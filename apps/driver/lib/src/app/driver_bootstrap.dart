@@ -18,7 +18,7 @@ import 'package:driver/src/infrastructure/telemetry/driver_background_telemetry.
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Future<void> bootstrapDriverApp() async {
+Future<void> bootstrapApp() async {
   final startupTask = developer.TimelineTask()..start('driver.startup');
   var firstFrameCallbackRegistered = false;
 
@@ -47,10 +47,10 @@ Future<void> bootstrapDriverApp() async {
     configureClientErrorBoundary(appName: 'driver-app');
 
     try {
-      final sessionService = DriverSessionStore();
+      final sessionService = SessionStore();
       final stopServiceTask = traceTimelineStage<void>(
         'driver.startup.stop_background_service',
-        DriverBackgroundTelemetry.stopExistingServiceForStartup,
+        BackgroundTelemetry.stopExistingServiceForStartup,
       );
       final preferencesTask = traceTimelineStage(
         'driver.startup.load_preferences',
@@ -58,7 +58,7 @@ Future<void> bootstrapDriverApp() async {
       );
       final sessionTask = traceTimelineStage(
         'driver.startup.restore_session',
-        () => _hasDriverSession(sessionService),
+        () => _hasSession(sessionService),
       );
       final environmentTask = traceTimelineStage<void>(
         'driver.startup.load_environment',
@@ -74,25 +74,25 @@ Future<void> bootstrapDriverApp() async {
         environmentTask,
       ]);
       final preferences = await preferencesTask;
-      final hasDriverSession = await sessionTask;
+      final hasSession = await sessionTask;
 
       await traceTimelineStage(
         'driver.startup.sentry_and_app_runner',
         () => SentryFlutter.init(
           (options) {
-            options.dsn = DriverEnvConfig.sentryDsn;
+            options.dsn = EnvConfig.sentryDsn;
             options.tracesSampleRate = 0.1;
-            options.environment = DriverEnvConfig.appEnvironment;
+            options.environment = EnvConfig.appEnvironment;
           },
           appRunner: () async {
             await traceTimelineStage(
               'driver.startup.configure_dependencies_and_router',
               () => Modular.configure(
-                appModule: DriverDependencies(
+                appModule: AppDependencies(
                   preferences: preferences,
                   sessionService: sessionService,
                 ),
-                initialRoute: hasDriverSession
+                initialRoute: hasSession
                     ? DashboardRoutes.fullDashboardPath
                     : AuthRoutes.signinPath,
                 debugLogDiagnostics: true,
@@ -106,11 +106,11 @@ Future<void> bootstrapDriverApp() async {
             await Future<void>.delayed(Duration.zero);
 
             final nativeService = MapNativeService(
-              placeServiceBaseUri: DriverEnvConfig.apiBaseUri,
+              placeServiceBaseUri: EnvConfig.apiBaseUri,
               dio: Modular.get<Dio>(),
             );
             LocationService.nativeService = nativeService;
-            final mapboxToken = DriverEnvConfig.mapboxPublicToken;
+            final mapboxToken = EnvConfig.mapboxPublicToken;
             if (mapboxToken == null) {
               debugPrint(
                 'Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.',
@@ -125,7 +125,7 @@ Future<void> bootstrapDriverApp() async {
             );
 
             captureFirstFrameTiming();
-            runApp(const DriverApp());
+            runApp(const App());
           },
         ),
       );
@@ -133,7 +133,7 @@ Future<void> bootstrapDriverApp() async {
       captureFirstFrameTiming();
       runApp(
         SafeClientErrorApp(
-          theme: EasyRideTheme.main,
+          theme: AppTheme.main,
           message: ErrorHandler.getErrorMessage(error, stackTrace),
         ),
       );
@@ -143,9 +143,9 @@ Future<void> bootstrapDriverApp() async {
   }
 }
 
-Future<bool> _hasDriverSession(DriverSessionStore sessionService) async {
+Future<bool> _hasSession(SessionStore sessionService) async {
   try {
-    return await sessionService.hasValidDriverSession();
+    return await sessionService.hasValidSession();
   } catch (_) {
     return false;
   }

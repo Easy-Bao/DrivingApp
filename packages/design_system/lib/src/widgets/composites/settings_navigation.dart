@@ -22,14 +22,14 @@ class const AppSettingsScaffold({
 
   @override
   Widget build(BuildContext context) {
-    return EasyRideSecondaryPage(
+    return AppSecondaryPage(
       title: title,
       onBack: onBack,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(
-          EasyRideLayout.pagePadding,
-          EasyRideLayout.pagePadding,
-          EasyRideLayout.pagePadding,
+          AppLayout.pagePadding,
+          AppLayout.pagePadding,
+          AppLayout.pagePadding,
           40,
         ),
         children: [
@@ -40,7 +40,7 @@ class const AppSettingsScaffold({
             style: Theme.of(context).textTheme.bodyMedium
                 ?.copyWith(color: context.colorScheme.onSurfaceVariant),
           ),
-          const SizedBox(height: EasyRideSpacing.xxl),
+          const SizedBox(height: AppSpacing.xxl),
           ...children,
         ],
       ),
@@ -70,7 +70,7 @@ class const AppSettingsSection({
         Material(
           color: context.colorScheme.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             side: BorderSide(color: context.colorScheme.outlineVariant),
           ),
           clipBehavior: Clip.antiAlias,

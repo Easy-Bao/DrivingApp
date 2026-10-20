@@ -10,7 +10,7 @@ void main() {
     var backCount = 0;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: HelpCenterPage(onBack: () => backCount++),
       ),
     );

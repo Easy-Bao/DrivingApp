@@ -10,7 +10,7 @@ part 'reset_password_confirm_state.dart';
 
 class ResetPasswordConfirmBloc(this._authRepository)
     extends Bloc<ResetPasswordConfirmEvent, ResetPasswordConfirmState> {
-  final PassengerAuthRepository _authRepository;
+  final AuthRepository _authRepository;
 
   this : super(const ResetPasswordConfirmInitial()) {
     on<ResetPasswordConfirmSubmitted>(

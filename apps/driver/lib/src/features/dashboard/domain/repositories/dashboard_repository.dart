@@ -12,9 +12,9 @@ abstract interface class DashboardRepository {
     required double lng,
   });
 
-  Future<Result<DriverDashboardStats, Failure>> getDashboardStats();
+  Future<Result<DashboardStats, Failure>> getDashboardStats();
 
-  Future<Result<DriverDispatchSnapshot, Failure>> getDispatchSnapshot({
+  Future<Result<DispatchSnapshot, Failure>> getDispatchSnapshot({
     bool includeOffers = true,
     int limit = 10,
   });
@@ -46,16 +46,17 @@ extension DashboardRepositoryResultApi on DashboardRepository {
     );
   }
 
-  Future<Result<DriverDashboardStats, DomainFailure>>
-  getDashboardStatsResult() {
+  Future<Result<DashboardStats, DomainFailure>> getDashboardStatsResult() {
     return _captureDashboardResult(
       getDashboardStats,
       message: 'Unable to load driver dashboard statistics right now.',
     );
   }
 
-  Future<Result<DriverDispatchSnapshot, DomainFailure>>
-  getDispatchSnapshotResult({bool includeOffers = true, int limit = 10}) {
+  Future<Result<DispatchSnapshot, DomainFailure>> getDispatchSnapshotResult({
+    bool includeOffers = true,
+    int limit = 10,
+  }) {
     return _captureDashboardResult(
       () => getDispatchSnapshot(includeOffers: includeOffers, limit: limit),
       message: 'Unable to load driver dispatch data right now.',

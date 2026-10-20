@@ -4,7 +4,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 
-class const PassengerSafetyReportButton({
+class const SafetyReportButton({
   super.key,
   required this.rideId,
   required this.trackRepository,
@@ -18,7 +18,7 @@ class const PassengerSafetyReportButton({
     return IconButton(
       onPressed: canReport
           ? () async {
-              final submitted = await showPassengerSafetyReportSheet(
+              final submitted = await showSafetyReportSheet(
                 context,
                 rideId: rideId!,
                 trackRepository: trackRepository,
@@ -35,14 +35,14 @@ class const PassengerSafetyReportButton({
       icon: const Icon(LucideIcons.flag_triangle_right),
       color: context.colorScheme.error,
       constraints: const BoxConstraints(
-        minWidth: EasyRideSize.minimumTouchTarget,
-        minHeight: EasyRideSize.minimumTouchTarget,
+        minWidth: AppSize.minimumTouchTarget,
+        minHeight: AppSize.minimumTouchTarget,
       ),
     );
   }
 }
 
-Future<bool> showPassengerSafetyReportSheet(
+Future<bool> showSafetyReportSheet(
   BuildContext context, {
   required String rideId,
   required TrackRepository trackRepository,
@@ -55,7 +55,7 @@ Future<bool> showPassengerSafetyReportSheet(
         showDragHandle: false,
         useSafeArea: true,
         backgroundColor: Colors.transparent,
-        builder: (context) => _PassengerSafetyReportSheet(
+        builder: (context) => _SafetyReportSheet(
           rideId: rideId,
           trackRepository: trackRepository,
         ),
@@ -63,43 +63,31 @@ Future<bool> showPassengerSafetyReportSheet(
       false;
 }
 
-class const _PassengerSafetyReportOption({
-  required this.value,
-  required this.label,
-}) {
+class const _SafetyReportOption({required this.value, required this.label}) {
   final String value;
   final String label;
 }
 
-const _passengerSafetyReportOptions = <_PassengerSafetyReportOption>[
-  _PassengerSafetyReportOption(
-    value: 'unsafe_driving',
-    label: 'Unsafe driving',
-  ),
-  _PassengerSafetyReportOption(
+const _passengerSafetyReportOptions = <_SafetyReportOption>[
+  _SafetyReportOption(value: 'unsafe_driving', label: 'Unsafe driving'),
+  _SafetyReportOption(
     value: 'driver_identity_mismatch',
     label: 'Driver identity mismatch',
   ),
-  _PassengerSafetyReportOption(
+  _SafetyReportOption(
     value: 'vehicle_mismatch',
     label: 'Vehicle does not match',
   ),
-  _PassengerSafetyReportOption(value: 'harassment', label: 'Harassment'),
-  _PassengerSafetyReportOption(
-    value: 'threat_or_violence',
-    label: 'Threat or violence',
-  ),
-  _PassengerSafetyReportOption(value: 'fare_dispute', label: 'Fare dispute'),
-  _PassengerSafetyReportOption(value: 'route_issue', label: 'Route issue'),
-  _PassengerSafetyReportOption(
-    value: 'fraud',
-    label: 'Fraud or suspicious behavior',
-  ),
-  _PassengerSafetyReportOption(value: 'accident', label: 'Accident or injury'),
-  _PassengerSafetyReportOption(value: 'other', label: 'Other serious concern'),
+  _SafetyReportOption(value: 'harassment', label: 'Harassment'),
+  _SafetyReportOption(value: 'threat_or_violence', label: 'Threat or violence'),
+  _SafetyReportOption(value: 'fare_dispute', label: 'Fare dispute'),
+  _SafetyReportOption(value: 'route_issue', label: 'Route issue'),
+  _SafetyReportOption(value: 'fraud', label: 'Fraud or suspicious behavior'),
+  _SafetyReportOption(value: 'accident', label: 'Accident or injury'),
+  _SafetyReportOption(value: 'other', label: 'Other serious concern'),
 ];
 
-class const _PassengerSafetyReportSheet({
+class const _SafetyReportSheet({
   required this.rideId,
   required this.trackRepository,
 }) extends StatefulWidget {
@@ -107,12 +95,10 @@ class const _PassengerSafetyReportSheet({
   final TrackRepository trackRepository;
 
   @override
-  State<_PassengerSafetyReportSheet> createState() =>
-      _PassengerSafetyReportSheetState();
+  State<_SafetyReportSheet> createState() => _SafetyReportSheetState();
 }
 
-class _PassengerSafetyReportSheetState
-    extends State<_PassengerSafetyReportSheet> {
+class _SafetyReportSheetState extends State<_SafetyReportSheet> {
   final _descriptionController = TextEditingController();
   String? _category;
   String? _errorMessage;
@@ -164,16 +150,16 @@ class _PassengerSafetyReportSheetState
       child: Material(
         color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(EasyRideRadius.sheet),
+          top: Radius.circular(AppRadius.sheet),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: 680),
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
-              EasyRideSpacing.lg,
-              EasyRideSpacing.lg,
-              EasyRideSpacing.lg,
-              EasyRideSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.md,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -184,7 +170,7 @@ class _PassengerSafetyReportSheetState
                       LucideIcons.flag_triangle_right,
                       color: context.colorScheme.error,
                     ),
-                    const SizedBox(width: EasyRideSpacing.sm),
+                    const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
                         'Report a driver issue',
@@ -195,15 +181,15 @@ class _PassengerSafetyReportSheetState
                     ),
                   ],
                 ),
-                const SizedBox(height: EasyRideSpacing.xs),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Use this for safety or serious trip problems. The report is linked to the ride timeline.',
                   style: context.textStyles.bodyMedium?.copyWith(
                     color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: EasyRideSpacing.md),
-                EasyRideSelectField<String>(
+                const SizedBox(height: AppSpacing.md),
+                AppSelectField<String>(
                   key: const ValueKey('passenger-safety-report-category'),
                   value: _category,
                   menuTitle: 'What happened?',
@@ -213,7 +199,7 @@ class _PassengerSafetyReportSheetState
                   ),
                   options: [
                     for (final option in _passengerSafetyReportOptions)
-                      EasyRideSelectOption<String>(
+                      AppSelectOption<String>(
                         value: option.value,
                         label: option.label,
                       ),
@@ -222,7 +208,7 @@ class _PassengerSafetyReportSheetState
                       ? null
                       : (value) => setState(() => _category = value),
                 ),
-                const SizedBox(height: EasyRideSpacing.md),
+                const SizedBox(height: AppSpacing.md),
                 TextField(
                   controller: _descriptionController,
                   minLines: 4,
@@ -238,15 +224,15 @@ class _PassengerSafetyReportSheetState
                   ),
                 ),
                 if (_errorMessage != null) ...[
-                  const SizedBox(height: EasyRideSpacing.xs),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     _errorMessage!,
                     style: TextStyle(color: context.colorScheme.error),
                   ),
                 ],
-                const SizedBox(height: EasyRideSpacing.md),
+                const SizedBox(height: AppSpacing.md),
                 SizedBox(
-                  height: EasyRideSize.controlHeight,
+                  height: AppSize.controlHeight,
                   child: FilledButton(
                     onPressed: _isSubmitting ? null : _submit,
                     child: _isSubmitting
@@ -260,7 +246,7 @@ class _PassengerSafetyReportSheetState
                                   strokeWidth: 2,
                                 ),
                               ),
-                              SizedBox(width: EasyRideSpacing.sm),
+                              SizedBox(width: AppSpacing.sm),
                               Text('Submitting…'),
                             ],
                           )

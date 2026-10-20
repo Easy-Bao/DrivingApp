@@ -19,9 +19,9 @@ void main() {
     var submitted = false;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: DriverPoolBidCard(
+          body: PoolBidCard(
             bid: session,
             submittingBidId: null,
             onDecline: () {},
@@ -51,9 +51,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: DriverPoolBidCard(
+          body: PoolBidCard(
             bid: submittedSession,
             submittingBidId: null,
             onDecline: null,
@@ -83,9 +83,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: DriverPoolBidCard(
+          body: PoolBidCard(
             bid: tickingSession,
             submittingBidId: null,
             onDecline: () {},

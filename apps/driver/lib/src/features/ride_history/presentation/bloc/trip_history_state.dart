@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-class const DriverTripHistoryState({
+class const TripHistoryState({
   this.isLoading = false,
   this.isLoadingMore = false,
   this.hasMore = false,
@@ -17,7 +17,7 @@ class const DriverTripHistoryState({
   final String? loadMoreError;
   final List<Map<String, dynamic>> trips;
 
-  DriverTripHistoryState copyWith({
+  TripHistoryState copyWith({
     bool? isLoading,
     bool? isLoadingMore,
     bool? hasMore,
@@ -29,7 +29,7 @@ class const DriverTripHistoryState({
     bool clearLoadMoreError = false,
     List<Map<String, dynamic>>? trips,
   }) {
-    return DriverTripHistoryState(
+    return TripHistoryState(
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       hasMore: hasMore ?? this.hasMore,

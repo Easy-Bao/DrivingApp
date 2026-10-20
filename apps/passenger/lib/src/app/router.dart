@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -20,7 +22,7 @@ import 'package:passenger/src/features/ride_history/ride_history_module.dart';
 import 'package:passenger/src/features/saved_places/saved_places_module.dart';
 import 'package:passenger/src/features/settings/settings_module.dart';
 
-class PassengerRouter extends Module {
+class AppRouter extends Module {
   @override
   List<ModularRoute> get routes => <ModularRoute>[
     ...RideHistoryModule.routes,
@@ -37,26 +39,23 @@ class PassengerRouter extends Module {
     ...SettingsModule.routes,
 
     StatefulShellModularRoute(
-      builder: (context, GoRouterState state, navigationShell) =>
-          PassengerShellLayout(
-            inboxCubit: Modular.get<InboxCubit>(),
-            realtimeClient: Modular.get<RealtimeWebSocketClient>(),
-            lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
-            navigationCoordinator:
-                Modular.get<PassengerTabNavigationCoordinator>(),
-            navigationShell: navigationShell,
-          ),
+      builder: (context, GoRouterState state, navigationShell) => ShellLayout(
+        inboxCubit: Modular.get<InboxCubit>(),
+        realtimeClient: Modular.get<RealtimeWebSocketClient>(),
+        lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
+        navigationCoordinator: Modular.get<TabNavigationCoordinator>(),
+        navigationShell: navigationShell,
+      ),
       navigatorContainerBuilder: (context, navigationShell, children) =>
           BlocSelector<SessionBloc, SessionState, bool>(
             selector: (state) => state.isAuthenticated,
-            builder: (context, isAuthenticated) => PassengerTabBranchContainer(
+            builder: (context, isAuthenticated) => TabBranchContainer(
               navigationShell: navigationShell,
               allowUserNavigation: isAuthenticated,
               onNavigationSettled:
-                  Modular.get<PassengerTabNavigationCoordinator>().commit,
+                  Modular.get<TabNavigationCoordinator>().commit,
               onPagePositionChanged:
-                  Modular.get<PassengerTabNavigationCoordinator>()
-                      .updatePagePosition,
+                  Modular.get<TabNavigationCoordinator>().updatePagePosition,
               children: children,
             ),
           ),
@@ -83,14 +82,12 @@ class PassengerRouter extends Module {
 
     i
       ..addFactory<LiveMapBloc>((_) => LiveMapBloc())
-      ..addLazySingleton<PassengerTabNavigationCoordinator>(
-        (_) => PassengerTabNavigationCoordinator(),
+      ..addLazySingleton<TabNavigationCoordinator>(
+        (_) => TabNavigationCoordinator(),
       )
       ..addLazySingleton<RealtimeWebSocketClient>(
         (i) => RealtimeWebSocketClient(
-          uri: PassengerEnvConfig.webSocketBaseUri.replace(
-            path: '/api/v1/realtime/ws',
-          ),
+          uri: EnvConfig.webSocketBaseUri.replace(path: '/api/v1/realtime/ws'),
           tokenProvider: i.get<RefreshableTokenProvider>().getToken,
           refreshToken: i.get<RefreshableTokenProvider>().refreshAccessToken,
           networkAvailability: i.get<NetworkAvailabilityCoordinator>(),

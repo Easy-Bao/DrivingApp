@@ -23,13 +23,13 @@ void main() {
   late MockRideRemoteDataSource rideDataSource;
   late MockRideCounterpartyRemoteDataSource counterpartyDataSource;
   late MockTelemetryRemoteDataSource telemetryDataSource;
-  late DriverRideRepositoryImpl repository;
+  late RideRepositoryImpl repository;
 
   setUp(() {
     rideDataSource = MockRideRemoteDataSource();
     counterpartyDataSource = MockRideCounterpartyRemoteDataSource();
     telemetryDataSource = MockTelemetryRemoteDataSource();
-    repository = DriverRideRepositoryImpl(
+    repository = RideRepositoryImpl(
       rideDataSource: rideDataSource,
       counterpartyDataSource: counterpartyDataSource,
       telemetryDataSource: telemetryDataSource,

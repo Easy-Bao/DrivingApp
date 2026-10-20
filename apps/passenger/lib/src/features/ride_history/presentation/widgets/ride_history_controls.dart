@@ -144,7 +144,7 @@ class _SummaryCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
         boxShadow: const [
           BoxShadow(
@@ -202,7 +202,7 @@ class _RideHistoryFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(EasyRideRadius.pill);
+    final radius = BorderRadius.circular(AppRadius.pill);
 
     return Semantics(
       button: true,

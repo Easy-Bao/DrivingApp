@@ -3,7 +3,7 @@ import 'package:driver/src/features/profile/domain/entities/driver_profile.dart'
 
 void main() {
   test('normalizes nested snake-case profile payloads', () {
-    final profile = DriverProfile.fromJson({
+    final profile = Profile.fromJson({
       'data': {
         'user_id': 7,
         'full_name': 'Ada Driver',
@@ -27,7 +27,7 @@ void main() {
   });
 
   test('prefers the first non-empty alias and supports camel-case fields', () {
-    final profile = DriverProfile.fromJson({
+    final profile = Profile.fromJson({
       'profile': {
         'name': '  ',
         'fullName': 'Passenger Name',

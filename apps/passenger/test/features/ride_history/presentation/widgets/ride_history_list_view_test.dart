@@ -205,7 +205,7 @@ Future<void> _pumpHistory(
     MediaQuery(
       data: MediaQueryData(alwaysUse24HourFormat: alwaysUse24HourFormat),
       child: MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           body: RideHistoryListView(
             activeRides: activeRides,

@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('clears the session even when best-effort cleanup fails', () async {
     final completedSteps = <String>[];
-    final coordinator = DriverLogoutCoordinator(
+    final coordinator = LogoutCoordinator(
       forceOffline: () async {
         completedSteps.add('offline');
         throw StateError('availability unavailable');

@@ -10,16 +10,16 @@ import 'package:passenger/src/features/profile/data/datasources/profile_remote_d
 import 'package:passenger/src/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class MockPassengerProfileRemoteDataSource extends Mock
-    implements PassengerProfileRemoteDataSource {}
+class MockProfileRemoteDataSource extends Mock
+    implements ProfileRemoteDataSource {}
 
-class MockSecureSessionService extends Mock implements PassengerSessionStore {}
+class MockSecureSessionService extends Mock implements SessionStore {}
 
 void main() {
   test('uploads a newly selected avatar as part of profile save', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final preferences = await SharedPreferences.getInstance();
-    final remoteDataSource = MockPassengerProfileRemoteDataSource();
+    final remoteDataSource = MockProfileRemoteDataSource();
     final sessionService = MockSecureSessionService();
     final avatarFile = File(
       '${Directory.systemTemp.path}/passenger-profile-test.png',
@@ -55,7 +55,7 @@ void main() {
       },
     );
 
-    final repository = PassengerProfileRepositoryImpl(
+    final repository = ProfileRepositoryImpl(
       remoteDataSource: remoteDataSource,
       sessionService: sessionService,
       preferences: preferences,
@@ -101,7 +101,7 @@ void main() {
     () async {
       SharedPreferences.setMockInitialValues(<String, Object>{});
       final preferences = await SharedPreferences.getInstance();
-      final remoteDataSource = MockPassengerProfileRemoteDataSource();
+      final remoteDataSource = MockProfileRemoteDataSource();
       final sessionService = MockSecureSessionService();
       final request = RequestOptions(path: '/api/v1/passengers/42');
 
@@ -120,7 +120,7 @@ void main() {
         ),
       );
 
-      final repository = PassengerProfileRepositoryImpl(
+      final repository = ProfileRepositoryImpl(
         remoteDataSource: remoteDataSource,
         sessionService: sessionService,
         preferences: preferences,

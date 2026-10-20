@@ -722,7 +722,7 @@ class _SearchDestinationPageState()
                                     decoration: BoxDecoration(
                                       color: context.colorScheme.surface,
                                       borderRadius: BorderRadius.circular(
-                                        EasyRideRadius.pill,
+                                        AppRadius.pill,
                                       ),
                                       border: Border.all(
                                         color:
@@ -739,10 +739,8 @@ class _SearchDestinationPageState()
                                             _handleSearchBackTap();
                                           },
                                           child: SizedBox(
-                                            width:
-                                                EasyRideSize.minimumTouchTarget,
-                                            height:
-                                                EasyRideSize.minimumTouchTarget,
+                                            width: AppSize.minimumTouchTarget,
+                                            height: AppSize.minimumTouchTarget,
                                             child: Center(
                                               child: AnimatedSwitcher(
                                                 duration: const Duration(
@@ -806,10 +804,9 @@ class _SearchDestinationPageState()
                                             onTap: () =>
                                                 _searchController.clear(),
                                             child: SizedBox(
-                                              width: EasyRideSize
-                                                  .minimumTouchTarget,
-                                              height: EasyRideSize
-                                                  .minimumTouchTarget,
+                                              width: AppSize.minimumTouchTarget,
+                                              height:
+                                                  AppSize.minimumTouchTarget,
                                               child: Center(
                                                 child: Icon(
                                                   LucideIcons.x,
@@ -840,9 +837,9 @@ class _SearchDestinationPageState()
                                                       .surface
                                                       .withValues(alpha: 0),
                                                   child: SizedBox(
-                                                    width: EasyRideSize
+                                                    width: AppSize
                                                         .minimumTouchTarget,
-                                                    height: EasyRideSize
+                                                    height: AppSize
                                                         .minimumTouchTarget,
                                                     child: Center(
                                                       child: Container(
@@ -889,8 +886,8 @@ class _SearchDestinationPageState()
                                       _handleSearchBackTap();
                                     },
                                     child: Container(
-                                      width: EasyRideSize.minimumTouchTarget,
-                                      height: EasyRideSize.minimumTouchTarget,
+                                      width: AppSize.minimumTouchTarget,
+                                      height: AppSize.minimumTouchTarget,
                                       decoration: BoxDecoration(
                                         color: context.colorScheme.surface,
                                         shape: BoxShape.circle,
@@ -929,8 +926,8 @@ class _SearchDestinationPageState()
                                     ),
                                     onTap: _openMapPin,
                                     child: SizedBox(
-                                      width: EasyRideSize.minimumTouchTarget,
-                                      height: EasyRideSize.minimumTouchTarget,
+                                      width: AppSize.minimumTouchTarget,
+                                      height: AppSize.minimumTouchTarget,
                                       child: Hero(
                                         tag: BookingRoutes.mapPinHeroTag,
                                         child: FittedBox(
@@ -938,10 +935,9 @@ class _SearchDestinationPageState()
                                             color: context.colorScheme.surface
                                                 .withValues(alpha: 0),
                                             child: Container(
-                                              width: EasyRideSize
-                                                  .minimumTouchTarget,
-                                              height: EasyRideSize
-                                                  .minimumTouchTarget,
+                                              width: AppSize.minimumTouchTarget,
+                                              height:
+                                                  AppSize.minimumTouchTarget,
                                               decoration: BoxDecoration(
                                                 color:
                                                     context.colorScheme.surface,

@@ -10,7 +10,7 @@ import 'package:passenger/src/features/auth/domain/repositories/auth_repository.
 import 'package:passenger/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/pages/sign_in_page.dart';
 
-class _AuthRepository extends Mock implements PassengerAuthRepository {}
+class _AuthRepository extends Mock implements AuthRepository {}
 
 void main() {
   testWidgets('Remember me toggles through both its label and checkbox', (
@@ -20,7 +20,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: SigninPage(signInBloc: SignInBloc(_AuthRepository())),
       ),
     );
@@ -55,7 +55,7 @@ void main() {
       'submits rememberMe=$rememberMe and disables changes while signing in',
       (tester) async {
         final repository = _AuthRepository();
-        final response = Completer<Result<PassengerAuthCredentials, Failure>>();
+        final response = Completer<Result<AuthCredentials, Failure>>();
         when(
           () => repository.authenticate(
             email: any(named: 'email'),
@@ -65,7 +65,7 @@ void main() {
         ).thenAnswer((_) => response.future);
         await tester.pumpWidget(
           MaterialApp(
-            theme: EasyRideTheme.main,
+            theme: AppTheme.main,
             home: SigninPage(signInBloc: SignInBloc(repository)),
           ),
         );

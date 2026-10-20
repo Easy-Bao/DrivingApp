@@ -8,28 +8,26 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockDriverLocationAccessCubit
-    extends MockCubit<DriverLocationAccessViewState>
-    implements DriverLocationAccessCubit {}
+class _MockLocationAccessCubit extends MockCubit<LocationAccessViewState>
+    implements LocationAccessCubit {}
 
 void main() {
   testWidgets('shows only completed driver settings destinations', (
     tester,
   ) async {
-    final locationCubit = _MockDriverLocationAccessCubit();
-    when(() => locationCubit.state)
-        .thenReturn(const DriverLocationAccessReady());
+    final locationCubit = _MockLocationAccessCubit();
+    when(() => locationCubit.state).thenReturn(const LocationAccessReady());
     var backTaps = 0;
     final destinationTaps = <String>[];
 
     await tester.pumpWidget(
       MultiBlocProvider(
         providers: [
-          BlocProvider<DriverLocationAccessCubit>.value(value: locationCubit),
+          BlocProvider<LocationAccessCubit>.value(value: locationCubit),
         ],
         child: MaterialApp(
-          theme: EasyRideTheme.main,
-          home: DriverSettingsPage(
+          theme: AppTheme.main,
+          home: SettingsPage(
             onBack: () => backTaps++,
             onLocationTap: () => destinationTaps.add('location'),
             onHelpCenterTap: () => destinationTaps.add('help'),

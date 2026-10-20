@@ -10,7 +10,7 @@ part 'verify_otp_state.dart';
 
 class VerifyOtpBloc(this._authRepository)
     extends Bloc<VerifyOtpEvent, VerifyOtpState> {
-  final PassengerAuthRepository _authRepository;
+  final AuthRepository _authRepository;
   Timer? _timer;
   int _seconds = 60;
 

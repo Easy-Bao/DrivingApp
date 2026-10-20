@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 
-final class DriverIncomingRequestAlert {
-  DriverIncomingRequestAlert._();
+final class IncomingRequestAlert {
+  IncomingRequestAlert._();
 
   static const MethodChannel channel = MethodChannel('easyride/driver_alerts');
 

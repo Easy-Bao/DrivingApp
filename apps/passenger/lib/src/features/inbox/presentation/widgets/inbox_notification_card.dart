@@ -78,7 +78,7 @@ class InboxNotificationCard extends StatelessWidget {
     }
 
     final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       side: BorderSide(color: context.colorScheme.outlineVariant),
     );
 
@@ -94,23 +94,23 @@ class InboxNotificationCard extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             child: Padding(
-              padding: const EdgeInsets.all(EasyRideSpacing.lg),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    width: EasyRideSize.minimumTouchTarget,
-                    height: EasyRideSize.minimumTouchTarget,
+                    width: AppSize.minimumTouchTarget,
+                    height: AppSize.minimumTouchTarget,
                     decoration: BoxDecoration(
                       color: circleBackgroundColor,
-                      borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     alignment: Alignment.center,
                     child: Icon(icon, color: iconColor, size: 20),
                   ),
-                  const SizedBox(width: EasyRideSpacing.lg),
+                  const SizedBox(width: AppSpacing.lg),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

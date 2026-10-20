@@ -4,8 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 
-class DriverAuthInterceptor(
-  DriverSessionStore secureSessionService, {
+class AuthInterceptor(
+  SessionStore secureSessionService, {
   Dio? dio,
   Dio? refreshClient,
   Uri? allowedBaseUri,

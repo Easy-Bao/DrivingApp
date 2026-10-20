@@ -49,6 +49,6 @@ class RideHistoryHeader extends StatelessWidget {
       );
     }
 
-    return EasyRidePageHeader(title: title, subtitle: subtitle);
+    return AppPageHeader(title: title, subtitle: subtitle);
   }
 }

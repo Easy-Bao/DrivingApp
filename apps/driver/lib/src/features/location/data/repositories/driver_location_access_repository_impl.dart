@@ -1,8 +1,7 @@
 import 'package:maps/maps.dart';
 import 'package:driver/src/features/location/domain/repositories/driver_location_access_repository.dart';
 
-final class DriverLocationAccessRepositoryImpl
-    implements DriverLocationAccessRepository {
+final class LocationAccessRepositoryImpl implements LocationAccessRepository {
   final _monitor = AccessStateMonitor<LocationAccessState>(
     stateChanges: () => LocationService.accessStateChanges,
     readState: LocationService.getAccessState,

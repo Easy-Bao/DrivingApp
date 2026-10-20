@@ -44,7 +44,7 @@ class SavedPlaceQuickActions extends StatelessWidget {
               child: Material(
                 type: MaterialType.transparency,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                   onTap: () => onPlaceTap(orderedPlaces[index]),
                   onLongPress: onPlaceLongPress == null
                       ? null
@@ -77,9 +77,7 @@ class _SavedPlaceChip extends StatelessWidget {
     final showActiveStyle = isActive && place.hasLocation;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      constraints: const BoxConstraints(
-        minHeight: EasyRideSize.minimumTouchTarget,
-      ),
+      constraints: const BoxConstraints(minHeight: AppSize.minimumTouchTarget),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: showActiveStyle
@@ -91,7 +89,7 @@ class _SavedPlaceChip extends StatelessWidget {
               : context.colorScheme.outlineVariant,
           width: showActiveStyle ? 1.5 : 1.0,
         ),
-        borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -137,11 +135,11 @@ class _AddPlaceChip extends StatelessWidget {
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
-          borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
           onTap: onTap,
           child: Container(
             constraints: const BoxConstraints(
-              minHeight: EasyRideSize.minimumTouchTarget,
+              minHeight: AppSize.minimumTouchTarget,
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
@@ -149,7 +147,7 @@ class _AddPlaceChip extends StatelessWidget {
               border: Border.all(
                 color: context.colorScheme.onSurface.withValues(alpha: 0.25),
               ),
-              borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

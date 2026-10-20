@@ -10,22 +10,21 @@ import 'package:passenger/src/features/profile/domain/entities/profile.dart';
 import 'package:passenger/src/features/profile/domain/repositories/profile_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class PassengerProfileRepositoryImpl
-    implements PassengerProfileRepository {
-  PassengerProfileRepositoryImpl({
+final class ProfileRepositoryImpl implements ProfileRepository {
+  ProfileRepositoryImpl({
     required this.remoteDataSource,
     required this.sessionService,
     required this.preferences,
   });
 
-  final PassengerProfileRemoteDataSource remoteDataSource;
-  final PassengerSessionStore sessionService;
+  final ProfileRemoteDataSource remoteDataSource;
+  final SessionStore sessionService;
   final SharedPreferences preferences;
   String _avatarData = '';
 
   @override
-  PassengerProfile getCachedProfile() {
-    return PassengerProfile(
+  Profile getCachedProfile() {
+    return Profile(
       name: preferences.getString('passenger_name') ?? '',
       phone: preferences.getString('passenger_phone') ?? '',
       email: preferences.getString('passenger_email') ?? '',
@@ -37,11 +36,11 @@ final class PassengerProfileRepositoryImpl
   }
 
   @override
-  Future<Result<PassengerProfile, Failure>> refreshProfile() async {
+  Future<Result<Profile, Failure>> refreshProfile() async {
     try {
       final passengerId = await _passengerId();
       final cached = getCachedProfile();
-      final remote = PassengerProfile.fromJson(
+      final remote = Profile.fromJson(
         await remoteDataSource.fetchProfile(passengerId),
       );
       var avatarData = _avatarData;
@@ -63,7 +62,7 @@ final class PassengerProfileRepositoryImpl
           : (cachedName.isNotEmpty && !cachedName.contains('@')
                 ? cachedName
                 : (remoteName.isNotEmpty ? remoteName : cachedName));
-      final profile = PassengerProfile(
+      final profile = Profile(
         id: remote.id,
         userId: remote.userId,
         role: remote.role,
@@ -85,7 +84,7 @@ final class PassengerProfileRepositoryImpl
   }
 
   @override
-  Future<Result<PassengerProfile, Failure>> updateProfile({
+  Future<Result<Profile, Failure>> updateProfile({
     required String name,
     required String address,
     required String gender,
@@ -123,7 +122,7 @@ final class PassengerProfileRepositoryImpl
           'gender': gender.trim(),
         },
       );
-      final remote = PassengerProfile.fromJson(response);
+      final remote = Profile.fromJson(response);
       if (normalizedAvatarPath == cached.avatarPath &&
           remote.avatarUrl.isNotEmpty) {
         try {
@@ -136,7 +135,7 @@ final class PassengerProfileRepositoryImpl
         avatarData = '';
       }
       _avatarData = avatarData;
-      final profile = PassengerProfile(
+      final profile = Profile(
         id: remote.id,
         userId: remote.userId,
         role: remote.role,
@@ -165,7 +164,7 @@ final class PassengerProfileRepositoryImpl
     return passengerId;
   }
 
-  Future<void> _cache(PassengerProfile profile) async {
+  Future<void> _cache(Profile profile) async {
     await Future.wait<void>([
       preferences.setString('passenger_name', profile.name),
       preferences.setString('passenger_phone', profile.phone),

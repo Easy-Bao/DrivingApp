@@ -101,7 +101,7 @@ class const _LocationAccessSheet({
       color: colorScheme.surface,
       elevation: 0,
       borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(EasyRideRadius.sheet),
+        top: Radius.circular(AppRadius.sheet),
       ),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(
@@ -109,10 +109,10 @@ class const _LocationAccessSheet({
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(
-            EasyRideSpacing.lg,
-            EasyRideSpacing.sm,
-            EasyRideSpacing.lg,
-            EasyRideSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            AppSpacing.lg,
           ),
           child: Align(
             alignment: Alignment.topCenter,
@@ -134,13 +134,13 @@ class const _LocationAccessSheet({
                       ),
                     ),
                   ),
-                  const SizedBox(height: EasyRideSpacing.sm),
+                  const SizedBox(height: AppSpacing.sm),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        width: EasyRideSize.controlHeight,
-                        height: EasyRideSize.controlHeight,
+                        width: AppSize.controlHeight,
+                        height: AppSize.controlHeight,
                         decoration: BoxDecoration(
                           color: presentation
                               .color(colorScheme)
@@ -162,7 +162,7 @@ class const _LocationAccessSheet({
                                 color: presentation.color(colorScheme),
                               ),
                       ),
-                      const SizedBox(width: EasyRideSpacing.md),
+                      const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,9 +190,9 @@ class const _LocationAccessSheet({
                     ],
                   ),
                   if (primaryAction != null) ...[
-                    const SizedBox(height: EasyRideSpacing.md),
+                    const SizedBox(height: AppSpacing.md),
                     SizedBox(
-                      height: EasyRideSize.controlHeight,
+                      height: AppSize.controlHeight,
                       child: FilledButton.icon(
                         onPressed: primaryAction.callback,
                         style: FilledButton.styleFrom(
@@ -212,9 +212,9 @@ class const _LocationAccessSheet({
                   if (onTryAgain != null &&
                       state != LocationAccessOverlayState.permissionDenied &&
                       state != LocationAccessOverlayState.checking) ...[
-                    const SizedBox(height: EasyRideSpacing.xs),
+                    const SizedBox(height: AppSpacing.xs),
                     SizedBox(
-                      height: EasyRideSize.minimumTouchTarget,
+                      height: AppSize.minimumTouchTarget,
                       child: TextButton.icon(
                         onPressed: onTryAgain,
                         icon: const Icon(LucideIcons.refresh_cw, size: 16),
@@ -310,7 +310,7 @@ class const _LocationAccessPresentation({
     return switch (tone) {
       _LocationAccessTone.neutral => colorScheme.onSurfaceVariant,
       _LocationAccessTone.primary => colorScheme.primary,
-      _LocationAccessTone.warning => EasyRideStatusColors.warning,
+      _LocationAccessTone.warning => AppStatusColors.warning,
       _LocationAccessTone.error => colorScheme.error,
     };
   }

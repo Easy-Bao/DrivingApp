@@ -7,15 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
-class const EasyRideSelectOption<T>({
-  required this.value,
-  required this.label,
-}) {
+class const AppSelectOption<T>({required this.value, required this.label}) {
   final T value;
   final String label;
 }
 
-class const EasyRideSelectField<T>({
+class const AppSelectField<T>({
   super.key,
   required this.options,
   required this.onChanged,
@@ -25,20 +22,20 @@ class const EasyRideSelectField<T>({
   this.style,
 }) extends StatefulWidget {
   final T? value;
-  final List<EasyRideSelectOption<T>> options;
+  final List<AppSelectOption<T>> options;
   final ValueChanged<T?>? onChanged;
   final InputDecoration decoration;
   final String? menuTitle;
   final TextStyle? style;
 
   @override
-  State<EasyRideSelectField<T>> createState() => _EasyRideSelectFieldState<T>();
+  State<AppSelectField<T>> createState() => _AppSelectFieldState<T>();
 }
 
-class _EasyRideSelectFieldState<T> extends State<EasyRideSelectField<T>> {
+class _AppSelectFieldState<T> extends State<AppSelectField<T>> {
   bool _isMenuOpen = false;
 
-  EasyRideSelectOption<T>? get _selectedOption {
+  AppSelectOption<T>? get _selectedOption {
     for (final option in widget.options) {
       if (option.value == widget.value) return option;
     }
@@ -57,7 +54,7 @@ class _EasyRideSelectFieldState<T> extends State<EasyRideSelectField<T>> {
       showDragHandle: false,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _EasyRideSelectMenu<T>(
+      builder: (context) => _AppSelectMenu<T>(
         title:
             widget.menuTitle ??
             widget.decoration.labelText ??
@@ -94,7 +91,7 @@ class _EasyRideSelectFieldState<T> extends State<EasyRideSelectField<T>> {
     );
     final borderRadius = decoration.border is OutlineInputBorder
         ? (decoration.border! as OutlineInputBorder).borderRadius
-        : BorderRadius.circular(EasyRideRadius.lg);
+        : BorderRadius.circular(AppRadius.lg);
 
     return Semantics(
       button: true,
@@ -136,15 +133,15 @@ class _EasyRideSelectFieldState<T> extends State<EasyRideSelectField<T>> {
   }
 }
 
-class _EasyRideSelectMenu<T> extends StatelessWidget {
-  const _EasyRideSelectMenu({
+class _AppSelectMenu<T> extends StatelessWidget {
+  const _AppSelectMenu({
     required this.title,
     required this.options,
     required this.selectedValue,
   });
 
   final String title;
-  final List<EasyRideSelectOption<T>> options;
+  final List<AppSelectOption<T>> options;
   final T? selectedValue;
 
   @override
@@ -155,7 +152,7 @@ class _EasyRideSelectMenu<T> extends StatelessWidget {
     return Material(
       color: colors.surface,
       borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(EasyRideRadius.sheet),
+        top: Radius.circular(AppRadius.sheet),
       ),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(
@@ -165,10 +162,10 @@ class _EasyRideSelectMenu<T> extends StatelessWidget {
           child: ListView(
             shrinkWrap: true,
             padding: const EdgeInsets.fromLTRB(
-              EasyRideSpacing.lg,
-              EasyRideSpacing.lg,
-              EasyRideSpacing.lg,
-              EasyRideSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.md,
             ),
             children: [
               Text(
@@ -176,14 +173,14 @@ class _EasyRideSelectMenu<T> extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium
                     ?.copyWith(fontWeight: FontWeight.w800),
               ),
-              const SizedBox(height: EasyRideSpacing.md),
+              const SizedBox(height: AppSpacing.md),
               for (final option in options) ...[
-                _EasyRideSelectOptionTile<T>(
+                _AppSelectOptionTile<T>(
                   option: option,
                   selected: option.value == selectedValue,
                 ),
                 if (option != options.last)
-                  const SizedBox(height: EasyRideSpacing.sm),
+                  const SizedBox(height: AppSpacing.sm),
               ],
             ],
           ),
@@ -193,13 +190,10 @@ class _EasyRideSelectMenu<T> extends StatelessWidget {
   }
 }
 
-class _EasyRideSelectOptionTile<T> extends StatelessWidget {
-  const _EasyRideSelectOptionTile({
-    required this.option,
-    required this.selected,
-  });
+class _AppSelectOptionTile<T> extends StatelessWidget {
+  const _AppSelectOptionTile({required this.option, required this.selected});
 
-  final EasyRideSelectOption<T> option;
+  final AppSelectOption<T> option;
   final bool selected;
 
   @override
@@ -209,7 +203,7 @@ class _EasyRideSelectOptionTile<T> extends StatelessWidget {
     final background = selected
         ? colors.primaryContainer
         : colors.surfaceContainerHighest;
-    final borderRadius = BorderRadius.circular(EasyRideRadius.lg);
+    final borderRadius = BorderRadius.circular(AppRadius.lg);
 
     return Semantics(
       button: true,
@@ -222,13 +216,11 @@ class _EasyRideSelectOptionTile<T> extends StatelessWidget {
           onTap: () => Navigator.of(context).pop(option.value),
           borderRadius: borderRadius,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: EasyRideSize.controlHeight,
-            ),
+            constraints: const BoxConstraints(minHeight: AppSize.controlHeight),
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: EasyRideSpacing.lg,
-                vertical: EasyRideSpacing.sm,
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.sm,
               ),
               child: Row(
                 children: [

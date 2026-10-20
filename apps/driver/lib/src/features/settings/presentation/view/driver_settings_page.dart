@@ -9,7 +9,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-class const DriverSettingsPage({
+class const SettingsPage({
   super.key,
   this.onBack,
   this.onLocationTap,
@@ -31,18 +31,14 @@ class const DriverSettingsPage({
         AppSettingsSection(
           label: 'Device',
           children: [
-            BlocBuilder<
-              DriverLocationAccessCubit,
-              DriverLocationAccessViewState
-            >(
+            BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
               builder: (context, state) => AppSettingsNavigationTile(
                 icon: LucideIcons.map_pin,
                 title: 'Location access',
                 subtitle: _locationStatusLabel(state),
                 onTap:
                     onLocationTap ??
-                    () =>
-                        context.pushNamed(DriverSettingsRoutes.locationAccess),
+                    () => context.pushNamed(SettingsRoutes.locationAccess),
               ),
             ),
           ],
@@ -57,7 +53,7 @@ class const DriverSettingsPage({
               subtitle: 'Get help with trips and earnings',
               onTap:
                   onHelpCenterTap ??
-                  () => context.pushNamed(DriverHelpCenterRoutes.helpCenter),
+                  () => context.pushNamed(HelpCenterRoutes.helpCenter),
             ),
           ],
         ),
@@ -70,16 +66,14 @@ class const DriverSettingsPage({
               title: 'Terms of Service',
               subtitle: 'Read the rules for using EasyRide',
               onTap:
-                  onTermsTap ??
-                  () => context.pushNamed(DriverSettingsRoutes.terms),
+                  onTermsTap ?? () => context.pushNamed(SettingsRoutes.terms),
             ),
             AppSettingsNavigationTile(
               icon: LucideIcons.info,
               title: 'About EasyRide',
               subtitle: 'Version and open-source licenses',
               onTap:
-                  onAboutTap ??
-                  () => context.pushNamed(DriverSettingsRoutes.about),
+                  onAboutTap ?? () => context.pushNamed(SettingsRoutes.about),
             ),
           ],
         ),
@@ -87,11 +81,11 @@ class const DriverSettingsPage({
     );
   }
 
-  static String _locationStatusLabel(DriverLocationAccessViewState state) {
+  static String _locationStatusLabel(LocationAccessViewState state) {
     return switch (state) {
-      DriverLocationAccessChecking() => 'Checking access…',
-      DriverLocationAccessReady() => 'Ready to go online',
-      DriverLocationAccessUnavailable(accessState: final accessState) =>
+      LocationAccessChecking() => 'Checking access…',
+      LocationAccessReady() => 'Ready to go online',
+      LocationAccessUnavailable(accessState: final accessState) =>
         switch (accessState) {
           LocationAccessState.ready => 'Ready to go online',
           LocationAccessState.serviceDisabled => 'Location services are off',

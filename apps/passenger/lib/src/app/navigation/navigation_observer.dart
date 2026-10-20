@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 /// Booking pages are siblings of the stateful shell, so a route observer
 /// attached only to the home branch cannot see their pop or removal. The home
 /// page uses this stream to refresh when either navigation path returns.
-final class PassengerNavigationObserver extends NavigatorObserver {
+final class AppNavigationObserver extends NavigatorObserver {
   final _routePopEvents = StreamController<void>.broadcast(sync: true);
 
   Stream<void> get routePopEvents => _routePopEvents.stream;
@@ -29,4 +29,4 @@ final class PassengerNavigationObserver extends NavigatorObserver {
   }
 }
 
-final passengerNavigationObserver = PassengerNavigationObserver();
+final appNavigationObserver = AppNavigationObserver();

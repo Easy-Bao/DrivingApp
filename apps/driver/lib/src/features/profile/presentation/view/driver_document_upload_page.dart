@@ -9,17 +9,16 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:image_picker/image_picker.dart';
 
-class const DriverDocumentUploadPage({super.key, this.pickPhoto, this.onBack})
+class const DocumentUploadPage({super.key, this.pickPhoto, this.onBack})
     extends StatefulWidget {
   final Future<XFile?> Function()? pickPhoto;
   final VoidCallback? onBack;
 
   @override
-  State<DriverDocumentUploadPage> createState() =>
-      _DriverDocumentUploadPageState();
+  State<DocumentUploadPage> createState() => _DocumentUploadPageState();
 }
 
-class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
+class _DocumentUploadPageState extends State<DocumentUploadPage> {
   DriverDocumentType _type = DriverDocumentType.driverLicense;
   XFile? _draft;
   Uint8List? _draftBytes;
@@ -42,7 +41,7 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
         _draftBytes = bytes;
         _draftError = null;
       });
-      BlocProvider.of<DriverDocumentUploadCubit>(context).reset();
+      BlocProvider.of<DocumentUploadCubit>(context).reset();
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -62,7 +61,7 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
       setState(() => _draftError = 'Choose a JPEG or PNG photo.');
       return;
     }
-    await BlocProvider.of<DriverDocumentUploadCubit>(context)
+    await BlocProvider.of<DocumentUploadCubit>(context)
         .submit(type: _type, bytes: bytes, contentType: contentType);
   }
 
@@ -77,9 +76,9 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<DriverDocumentUploadCubit, DriverDocumentUploadState>(
+    return BlocListener<DocumentUploadCubit, DocumentUploadState>(
       listener: (context, state) {
-        if (state.status == DriverDocumentUploadStatus.succeeded) {
+        if (state.status == DocumentUploadStatus.succeeded) {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(
@@ -89,7 +88,7 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
             _draft = null;
             _draftBytes = null;
           });
-        } else if (state.status == DriverDocumentUploadStatus.failed) {
+        } else if (state.status == DocumentUploadStatus.failed) {
           setState(() => _draftError = state.message);
         }
       },
@@ -108,7 +107,7 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
               child: ListView(
-                padding: const EdgeInsets.all(EasyRideLayout.pagePaddingWide),
+                padding: const EdgeInsets.all(AppLayout.pagePaddingWide),
                 children: [
                   Text(
                     'Submit a clear photo for review',
@@ -121,7 +120,7 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
                       color: context.colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: EasyRideSpacing.xl),
+                  const SizedBox(height: AppSpacing.xl),
                   SegmentedButton<DriverDocumentType>(
                     segments: [
                       ButtonSegment(
@@ -140,7 +139,7 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
                       setState(() => _type = selection.first);
                     },
                   ),
-                  const SizedBox(height: EasyRideSpacing.xl),
+                  const SizedBox(height: AppSpacing.xl),
                   _buildPreview(context),
                   if (_draftError != null) ...[
                     const SizedBox(height: 12),
@@ -150,14 +149,11 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
                       style: TextStyle(color: context.colorScheme.error),
                     ),
                   ],
-                  const SizedBox(height: EasyRideSpacing.xl),
+                  const SizedBox(height: AppSpacing.xl),
                   OutlinedButton.icon(
                     key: const ValueKey('driver-document-choose-photo'),
                     onPressed:
-                        context
-                            .watch<DriverDocumentUploadCubit>()
-                            .state
-                            .isUploading
+                        context.watch<DocumentUploadCubit>().state.isUploading
                         ? null
                         : _choosePhoto,
                     icon: const Icon(LucideIcons.camera),
@@ -166,10 +162,7 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  BlocBuilder<
-                    DriverDocumentUploadCubit,
-                    DriverDocumentUploadState
-                  >(
+                  BlocBuilder<DocumentUploadCubit, DocumentUploadState>(
                     builder: (context, state) => ElevatedButton(
                       key: const ValueKey('driver-document-submit'),
                       onPressed: _draft == null || state.isUploading
@@ -202,7 +195,7 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: context.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: context.colorScheme.outlineVariant),
         ),
         child: Text(
@@ -215,7 +208,7 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
     }
     return ClipRRect(
       key: const ValueKey('driver-document-photo-preview'),
-      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Image.memory(
         bytes,
         height: 220,

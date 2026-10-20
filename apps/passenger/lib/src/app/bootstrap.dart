@@ -17,7 +17,7 @@ import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Future<void> bootstrapPassengerApp() async {
+Future<void> bootstrapApp() async {
   final startupTask = developer.TimelineTask()..start('passenger.startup');
   var firstFrameCallbackRegistered = false;
 
@@ -48,7 +48,7 @@ Future<void> bootstrapPassengerApp() async {
     try {
       await traceTimelineStage(
         'passenger.startup.stop_background_service',
-        PassengerBackgroundTelemetry.stopExistingServiceForStartup,
+        BackgroundTelemetry.stopExistingServiceForStartup,
       );
       final preferences = await traceTimelineStage(
         'passenger.startup.load_preferences',
@@ -64,9 +64,9 @@ Future<void> bootstrapPassengerApp() async {
         'passenger.startup.sentry_and_app_runner',
         () => SentryFlutter.init(
           (options) {
-            options.dsn = PassengerEnvConfig.sentryDsn;
+            options.dsn = EnvConfig.sentryDsn;
             options.tracesSampleRate = 0.1;
-            options.environment = PassengerEnvConfig.appEnvironment;
+            options.environment = EnvConfig.appEnvironment;
           },
           appRunner: () async {
             AppTransitions.configure();
@@ -74,12 +74,12 @@ Future<void> bootstrapPassengerApp() async {
             await traceTimelineStage(
               'passenger.startup.configure_dependencies_and_router',
               () => Modular.configure(
-                appModule: PassengerDependencies(preferences: preferences),
+                appModule: AppDependencies(preferences: preferences),
                 initialRoute: HomeRoutes.fullHomePath,
                 debugLogDiagnostics: true,
                 debugLogDiagnosticsGoRouter: true,
                 debugLogEventBus: true,
-                observers: [passengerNavigationObserver],
+                observers: [appNavigationObserver],
               ),
             );
             developer.Timeline.instantSync(
@@ -88,11 +88,11 @@ Future<void> bootstrapPassengerApp() async {
             await Future<void>.delayed(Duration.zero);
 
             final nativeService = MapNativeService(
-              placeServiceBaseUri: PassengerEnvConfig.apiBaseUri,
+              placeServiceBaseUri: EnvConfig.apiBaseUri,
               dio: Modular.get<Dio>(),
             );
             LocationService.nativeService = nativeService;
-            final mapboxToken = PassengerEnvConfig.mapboxPublicToken;
+            final mapboxToken = EnvConfig.mapboxPublicToken;
             if (mapboxToken == null) {
               debugPrint(
                 'Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.',
@@ -107,7 +107,7 @@ Future<void> bootstrapPassengerApp() async {
             );
 
             captureFirstFrameTiming();
-            runApp(const PassengerApp());
+            runApp(const App());
           },
         ),
       );
@@ -115,7 +115,7 @@ Future<void> bootstrapPassengerApp() async {
       captureFirstFrameTiming();
       runApp(
         SafeClientErrorApp(
-          theme: EasyRideTheme.main,
+          theme: AppTheme.main,
           message: ErrorHandler.getErrorMessage(error, stackTrace),
         ),
       );

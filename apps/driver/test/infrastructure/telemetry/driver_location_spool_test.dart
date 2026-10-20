@@ -10,7 +10,7 @@ void main() {
   });
 
   test('flushes queued coordinates oldest-first and removes them', () async {
-    final spool = DriverLocationSpool();
+    final spool = LocationSpool();
     final sent = <double>[];
 
     await spool.enqueue(_point(latitude: 7.1));
@@ -37,7 +37,7 @@ void main() {
   });
 
   test('retains the failed point and later points for a retry', () async {
-    final spool = DriverLocationSpool();
+    final spool = LocationSpool();
     await spool.enqueue(_point(latitude: 7.1));
     await spool.enqueue(_point(latitude: 7.2));
 
@@ -55,7 +55,7 @@ void main() {
   });
 
   test('persists an acknowledged prefix before a failed send', () async {
-    final spool = DriverLocationSpool();
+    final spool = LocationSpool();
     await spool.enqueue(_point(latitude: 7.1));
     await spool.enqueue(_point(latitude: 7.2));
     await spool.enqueue(_point(latitude: 7.3));
@@ -77,7 +77,7 @@ void main() {
   test(
     'commits each bounded batch before progressing to later points',
     () async {
-      final spool = DriverLocationSpool();
+      final spool = LocationSpool();
       for (var latitude = 0; latitude < 11; latitude++) {
         await spool.enqueue(_point(latitude: latitude.toDouble()));
       }
@@ -106,8 +106,8 @@ void main() {
   );
 }
 
-DriverLocationPoint _point({required double latitude}) {
-  return DriverLocationPoint(
+LocationPoint _point({required double latitude}) {
+  return LocationPoint(
     latitude: latitude,
     longitude: 123.4,
     observedAt: DateTime.utc(2026, 9, 18),

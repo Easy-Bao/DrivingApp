@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('exposes the approved default semantic palette', () {
-    final theme = EasyRideTheme.main;
+    final theme = AppTheme.main;
     final scheme = theme.colorScheme;
-    final semantic = theme.extension<EasyRideSemanticColors>();
+    final semantic = theme.extension<AppSemanticColors>();
 
     expect(theme.brightness, Brightness.light);
     expect(theme.scaffoldBackgroundColor, const Color(0xFFF8FAFC));
@@ -16,7 +16,7 @@ void main() {
     expect(scheme.secondary, const Color(0xFF1E293B));
     expect(scheme.onSurfaceVariant, const Color(0xFF64748B));
     expect(scheme.error, const Color(0xFFD64545));
-    expect(semantic, EasyRideSemanticColors.defaults);
+    expect(semantic, AppSemanticColors.defaults);
     expect(_contrast(scheme.onSurface, scheme.surface), greaterThan(4.5));
     expect(
       _contrast(scheme.onSurfaceVariant, scheme.surface),
@@ -25,7 +25,7 @@ void main() {
   });
 
   test('exposes the balanced type scale', () {
-    final theme = EasyRideTheme.main;
+    final theme = AppTheme.main;
     expect(theme.textTheme.headlineLarge?.fontSize, 32);
     expect(theme.textTheme.headlineLarge?.fontWeight, FontWeight.w700);
     expect(theme.textTheme.titleLarge?.fontSize, 20);
@@ -37,7 +37,7 @@ void main() {
   });
 
   test('keeps icon controls at the shared touch target', () {
-    final style = EasyRideTheme.main.iconButtonTheme.style!;
+    final style = AppTheme.main.iconButtonTheme.style!;
 
     expect(style.minimumSize?.resolve({}), const Size.square(48));
     expect(style.tapTargetSize, MaterialTapTargetSize.padded);
@@ -48,7 +48,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           body: Align(
             alignment: Alignment.bottomCenter,
@@ -68,7 +68,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final scheme = EasyRideTheme.main.colorScheme;
+    final scheme = AppTheme.main.colorScheme;
     final tabBar = find.byType(AppFloatingTabBar);
     final tabContainer = tester.widget<Container>(
       find.descendant(of: tabBar, matching: find.byType(Container)),

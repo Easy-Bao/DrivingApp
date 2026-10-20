@@ -7,7 +7,7 @@ import 'package:passenger/src/features/booking/presentation/widgets/ride_fare_de
 void main() {
   Widget buildSubject({required FareEstimate fareResult}) {
     return MaterialApp(
-      theme: EasyRideTheme.main,
+      theme: AppTheme.main,
       home: Scaffold(
         body: RideFareDetails(
           passengerName: 'Avery Cruz',

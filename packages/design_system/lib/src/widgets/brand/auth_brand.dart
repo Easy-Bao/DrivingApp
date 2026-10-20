@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-class const EasyRideAuthBrand({super.key, this.size = 40})
-    extends StatelessWidget {
+class const AppAuthBrand({super.key, this.size = 40}) extends StatelessWidget {
   final double size;
 
   @override

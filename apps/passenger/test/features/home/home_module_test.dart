@@ -7,7 +7,7 @@ import 'package:passenger/src/features/saved_places/saved_places_routes.dart';
 
 void main() {
   test('registers the saved-place configuration route', () {
-    final routes = PassengerRouter().routes.whereType<ChildRoute>();
+    final routes = AppRouter().routes.whereType<ChildRoute>();
     final addCategoryRoute = routes.firstWhere(
       (route) => route.name == HomeRoutes.addCategory,
     );

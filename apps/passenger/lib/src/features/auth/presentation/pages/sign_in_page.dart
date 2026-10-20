@@ -58,7 +58,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
           ),
         ),
         centerTitle: true,
-        title: const EasyRideAuthBrand(),
+        title: const AppAuthBrand(),
       ),
       body: SafeArea(
         child: BlocConsumer<SignInBloc, SignInState>(
@@ -188,7 +188,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                     fillColor: context.colorScheme.surface,
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        EasyRideRadius.lg,
+                                        AppRadius.lg,
                                       ),
                                       borderSide: BorderSide(
                                         color:
@@ -197,7 +197,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        EasyRideRadius.lg,
+                                        AppRadius.lg,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.onSurface,
@@ -206,7 +206,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                     ),
                                     errorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        EasyRideRadius.lg,
+                                        AppRadius.lg,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
@@ -214,7 +214,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                     ),
                                     focusedErrorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        EasyRideRadius.lg,
+                                        AppRadius.lg,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
@@ -296,7 +296,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                     fillColor: context.colorScheme.surface,
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        EasyRideRadius.lg,
+                                        AppRadius.lg,
                                       ),
                                       borderSide: BorderSide(
                                         color:
@@ -305,7 +305,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        EasyRideRadius.lg,
+                                        AppRadius.lg,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.onSurface,
@@ -314,7 +314,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                     ),
                                     errorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        EasyRideRadius.lg,
+                                        AppRadius.lg,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
@@ -322,7 +322,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                     ),
                                     focusedErrorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        EasyRideRadius.lg,
+                                        AppRadius.lg,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
@@ -435,7 +435,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                     minimumSize: const Size.fromHeight(56),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(
-                                        EasyRideRadius.lg,
+                                        AppRadius.lg,
                                       ),
                                     ),
                                     elevation: 0,

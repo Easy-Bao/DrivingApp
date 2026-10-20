@@ -3,12 +3,12 @@ import 'package:driver/src/features/help_center/presentation/view/driver_help_ce
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-class DriverHelpCenterModule._() {
+class HelpCenterModule._() {
   static List<ModularRoute> routes = [
     ChildRoute(
-      name: DriverHelpCenterRoutes.helpCenter,
-      DriverHelpCenterRoutes.helpCenterPath,
-      child: (context, GoRouterState state) => const DriverHelpCenterPage(),
+      name: HelpCenterRoutes.helpCenter,
+      HelpCenterRoutes.helpCenterPath,
+      child: (context, GoRouterState state) => const HelpCenterPage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

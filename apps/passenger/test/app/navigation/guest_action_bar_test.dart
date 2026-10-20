@@ -13,7 +13,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           bottomNavigationBar: GuestActionBar(
             onSignUp: () => signUpPressed = true,

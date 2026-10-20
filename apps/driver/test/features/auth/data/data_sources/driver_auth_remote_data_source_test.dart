@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:driver/src/features/auth/data/data_sources/driver_auth_remote_data_source.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
@@ -8,11 +7,11 @@ class _MockDio extends Mock implements Dio {}
 
 void main() {
   late _MockDio dio;
-  late DriverAuthRemoteDataSource dataSource;
+  late AuthRemoteDataSource dataSource;
 
   setUp(() {
     dio = _MockDio();
-    dataSource = DriverAuthRemoteDataSourceImpl(dio);
+    dataSource = AuthRemoteDataSourceImpl(dio);
   });
 
   test('unwraps a successful authentication response', () async {

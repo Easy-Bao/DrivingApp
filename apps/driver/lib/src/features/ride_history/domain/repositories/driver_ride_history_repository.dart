@@ -1,6 +1,6 @@
 import 'package:foundation/foundation.dart';
 
-abstract interface class DriverRideHistoryRepository {
+abstract interface class RideHistoryRepository {
   Future<Result<OffsetPage<Map<String, dynamic>>, Failure>> fetchTripHistory(
     String driverId, {
     int limit = 25,

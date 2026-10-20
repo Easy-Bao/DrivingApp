@@ -9,8 +9,8 @@ double? _extractDistanceInKm(Map<String, dynamic> value) {
   return distance is num && distance >= 0 ? distance.toDouble() : null;
 }
 
-class DriverIncomingRequestDialog extends StatefulWidget {
-  const DriverIncomingRequestDialog({
+class IncomingRequestDialog extends StatefulWidget {
+  const IncomingRequestDialog({
     super.key,
     required this.bid,
     required this.submittingBidId,
@@ -54,8 +54,7 @@ class DriverIncomingRequestDialog extends StatefulWidget {
   }
 
   @override
-  State<DriverIncomingRequestDialog> createState() =>
-      _DriverIncomingRequestDialogState();
+  State<IncomingRequestDialog> createState() => _IncomingRequestDialogState();
 }
 
 class _IncomingRequestDialogRoute extends StatefulWidget {
@@ -97,7 +96,7 @@ class _IncomingRequestDialogRouteState
   Widget build(BuildContext context) {
     return PopScope<void>(
       canPop: _isClosing,
-      child: DriverIncomingRequestDialog(
+      child: IncomingRequestDialog(
         bid: widget.bid,
         submittingBidId: widget.submittingBidId,
         onDecline: () => _close(widget.onDecline),
@@ -109,8 +108,7 @@ class _IncomingRequestDialogRouteState
   }
 }
 
-class _DriverIncomingRequestDialogState
-    extends State<DriverIncomingRequestDialog>
+class _IncomingRequestDialogState extends State<IncomingRequestDialog>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final bool _isInternalController;
@@ -142,7 +140,7 @@ class _DriverIncomingRequestDialogState
   }
 
   Duration _calculateRemainingDuration() {
-    final rawExpiry = driverValueAsString(widget.bid['expires_at']);
+    final rawExpiry = valueAsString(widget.bid['expires_at']);
     final expiresAt = rawExpiry == null ? null : DateTime.tryParse(rawExpiry);
     if (expiresAt == null) return widget.totalDuration;
     final diff = expiresAt.difference(DateTime.now());
@@ -159,7 +157,7 @@ class _DriverIncomingRequestDialogState
   }
 
   @override
-  void didUpdateWidget(covariant DriverIncomingRequestDialog oldWidget) {
+  void didUpdateWidget(covariant IncomingRequestDialog oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.submittingBidId != widget.submittingBidId &&
         widget.submittingBidId == null) {
@@ -191,13 +189,13 @@ class _DriverIncomingRequestDialogState
         : viewport.height - 48;
     final pickup = widget.bid['pickup_name']?.toString() ?? '—';
     final dropoff = widget.bid['dropoff_name']?.toString() ?? '—';
-    final fare = driverFareInPesos(widget.bid);
+    final fare = fareInPesos(widget.bid);
     final distance = _extractDistanceInKm(widget.bid);
-    final bidId = driverValueAsString(widget.bid['id']);
+    final bidId = valueAsString(widget.bid['id']);
     final isSubmitting =
         _isSubmittingOffer ||
         (bidId != null && widget.submittingBidId == bidId);
-    final passengerNote = driverValueAsString(widget.bid['passenger_note']);
+    final passengerNote = valueAsString(widget.bid['passenger_note']);
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -207,7 +205,7 @@ class _DriverIncomingRequestDialogState
         constraints: BoxConstraints(maxWidth: 420, maxHeight: maxDialogHeight),
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
-          borderRadius: BorderRadius.circular(EasyRideRadius.xl),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(color: context.colorScheme.outlineVariant),
           boxShadow: [
             BoxShadow(
@@ -218,7 +216,7 @@ class _DriverIncomingRequestDialogState
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(EasyRideRadius.xl),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           child: SingleChildScrollView(
             key: const ValueKey('incoming-request-scroll-view'),
             child: Column(
@@ -240,7 +238,7 @@ class _DriverIncomingRequestDialogState
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(EasyRideSpacing.xl),
+                  padding: const EdgeInsets.all(AppSpacing.xl),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,9 +334,7 @@ class _DriverIncomingRequestDialogState
                           ),
                           decoration: BoxDecoration(
                             color: context.colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(
-                              EasyRideRadius.md,
-                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,7 +382,7 @@ class _DriverIncomingRequestDialogState
                               ),
                             ),
                           ),
-                          const SizedBox(width: EasyRideSpacing.sm),
+                          const SizedBox(width: AppSpacing.sm),
                           Text(
                             fare == null ? '—' : formatPesoAmount(fare),
                             style: TextStyle(
@@ -416,7 +412,7 @@ class _DriverIncomingRequestDialogState
                               style: OutlinedButton.styleFrom(
                                 minimumSize: const Size(
                                   0,
-                                  EasyRideSize.minimumTouchTarget,
+                                  AppSize.minimumTouchTarget,
                                 ),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,
@@ -426,7 +422,7 @@ class _DriverIncomingRequestDialogState
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
+                                    AppRadius.lg,
                                   ),
                                 ),
                               ),
@@ -458,14 +454,14 @@ class _DriverIncomingRequestDialogState
                                 elevation: 0,
                                 minimumSize: const Size(
                                   0,
-                                  EasyRideSize.minimumTouchTarget,
+                                  AppSize.minimumTouchTarget,
                                 ),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
+                                    AppRadius.lg,
                                   ),
                                 ),
                               ),

@@ -18,18 +18,18 @@ void main() {
     () async {
       SharedPreferences.setMockInitialValues({});
       final storage = MockFlutterSecureStorage();
-      when(() => storage.read(key: PassengerStorageKeys.accessToken))
+      when(() => storage.read(key: StorageKeys.accessToken))
           .thenAnswer((_) async => '   ');
-      when(() => storage.read(key: PassengerStorageKeys.passengerId))
+      when(() => storage.read(key: StorageKeys.passengerId))
           .thenAnswer((_) async => '\t');
       final repository = SessionRepositoryImpl(
-        secureSessionService: PassengerSessionStore(storage: storage),
+        secureSessionService: SessionStore(storage: storage),
         preferences: await SharedPreferences.getInstance(),
       );
 
       final result = await repository.restoreSession();
 
-      expect(result, const Ok(PassengerSession.guest()));
+      expect(result, const Ok(Session.guest()));
     },
   );
 
@@ -46,13 +46,13 @@ void main() {
     final storage = MockFlutterSecureStorage();
     when(() => storage.delete(key: any(named: 'key'))).thenAnswer((_) async {});
     final repository = SessionRepositoryImpl(
-      secureSessionService: PassengerSessionStore(storage: storage),
+      secureSessionService: SessionStore(storage: storage),
       preferences: preferences,
     );
 
     final result = await repository.clearSession();
 
-    expect(result, const Ok(PassengerSession.guest()));
+    expect(result, const Ok(Session.guest()));
     for (final key in const [
       'passenger_name',
       'passenger_email',

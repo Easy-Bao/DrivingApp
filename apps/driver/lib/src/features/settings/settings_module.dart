@@ -7,40 +7,39 @@ import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-class DriverSettingsModule._() {
+class SettingsModule._() {
   static List<ModularRoute> routes = [
     ChildRoute(
-      name: DriverSettingsRoutes.settings,
-      DriverSettingsRoutes.settingsPath,
-      child: (context, GoRouterState state) => const DriverSettingsPage(),
+      name: SettingsRoutes.settings,
+      SettingsRoutes.settingsPath,
+      child: (context, GoRouterState state) => const SettingsPage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: DriverSettingsRoutes.locationAccess,
-      DriverSettingsRoutes.locationAccessPath,
-      child: (context, GoRouterState state) =>
-          const DriverLocationAccessStatusPage(),
+      name: SettingsRoutes.locationAccess,
+      SettingsRoutes.locationAccessPath,
+      child: (context, GoRouterState state) => const LocationAccessStatusPage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: DriverSettingsRoutes.terms,
-      DriverSettingsRoutes.termsPath,
-      child: (context, GoRouterState state) => const DriverTermsOfServicePage(),
+      name: SettingsRoutes.terms,
+      SettingsRoutes.termsPath,
+      child: (context, GoRouterState state) => const TermsOfServicePage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: DriverSettingsRoutes.about,
-      DriverSettingsRoutes.aboutPath,
-      child: (context, GoRouterState state) => const DriverAboutEasyRidePage(),
+      name: SettingsRoutes.about,
+      SettingsRoutes.aboutPath,
+      child: (context, GoRouterState state) => const AboutPage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: DriverSettingsRoutes.licenses,
-      DriverSettingsRoutes.licensesPath,
+      name: SettingsRoutes.licenses,
+      SettingsRoutes.licensesPath,
       child: (context, GoRouterState state) => const LicensePage(
         applicationName: 'EasyRide Driver',
         applicationVersion: '1.0.0',

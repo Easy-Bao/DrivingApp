@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-class const DriverPerformanceStats({
+class const PerformanceStats({
   required this.todayEarningsAmount,
   required this.todayCompletedTrips,
   required this.totalTrips,

@@ -4,8 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 
-class PassengerAuthInterceptor(
-  PassengerSessionStore secureSessionService, {
+class AuthInterceptor(
+  SessionStore secureSessionService, {
   Dio? dio,
   Dio? refreshClient,
   Uri? allowedBaseUri,

@@ -3,11 +3,10 @@ import 'package:driver/src/features/profile/domain/repositories/driver_profile_r
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 
-class DriverAccountCubit({required this._repository})
-    extends Cubit<DriverAccountState> {
-  final DriverProfileRepository _repository;
+class AccountCubit({required this._repository}) extends Cubit<AccountState> {
+  final ProfileRepository _repository;
 
-  this : super(const DriverAccountState());
+  this : super(const AccountState());
 
   Future<void> load() async {
     if (isClosed || state.isLoading) return;

@@ -15,7 +15,7 @@ final class const SignUpNeedsVerification(final String email)
   List<Object?> get props => [email];
 }
 
-final class const SignUpSuccess(final PassengerAuthCredentials credentials)
+final class const SignUpSuccess(final AuthCredentials credentials)
     extends SignUpState {
   @override
   List<Object?> get props => [credentials];

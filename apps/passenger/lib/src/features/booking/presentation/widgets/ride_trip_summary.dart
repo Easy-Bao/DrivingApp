@@ -18,10 +18,10 @@ class const RideTripSummary({
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(EasyRideSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
@@ -273,7 +273,7 @@ class const _DashedRoutePainter(this.color) extends CustomPainter {
 )
 Widget rideTripSummaryLongAddressPreview() {
   return MaterialApp(
-    theme: EasyRideTheme.main,
+    theme: AppTheme.main,
     home: const Scaffold(
       body: Padding(
         padding: EdgeInsets.all(16),

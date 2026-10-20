@@ -10,7 +10,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: const Scaffold(
           body: PublicDriverSummaryCard(
             summaries: [

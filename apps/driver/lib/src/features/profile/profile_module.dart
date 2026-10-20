@@ -24,26 +24,24 @@ import 'package:design_system/design_system.dart';
 class ProfileModule._() {
   static void binds(Injector i) {
     i
-      ..addLazySingleton<DriverProfileRemoteDataSource>(
-        (i) => DriverProfileRemoteDataSourceImpl(i.get<Dio>()),
+      ..addLazySingleton<ProfileRemoteDataSource>(
+        (i) => ProfileRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<DriverDocumentRemoteDataSource>(
-        (i) => DriverDocumentRemoteDataSourceImpl(i.get<Dio>()),
+      ..addLazySingleton<DocumentRemoteDataSource>(
+        (i) => DocumentRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<DriverDocumentRepository>(
-        (i) => DriverDocumentRepositoryImpl(
-          i.get<DriverDocumentRemoteDataSource>(),
-        ),
+      ..addLazySingleton<DocumentRepository>(
+        (i) => DocumentRepositoryImpl(i.get<DocumentRemoteDataSource>()),
       )
-      ..addLazySingleton<DriverProfileRepository>(
-        (i) => DriverProfileRepositoryImpl(
-          profileDataSource: i.get<DriverProfileRemoteDataSource>(),
-          sessionService: i.get<DriverSessionStore>(),
+      ..addLazySingleton<ProfileRepository>(
+        (i) => ProfileRepositoryImpl(
+          profileDataSource: i.get<ProfileRemoteDataSource>(),
+          sessionService: i.get<SessionStore>(),
           preferences: i.get<SharedPreferences>(),
         ),
       )
-      ..addFactory<DriverAccountCubit>(
-        (i) => DriverAccountCubit(repository: i.get<DriverProfileRepository>()),
+      ..addFactory<AccountCubit>(
+        (i) => AccountCubit(repository: i.get<ProfileRepository>()),
       );
   }
 
@@ -53,11 +51,11 @@ class ProfileModule._() {
       ProfileRoutes.personalDetailsPath,
       child: (context, GoRouterState state) => BlocProvider(
         create: (_) {
-          final cubit = Modular.get<DriverAccountCubit>();
+          final cubit = Modular.get<AccountCubit>();
           unawaited(cubit.load());
           return cubit;
         },
-        child: const DriverPersonalDetailsPage(),
+        child: const PersonalDetailsPage(),
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
@@ -67,11 +65,11 @@ class ProfileModule._() {
       ProfileRoutes.vehicleInformationPath,
       child: (context, GoRouterState state) => BlocProvider(
         create: (_) {
-          final cubit = Modular.get<DriverAccountCubit>();
+          final cubit = Modular.get<AccountCubit>();
           unawaited(cubit.load());
           return cubit;
         },
-        child: const DriverVehicleInformationPage(),
+        child: const VehicleInformationPage(),
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
@@ -80,9 +78,8 @@ class ProfileModule._() {
       name: ProfileRoutes.documents,
       ProfileRoutes.documentsPath,
       child: (context, GoRouterState state) => BlocProvider(
-        create: (_) =>
-            DriverDocumentUploadCubit(Modular.get<DriverDocumentRepository>()),
-        child: const DriverDocumentUploadPage(),
+        create: (_) => DocumentUploadCubit(Modular.get<DocumentRepository>()),
+        child: const DocumentUploadPage(),
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
@@ -95,13 +92,11 @@ class ProfileModule._() {
       ProfileRoutes.accountPath,
       child: (context, GoRouterState state) => BlocProvider(
         create: (_) {
-          final cubit = Modular.get<DriverAccountCubit>();
+          final cubit = Modular.get<AccountCubit>();
           cubit.load();
           return cubit;
         },
-        child: DriverAccountPage(
-          onLogout: Modular.get<DriverLogoutCoordinator>().logout,
-        ),
+        child: AccountPage(onLogout: Modular.get<LogoutCoordinator>().logout),
       ),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,

@@ -8,16 +8,16 @@ import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_
 import 'package:foundation/foundation.dart';
 import 'package:driver/src/infrastructure/telemetry/driver_location_spool.dart';
 
-final class DriverRideRepositoryImpl({
+final class RideRepositoryImpl({
   required this._rideDataSource,
   required this._counterpartyDataSource,
   required this._telemetryDataSource,
   this._locationSpool,
-}) implements DriverRideRepository {
+}) implements RideRepository {
   final RideRemoteDataSource _rideDataSource;
   final RideCounterpartyRemoteDataSource _counterpartyDataSource;
   final TelemetryRemoteDataSource _telemetryDataSource;
-  final DriverLocationSpool? _locationSpool;
+  final LocationSpool? _locationSpool;
 
   @override
   Future<Result<void, Failure>> acceptRide({
@@ -332,7 +332,7 @@ final class DriverRideRepositoryImpl({
             : const Err(NetworkFailure('Driver location was not accepted.'));
       }
       await spool.enqueue(
-        DriverLocationPoint(
+        LocationPoint(
           latitude: latitude,
           longitude: longitude,
           observedAt: DateTime.now().toUtc(),

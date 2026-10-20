@@ -29,9 +29,7 @@ class const RideOptionsLoadingView({super.key, this.showPrimaryAction = true})
             const Bone.button(
               width: double.infinity,
               height: 50,
-              borderRadius: BorderRadius.all(
-                Radius.circular(EasyRideRadius.lg),
-              ),
+              borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
             ),
         ],
       ),
@@ -44,7 +42,7 @@ class const RideOptionsLoadingView({super.key, this.showPrimaryAction = true})
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
         boxShadow: const [
           BoxShadow(
@@ -94,14 +92,14 @@ class const RideOptionsLoadingView({super.key, this.showPrimaryAction = true})
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: const Row(
         children: [
           Bone.square(
             size: 40,
-            borderRadius: BorderRadius.all(Radius.circular(EasyRideRadius.md)),
+            borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
           ),
           SizedBox(width: 12),
           Expanded(
@@ -182,7 +180,7 @@ class const RideOptionsLoadingView({super.key, this.showPrimaryAction = true})
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
         boxShadow: const [
           BoxShadow(

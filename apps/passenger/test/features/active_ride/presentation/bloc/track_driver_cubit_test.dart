@@ -12,16 +12,14 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/track_drive
 
 class MockTrackRepo extends Mock implements TrackRepository {}
 
-class MockSecureSessionService extends Mock implements PassengerSessionStore {}
+class MockSecureSessionService extends Mock implements SessionStore {}
 
-TrackDriverCubit _makeCubit(
-  TrackRepository repo,
-  PassengerSessionStore session,
-) => TrackDriverCubit(
-  repository: repo,
-  sessionService: session,
-  lifecycleCoordinator: AppLifecycleCoordinator(),
-);
+TrackDriverCubit _makeCubit(TrackRepository repo, SessionStore session) =>
+    TrackDriverCubit(
+      repository: repo,
+      sessionService: session,
+      lifecycleCoordinator: AppLifecycleCoordinator(),
+    );
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

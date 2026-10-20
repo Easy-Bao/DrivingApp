@@ -1,18 +1,18 @@
 import 'dart:developer' as developer;
 
-typedef DriverLogoutStep = Future<void> Function();
+typedef LogoutStep = Future<void> Function();
 
 /// Best-effort availability and telemetry cleanup must not prevent the session
 /// from being cleared. Session cleanup remains the final required step and its
 /// error is allowed to reach the caller.
-final class const DriverLogoutCoordinator({
+final class const LogoutCoordinator({
   required this._forceOffline,
   required this._stopTelemetry,
   required this._clearSession,
 }) {
-  final DriverLogoutStep _forceOffline;
-  final DriverLogoutStep _stopTelemetry;
-  final DriverLogoutStep _clearSession;
+  final LogoutStep _forceOffline;
+  final LogoutStep _stopTelemetry;
+  final LogoutStep _clearSession;
 
   Future<void> logout() async {
     try {

@@ -30,8 +30,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final DriverRepository _driverRepository;
   final BookingRepository _bookingRepository;
   final DriverProfileRepository _driverProfileRepository;
-  final PassengerSessionStore _secureSessionService;
-  final PassengerBackgroundTelemetry? _backgroundTelemetryService;
+  final SessionStore _secureSessionService;
+  final BackgroundTelemetry? _backgroundTelemetryService;
   final InboxCubit? _inboxCubit;
   final RealtimeWebSocketClient? _realtimeClient;
   final AppLifecycleCoordinator _lifecycleCoordinator;
@@ -71,11 +71,11 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     int nearestDriverMaxAttempts = 1,
     this._nearestDriverRetryDelay = const Duration(seconds: 2),
     Duration offerRefreshInterval = const Duration(seconds: 3),
-  })  : assert(nearestDriverMaxAttempts > 0),
-        assert(offerRefreshInterval > Duration.zero),
-        _nearestDriverMaxAttempts = nearestDriverMaxAttempts,
-        _offerRefreshInterval = offerRefreshInterval,
-        super(const BookingInitial()) {
+  }) : assert(nearestDriverMaxAttempts > 0),
+       assert(offerRefreshInterval > Duration.zero),
+       _nearestDriverMaxAttempts = nearestDriverMaxAttempts,
+       _offerRefreshInterval = offerRefreshInterval,
+       super(const BookingInitial()) {
     on<LocateNearestDriverEvent>(
       _onLocateNearestDriver,
       transformer: droppable(),
@@ -88,10 +88,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       _onStartDirectBooking,
       transformer: droppable(),
     );
-    on<StartOpenBookingEvent>(
-      _onStartOpenBooking,
-      transformer: droppable(),
-    );
+    on<StartOpenBookingEvent>(_onStartOpenBooking, transformer: droppable());
     on<AcceptBidOfferEvent>(_onAcceptBidOffer, transformer: droppable());
     on<CancelBookingEvent>(_onCancelBooking, transformer: droppable());
     on<ResetBookingEvent>(_onResetBooking);

@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 
-final class DriverBatteryOptimization {
-  DriverBatteryOptimization._();
+final class BatteryOptimization {
+  BatteryOptimization._();
 
   static const _channel = MethodChannel('easyride/driver_battery');
 

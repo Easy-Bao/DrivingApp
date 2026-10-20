@@ -9,7 +9,7 @@ final class const SignInInitial() extends SignInState;
 
 final class const SignInLoading() extends SignInState;
 
-final class const SignInSuccess(final PassengerAuthCredentials credentials)
+final class const SignInSuccess(final AuthCredentials credentials)
     extends SignInState {
   @override
   List<Object?> get props => [credentials];

@@ -76,7 +76,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(centerTitle: true, title: const EasyRideAuthBrand()),
+      appBar: AppBar(centerTitle: true, title: const AppAuthBrand()),
       body: SafeArea(
         child: BlocConsumer<SignInBloc, SignInState>(
           listener: (context, state) {
@@ -148,35 +148,27 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                             ),
                             filled: false,
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               borderSide: BorderSide(
                                 color: context.colorScheme.outline,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               borderSide: BorderSide(
                                 color: context.colorScheme.onSurface,
                                 width: 1.5,
                               ),
                             ),
                             errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               borderSide: BorderSide(
                                 color: context.colorScheme.error,
                                 width: 1.0,
                               ),
                             ),
                             focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               borderSide: BorderSide(
                                 color: context.colorScheme.error,
                                 width: 1.5,
@@ -204,8 +196,8 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                             ),
                             suffixIcon: IconButton(
                               constraints: const BoxConstraints(
-                                minWidth: EasyRideSize.minimumTouchTarget,
-                                minHeight: EasyRideSize.minimumTouchTarget,
+                                minWidth: AppSize.minimumTouchTarget,
+                                minHeight: AppSize.minimumTouchTarget,
                               ),
                               icon: Icon(
                                 _isPasswordVisible
@@ -219,35 +211,27 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                             ),
                             filled: false,
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               borderSide: BorderSide(
                                 color: context.colorScheme.outline,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               borderSide: BorderSide(
                                 color: context.colorScheme.onSurface,
                                 width: 1.5,
                               ),
                             ),
                             errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               borderSide: BorderSide(
                                 color: context.colorScheme.error,
                                 width: 1.0,
                               ),
                             ),
                             focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               borderSide: BorderSide(
                                 color: context.colorScheme.error,
                                 width: 1.5,
@@ -261,8 +245,8 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                           child: TextButton(
                             style: TextButton.styleFrom(
                               minimumSize: const Size(
-                                EasyRideSize.minimumTouchTarget,
-                                EasyRideSize.minimumTouchTarget,
+                                AppSize.minimumTouchTarget,
+                                AppSize.minimumTouchTarget,
                               ),
                             ),
                             onPressed: () {
@@ -289,9 +273,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                             foregroundColor: context.colorScheme.onPrimary,
                             minimumSize: const Size.fromHeight(60),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                             ),
                             elevation: 0,
                           ),

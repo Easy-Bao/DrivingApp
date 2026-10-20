@@ -115,8 +115,8 @@ class const WaitingPassengerPanel({
                     tooltip: 'Chat with passenger',
                     onPressed: onChatPressed,
                     constraints: const BoxConstraints(
-                      minWidth: EasyRideSize.minimumTouchTarget,
-                      minHeight: EasyRideSize.minimumTouchTarget,
+                      minWidth: AppSize.minimumTouchTarget,
+                      minHeight: AppSize.minimumTouchTarget,
                     ),
                     icon: const Icon(LucideIcons.message_circle),
                   ),
@@ -200,14 +200,14 @@ class const WaitingPassengerPanel({
         : context.colorScheme.onSurface;
     return Material(
       color: background,
-      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
-          height: EasyRideSize.minimumTouchTarget,
+          height: AppSize.minimumTouchTarget,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: filled
                 ? null
                 : Border.all(color: context.colorScheme.outlineVariant),
@@ -252,7 +252,7 @@ class const WaitingPassengerStartTripButton({
           foregroundColor: context.colorScheme.onPrimary,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           textStyle: context.textStyles.labelLarge?.copyWith(
             fontWeight: FontWeight.w700,

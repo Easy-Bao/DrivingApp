@@ -47,7 +47,7 @@ void main() {
 
   Widget buildSubject({Future<XFile?> Function()? pickPhoto}) {
     return MaterialApp(
-      theme: EasyRideTheme.main,
+      theme: AppTheme.main,
       home: MultiBlocProvider(
         providers: [
           BlocProvider<ProfileCubit>.value(value: profileCubit),
@@ -204,7 +204,7 @@ void main() {
   ) async {
     await tester.pumpWidget(buildSubject());
 
-    expect(find.byType(EasyRideSurfaceCard), findsOneWidget);
+    expect(find.byType(AppSurfaceCard), findsOneWidget);
     expect(find.byType(Divider), findsNWidgets(3));
   });
 

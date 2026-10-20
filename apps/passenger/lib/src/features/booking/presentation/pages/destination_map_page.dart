@@ -182,15 +182,15 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
               top: false,
               child: Container(
                 padding: const EdgeInsets.fromLTRB(
-                  EasyRideLayout.pagePaddingWide,
-                  EasyRideSpacing.xxl,
-                  EasyRideLayout.pagePaddingWide,
-                  EasyRideSpacing.xxl,
+                  AppLayout.pagePaddingWide,
+                  AppSpacing.xxl,
+                  AppLayout.pagePaddingWide,
+                  AppSpacing.xxl,
                 ),
                 decoration: BoxDecoration(
                   color: context.colorScheme.surface,
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(EasyRideRadius.sheet),
+                    top: Radius.circular(AppRadius.sheet),
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -223,9 +223,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             color: context.colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(
-                              EasyRideRadius.lg,
-                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                           ),
                           child: Icon(
                             LucideIcons.map_pin,
@@ -272,7 +270,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                     const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
-                      height: EasyRideSize.controlHeight,
+                      height: AppSize.controlHeight,
                       child: ElevatedButton(
                         onPressed: () {
                           final place = Place(
@@ -301,9 +299,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                           backgroundColor: context.colorScheme.primary,
                           foregroundColor: context.colorScheme.onPrimary,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              EasyRideRadius.lg,
-                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                           ),
                           elevation: 0,
                         ),
@@ -340,8 +336,8 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
         onTap: onPressed,
         customBorder: const CircleBorder(),
         child: SizedBox(
-          width: EasyRideSize.minimumTouchTarget,
-          height: EasyRideSize.minimumTouchTarget,
+          width: AppSize.minimumTouchTarget,
+          height: AppSize.minimumTouchTarget,
           child: Center(
             child: Icon(
               LucideIcons.arrow_left,

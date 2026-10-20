@@ -11,7 +11,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: DriverDashboardSectionLabel(label: 'Current Active Trip'),
+          body: DashboardSectionLabel(label: 'Current Active Trip'),
         ),
       ),
     );
@@ -27,7 +27,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DriverActiveTripCard(
+          body: ActiveTripCard(
             trip: const RideSnapshot(
               id: 'ride-1',
               status: 'in_transit',

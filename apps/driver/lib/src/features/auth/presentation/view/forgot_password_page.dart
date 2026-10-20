@@ -55,8 +55,8 @@ class _ForgotPasswordPageContentState
       appBar: AppBar(
         leading: IconButton(
           constraints: const BoxConstraints(
-            minWidth: EasyRideSize.minimumTouchTarget,
-            minHeight: EasyRideSize.minimumTouchTarget,
+            minWidth: AppSize.minimumTouchTarget,
+            minHeight: AppSize.minimumTouchTarget,
           ),
           style: IconButton.styleFrom(shape: const CircleBorder()),
           icon: Icon(
@@ -154,7 +154,7 @@ class _ForgotPasswordPageContentState
                                 filled: false,
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
+                                    AppRadius.lg,
                                   ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.outline,
@@ -162,7 +162,7 @@ class _ForgotPasswordPageContentState
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
+                                    AppRadius.lg,
                                   ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.onSurface,
@@ -187,7 +187,7 @@ class _ForgotPasswordPageContentState
                               minimumSize: const Size.fromHeight(60),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
-                                  EasyRideRadius.lg,
+                                  AppRadius.lg,
                                 ),
                               ),
                               elevation: 0,
@@ -218,8 +218,8 @@ class _ForgotPasswordPageContentState
                           TextButton(
                             style: TextButton.styleFrom(
                               minimumSize: const Size(
-                                EasyRideSize.minimumTouchTarget,
-                                EasyRideSize.minimumTouchTarget,
+                                AppSize.minimumTouchTarget,
+                                AppSize.minimumTouchTarget,
                               ),
                             ),
                             onPressed: () => context.pop(),

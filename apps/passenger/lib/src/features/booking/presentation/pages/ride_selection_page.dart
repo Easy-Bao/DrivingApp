@@ -573,7 +573,7 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: EasyRideLayout.pagePadding,
+                      horizontal: AppLayout.pagePadding,
                       vertical: 8,
                     ),
                     child: _buildMapBackButton(context),

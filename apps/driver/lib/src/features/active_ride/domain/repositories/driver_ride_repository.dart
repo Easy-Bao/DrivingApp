@@ -1,7 +1,7 @@
 import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:foundation/foundation.dart';
 
-abstract interface class DriverRideRepository {
+abstract interface class RideRepository {
   Future<Result<void, Failure>> acceptRide({
     required String rideId,
     required String driverId,
@@ -71,7 +71,7 @@ abstract interface class DriverRideRepository {
   Future<Result<void, Failure>> clearDriverLocation();
 }
 
-extension DriverRideRepositoryResultAdapters on DriverRideRepository {
+extension RideRepositoryResultAdapters on RideRepository {
   Future<Result<void, DomainFailure>> acceptRideResult({
     required String rideId,
     required String driverId,

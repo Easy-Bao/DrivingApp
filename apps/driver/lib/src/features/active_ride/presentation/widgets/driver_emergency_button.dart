@@ -6,17 +6,17 @@ import 'package:url_launcher/url_launcher.dart';
 
 const _emergencyContactNumber = '911';
 
-typedef DriverEmergencyStopCallback = Future<bool> Function(
+typedef EmergencyStopCallback = Future<bool> Function(
   String reason,
   String details,
 );
 
-class const DriverEmergencyButton({
+class const EmergencyButton({
   super.key,
   required this.onEmergencyStop,
   this.onEmergencyStopCompleted,
 }) extends StatelessWidget {
-  final DriverEmergencyStopCallback onEmergencyStop;
+  final EmergencyStopCallback onEmergencyStop;
   final VoidCallback? onEmergencyStopCompleted;
 
   @override
@@ -27,14 +27,14 @@ class const DriverEmergencyButton({
       icon: const Icon(Icons.emergency_outlined),
       color: context.colorScheme.error,
       constraints: const BoxConstraints(
-        minWidth: EasyRideSize.minimumTouchTarget,
-        minHeight: EasyRideSize.minimumTouchTarget,
+        minWidth: AppSize.minimumTouchTarget,
+        minHeight: AppSize.minimumTouchTarget,
       ),
     );
   }
 
   Future<void> _openEmergencyActions(BuildContext context) async {
-    final stopped = await showDriverEmergencyActionSheet(
+    final stopped = await showEmergencyActionSheet(
       context,
       onEmergencyStop: onEmergencyStop,
     );
@@ -54,9 +54,9 @@ const _driverEmergencyStopReasons = <String, String>{
   'other': 'Other serious emergency',
 };
 
-Future<bool> showDriverEmergencyActionSheet(
+Future<bool> showEmergencyActionSheet(
   BuildContext context, {
-  required DriverEmergencyStopCallback onEmergencyStop,
+  required EmergencyStopCallback onEmergencyStop,
 }) async {
   return await showModalBottomSheet<bool>(
         context: context,
@@ -64,21 +64,20 @@ Future<bool> showDriverEmergencyActionSheet(
         useSafeArea: true,
         backgroundColor: Colors.transparent,
         builder: (context) =>
-            _DriverEmergencyStopSheet(onEmergencyStop: onEmergencyStop),
+            _EmergencyStopSheet(onEmergencyStop: onEmergencyStop),
       ) ??
       false;
 }
 
-class const _DriverEmergencyStopSheet({required this.onEmergencyStop})
+class const _EmergencyStopSheet({required this.onEmergencyStop})
     extends StatefulWidget {
-  final DriverEmergencyStopCallback onEmergencyStop;
+  final EmergencyStopCallback onEmergencyStop;
 
   @override
-  State<_DriverEmergencyStopSheet> createState() =>
-      _DriverEmergencyStopSheetState();
+  State<_EmergencyStopSheet> createState() => _EmergencyStopSheetState();
 }
 
-class _DriverEmergencyStopSheetState extends State<_DriverEmergencyStopSheet> {
+class _EmergencyStopSheetState extends State<_EmergencyStopSheet> {
   String? _selectedReason;
   String _details = '';
   String? _errorMessage;
@@ -148,14 +147,14 @@ class _DriverEmergencyStopSheetState extends State<_DriverEmergencyStopSheet> {
       child: Material(
         color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(EasyRideRadius.sheet),
+          top: Radius.circular(AppRadius.sheet),
         ),
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
-            EasyRideSpacing.lg,
-            EasyRideSpacing.lg,
-            EasyRideSpacing.lg,
-            EasyRideSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.lg,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -175,11 +174,11 @@ class _DriverEmergencyStopSheetState extends State<_DriverEmergencyStopSheet> {
               ),
               const SizedBox(height: 16),
               SizedBox(
-                height: EasyRideSize.minimumTouchTarget,
+                height: AppSize.minimumTouchTarget,
                 child: OutlinedButton.icon(
                   onPressed: _isSubmitting
                       ? null
-                      : () => unawaited(showDriverEmergencyContacts(context)),
+                      : () => unawaited(showEmergencyContacts(context)),
                   icon: const Icon(Icons.phone_in_talk_outlined),
                   label: const Text('Call emergency services (911)'),
                   style: OutlinedButton.styleFrom(
@@ -189,7 +188,7 @@ class _DriverEmergencyStopSheetState extends State<_DriverEmergencyStopSheet> {
                 ),
               ),
               const SizedBox(height: 16),
-              EasyRideSelectField<String>(
+              AppSelectField<String>(
                 key: const ValueKey('driver-emergency-reason-dropdown'),
                 value: _selectedReason,
                 menuTitle: 'Why are you ending the ride?',
@@ -198,7 +197,7 @@ class _DriverEmergencyStopSheetState extends State<_DriverEmergencyStopSheet> {
                 ),
                 options: [
                   for (final entry in _driverEmergencyStopReasons.entries)
-                    EasyRideSelectOption<String>(
+                    AppSelectOption<String>(
                       value: entry.key,
                       label: entry.value,
                     ),
@@ -237,7 +236,7 @@ class _DriverEmergencyStopSheetState extends State<_DriverEmergencyStopSheet> {
               ],
               const SizedBox(height: 12),
               SizedBox(
-                height: EasyRideSize.minimumTouchTarget,
+                height: AppSize.minimumTouchTarget,
                 child: FilledButton.icon(
                   onPressed: _selectedReason == null || _isSubmitting
                       ? null
@@ -262,7 +261,7 @@ class _DriverEmergencyStopSheetState extends State<_DriverEmergencyStopSheet> {
   }
 }
 
-Future<void> showDriverEmergencyContacts(BuildContext context) async {
+Future<void> showEmergencyContacts(BuildContext context) async {
   final emergencyUri = Uri(scheme: 'tel', path: _emergencyContactNumber);
   var launched = false;
   try {

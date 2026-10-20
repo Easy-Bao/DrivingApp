@@ -12,7 +12,7 @@ class MockErrorInterceptorHandler extends Mock
 
 class MockDio extends Mock implements Dio {}
 
-class MockSecureSessionService extends Mock implements PassengerSessionStore {}
+class MockSecureSessionService extends Mock implements SessionStore {}
 
 class FakeRequestOptions extends Fake implements RequestOptions {}
 
@@ -20,8 +20,7 @@ class FakeResponse extends Fake implements Response<dynamic> {}
 
 class FakeDioException extends Fake implements DioException {}
 
-class TestSecureSessionService(this.refreshTokenValue)
-    extends PassengerSessionStore {
+class TestSecureSessionService(this.refreshTokenValue) extends SessionStore {
   final String? refreshTokenValue;
   bool sessionCleared = false;
 
@@ -50,7 +49,7 @@ void main() {
     when(() => secureSessionService.readToken())
         .thenAnswer((_) async => 'jwt-token');
 
-    await PassengerAuthInterceptor(secureSessionService)
+    await AuthInterceptor(secureSessionService)
         .onRequest(requestOptions, handler);
 
     expect(requestOptions.headers['Authorization'], 'Bearer jwt-token');
@@ -67,7 +66,7 @@ void main() {
     when(() => secureSessionService.readToken())
         .thenAnswer((_) async => 'jwt-token');
 
-    await PassengerAuthInterceptor(
+    await AuthInterceptor(
       secureSessionService,
       allowedBaseUri: Uri.parse('https://api.example'),
     ).onRequest(requestOptions, handler);
@@ -128,7 +127,7 @@ void main() {
         ),
       );
 
-      await PassengerAuthInterceptor(
+      await AuthInterceptor(
         secureSessionService,
         dio: dio,
         refreshClient: refreshClient,
@@ -188,7 +187,7 @@ void main() {
         ),
       );
 
-      await PassengerAuthInterceptor(
+      await AuthInterceptor(
         secureSessionService,
         dio: dio,
         refreshClient: refreshClient,
@@ -231,7 +230,7 @@ void main() {
       ),
     );
 
-    await PassengerAuthInterceptor(
+    await AuthInterceptor(
       secureSessionService,
       dio: dio,
       refreshClient: refreshClient,

@@ -7,7 +7,7 @@ void main() {
   testWidgets('renders pickup and destination icons', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: const Scaffold(
           body: CompactRouteTimeline(
             pickup: 'Mountain View',
@@ -35,7 +35,7 @@ void main() {
   testWidgets('grows to fit scaled route labels and values', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: MediaQuery(
           data: const MediaQueryData(textScaler: TextScaler.linear(2)),
           child: const Scaffold(

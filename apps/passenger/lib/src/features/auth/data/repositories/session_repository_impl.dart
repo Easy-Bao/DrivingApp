@@ -10,7 +10,7 @@ final class SessionRepositoryImpl implements SessionRepository {
     required this._preferences,
   });
 
-  final PassengerSessionStore _secureSessionService;
+  final SessionStore _secureSessionService;
   final SharedPreferences _preferences;
   static const _profileCacheKeys = [
     'passenger_name',
@@ -22,17 +22,17 @@ final class SessionRepositoryImpl implements SessionRepository {
   ];
 
   @override
-  Future<Result<PassengerSession, Failure>> restoreSession() async {
+  Future<Result<Session, Failure>> restoreSession() async {
     try {
       final token = await _secureSessionService.readToken();
       final passengerId = await _secureSessionService.readPassengerId();
       final normalizedToken = token?.trim() ?? '';
       final normalizedPassengerId = passengerId?.trim() ?? '';
       if (normalizedToken.isEmpty || normalizedPassengerId.isEmpty) {
-        return const Ok(PassengerSession.guest());
+        return const Ok(Session.guest());
       }
       return Ok(
-        PassengerSession.authenticated(
+        Session.authenticated(
           passengerId: normalizedPassengerId,
           passengerName: _preferences.getString('passenger_name') ?? '',
         ),
@@ -45,13 +45,13 @@ final class SessionRepositoryImpl implements SessionRepository {
   }
 
   @override
-  Future<Result<PassengerSession, Failure>> clearSession() async {
+  Future<Result<Session, Failure>> clearSession() async {
     try {
       await Future.wait([
         _secureSessionService.clearAll(),
         for (final key in _profileCacheKeys) _preferences.remove(key),
       ]);
-      return const Ok(PassengerSession.guest());
+      return const Ok(Session.guest());
     } catch (_) {
       return const Err(CacheFailure('Unable to clear the passenger session.'));
     }

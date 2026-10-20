@@ -7,12 +7,12 @@ import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
 import 'package:flutter/material.dart';
 
-abstract final class EasyRideTheme {
+abstract final class AppTheme {
   static final ThemeData main = _build();
 
   static ThemeData _build() {
-    final colors = EasyRideColorScheme.main;
-    final textTheme = EasyRideTypography.textTheme.apply(
+    final colors = AppColorScheme.main;
+    final textTheme = AppTypography.textTheme.apply(
       bodyColor: colors.onSurface,
       displayColor: colors.onSurface,
     );
@@ -21,13 +21,11 @@ abstract final class EasyRideTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: colors,
-      scaffoldBackgroundColor: EasyRidePalette.softWhite,
-      canvasColor: EasyRidePalette.softWhite,
+      scaffoldBackgroundColor: AppPalette.softWhite,
+      canvasColor: AppPalette.softWhite,
       fontFamily: 'packages/design_system/ProductSans',
       textTheme: textTheme,
-      extensions: const <ThemeExtension<dynamic>>[
-        EasyRideSemanticColors.defaults,
-      ],
+      extensions: const <ThemeExtension<dynamic>>[AppSemanticColors.defaults],
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         foregroundColor: colors.onSurface,
@@ -37,11 +35,11 @@ abstract final class EasyRideTheme {
         iconTheme: IconThemeData(color: colors.onSurface),
         titleTextStyle: textTheme.titleLarge,
       ),
-      inputDecorationTheme: EasyRideComponentThemes.input(colors, textTheme),
+      inputDecorationTheme: AppComponentThemes.input(colors, textTheme),
       iconTheme: IconThemeData(color: colors.onSurface, size: 20),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          minimumSize: const Size.square(EasyRideSize.minimumTouchTarget),
+          minimumSize: const Size.square(AppSize.minimumTouchTarget),
           tapTargetSize: MaterialTapTargetSize.padded,
           foregroundColor: colors.onSurface,
           disabledForegroundColor: colors.onSurfaceVariant.withValues(
@@ -49,18 +47,15 @@ abstract final class EasyRideTheme {
           ),
         ),
       ),
-      cardTheme: EasyRideComponentThemes.card(colors),
-      dividerTheme: EasyRideComponentThemes.divider(colors),
-      navigationBarTheme: EasyRideComponentThemes.navigationBar(
-        colors,
-        textTheme,
-      ),
-      bottomSheetTheme: EasyRideComponentThemes.bottomSheet(colors),
+      cardTheme: AppComponentThemes.card(colors),
+      dividerTheme: AppComponentThemes.divider(colors),
+      navigationBarTheme: AppComponentThemes.navigationBar(colors, textTheme),
+      bottomSheetTheme: AppComponentThemes.bottomSheet(colors),
       dialogTheme: DialogThemeData(
         backgroundColor: colors.surfaceContainerHigh,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
@@ -71,7 +66,7 @@ abstract final class EasyRideTheme {
         ),
         actionTextColor: colors.inversePrimary,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         behavior: SnackBarBehavior.floating,
       ),
@@ -85,41 +80,32 @@ abstract final class EasyRideTheme {
         selectionColor: colors.primary.withValues(alpha: 0.25),
         selectionHandleColor: colors.primary,
       ),
-      filledButtonTheme: EasyRideComponentThemes.filledButton(
-        colors,
-        textTheme,
-      ),
-      outlinedButtonTheme: EasyRideComponentThemes.outlinedButton(
-        colors,
-        textTheme,
-      ),
-      textButtonTheme: EasyRideComponentThemes.textButton(colors, textTheme),
+      filledButtonTheme: AppComponentThemes.filledButton(colors, textTheme),
+      outlinedButtonTheme: AppComponentThemes.outlinedButton(colors, textTheme),
+      textButtonTheme: AppComponentThemes.textButton(colors, textTheme),
       chipTheme: ChipThemeData(
         backgroundColor: colors.surface,
         selectedColor: colors.primaryContainer,
         disabledColor: colors.surfaceContainerHighest,
         side: BorderSide(color: colors.outlineVariant),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         labelStyle: textTheme.labelLarge,
         secondaryLabelStyle: textTheme.labelLarge,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
-      elevatedButtonTheme: EasyRideComponentThemes.elevatedButton(
-        colors,
-        textTheme,
-      ),
+      elevatedButtonTheme: AppComponentThemes.elevatedButton(colors, textTheme),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: colors.surface,
         indicatorColor: colors.primaryContainer,
         selectedIconTheme: IconThemeData(
           color: colors.onPrimaryContainer,
-          size: EasyRideSize.navigationIcon,
+          size: AppSize.navigationIcon,
         ),
         unselectedIconTheme: IconThemeData(
           color: colors.onSurfaceVariant,
-          size: EasyRideSize.navigationIcon,
+          size: AppSize.navigationIcon,
         ),
         selectedLabelTextStyle: textTheme.labelMedium?.copyWith(
           color: colors.onSurface,
@@ -152,7 +138,7 @@ abstract final class EasyRideTheme {
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
           color: colors.inverseSurface,
-          borderRadius: BorderRadius.circular(EasyRideRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         textStyle: textTheme.bodySmall?.copyWith(
           color: colors.onInverseSurface,

@@ -27,7 +27,7 @@ class TrackDriverPageLoader extends StatefulWidget {
 
   final TrackRepository trackRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
-  final PassengerSessionStore sessionService;
+  final SessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
   final LiveMapBloc liveMapBloc;
   final VoidCallback onRideTerminated;

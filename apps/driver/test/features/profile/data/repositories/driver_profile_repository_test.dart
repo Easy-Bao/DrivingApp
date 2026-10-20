@@ -6,10 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class _MockProfileDataSource extends Mock
-    implements DriverProfileRemoteDataSource {}
+class _MockProfileDataSource extends Mock implements ProfileRemoteDataSource {}
 
-class _MockSessionService extends Mock implements DriverSessionStore {}
+class _MockSessionService extends Mock implements SessionStore {}
 
 void main() {
   test(
@@ -35,7 +34,7 @@ void main() {
         },
       );
 
-      final repository = DriverProfileRepositoryImpl(
+      final repository = ProfileRepositoryImpl(
         profileDataSource: profileDataSource,
         sessionService: sessionService,
         preferences: preferences,
@@ -65,12 +64,12 @@ void main() {
       ),
     ).thenAnswer((_) async => const {'name': 'Updated Driver'});
 
-    final repository = DriverProfileRepositoryImpl(
+    final repository = ProfileRepositoryImpl(
       profileDataSource: profileDataSource,
       sessionService: _MockSessionService(),
       preferences: preferences,
     );
-    final currentAccount = const DriverAccountSnapshot(
+    final currentAccount = const AccountSnapshot(
       name: 'Driver',
       phone: '+639170000001',
       email: 'driver@example.com',
@@ -113,12 +112,12 @@ void main() {
         ),
       ).thenAnswer((_) async => const {'name': 'Updated Driver'});
 
-      final repository = DriverProfileRepositoryImpl(
+      final repository = ProfileRepositoryImpl(
         profileDataSource: profileDataSource,
         sessionService: _MockSessionService(),
         preferences: preferences,
       );
-      const currentAccount = DriverAccountSnapshot(
+      const currentAccount = AccountSnapshot(
         name: 'Driver',
         phone: '+639170000001',
         email: 'driver@example.com',
@@ -153,14 +152,14 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final preferences = await SharedPreferences.getInstance();
     final profileDataSource = _MockProfileDataSource();
-    final repository = DriverProfileRepositoryImpl(
+    final repository = ProfileRepositoryImpl(
       profileDataSource: profileDataSource,
       sessionService: _MockSessionService(),
       preferences: preferences,
     );
 
     final result = await repository.updateAccount(
-      currentAccount: const DriverAccountSnapshot(name: 'Driver'),
+      currentAccount: const AccountSnapshot(name: 'Driver'),
       name: 'Driver',
       vehicleType: 'Motorcycle',
       plateNumber: '',
@@ -187,12 +186,12 @@ void main() {
       ),
     ).thenAnswer((_) async => const {'plate_number': 'XYZ-789'});
 
-    final repository = DriverProfileRepositoryImpl(
+    final repository = ProfileRepositoryImpl(
       profileDataSource: profileDataSource,
       sessionService: _MockSessionService(),
       preferences: preferences,
     );
-    const currentAccount = DriverAccountSnapshot(
+    const currentAccount = AccountSnapshot(
       name: 'Driver',
       vehicleType: 'Motorcycle',
       plateNumber: 'ABC-123',
@@ -226,12 +225,12 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final preferences = await SharedPreferences.getInstance();
     final profileDataSource = _MockProfileDataSource();
-    final repository = DriverProfileRepositoryImpl(
+    final repository = ProfileRepositoryImpl(
       profileDataSource: profileDataSource,
       sessionService: _MockSessionService(),
       preferences: preferences,
     );
-    const currentAccount = DriverAccountSnapshot(
+    const currentAccount = AccountSnapshot(
       name: 'Driver',
       vehicleType: 'Motorcycle',
       plateNumber: 'ABC-123',

@@ -27,7 +27,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: BlocProvider<LocationAccessCubit>.value(
           value: cubit,
           child: LocationAccessStatusPage(onBack: () {}),

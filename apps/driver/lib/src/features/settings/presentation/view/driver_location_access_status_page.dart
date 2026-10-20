@@ -9,18 +9,15 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_pages/shared_pages.dart';
 
-class const DriverLocationAccessStatusPage({super.key, this.onBack})
+class const LocationAccessStatusPage({super.key, this.onBack})
     extends StatelessWidget {
   final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<
-      DriverLocationAccessCubit,
-      DriverLocationAccessViewState
-    >(
+    return BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
       builder: (context, state) {
-        final accessState = state is DriverLocationAccessUnavailable
+        final accessState = state is LocationAccessUnavailable
             ? state.accessState
             : null;
         return AppLocationAccessStatusPage(
@@ -33,12 +30,12 @@ class const DriverLocationAccessStatusPage({super.key, this.onBack})
           onPrimaryAction: accessState == null
               ? null
               : () => unawaited(
-                  BlocProvider.of<DriverLocationAccessCubit>(context).enable(),
+                  BlocProvider.of<LocationAccessCubit>(context).enable(),
                 ),
           onRetry: accessState == null
               ? null
               : () => unawaited(
-                  BlocProvider.of<DriverLocationAccessCubit>(context).refresh(),
+                  BlocProvider.of<LocationAccessCubit>(context).refresh(),
                 ),
         );
       },
@@ -46,22 +43,22 @@ class const DriverLocationAccessStatusPage({super.key, this.onBack})
   }
 
   static AppLocationAccessPresentation _presentationFor(
-    DriverLocationAccessViewState state,
+    LocationAccessViewState state,
   ) {
     return switch (state) {
-      DriverLocationAccessChecking() => const AppLocationAccessPresentation(
+      LocationAccessChecking() => const AppLocationAccessPresentation(
         icon: LucideIcons.loader_circle,
         title: 'Checking location access',
         message: 'EasyRide is checking your phone settings and permission.',
         tone: AppLocationAccessTone.neutral,
       ),
-      DriverLocationAccessReady() => const AppLocationAccessPresentation(
+      LocationAccessReady() => const AppLocationAccessPresentation(
         icon: LucideIcons.circle_check,
         title: 'Location is ready',
         message: 'You can go online and receive nearby ride requests.',
         tone: AppLocationAccessTone.success,
       ),
-      DriverLocationAccessUnavailable(accessState: final accessState) =>
+      LocationAccessUnavailable(accessState: final accessState) =>
         switch (accessState) {
           LocationAccessState.ready => const AppLocationAccessPresentation(
             icon: LucideIcons.circle_check,

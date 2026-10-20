@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-abstract final class EasyRideTypography {
+abstract final class AppTypography {
   static const textTheme = TextTheme(
     displayLarge: TextStyle(
       fontSize: 32,
@@ -95,7 +95,7 @@ abstract final class EasyRideTypography {
   );
 }
 
-extension EasyRideTextStyleX on TextStyle {
+extension TextStyleExtensions on TextStyle {
   TextStyle get tabular => copyWith(
     fontFeatures: [...?fontFeatures, const FontFeature.tabularFigures()],
   );

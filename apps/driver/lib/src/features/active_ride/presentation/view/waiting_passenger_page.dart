@@ -48,9 +48,9 @@ class const WaitingPassengerPage({
   final String duration;
   final double distance;
   final double fare;
-  final DriverRideRepository rideRepository;
+  final RideRepository rideRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
-  final DriverSessionStore sessionService;
+  final SessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
 
   @override
@@ -247,7 +247,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
 
   Future<void> _cancelRide() async {
     if (_isCancellingRide || !mounted) return;
-    final choice = await showDriverRideCancellationSheet(context);
+    final choice = await showRideCancellationSheet(context);
     if (!mounted || choice == null) return;
 
     setState(() => _isCancellingRide = true);
@@ -329,18 +329,18 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: EasyRideLayout.pagePadding,
+                      horizontal: AppLayout.pagePadding,
                     ),
                     child: Column(
                       children: [
                         const SizedBox(height: 12),
-                        DriverActiveRideHeader(
+                        ActiveRideHeader(
                           backButton: _buildTripBackButton(
                             context,
                             () => context.pop(),
                           ),
                           actions: [
-                            DriverEmergencyButton(
+                            EmergencyButton(
                               onEmergencyStop: _emergencyStop,
                               onEmergencyStopCompleted: () {
                                 if (mounted) {
@@ -348,7 +348,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                                 }
                               },
                             ),
-                            DriverSafetyReportButton(
+                            SafetyReportButton(
                               rideId: BlocProvider.of<RideFlowCubit>(context)
                                   .activeRideId,
                               rideRepository: widget.rideRepository,
@@ -366,7 +366,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.only(bottom: 12),
-                            child: EasyRideSurfaceCard(
+                            child: AppSurfaceCard(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
@@ -541,8 +541,8 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
 Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
   return IconButton(
     constraints: const BoxConstraints(
-      minWidth: EasyRideSize.minimumTouchTarget,
-      minHeight: EasyRideSize.minimumTouchTarget,
+      minWidth: AppSize.minimumTouchTarget,
+      minHeight: AppSize.minimumTouchTarget,
     ),
     tooltip: MaterialLocalizations.of(context).backButtonTooltip,
     onPressed: onPressed,

@@ -4,28 +4,27 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 
-enum DriverDocumentUploadStatus { idle, uploading, succeeded, failed }
+enum DocumentUploadStatus { idle, uploading, succeeded, failed }
 
-class const DriverDocumentUploadState({
-  this.status = DriverDocumentUploadStatus.idle,
+class const DocumentUploadState({
+  this.status = DocumentUploadStatus.idle,
   this.document,
   this.message,
 }) extends Equatable {
-  final DriverDocumentUploadStatus status;
+  final DocumentUploadStatus status;
   final DriverDocument? document;
   final String? message;
 
-  bool get isUploading => status == DriverDocumentUploadStatus.uploading;
+  bool get isUploading => status == DocumentUploadStatus.uploading;
 
   @override
   List<Object?> get props => [status, document, message];
 }
 
-class DriverDocumentUploadCubit extends Cubit<DriverDocumentUploadState> {
-  DriverDocumentUploadCubit(this.repository)
-    : super(const DriverDocumentUploadState());
+class DocumentUploadCubit extends Cubit<DocumentUploadState> {
+  DocumentUploadCubit(this.repository) : super(const DocumentUploadState());
 
-  final DriverDocumentRepository repository;
+  final DocumentRepository repository;
 
   Future<void> submit({
     required DriverDocumentType type,
@@ -33,11 +32,7 @@ class DriverDocumentUploadCubit extends Cubit<DriverDocumentUploadState> {
     required String contentType,
   }) async {
     if (isClosed || state.isUploading) return;
-    emit(
-      const DriverDocumentUploadState(
-        status: DriverDocumentUploadStatus.uploading,
-      ),
-    );
+    emit(const DocumentUploadState(status: DocumentUploadStatus.uploading));
 
     try {
       final result = await repository.upload(
@@ -48,14 +43,14 @@ class DriverDocumentUploadCubit extends Cubit<DriverDocumentUploadState> {
       if (isClosed) return;
       result.fold(
         (failure) => emit(
-          DriverDocumentUploadState(
-            status: DriverDocumentUploadStatus.failed,
+          DocumentUploadState(
+            status: DocumentUploadStatus.failed,
             message: ErrorHandler.getErrorMessage(failure),
           ),
         ),
         (document) => emit(
-          DriverDocumentUploadState(
-            status: DriverDocumentUploadStatus.succeeded,
+          DocumentUploadState(
+            status: DocumentUploadStatus.succeeded,
             document: document,
           ),
         ),
@@ -63,8 +58,8 @@ class DriverDocumentUploadCubit extends Cubit<DriverDocumentUploadState> {
     } catch (error) {
       if (isClosed) return;
       emit(
-        DriverDocumentUploadState(
-          status: DriverDocumentUploadStatus.failed,
+        DocumentUploadState(
+          status: DocumentUploadStatus.failed,
           message: ErrorHandler.getErrorMessage(error),
         ),
       );
@@ -72,6 +67,6 @@ class DriverDocumentUploadCubit extends Cubit<DriverDocumentUploadState> {
   }
 
   void reset() {
-    if (!isClosed) emit(const DriverDocumentUploadState());
+    if (!isClosed) emit(const DocumentUploadState());
   }
 }

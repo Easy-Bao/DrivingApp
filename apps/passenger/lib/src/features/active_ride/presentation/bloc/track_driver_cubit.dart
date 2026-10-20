@@ -19,13 +19,13 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
   }) : super(const TrackDriverInitial());
 
   final TrackRepository repository;
-  final PassengerSessionStore sessionService;
-  final PassengerBackgroundTelemetry? backgroundTelemetryService;
+  final SessionStore sessionService;
+  final BackgroundTelemetry? backgroundTelemetryService;
   final AppLifecycleCoordinator lifecycleCoordinator;
 
   TrackRepository get _repository => repository;
-  PassengerSessionStore get _sessionService => sessionService;
-  PassengerBackgroundTelemetry? get _backgroundTelemetryService =>
+  SessionStore get _sessionService => sessionService;
+  BackgroundTelemetry? get _backgroundTelemetryService =>
       backgroundTelemetryService;
   AppLifecycleCoordinator get _lifecycleCoordinator => lifecycleCoordinator;
   AppLifecyclePeriodicTask? _trackingTask;

@@ -7,7 +7,7 @@ class const AppTermsOfServicePage({super.key, required this.onBack})
 
   @override
   Widget build(BuildContext context) {
-    return EasyRideSecondaryPage(
+    return AppSecondaryPage(
       title: 'Terms of Service',
       onBack: onBack,
       maxWidth: 600,

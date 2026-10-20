@@ -11,7 +11,7 @@ part 'sign_up_event.dart';
 part 'sign_up_state.dart';
 
 class SignUpBloc(this._authRepository) extends Bloc<SignUpEvent, SignUpState> {
-  final PassengerAuthRepository _authRepository;
+  final AuthRepository _authRepository;
 
   this : super(const SignUpInitial()) {
     on<SignUpSubmitted>(_onSignUpSubmitted, transformer: droppable());
@@ -56,7 +56,7 @@ class SignUpBloc(this._authRepository) extends Bloc<SignUpEvent, SignUpState> {
           final user = userData is Map
               ? Map<String, dynamic>.from(userData)
               : const <String, dynamic>{};
-          final credentials = PassengerAuthCredentials(
+          final credentials = AuthCredentials(
             passengerId:
                 response['passengerId']?.toString() ??
                 user['id']?.toString() ??

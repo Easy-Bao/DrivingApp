@@ -28,21 +28,21 @@ import 'package:geolocator/geolocator.dart';
 import 'package:driver/src/features/active_ride/active_ride_routes.dart';
 import 'package:design_system/design_system.dart';
 
-bool _isActiveDriverTripStatus(Object? value) {
+bool _isActiveTripStatus(Object? value) {
   return const {
     'assigned',
     'accepted',
     'arrived',
     'in_transit',
-  }.contains(driverValueAsString(value));
+  }.contains(valueAsString(value));
 }
 
-bool shouldAnimateDriverStatusPulse({
+bool shouldAnimateStatusPulse({
   required bool isOnline,
   required bool isForeground,
 }) => isOnline && isForeground;
 
-class const DriverDashboardPage({
+class const DashboardPage({
   super.key,
   required this.lifecycleCoordinator,
   required this.realtimeClient,
@@ -51,10 +51,10 @@ class const DriverDashboardPage({
   final RealtimeWebSocketClient realtimeClient;
 
   @override
-  State<DriverDashboardPage> createState() => _DriverDashboardPageState();
+  State<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DriverDashboardPageState extends State<DriverDashboardPage>
+class _DashboardPageState extends State<DashboardPage>
     with TickerProviderStateMixin {
   late final AnimationController _pulseAnimationController;
   Timer? _rideTriggerTimer;
@@ -139,7 +139,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   void _syncPulseAnimation(bool isOnline) {
-    final shouldPulse = shouldAnimateDriverStatusPulse(
+    final shouldPulse = shouldAnimateStatusPulse(
       isOnline: isOnline,
       isForeground: _isForeground,
     );
@@ -324,7 +324,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         lng: position?.longitude ?? 0,
       );
       if (mounted) {
-        await BlocProvider.of<DriverLocationAccessCubit>(context).refresh();
+        await BlocProvider.of<LocationAccessCubit>(context).refresh();
       }
     } finally {
       _isForcingOfflineForLocationLoss = false;
@@ -435,16 +435,16 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     // authoritative offers immediately instead of waiting for the fallback
     // polling interval.
     if (event is RideOfferCreatedEvent) {
-      unawaited(DriverIncomingRequestAlert.play());
+      unawaited(IncomingRequestAlert.play());
       unawaited(_pollRideData(_pollGeneration));
       return;
     }
     if (event is RideOfferUpdatedEvent) {
       final payload = event.envelope.payload;
       final sessionId =
-          driverValueAsString(payload['session_id']) ??
+          valueAsString(payload['session_id']) ??
           (payload['session'] is Map
-              ? driverValueAsString((payload['session'] as Map)['id'])
+              ? valueAsString((payload['session'] as Map)['id'])
               : null);
       final session = payload['session'];
       final wasClosed =
@@ -452,8 +452,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           {
             'cancelled',
             'canceled',
-          }.contains(driverValueAsString(session['status'])?.toLowerCase());
-      final reason = driverValueAsString(payload['reason']);
+          }.contains(valueAsString(session['status'])?.toLowerCase());
+      final reason = valueAsString(payload['reason']);
       final wasResolved = reason == 'another_driver_selected' || wasClosed
           ? BlocProvider.of<DashboardCubit>(context)
                 .resolveSubmittedOffer(sessionId)
@@ -478,12 +478,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     }
 
     final ride = Map<String, dynamic>.from(rawRide);
-    final rideId =
-        driverValueAsString(ride['id']) ?? event.envelope.scope.rideId;
+    final rideId = valueAsString(ride['id']) ?? event.envelope.scope.rideId;
     if (rideId == null) return;
 
-    final status = driverValueAsString(ride['status']) ?? 'accepted';
-    if (!_isActiveDriverTripStatus(status)) return;
+    final status = valueAsString(ride['status']) ?? 'accepted';
+    if (!_isActiveTripStatus(status)) return;
     ride['id'] = rideId;
     ride['status'] = status;
 
@@ -495,14 +494,13 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     final rawRide = event.envelope.payload['ride'];
     final ride = rawRide is Map ? Map<String, dynamic>.from(rawRide) : null;
     final status =
-        driverValueAsString(ride?['status']) ??
-        driverValueAsString(event.envelope.payload['status']);
+        valueAsString(ride?['status']) ??
+        valueAsString(event.envelope.payload['status']);
     if (status == null) return;
     final terminalStatus = RideStatus.fromString(status);
     if (!terminalStatus.isTerminal) return;
 
-    final rideId =
-        event.envelope.scope.rideId ?? driverValueAsString(ride?['id']);
+    final rideId = event.envelope.scope.rideId ?? valueAsString(ride?['id']);
     if (rideId == null) return;
 
     final dashboardCubit = BlocProvider.of<DashboardCubit>(context);
@@ -643,9 +641,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     try {
       if (requestedOnline && await _hasReadyLocationAccess(context) == false) {
         if (context.mounted) {
-          unawaited(
-            BlocProvider.of<DriverLocationAccessCubit>(context).enable(),
-          );
+          unawaited(BlocProvider.of<LocationAccessCubit>(context).enable());
         }
         return;
       }
@@ -709,8 +705,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       return;
     }
 
-    final sessionId = driverValueAsString(bid['id']);
-    final fare = driverFareInPesos(bid);
+    final sessionId = valueAsString(bid['id']);
+    final fare = fareInPesos(bid);
     if (sessionId == null || fare == null) return;
 
     if (mounted) setState(() => _submittingBidId = sessionId);
@@ -854,9 +850,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
             }
           },
         ),
-        BlocListener<DriverLocationAccessCubit, DriverLocationAccessViewState>(
-          listenWhen: (_, current) =>
-              current is DriverLocationAccessUnavailable,
+        BlocListener<LocationAccessCubit, LocationAccessViewState>(
+          listenWhen: (_, current) => current is LocationAccessUnavailable,
           listener: (context, _) {
             if (BlocProvider.of<DashboardCubit>(context).state.isOnline) {
               unawaited(_forceOfflineForLocationLoss());
@@ -920,7 +915,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                             'EasyRide',
                             style: context.textStyles.titleLarge,
                           ),
-                          const SizedBox(height: EasyRideSpacing.sm / 2),
+                          const SizedBox(height: AppSpacing.sm / 2),
                           Text('Driver', style: context.textStyles.labelMedium),
                         ],
                       ),
@@ -929,8 +924,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                           padding: const EdgeInsets.only(right: 16),
                           child: IconButton(
                             constraints: const BoxConstraints(
-                              minWidth: EasyRideSize.minimumTouchTarget,
-                              minHeight: EasyRideSize.minimumTouchTarget,
+                              minWidth: AppSize.minimumTouchTarget,
+                              minHeight: AppSize.minimumTouchTarget,
                             ),
                             tooltip: 'Account',
                             onPressed: () =>
@@ -949,7 +944,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                       child: Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(
-                            maxWidth: EasyRideLayout.contentMaxWidth,
+                            maxWidth: AppLayout.contentMaxWidth,
                           ),
                           child: Column(
                             children: [
@@ -967,11 +962,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                     physics: const BouncingScrollPhysics(),
                                     children: [
                                       if (activeRide != null) ...[
-                                        const DriverDashboardSectionLabel(
+                                        const DashboardSectionLabel(
                                           label: 'Current Active Trip',
                                         ),
                                         const SizedBox(height: 10),
-                                        DriverActiveTripCard(
+                                        ActiveTripCard(
                                           key: ValueKey<String>(activeRide.id),
                                           trip: activeRide,
                                           onResume: () =>
@@ -980,12 +975,12 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                         const SizedBox(height: 24),
                                       ],
                                       if (submittedOffers.isNotEmpty) ...[
-                                        const DriverDashboardSectionLabel(
+                                        const DashboardSectionLabel(
                                           label: 'Your Submitted Offers',
                                         ),
                                         const SizedBox(height: 10),
                                         ...submittedOffers.map(
-                                          (bid) => DriverPoolBidCard(
+                                          (bid) => PoolBidCard(
                                             bid: bid,
                                             submittingBidId: null,
                                             onDecline: null,
@@ -994,21 +989,19 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                         ),
                                       ],
                                       if (activeBids.isNotEmpty) ...[
-                                        const DriverDashboardSectionLabel(
+                                        const DashboardSectionLabel(
                                           label: 'Open Ride Offers',
                                         ),
                                         const SizedBox(height: 10),
                                         ...activeBids.map(
-                                          (bid) => DriverPoolBidCard(
+                                          (bid) => PoolBidCard(
                                             bid: bid,
                                             submittingBidId: _submittingBidId,
                                             onDecline: () =>
                                                 BlocProvider.of<DashboardCubit>(
                                                   context,
                                                 ).removeActiveBid(
-                                                  driverValueAsString(
-                                                    bid['id'],
-                                                  ),
+                                                  valueAsString(bid['id']),
                                                 ),
                                             onSubmitOffer: () =>
                                                 _submitBid(bid),
@@ -1040,10 +1033,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Widget _buildOnlineCardBanner(BuildContext context, DashboardState state) {
     final isOnline = _pendingOnline ?? state.isOnline;
-    final locationReady = context.select<DriverLocationAccessCubit, bool>(
-      (cubit) => cubit.state is DriverLocationAccessReady,
+    final locationReady = context.select<LocationAccessCubit, bool>(
+      (cubit) => cubit.state is LocationAccessReady,
     );
-    return DriverAvailabilityCard(
+    return AvailabilityCard(
       isOnline: isOnline,
       isToggling: _isTogglingOnline,
       hasActiveRide: state.activeRide != null,
@@ -1055,7 +1048,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Widget _buildStatsRow(BuildContext context, DashboardState state) {
-    return DriverDashboardStatsRow(
+    return DashboardStatsRow(
       isLoadingStats: state.isLoadingStats,
       hasExistingStats: state.hasLoadedStats,
       earnings: state.earnings,
@@ -1072,8 +1065,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         child: AnimatedBuilder(
           animation: _pulseAnimationController,
           builder: (_, _) {
-            final pulseOpacity =
-                0.3 + _pulseAnimationController.value * 0.7;
+            final pulseOpacity = 0.3 + _pulseAnimationController.value * 0.7;
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [

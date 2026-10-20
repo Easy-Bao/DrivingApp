@@ -4,11 +4,8 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver/src/features/settings/settings_routes.dart';
 import 'package:shared_pages/shared_pages.dart';
 
-class const DriverAboutEasyRidePage({
-  super.key,
-  this.onBack,
-  this.onLicensesTap,
-}) extends StatelessWidget {
+class const AboutPage({super.key, this.onBack, this.onLicensesTap})
+    extends StatelessWidget {
   final VoidCallback? onBack;
   final VoidCallback? onLicensesTap;
 
@@ -21,8 +18,7 @@ class const DriverAboutEasyRidePage({
       icon: LucideIcons.car_front,
       onBack: onBack ?? () => context.pop(),
       onLicensesTap:
-          onLicensesTap ??
-          () => context.pushNamed(DriverSettingsRoutes.licenses),
+          onLicensesTap ?? () => context.pushNamed(SettingsRoutes.licenses),
     );
   }
 }

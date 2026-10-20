@@ -1,11 +1,11 @@
 import 'package:dio/dio.dart';
 
-abstract class DriverEarningsRemoteDataSource {
+abstract class EarningsRemoteDataSource {
   Future<Map<String, dynamic>> fetchEarningsSummary(String driverId);
 }
 
-class DriverEarningsRemoteDataSourceImpl(this._dio)
-    implements DriverEarningsRemoteDataSource {
+class EarningsRemoteDataSourceImpl(this._dio)
+    implements EarningsRemoteDataSource {
   final Dio _dio;
 
   @override

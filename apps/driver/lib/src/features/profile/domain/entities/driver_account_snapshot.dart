@@ -1,4 +1,4 @@
-class const DriverAccountSnapshot({
+class const AccountSnapshot({
   this.name = '',
   this.phone = '',
   this.email = '',

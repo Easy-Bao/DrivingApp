@@ -7,18 +7,18 @@ import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class DriverProfileRepositoryImpl({
+final class ProfileRepositoryImpl({
   required this._profileDataSource,
   required this._sessionService,
   required this._preferences,
-}) implements DriverProfileRepository {
-  final DriverProfileRemoteDataSource _profileDataSource;
-  final DriverSessionStore _sessionService;
+}) implements ProfileRepository {
+  final ProfileRemoteDataSource _profileDataSource;
+  final SessionStore _sessionService;
   final SharedPreferences _preferences;
 
   @override
-  DriverAccountSnapshot getCachedAccount() {
-    return DriverAccountSnapshot(
+  AccountSnapshot getCachedAccount() {
+    return AccountSnapshot(
       name: _preferences.getString('driver_name') ?? '',
       phone: _preferences.getString('driver_phone') ?? '',
       email: _preferences.getString('driver_email') ?? '',
@@ -29,7 +29,7 @@ final class DriverProfileRepositoryImpl({
   }
 
   @override
-  Future<Result<DriverAccountSnapshot, Failure>> refreshAccount() async {
+  Future<Result<AccountSnapshot, Failure>> refreshAccount() async {
     try {
       final driverId = await _sessionService.readDriverId() ?? '';
       if (driverId.isEmpty) {
@@ -37,9 +37,9 @@ final class DriverProfileRepositoryImpl({
       }
       final profileValues = await _profileDataSource.fetchProfile(driverId);
       final cached = getCachedAccount();
-      final profile = DriverProfile.fromJson(profileValues);
+      final profile = Profile.fromJson(profileValues);
       final ratingValue = profile.rating;
-      final snapshot = DriverAccountSnapshot(
+      final snapshot = AccountSnapshot(
         name: profile.name.isEmpty ? cached.name : profile.name,
         phone: profile.phone.isEmpty ? cached.phone : profile.phone,
         email: profile.email.isEmpty ? cached.email : profile.email,
@@ -65,8 +65,8 @@ final class DriverProfileRepositoryImpl({
   }
 
   @override
-  Future<Result<DriverAccountSnapshot, Failure>> updateAccount({
-    required DriverAccountSnapshot currentAccount,
+  Future<Result<AccountSnapshot, Failure>> updateAccount({
+    required AccountSnapshot currentAccount,
     required String name,
     required String vehicleType,
     required String plateNumber,
@@ -96,8 +96,8 @@ final class DriverProfileRepositoryImpl({
             'plate_number': normalizedPlateNumber,
         },
       );
-      final profile = DriverProfile.fromJson(response);
-      final updated = DriverAccountSnapshot(
+      final profile = Profile.fromJson(response);
+      final updated = AccountSnapshot(
         name: profile.name.isEmpty ? normalizedName : profile.name,
         phone: profile.phone.isEmpty ? currentAccount.phone : profile.phone,
         email: profile.email.isEmpty ? currentAccount.email : profile.email,
@@ -120,7 +120,7 @@ final class DriverProfileRepositoryImpl({
     }
   }
 
-  Future<void> _cacheAccount(DriverAccountSnapshot account) async {
+  Future<void> _cacheAccount(AccountSnapshot account) async {
     await Future.wait<void>([
       _preferences.setString('driver_name', account.name),
       _preferences.setString('driver_phone', account.phone),

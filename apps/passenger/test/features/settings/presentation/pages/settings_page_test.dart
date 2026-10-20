@@ -26,7 +26,7 @@ void main() {
           BlocProvider<LocationAccessCubit>.value(value: locationCubit),
         ],
         child: MaterialApp(
-          theme: EasyRideTheme.main,
+          theme: AppTheme.main,
           home: SettingsPage(
             onLocationTap: () => locationTaps++,
             onHelpCenterTap: () => helpTaps++,

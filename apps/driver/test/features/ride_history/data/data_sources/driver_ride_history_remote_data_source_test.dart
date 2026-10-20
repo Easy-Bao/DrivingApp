@@ -8,7 +8,7 @@ class MockDio extends Mock implements Dio {}
 void main() {
   test('requests only active trips for dashboard recovery', () async {
     final dio = MockDio();
-    final dataSource = DriverRideHistoryRemoteDataSourceImpl(dio);
+    final dataSource = RideHistoryRemoteDataSourceImpl(dio);
     when(
       () => dio.get<Map<String, dynamic>>(
         any(),
@@ -49,7 +49,7 @@ void main() {
 
   test('rejects malformed trip items', () async {
     final dio = MockDio();
-    final dataSource = DriverRideHistoryRemoteDataSourceImpl(dio);
+    final dataSource = RideHistoryRemoteDataSourceImpl(dio);
     when(
       () => dio.get<Map<String, dynamic>>(
         any(),

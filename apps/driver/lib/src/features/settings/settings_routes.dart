@@ -1,4 +1,4 @@
-abstract final class DriverSettingsRoutes {
+abstract final class SettingsRoutes {
   static const String settings = 'DriverSettings';
   static const String settingsPath = 'account/settings';
   static const String locationAccess = 'DriverSettingsLocationAccess';

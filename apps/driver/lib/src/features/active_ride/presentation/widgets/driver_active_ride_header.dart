@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class const DriverActiveRideHeader({
+class const ActiveRideHeader({
   super.key,
   required this.backButton,
   required this.actions,

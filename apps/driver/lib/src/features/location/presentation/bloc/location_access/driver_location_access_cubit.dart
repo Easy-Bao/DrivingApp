@@ -5,11 +5,11 @@ import 'package:driver/src/features/location/presentation/bloc/location_access/d
 import 'package:driver/src/features/location/domain/repositories/driver_location_access_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class DriverLocationAccessCubit({required this._repository})
-    extends Cubit<DriverLocationAccessViewState> {
-  this : super(const DriverLocationAccessChecking());
+class LocationAccessCubit({required this._repository})
+    extends Cubit<LocationAccessViewState> {
+  this : super(const LocationAccessChecking());
 
-  final DriverLocationAccessRepository _repository;
+  final LocationAccessRepository _repository;
 
   StreamSubscription<LocationAccessState>? _accessStateSubscription;
   bool _isStarted = false;
@@ -51,7 +51,7 @@ class DriverLocationAccessCubit({required this._repository})
 
   Future<void> enable() async {
     final previousState = state;
-    emit(const DriverLocationAccessChecking());
+    emit(const LocationAccessChecking());
 
     try {
       final accessState = await _repository.refresh();
@@ -63,10 +63,9 @@ class DriverLocationAccessCubit({required this._repository})
       };
       _applyAccessState(refreshedState);
     } catch (_) {
-      if (previousState
-          case final DriverLocationAccessUnavailable unavailable) {
+      if (previousState case final LocationAccessUnavailable unavailable) {
         emit(
-          DriverLocationAccessUnavailable(
+          LocationAccessUnavailable(
             accessState: unavailable.accessState,
             message: 'Location is temporarily unavailable. Try again.',
           ),
@@ -89,12 +88,12 @@ class DriverLocationAccessCubit({required this._repository})
 
   void _applyAccessState(LocationAccessState accessState) {
     if (accessState == LocationAccessState.ready) {
-      emit(const DriverLocationAccessReady());
+      emit(const LocationAccessReady());
       return;
     }
 
     emit(
-      DriverLocationAccessUnavailable(
+      LocationAccessUnavailable(
         accessState: accessState,
         message: _settingsMessage(accessState),
       ),
@@ -113,7 +112,7 @@ class DriverLocationAccessCubit({required this._repository})
 
   void _emitTemporaryFailure() {
     emit(
-      DriverLocationAccessUnavailable(
+      LocationAccessUnavailable(
         accessState: LocationAccessState.serviceDisabled,
         message: 'Location is temporarily unavailable. Try again.',
       ),

@@ -17,14 +17,13 @@ import 'package:passenger/src/features/auth/presentation/bloc/session/session_bl
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 
-class PassengerApp extends StatefulWidget {
-  const PassengerApp({super.key});
+class App extends StatefulWidget {
+  const App({super.key});
   @override
-  State<PassengerApp> createState() => _PassengerAppState();
+  State<App> createState() => _AppState();
 }
 
-class _PassengerAppState extends State<PassengerApp>
-    with WidgetsBindingObserver {
+class _AppState extends State<App> with WidgetsBindingObserver {
   late final SessionBloc _sessionBloc;
   late final LocationAccessCubit _locationAccessCubit;
   late final AppLifecycleCoordinator _lifecycleCoordinator;
@@ -43,16 +42,15 @@ class _PassengerAppState extends State<PassengerApp>
           create: (_) {
             return TrackDriverCubit(
               repository: Modular.get<TrackRepository>(),
-              sessionService: Modular.get<PassengerSessionStore>(),
+              sessionService: Modular.get<SessionStore>(),
               lifecycleCoordinator: _lifecycleCoordinator,
-              backgroundTelemetryService:
-                  Modular.get<PassengerBackgroundTelemetry>(),
+              backgroundTelemetryService: Modular.get<BackgroundTelemetry>(),
             );
           },
         ),
       ],
       child: ModularApp.router(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         debugShowCheckedModeBanner: false,
         title: 'EasyRide Passenger',
         builder: (context, child) =>
@@ -86,7 +84,7 @@ class _PassengerAppState extends State<PassengerApp>
                                 } catch (_) {}
                                 try {
                                   unawaited(
-                                    Modular.get<PassengerBackgroundTelemetry>()
+                                    Modular.get<BackgroundTelemetry>()
                                         .stopRideTelemetry(),
                                   );
                                 } catch (_) {}

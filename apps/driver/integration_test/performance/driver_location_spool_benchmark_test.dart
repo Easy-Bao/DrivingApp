@@ -15,7 +15,7 @@ void main() {
     const storageKey = 'driver_location_spool_v1';
     const maximumPoints = 3600;
     final preferences = SharedPreferencesAsync();
-    final spool = DriverLocationSpool(preferences: preferences);
+    final spool = LocationSpool(preferences: preferences);
 
     try {
       for (final depth in [0, 1000, maximumPoints]) {
@@ -71,8 +71,8 @@ String _encodedPoints(int count) {
   );
 }
 
-DriverLocationPoint _point(int index) {
-  return DriverLocationPoint(
+LocationPoint _point(int index) {
+  return LocationPoint(
     latitude: 0,
     longitude: 0,
     observedAt: DateTime.utc(2026).add(Duration(seconds: index)),

@@ -17,13 +17,13 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
-class _FakeEarningsRepository implements DriverEarningsRepository {
+class _FakeEarningsRepository implements EarningsRepository {
   @override
-  Future<Result<DriverEarningsSummary, Failure>> fetchEarningsSummary(
+  Future<Result<EarningsSummary, Failure>> fetchEarningsSummary(
     String driverId,
   ) async {
     return Ok(
-      DriverEarningsSummary.fromJson(const {
+      EarningsSummary.fromJson(const {
         'today': {'earnings_amount': 2973, 'completed_trips': 1},
         'this_week': {'earnings_amount': 2973, 'completed_trips': 1},
         'this_month': {'earnings_amount': 2973, 'completed_trips': 1},
@@ -48,21 +48,21 @@ class _FakeEarningsRepository implements DriverEarningsRepository {
   }
 }
 
-class _PendingEarningsRepository implements DriverEarningsRepository {
-  final completer = Completer<Result<DriverEarningsSummary, Failure>>();
+class _PendingEarningsRepository implements EarningsRepository {
+  final completer = Completer<Result<EarningsSummary, Failure>>();
 
   @override
-  Future<Result<DriverEarningsSummary, Failure>> fetchEarningsSummary(
+  Future<Result<EarningsSummary, Failure>> fetchEarningsSummary(
     String driverId,
   ) => completer.future;
 }
 
 class _ReloadingEarningsRepository extends _FakeEarningsRepository {
-  final reload = Completer<Result<DriverEarningsSummary, Failure>>();
+  final reload = Completer<Result<EarningsSummary, Failure>>();
   var _requestCount = 0;
 
   @override
-  Future<Result<DriverEarningsSummary, Failure>> fetchEarningsSummary(
+  Future<Result<EarningsSummary, Failure>> fetchEarningsSummary(
     String driverId,
   ) {
     if (_requestCount++ == 0) {
@@ -73,7 +73,7 @@ class _ReloadingEarningsRepository extends _FakeEarningsRepository {
 }
 
 void main() {
-  late DriverSessionStore sessionService;
+  late SessionStore sessionService;
 
   setUp(() {
     final storage = _MockSecureStorage();
@@ -84,7 +84,7 @@ void main() {
       ),
     ).thenAnswer((_) async => 'driver-1');
 
-    sessionService = DriverSessionStore(storage: storage);
+    sessionService = SessionStore(storage: storage);
   });
 
   testWidgets('period tabs stay within a compact driver layout', (
@@ -95,13 +95,13 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: BlocProvider(
-          create: (_) => DriverEarningsCubit(
+          create: (_) => EarningsCubit(
             repository: _FakeEarningsRepository(),
             sessionService: sessionService,
           )..load(),
-          child: const DriverEarningsPage(),
+          child: const EarningsPage(),
         ),
       ),
     );
@@ -141,17 +141,17 @@ void main() {
 
   testWidgets('keeps loaded earnings visible while refreshing', (tester) async {
     final repository = _ReloadingEarningsRepository();
-    late final DriverEarningsCubit cubit;
+    late final EarningsCubit cubit;
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: BlocProvider(
-          create: (_) => cubit = DriverEarningsCubit(
+          create: (_) => cubit = EarningsCubit(
             repository: repository,
             sessionService: sessionService,
           )..load(),
-          child: const DriverEarningsPage(),
+          child: const EarningsPage(),
         ),
       ),
     );
@@ -174,7 +174,7 @@ void main() {
 
     repository.reload.complete(
       Ok(
-        DriverEarningsSummary.fromJson(const {
+        EarningsSummary.fromJson(const {
           'today': {'earnings_amount': 2973, 'completed_trips': 1},
           'this_week': {'earnings_amount': 2973, 'completed_trips': 1},
           'this_month': {'earnings_amount': 2973, 'completed_trips': 1},
@@ -192,13 +192,13 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: BlocProvider(
-          create: (_) => DriverEarningsCubit(
+          create: (_) => EarningsCubit(
             repository: repository,
             sessionService: sessionService,
           )..load(),
-          child: const DriverEarningsPage(),
+          child: const EarningsPage(),
         ),
       ),
     );
@@ -209,7 +209,7 @@ void main() {
 
     repository.completer.complete(
       Ok(
-        DriverEarningsSummary.fromJson(const {
+        EarningsSummary.fromJson(const {
           'today': {'earnings_amount': 2973, 'completed_trips': 1},
           'this_week': {'earnings_amount': 2973, 'completed_trips': 1},
           'this_month': {'earnings_amount': 2973, 'completed_trips': 1},
@@ -227,13 +227,13 @@ void main() {
     (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: EasyRideTheme.main,
+          theme: AppTheme.main,
           home: BlocProvider(
-            create: (_) => DriverEarningsCubit(
+            create: (_) => EarningsCubit(
               repository: _FakeNegativeEarningsRepository(),
               sessionService: sessionService,
             )..load(),
-            child: const DriverEarningsPage(),
+            child: const EarningsPage(),
           ),
         ),
       );
@@ -253,13 +253,13 @@ void main() {
   );
 }
 
-class _FakeNegativeEarningsRepository implements DriverEarningsRepository {
+class _FakeNegativeEarningsRepository implements EarningsRepository {
   @override
-  Future<Result<DriverEarningsSummary, Failure>> fetchEarningsSummary(
+  Future<Result<EarningsSummary, Failure>> fetchEarningsSummary(
     String driverId,
   ) async {
     return Ok(
-      DriverEarningsSummary.fromJson(const {
+      EarningsSummary.fromJson(const {
         'today': {'earnings_amount': -5000, 'completed_trips': 1},
         'this_week': {'earnings_amount': -5000, 'completed_trips': 1},
         'this_month': {'earnings_amount': -5000, 'completed_trips': 1},

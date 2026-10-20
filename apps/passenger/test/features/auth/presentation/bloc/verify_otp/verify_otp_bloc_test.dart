@@ -5,14 +5,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/verify_otp/verify_otp_bloc.dart';
 
-class MockPassengerAuthRepository extends Mock
-    implements PassengerAuthRepository {}
+class MockAuthRepository extends Mock implements AuthRepository {}
 
 void main() {
-  late MockPassengerAuthRepository authRepository;
+  late MockAuthRepository authRepository;
 
   setUp(() {
-    authRepository = MockPassengerAuthRepository();
+    authRepository = MockAuthRepository();
   });
 
   blocTest<VerifyOtpBloc, VerifyOtpState>(

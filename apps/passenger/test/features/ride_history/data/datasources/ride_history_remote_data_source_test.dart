@@ -8,7 +8,7 @@ class MockDio extends Mock implements Dio {}
 void main() {
   test('decodes paginated ride history with explicit query bounds', () async {
     final dio = MockDio();
-    final dataSource = PassengerRideHistoryRemoteDataSourceImpl(dio);
+    final dataSource = RideHistoryRemoteDataSourceImpl(dio);
     when(
       () => dio.get<Map<String, dynamic>>(
         any(),
@@ -43,7 +43,7 @@ void main() {
 
   test('loads the passenger activity aggregate independently', () async {
     final dio = MockDio();
-    final dataSource = PassengerRideHistoryRemoteDataSourceImpl(dio);
+    final dataSource = RideHistoryRemoteDataSourceImpl(dio);
     when(() => dio.get<Map<String, dynamic>>(any())).thenAnswer(
       (_) async => Response<Map<String, dynamic>>(
         requestOptions: RequestOptions(
@@ -69,7 +69,7 @@ void main() {
 
   test('rejects malformed ride history items', () async {
     final dio = MockDio();
-    final dataSource = PassengerRideHistoryRemoteDataSourceImpl(dio);
+    final dataSource = RideHistoryRemoteDataSourceImpl(dio);
     when(
       () => dio.get<Map<String, dynamic>>(
         any(),

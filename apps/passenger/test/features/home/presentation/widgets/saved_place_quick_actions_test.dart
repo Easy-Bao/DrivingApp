@@ -12,7 +12,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           body: SavedPlaceQuickActions(
             places: const [
@@ -57,8 +57,8 @@ void main() {
     final secondDecoration =
         tester.widget<AnimatedContainer>(chips.at(1)).decoration
             as BoxDecoration;
-    expect(firstDecoration.color, EasyRideTheme.main.colorScheme.primary);
-    expect(secondDecoration.color, EasyRideTheme.main.colorScheme.surface);
+    expect(firstDecoration.color, AppTheme.main.colorScheme.primary);
+    expect(secondDecoration.color, AppTheme.main.colorScheme.surface);
 
     await tester.tap(find.text('Home'));
     expect(tappedPlace?.label, 'Home');
@@ -69,7 +69,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           body: SavedPlaceQuickActions(
             places: const [
@@ -111,8 +111,8 @@ void main() {
                 .widget<AnimatedContainer>(find.byType(AnimatedContainer).at(1))
                 .decoration
             as BoxDecoration;
-    expect(firstDecoration.color, EasyRideTheme.main.colorScheme.primary);
-    expect(secondDecoration.color, EasyRideTheme.main.colorScheme.surface);
+    expect(firstDecoration.color, AppTheme.main.colorScheme.primary);
+    expect(secondDecoration.color, AppTheme.main.colorScheme.surface);
   });
 
   testWidgets('ellipsizes long saved place labels within a bounded chip', (
@@ -123,7 +123,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           body: SavedPlaceQuickActions(
             places: const [SavedPlace(label: label, iconName: 'map_pin')],

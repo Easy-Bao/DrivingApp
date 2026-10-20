@@ -4,12 +4,8 @@ import 'package:foundation/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
-class DriverActiveTripCard extends StatelessWidget {
-  const DriverActiveTripCard({
-    super.key,
-    required this.trip,
-    required this.onResume,
-  });
+class ActiveTripCard extends StatelessWidget {
+  const ActiveTripCard({super.key, required this.trip, required this.onResume});
 
   final RideSnapshot trip;
   final VoidCallback onResume;
@@ -30,10 +26,10 @@ class DriverActiveTripCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(EasyRideSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: context.colorScheme.onSurface.withValues(alpha: 0.12),
         ),
@@ -49,7 +45,7 @@ class DriverActiveTripCard extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Text(
                   statusLabel,
@@ -105,7 +101,7 @@ class DriverActiveTripCard extends StatelessWidget {
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            height: EasyRideSize.minimumTouchTarget,
+            height: AppSize.minimumTouchTarget,
             child: ElevatedButton.icon(
               onPressed: onResume,
               icon: const Icon(LucideIcons.navigation, size: 18),
@@ -122,7 +118,7 @@ class DriverActiveTripCard extends StatelessWidget {
                 backgroundColor: context.colorScheme.primary,
                 foregroundColor: context.colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 elevation: 0,
               ),

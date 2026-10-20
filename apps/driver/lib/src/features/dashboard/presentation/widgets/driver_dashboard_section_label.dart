@@ -1,8 +1,8 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
-class DriverDashboardSectionLabel extends StatelessWidget {
-  const DriverDashboardSectionLabel({required this.label, super.key});
+class DashboardSectionLabel extends StatelessWidget {
+  const DashboardSectionLabel({required this.label, super.key});
 
   final String label;
 

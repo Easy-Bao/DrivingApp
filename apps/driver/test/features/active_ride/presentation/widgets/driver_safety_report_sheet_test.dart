@@ -6,18 +6,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockDriverRideRepository extends Mock implements DriverRideRepository {}
+class _MockRideRepository extends Mock implements RideRepository {}
 
 void main() {
   testWidgets('requires details before submitting a passenger report', (
     tester,
   ) async {
-    final repository = _MockDriverRideRepository();
+    final repository = _MockRideRepository();
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: DriverSafetyReportButton(
+          body: SafetyReportButton(
             rideId: 'ride-7',
             rideRepository: repository,
           ),
@@ -45,7 +45,7 @@ void main() {
   });
 
   testWidgets('submits the selected category and description', (tester) async {
-    final repository = _MockDriverRideRepository();
+    final repository = _MockRideRepository();
     when(
       () => repository.createSafetyReport(
         rideId: 'ride-7',
@@ -56,9 +56,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: DriverSafetyReportButton(
+          body: SafetyReportButton(
             rideId: 'ride-7',
             rideRepository: repository,
           ),

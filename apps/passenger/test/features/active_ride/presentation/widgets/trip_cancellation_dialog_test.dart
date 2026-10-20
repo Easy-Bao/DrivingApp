@@ -6,7 +6,7 @@ import 'package:passenger/src/features/active_ride/presentation/widgets/trip_can
 void main() {
   Widget buildTestableWidget(Widget child) {
     return MaterialApp(
-      theme: EasyRideTheme.main,
+      theme: AppTheme.main,
       home: Scaffold(body: child),
     );
   }

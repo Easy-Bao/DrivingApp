@@ -9,10 +9,10 @@ void main() {
     String? selectedValue;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           body: StatefulBuilder(
-            builder: (context, setState) => EasyRideSelectField<String>(
+            builder: (context, setState) => AppSelectField<String>(
               key: const ValueKey('custom-select'),
               value: selectedValue,
               menuTitle: 'Choose a reason',
@@ -21,11 +21,8 @@ void main() {
                 hintText: 'Select a reason',
               ),
               options: const [
-                EasyRideSelectOption<String>(
-                  value: 'first',
-                  label: 'First reason',
-                ),
-                EasyRideSelectOption<String>(
+                AppSelectOption<String>(value: 'first', label: 'First reason'),
+                AppSelectOption<String>(
                   value: 'second',
                   label: 'Second reason',
                 ),
@@ -37,7 +34,7 @@ void main() {
       ),
     );
 
-    expect(find.byType(EasyRideSelectField<String>), findsOneWidget);
+    expect(find.byType(AppSelectField<String>), findsOneWidget);
     expect(find.text('Select a reason'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('custom-select')));
@@ -46,7 +43,7 @@ void main() {
     expect(find.text('Choose a reason'), findsOneWidget);
     expect(find.text('First reason'), findsOneWidget);
     expect(find.text('Second reason'), findsOneWidget);
-    expect(find.byType(EasyRideSelectField<String>), findsOneWidget);
+    expect(find.byType(AppSelectField<String>), findsOneWidget);
 
     await tester.tap(find.text('Second reason'));
     await tester.pumpAndSettle();
@@ -62,17 +59,14 @@ void main() {
     String? selectedValue;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: EasyRideSelectField<String>(
+          body: AppSelectField<String>(
             key: const ValueKey('custom-select'),
             value: selectedValue,
             decoration: const InputDecoration(hintText: 'Select a reason'),
             options: const [
-              EasyRideSelectOption<String>(
-                value: 'first',
-                label: 'First reason',
-              ),
+              AppSelectOption<String>(value: 'first', label: 'First reason'),
             ],
             onChanged: (value) => selectedValue = value,
           ),

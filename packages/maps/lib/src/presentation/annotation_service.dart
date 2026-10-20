@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:design_system/design_system.dart'
-    show EasyRidePalette, EasyRideStatusColors;
+    show AppPalette, AppStatusColors;
 import 'package:flutter/material.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
@@ -17,10 +17,10 @@ typedef MapBaseAnnotationManager = mapbox.BaseAnnotationManager;
 
 class TripMapMarkerStyle._() {
   static const double pinIconSize = 1.22;
-  static const Color ownLocation = EasyRidePalette.obsidian;
-  static const Color tripLocation = EasyRideStatusColors.success;
-  static const Color markerSurface = EasyRidePalette.white;
-  static const Color labelForeground = EasyRidePalette.obsidian;
+  static const Color ownLocation = AppPalette.obsidian;
+  static const Color tripLocation = AppStatusColors.success;
+  static const Color markerSurface = AppPalette.white;
+  static const Color labelForeground = AppPalette.obsidian;
 
   static Color colorFor({required bool isOrigin}) {
     return isOrigin ? ownLocation : tripLocation;

@@ -1,4 +1,4 @@
-abstract final class EasyRideSize {
+abstract final class AppSize {
   static const minimumTouchTarget = 48.0;
   static const controlHeight = 52.0;
 

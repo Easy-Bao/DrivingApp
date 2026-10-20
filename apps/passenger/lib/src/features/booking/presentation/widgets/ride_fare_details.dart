@@ -91,10 +91,10 @@ class const RideFareDetails({
                 message: 'Back to trip summary',
                 child: InkWell(
                   onTap: onBackPressed,
-                  borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                   child: Container(
-                    width: EasyRideSize.minimumTouchTarget,
-                    height: EasyRideSize.minimumTouchTarget,
+                    width: AppSize.minimumTouchTarget,
+                    height: AppSize.minimumTouchTarget,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -146,7 +146,7 @@ class const RideFareDetails({
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(color: context.colorScheme.outlineVariant),
                 boxShadow: const [
                   BoxShadow(
@@ -165,7 +165,7 @@ class const RideFareDetails({
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: context.colorScheme.surface,
-              borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: context.colorScheme.outlineVariant),
               boxShadow: const [
                 BoxShadow(
@@ -238,7 +238,7 @@ class const RideFareDetails({
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: context.colorScheme.surface,
-              borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
                 color: context.colorScheme.outlineVariant,
                 width: 0.8,

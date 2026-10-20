@@ -19,18 +19,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ProfileModule._() {
   static void binds(Injector i) {
     i
-      ..addLazySingleton<PassengerProfileRemoteDataSource>(
-        (i) => PassengerProfileRemoteDataSourceImpl(i.get<Dio>()),
+      ..addLazySingleton<ProfileRemoteDataSource>(
+        (i) => ProfileRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<PassengerProfileRepository>(
-        (i) => PassengerProfileRepositoryImpl(
-          remoteDataSource: i.get<PassengerProfileRemoteDataSource>(),
-          sessionService: i.get<PassengerSessionStore>(),
+      ..addLazySingleton<ProfileRepository>(
+        (i) => ProfileRepositoryImpl(
+          remoteDataSource: i.get<ProfileRemoteDataSource>(),
+          sessionService: i.get<SessionStore>(),
           preferences: i.get<SharedPreferences>(),
         ),
       )
       ..addFactory<ProfileCubit>(
-        (i) => ProfileCubit(repository: i.get<PassengerProfileRepository>()),
+        (i) => ProfileCubit(repository: i.get<ProfileRepository>()),
       );
   }
 

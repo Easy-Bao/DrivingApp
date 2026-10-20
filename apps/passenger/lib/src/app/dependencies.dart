@@ -18,8 +18,8 @@ import 'package:passenger/src/features/auth/presentation/bloc/session/session_bl
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class PassengerDependencies extends Module {
-  PassengerDependencies({required this._preferences});
+class AppDependencies extends Module {
+  AppDependencies({required this._preferences});
 
   final SharedPreferences _preferences;
 
@@ -33,9 +33,9 @@ class PassengerDependencies extends Module {
       ..addLazySingleton<NetworkAvailabilityCoordinator>(
         (_) => NetworkAvailabilityCoordinator(),
       )
-      ..addLazySingleton<PassengerSessionStore>((i) => PassengerSessionStore())
+      ..addLazySingleton<SessionStore>((i) => SessionStore())
       ..addLazySingleton<RefreshableTokenProvider>((i) {
-        final session = i.get<PassengerSessionStore>();
+        final session = i.get<SessionStore>();
         return RefreshableTokenProvider(
           readAccessToken: session.readToken,
           readRefreshToken: session.readRefreshToken,
@@ -44,7 +44,7 @@ class PassengerDependencies extends Module {
           clearSession: session.clearSession,
           refreshClient: Dio(
             BaseOptions(
-              baseUrl: PassengerEnvConfig.apiBaseUri.toString(),
+              baseUrl: EnvConfig.apiBaseUri.toString(),
               connectTimeout: const Duration(seconds: 15),
               receiveTimeout: const Duration(seconds: 15),
               sendTimeout: const Duration(seconds: 15),
@@ -54,15 +54,15 @@ class PassengerDependencies extends Module {
               i.get<SessionBloc>().add(const SessionGuestRequested()),
         );
       })
-      ..addLazySingleton<PassengerBackgroundTelemetry>(
-        (i) => PassengerBackgroundTelemetry(
-          apiBaseUri: PassengerEnvConfig.apiBaseUri,
+      ..addLazySingleton<BackgroundTelemetry>(
+        (i) => BackgroundTelemetry(
+          apiBaseUri: EnvConfig.apiBaseUri,
           lifecycleCoordinator: i.get<AppLifecycleCoordinator>(),
         ),
       )
       ..addLazySingleton<SessionRepository>(
         (i) => SessionRepositoryImpl(
-          secureSessionService: i.get<PassengerSessionStore>(),
+          secureSessionService: i.get<SessionStore>(),
           preferences: i.get<SharedPreferences>(),
         ),
       )
@@ -77,9 +77,9 @@ class PassengerDependencies extends Module {
             LocationAccessCubit(repository: i.get<LocationAccessRepository>()),
       )
       ..addLazySingleton<Dio>(
-        (i) => PassengerApiClient.create(
-          baseUrl: PassengerEnvConfig.apiBaseUri,
-          sessionService: i.get<PassengerSessionStore>(),
+        (i) => ApiClient.create(
+          baseUrl: EnvConfig.apiBaseUri,
+          sessionService: i.get<SessionStore>(),
           networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
           onSessionExpired: () =>
               i.get<SessionBloc>().add(const SessionGuestRequested()),
@@ -89,13 +89,13 @@ class PassengerDependencies extends Module {
       ..addLazySingleton<LocationRepository>(
         (i) => LocationRemoteDataSource(i.get<Dio>()),
       )
-      // PassengerApp provides this state before the passenger route module is active.
+      // App provides this state before the passenger route module is active.
       ..addLazySingleton<BookingDraftCubit>((_) => BookingDraftCubit());
   }
 
   @override
   List<ModularRoute> get routes => [
     ModuleRoute(AppRoutes.authModulePath, module: AuthModule()),
-    ModuleRoute(AppRoutes.passengerModulePath, module: PassengerRouter()),
+    ModuleRoute(AppRoutes.passengerModulePath, module: AppRouter()),
   ];
 }

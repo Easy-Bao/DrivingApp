@@ -3,10 +3,10 @@ import 'package:driver/src/features/profile/domain/entities/driver_document.dart
 import 'package:driver/src/features/profile/domain/repositories/driver_document_repository.dart';
 import 'package:foundation/foundation.dart';
 
-final class DriverDocumentRepositoryImpl implements DriverDocumentRepository {
-  const DriverDocumentRepositoryImpl(this._dataSource);
+final class DocumentRepositoryImpl implements DocumentRepository {
+  const DocumentRepositoryImpl(this._dataSource);
 
-  final DriverDocumentRemoteDataSource _dataSource;
+  final DocumentRemoteDataSource _dataSource;
 
   @override
   Future<Result<DriverDocument, Failure>> upload({

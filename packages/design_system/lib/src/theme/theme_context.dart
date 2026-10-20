@@ -6,9 +6,9 @@ extension DesignSystemContext on BuildContext {
 
   ColorScheme get colorScheme => Theme.of(this).colorScheme;
 
-  EasyRideSemanticColors get semanticColors {
-    return Theme.of(this).extension<EasyRideSemanticColors>() ??
-        EasyRideSemanticColors.defaults;
+  AppSemanticColors get semanticColors {
+    return Theme.of(this).extension<AppSemanticColors>() ??
+        AppSemanticColors.defaults;
   }
 
   TextTheme get textStyles => Theme.of(this).textTheme;

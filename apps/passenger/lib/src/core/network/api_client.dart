@@ -7,10 +7,10 @@ import 'package:passenger/src/core/network/auth_interceptor.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:sentry_dio/sentry_dio.dart';
 
-class PassengerApiClient._() {
+class ApiClient._() {
   static Dio create({
     required Uri baseUrl,
-    required PassengerSessionStore sessionService,
+    required SessionStore sessionService,
     NetworkAvailabilityCoordinator? networkAvailability,
     FutureOr<void> Function()? onSessionExpired,
     RefreshableTokenProvider? tokenProvider,
@@ -36,7 +36,7 @@ class PassengerApiClient._() {
         : null;
 
     dio.interceptors.add(
-      PassengerAuthInterceptor(
+      AuthInterceptor(
         sessionService,
         dio: dio,
         refreshClient: refreshClient,

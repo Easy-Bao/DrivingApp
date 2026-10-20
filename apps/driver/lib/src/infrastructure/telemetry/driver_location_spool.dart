@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class DriverLocationPoint {
-  const DriverLocationPoint({
+final class LocationPoint {
+  const LocationPoint({
     required this.latitude,
     required this.longitude,
     required this.observedAt,
@@ -26,8 +26,8 @@ final class DriverLocationPoint {
     'speed': speed,
   };
 
-  factory DriverLocationPoint.fromJson(Map<String, dynamic> json) {
-    return DriverLocationPoint(
+  factory LocationPoint.fromJson(Map<String, dynamic> json) {
+    return LocationPoint(
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
       observedAt: DateTime.parse(json['observed_at'] as String).toUtc(),
@@ -37,20 +37,20 @@ final class DriverLocationPoint {
   }
 }
 
-typedef DriverLocationSender = Future<bool> Function(DriverLocationPoint point);
+typedef LocationSender = Future<bool> Function(LocationPoint point);
 
-final class DriverLocationSpool {
+final class LocationSpool {
   static const _storageKey = 'driver_location_spool_v1';
   static const _maximumPoints = 3600;
   static const _flushCommitBatchSize = 10;
 
-  DriverLocationSpool({SharedPreferencesAsync? preferences})
+  LocationSpool({SharedPreferencesAsync? preferences})
     : _preferences = preferences ?? SharedPreferencesAsync();
 
   final SharedPreferencesAsync _preferences;
   Future<void> _operation = Future<void>.value();
 
-  Future<void> enqueue(DriverLocationPoint point) {
+  Future<void> enqueue(LocationPoint point) {
     return _serialize(
       () => traceTimelineStage('driver.location_spool.enqueue', () async {
         final points = await _read();
@@ -63,7 +63,7 @@ final class DriverLocationSpool {
     );
   }
 
-  Future<bool> flush(DriverLocationSender send) {
+  Future<bool> flush(LocationSender send) {
     return _serialize(
       () => traceTimelineStage('driver.location_spool.flush', () async {
         final points = await _read();
@@ -91,29 +91,28 @@ final class DriverLocationSpool {
     );
   }
 
-  Future<List<DriverLocationPoint>> _read() async {
+  Future<List<LocationPoint>> _read() async {
     final encoded = await _preferences.getString(_storageKey);
-    if (encoded == null || encoded.isEmpty) return <DriverLocationPoint>[];
+    if (encoded == null || encoded.isEmpty) return <LocationPoint>[];
     try {
       final decoded = jsonDecode(encoded);
-      if (decoded is! List) return <DriverLocationPoint>[];
+      if (decoded is! List) return <LocationPoint>[];
       return decoded
           .whereType<Map>()
           .map(
-            (value) =>
-                DriverLocationPoint.fromJson(Map<String, dynamic>.from(value)),
+            (value) => LocationPoint.fromJson(Map<String, dynamic>.from(value)),
           )
           .toList(growable: true);
     } on FormatException {
       await _preferences.remove(_storageKey);
-      return <DriverLocationPoint>[];
+      return <LocationPoint>[];
     } on TypeError {
       await _preferences.remove(_storageKey);
-      return <DriverLocationPoint>[];
+      return <LocationPoint>[];
     }
   }
 
-  Future<void> _write(List<DriverLocationPoint> points) async {
+  Future<void> _write(List<LocationPoint> points) async {
     if (points.isEmpty) {
       await _preferences.remove(_storageKey);
       return;

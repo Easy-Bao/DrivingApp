@@ -10,15 +10,15 @@ import 'package:passenger/src/features/ride_history/presentation/bloc/ride_detai
 
 class MockTrackRepository extends Mock implements TrackRepository {}
 
-class MockPassengerSessionStore extends Mock implements PassengerSessionStore {}
+class MockSessionStore extends Mock implements SessionStore {}
 
 void main() {
   late MockTrackRepository repository;
-  late MockPassengerSessionStore sessionService;
+  late MockSessionStore sessionService;
 
   setUp(() {
     repository = MockTrackRepository();
-    sessionService = MockPassengerSessionStore();
+    sessionService = MockSessionStore();
     when(() => sessionService.readPassengerId())
         .thenAnswer((_) async => 'passenger-1');
   });

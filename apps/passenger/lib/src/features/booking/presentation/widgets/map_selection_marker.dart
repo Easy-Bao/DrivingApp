@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class const MapSelectionMarker({super.key}) extends StatelessWidget {
   static const double width = 32;
   static const double height = 38;
-  static final Color markerColor = EasyRideTheme.main.colorScheme.onSurface;
+  static final Color markerColor = AppTheme.main.colorScheme.onSurface;
 
   @override
   Widget build(BuildContext context) {

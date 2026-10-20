@@ -8,12 +8,12 @@ class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 
 void main() {
   late MockFlutterSecureStorage storage;
-  late PassengerSessionStore sessionStore;
+  late SessionStore sessionStore;
   late Map<String, String> stored;
 
   setUp(() {
     storage = MockFlutterSecureStorage();
-    sessionStore = PassengerSessionStore(storage: storage);
+    sessionStore = SessionStore(storage: storage);
     stored = {};
     when(
       () => storage.write(
@@ -36,7 +36,7 @@ void main() {
     await sessionStore.saveToken('access');
     await sessionStore.saveRefreshToken('refresh');
     await sessionStore.savePassengerId('42');
-    final reopened = PassengerSessionStore(storage: storage);
+    final reopened = SessionStore(storage: storage);
     expect(await reopened.readToken(), 'access');
     expect(await reopened.readRefreshToken(), 'refresh');
     expect(await reopened.readPassengerId(), '42');
@@ -59,7 +59,7 @@ void main() {
     expect(await sessionStore.readPassengerId(), '42');
     expect(await sessionStore.readActiveRideId(), 'ride-1');
     expect(stored, isEmpty);
-    final reopened = PassengerSessionStore(storage: storage);
+    final reopened = SessionStore(storage: storage);
     expect(await reopened.readToken(), isNull);
     expect(await reopened.readRefreshToken(), isNull);
     expect(await reopened.readPassengerId(), isNull);
@@ -74,11 +74,11 @@ void main() {
     await sessionStore.clearAll();
 
     for (final key in const [
-      PassengerStorageKeys.accessToken,
-      PassengerStorageKeys.refreshToken,
-      PassengerStorageKeys.driverId,
-      PassengerStorageKeys.passengerId,
-      PassengerStorageKeys.activeRideId,
+      StorageKeys.accessToken,
+      StorageKeys.refreshToken,
+      StorageKeys.driverId,
+      StorageKeys.passengerId,
+      StorageKeys.activeRideId,
     ]) {
       verify(() => storage.delete(key: key)).called(1);
     }
@@ -88,26 +88,24 @@ void main() {
   test('keeps the active ride out of a later account session', () async {
     await sessionStore.clearAll();
 
-    verify(() => storage.delete(key: PassengerStorageKeys.activeRideId))
-        .called(1);
+    verify(() => storage.delete(key: StorageKeys.activeRideId)).called(1);
   });
 
   test('keeps granular token deletion behavior', () async {
     await sessionStore.deleteToken();
 
-    verify(() => storage.delete(key: PassengerStorageKeys.accessToken))
-        .called(1);
+    verify(() => storage.delete(key: StorageKeys.accessToken)).called(1);
   });
 
   test('persists and restores a chat read timestamp per ride', () async {
     final readAt = DateTime.utc(2026, 9, 18, 12, 30);
     when(
       () => storage.write(
-        key: PassengerStorageKeys.chatReadAt('ride-7'),
+        key: StorageKeys.chatReadAt('ride-7'),
         value: readAt.toIso8601String(),
       ),
     ).thenAnswer((_) async {});
-    when(() => storage.read(key: PassengerStorageKeys.chatReadAt('ride-7')))
+    when(() => storage.read(key: StorageKeys.chatReadAt('ride-7')))
         .thenAnswer((_) async => readAt.toIso8601String());
 
     await sessionStore.saveChatReadAt('ride-7', readAt);

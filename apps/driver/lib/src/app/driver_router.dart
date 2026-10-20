@@ -1,3 +1,5 @@
+import 'package:design_system/design_system.dart';
+
 import 'dart:async';
 
 import 'package:maps/maps.dart';
@@ -18,7 +20,7 @@ import 'package:driver/src/features/earnings/earnings_module.dart';
 import 'package:driver/src/features/performance/performance_module.dart';
 import 'package:driver/src/features/ride_history/ride_history_module.dart';
 
-class DriverRouter extends Module {
+class AppRouter extends Module {
   @override
   FutureOr<void> binds(Injector i) {
     ActiveRideModule.binds(i);
@@ -35,8 +37,8 @@ class DriverRouter extends Module {
           dashboardCubit: i.get<DashboardCubit>(),
         ),
       )
-      ..addLazySingleton<DriverLogoutCoordinator>(
-        (i) => DriverLogoutCoordinator(
+      ..addLazySingleton<LogoutCoordinator>(
+        (i) => LogoutCoordinator(
           forceOffline: () async {
             final position = LocationService.lastPosition;
             await i.get<DashboardCubit>().forceOffline(
@@ -44,12 +46,12 @@ class DriverRouter extends Module {
               lng: position?.longitude ?? 0,
             );
           },
-          stopTelemetry: () => i.get<DriverBackgroundTelemetry>().stop(),
-          clearSession: () => i.get<DriverSessionStore>().clearSession(),
+          stopTelemetry: () => i.get<BackgroundTelemetry>().stop(),
+          clearSession: () => i.get<SessionStore>().clearSession(),
         ),
       )
-      ..addLazySingleton<DriverTabNavigationCoordinator>(
-        (_) => DriverTabNavigationCoordinator(),
+      ..addLazySingleton<TabNavigationCoordinator>(
+        (_) => TabNavigationCoordinator(),
       );
   }
 
@@ -61,23 +63,20 @@ class DriverRouter extends Module {
     ...PerformanceModule.routes,
     ...RideHistoryModule.routes,
     ...ProfileModule.routes,
-    ...DriverSettingsModule.routes,
-    ...DriverHelpCenterModule.routes,
+    ...SettingsModule.routes,
+    ...HelpCenterModule.routes,
 
     StatefulShellModularRoute(
-      builder: (context, GoRouterState state, navigationShell) =>
-          DriverShellLayout(
-            navigationShell: navigationShell,
-            navigationCoordinator:
-                Modular.get<DriverTabNavigationCoordinator>(),
-          ),
+      builder: (context, GoRouterState state, navigationShell) => ShellLayout(
+        navigationShell: navigationShell,
+        navigationCoordinator: Modular.get<TabNavigationCoordinator>(),
+      ),
       navigatorContainerBuilder: (context, navigationShell, children) =>
-          DriverTabBranchContainer(
+          TabBranchContainer(
             navigationShell: navigationShell,
-            onNavigationSettled:
-                Modular.get<DriverTabNavigationCoordinator>().commit,
-            onPagePositionChanged: Modular.get<DriverTabNavigationCoordinator>()
-                .updatePagePosition,
+            onNavigationSettled: Modular.get<TabNavigationCoordinator>().commit,
+            onPagePositionChanged:
+                Modular.get<TabNavigationCoordinator>().updatePagePosition,
             children: children,
           ),
       branches: [

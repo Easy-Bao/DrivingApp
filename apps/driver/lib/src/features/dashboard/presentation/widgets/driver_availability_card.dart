@@ -1,8 +1,8 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
-class DriverAvailabilityCard extends StatelessWidget {
-  const DriverAvailabilityCard({
+class AvailabilityCard extends StatelessWidget {
+  const AvailabilityCard({
     super.key,
     required this.isOnline,
     required this.isToggling,
@@ -20,20 +20,18 @@ class DriverAvailabilityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: EasyRideLayout.pagePadding,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppLayout.pagePadding),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: context.colorScheme.outlineVariant),
         ),
         padding: EdgeInsets.symmetric(
-          horizontal: EasyRideSpacing.lg,
-          vertical: hasActiveRide ? EasyRideSpacing.sm : EasyRideSpacing.lg,
+          horizontal: AppSpacing.lg,
+          vertical: hasActiveRide ? AppSpacing.sm : AppSpacing.lg,
         ),
         child: Row(
           children: [
@@ -41,11 +39,8 @@ class DriverAvailabilityCard extends StatelessWidget {
               child: hasActiveRide
                   ? Row(
                       children: [
-                        _DriverStatusPill(
-                          isOnline: isOnline,
-                          pulse: statusPulse,
-                        ),
-                        const SizedBox(width: EasyRideSpacing.sm),
+                        _StatusPill(isOnline: isOnline, pulse: statusPulse),
+                        const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
                             'Active trip',
@@ -61,11 +56,8 @@ class DriverAvailabilityCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _DriverStatusPill(
-                          isOnline: isOnline,
-                          pulse: statusPulse,
-                        ),
-                        const SizedBox(height: EasyRideSpacing.sm),
+                        _StatusPill(isOnline: isOnline, pulse: statusPulse),
+                        const SizedBox(height: AppSpacing.sm),
                         Text(
                           isOnline
                               ? 'Available for ride requests nearby'
@@ -79,10 +71,10 @@ class DriverAvailabilityCard extends StatelessWidget {
                       ],
                     ),
             ),
-            const SizedBox(width: EasyRideSpacing.sm),
+            const SizedBox(width: AppSpacing.sm),
             SizedBox(
               width: 64,
-              height: EasyRideSize.minimumTouchTarget,
+              height: AppSize.minimumTouchTarget,
               child: Center(
                 child: isToggling
                     ? Semantics(
@@ -123,8 +115,8 @@ class DriverAvailabilityCard extends StatelessWidget {
   }
 }
 
-class _DriverStatusPill extends StatelessWidget {
-  const _DriverStatusPill({required this.isOnline, required this.pulse});
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.isOnline, required this.pulse});
 
   final bool isOnline;
   final Animation<double> pulse;
@@ -142,7 +134,7 @@ class _DriverStatusPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: statusColor,
-        borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -73,7 +73,7 @@ class SessionBloc({required this._sessionRepository})
     );
   }
 
-  SessionState _stateFor(PassengerSession session) {
+  SessionState _stateFor(Session session) {
     final passengerId = session.passengerId;
     if (session.isAuthenticated && passengerId != null) {
       return AuthenticatedSession(

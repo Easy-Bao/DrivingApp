@@ -34,7 +34,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: PassengerRatingPage(
+        home: RatingPage(
           driverId: 'driver-1',
           driverName: 'Demo Driver',
           rideId: 'ride-1',

@@ -1,19 +1,19 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:passenger/src/core/session/storage_keys.dart';
 
-class PassengerSessionStore({FlutterSecureStorage? storage}) {
+class SessionStore({FlutterSecureStorage? storage}) {
   static const _defaultStorage = FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
   final Map<String, String> _temporaryValues = {};
   bool _persistent = true;
   static const _sessionKeys = [
-    PassengerStorageKeys.accessToken,
-    PassengerStorageKeys.refreshToken,
-    PassengerStorageKeys.driverId,
-    PassengerStorageKeys.passengerId,
-    PassengerStorageKeys.activeRideId,
-    PassengerStorageKeys.activeBidSessionId,
+    StorageKeys.accessToken,
+    StorageKeys.refreshToken,
+    StorageKeys.driverId,
+    StorageKeys.passengerId,
+    StorageKeys.activeRideId,
+    StorageKeys.activeBidSessionId,
   ];
 
   this : _storage = storage ?? _defaultStorage;
@@ -40,76 +40,70 @@ class PassengerSessionStore({FlutterSecureStorage? storage}) {
   }
 
   Future<void> saveToken(String token) async {
-    await _writeValue(key: PassengerStorageKeys.accessToken, value: token);
+    await _writeValue(key: StorageKeys.accessToken, value: token);
   }
 
   Future<String?> readToken() async {
-    return _readValue(key: PassengerStorageKeys.accessToken);
+    return _readValue(key: StorageKeys.accessToken);
   }
 
   Future<void> deleteToken() async {
-    await _deleteKeys(const [PassengerStorageKeys.accessToken]);
+    await _deleteKeys(const [StorageKeys.accessToken]);
   }
 
   Future<void> saveRefreshToken(String token) async {
-    await _writeValue(key: PassengerStorageKeys.refreshToken, value: token);
+    await _writeValue(key: StorageKeys.refreshToken, value: token);
   }
 
   Future<String?> readRefreshToken() async {
-    return _readValue(key: PassengerStorageKeys.refreshToken);
+    return _readValue(key: StorageKeys.refreshToken);
   }
 
   Future<void> deleteRefreshToken() async {
-    await _deleteKeys(const [PassengerStorageKeys.refreshToken]);
+    await _deleteKeys(const [StorageKeys.refreshToken]);
   }
 
   Future<void> savePassengerId(String passengerId) async {
-    await _writeValue(
-      key: PassengerStorageKeys.passengerId,
-      value: passengerId,
-    );
+    await _writeValue(key: StorageKeys.passengerId, value: passengerId);
   }
 
   Future<String?> readPassengerId() async {
-    return _readValue(key: PassengerStorageKeys.passengerId);
+    return _readValue(key: StorageKeys.passengerId);
   }
 
   Future<void> deletePassengerId() async {
-    await _deleteKeys(const [PassengerStorageKeys.passengerId]);
+    await _deleteKeys(const [StorageKeys.passengerId]);
   }
 
   Future<void> saveActiveRideId(String rideId) async {
-    await _writeValue(key: PassengerStorageKeys.activeRideId, value: rideId);
+    await _writeValue(key: StorageKeys.activeRideId, value: rideId);
   }
 
   Future<String?> readActiveRideId() async {
-    return _readValue(key: PassengerStorageKeys.activeRideId);
+    return _readValue(key: StorageKeys.activeRideId);
   }
 
   Future<void> deleteActiveRideId() async {
-    await _deleteKeys(const [PassengerStorageKeys.activeRideId]);
+    await _deleteKeys(const [StorageKeys.activeRideId]);
   }
 
   Future<void> saveActiveBidSessionId(String sessionId) async {
-    await _writeValue(
-      key: PassengerStorageKeys.activeBidSessionId,
-      value: sessionId,
-    );
+    await _writeValue(key: StorageKeys.activeBidSessionId, value: sessionId);
   }
 
   Future<String?> readActiveBidSessionId() async {
-    return _readValue(key: PassengerStorageKeys.activeBidSessionId);
+    return _readValue(key: StorageKeys.activeBidSessionId);
   }
 
   Future<void> deleteActiveBidSessionId() async {
-    await _deleteKeys(const [PassengerStorageKeys.activeBidSessionId]);
+    await _deleteKeys(const [StorageKeys.activeBidSessionId]);
   }
 
   Future<void> saveChatReadAt(String rideId, DateTime readAt) async {
     final normalizedRideId = rideId.trim();
     if (normalizedRideId.isEmpty) return;
     await _writeValue(
-      key: PassengerStorageKeys.chatReadAt(normalizedRideId),
+      key: StorageKeys.chatReadAt(normalizedRideId),
       value: readAt.toUtc().toIso8601String(),
     );
   }
@@ -118,7 +112,7 @@ class PassengerSessionStore({FlutterSecureStorage? storage}) {
     final normalizedRideId = rideId.trim();
     if (normalizedRideId.isEmpty) return null;
     final rawValue = await _readValue(
-      key: PassengerStorageKeys.chatReadAt(normalizedRideId),
+      key: StorageKeys.chatReadAt(normalizedRideId),
     );
     if (rawValue == null || rawValue.trim().isEmpty) return null;
     return DateTime.tryParse(rawValue)?.toUtc();

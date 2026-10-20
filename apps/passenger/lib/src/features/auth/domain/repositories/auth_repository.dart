@@ -1,8 +1,8 @@
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
 
-abstract interface class PassengerAuthRepository {
-  Future<Result<PassengerAuthCredentials, Failure>> authenticate({
+abstract interface class AuthRepository {
+  Future<Result<AuthCredentials, Failure>> authenticate({
     required String email,
     required String password,
     bool rememberMe = true,
@@ -15,7 +15,7 @@ abstract interface class PassengerAuthRepository {
     required String password,
   });
 
-  Future<Result<PassengerAuthCredentials, Failure>> verifyOtp({
+  Future<Result<AuthCredentials, Failure>> verifyOtp({
     required String email,
     required String code,
   });

@@ -16,7 +16,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          theme: EasyRideTheme.main,
+          theme: AppTheme.main,
           home: MediaQuery(
             data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
             child: Scaffold(

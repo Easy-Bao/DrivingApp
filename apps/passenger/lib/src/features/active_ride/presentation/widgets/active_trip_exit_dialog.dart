@@ -11,7 +11,7 @@ class const ActiveTripExitDialog({required this.driverName, super.key})
   Widget build(BuildContext context) {
     return AlertDialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       title: Text(
         'Trip in progress',
@@ -31,7 +31,7 @@ class const ActiveTripExitDialog({required this.driverName, super.key})
         TextButton(
           onPressed: () => Navigator.pop(context, ActiveTripExitAction.cancel),
           style: TextButton.styleFrom(
-            minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
+            minimumSize: const Size(0, AppSize.minimumTouchTarget),
           ),
           child: Text(
             'Cancel ride',
@@ -45,7 +45,7 @@ class const ActiveTripExitDialog({required this.driverName, super.key})
           onPressed: () =>
               Navigator.pop(context, ActiveTripExitAction.minimize),
           style: TextButton.styleFrom(
-            minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
+            minimumSize: const Size(0, AppSize.minimumTouchTarget),
           ),
           child: Text(
             'Go to home',
@@ -59,7 +59,7 @@ class const ActiveTripExitDialog({required this.driverName, super.key})
           onPressed: () =>
               Navigator.pop(context, ActiveTripExitAction.keepTracking),
           style: FilledButton.styleFrom(
-            minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
+            minimumSize: const Size(0, AppSize.minimumTouchTarget),
           ),
           child: const Text('Keep tracking'),
         ),

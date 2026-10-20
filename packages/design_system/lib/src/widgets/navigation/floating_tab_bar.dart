@@ -38,7 +38,7 @@ class AppFloatingTabBar extends StatelessWidget {
   }) : assert(destinations.length > 0);
 
   static const animationDuration = Duration(milliseconds: 280);
-  static const height = EasyRideSize.navigationBarHeight;
+  static const height = AppSize.navigationBarHeight;
 
   final List<AppTabDestination> destinations;
   final int selectedIndex;
@@ -124,7 +124,7 @@ class AppFloatingTabBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(
           color: colorScheme.outlineVariant.withValues(alpha: 0.6),
           width: 0.5,
@@ -191,7 +191,7 @@ class _AppFloatingTabItem extends StatelessWidget {
         message: destination.label,
         child: InkWell(
           key: ValueKey<String>('$itemKeyPrefix-$index'),
-          borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
           overlayColor: WidgetStateProperty.resolveWith<Color>((states) {
             if (states.contains(WidgetState.pressed)) {
               return colorScheme.primary.withValues(alpha: 0.12);
@@ -212,10 +212,10 @@ class _AppFloatingTabItem extends StatelessWidget {
                 iconBuilder?.call(context, index, destination, targetColor) ??
                     Icon(
                       destination.icon,
-                      size: EasyRideSize.navigationIcon,
+                      size: AppSize.navigationIcon,
                       color: targetColor,
                     ),
-                const SizedBox(height: EasyRideSpacing.sm / 2),
+                const SizedBox(height: AppSpacing.sm / 2),
                 Flexible(
                   child: Text(
                     destination.label,

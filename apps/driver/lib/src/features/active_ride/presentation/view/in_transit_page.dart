@@ -37,7 +37,7 @@ class const InTransitPage({
   final String duration;
   final double distance;
   final double fare;
-  final DriverRideRepository rideRepository;
+  final RideRepository rideRepository;
   final AppLifecycleCoordinator lifecycleCoordinator;
   final LiveMapBloc? liveMapBloc;
 
@@ -318,14 +318,14 @@ class _InTransitPageState extends State<InTransitPage> {
                     ),
                   ),
                   SafeArea(
-                    child: DriverActiveRideHeader(
+                    child: ActiveRideHeader(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                       backButton: _buildTripBackButton(
                         context,
                         () => context.pop(),
                       ),
                       actions: [
-                        DriverEmergencyButton(
+                        EmergencyButton(
                           onEmergencyStop: _emergencyStop,
                           onEmergencyStopCompleted: () {
                             if (mounted) {
@@ -333,7 +333,7 @@ class _InTransitPageState extends State<InTransitPage> {
                             }
                           },
                         ),
-                        DriverSafetyReportButton(
+                        SafetyReportButton(
                           rideId: BlocProvider.of<RideFlowCubit>(context)
                               .activeRideId,
                           rideRepository: widget.rideRepository,
@@ -349,14 +349,14 @@ class _InTransitPageState extends State<InTransitPage> {
                         decoration: BoxDecoration(
                           color: context.colorScheme.surface,
                           borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(EasyRideRadius.sheet),
+                            top: Radius.circular(AppRadius.sheet),
                           ),
                         ),
                         padding: const EdgeInsets.fromLTRB(
-                          EasyRideSpacing.lg,
+                          AppSpacing.lg,
                           10,
-                          EasyRideSpacing.lg,
-                          EasyRideSpacing.lg,
+                          AppSpacing.lg,
+                          AppSpacing.lg,
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -420,8 +420,8 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
         onTap: onPressed,
         customBorder: const CircleBorder(),
         child: SizedBox(
-          width: EasyRideSize.minimumTouchTarget,
-          height: EasyRideSize.minimumTouchTarget,
+          width: AppSize.minimumTouchTarget,
+          height: AppSize.minimumTouchTarget,
           child: Center(
             child: Icon(
               LucideIcons.arrow_left,

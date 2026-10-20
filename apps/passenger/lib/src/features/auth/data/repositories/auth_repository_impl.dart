@@ -1,32 +1,31 @@
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/data/datasources/auth_endpoints.dart';
-import 'package:passenger/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
-  PassengerAuthRepositoryImpl({
+final class AuthRepositoryImpl implements AuthRepository {
+  AuthRepositoryImpl({
     required this._remoteDataSource,
     required this._secureSessionService,
     required this._preferences,
   });
 
-  final PassengerAuthRemoteDataSource _remoteDataSource;
-  final PassengerSessionStore _secureSessionService;
+  final AuthRemoteDataSource _remoteDataSource;
+  final SessionStore _secureSessionService;
   final SharedPreferences _preferences;
 
   @override
-  Future<Result<PassengerAuthCredentials, Failure>> authenticate({
+  Future<Result<AuthCredentials, Failure>> authenticate({
     required String email,
     required String password,
     bool rememberMe = true,
   }) async {
     try {
       final responseData = await _remoteDataSource.postData(
-        PassengerAuthEndpoints.login,
+        AccountAuthEndpoints.login,
         requestBody: {
           'email': email,
           'password': password,
@@ -73,7 +72,7 @@ final class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
   }) async {
     try {
       final responseData = await _remoteDataSource.postData(
-        PassengerAuthEndpoints.register,
+        AccountAuthEndpoints.register,
         requestBody: {
           'name': name,
           'email': email,
@@ -113,13 +112,13 @@ final class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
   }
 
   @override
-  Future<Result<PassengerAuthCredentials, Failure>> verifyOtp({
+  Future<Result<AuthCredentials, Failure>> verifyOtp({
     required String email,
     required String code,
   }) async {
     try {
       final responseData = await _remoteDataSource.postData(
-        PassengerAuthEndpoints.verifyOtp,
+        AccountAuthEndpoints.verifyOtp,
         requestBody: {'email': email, 'code': code},
       );
       final credentials = _credentialsFromResponse(
@@ -141,7 +140,7 @@ final class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
     }
   }
 
-  PassengerAuthCredentials _credentialsFromResponse(
+  AuthCredentials _credentialsFromResponse(
     Map<String, dynamic> responseData, {
     required String fallbackEmail,
   }) {
@@ -171,7 +170,7 @@ final class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
     final rawName = _stringValue(
       passenger['name'] ?? passenger['full_name'] ?? passenger['fullName'],
     );
-    return PassengerAuthCredentials(
+    return AuthCredentials(
       passengerId: passengerId,
       passengerName: rawName,
       passengerEmail: passengerEmail.isEmpty ? fallbackEmail : passengerEmail,
@@ -183,7 +182,7 @@ final class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
   }
 
   Future<void> _persistSession(
-    PassengerAuthCredentials credentials, {
+    AuthCredentials credentials, {
     bool? rememberMe,
   }) async {
     if (rememberMe != null) {
@@ -211,7 +210,7 @@ final class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
   }) async {
     try {
       final responseBody = await _remoteDataSource.postJson(
-        PassengerAuthEndpoints.requestOtp,
+        AccountAuthEndpoints.requestOtp,
         requestBody: {'email': email},
       );
       final success = responseBody['success'] == true;
@@ -237,7 +236,7 @@ final class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
   Future<Result<void, Failure>> resetPassword({required String email}) async {
     try {
       final responseBody = await _remoteDataSource.postJson(
-        PassengerAuthEndpoints.forgotPassword,
+        AccountAuthEndpoints.forgotPassword,
         requestBody: {'email': email},
       );
       final success = responseBody['success'] == true;
@@ -267,7 +266,7 @@ final class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
   }) async {
     try {
       final responseBody = await _remoteDataSource.postJson(
-        PassengerAuthEndpoints.resetPassword,
+        AccountAuthEndpoints.resetPassword,
         requestBody: {'email': email, 'code': code, 'newPassword': newPassword},
       );
       final success = responseBody['success'] == true;

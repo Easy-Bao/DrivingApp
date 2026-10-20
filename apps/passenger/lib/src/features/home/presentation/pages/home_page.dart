@@ -49,7 +49,7 @@ class const HomePage({
 }) extends StatefulWidget {
   final BookingBloc bookingBloc;
   final AppLifecycleCoordinator lifecycleCoordinator;
-  final PassengerSessionStore? sessionService;
+  final SessionStore? sessionService;
   final TrackRepository? trackRepository;
 
   @override
@@ -134,13 +134,13 @@ class _HomePageState extends State<HomePage> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(
-                      maxWidth: EasyRideLayout.pageMaxWidth,
+                      maxWidth: AppLayout.pageMaxWidth,
                     ),
                     child: Stack(
                       children: [
                         Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: EasyRideLayout.pagePadding,
+                            horizontal: AppLayout.pagePadding,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,9 +174,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _bookingBloc = widget.bookingBloc;
     _homeCubit = BlocProvider.of<HomeCubit>(context, listen: false);
-    _routePopSubscription = passengerNavigationObserver.routePopEvents.listen((
-      _,
-    ) {
+    _routePopSubscription = appNavigationObserver.routePopEvents.listen((_) {
       if (!mounted) return;
       _isNavigationInFlight = false;
       _refreshLocationSnapshot();
@@ -204,10 +202,10 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _restoreActiveRideOnLaunch() async {
     try {
-      PassengerSessionStore? session = widget.sessionService;
+      SessionStore? session = widget.sessionService;
       if (session == null) {
         try {
-          session = Modular.get<PassengerSessionStore>();
+          session = Modular.get<SessionStore>();
         } catch (_) {
           return;
         }
@@ -384,7 +382,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeader() {
-    return const EasyRidePageHeader(
+    return const AppPageHeader(
       title: 'EasyRide',
       subtitle: 'Ready to ride today?',
     );
@@ -540,10 +538,10 @@ class _HomePageState extends State<HomePage> {
     final trackDriverCubit = _getTrackDriverCubit();
     if (trackDriverCubit?.state.isTerminal == true) return;
 
-    PassengerSessionStore? session = widget.sessionService;
+    SessionStore? session = widget.sessionService;
     if (session == null) {
       try {
-        session = Modular.get<PassengerSessionStore>();
+        session = Modular.get<SessionStore>();
       } catch (_) {
         // Ride-history fallback remains available if session storage is absent.
       }
@@ -593,7 +591,7 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         title: Text(
           'Active Ride in Progress',
@@ -639,10 +637,10 @@ class _HomePageState extends State<HomePage> {
           child: Material(
             color: context.colorScheme.surface.withValues(alpha: 0),
             child: Container(
-              padding: const EdgeInsets.all(EasyRideSpacing.lg),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(color: context.colorScheme.outlineVariant),
                 boxShadow: const [
                   BoxShadow(

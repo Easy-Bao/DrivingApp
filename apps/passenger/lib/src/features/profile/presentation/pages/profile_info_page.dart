@@ -252,8 +252,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final horizontalPadding = constraints.maxWidth < 360
-                    ? EasyRideLayout.pagePadding
-                    : EasyRideLayout.pagePaddingWide;
+                    ? AppLayout.pagePadding
+                    : AppLayout.pagePaddingWide;
                 return SingleChildScrollView(
                   key: const ValueKey<String>('passenger-profile-info-scroll'),
                   physics: const ClampingScrollPhysics(),
@@ -270,7 +270,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _buildProfileHeader(),
-                          const SizedBox(height: EasyRideSpacing.xxl * 1.5),
+                          const SizedBox(height: AppSpacing.xxl * 1.5),
                           _buildDetailsSection(),
                         ],
                       ),
@@ -292,8 +292,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final horizontalPadding = constraints.maxWidth < 360
-              ? EasyRideLayout.pagePadding
-              : EasyRideLayout.pagePaddingWide;
+              ? AppLayout.pagePadding
+              : AppLayout.pagePaddingWide;
           return Container(
             color: context.canvasColor,
             padding: EdgeInsets.fromLTRB(
@@ -308,7 +308,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                 constraints: const BoxConstraints(maxWidth: 560),
                 child: SizedBox(
                   width: double.infinity,
-                  height: EasyRideSize.controlHeight,
+                  height: AppSize.controlHeight,
                   child: FilledButton(
                     key: const ValueKey<String>('passenger-profile-save'),
                     onPressed: _isSaving ? null : _saveProfile,
@@ -317,7 +317,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                       foregroundColor: context.colorScheme.onPrimary,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     child: _isSaving
@@ -388,7 +388,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   }
 
   Widget _buildDetailsSection() {
-    return EasyRideSurfaceCard(
+    return AppSurfaceCard(
       padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -400,10 +400,10 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           _buildEmailTile(),
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              EasyRideSpacing.lg,
+              AppSpacing.lg,
               0,
-              EasyRideSpacing.lg,
-              EasyRideSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.md,
             ),
             child: Text(
               'Email and phone changes require verification.',
@@ -432,7 +432,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   Widget _buildFullNameTile() {
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: EasyRideSpacing.lg,
+        horizontal: AppSpacing.lg,
         vertical: 14,
       ),
       child: Row(
@@ -501,7 +501,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   Widget _buildPhoneTile() {
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: EasyRideSpacing.lg,
+        horizontal: AppSpacing.lg,
         vertical: 14,
       ),
       child: Row(
@@ -583,7 +583,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   Widget _buildEmailTile() {
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: EasyRideSpacing.lg,
+        horizontal: AppSpacing.lg,
         vertical: 14,
       ),
       child: Row(
@@ -642,7 +642,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   Widget _buildGenderTile() {
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: EasyRideSpacing.lg,
+        horizontal: AppSpacing.lg,
         vertical: 14,
       ),
       child: Row(
@@ -661,7 +661,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               children: [
                 _buildFieldLabel('Gender'),
                 const SizedBox(height: 4),
-                EasyRideSelectField<String>(
+                AppSelectField<String>(
                   key: const ValueKey<String>('passenger-profile-gender'),
                   value: _gender,
                   menuTitle: 'Gender',
@@ -689,10 +689,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                   ),
                   options: [
                     for (final gender in _genderOptions)
-                      EasyRideSelectOption<String>(
-                        value: gender,
-                        label: gender,
-                      ),
+                      AppSelectOption<String>(value: gender, label: gender),
                   ],
                   onChanged: (gender) {
                     if (gender == null) return;

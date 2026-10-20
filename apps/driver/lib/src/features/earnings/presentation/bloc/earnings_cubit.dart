@@ -4,12 +4,12 @@ import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 
-class DriverEarningsCubit extends Cubit<DriverEarningsState> {
-  DriverEarningsCubit({required this.repository, required this.sessionService})
-    : super(const DriverEarningsState());
+class EarningsCubit extends Cubit<EarningsState> {
+  EarningsCubit({required this.repository, required this.sessionService})
+    : super(const EarningsState());
 
-  final DriverEarningsRepository repository;
-  final DriverSessionStore sessionService;
+  final EarningsRepository repository;
+  final SessionStore sessionService;
 
   Future<void> load() async {
     if (isClosed || state.isLoading) return;

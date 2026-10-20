@@ -3,7 +3,7 @@ import 'package:passenger/src/features/profile/domain/entities/profile.dart';
 
 void main() {
   test('normalizes nested snake-case profile payloads', () {
-    final profile = PassengerProfile.fromJson({
+    final profile = Profile.fromJson({
       'data': {
         'user_id': 7,
         'full_name': 'Ada Driver',
@@ -27,7 +27,7 @@ void main() {
   });
 
   test('prefers the first non-empty alias and supports camel-case fields', () {
-    final profile = PassengerProfile.fromJson({
+    final profile = Profile.fromJson({
       'profile': {
         'name': '  ',
         'fullName': 'Passenger Name',

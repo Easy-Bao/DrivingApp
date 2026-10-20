@@ -34,7 +34,7 @@ void main() {
   group('DashboardCubit — loadStats()', () {
     test('ignores a statistics result after the cubit closes', () async {
       final statsStarted = Completer<void>();
-      final releaseStats = Completer<Result<DriverDashboardStats, Failure>>();
+      final releaseStats = Completer<Result<DashboardStats, Failure>>();
       when(() => repo.getDashboardStats()).thenAnswer((_) {
         statsStarted.complete();
         return releaseStats.future;
@@ -48,7 +48,7 @@ void main() {
 
       await cubit.close();
       releaseStats.complete(
-        const Ok(DriverDashboardStats(earnings: 42, completedTrips: 2)),
+        const Ok(DashboardStats(earnings: 42, completedTrips: 2)),
       );
       await pendingLoad;
 
@@ -67,9 +67,8 @@ void main() {
           ),
         ).thenAnswer((_) async => const Ok(null));
         when(() => repo.getDashboardStats()).thenAnswer(
-          (_) async => const Ok(
-            DriverDashboardStats(earnings: 385.50, completedTrips: 7),
-          ),
+          (_) async =>
+              const Ok(DashboardStats(earnings: 385.50, completedTrips: 7)),
         );
         return _makeCubit(repo);
       },
@@ -120,7 +119,7 @@ void main() {
           requestCount++;
           if (requestCount == 1) {
             return const Ok(
-              DriverDashboardStats(earnings: 385.50, completedTrips: 7),
+              DashboardStats(earnings: 385.50, completedTrips: 7),
             );
           }
           return const Err(ServerFailure('network'));
@@ -163,9 +162,7 @@ void main() {
       build: () {
         when(() => repo.getDashboardStats()).thenAnswer((_) async {
           await Future<void>.delayed(const Duration(milliseconds: 10));
-          return const Ok(
-            DriverDashboardStats(earnings: 12.50, completedTrips: 1),
-          );
+          return const Ok(DashboardStats(earnings: 12.50, completedTrips: 1));
         });
         return _makeCubit(repo);
       },
@@ -194,8 +191,7 @@ void main() {
         when(() => repo.getPersistedOnlineStatus())
             .thenAnswer((_) async => const Ok(true));
         when(() => repo.getDashboardStats()).thenAnswer(
-          (_) async =>
-              const Ok(DriverDashboardStats(earnings: 0, completedTrips: 0)),
+          (_) async => const Ok(DashboardStats(earnings: 0, completedTrips: 0)),
         );
 
         final cubit = _makeCubit(repo);
@@ -213,8 +209,7 @@ void main() {
         return const Ok(false);
       });
       when(() => repo.getDashboardStats()).thenAnswer(
-        (_) async =>
-            const Ok(DriverDashboardStats(earnings: 0, completedTrips: 0)),
+        (_) async => const Ok(DashboardStats(earnings: 0, completedTrips: 0)),
       );
 
       final cubit = _makeCubit(repo);
@@ -236,7 +231,7 @@ void main() {
               return const Err(NetworkFailure('service unavailable'));
             }
             return const Ok(
-              DriverDispatchSnapshot(
+              DispatchSnapshot(
                 activeRide: RideSnapshot(
                   id: 'trip-1',
                   status: 'in_transit',
@@ -285,7 +280,7 @@ void main() {
       build: () {
         when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
           (_) async => const Ok(
-            DriverDispatchSnapshot(
+            DispatchSnapshot(
               activeRide: RideSnapshot(
                 id: 'transit-trip',
                 status: 'in_transit',
@@ -319,7 +314,7 @@ void main() {
       () async {
         when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
           (_) async => const Ok(
-            DriverDispatchSnapshot(
+            DispatchSnapshot(
               rideOffers: [
                 {'id': 'offer-1', 'expires_at': '2099-01-01T00:00:00Z'},
               ],
@@ -357,7 +352,7 @@ void main() {
       () async {
         when(() => repo.getDispatchSnapshot(includeOffers: false)).thenAnswer(
           (_) async => const Ok(
-            DriverDispatchSnapshot(
+            DispatchSnapshot(
               activeRide: RideSnapshot(
                 id: 'trip-1',
                 status: 'in_transit',
@@ -390,7 +385,7 @@ void main() {
     );
 
     test('ignores a stale snapshot after a realtime ride is matched', () async {
-      final response = Completer<Result<DriverDispatchSnapshot, Failure>>();
+      final response = Completer<Result<DispatchSnapshot, Failure>>();
       when(() => repo.getDispatchSnapshot(includeOffers: true))
           .thenAnswer((_) => response.future);
       final cubit = _makeCubit(repo);
@@ -405,7 +400,7 @@ void main() {
       cubit.mergeActiveRide(matchedRide);
       response.complete(
         const Ok(
-          DriverDispatchSnapshot(
+          DispatchSnapshot(
             rideOffers: [
               {'id': 'stale-offer'},
             ],
@@ -422,7 +417,7 @@ void main() {
     test(
       'does not restore a ride removed while a snapshot is pending',
       () async {
-        final response = Completer<Result<DriverDispatchSnapshot, Failure>>();
+        final response = Completer<Result<DispatchSnapshot, Failure>>();
         when(() => repo.getDispatchSnapshot(includeOffers: false))
             .thenAnswer((_) => response.future);
         final cubit = _makeCubit(repo);
@@ -437,9 +432,7 @@ void main() {
 
         cubit.removeActiveRide(activeRide.id);
         response.complete(
-          const Ok(
-            DriverDispatchSnapshot(activeRide: activeRide, rideOffers: []),
-          ),
+          const Ok(DispatchSnapshot(activeRide: activeRide, rideOffers: [])),
         );
         await pendingSnapshot;
 
@@ -460,7 +453,7 @@ void main() {
         );
         when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
           (_) async => const Ok(
-            DriverDispatchSnapshot(activeRide: finishedRide, rideOffers: []),
+            DispatchSnapshot(activeRide: finishedRide, rideOffers: []),
           ),
         );
         final cubit = _makeCubit(repo);
@@ -503,13 +496,12 @@ void main() {
         final expiresAt = now
             .add(const Duration(seconds: 90))
             .toIso8601String();
-        var snapshot = DriverDispatchSnapshot(
+        var snapshot = DispatchSnapshot(
           rideOffers: [
             {'id': 'session-1', 'offered_fare': 25000, 'expires_at': expiresAt},
           ],
         );
-        final staleResponse =
-            Completer<Result<DriverDispatchSnapshot, Failure>>();
+        final staleResponse = Completer<Result<DispatchSnapshot, Failure>>();
         final staleRequestStarted = Completer<void>();
         var snapshotRequestCount = 0;
         when(() => repo.getDispatchSnapshot(includeOffers: true))
@@ -541,7 +533,7 @@ void main() {
         );
         staleResponse.complete(
           Ok(
-            DriverDispatchSnapshot(
+            DispatchSnapshot(
               rideOffers: [
                 {
                   'id': 'session-1',
@@ -556,7 +548,7 @@ void main() {
         expect(cubit.state.submittedOffers, hasLength(1));
         expect(cubit.state.activeBids, isEmpty);
 
-        snapshot = DriverDispatchSnapshot(
+        snapshot = DispatchSnapshot(
           rideOffers: [
             {
               'id': 'session-1',
@@ -587,7 +579,7 @@ void main() {
       final expiresAt = now.add(const Duration(seconds: 30));
       when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
         (_) async => Ok(
-          DriverDispatchSnapshot(
+          DispatchSnapshot(
             rideOffers: [
               {
                 'id': 'session-2',

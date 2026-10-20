@@ -28,14 +28,14 @@ final class DashboardRepositoryImpl({
   required this._preferences,
   this._backgroundTelemetryService,
 }) implements DashboardRepository {
-  final DriverPerformanceRepository _performanceRepository;
-  final DriverRideHistoryRepository _rideHistoryRepository;
-  final DriverAvailabilityRemoteDataSource _availabilityDataSource;
+  final PerformanceRepository _performanceRepository;
+  final RideHistoryRepository _rideHistoryRepository;
+  final AvailabilityRemoteDataSource _availabilityDataSource;
   final RideOfferRemoteDataSource _rideOfferDataSource;
-  final DriverRideRepository _rideRepository;
-  final DriverSessionStore _sessionService;
+  final RideRepository _rideRepository;
+  final SessionStore _sessionService;
   final SharedPreferences _preferences;
-  final DriverBackgroundTelemetry? _backgroundTelemetryService;
+  final BackgroundTelemetry? _backgroundTelemetryService;
 
   Failure _mapExceptionToFailure(Object error) => switch (error) {
     final DioException exception => _mapDioFailure(exception),
@@ -296,7 +296,7 @@ final class DashboardRepositoryImpl({
   }
 
   @override
-  Future<Result<DriverDashboardStats, Failure>> getDashboardStats() async {
+  Future<Result<DashboardStats, Failure>> getDashboardStats() async {
     try {
       final driverId = await _getDriverId();
       if (driverId.isEmpty) {
@@ -305,7 +305,7 @@ final class DashboardRepositoryImpl({
         );
       }
       return (await _performanceRepository.fetchStats(driverId)).map(
-        (stats) => DriverDashboardStats(
+        (stats) => DashboardStats(
           earnings: stats.todayEarningsAmount / 100,
           completedTrips: stats.todayCompletedTrips,
         ),
@@ -316,7 +316,7 @@ final class DashboardRepositoryImpl({
   }
 
   @override
-  Future<Result<DriverDispatchSnapshot, Failure>> getDispatchSnapshot({
+  Future<Result<DispatchSnapshot, Failure>> getDispatchSnapshot({
     bool includeOffers = true,
     int limit = 10,
   }) async {
@@ -346,9 +346,7 @@ final class DashboardRepositoryImpl({
         final activeRide = page.items.isEmpty
             ? null
             : RideSnapshot.fromJson(page.items.single);
-        return Ok(
-          DriverDispatchSnapshot(activeRide: activeRide, rideOffers: offers),
-        );
+        return Ok(DispatchSnapshot(activeRide: activeRide, rideOffers: offers));
       });
     } catch (error) {
       return Err(_mapExceptionToFailure(error));

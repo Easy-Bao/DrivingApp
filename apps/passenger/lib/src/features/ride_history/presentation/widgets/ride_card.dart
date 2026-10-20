@@ -5,8 +5,8 @@ import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/ride_history/presentation/formatters/ride_history_presenter.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 
-class PassengerActiveRideCard extends StatelessWidget {
-  const PassengerActiveRideCard({
+class ActiveRideCard extends StatelessWidget {
+  const ActiveRideCard({
     required this.ride,
     required this.presenter,
     required this.onTap,
@@ -34,7 +34,7 @@ class PassengerActiveRideCard extends StatelessWidget {
       child: Material(
         color: context.colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           side: BorderSide(color: context.colorScheme.outlineVariant),
         ),
         clipBehavior: Clip.antiAlias,
@@ -120,8 +120,8 @@ class PassengerActiveRideCard extends StatelessWidget {
   }
 }
 
-class PassengerPastRideCard extends StatelessWidget {
-  const PassengerPastRideCard({
+class PastRideCard extends StatelessWidget {
+  const PastRideCard({
     required this.ride,
     required this.presenter,
     required this.onTap,
@@ -148,7 +148,7 @@ class PassengerPastRideCard extends StatelessWidget {
       child: Material(
         color: context.colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           side: BorderSide(color: context.colorScheme.outlineVariant),
         ),
         clipBehavior: Clip.antiAlias,

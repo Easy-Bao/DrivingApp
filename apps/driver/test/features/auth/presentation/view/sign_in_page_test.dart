@@ -8,13 +8,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockDriverAuthRepository extends Mock implements DriverAuthRepository {}
+class _MockAuthRepository extends Mock implements AuthRepository {}
 
 void main() {
-  late _MockDriverAuthRepository repository;
+  late _MockAuthRepository repository;
 
   setUp(() {
-    repository = _MockDriverAuthRepository();
+    repository = _MockAuthRepository();
   });
 
   testWidgets(
@@ -30,7 +30,7 @@ void main() {
       final bloc = SignInBloc(repository);
       await tester.pumpWidget(
         MaterialApp(
-          theme: EasyRideTheme.main,
+          theme: AppTheme.main,
           home: SigninPage(signInBloc: bloc),
         ),
       );

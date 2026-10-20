@@ -22,14 +22,12 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class DriverDependencies extends Module {
-  DriverDependencies({
-    required this.preferences,
-    DriverSessionStore? sessionService,
-  })  : _sessionService = sessionService ?? DriverSessionStore();
+class AppDependencies extends Module {
+  AppDependencies({required this.preferences, SessionStore? sessionService})
+    : _sessionService = sessionService ?? SessionStore();
 
   final SharedPreferences preferences;
-  final DriverSessionStore _sessionService;
+  final SessionStore _sessionService;
 
   @override
   void binds(Injector i) {
@@ -41,17 +39,16 @@ class DriverDependencies extends Module {
       ..addLazySingleton<NetworkAvailabilityCoordinator>(
         (_) => NetworkAvailabilityCoordinator(),
       )
-      ..addLazySingleton<DriverLocationAccessRepository>(
-        (_) => DriverLocationAccessRepositoryImpl(),
+      ..addLazySingleton<LocationAccessRepository>(
+        (_) => LocationAccessRepositoryImpl(),
       )
-      ..addLazySingleton<DriverLocationAccessCubit>(
-        (i) => DriverLocationAccessCubit(
-          repository: i.get<DriverLocationAccessRepository>(),
-        ),
+      ..addLazySingleton<LocationAccessCubit>(
+        (i) =>
+            LocationAccessCubit(repository: i.get<LocationAccessRepository>()),
       )
-      ..addLazySingleton<DriverSessionStore>((i) => _sessionService)
+      ..addLazySingleton<SessionStore>((i) => _sessionService)
       ..addLazySingleton<RefreshableTokenProvider>((i) {
-        final session = i.get<DriverSessionStore>();
+        final session = i.get<SessionStore>();
         return RefreshableTokenProvider(
           readAccessToken: session.readToken,
           readRefreshToken: session.readRefreshToken,
@@ -64,37 +61,35 @@ class DriverDependencies extends Module {
           },
           refreshClient: Dio(
             BaseOptions(
-              baseUrl: DriverEnvConfig.apiBaseUri.toString(),
+              baseUrl: EnvConfig.apiBaseUri.toString(),
               connectTimeout: const Duration(seconds: 15),
               receiveTimeout: const Duration(seconds: 15),
               sendTimeout: const Duration(seconds: 15),
             ),
           ),
-          onSessionExpired: () => _navigateToDriverSignIn(session),
+          onSessionExpired: () => _navigateToSignIn(session),
         );
       })
-      ..addLazySingleton<DriverBackgroundTelemetry>(
-        (i) => DriverBackgroundTelemetry(
-          apiBaseUri: DriverEnvConfig.apiBaseUri,
+      ..addLazySingleton<BackgroundTelemetry>(
+        (i) => BackgroundTelemetry(
+          apiBaseUri: EnvConfig.apiBaseUri,
           lifecycleCoordinator: i.get<AppLifecycleCoordinator>(),
-          enabled: DriverEnvConfig.backgroundTelemetryEnabled,
+          enabled: EnvConfig.backgroundTelemetryEnabled,
         ),
       )
-      ..addLazySingleton<DriverLocationSpool>((_) => DriverLocationSpool())
+      ..addLazySingleton<LocationSpool>((_) => LocationSpool())
       ..addLazySingleton<RealtimeWebSocketClient>(
         (i) => RealtimeWebSocketClient(
-          uri: DriverEnvConfig.webSocketBaseUri.replace(
-            path: '/api/v1/realtime/ws',
-          ),
+          uri: EnvConfig.webSocketBaseUri.replace(path: '/api/v1/realtime/ws'),
           tokenProvider: i.get<RefreshableTokenProvider>().getToken,
           refreshToken: i.get<RefreshableTokenProvider>().refreshAccessToken,
           networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
         ),
       )
       ..addLazySingleton<Dio>(
-        (i) => DriverApiClient.create(
-          baseUrl: DriverEnvConfig.apiBaseUri,
-          sessionService: i.get<DriverSessionStore>(),
+        (i) => ApiClient.create(
+          baseUrl: EnvConfig.apiBaseUri,
+          sessionService: i.get<SessionStore>(),
           networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
           tokenProvider: i.get<RefreshableTokenProvider>(),
         ),
@@ -110,12 +105,12 @@ class DriverDependencies extends Module {
       ..addLazySingleton<TelemetryRemoteDataSource>(
         (i) => TelemetryRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<DriverRideRepository>(
-        (i) => DriverRideRepositoryImpl(
+      ..addLazySingleton<RideRepository>(
+        (i) => RideRepositoryImpl(
           rideDataSource: i.get<RideRemoteDataSource>(),
           counterpartyDataSource: i.get<RideCounterpartyRemoteDataSource>(),
           telemetryDataSource: i.get<TelemetryRemoteDataSource>(),
-          locationSpool: i.get<DriverLocationSpool>(),
+          locationSpool: i.get<LocationSpool>(),
         ),
       );
   }
@@ -123,15 +118,13 @@ class DriverDependencies extends Module {
   @override
   List<ModularRoute> get routes => [
     ModuleRoute(AppRoutes.authModulePath, module: AuthModule()),
-    ModuleRoute(AppRoutes.driverModulePath, module: DriverRouter()),
+    ModuleRoute(AppRoutes.driverModulePath, module: AppRouter()),
   ];
 }
 
-Future<void> _navigateToDriverSignIn([
-  DriverSessionStore? sessionService,
-]) async {
+Future<void> _navigateToSignIn([SessionStore? sessionService]) async {
   try {
-    final session = sessionService ?? Modular.get<DriverSessionStore>();
+    final session = sessionService ?? Modular.get<SessionStore>();
     final activeRideId = await session.readActiveRideId();
     if (activeRideId != null && activeRideId.trim().isNotEmpty) {
       return;

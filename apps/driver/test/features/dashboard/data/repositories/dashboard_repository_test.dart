@@ -15,35 +15,33 @@ import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class MockDriverAvailabilityRemoteDataSource extends Mock
-    implements DriverAvailabilityRemoteDataSource {}
+class MockAvailabilityRemoteDataSource extends Mock
+    implements AvailabilityRemoteDataSource {}
 
-class MockDriverPerformanceRepository extends Mock
-    implements DriverPerformanceRepository {}
+class MockPerformanceRepository extends Mock implements PerformanceRepository {}
 
-class MockDriverRideHistoryRepository extends Mock
-    implements DriverRideHistoryRepository {}
+class MockRideHistoryRepository extends Mock implements RideHistoryRepository {}
 
-class MockSecureSessionService extends Mock implements DriverSessionStore {}
+class MockSecureSessionService extends Mock implements SessionStore {}
 
 class MockBackgroundTelemetryService extends Mock
-    implements DriverBackgroundTelemetry {}
+    implements BackgroundTelemetry {}
 
 class MockRideOfferRemoteDataSource extends Mock
     implements RideOfferRemoteDataSource {}
 
-class MockDriverRideRepository extends Mock implements DriverRideRepository {}
+class MockRideRepository extends Mock implements RideRepository {}
 
 late SharedPreferences _preferences;
-late MockDriverPerformanceRepository _performanceRepository;
-late MockDriverRideHistoryRepository _rideHistoryRepository;
+late MockPerformanceRepository _performanceRepository;
+late MockRideHistoryRepository _rideHistoryRepository;
 late MockRideOfferRemoteDataSource _rideOfferDataSource;
-late MockDriverRideRepository _rideRepository;
+late MockRideRepository _rideRepository;
 
 DashboardRepositoryImpl _buildRepository({
-  required DriverAvailabilityRemoteDataSource availabilityDataSource,
-  required DriverSessionStore sessionService,
-  DriverBackgroundTelemetry? backgroundTelemetryService,
+  required AvailabilityRemoteDataSource availabilityDataSource,
+  required SessionStore sessionService,
+  BackgroundTelemetry? backgroundTelemetryService,
 }) {
   return DashboardRepositoryImpl(
     performanceRepository: _performanceRepository,
@@ -72,23 +70,23 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     _preferences = await SharedPreferences.getInstance();
-    _performanceRepository = MockDriverPerformanceRepository();
-    _rideHistoryRepository = MockDriverRideHistoryRepository();
+    _performanceRepository = MockPerformanceRepository();
+    _rideHistoryRepository = MockRideHistoryRepository();
     _rideOfferDataSource = MockRideOfferRemoteDataSource();
-    _rideRepository = MockDriverRideRepository();
+    _rideRepository = MockRideRepository();
   });
 
   test(
     'maps completed trip statistics from the server contract once',
     () async {
-      final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+      final availabilityDataSource = MockAvailabilityRemoteDataSource();
       final sessionService = MockSecureSessionService();
 
       when(() => sessionService.readDriverId())
           .thenAnswer((_) async => 'driver-42');
       when(() => _performanceRepository.fetchStats('driver-42')).thenAnswer(
         (_) async => const Ok(
-          DriverPerformanceStats(
+          PerformanceStats(
             todayEarningsAmount: 2817,
             todayCompletedTrips: 1,
             totalTrips: 6,
@@ -108,8 +106,8 @@ void main() {
 
       expect(
         result,
-        const Ok<DriverDashboardStats, Failure>(
-          DriverDashboardStats(earnings: 28.17, completedTrips: 1),
+        const Ok<DashboardStats, Failure>(
+          DashboardStats(earnings: 28.17, completedTrips: 1),
         ),
       );
       verify(() => _performanceRepository.fetchStats('driver-42')).called(1);
@@ -117,7 +115,7 @@ void main() {
   );
 
   test('maps one active ride from the active-history response', () async {
-    final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+    final availabilityDataSource = MockAvailabilityRemoteDataSource();
     final sessionService = MockSecureSessionService();
 
     when(() => sessionService.readDriverId())
@@ -174,7 +172,7 @@ void main() {
   test(
     'rejects multiple active rides instead of dropping an extra ride',
     () async {
-      final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+      final availabilityDataSource = MockAvailabilityRemoteDataSource();
       final sessionService = MockSecureSessionService();
 
       when(() => sessionService.readDriverId())
@@ -220,7 +218,7 @@ void main() {
   test(
     'reports an incomplete local session as an authentication failure',
     () async {
-      final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+      final availabilityDataSource = MockAvailabilityRemoteDataSource();
       final sessionService = MockSecureSessionService();
 
       when(() => sessionService.readDriverId()).thenAnswer((_) async => null);
@@ -234,7 +232,7 @@ void main() {
 
       expect(
         result,
-        const Err<DriverDashboardStats, Failure>(
+        const Err<DashboardStats, Failure>(
           AuthFailure('Driver session is unavailable. Please sign in again.'),
         ),
       );
@@ -243,7 +241,7 @@ void main() {
   );
 
   test('confirms availability without blocking on initial telemetry', () async {
-    final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+    final availabilityDataSource = MockAvailabilityRemoteDataSource();
     final sessionService = MockSecureSessionService();
 
     when(() => sessionService.readDriverId())
@@ -288,7 +286,7 @@ void main() {
   test(
     'keeps the driver online when initial telemetry fails so it can retry',
     () async {
-      final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+      final availabilityDataSource = MockAvailabilityRemoteDataSource();
       final sessionService = MockSecureSessionService();
 
       when(() => sessionService.readDriverId())
@@ -351,7 +349,7 @@ void main() {
   );
 
   test('does not make native telemetry startup block going online', () async {
-    final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+    final availabilityDataSource = MockAvailabilityRemoteDataSource();
     final sessionService = MockSecureSessionService();
     final backgroundService = MockBackgroundTelemetryService();
 
@@ -399,7 +397,7 @@ void main() {
   });
 
   test('persists online state before starting background telemetry', () async {
-    final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+    final availabilityDataSource = MockAvailabilityRemoteDataSource();
     final sessionService = MockSecureSessionService();
     final backgroundService = MockBackgroundTelemetryService();
     final callOrder = <String>[];
@@ -438,7 +436,7 @@ void main() {
   });
 
   test('removes the driver location when going offline', () async {
-    final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+    final availabilityDataSource = MockAvailabilityRemoteDataSource();
     final sessionService = MockSecureSessionService();
 
     when(() => sessionService.readDriverId())
@@ -470,7 +468,7 @@ void main() {
   });
 
   test('explains that an active ride blocks going offline', () async {
-    final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+    final availabilityDataSource = MockAvailabilityRemoteDataSource();
     final sessionService = MockSecureSessionService();
 
     when(() => sessionService.readDriverId())
@@ -508,7 +506,7 @@ void main() {
   });
 
   test('clears local state even when remote offline call fails', () async {
-    final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+    final availabilityDataSource = MockAvailabilityRemoteDataSource();
     final sessionService = MockSecureSessionService();
     final telemetryService = MockBackgroundTelemetryService();
 
@@ -546,7 +544,7 @@ void main() {
   test(
     'keeps the server error actionable when availability update fails',
     () async {
-      final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+      final availabilityDataSource = MockAvailabilityRemoteDataSource();
       final sessionService = MockSecureSessionService();
 
       when(() => sessionService.readDriverId())

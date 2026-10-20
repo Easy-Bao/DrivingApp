@@ -10,7 +10,7 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class TestDriverSessionStore extends DriverSessionStore {
+class TestSessionStore extends SessionStore {
   bool sessionCleared = false;
 
   @override
@@ -25,11 +25,11 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final preferences = await SharedPreferences.getInstance();
-    final session = TestDriverSessionStore();
+    final session = TestSessionStore();
     await dotenv.load(fileName: '.env', isOptional: true);
 
     await Modular.configure(
-      appModule: DriverDependencies(
+      appModule: AppDependencies(
         preferences: preferences,
         sessionService: session,
       ),
@@ -40,8 +40,8 @@ void main() {
     );
     await Future<void>.delayed(Duration.zero);
 
-    expect(Modular.isRegistered<DriverLocationAccessRepository>(), isTrue);
-    expect(Modular.isRegistered<DriverLocationAccessCubit>(), isTrue);
+    expect(Modular.isRegistered<LocationAccessRepository>(), isTrue);
+    expect(Modular.isRegistered<LocationAccessCubit>(), isTrue);
 
     await Modular.get<RefreshableTokenProvider>().refreshAccessToken();
 

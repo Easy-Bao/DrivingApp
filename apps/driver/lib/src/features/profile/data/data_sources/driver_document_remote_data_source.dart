@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 import 'package:driver/src/features/profile/domain/entities/driver_document.dart';
 
-abstract interface class DriverDocumentRemoteDataSource {
+abstract interface class DocumentRemoteDataSource {
   Future<DriverDocument> upload({
     required DriverDocumentType type,
     required List<int> bytes,
@@ -10,9 +10,8 @@ abstract interface class DriverDocumentRemoteDataSource {
   });
 }
 
-final class DriverDocumentRemoteDataSourceImpl
-    implements DriverDocumentRemoteDataSource {
-  const DriverDocumentRemoteDataSourceImpl(this._dio);
+final class DocumentRemoteDataSourceImpl implements DocumentRemoteDataSource {
+  const DocumentRemoteDataSourceImpl(this._dio);
 
   final Dio _dio;
 

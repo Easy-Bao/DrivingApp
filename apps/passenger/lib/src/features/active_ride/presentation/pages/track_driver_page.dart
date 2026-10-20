@@ -70,7 +70,7 @@ class const TrackDriverPage({
   final RideSnapshot ride;
   final TrackRepository trackRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
-  final PassengerSessionStore sessionService;
+  final SessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
   final LiveMapBloc liveMapBloc;
   final VoidCallback onRideTerminated;
@@ -516,8 +516,9 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       final rideId = widget.ride.id.trim();
       if (rideId.isEmpty) return;
 
-      final result =
-          await widget.trackRepository.fetchCounterpartyResult(rideId);
+      final result = await widget.trackRepository.fetchCounterpartyResult(
+        rideId,
+      );
       final (canCall, phone) = result.fold(
         (failure) {
           if (mounted) {
@@ -601,14 +602,11 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   }
 
   Future<void> _handleEmergencyPressed() async {
-    await showPassengerEmergencyActionSheet(
-      context,
-      onEmergencyStop: _emergencyStop,
-    );
+    await showEmergencyActionSheet(context, onEmergencyStop: _emergencyStop);
   }
 
   Future<void> _handleReportDriverPressed() async {
-    final submitted = await showPassengerSafetyReportSheet(
+    final submitted = await showSafetyReportSheet(
       context,
       rideId: widget.ride.id,
       trackRepository: widget.trackRepository,

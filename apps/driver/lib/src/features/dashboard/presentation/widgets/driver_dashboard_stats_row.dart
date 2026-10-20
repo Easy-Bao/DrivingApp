@@ -4,8 +4,8 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class DriverDashboardStatsRow extends StatelessWidget {
-  const DriverDashboardStatsRow({
+class DashboardStatsRow extends StatelessWidget {
+  const DashboardStatsRow({
     super.key,
     required this.isLoadingStats,
     required this.earnings,
@@ -33,7 +33,7 @@ class DriverDashboardStatsRow extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: EasyRideLayout.pagePadding,
+            horizontal: AppLayout.pagePadding,
           ),
           child: Row(
             children: [
@@ -47,7 +47,7 @@ class DriverDashboardStatsRow extends StatelessWidget {
                   icon: LucideIcons.wallet,
                 ),
               ),
-              const SizedBox(width: EasyRideSpacing.sm),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: _buildStatCard(
                   context,
@@ -69,9 +69,9 @@ class DriverDashboardStatsRow extends StatelessWidget {
   Widget _buildErrorState(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(
-        left: EasyRideLayout.pagePadding,
-        right: EasyRideLayout.pagePadding,
-        top: EasyRideSpacing.xs,
+        left: AppLayout.pagePadding,
+        right: AppLayout.pagePadding,
+        top: AppSpacing.xs,
       ),
       child: Row(
         children: [
@@ -80,7 +80,7 @@ class DriverDashboardStatsRow extends StatelessWidget {
             size: 16,
             color: context.colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(width: EasyRideSpacing.xs),
+          const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
               hasExistingStats
@@ -109,10 +109,10 @@ class DriverDashboardStatsRow extends StatelessWidget {
     required IconData icon,
   }) {
     return Container(
-      padding: const EdgeInsets.all(EasyRideSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
@@ -133,7 +133,7 @@ class DriverDashboardStatsRow extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: EasyRideSpacing.xs),
+              const SizedBox(width: AppSpacing.xs),
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
@@ -169,9 +169,7 @@ class DriverDashboardStatsRow extends StatelessWidget {
     return Skeletonizer.zone(
       key: const ValueKey<String>('driver-dashboard-stats-loading'),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: EasyRideLayout.pagePadding,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppLayout.pagePadding),
         child: Row(
           children: [
             Expanded(
@@ -182,7 +180,7 @@ class DriverDashboardStatsRow extends StatelessWidget {
                 icon: LucideIcons.wallet,
               ),
             ),
-            const SizedBox(width: EasyRideSpacing.sm),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: _buildInitialSkeletonCard(
                 context,
@@ -205,10 +203,10 @@ class DriverDashboardStatsRow extends StatelessWidget {
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(EasyRideSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(

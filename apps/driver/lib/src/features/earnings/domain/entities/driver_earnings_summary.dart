@@ -3,8 +3,8 @@ import 'package:foundation/foundation.dart';
 
 enum EarningsPeriod { daily, weekly, monthly }
 
-class DriverEarningsSummary extends Equatable {
-  const DriverEarningsSummary({
+class EarningsSummary extends Equatable {
+  const EarningsSummary({
     required this.daily,
     required this.weekly,
     required this.monthly,
@@ -27,7 +27,7 @@ class DriverEarningsSummary extends Equatable {
     }
   }
 
-  factory DriverEarningsSummary.fromJson(
+  factory EarningsSummary.fromJson(
     Map<String, dynamic> data, [
     DateTime? referenceDate,
   ]) {
@@ -49,7 +49,7 @@ class DriverEarningsSummary extends Equatable {
       currentIndex: (now.day - 1) ~/ 7,
     );
 
-    return DriverEarningsSummary(
+    return EarningsSummary(
       daily: EarningsPeriodSummary(
         total: today.total,
         tripsCount: today.tripsCount,

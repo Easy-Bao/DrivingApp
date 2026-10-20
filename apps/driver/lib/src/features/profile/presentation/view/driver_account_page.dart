@@ -13,46 +13,46 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-class const DriverAccountPage({super.key, required this.onLogout})
+class const AccountPage({super.key, required this.onLogout})
     extends StatefulWidget {
   final Future<void> Function() onLogout;
 
   @override
-  State<DriverAccountPage> createState() => _DriverAccountPageState();
+  State<AccountPage> createState() => _AccountPageState();
 }
 
-class _DriverAccountPageState extends State<DriverAccountPage> {
+class _AccountPageState extends State<AccountPage> {
   bool _isLoggingOut = false;
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<DriverAccountCubit, DriverAccountState>(
+    return BlocBuilder<AccountCubit, AccountState>(
       builder: (context, state) => Scaffold(
         body: SafeArea(
           child: Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: const BoxConstraints(
-                maxWidth: EasyRideLayout.pageMaxWidth,
+                maxWidth: AppLayout.pageMaxWidth,
               ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final horizontalPadding = constraints.maxWidth < 360
                       ? 20.0
-                      : EasyRideLayout.pagePaddingWide;
+                      : AppLayout.pagePaddingWide;
                   return SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
                     padding: EdgeInsets.fromLTRB(
                       horizontalPadding,
-                      EasyRideLayout.pagePadding,
+                      AppLayout.pagePadding,
                       horizontalPadding,
                       MediaQuery.paddingOf(context).bottom + 98,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const EasyRidePageHeader(title: 'Account'),
-                        const SizedBox(height: EasyRideSpacing.xxl),
+                        const AppPageHeader(title: 'Account'),
+                        const SizedBox(height: AppSpacing.xxl),
                         _buildProfileSummary(context, state.account),
                         if (state.isLoading) ...[
                           const SizedBox(height: 20),
@@ -63,19 +63,18 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                           AppErrorBanner(
                             message: state.errorMessage!,
                             onRetry: () => unawaited(
-                              BlocProvider.of<DriverAccountCubit>(context)
-                                  .load(),
+                              BlocProvider.of<AccountCubit>(context).load(),
                             ),
                             onDismiss: () =>
-                                BlocProvider.of<DriverAccountCubit>(context)
+                                BlocProvider.of<AccountCubit>(context)
                                     .dismissError(),
                           ),
                         ],
-                        const SizedBox(height: EasyRideSpacing.xxl),
+                        const SizedBox(height: AppSpacing.xxl),
                         _buildSectionTitle(context, 'Driver Details'),
                         const SizedBox(height: 12),
                         _buildMenuGroup(context, [
-                          _DriverAccountMenuItem(
+                          _AccountMenuItem(
                             icon: LucideIcons.car_front,
                             title: 'Vehicle Information',
                             subtitle: _vehicleSummary(state.account),
@@ -86,7 +85,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                               ),
                             ),
                           ),
-                          _DriverAccountMenuItem(
+                          _AccountMenuItem(
                             icon: LucideIcons.file_text,
                             title: 'Documents',
                             subtitle:
@@ -98,7 +97,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                               ),
                             ),
                           ),
-                          _DriverAccountMenuItem(
+                          _AccountMenuItem(
                             icon: LucideIcons.wallet_cards,
                             title: 'Performance',
                             subtitle: 'Ratings, trips, and earnings',
@@ -111,13 +110,12 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                         _buildSectionTitle(context, 'App settings'),
                         const SizedBox(height: 12),
                         _buildMenuGroup(context, [
-                          _DriverAccountMenuItem(
+                          _AccountMenuItem(
                             icon: LucideIcons.settings,
                             title: 'Settings',
                             subtitle: 'Location, support, and app details',
-                            onTap: () => context.pushNamed(
-                              DriverSettingsRoutes.settings,
-                            ),
+                            onTap: () =>
+                                context.pushNamed(SettingsRoutes.settings),
                           ),
                         ]),
                         const SizedBox(height: 32),
@@ -134,17 +132,14 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     );
   }
 
-  Widget _buildProfileSummary(
-    BuildContext context,
-    DriverAccountSnapshot account,
-  ) {
+  Widget _buildProfileSummary(BuildContext context, AccountSnapshot account) {
     final displayName = account.name.isEmpty ? 'Driver' : account.name;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         key: const ValueKey<String>('driver-profile-summary'),
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         onTap: () => unawaited(
           _openEditableDestination(context, ProfileRoutes.personalDetails),
         ),
@@ -220,12 +215,12 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     BuildContext context,
     String routeName,
   ) async {
-    final accountCubit = BlocProvider.of<DriverAccountCubit>(context);
+    final accountCubit = BlocProvider.of<AccountCubit>(context);
     await context.pushNamed(routeName);
     if (context.mounted) unawaited(accountCubit.load());
   }
 
-  String _vehicleSummary(DriverAccountSnapshot account) {
+  String _vehicleSummary(AccountSnapshot account) {
     final vehicle = account.vehicleType.trim();
     final plate = account.plateNumber.trim();
     if (vehicle.isEmpty && plate.isEmpty) {
@@ -236,11 +231,8 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     return '$vehicle · Plate $plate';
   }
 
-  Widget _buildMenuGroup(
-    BuildContext context,
-    List<_DriverAccountMenuItem> items,
-  ) {
-    return EasyRideSurfaceCard(
+  Widget _buildMenuGroup(BuildContext context, List<_AccountMenuItem> items) {
+    return AppSurfaceCard(
       padding: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -273,7 +265,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     );
   }
 
-  Widget _buildMenuTile(BuildContext context, _DriverAccountMenuItem item) {
+  Widget _buildMenuTile(BuildContext context, _AccountMenuItem item) {
     return InkWell(
       key: ValueKey<String>('driver-account-item-${item.title}'),
       onTap: item.onTap,
@@ -281,7 +273,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
         constraints: const BoxConstraints(minHeight: 76),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: EasyRideSpacing.lg,
+            horizontal: AppSpacing.lg,
             vertical: 12,
           ),
           child: Row(
@@ -296,7 +288,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                   color: context.colorScheme.primary,
                 ),
               ),
-              const SizedBox(width: EasyRideSpacing.lg),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,7 +298,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                       item.title,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: EasyRideSpacing.sm / 2),
+                    const SizedBox(height: AppSpacing.sm / 2),
                     Text(
                       item.subtitle,
                       maxLines: 2,
@@ -318,11 +310,11 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                   ],
                 ),
               ),
-              const SizedBox(width: EasyRideSpacing.sm),
+              const SizedBox(width: AppSpacing.sm),
               Icon(
                 LucideIcons.chevron_right,
                 color: context.colorScheme.onSurfaceVariant,
-                size: EasyRideSize.navigationIcon,
+                size: AppSize.navigationIcon,
               ),
             ],
           ),
@@ -345,7 +337,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
           ),
           backgroundColor: context.colorScheme.error.withValues(alpha: 0.04),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
         ),
         child: _isLoggingOut
@@ -387,7 +379,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
   }
 }
 
-class const _DriverAccountMenuItem({
+class const _AccountMenuItem({
   required this.icon,
   required this.title,
   required this.subtitle,

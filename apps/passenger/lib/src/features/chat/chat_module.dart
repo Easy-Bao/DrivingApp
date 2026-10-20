@@ -31,7 +31,7 @@ class ChatModule._() {
         if (roomId == null || userId == null) {
           return const _ChatUnavailablePage();
         }
-        return PassengerChatPage(
+        return ChatPage(
           roomId: roomId,
           userId: userId,
           peerId: _asNonEmptyString(extra['peerId']),

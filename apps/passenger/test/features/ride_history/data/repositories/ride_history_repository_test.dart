@@ -7,15 +7,15 @@ import 'package:passenger/src/features/ride_history/data/datasources/ride_histor
 import 'package:passenger/src/features/ride_history/data/repositories/ride_history_repository_impl.dart';
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
 
-class MockPassengerRideHistoryRemoteDataSource extends Mock
-    implements PassengerRideHistoryRemoteDataSource {}
+class MockRideHistoryRemoteDataSource extends Mock
+    implements RideHistoryRemoteDataSource {}
 
 void main() {
-  late MockPassengerRideHistoryRemoteDataSource remoteDataSource;
+  late MockRideHistoryRemoteDataSource remoteDataSource;
   late RideHistoryRepository repository;
 
   setUp(() {
-    remoteDataSource = MockPassengerRideHistoryRemoteDataSource();
+    remoteDataSource = MockRideHistoryRemoteDataSource();
     repository = RideHistoryRepositoryImpl(remoteDataSource: remoteDataSource);
   });
 

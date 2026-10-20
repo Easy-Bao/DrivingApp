@@ -8,7 +8,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 
-class const PassengerRatingPage({
+class const RatingPage({
   super.key,
   required this.driverId,
   required this.driverName,
@@ -21,10 +21,10 @@ class const PassengerRatingPage({
   final DriverProfileRepository profileRepository;
 
   @override
-  State<PassengerRatingPage> createState() => _PassengerRatingPageState();
+  State<RatingPage> createState() => _RatingPageState();
 }
 
-class _PassengerRatingPageState extends State<PassengerRatingPage> {
+class _RatingPageState extends State<RatingPage> {
   int _selectedStars = 0;
   final TextEditingController _feedbackController = TextEditingController();
   bool _isSubmitting = false;
@@ -141,7 +141,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                       ),
                       decoration: BoxDecoration(
                         color: context.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         border: Border.all(
                           color: context.colorScheme.outlineVariant,
                         ),
@@ -243,9 +243,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         decoration: BoxDecoration(
                           color: context.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(
-                            EasyRideRadius.lg,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                           border: Border.all(
                             color: context.colorScheme.outlineVariant,
                           ),
@@ -310,7 +308,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                     foregroundColor: context.colorScheme.onPrimary,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
                     textStyle: const TextStyle(
                       fontSize: 16,

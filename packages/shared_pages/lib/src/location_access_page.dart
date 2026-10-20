@@ -34,7 +34,7 @@ class const AppLocationAccessStatusPage({
 
   @override
   Widget build(BuildContext context) {
-    return EasyRideSecondaryPage(
+    return AppSecondaryPage(
       title: 'Location access',
       onBack: onBack,
       maxWidth: 600,
@@ -45,7 +45,7 @@ class const AppLocationAccessStatusPage({
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
               color: context.colorScheme.surface,
-              borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: context.colorScheme.outlineVariant),
             ),
             child: Column(

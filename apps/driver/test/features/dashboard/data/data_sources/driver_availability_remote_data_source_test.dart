@@ -10,7 +10,7 @@ void main() {
     'sends only the online state accepted by the availability API',
     () async {
       final dio = MockDio();
-      final dataSource = DriverAvailabilityRemoteDataSourceImpl(dio);
+      final dataSource = AvailabilityRemoteDataSourceImpl(dio);
       when(
         () => dio.post<Map<String, dynamic>>(
           any(),

@@ -57,8 +57,7 @@ class _MockSavedPlacesCubit extends MockCubit<SavedPlacesState>
 
 class _MockSessionRepository extends Mock implements SessionRepository {}
 
-class _MockPassengerSessionStore extends Mock
-    implements PassengerSessionStore {}
+class _MockSessionStore extends Mock implements SessionStore {}
 
 class _MockTrackRepository extends Mock implements TrackRepository {}
 
@@ -108,7 +107,7 @@ void main() {
       var searchVisits = 0;
       final router = GoRouter(
         initialLocation: '/home',
-        observers: [passengerNavigationObserver],
+        observers: [appNavigationObserver],
         routes: [
           StatefulShellRoute.indexedStack(
             builder: (_, _, shell) => shell,
@@ -171,10 +170,7 @@ void main() {
             BlocProvider<RideHistoryBloc>.value(value: history),
             BlocProvider<SavedPlacesCubit>.value(value: savedPlaces),
           ],
-          child: MaterialApp.router(
-            theme: EasyRideTheme.main,
-            routerConfig: router,
-          ),
+          child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
         ),
       );
       await tester.pumpAndSettle();
@@ -260,7 +256,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: MultiBlocProvider(
           providers: [
             BlocProvider<SessionBloc>.value(value: sessionBloc),
@@ -368,7 +364,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: MultiBlocProvider(
           providers: [
             BlocProvider<SessionBloc>.value(value: sessionBloc),
@@ -418,7 +414,7 @@ void main() {
       final savedPlacesCubit = _MockSavedPlacesCubit();
       final bookingDraftCubit = BookingDraftCubit();
       final lifecycleCoordinator = AppLifecycleCoordinator();
-      final sessionStore = _MockPassengerSessionStore();
+      final sessionStore = _MockSessionStore();
       final trackRepository = _MockTrackRepository();
 
       when(() => currentLocationRepository.getCurrentLocation()).thenAnswer(
@@ -467,7 +463,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          theme: EasyRideTheme.main,
+          theme: AppTheme.main,
           home: MultiBlocProvider(
             providers: [
               BlocProvider<SessionBloc>.value(value: sessionBloc),
@@ -521,7 +517,7 @@ void main() {
       final savedPlacesCubit = _MockSavedPlacesCubit();
       final bookingDraftCubit = BookingDraftCubit();
       final lifecycleCoordinator = AppLifecycleCoordinator();
-      final sessionStore = _MockPassengerSessionStore();
+      final sessionStore = _MockSessionStore();
       final trackRepository = _MockTrackRepository();
 
       when(() => currentLocationRepository.getCurrentLocation()).thenAnswer(
@@ -624,7 +620,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          theme: EasyRideTheme.main,
+          theme: AppTheme.main,
           home: MultiBlocProvider(
             providers: [
               BlocProvider<SessionBloc>.value(value: sessionBloc),
@@ -676,7 +672,7 @@ void main() {
       final rideHistoryBloc = _MockRideHistoryBloc();
       final savedPlacesCubit = _MockSavedPlacesCubit();
       final sessionRepository = _MockSessionRepository();
-      final sessionStore = _MockPassengerSessionStore();
+      final sessionStore = _MockSessionStore();
       final trackRepository = _MockTrackRepository();
       final lifecycleCoordinator = AppLifecycleCoordinator();
 
@@ -736,7 +732,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          theme: EasyRideTheme.main,
+          theme: AppTheme.main,
           home: MultiBlocProvider(
             providers: [
               BlocProvider<SessionBloc>.value(value: sessionBloc),
@@ -871,7 +867,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: MultiBlocProvider(
           providers: [
             BlocProvider<SessionBloc>.value(value: sessionBloc),

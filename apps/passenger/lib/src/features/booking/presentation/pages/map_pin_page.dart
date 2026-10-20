@@ -338,7 +338,7 @@ class _MapPinPageState()
                     : Stack(
                         children: [
                           Positioned.fill(
-                            left: EasyRideSize.minimumTouchTarget + 8,
+                            left: AppSize.minimumTouchTarget + 8,
                             right: 0,
                             child: _buildDestinationSearchField(context),
                           ),
@@ -357,15 +357,15 @@ class _MapPinPageState()
             child: Container(
               width: double.infinity,
               padding: EdgeInsets.fromLTRB(
-                EasyRideLayout.pagePadding,
+                AppLayout.pagePadding,
                 10,
-                EasyRideLayout.pagePadding,
+                AppLayout.pagePadding,
                 MediaQuery.of(context).padding.bottom + 10,
               ),
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(EasyRideRadius.sheet),
+                  top: Radius.circular(AppRadius.sheet),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -458,11 +458,11 @@ class _MapPinPageState()
                     button: true,
                     label: 'Use my current location',
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(EasyRideRadius.sm),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                       onTap: _useCurrentLocation,
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(
-                          minHeight: EasyRideSize.minimumTouchTarget,
+                          minHeight: AppSize.minimumTouchTarget,
                         ),
                         child: Row(
                           children: [
@@ -489,7 +489,7 @@ class _MapPinPageState()
                   ),
                   SizedBox(
                     width: double.infinity,
-                    height: EasyRideSize.controlHeight,
+                    height: AppSize.controlHeight,
                     child: FilledButton(
                       onPressed: _isGeocoding ? null : _confirmLocation,
                       style: FilledButton.styleFrom(
@@ -532,20 +532,20 @@ class _MapPinPageState()
           color: context.colorScheme.surface.withValues(alpha: 0),
           child: InkWell(
             onTap: () => unawaited(_openDestinationSearch()),
-            borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
             child: Container(
               height: 52,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
                 border: Border.all(color: context.colorScheme.outlineVariant),
-                borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Row(
                 children: [
                   SizedBox(
-                    width: EasyRideSize.minimumTouchTarget,
-                    height: EasyRideSize.minimumTouchTarget,
+                    width: AppSize.minimumTouchTarget,
+                    height: AppSize.minimumTouchTarget,
                     child: Center(
                       child: Icon(
                         LucideIcons.search,
@@ -586,8 +586,8 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
         onTap: onPressed,
         customBorder: const CircleBorder(),
         child: SizedBox(
-          width: EasyRideSize.minimumTouchTarget,
-          height: EasyRideSize.minimumTouchTarget,
+          width: AppSize.minimumTouchTarget,
+          height: AppSize.minimumTouchTarget,
           child: Center(
             child: Icon(
               LucideIcons.arrow_left,

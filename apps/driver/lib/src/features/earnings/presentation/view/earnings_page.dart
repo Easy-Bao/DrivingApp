@@ -7,14 +7,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class DriverEarningsPage extends StatefulWidget {
-  const DriverEarningsPage({super.key});
+class EarningsPage extends StatefulWidget {
+  const EarningsPage({super.key});
 
   @override
-  State<DriverEarningsPage> createState() => _DriverEarningsPageState();
+  State<EarningsPage> createState() => _EarningsPageState();
 }
 
-class _DriverEarningsPageState extends State<DriverEarningsPage>
+class _EarningsPageState extends State<EarningsPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   EarningsPeriod _selectedPeriod = EarningsPeriod.weekly;
@@ -30,7 +30,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   }
 
   void _selectPeriod(int index) {
-    if (context.read<DriverEarningsCubit>().state.isLoading) return;
+    if (context.read<EarningsCubit>().state.isLoading) return;
     final period = EarningsPeriod.values[index];
     if (_selectedPeriod == period) return;
     setState(() => _selectedPeriod = period);
@@ -77,7 +77,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<DriverEarningsCubit>().state;
+    final state = context.watch<EarningsCubit>().state;
     final summary = state.data?.summaryFor(_selectedPeriod);
     final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
 
@@ -111,10 +111,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                         AppErrorBanner(
                           message: state.errorMessage!,
                           onRetry: () =>
-                              BlocProvider.of<DriverEarningsCubit>(context)
-                                  .load(),
+                              BlocProvider.of<EarningsCubit>(context).load(),
                           onDismiss: () =>
-                              BlocProvider.of<DriverEarningsCubit>(context)
+                              BlocProvider.of<EarningsCubit>(context)
                                   .dismissError(),
                         ),
                       if (state.errorMessage != null && !isNetworkUnavailable)
@@ -177,9 +176,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                       Container(
                         decoration: BoxDecoration(
                           color: context.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(
-                            EasyRideRadius.lg,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                           border: Border.all(
                             color: context.colorScheme.outlineVariant,
                           ),
@@ -198,7 +195,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                               child: Bone.square(
                                 size: 150,
                                 borderRadius: BorderRadius.all(
-                                  Radius.circular(EasyRideRadius.md),
+                                  Radius.circular(AppRadius.md),
                                 ),
                               ),
                             ),
@@ -248,8 +245,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
             ),
             const SizedBox(height: 20),
             OutlinedButton(
-              onPressed: () =>
-                  BlocProvider.of<DriverEarningsCubit>(context).load(),
+              onPressed: () => BlocProvider.of<EarningsCubit>(context).load(),
               child: const Text('Retry'),
             ),
           ],
@@ -270,7 +266,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     return Container(
       decoration: BoxDecoration(
         color: cardBgColor,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: cardBgColor.withValues(alpha: 0.16),
@@ -280,9 +276,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
         ],
       ),
       padding: const EdgeInsets.fromLTRB(
-        EasyRideSpacing.lg,
-        EasyRideSpacing.md,
-        EasyRideSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
         12,
       ),
       child: Column(
@@ -307,7 +303,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                               ? context.colorScheme.onError
                               : context.semanticColors.success)
                           .withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -365,7 +361,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
             decoration: BoxDecoration(
               color: onCardColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(EasyRideRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Row(
               children: [
@@ -438,7 +434,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
         onTap: enabled ? _selectPeriod : null,
         indicator: BoxDecoration(
           color: context.colorScheme.primary,
-          borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         labelColor: context.colorScheme.onPrimary,
         unselectedLabelColor: context.colorScheme.onSurfaceVariant,
@@ -463,7 +459,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     return Container(
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),

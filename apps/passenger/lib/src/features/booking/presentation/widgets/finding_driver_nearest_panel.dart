@@ -32,7 +32,7 @@ class const FindingDriverNearestPanel({
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
           borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(EasyRideRadius.sheet),
+            top: Radius.circular(AppRadius.sheet),
           ),
           boxShadow: [
             BoxShadow(
@@ -165,10 +165,7 @@ class const FindingDriverNearestPanel({
                   child: OutlinedButton(
                     onPressed: onViewFullProfilePressed,
                     style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(
-                        0,
-                        EasyRideSize.minimumTouchTarget,
-                      ),
+                      minimumSize: const Size(0, AppSize.minimumTouchTarget),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     child: const Text('View Profile'),
@@ -182,10 +179,7 @@ class const FindingDriverNearestPanel({
                       backgroundColor: context.colorScheme.primary,
                       foregroundColor: context.colorScheme.onPrimary,
                       elevation: 0,
-                      minimumSize: const Size(
-                        0,
-                        EasyRideSize.minimumTouchTarget,
-                      ),
+                      minimumSize: const Size(0, AppSize.minimumTouchTarget),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     child: const Text('Choose Driver'),
@@ -200,10 +194,7 @@ class const FindingDriverNearestPanel({
                   child: TextButton(
                     onPressed: onSearchAllDriversPressed,
                     style: TextButton.styleFrom(
-                      minimumSize: const Size(
-                        0,
-                        EasyRideSize.minimumTouchTarget,
-                      ),
+                      minimumSize: const Size(0, AppSize.minimumTouchTarget),
                     ),
                     child: const Text('Compare All Drivers'),
                   ),
@@ -212,10 +203,7 @@ class const FindingDriverNearestPanel({
                   child: TextButton(
                     onPressed: isCanceling ? null : onCancelRidePressed,
                     style: TextButton.styleFrom(
-                      minimumSize: const Size(
-                        0,
-                        EasyRideSize.minimumTouchTarget,
-                      ),
+                      minimumSize: const Size(0, AppSize.minimumTouchTarget),
                     ),
                     child: isCanceling
                         ? SizedBox(

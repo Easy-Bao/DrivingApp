@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:foundation/foundation.dart';
 
-class DriverEnvConfig._() {
+class EnvConfig._() {
   static const _buildValues = <String, String>{
     'APP_ENV': String.fromEnvironment('APP_ENV'),
     'API_BASE_URL': String.fromEnvironment('API_BASE_URL'),

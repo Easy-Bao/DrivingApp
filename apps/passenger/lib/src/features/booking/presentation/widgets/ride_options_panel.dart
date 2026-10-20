@@ -127,7 +127,7 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: context.colorScheme.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: context.colorScheme.error.withValues(alpha: 0.2),
         ),
@@ -181,13 +181,13 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
       child: InkWell(
         key: key,
         onTap: onTap,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: context.colorScheme.surface,
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color: context.colorScheme.outlineVariant,
               width: 0.8,
@@ -207,7 +207,7 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
                 height: 40,
                 decoration: BoxDecoration(
                   color: context.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(
                     color: context.colorScheme.outlineVariant,
                     width: 0.6,
@@ -267,13 +267,13 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
         onTap: _hasValidFare
             ? () => _showView(_RideOptionsPanelView.fareDetails)
             : null,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           decoration: BoxDecoration(
             color: context.colorScheme.surface,
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color: context.colorScheme.outlineVariant,
               width: 0.8,
@@ -352,7 +352,7 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
           disabledForegroundColor: context.colorScheme.onSurfaceVariant
               .withValues(alpha: 0.45),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           textStyle: const TextStyle(
             fontSize: 15,
@@ -399,7 +399,7 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
         key: ValueKey('ride-options-loading-primary-action'),
         width: double.infinity,
         height: 50,
-        borderRadius: BorderRadius.all(Radius.circular(EasyRideRadius.lg)),
+        borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
       );
     }
 
@@ -480,8 +480,8 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
       onPressed: onPressed,
       tooltip: tooltip,
       constraints: const BoxConstraints.tightFor(
-        width: EasyRideSize.minimumTouchTarget,
-        height: EasyRideSize.minimumTouchTarget,
+        width: AppSize.minimumTouchTarget,
+        height: AppSize.minimumTouchTarget,
       ),
       padding: EdgeInsets.zero,
       style: IconButton.styleFrom(shape: const CircleBorder()),
@@ -585,7 +585,7 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
           decoration: BoxDecoration(
             color: context.colorScheme.surface,
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color: context.colorScheme.outlineVariant,
               width: 0.8,
@@ -632,7 +632,7 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
                     ),
                     decoration: BoxDecoration(
                       color: context.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
                     child: Text(
                       'Minimum',
@@ -702,7 +702,7 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
                         );
                         setState(() {});
                       },
-                      borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
@@ -710,9 +710,7 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
                         ),
                         decoration: BoxDecoration(
                           color: context.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(
-                            EasyRideRadius.pill,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                           border: Border.all(
                             color: context.colorScheme.outlineVariant,
                             width: 0.8,
@@ -757,7 +755,7 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
           decoration: BoxDecoration(
             color: context.colorScheme.surface,
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: context.colorScheme.outlineVariant),
             boxShadow: const [
               BoxShadow(
@@ -778,7 +776,7 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
                     height: 38,
                     decoration: BoxDecoration(
                       color: context.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Icon(
                       LucideIcons.file_text,
@@ -865,7 +863,7 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
                         widget.onNotesChanged(widget.notesController.text);
                         setState(() {});
                       },
-                      borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
@@ -873,9 +871,7 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
                         ),
                         decoration: BoxDecoration(
                           color: context.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(
-                            EasyRideRadius.pill,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                           border: Border.all(
                             color: context.colorScheme.outlineVariant,
                             width: 0.8,
@@ -974,7 +970,7 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
         borderRadius: widget.isExpanded
             ? BorderRadius.zero
             : const BorderRadius.vertical(
-                top: Radius.circular(EasyRideRadius.sheet),
+                top: Radius.circular(AppRadius.sheet),
               ),
         boxShadow: widget.isExpanded
             ? const []
@@ -1059,7 +1055,7 @@ Widget rideOptionsPanelPreview() {
   );
 
   return MaterialApp(
-    theme: EasyRideTheme.main,
+    theme: AppTheme.main,
     home: Scaffold(
       body: RideOptionsPanel(
         passengerName: 'Avery Cruz',

@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-typedef DriverTabNavigationCoordinator = TabNavigationCoordinator;
-
-class const DriverTabBranchContainer({
+class const TabBranchContainer({
   super.key,
   required this.navigationShell,
   required this.children,
@@ -30,19 +28,19 @@ class const DriverTabBranchContainer({
   );
 }
 
-class const DriverShellLayout({
+class const ShellLayout({
   super.key,
   required this.navigationShell,
   required this.navigationCoordinator,
 }) extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
-  final DriverTabNavigationCoordinator navigationCoordinator;
+  final TabNavigationCoordinator navigationCoordinator;
 
   @override
-  State<DriverShellLayout> createState() => _DriverShellLayoutState();
+  State<ShellLayout> createState() => _ShellLayoutState();
 }
 
-class _DriverShellLayoutState extends State<DriverShellLayout> {
+class _ShellLayoutState extends State<ShellLayout> {
   @override
   void initState() {
     super.initState();
@@ -65,8 +63,7 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
   @override
   Widget build(BuildContext context) {
     final selectedIndex = widget.navigationCoordinator.selectedIndex;
-    final isWide =
-        MediaQuery.sizeOf(context).width >= EasyRideLayout.wideBreakpoint;
+    final isWide = MediaQuery.sizeOf(context).width >= AppLayout.wideBreakpoint;
 
     return PopScope(
       canPop: widget.navigationCoordinator.canPop,
@@ -81,7 +78,7 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
         body: isWide
             ? Row(
                 children: [
-                  DriverNavigationRail(
+                  ShellNavigationRail(
                     selectedIndex: selectedIndex,
                     onDestinationSelected: _onItemTapped,
                   ),
@@ -100,7 +97,7 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
                   widthFactor: 0.94,
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 520),
-                    child: DriverFloatingTabBar(
+                    child: FloatingTabBar(
                       selectedIndex: selectedIndex,
                       onDestinationSelected: _onItemTapped,
                       pagePosition: widget.navigationCoordinator.pagePosition,

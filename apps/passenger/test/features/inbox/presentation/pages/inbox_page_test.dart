@@ -17,7 +17,7 @@ class MockSessionBloc extends MockBloc<SessionEvent, SessionState>
 
 class MockInboxRepository extends Mock implements InboxRepository {}
 
-class MockPassengerSessionStore extends Mock implements PassengerSessionStore {}
+class MockSessionStore extends Mock implements SessionStore {}
 
 class MockInboxCubit extends MockCubit<InboxState> implements InboxCubit {}
 
@@ -27,13 +27,13 @@ void main() {
   ) async {
     final sessionBloc = MockSessionBloc();
     final inboxCubit = InboxCubit(inboxRepository: MockInboxRepository());
-    final sessionStore = MockPassengerSessionStore();
+    final sessionStore = MockSessionStore();
     when(() => sessionBloc.state).thenReturn(const SessionLoading());
     addTearDown(inboxCubit.close);
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: MultiBlocProvider(
           providers: [
             BlocProvider<SessionBloc>.value(value: sessionBloc),
@@ -61,7 +61,7 @@ void main() {
   ) async {
     final sessionBloc = MockSessionBloc();
     final inboxCubit = MockInboxCubit();
-    final sessionStore = MockPassengerSessionStore();
+    final sessionStore = MockSessionStore();
     when(() => sessionBloc.state)
         .thenReturn(const AuthenticatedSession(passengerId: 'user-1'));
     when(() => sessionStore.readPassengerId())
@@ -73,7 +73,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: MultiBlocProvider(
           providers: [
             BlocProvider<SessionBloc>.value(value: sessionBloc),

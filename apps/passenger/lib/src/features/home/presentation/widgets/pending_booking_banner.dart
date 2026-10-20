@@ -20,10 +20,10 @@ class const PendingBookingBanner({
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(EasyRideSpacing.lg, 14, 10, 14),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 14, 10, 14),
       decoration: BoxDecoration(
         color: context.colorScheme.secondaryContainer.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.secondaryContainer),
       ),
       child: Row(
@@ -61,7 +61,7 @@ class const PendingBookingBanner({
           TextButton(
             onPressed: onContinue,
             style: TextButton.styleFrom(
-              minimumSize: const Size(48, EasyRideSize.minimumTouchTarget),
+              minimumSize: const Size(48, AppSize.minimumTouchTarget),
               textStyle: const TextStyle(fontWeight: FontWeight.w700),
             ),
             child: const Text('Continue'),
@@ -70,8 +70,8 @@ class const PendingBookingBanner({
             tooltip: 'Dismiss booking draft',
             onPressed: onDismiss,
             constraints: const BoxConstraints(
-              minWidth: EasyRideSize.minimumTouchTarget,
-              minHeight: EasyRideSize.minimumTouchTarget,
+              minWidth: AppSize.minimumTouchTarget,
+              minHeight: AppSize.minimumTouchTarget,
             ),
             icon: const Icon(LucideIcons.x, size: 18),
           ),

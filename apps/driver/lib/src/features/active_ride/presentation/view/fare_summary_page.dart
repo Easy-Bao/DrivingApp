@@ -234,10 +234,10 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
               constraints: const BoxConstraints(maxWidth: 600),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
-                  EasyRideLayout.pagePadding,
+                  AppLayout.pagePadding,
                   12,
-                  EasyRideLayout.pagePadding,
-                  EasyRideLayout.pagePadding,
+                  AppLayout.pagePadding,
+                  AppLayout.pagePadding,
                 ),
                 child: Column(
                   children: [
@@ -285,9 +285,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                           backgroundColor: context.semanticColors.success,
                           foregroundColor: context.semanticColors.onSuccess,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              EasyRideRadius.lg,
-                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                           ),
                         ),
                       ),
@@ -387,10 +385,10 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
     final recordsAmount = _cashOutcome == 'paid' || _cashOutcome == 'partial';
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(EasyRideSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
@@ -413,17 +411,14 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
             ),
           ),
           const SizedBox(height: 12),
-          EasyRideSelectField<String>(
+          AppSelectField<String>(
             key: const ValueKey('cash-outcome-dropdown'),
             value: _cashOutcome,
             menuTitle: 'Payment outcome',
             decoration: const InputDecoration(labelText: 'Payment outcome'),
             options: [
               for (final entry in _cashOutcomeLabels.entries)
-                EasyRideSelectOption<String>(
-                  value: entry.key,
-                  label: entry.value,
-                ),
+                AppSelectOption<String>(value: entry.key, label: entry.value),
             ],
             onChanged: _isSubmitting
                 ? null
@@ -523,10 +518,10 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
   Widget _buildAmountCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(EasyRideSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.primary,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         children: [
@@ -595,7 +590,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
@@ -697,7 +692,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
         constraints: const BoxConstraints(minHeight: 42),
         decoration: BoxDecoration(
           color: context.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(EasyRideRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

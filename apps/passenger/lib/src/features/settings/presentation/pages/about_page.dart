@@ -4,7 +4,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/features/settings/settings_routes.dart';
 import 'package:shared_pages/shared_pages.dart';
 
-class const AboutEasyRidePage({super.key, this.onBack, this.onLicensesTap})
+class const AboutPage({super.key, this.onBack, this.onLicensesTap})
     extends StatelessWidget {
   final VoidCallback? onBack;
   final VoidCallback? onLicensesTap;

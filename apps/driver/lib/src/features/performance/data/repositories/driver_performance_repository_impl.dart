@@ -3,21 +3,19 @@ import 'package:driver/src/features/performance/domain/entities/driver_performan
 import 'package:driver/src/features/performance/domain/repositories/driver_performance_repository.dart';
 import 'package:foundation/foundation.dart';
 
-final class DriverPerformanceRepositoryImpl({required this._dataSource})
-    implements DriverPerformanceRepository {
-  final DriverPerformanceRemoteDataSource _dataSource;
+final class PerformanceRepositoryImpl({required this._dataSource})
+    implements PerformanceRepository {
+  final PerformanceRemoteDataSource _dataSource;
 
   @override
-  Future<Result<DriverPerformanceStats, Failure>> fetchStats(
-    String driverId,
-  ) async {
+  Future<Result<PerformanceStats, Failure>> fetchStats(String driverId) async {
     try {
       final raw = await _dataSource.fetchStats(driverId);
       final values = raw['data'] is Map
           ? Map<String, dynamic>.from(raw['data'] as Map)
           : raw;
       return Ok(
-        DriverPerformanceStats(
+        PerformanceStats(
           todayEarningsAmount: _readNonNegativeInt(
             values,
             'today_earnings_amount',

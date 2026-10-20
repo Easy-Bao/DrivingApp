@@ -10,7 +10,7 @@ void main() {
     late BuildContext pageContext;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Builder(
           builder: (context) {
             pageContext = context;
@@ -40,7 +40,7 @@ void main() {
     late BuildContext pageContext;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Builder(
           builder: (context) {
             pageContext = context;
@@ -63,7 +63,7 @@ void main() {
     late BuildContext pageContext;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Builder(
           builder: (context) {
             pageContext = context;

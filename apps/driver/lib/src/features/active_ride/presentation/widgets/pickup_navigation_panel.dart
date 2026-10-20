@@ -42,14 +42,14 @@ class const PickupNavigationPanel({
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(EasyRideRadius.sheet),
+          top: Radius.circular(AppRadius.sheet),
         ),
       ),
       padding: const EdgeInsets.fromLTRB(
-        EasyRideSpacing.lg,
+        AppSpacing.lg,
         10,
-        EasyRideSpacing.lg,
-        EasyRideSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -114,8 +114,8 @@ class const PickupNavigationPanel({
                       tooltip: 'Chat with passenger',
                       onPressed: onChatPressed,
                       constraints: const BoxConstraints(
-                        minWidth: EasyRideSize.minimumTouchTarget,
-                        minHeight: EasyRideSize.minimumTouchTarget,
+                        minWidth: AppSize.minimumTouchTarget,
+                        minHeight: AppSize.minimumTouchTarget,
                       ),
                       icon: const Icon(LucideIcons.message_circle),
                     ),
@@ -129,7 +129,7 @@ class const PickupNavigationPanel({
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            height: EasyRideSize.minimumTouchTarget,
+            height: AppSize.minimumTouchTarget,
             child: OutlinedButton.icon(
               onPressed: isCancelling ? null : onCancelPressed,
               icon: isCancelling
@@ -181,7 +181,7 @@ class const PickupNavigationPanel({
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Row(
@@ -241,14 +241,14 @@ class const PickupNavigationPanel({
         : context.colorScheme.onSurface;
     return Material(
       color: background,
-      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
-          height: EasyRideSize.minimumTouchTarget,
+          height: AppSize.minimumTouchTarget,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: filled
                 ? null
                 : Border.all(color: context.colorScheme.outlineVariant),

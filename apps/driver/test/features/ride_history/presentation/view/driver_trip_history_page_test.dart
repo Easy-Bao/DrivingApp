@@ -12,9 +12,9 @@ import 'package:foundation/foundation.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class _MockRideHistoryRepository extends Mock
-    implements DriverRideHistoryRepository {}
+    implements RideHistoryRepository {}
 
-class _MockSessionService extends Mock implements DriverSessionStore {}
+class _MockSessionService extends Mock implements SessionStore {}
 
 void main() {
   testWidgets('shows a retryable error instead of an empty history state', (
@@ -31,7 +31,7 @@ void main() {
           const Err(ServerFailure('backend query details must stay internal')),
     );
 
-    final cubit = DriverTripHistoryCubit(
+    final cubit = TripHistoryCubit(
       repository: repository,
       sessionService: sessionService,
     );
@@ -39,11 +39,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
-        home: BlocProvider.value(
-          value: cubit,
-          child: const DriverTripHistoryPage(),
-        ),
+        theme: AppTheme.main,
+        home: BlocProvider.value(value: cubit, child: const TripHistoryPage()),
       ),
     );
     await tester.pumpAndSettle();
@@ -62,34 +59,29 @@ void main() {
     final repository = _MockRideHistoryRepository();
     final sessionService = _MockSessionService();
     final cubit =
-        DriverTripHistoryCubit(
-          repository: repository,
-          sessionService: sessionService,
-        )..emit(
-          const DriverTripHistoryState(
-            isLoading: true,
-            trips: [
-              {
-                'id': 42,
-                'status': 'completed',
-                'created_at': '2026-08-19T10:00:00Z',
-                'pickup_name': 'Mountain View',
-                'dropoff_name': 'Vista Slope',
-                'ride_type': 'solo',
-                'fare_amount': 2973,
-                'distance_km': 1.8,
-              },
-            ],
-          ),
-        );
+        TripHistoryCubit(repository: repository, sessionService: sessionService)
+          ..emit(
+            const TripHistoryState(
+              isLoading: true,
+              trips: [
+                {
+                  'id': 42,
+                  'status': 'completed',
+                  'created_at': '2026-08-19T10:00:00Z',
+                  'pickup_name': 'Mountain View',
+                  'dropoff_name': 'Vista Slope',
+                  'ride_type': 'solo',
+                  'fare_amount': 2973,
+                  'distance_km': 1.8,
+                },
+              ],
+            ),
+          );
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
-        home: BlocProvider.value(
-          value: cubit,
-          child: const DriverTripHistoryPage(),
-        ),
+        theme: AppTheme.main,
+        home: BlocProvider.value(value: cubit, child: const TripHistoryPage()),
       ),
     );
     await tester.pump();

@@ -17,9 +17,9 @@ class const GuestActionBar({
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(
-          EasyRideLayout.pagePaddingWide,
+          AppLayout.pagePaddingWide,
           14,
-          EasyRideLayout.pagePaddingWide,
+          AppLayout.pagePaddingWide,
           12,
         ),
         decoration: BoxDecoration(
@@ -37,30 +37,26 @@ class const GuestActionBar({
                   child: FilledButton(
                     onPressed: onSignUp,
                     style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(
-                        EasyRideSize.controlHeight,
-                      ),
+                      minimumSize: const Size.fromHeight(AppSize.controlHeight),
                       backgroundColor: context.colorScheme.secondaryContainer,
                       foregroundColor: context.colorScheme.onSecondaryContainer,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     child: const Text('Sign Up'),
                   ),
                 ),
-                const SizedBox(width: EasyRideSpacing.xxl),
+                const SizedBox(width: AppSpacing.xxl),
                 Expanded(
                   child: FilledButton(
                     onPressed: onSignIn,
                     style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(
-                        EasyRideSize.controlHeight,
-                      ),
+                      minimumSize: const Size.fromHeight(AppSize.controlHeight),
                       backgroundColor: context.colorScheme.onSurface,
                       foregroundColor: context.colorScheme.onPrimary,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     child: const Text('Log In'),
@@ -68,7 +64,7 @@ class const GuestActionBar({
                 ),
               ],
             ),
-            const SizedBox(height: EasyRideSpacing.sm),
+            const SizedBox(height: AppSpacing.sm),
             Semantics(
               button: true,
               label: 'Need help? Visit our Help Centre',

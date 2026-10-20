@@ -9,11 +9,11 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           body: Builder(
             builder: (context) => ElevatedButton(
-              onPressed: () => showPassengerEmergencyActionSheet(
+              onPressed: () => showEmergencyActionSheet(
                 context,
                 onEmergencyStop: (reason, details) async => true,
               ),

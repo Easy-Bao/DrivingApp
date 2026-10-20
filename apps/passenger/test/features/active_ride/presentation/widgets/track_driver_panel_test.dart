@@ -13,7 +13,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           body: TrackDriverPanel(
             ride: const RideSnapshot(
@@ -65,7 +65,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           body: TrackDriverPanel(
             ride: const RideSnapshot(
@@ -106,7 +106,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           body: TrackDriverPanel(
             ride: const RideSnapshot(
@@ -137,7 +137,7 @@ void main() {
   testWidgets('displays driver rating badge when provided', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           body: TrackDriverPanel(
             ride: const RideSnapshot(
@@ -172,7 +172,7 @@ void main() {
     (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: EasyRideTheme.main,
+          theme: AppTheme.main,
           home: Scaffold(
             body: TrackDriverPanel(
               ride: const RideSnapshot(

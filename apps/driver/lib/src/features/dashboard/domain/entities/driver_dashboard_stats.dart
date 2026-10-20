@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-class const DriverDashboardStats({
+class const DashboardStats({
   required this.earnings,
   required this.completedTrips,
 }) extends Equatable {

@@ -5,7 +5,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 
-class const PassengerPaymentPage({super.key, required this.ride})
+class const PaymentPage({super.key, required this.ride})
     extends StatelessWidget {
   final RideSnapshot ride;
 
@@ -74,7 +74,7 @@ class const PassengerPaymentPage({super.key, required this.ride})
                               decoration: BoxDecoration(
                                 color: context.colorScheme.surface,
                                 borderRadius: BorderRadius.circular(
-                                  EasyRideRadius.lg,
+                                  AppRadius.lg,
                                 ),
                                 border: Border.all(
                                   color: context.colorScheme.outlineVariant,
@@ -112,7 +112,7 @@ class const PassengerPaymentPage({super.key, required this.ride})
                                           .colorScheme
                                           .surfaceContainerHighest,
                                       borderRadius: BorderRadius.circular(
-                                        EasyRideRadius.lg,
+                                        AppRadius.lg,
                                       ),
                                     ),
                                     child: const Row(
@@ -177,7 +177,7 @@ class const PassengerPaymentPage({super.key, required this.ride})
                                 minimumSize: const Size.fromHeight(54),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
+                                    AppRadius.lg,
                                   ),
                                 ),
                               ),

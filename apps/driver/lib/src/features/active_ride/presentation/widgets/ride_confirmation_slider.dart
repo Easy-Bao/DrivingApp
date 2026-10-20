@@ -54,7 +54,7 @@ class _RideConfirmationSliderState extends State<RideConfirmationSlider> {
             height: RideConfirmationSlider.thumbSize,
             decoration: BoxDecoration(
               color: colors.success.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: Stack(
               children: [

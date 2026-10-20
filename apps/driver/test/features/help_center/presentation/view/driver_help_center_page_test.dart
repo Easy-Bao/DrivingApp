@@ -9,8 +9,8 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
-        home: DriverHelpCenterPage(onBack: () {}),
+        theme: AppTheme.main,
+        home: HelpCenterPage(onBack: () {}),
       ),
     );
 

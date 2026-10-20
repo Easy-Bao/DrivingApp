@@ -75,9 +75,9 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(
-            EasyRideLayout.pagePadding,
+            AppLayout.pagePadding,
             8,
-            EasyRideLayout.pagePadding,
+            AppLayout.pagePadding,
             18,
           ),
           sliver: SliverToBoxAdapter(
@@ -94,7 +94,7 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
         if (widget.showSummary)
           SliverPadding(
             padding: const EdgeInsets.symmetric(
-              horizontal: EasyRideLayout.pagePadding,
+              horizontal: AppLayout.pagePadding,
             ),
             sliver: SliverToBoxAdapter(
               child: RideHistorySummary(
@@ -107,9 +107,9 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
         if (widget.showFilters)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
-              EasyRideLayout.pagePadding,
+              AppLayout.pagePadding,
               12,
-              EasyRideLayout.pagePadding,
+              AppLayout.pagePadding,
               18,
             ),
             sliver: SliverToBoxAdapter(
@@ -132,9 +132,9 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
                     !AppNetworkStatusScope.isUnavailableOf(context))))
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
-              EasyRideLayout.pagePadding,
+              AppLayout.pagePadding,
               10,
-              EasyRideLayout.pagePadding,
+              AppLayout.pagePadding,
               0,
             ),
             sliver: SliverToBoxAdapter(child: _buildLoadMore()),
@@ -218,9 +218,9 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
     return [
       const SliverPadding(
         padding: EdgeInsets.fromLTRB(
-          EasyRideLayout.pagePadding,
+          AppLayout.pagePadding,
           0,
-          EasyRideLayout.pagePadding,
+          AppLayout.pagePadding,
           8,
         ),
         sliver: SliverToBoxAdapter(
@@ -228,16 +228,14 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
         ),
       ),
       SliverPadding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: EasyRideLayout.pagePadding,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppLayout.pagePadding),
         sliver: SliverList.builder(
           itemCount: widget.activeRides.length,
           itemBuilder: (context, index) {
             final ride = widget.activeRides[index];
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: PassengerActiveRideCard(
+              child: ActiveRideCard(
                 ride: ride,
                 presenter: presenter,
                 onTap: () => widget.onRideTap(ride),
@@ -260,9 +258,9 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
         ..add(
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
-              EasyRideLayout.pagePadding,
+              AppLayout.pagePadding,
               0,
-              EasyRideLayout.pagePadding,
+              AppLayout.pagePadding,
               8,
             ),
             sliver: SliverToBoxAdapter(
@@ -273,7 +271,7 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
         ..add(
           SliverPadding(
             padding: const EdgeInsets.symmetric(
-              horizontal: EasyRideLayout.pagePadding,
+              horizontal: AppLayout.pagePadding,
             ),
             sliver: SliverList.builder(
               itemCount: entry.value.length,
@@ -281,7 +279,7 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
                 final ride = entry.value[index];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: PassengerPastRideCard(
+                  child: PastRideCard(
                     ride: ride,
                     presenter: presenter,
                     onTap: () => widget.onRideTap(ride),

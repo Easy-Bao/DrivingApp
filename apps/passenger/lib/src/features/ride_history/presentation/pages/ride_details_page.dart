@@ -25,7 +25,7 @@ class RideDetailsPage extends StatefulWidget {
   });
   final RideHistory? ride;
   final TrackRepository trackRepository;
-  final PassengerSessionStore sessionService;
+  final SessionStore sessionService;
   final RideDetailsCubit? detailsCubit;
 
   @override
@@ -263,7 +263,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
       statusSubtitle = 'Trip is in progress';
     }
 
-    return EasyRideSecondaryPage(
+    return AppSecondaryPage(
       title: 'Ride details',
       onBack: () => context.pop(),
       child: SingleChildScrollView(
@@ -276,7 +276,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
               width: double.infinity,
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(
                   color: context.colorScheme.outlineVariant,
                   width: 1.0,
@@ -290,7 +290,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                 ],
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(EasyRideRadius.lg - 1),
+                borderRadius: BorderRadius.circular(AppRadius.lg - 1),
                 child: MapProvider.buildMapView(
                   latitude: centerLat,
                   longitude: centerLng,
@@ -306,7 +306,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(
                   color: context.colorScheme.outlineVariant,
                   width: 1.0,
@@ -426,7 +426,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                       ),
                     ),
                   ],
-                  PassengerSafetyReportButton(
+                  SafetyReportButton(
                     rideId: ride?.id,
                     trackRepository: widget.trackRepository,
                   ),
@@ -439,7 +439,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(
                   color: context.colorScheme.outlineVariant,
                   width: 1.0,
@@ -465,9 +465,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                         ),
                         decoration: BoxDecoration(
                           color: statusColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(
-                            EasyRideRadius.pill,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                         child: Text(
                           statusLabel,
@@ -512,7 +510,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(
                   color: context.colorScheme.outlineVariant,
                   width: 1.0,

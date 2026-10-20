@@ -13,12 +13,12 @@ const _backgroundTelemetryInterval = Duration(seconds: 10);
 const _notificationChannelId = 'easyride_passenger_location';
 const _notificationId = 4802;
 
-class PassengerBackgroundTelemetry {
-  PassengerBackgroundTelemetry({
+class BackgroundTelemetry {
+  BackgroundTelemetry({
     required this.apiBaseUri,
     required this.lifecycleCoordinator,
     FlutterBackgroundService? service,
-  })  : _service = service ?? FlutterBackgroundService();
+  }) : _service = service ?? FlutterBackgroundService();
 
   final Uri apiBaseUri;
   final FlutterBackgroundService _service;
@@ -138,7 +138,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   DartPluginRegistrant.ensureInitialized();
 
   final storage = const FlutterSecureStorage();
-  final sessionStore = PassengerSessionStore(storage: storage);
+  final sessionStore = SessionStore(storage: storage);
   Dio? telemetryClient;
   RefreshableTokenProvider? tokenProvider;
   var sending = false;

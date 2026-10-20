@@ -3,12 +3,12 @@ import 'package:driver/src/features/earnings/domain/entities/driver_earnings_sum
 import 'package:driver/src/features/earnings/domain/repositories/driver_earnings_repository.dart';
 import 'package:foundation/foundation.dart';
 
-final class DriverEarningsRepositoryImpl({required this._dataSource})
-    implements DriverEarningsRepository {
-  final DriverEarningsRemoteDataSource _dataSource;
+final class EarningsRepositoryImpl({required this._dataSource})
+    implements EarningsRepository {
+  final EarningsRemoteDataSource _dataSource;
 
   @override
-  Future<Result<DriverEarningsSummary, Failure>> fetchEarningsSummary(
+  Future<Result<EarningsSummary, Failure>> fetchEarningsSummary(
     String driverId,
   ) async {
     try {
@@ -16,7 +16,7 @@ final class DriverEarningsRepositoryImpl({required this._dataSource})
       final data = raw['data'] is Map
           ? Map<String, dynamic>.from(raw['data'] as Map)
           : raw;
-      return Ok(DriverEarningsSummary.fromJson(data));
+      return Ok(EarningsSummary.fromJson(data));
     } catch (error) {
       return Err(_mapExceptionToFailure(error));
     }

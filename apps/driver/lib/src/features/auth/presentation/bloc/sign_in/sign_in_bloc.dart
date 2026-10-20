@@ -15,7 +15,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     on<SignInSubmitted>(_onSignInSubmitted, transformer: droppable());
   }
 
-  final DriverAuthRepository _authRepository;
+  final AuthRepository _authRepository;
 
   Future<void> _onSignInSubmitted(
     SignInSubmitted event,

@@ -6,16 +6,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
 
-class MockDriverPerformanceRemoteDataSource extends Mock
-    implements DriverPerformanceRemoteDataSource {}
+class MockPerformanceRemoteDataSource extends Mock
+    implements PerformanceRemoteDataSource {}
 
 void main() {
-  late MockDriverPerformanceRemoteDataSource dataSource;
-  late DriverPerformanceRepositoryImpl repository;
+  late MockPerformanceRemoteDataSource dataSource;
+  late PerformanceRepositoryImpl repository;
 
   setUp(() {
-    dataSource = MockDriverPerformanceRemoteDataSource();
-    repository = DriverPerformanceRepositoryImpl(dataSource: dataSource);
+    dataSource = MockPerformanceRemoteDataSource();
+    repository = PerformanceRepositoryImpl(dataSource: dataSource);
   });
 
   test('normalizes the complete driver statistics contract', () async {
@@ -47,8 +47,8 @@ void main() {
 
     expect(
       result,
-      const Ok<DriverPerformanceStats, Failure>(
-        DriverPerformanceStats(
+      const Ok<PerformanceStats, Failure>(
+        PerformanceStats(
           todayEarningsAmount: 2817,
           todayCompletedTrips: 1,
           totalTrips: 6,

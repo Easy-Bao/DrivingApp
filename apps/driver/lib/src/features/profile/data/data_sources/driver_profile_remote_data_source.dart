@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-abstract class DriverProfileRemoteDataSource {
+abstract class ProfileRemoteDataSource {
   Future<Map<String, dynamic>> fetchProfile(String driverId);
 
   Future<Map<String, dynamic>> updateProfile({
@@ -8,8 +8,8 @@ abstract class DriverProfileRemoteDataSource {
   });
 }
 
-class DriverProfileRemoteDataSourceImpl(this._dio)
-    implements DriverProfileRemoteDataSource {
+class ProfileRemoteDataSourceImpl(this._dio)
+    implements ProfileRemoteDataSource {
   final Dio _dio;
 
   @override

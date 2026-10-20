@@ -31,7 +31,7 @@ void main() {
       connector: connector,
       reconnectDelay: (_) => const Duration(minutes: 1),
     );
-    final navigationCoordinator = PassengerTabNavigationCoordinator();
+    final navigationCoordinator = TabNavigationCoordinator();
     final lifecycleCoordinator = AppLifecycleCoordinator();
     final router = _createRouter(
       inboxCubit,
@@ -51,10 +51,7 @@ void main() {
     await tester.pumpWidget(
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
-        child: MaterialApp.router(
-          theme: EasyRideTheme.main,
-          routerConfig: router,
-        ),
+        child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -89,7 +86,7 @@ void main() {
       tokenProvider: () async => 'test-token',
       connector: _RealtimeSocketConnectorStub(),
     );
-    final navigationCoordinator = PassengerTabNavigationCoordinator();
+    final navigationCoordinator = TabNavigationCoordinator();
     final lifecycleCoordinator = AppLifecycleCoordinator();
     final router = _createRouter(
       inboxCubit,
@@ -109,17 +106,14 @@ void main() {
     await tester.pumpWidget(
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
-        child: MaterialApp.router(
-          theme: EasyRideTheme.main,
-          routerConfig: router,
-        ),
+        child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
-    final tabBar = find.byType(PassengerFloatingTabBar);
-    expect(tester.getSize(tabBar).height, PassengerFloatingTabBar.height);
+    final tabBar = find.byType(FloatingTabBar);
+    expect(tester.getSize(tabBar).height, FloatingTabBar.height);
     expect(
       find.descendant(of: tabBar, matching: find.byType(AnimatedScale)),
       findsNothing,
@@ -137,18 +131,18 @@ void main() {
       final inkWell = tester.widget<InkWell>(item);
       expect(
         labelWidget.style?.fontSize,
-        EasyRideTheme.main.textTheme.labelMedium?.fontSize,
+        AppTheme.main.textTheme.labelMedium?.fontSize,
       );
       expect(labelWidget.style?.fontWeight, FontWeight.w500);
-      expect(iconWidget.size, EasyRideSize.navigationIcon);
+      expect(iconWidget.size, AppSize.navigationIcon);
       expect(inkWell.splashFactory, NoSplash.splashFactory);
       expect(
         inkWell.overlayColor?.resolve({WidgetState.pressed}),
-        EasyRideTheme.main.colorScheme.primary.withValues(alpha: 0.12),
+        AppTheme.main.colorScheme.primary.withValues(alpha: 0.12),
       );
       expect(
         inkWell.overlayColor?.resolve({WidgetState.hovered}),
-        EasyRideTheme.main.colorScheme.primary.withValues(alpha: 0.08),
+        AppTheme.main.colorScheme.primary.withValues(alpha: 0.08),
       );
     }
 
@@ -266,7 +260,7 @@ void main() {
       tokenProvider: () async => 'test-token',
       connector: _RealtimeSocketConnectorStub(),
     );
-    final navigationCoordinator = PassengerTabNavigationCoordinator();
+    final navigationCoordinator = TabNavigationCoordinator();
     final lifecycleCoordinator = AppLifecycleCoordinator();
     final router = _createRouter(
       inboxCubit,
@@ -287,16 +281,13 @@ void main() {
     await tester.pumpWidget(
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
-        child: MaterialApp.router(
-          theme: EasyRideTheme.main,
-          routerConfig: router,
-        ),
+        child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
 
     expect(router.state.uri.path, HomeRoutes.fullHomePath);
-    expect(find.byType(PassengerFloatingTabBar), findsNothing);
+    expect(find.byType(FloatingTabBar), findsNothing);
     expect(find.text('View all'), findsNothing);
 
     final gesture = await tester.startGesture(
@@ -321,7 +312,7 @@ void main() {
       tokenProvider: () async => 'test-token',
       connector: _RealtimeSocketConnectorStub(),
     );
-    final navigationCoordinator = PassengerTabNavigationCoordinator();
+    final navigationCoordinator = TabNavigationCoordinator();
     final lifecycleCoordinator = AppLifecycleCoordinator();
     final router = _createRouter(
       inboxCubit,
@@ -341,10 +332,7 @@ void main() {
     await tester.pumpWidget(
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
-        child: MaterialApp.router(
-          theme: EasyRideTheme.main,
-          routerConfig: router,
-        ),
+        child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -366,7 +354,7 @@ void main() {
 GoRouter _createRouter(
   InboxCubit inboxCubit,
   RealtimeWebSocketClient realtimeClient,
-  PassengerTabNavigationCoordinator navigationCoordinator,
+  TabNavigationCoordinator navigationCoordinator,
   AppLifecycleCoordinator lifecycleCoordinator, {
   String initialLocation = HomeRoutes.fullHomePath,
 }) {
@@ -382,7 +370,7 @@ GoRouter _createRouter(
         ),
       ),
       StatefulShellRoute(
-        builder: (context, state, navigationShell) => PassengerShellLayout(
+        builder: (context, state, navigationShell) => ShellLayout(
           inboxCubit: inboxCubit,
           realtimeClient: realtimeClient,
           lifecycleCoordinator: lifecycleCoordinator,
@@ -391,7 +379,7 @@ GoRouter _createRouter(
         ),
         navigatorContainerBuilder: (context, navigationShell, children) =>
             BlocBuilder<SessionBloc, SessionState>(
-              builder: (context, sessionState) => PassengerTabBranchContainer(
+              builder: (context, sessionState) => TabBranchContainer(
                 navigationShell: navigationShell,
                 allowUserNavigation: sessionState.isAuthenticated,
                 onNavigationSettled: navigationCoordinator.commit,
@@ -473,13 +461,13 @@ GoRouter _createRouter(
 
 class _SessionRepositoryStub implements SessionRepository {
   @override
-  Future<Result<PassengerSession, Failure>> clearSession() async {
-    return const Ok(PassengerSession.guest());
+  Future<Result<Session, Failure>> clearSession() async {
+    return const Ok(Session.guest());
   }
 
   @override
-  Future<Result<PassengerSession, Failure>> restoreSession() async {
-    return const Ok(PassengerSession.authenticated(passengerId: 'passenger-1'));
+  Future<Result<Session, Failure>> restoreSession() async {
+    return const Ok(Session.authenticated(passengerId: 'passenger-1'));
   }
 }
 

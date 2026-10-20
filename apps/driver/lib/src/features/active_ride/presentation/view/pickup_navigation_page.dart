@@ -43,9 +43,9 @@ class const PickupNavigationPage({
   final double distance;
   final double fare;
   final String duration;
-  final DriverRideRepository rideRepository;
+  final RideRepository rideRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
-  final DriverSessionStore sessionService;
+  final SessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
   final LiveMapBloc? liveMapBloc;
 
@@ -129,9 +129,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
               ),
             );
           }
-          if (mounted &&
-              _pickupLatitude != null &&
-              _pickupLongitude != null) {
+          if (mounted && _pickupLatitude != null && _pickupLongitude != null) {
             _liveMapBloc.add(
               UpdateLocationsAndDrawRouteEvent(
                 driverLatitude: position.latitude,
@@ -324,7 +322,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
 
   Future<void> _cancelRide() async {
     if (_isCancellingRide || !mounted) return;
-    final choice = await showDriverRideCancellationSheet(context);
+    final choice = await showRideCancellationSheet(context);
     if (!mounted || choice == null) return;
 
     setState(() => _isCancellingRide = true);
@@ -521,17 +519,17 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return DriverActiveRideHeader(
+    return ActiveRideHeader(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       backButton: _buildTripBackButton(context, () => context.pop()),
       actions: [
-        DriverEmergencyButton(
+        EmergencyButton(
           onEmergencyStop: _emergencyStop,
           onEmergencyStopCompleted: () {
             if (mounted) context.goNamed(DashboardRoutes.dashboard);
           },
         ),
-        DriverSafetyReportButton(
+        SafetyReportButton(
           rideId: BlocProvider.of<RideFlowCubit>(context).activeRideId,
           rideRepository: widget.rideRepository,
         ),
@@ -553,8 +551,8 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
         onTap: onPressed,
         customBorder: const CircleBorder(),
         child: SizedBox(
-          width: EasyRideSize.minimumTouchTarget,
-          height: EasyRideSize.minimumTouchTarget,
+          width: AppSize.minimumTouchTarget,
+          height: AppSize.minimumTouchTarget,
           child: Center(
             child: Icon(
               LucideIcons.arrow_left,

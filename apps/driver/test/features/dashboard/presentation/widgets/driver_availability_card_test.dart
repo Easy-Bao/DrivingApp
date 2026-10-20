@@ -23,17 +23,17 @@ void main() {
       find.byType(AnimatedContainer),
     );
     final decoration = card.decoration! as BoxDecoration;
-    final semantics = EasyRideTheme.main.extension<EasyRideSemanticColors>()!;
+    final semantics = AppTheme.main.extension<AppSemanticColors>()!;
     final statusPill = tester.widget<Container>(
       find
           .ancestor(of: find.text('ONLINE'), matching: find.byType(Container))
           .first,
     );
 
-    expect(decoration.color, EasyRideTheme.main.colorScheme.surface);
+    expect(decoration.color, AppTheme.main.colorScheme.surface);
     expect(
       decoration.border,
-      Border.all(color: EasyRideTheme.main.colorScheme.outlineVariant),
+      Border.all(color: AppTheme.main.colorScheme.outlineVariant),
     );
     expect((statusPill.decoration! as BoxDecoration).color, semantics.online);
     expect(
@@ -80,7 +80,7 @@ void main() {
     );
     expect(
       (statusPill.decoration! as BoxDecoration).color,
-      EasyRideTheme.main.colorScheme.surfaceContainerHighest,
+      AppTheme.main.colorScheme.surfaceContainerHighest,
     );
   });
 }
@@ -92,9 +92,9 @@ Widget _buildCard({
   ValueChanged<bool>? onChanged,
 }) {
   return MaterialApp(
-    theme: EasyRideTheme.main,
+    theme: AppTheme.main,
     home: Scaffold(
-      body: DriverAvailabilityCard(
+      body: AvailabilityCard(
         isOnline: isOnline,
         isToggling: isToggling,
         hasActiveRide: hasActiveRide,

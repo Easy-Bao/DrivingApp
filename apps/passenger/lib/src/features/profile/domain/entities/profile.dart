@@ -1,7 +1,7 @@
 import 'package:foundation/foundation.dart';
 
-class PassengerProfile {
-  const PassengerProfile({
+class Profile {
+  const Profile({
     this.id,
     this.userId,
     this.role,
@@ -37,9 +37,9 @@ class PassengerProfile {
   final double? rating;
   final bool? isOnline;
 
-  factory PassengerProfile.fromJson(Map<String, dynamic> response) {
+  factory Profile.fromJson(Map<String, dynamic> response) {
     final payload = _payload(response);
-    return PassengerProfile(
+    return Profile(
       id: _readString(payload, const ['id', 'profile_id', 'profileId']),
       userId: _readString(payload, const ['user_id', 'userId']),
       role: _readString(payload, const ['role']),

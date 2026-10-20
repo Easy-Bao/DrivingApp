@@ -12,12 +12,12 @@ import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class const DriverTripHistoryPage({super.key}) extends StatefulWidget {
+class const TripHistoryPage({super.key}) extends StatefulWidget {
   @override
-  State<DriverTripHistoryPage> createState() => _DriverTripHistoryPageState();
+  State<TripHistoryPage> createState() => _TripHistoryPageState();
 }
 
-class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
+class _TripHistoryPageState extends State<TripHistoryPage> {
   String _selectedTripStatusFilter = 'ALL';
 
   List<Map<String, dynamic>> _filteredTripsList(
@@ -67,9 +67,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     }
   }
 
-  Future<void> _showTripFilterSheet(
-    BuildContext context,
-  ) async {
+  Future<void> _showTripFilterSheet(BuildContext context) async {
     final selectedFilter = switch (_selectedTripStatusFilter) {
       'COMPLETED' => TripHistoryFilter.completed,
       'CANCELLED' => TripHistoryFilter.cancelled,
@@ -95,8 +93,8 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     final map = <String, List<Map<String, dynamic>>>{};
     for (final trip in trips) {
       final formattedDate = _formatDate(
-        driverValueAsString(trip['completed_at']) ??
-            driverValueAsString(trip['created_at']) ??
+        valueAsString(trip['completed_at']) ??
+            valueAsString(trip['created_at']) ??
             '',
       );
       map.putIfAbsent(formattedDate, () => []).add(trip);
@@ -106,7 +104,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<DriverTripHistoryCubit>().state;
+    final state = context.watch<TripHistoryCubit>().state;
     final filteredTrips = _filteredTripsList(state.trips);
     final grouped = _groupByDate(filteredTrips);
     final hasTrips = state.trips.isNotEmpty;
@@ -131,9 +129,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
               LucideIcons.funnel,
               color: context.colorScheme.onSurface,
             ),
-            onPressed: () => unawaited(
-              _showTripFilterSheet(context),
-            ),
+            onPressed: () => unawaited(_showTripFilterSheet(context)),
           ),
           const SizedBox(width: 8),
         ],
@@ -146,8 +142,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
               message: state.errorMessage!,
               icon: LucideIcons.wifi_off,
               actionLabel: 'Try again',
-              onAction: () =>
-                  BlocProvider.of<DriverTripHistoryCubit>(context).load(),
+              onAction: () => BlocProvider.of<TripHistoryCubit>(context).load(),
             )
           : filteredTrips.isEmpty
           ? _buildMessageState(
@@ -164,13 +159,13 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
           : RefreshIndicator(
               color: context.colorScheme.onSurface,
               onRefresh: () =>
-                  BlocProvider.of<DriverTripHistoryCubit>(context).load(),
+                  BlocProvider.of<TripHistoryCubit>(context).load(),
               child: ListView.builder(
                 padding: const EdgeInsets.fromLTRB(
-                  EasyRideLayout.pagePadding,
+                  AppLayout.pagePadding,
                   4,
-                  EasyRideLayout.pagePadding,
-                  AppFloatingTabBar.height + EasyRideSpacing.xxl,
+                  AppLayout.pagePadding,
+                  AppFloatingTabBar.height + AppSpacing.xxl,
                 ),
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
@@ -217,10 +212,10 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     return Skeletonizer.zone(
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(
-          EasyRideLayout.pagePadding,
+          AppLayout.pagePadding,
           12,
-          EasyRideLayout.pagePadding,
-          AppFloatingTabBar.height + EasyRideSpacing.xxl,
+          AppLayout.pagePadding,
+          AppFloatingTabBar.height + AppSpacing.xxl,
         ),
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
@@ -231,7 +226,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: context.colorScheme.surface,
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: context.colorScheme.outlineVariant),
           ),
           child: const Row(
@@ -266,7 +261,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
   }) {
     return RefreshIndicator(
       color: context.colorScheme.onSurface,
-      onRefresh: () => BlocProvider.of<DriverTripHistoryCubit>(context).load(),
+      onRefresh: () => BlocProvider.of<TripHistoryCubit>(context).load(),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
@@ -315,12 +310,12 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
       padding: const EdgeInsets.only(top: 8, bottom: 4),
       child: AppErrorBanner(
         message: message,
-        onRetry: () => BlocProvider.of<DriverTripHistoryCubit>(context).load(),
+        onRetry: () => BlocProvider.of<TripHistoryCubit>(context).load(),
       ),
     );
   }
 
-  Widget _buildLoadMore(DriverTripHistoryState state) {
+  Widget _buildLoadMore(TripHistoryState state) {
     if (state.isLoadingMore) {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: 18),
@@ -354,7 +349,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
           ],
           TextButton.icon(
             onPressed: () =>
-                BlocProvider.of<DriverTripHistoryCubit>(context).loadMore(),
+                BlocProvider.of<TripHistoryCubit>(context).loadMore(),
             icon: const Icon(LucideIcons.chevron_down, size: 16),
             label: Text(
               state.loadMoreError == null ||
@@ -369,19 +364,18 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
   }
 
   Widget _buildTripCard(Map<String, dynamic> trip) {
-    final status = (driverValueAsString(trip['status']) ?? 'completed')
-        .toLowerCase();
+    final status = (valueAsString(trip['status']) ?? 'completed').toLowerCase();
     final isCompleted = status == 'completed';
     final statusColor = isCompleted
         ? context.semanticColors.success
         : context.colorScheme.error;
     final statusLabel = isCompleted
         ? 'Completed'
-        : driverSentenceCase(status, 'Canceled');
-    final fromName = driverValueAsString(trip['pickup_name']) ?? 'Pickup';
-    final toName = driverValueAsString(trip['dropoff_name']) ?? 'Drop-off';
-    final formattedFareAmount = driverFareInPesos(trip);
-    final rideType = driverSentenceCase(trip['ride_type'], 'Solo ride');
+        : sentenceCase(status, 'Canceled');
+    final fromName = valueAsString(trip['pickup_name']) ?? 'Pickup';
+    final toName = valueAsString(trip['dropoff_name']) ?? 'Drop-off';
+    final formattedFareAmount = fareInPesos(trip);
+    final rideType = sentenceCase(trip['ride_type'], 'Solo ride');
     final distance =
         trip['distance_km'] is num &&
             (trip['distance_km'] as num).isFinite &&
@@ -393,15 +387,15 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: InkWell(
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           onTap: () =>
               context.pushNamed(RideHistoryRoutes.tripDetail, extra: trip),
           child: Container(
-            padding: const EdgeInsets.all(EasyRideSpacing.lg),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: context.colorScheme.outlineVariant),
             ),
             child: Column(
@@ -430,9 +424,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                       ),
                       decoration: BoxDecoration(
                         color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(
-                          EasyRideRadius.pill,
-                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       child: Text(
                         statusLabel,
@@ -485,8 +477,8 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
 
   String _formatTripTime(dynamic trip, {required bool alwaysUse24HourFormat}) {
     final rawDate =
-        driverValueAsString(trip['completed_at']) ??
-        driverValueAsString(trip['created_at']);
+        valueAsString(trip['completed_at']) ??
+        valueAsString(trip['created_at']);
     if (rawDate == null) return 'Past trip';
     try {
       final date = DateTime.parse(rawDate).toLocal();

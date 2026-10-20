@@ -30,7 +30,7 @@ abstract final class AppSnackBar {
       duration: duration,
       backgroundColor: bgColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(EasyRideRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       content: Row(
         children: [
@@ -39,7 +39,7 @@ abstract final class AppSnackBar {
             size: 18,
             color: fgColor,
           ),
-          const SizedBox(width: EasyRideSpacing.md),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
               message,

@@ -11,7 +11,7 @@ void main() {
       12,
       30,
     ).add(const Duration(microseconds: 4321));
-    final point = driverLocationPointFromPosition(
+    final point = locationPointFromPosition(
       _position(timestamp: timestamp, heading: 361, speed: 250),
     );
 
@@ -23,7 +23,7 @@ void main() {
   });
 
   test('replaces invalid motion values with zero', () {
-    final point = driverLocationPointFromPosition(
+    final point = locationPointFromPosition(
       _position(heading: -1, speed: double.nan),
     );
 

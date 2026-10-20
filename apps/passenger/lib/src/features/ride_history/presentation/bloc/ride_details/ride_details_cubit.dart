@@ -53,14 +53,14 @@ final class RideDetailsState extends Equatable {
 class RideDetailsCubit extends Cubit<RideDetailsState> {
   RideDetailsCubit({
     required TrackRepository repository,
-    required PassengerSessionStore sessionService,
+    required SessionStore sessionService,
   }) : this._(repository, sessionService);
 
   RideDetailsCubit._(this._repository, this._sessionService)
     : super(const RideDetailsState());
 
   final TrackRepository _repository;
-  final PassengerSessionStore _sessionService;
+  final SessionStore _sessionService;
   Future<void>? _loadRequest;
   Future<RideCounterparty?>? _counterpartyRequest;
 

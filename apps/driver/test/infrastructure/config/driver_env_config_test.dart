@@ -8,12 +8,12 @@ void main() {
   test('reads the deployment environment from the app asset', () {
     dotenv.loadFromString(envString: 'APP_ENV=staging');
 
-    expect(DriverEnvConfig.appEnvironment, 'staging');
+    expect(EnvConfig.appEnvironment, 'staging');
   });
 
   test('defaults the deployment environment for local development', () {
     dotenv.loadFromString(envString: 'API_BASE_URL=http://127.0.0.1:8000');
 
-    expect(DriverEnvConfig.appEnvironment, 'development');
+    expect(EnvConfig.appEnvironment, 'development');
   });
 }

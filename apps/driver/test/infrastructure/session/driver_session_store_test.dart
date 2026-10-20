@@ -8,11 +8,11 @@ class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 
 void main() {
   late MockFlutterSecureStorage storage;
-  late DriverSessionStore sessionService;
+  late SessionStore sessionService;
 
   setUp(() {
     storage = MockFlutterSecureStorage();
-    sessionService = DriverSessionStore(storage: storage);
+    sessionService = SessionStore(storage: storage);
     when(
       () => storage.write(
         key: any(named: 'key'),
@@ -25,45 +25,45 @@ void main() {
   test(
     'recognizes a persisted token and driver ID as an active session',
     () async {
-      when(() => storage.read(key: DriverStorageKeys.accessToken))
+      when(() => storage.read(key: StorageKeys.accessToken))
           .thenAnswer((_) async => 'jwt-token');
-      when(() => storage.read(key: DriverStorageKeys.driverId))
+      when(() => storage.read(key: StorageKeys.driverId))
           .thenAnswer((_) async => 'driver-1');
 
-      expect(await sessionService.hasValidDriverSession(), isTrue);
+      expect(await sessionService.hasValidSession(), isTrue);
     },
   );
 
   test('rejects an incomplete persisted session', () async {
-    when(() => storage.read(key: DriverStorageKeys.accessToken))
+    when(() => storage.read(key: StorageKeys.accessToken))
         .thenAnswer((_) async => 'jwt-token');
-    when(() => storage.read(key: DriverStorageKeys.driverId))
+    when(() => storage.read(key: StorageKeys.driverId))
         .thenAnswer((_) async => '');
 
-    expect(await sessionService.hasValidDriverSession(), isFalse);
+    expect(await sessionService.hasValidSession(), isFalse);
   });
 
   test('deletes the cached active ride ID', () async {
     await sessionService.clearActiveRideId();
 
-    verify(() => storage.delete(key: DriverStorageKeys.activeRideId)).called(1);
+    verify(() => storage.delete(key: StorageKeys.activeRideId)).called(1);
     verifyNever(
       () => storage.write(
-        key: DriverStorageKeys.activeRideId,
+        key: StorageKeys.activeRideId,
         value: any(named: 'value'),
       ),
     );
   });
 
   test('persists and reads the refresh token', () async {
-    when(() => storage.read(key: DriverStorageKeys.refreshToken))
+    when(() => storage.read(key: StorageKeys.refreshToken))
         .thenAnswer((_) async => 'refresh-jwt-token');
 
     await sessionService.saveRefreshToken('refresh-jwt-token');
 
     verify(
       () => storage.write(
-        key: DriverStorageKeys.refreshToken,
+        key: StorageKeys.refreshToken,
         value: 'refresh-jwt-token',
       ),
     ).called(1);
@@ -74,13 +74,13 @@ void main() {
     await sessionService.clearSession();
 
     for (final key in const [
-      DriverStorageKeys.accessToken,
-      DriverStorageKeys.refreshToken,
-      DriverStorageKeys.driverId,
-      DriverStorageKeys.driverOnlineStatus,
-      DriverStorageKeys.driverOnlineSince,
-      DriverStorageKeys.passengerId,
-      DriverStorageKeys.activeRideId,
+      StorageKeys.accessToken,
+      StorageKeys.refreshToken,
+      StorageKeys.driverId,
+      StorageKeys.driverOnlineStatus,
+      StorageKeys.driverOnlineSince,
+      StorageKeys.passengerId,
+      StorageKeys.activeRideId,
     ]) {
       verify(() => storage.delete(key: key)).called(1);
     }

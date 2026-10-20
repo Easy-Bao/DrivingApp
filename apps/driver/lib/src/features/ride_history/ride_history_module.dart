@@ -14,18 +14,18 @@ import 'package:go_router_modular/go_router_modular.dart';
 class RideHistoryModule._() {
   static void binds(Injector i) {
     i
-      ..addLazySingleton<DriverRideHistoryRemoteDataSource>(
-        (i) => DriverRideHistoryRemoteDataSourceImpl(i.get<Dio>()),
+      ..addLazySingleton<RideHistoryRemoteDataSource>(
+        (i) => RideHistoryRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<DriverRideHistoryRepository>(
-        (i) => DriverRideHistoryRepositoryImpl(
-          dataSource: i.get<DriverRideHistoryRemoteDataSource>(),
+      ..addLazySingleton<RideHistoryRepository>(
+        (i) => RideHistoryRepositoryImpl(
+          dataSource: i.get<RideHistoryRemoteDataSource>(),
         ),
       )
-      ..addFactory<DriverTripHistoryCubit>(
-        (i) => DriverTripHistoryCubit(
-          repository: i.get<DriverRideHistoryRepository>(),
-          sessionService: i.get<DriverSessionStore>(),
+      ..addFactory<TripHistoryCubit>(
+        (i) => TripHistoryCubit(
+          repository: i.get<RideHistoryRepository>(),
+          sessionService: i.get<SessionStore>(),
         ),
       );
   }
@@ -34,9 +34,9 @@ class RideHistoryModule._() {
     ChildRoute(
       name: RideHistoryRoutes.tripDetail,
       RideHistoryRoutes.tripDetailPath,
-      child: (context, GoRouterState state) => DriverTripDetailPage(
+      child: (context, GoRouterState state) => TripDetailPage(
         trip: SafeRouteExtra.asMap(state.extra),
-        sessionService: Modular.get<DriverSessionStore>(),
+        sessionService: Modular.get<SessionStore>(),
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
@@ -49,11 +49,11 @@ class RideHistoryModule._() {
       RideHistoryRoutes.tripHistoryPath,
       child: (context, GoRouterState state) => BlocProvider(
         create: (_) {
-          final cubit = Modular.get<DriverTripHistoryCubit>();
+          final cubit = Modular.get<TripHistoryCubit>();
           cubit.load();
           return cubit;
         },
-        child: const DriverTripHistoryPage(),
+        child: const TripHistoryPage(),
       ),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,

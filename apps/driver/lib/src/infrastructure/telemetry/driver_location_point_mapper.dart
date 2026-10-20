@@ -1,8 +1,8 @@
 import 'package:driver/src/infrastructure/telemetry/driver_location_spool.dart';
 import 'package:geolocator/geolocator.dart';
 
-DriverLocationPoint driverLocationPointFromPosition(Position position) {
-  return DriverLocationPoint(
+LocationPoint locationPointFromPosition(Position position) {
+  return LocationPoint(
     latitude: position.latitude,
     longitude: position.longitude,
     observedAt: position.timestamp.toUtc(),

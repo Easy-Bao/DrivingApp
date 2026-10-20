@@ -11,9 +11,9 @@ import 'package:passenger/src/features/auth/presentation/pages/forgot_password_p
 import 'package:passenger/src/features/auth/presentation/pages/sign_in_page.dart';
 import 'package:passenger/src/features/auth/presentation/pages/sign_up_page.dart';
 
-class _UnusedAuthRepository implements PassengerAuthRepository {
+class _UnusedAuthRepository implements AuthRepository {
   @override
-  Future<Result<PassengerAuthCredentials, Failure>> authenticate({
+  Future<Result<AuthCredentials, Failure>> authenticate({
     required String email,
     required String password,
     bool rememberMe = true,
@@ -28,7 +28,7 @@ class _UnusedAuthRepository implements PassengerAuthRepository {
   }) => Future.error(UnimplementedError());
 
   @override
-  Future<Result<PassengerAuthCredentials, Failure>> verifyOtp({
+  Future<Result<AuthCredentials, Failure>> verifyOtp({
     required String email,
     required String code,
   }) => Future.error(UnimplementedError());
@@ -59,7 +59,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: SigninPage(signInBloc: SignInBloc(_UnusedAuthRepository())),
       ),
     );
@@ -68,7 +68,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: SignupPage(signUpBloc: SignUpBloc(_UnusedAuthRepository())),
       ),
     );
@@ -88,7 +88,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          theme: EasyRideTheme.main,
+          theme: AppTheme.main,
           home: ForgotPasswordPage(
             forgotPasswordBloc: ForgotPasswordBloc(_UnusedAuthRepository()),
           ),
@@ -110,7 +110,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: SigninPage(signInBloc: SignInBloc(_UnusedAuthRepository())),
       ),
     );

@@ -9,17 +9,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockDriverLocationAccessCubit
-    extends MockCubit<DriverLocationAccessViewState>
-    implements DriverLocationAccessCubit {}
+class _MockLocationAccessCubit extends MockCubit<LocationAccessViewState>
+    implements LocationAccessCubit {}
 
 void main() {
   testWidgets('opens phone settings for a disabled location service', (
     tester,
   ) async {
-    final cubit = _MockDriverLocationAccessCubit();
+    final cubit = _MockLocationAccessCubit();
     when(() => cubit.state).thenReturn(
-      const DriverLocationAccessUnavailable(
+      const LocationAccessUnavailable(
         accessState: LocationAccessState.serviceDisabled,
       ),
     );
@@ -28,10 +27,10 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
-        home: BlocProvider<DriverLocationAccessCubit>.value(
+        theme: AppTheme.main,
+        home: BlocProvider<LocationAccessCubit>.value(
           value: cubit,
-          child: DriverLocationAccessStatusPage(onBack: () {}),
+          child: LocationAccessStatusPage(onBack: () {}),
         ),
       ),
     );

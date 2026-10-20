@@ -33,7 +33,7 @@ bool hasExceededRouteDeviation({
 
 class LiveMapBloc({required this._rideRepository})
     extends Bloc<LiveMapEvent, LiveMapState> {
-  final DriverRideRepository _rideRepository;
+  final RideRepository _rideRepository;
 
   AppMapController? _mapController;
   MapPointAnnotationManager? _driverMarkerManager;
@@ -130,8 +130,7 @@ class LiveMapBloc({required this._rideRepository})
       return;
     }
 
-    final targetLatitude =
-        event.routeTargetLatitude ?? event.passengerLatitude;
+    final targetLatitude = event.routeTargetLatitude ?? event.passengerLatitude;
     final targetLongitude =
         event.routeTargetLongitude ?? event.passengerLongitude;
     if (targetLatitude == null || targetLongitude == null) return;

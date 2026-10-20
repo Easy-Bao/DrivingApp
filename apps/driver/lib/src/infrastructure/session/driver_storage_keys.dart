@@ -1,4 +1,4 @@
-class DriverStorageKeys {
+class StorageKeys {
   static const String accessToken = 'jwt_token';
   static const String refreshToken = 'refresh_token';
   static const String driverId = 'driver_id';

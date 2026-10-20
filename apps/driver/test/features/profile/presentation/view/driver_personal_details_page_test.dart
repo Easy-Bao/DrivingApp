@@ -9,26 +9,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class _FakeDriverProfileRepository(this.account)
-    implements DriverProfileRepository {
-  DriverAccountSnapshot account;
+class _FakeProfileRepository(this.account) implements ProfileRepository {
+  AccountSnapshot account;
 
   @override
-  DriverAccountSnapshot getCachedAccount() => account;
+  AccountSnapshot getCachedAccount() => account;
 
   @override
-  Future<Result<DriverAccountSnapshot, Failure>> refreshAccount() async {
+  Future<Result<AccountSnapshot, Failure>> refreshAccount() async {
     return Ok(account);
   }
 
   @override
-  Future<Result<DriverAccountSnapshot, Failure>> updateAccount({
-    required DriverAccountSnapshot currentAccount,
+  Future<Result<AccountSnapshot, Failure>> updateAccount({
+    required AccountSnapshot currentAccount,
     required String name,
     required String vehicleType,
     required String plateNumber,
   }) async {
-    account = DriverAccountSnapshot(
+    account = AccountSnapshot(
       name: name,
       phone: currentAccount.phone,
       email: currentAccount.email,
@@ -48,8 +47,8 @@ void main() {
   testWidgets('updates personal details without exposing vehicle fields', (
     tester,
   ) async {
-    final repository = _FakeDriverProfileRepository(
-      const DriverAccountSnapshot(
+    final repository = _FakeProfileRepository(
+      const AccountSnapshot(
         name: 'Bao Driver',
         phone: '+639170000001',
         email: 'bao@example.com',
@@ -57,16 +56,16 @@ void main() {
         plateNumber: 'ABC-1234',
       ),
     );
-    final cubit = DriverAccountCubit(repository: repository)
-      ..emit(DriverAccountState(account: repository.account));
+    final cubit = AccountCubit(repository: repository)
+      ..emit(AccountState(account: repository.account));
     addTearDown(cubit.close);
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
-        home: BlocProvider<DriverAccountCubit>.value(
+        theme: AppTheme.main,
+        home: BlocProvider<AccountCubit>.value(
           value: cubit,
-          child: DriverPersonalDetailsPage(onBack: () {}),
+          child: PersonalDetailsPage(onBack: () {}),
         ),
       ),
     );

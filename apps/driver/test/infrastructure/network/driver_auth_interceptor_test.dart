@@ -12,7 +12,7 @@ class MockErrorInterceptorHandler extends Mock
 
 class MockDio extends Mock implements Dio {}
 
-class MockSecureSessionService extends Mock implements DriverSessionStore {}
+class MockSecureSessionService extends Mock implements SessionStore {}
 
 class FakeRequestOptions extends Fake implements RequestOptions {}
 
@@ -34,7 +34,7 @@ void main() {
     when(() => secureSessionService.readToken())
         .thenAnswer((_) async => 'jwt-token');
 
-    await DriverAuthInterceptor(secureSessionService)
+    await AuthInterceptor(secureSessionService)
         .onRequest(requestOptions, handler);
 
     expect(requestOptions.headers['Authorization'], 'Bearer jwt-token');
@@ -51,7 +51,7 @@ void main() {
     when(() => secureSessionService.readToken())
         .thenAnswer((_) async => 'jwt-token');
 
-    await DriverAuthInterceptor(
+    await AuthInterceptor(
       secureSessionService,
       allowedBaseUri: Uri.parse('https://api.example'),
     ).onRequest(requestOptions, handler);
@@ -112,7 +112,7 @@ void main() {
         ),
       );
 
-      await DriverAuthInterceptor(
+      await AuthInterceptor(
         secureSessionService,
         dio: dio,
         refreshClient: refreshClient,
@@ -158,7 +158,7 @@ void main() {
         .thenAnswer((_) async => null);
     when(() => secureSessionService.clearSession()).thenAnswer((_) async {});
 
-    await DriverAuthInterceptor(
+    await AuthInterceptor(
       secureSessionService,
       dio: dio,
       refreshClient: refreshClient,
@@ -202,7 +202,7 @@ void main() {
       ),
     );
 
-    await DriverAuthInterceptor(
+    await AuthInterceptor(
       secureSessionService,
       dio: dio,
       refreshClient: refreshClient,

@@ -134,7 +134,7 @@ class const _ResumeTripButton({required this.onResume})
         backgroundColor: colors.primary,
         foregroundColor: colors.onPrimary,
         padding: const EdgeInsets.symmetric(
-          horizontal: EasyRideSpacing.md,
+          horizontal: AppSpacing.md,
           vertical: 6,
         ),
         minimumSize: Size.zero,
@@ -143,7 +143,7 @@ class const _ResumeTripButton({required this.onResume})
           fontWeight: FontWeight.w700,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
       ),
     );

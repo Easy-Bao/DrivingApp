@@ -16,9 +16,9 @@ void main() {
     final repository = _MockTrackRepository();
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: PassengerSafetyReportButton(
+          body: SafetyReportButton(
             rideId: 'ride-7',
             trackRepository: repository,
           ),
@@ -63,9 +63,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: PassengerSafetyReportButton(
+          body: SafetyReportButton(
             rideId: 'ride-7',
             trackRepository: repository,
           ),
@@ -104,9 +104,9 @@ void main() {
     final repository = _MockTrackRepository();
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: PassengerSafetyReportButton(
+          body: SafetyReportButton(
             rideId: 'ride-7',
             trackRepository: repository,
           ),

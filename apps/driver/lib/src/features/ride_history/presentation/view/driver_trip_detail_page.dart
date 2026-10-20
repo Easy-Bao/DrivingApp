@@ -7,43 +7,41 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class const DriverTripDetailPage({
+class const TripDetailPage({
   super.key,
   required this.trip,
   required this.sessionService,
 }) extends StatefulWidget {
   final Map<String, dynamic> trip;
-  final DriverSessionStore sessionService;
+  final SessionStore sessionService;
 
   @override
-  State<DriverTripDetailPage> createState() => _DriverTripDetailPageState();
+  State<TripDetailPage> createState() => _TripDetailPageState();
 }
 
-class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
+class _TripDetailPageState extends State<TripDetailPage> {
   static const _passengerContactWindow = Duration(hours: 24);
 
   bool _isContactingPassenger = false;
   String? _chatFeedbackMessage;
 
   String get _passengerName =>
-      driverValueAsString(widget.trip['passenger_name']) ?? 'Passenger';
+      valueAsString(widget.trip['passenger_name']) ?? 'Passenger';
 
   String get _passengerPhone =>
-      driverValueAsString(widget.trip['passenger_phone']) ??
-      'Phone unavailable';
+      valueAsString(widget.trip['passenger_phone']) ?? 'Phone unavailable';
 
   String? get _passengerFeedback =>
-      driverValueAsString(widget.trip['passenger_feedback']);
+      valueAsString(widget.trip['passenger_feedback']);
 
   double? get _passengerRating {
     final value = widget.trip['passenger_rating'];
     if (value is num && value.isFinite && value > 0) return value.toDouble();
-    return double.tryParse(driverValueAsString(value) ?? '');
+    return double.tryParse(valueAsString(value) ?? '');
   }
 
   bool get _canContactPassenger {
-    final status = (driverValueAsString(widget.trip['status']) ?? '')
-        .toLowerCase();
+    final status = (valueAsString(widget.trip['status']) ?? '').toLowerCase();
     if (status == 'assigned' ||
         status == 'accepted' ||
         status == 'arrived' ||
@@ -52,7 +50,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
     }
     if (status != 'completed') return false;
 
-    final completedAtValue = driverValueAsString(widget.trip['completed_at']);
+    final completedAtValue = valueAsString(widget.trip['completed_at']);
     if (completedAtValue == null) return false;
     final completedAt = DateTime.tryParse(completedAtValue);
     if (completedAt == null) return false;
@@ -63,8 +61,8 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
   Future<void> _contactPassenger() async {
     if (_isContactingPassenger || !_canContactPassenger) return;
 
-    final passengerId = driverValueAsString(widget.trip['passenger_id']);
-    final tripId = driverValueAsString(widget.trip['id']);
+    final passengerId = valueAsString(widget.trip['passenger_id']);
+    final tripId = valueAsString(widget.trip['id']);
     if (passengerId == null || tripId == null) {
       _showChatFeedback('Chat Unavailable. Please Try Again.');
       return;
@@ -135,7 +133,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final status = (driverValueAsString(widget.trip['status']) ?? 'completed')
+    final status = (valueAsString(widget.trip['status']) ?? 'completed')
         .toLowerCase();
     final canContactPassenger = _canContactPassenger;
     final isCompleted = status == 'completed';
@@ -147,33 +145,31 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
         ? 'Completed'
         : isCanceled
         ? 'Canceled'
-        : driverSentenceCase(status, 'Past trip');
-    final fromName =
-        driverValueAsString(widget.trip['pickup_name']) ?? 'Pickup';
-    final toName =
-        driverValueAsString(widget.trip['dropoff_name']) ?? 'Drop-off';
-    final fare = driverFareInPesos(widget.trip);
-    final rideType = driverSentenceCase(widget.trip['ride_type'], 'Solo ride');
+        : sentenceCase(status, 'Past trip');
+    final fromName = valueAsString(widget.trip['pickup_name']) ?? 'Pickup';
+    final toName = valueAsString(widget.trip['dropoff_name']) ?? 'Drop-off';
+    final fare = fareInPesos(widget.trip);
+    final rideType = sentenceCase(widget.trip['ride_type'], 'Solo ride');
     final dateValue =
-        driverValueAsString(widget.trip['completed_at']) ??
-        driverValueAsString(widget.trip['created_at']) ??
+        valueAsString(widget.trip['completed_at']) ??
+        valueAsString(widget.trip['created_at']) ??
         '';
 
-    return EasyRideSecondaryPage(
+    return AppSecondaryPage(
       title: 'Trip details',
       onBack: () => context.pop(),
       maxWidth: 720,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final horizontalPadding = constraints.maxWidth < 360
-              ? EasyRideLayout.pagePadding
-              : EasyRideLayout.pagePaddingWide;
+              ? AppLayout.pagePadding
+              : AppLayout.pagePaddingWide;
           return SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
               horizontalPadding,
               12,
               horizontalPadding,
-              EasyRideSpacing.xxl * 2,
+              AppSpacing.xxl * 2,
             ),
             physics: const BouncingScrollPhysics(),
             child: Center(
@@ -269,7 +265,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(50),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                       textStyle: const TextStyle(
                         fontSize: 14,
@@ -300,7 +296,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(EasyRideRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Text(
         label,
@@ -322,9 +318,9 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          EasyRideSpacing.lg,
-          EasyRideSpacing.lg,
-          EasyRideSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.lg,
           14,
         ),
         child: Column(
@@ -518,7 +514,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                   height: 50,
                   decoration: BoxDecoration(
                     color: context.colorScheme.secondaryContainer,
-                    borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                   alignment: Alignment.center,
                   child: Text(
@@ -570,7 +566,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                       color: context.semanticColors.success.withValues(
                         alpha: 0.1,
                       ),
-                      borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Text(
                       '${rating.toStringAsFixed(1)} rating',

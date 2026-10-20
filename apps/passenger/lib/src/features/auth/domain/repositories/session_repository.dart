@@ -2,7 +2,7 @@ import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/auth/domain/entities/session.dart';
 
 abstract interface class SessionRepository {
-  Future<Result<PassengerSession, Failure>> restoreSession();
+  Future<Result<Session, Failure>> restoreSession();
 
-  Future<Result<PassengerSession, Failure>> clearSession();
+  Future<Result<Session, Failure>> clearSession();
 }

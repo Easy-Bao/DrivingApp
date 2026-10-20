@@ -21,11 +21,8 @@ void main() {
     'restores an authenticated session from encrypted storage',
     setUp: () {
       when(() => sessionRepository.restoreSession()).thenAnswer(
-        (_) async => const Ok<PassengerSession, Failure>(
-          PassengerSession.authenticated(
-            passengerId: '42',
-            passengerName: 'Avery Cruz',
-          ),
+        (_) async => const Ok<Session, Failure>(
+          Session.authenticated(passengerId: '42', passengerName: 'Avery Cruz'),
         ),
       );
     },
@@ -43,10 +40,8 @@ void main() {
   blocTest<SessionBloc, SessionState>(
     'defaults to guest mode when no stored session exists',
     setUp: () {
-      when(() => sessionRepository.restoreSession()).thenAnswer(
-        (_) async =>
-            const Ok<PassengerSession, Failure>(PassengerSession.guest()),
-      );
+      when(() => sessionRepository.restoreSession())
+          .thenAnswer((_) async => const Ok<Session, Failure>(Session.guest()));
     },
     build: () => SessionBloc(sessionRepository: sessionRepository),
     act: (bloc) => bloc.add(const SessionStarted()),
@@ -56,10 +51,8 @@ void main() {
   blocTest<SessionBloc, SessionState>(
     'clears the authenticated session on logout',
     setUp: () {
-      when(() => sessionRepository.clearSession()).thenAnswer(
-        (_) async =>
-            const Ok<PassengerSession, Failure>(PassengerSession.guest()),
-      );
+      when(() => sessionRepository.clearSession())
+          .thenAnswer((_) async => const Ok<Session, Failure>(Session.guest()));
     },
     build: () => SessionBloc(sessionRepository: sessionRepository),
     seed: () => const AuthenticatedSession(passengerId: '42'),
@@ -73,7 +66,7 @@ void main() {
   test(
     'does not let a late restore overwrite a newer guest transition',
     () async {
-      final restore = Completer<Result<PassengerSession, Failure>>();
+      final restore = Completer<Result<Session, Failure>>();
       when(() => sessionRepository.restoreSession())
           .thenAnswer((_) => restore.future);
       final bloc = SessionBloc(sessionRepository: sessionRepository);
@@ -85,8 +78,8 @@ void main() {
       bloc.add(const SessionGuestRequested());
       await Future<void>.delayed(Duration.zero);
       restore.complete(
-        const Ok<PassengerSession, Failure>(
-          PassengerSession.authenticated(passengerId: 'late-restore'),
+        const Ok<Session, Failure>(
+          Session.authenticated(passengerId: 'late-restore'),
         ),
       );
       await Future<void>.delayed(Duration.zero);

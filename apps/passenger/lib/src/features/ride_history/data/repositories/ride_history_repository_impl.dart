@@ -31,7 +31,7 @@ String _shortenAddress(String fullAddress) {
 
 final class RideHistoryRepositoryImpl({required this._remoteDataSource})
     implements RideHistoryRepository {
-  final PassengerRideHistoryRemoteDataSource _remoteDataSource;
+  final RideHistoryRemoteDataSource _remoteDataSource;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is DioException) {

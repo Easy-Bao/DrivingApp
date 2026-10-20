@@ -33,7 +33,7 @@ class SettingsModule._() {
     ChildRoute(
       name: SettingsRoutes.about,
       SettingsRoutes.aboutPath,
-      child: (context, GoRouterState state) => const AboutEasyRidePage(),
+      child: (context, GoRouterState state) => const AboutPage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

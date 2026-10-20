@@ -1,4 +1,4 @@
-final class PassengerAuthEndpoints._() {
+final class AccountAuthEndpoints._() {
   static const String login = '/api/v1/auth/login';
   static const String register = '/api/v1/auth/register';
   static const String requestOtp = '/api/v1/auth/passenger/otp';

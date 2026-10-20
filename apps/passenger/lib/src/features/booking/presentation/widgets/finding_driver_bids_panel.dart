@@ -30,7 +30,7 @@ class const FindingDriverBidsPanel({
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
           borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(EasyRideRadius.sheet),
+            top: Radius.circular(AppRadius.sheet),
           ),
           boxShadow: [
             BoxShadow(
@@ -82,7 +82,7 @@ class const FindingDriverBidsPanel({
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: context.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       border: Border.all(
                         color: context.colorScheme.outlineVariant,
                       ),
@@ -171,7 +171,7 @@ class const FindingDriverBidsPanel({
                                 elevation: 0,
                                 minimumSize: const Size(
                                   0,
-                                  EasyRideSize.minimumTouchTarget,
+                                  AppSize.minimumTouchTarget,
                                 ),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
@@ -179,7 +179,7 @@ class const FindingDriverBidsPanel({
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.pill,
+                                    AppRadius.pill,
                                   ),
                                 ),
                               ),
@@ -226,7 +226,7 @@ class const FindingDriverBidsPanel({
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
                     color: context.colorScheme.error.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(EasyRideRadius.sheet),
+                    borderRadius: BorderRadius.circular(AppRadius.sheet),
                   ),
                   child: isCanceling
                       ? SizedBox(

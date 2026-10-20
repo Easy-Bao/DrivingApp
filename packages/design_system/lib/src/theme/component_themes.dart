@@ -3,7 +3,7 @@ import 'package:design_system/src/tokens/size.dart';
 import 'package:design_system/src/tokens/spacing.dart';
 import 'package:flutter/material.dart';
 
-abstract final class EasyRideComponentThemes {
+abstract final class AppComponentThemes {
   static ElevatedButtonThemeData elevatedButton(
     ColorScheme colors,
     TextTheme textTheme,
@@ -19,15 +19,15 @@ abstract final class EasyRideComponentThemes {
         elevation: 0,
         shadowColor: Colors.transparent,
         padding: const EdgeInsets.symmetric(
-          horizontal: EasyRideSpacing.xxl,
-          vertical: EasyRideSpacing.md,
+          horizontal: AppSpacing.xxl,
+          vertical: AppSpacing.md,
         ),
         minimumSize: const Size(
-          EasyRideSize.minimumTouchTarget,
-          EasyRideSize.controlHeight,
+          AppSize.minimumTouchTarget,
+          AppSize.controlHeight,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         textStyle: textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w700,
@@ -51,15 +51,15 @@ abstract final class EasyRideComponentThemes {
         ),
         elevation: 0,
         padding: const EdgeInsets.symmetric(
-          horizontal: EasyRideSpacing.xxl,
-          vertical: EasyRideSpacing.md,
+          horizontal: AppSpacing.xxl,
+          vertical: AppSpacing.md,
         ),
         minimumSize: const Size(
-          EasyRideSize.minimumTouchTarget,
-          EasyRideSize.controlHeight,
+          AppSize.minimumTouchTarget,
+          AppSize.controlHeight,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         textStyle: textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w700,
@@ -81,15 +81,15 @@ abstract final class EasyRideComponentThemes {
         ),
         side: BorderSide(color: colors.outlineVariant, width: 1.5),
         padding: const EdgeInsets.symmetric(
-          horizontal: EasyRideSpacing.xxl,
-          vertical: EasyRideSpacing.md,
+          horizontal: AppSpacing.xxl,
+          vertical: AppSpacing.md,
         ),
         minimumSize: const Size(
-          EasyRideSize.minimumTouchTarget,
-          EasyRideSize.controlHeight,
+          AppSize.minimumTouchTarget,
+          AppSize.controlHeight,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         textStyle: textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w700,
@@ -110,8 +110,8 @@ abstract final class EasyRideComponentThemes {
           alpha: 0.38,
         ),
         minimumSize: const Size(
-          EasyRideSize.minimumTouchTarget,
-          EasyRideSize.minimumTouchTarget,
+          AppSize.minimumTouchTarget,
+          AppSize.minimumTouchTarget,
         ),
         textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
       ),
@@ -121,7 +121,7 @@ abstract final class EasyRideComponentThemes {
   static InputDecorationTheme input(ColorScheme colors, TextTheme textTheme) {
     OutlineInputBorder border(Color color, {double width = 1}) {
       return OutlineInputBorder(
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         borderSide: BorderSide(color: color, width: width),
       );
     }
@@ -130,8 +130,8 @@ abstract final class EasyRideComponentThemes {
       filled: true,
       fillColor: colors.surface,
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: EasyRideSpacing.xl,
-        vertical: EasyRideSpacing.lg,
+        horizontal: AppSpacing.xl,
+        vertical: AppSpacing.lg,
       ),
       hintStyle: textTheme.bodyLarge?.copyWith(color: colors.onSurfaceVariant),
       labelStyle: textTheme.bodyLarge?.copyWith(
@@ -156,7 +156,7 @@ abstract final class EasyRideComponentThemes {
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         side: BorderSide(color: colors.outlineVariant),
       ),
     );
@@ -169,14 +169,14 @@ abstract final class EasyRideComponentThemes {
     return NavigationBarThemeData(
       backgroundColor: colors.surface,
       indicatorColor: colors.surfaceContainerHighest,
-      height: EasyRideSize.navigationBarHeight,
+      height: AppSize.navigationBarHeight,
       labelTextStyle: WidgetStatePropertyAll(textTheme.labelMedium),
       iconTheme: WidgetStateProperty.resolveWith((states) {
         return IconThemeData(
           color: states.contains(WidgetState.selected)
               ? colors.primary
               : colors.onSurfaceVariant,
-          size: EasyRideSize.navigationIcon,
+          size: AppSize.navigationIcon,
         );
       }),
     );
@@ -191,7 +191,7 @@ abstract final class EasyRideComponentThemes {
       dragHandleColor: colors.outlineVariant,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(EasyRideRadius.sheet),
+          top: Radius.circular(AppRadius.sheet),
         ),
       ),
     );

@@ -9,7 +9,7 @@ class _MockDio extends Mock implements Dio {}
 void main() {
   test('uploads documents through the canonical driver route', () async {
     final dio = _MockDio();
-    final dataSource = DriverDocumentRemoteDataSourceImpl(dio);
+    final dataSource = DocumentRemoteDataSourceImpl(dio);
     when(
       () => dio.post<Map<String, dynamic>>(
         any(),

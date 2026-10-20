@@ -4,18 +4,18 @@ import 'package:driver/src/features/performance/presentation/bloc/driver_perform
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 
-class DriverPerformanceCubit({
+class PerformanceCubit({
   required this._repository,
   required this._sessionService,
-}) extends Cubit<DriverPerformanceState> {
-  this : super(const DriverPerformanceInitial());
+}) extends Cubit<PerformanceState> {
+  this : super(const PerformanceInitial());
 
-  final DriverPerformanceRepository _repository;
-  final DriverSessionStore _sessionService;
+  final PerformanceRepository _repository;
+  final SessionStore _sessionService;
 
   Future<void> load() async {
     if (isClosed || state.isLoading) return;
-    emit(DriverPerformanceLoading(stats: state.stats));
+    emit(PerformanceLoading(stats: state.stats));
 
     try {
       final driverId = await _sessionService.readDriverId() ?? '';
@@ -28,7 +28,7 @@ class DriverPerformanceCubit({
       if (isClosed) return;
       result.fold(
         (failure) => _emitFailure(ErrorHandler.getErrorMessage(failure)),
-        (stats) => emit(DriverPerformanceLoaded(stats)),
+        (stats) => emit(PerformanceLoaded(stats)),
       );
     } catch (error) {
       _emitFailure(ErrorHandler.getErrorMessage(error));
@@ -37,16 +37,16 @@ class DriverPerformanceCubit({
 
   void _emitFailure(String message) {
     if (isClosed) return;
-    emit(DriverPerformanceFailure(stats: state.stats, message: message));
+    emit(PerformanceFailure(stats: state.stats, message: message));
   }
 
   void dismissError() {
     if (isClosed || state.errorMessage == null) return;
     final currentStats = state.stats;
     if (currentStats != null) {
-      emit(DriverPerformanceLoaded(currentStats));
+      emit(PerformanceLoaded(currentStats));
     } else {
-      emit(const DriverPerformanceInitial());
+      emit(const PerformanceInitial());
     }
   }
 }

@@ -21,9 +21,9 @@ void main() {
   testWidgets('renders open ride offer details', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: DriverIncomingRequestDialog(
+          body: IncomingRequestDialog(
             bid: testBid,
             submittingBidId: null,
             onDecline: () {},
@@ -60,9 +60,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: DriverIncomingRequestDialog(
+          body: IncomingRequestDialog(
             bid: testBid,
             submittingBidId: null,
             onDecline: () {},
@@ -92,9 +92,9 @@ void main() {
     (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: EasyRideTheme.main,
+          theme: AppTheme.main,
           home: Scaffold(
-            body: DriverIncomingRequestDialog(
+            body: IncomingRequestDialog(
               bid: testBid,
               submittingBidId: null,
               onDecline: () {},
@@ -135,9 +135,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: DriverIncomingRequestDialog(
+          body: IncomingRequestDialog(
             bid: testBid,
             submittingBidId: null,
             onDecline: () => declined = true,
@@ -166,13 +166,13 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Builder(
           builder: (context) => Scaffold(
             body: Center(
               child: ElevatedButton(
                 onPressed: () => unawaited(
-                  DriverIncomingRequestDialog.show(
+                  IncomingRequestDialog.show(
                     context,
                     bid: testBid,
                     onDecline: () => declined = true,
@@ -190,16 +190,16 @@ void main() {
     await tester.tap(find.text('Show request'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byType(DriverIncomingRequestDialog), findsOneWidget);
+    expect(find.byType(IncomingRequestDialog), findsOneWidget);
 
     await tester.tapAt(const Offset(10, 10));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byType(DriverIncomingRequestDialog), findsOneWidget);
+    expect(find.byType(IncomingRequestDialog), findsOneWidget);
     expect(declined, isFalse);
 
     await tester.binding.handlePopRoute();
     await tester.pump();
-    expect(find.byType(DriverIncomingRequestDialog), findsOneWidget);
+    expect(find.byType(IncomingRequestDialog), findsOneWidget);
 
     await tester.tap(
       find.byKey(const ValueKey('incoming-request-decline-button')),
@@ -211,7 +211,7 @@ void main() {
       isTrue,
     );
     await tester.pumpAndSettle();
-    expect(find.byType(DriverIncomingRequestDialog), findsNothing);
+    expect(find.byType(IncomingRequestDialog), findsNothing);
 
     await tester.tap(find.text('Show request'));
     await tester.pump();
@@ -220,7 +220,7 @@ void main() {
       find.byKey(const ValueKey('incoming-request-submit-button')),
     );
     await tester.pumpAndSettle();
-    expect(find.byType(DriverIncomingRequestDialog), findsNothing);
+    expect(find.byType(IncomingRequestDialog), findsNothing);
     expect(submittedOffer, isTrue);
   });
 
@@ -231,9 +231,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: DriverIncomingRequestDialog(
+          body: IncomingRequestDialog(
             bid: testBid,
             submittingBidId: null,
             onDecline: () {},
@@ -257,9 +257,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: DriverIncomingRequestDialog(
+          body: IncomingRequestDialog(
             bid: {
               ...testBid,
               'expires_at': DateTime.now()

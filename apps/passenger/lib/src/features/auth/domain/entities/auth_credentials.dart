@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-final class const PassengerAuthCredentials({
+final class const AuthCredentials({
   required final String passengerId,
   required final String passengerName,
   required final String passengerEmail,
@@ -10,7 +10,7 @@ final class const PassengerAuthCredentials({
   final bool needsVerification = false,
 }) extends Equatable {
   factory fromJson(Map<String, dynamic> json) {
-    return PassengerAuthCredentials(
+    return AuthCredentials(
       passengerId:
           json['passengerId']?.toString() ?? json['id']?.toString() ?? '',
       passengerName:

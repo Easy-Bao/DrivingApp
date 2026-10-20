@@ -135,8 +135,8 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
         child: LayoutBuilder(
           builder: (context, constraints) {
             final horizontalPadding = constraints.maxWidth >= 600
-                ? EasyRideLayout.pagePaddingWide
-                : EasyRideLayout.pagePadding;
+                ? AppLayout.pagePaddingWide
+                : AppLayout.pagePadding;
             return SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 horizontalPadding,
@@ -228,13 +228,11 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                             }
                           },
                           child: Container(
-                            padding: const EdgeInsets.all(EasyRideSpacing.lg),
+                            padding: const EdgeInsets.all(AppSpacing.lg),
                             decoration: BoxDecoration(
                               color:
                                   context.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               border: Border.all(
                                 color: context.colorScheme.outlineVariant,
                               ),
@@ -346,9 +344,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: context.colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(
-                            EasyRideRadius.lg,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                           border: Border.all(
                             color: context.colorScheme.outlineVariant,
                           ),
@@ -387,16 +383,14 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
 
                       SizedBox(
                         width: double.infinity,
-                        height: EasyRideSize.controlHeight,
+                        height: AppSize.controlHeight,
                         child: ElevatedButton(
                           onPressed: _goToTracking,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: context.colorScheme.primary,
                             foregroundColor: context.colorScheme.onPrimary,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                             ),
                             elevation: 0,
                           ),
@@ -436,7 +430,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -19,7 +19,7 @@ const _backgroundRideRequestInterval = Duration(seconds: 4);
 const _notificationChannelId = 'easyride_driver_location';
 const _notificationId = 4801;
 
-class DriverBackgroundTelemetry({
+class BackgroundTelemetry({
   required this._apiBaseUri,
   required this._lifecycleCoordinator,
   FlutterBackgroundService? service,
@@ -79,7 +79,7 @@ class DriverBackgroundTelemetry({
     await _waitForResumedActivity();
     await _ensureLocationAccess();
     final batteryOptimizationWarning =
-        await DriverBatteryOptimization.isOptimizationEnabled();
+        await BatteryOptimization.isOptimizationEnabled();
     var serviceWasStarted = false;
     if (!await _service.isRunning()) {
       final started = await _service.startService();
@@ -193,7 +193,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   DartPluginRegistrant.ensureInitialized();
 
   final storage = const FlutterSecureStorage();
-  final sessionStore = DriverSessionStore(storage: storage);
+  final sessionStore = SessionStore(storage: storage);
   Dio? telemetryClient;
   RefreshableTokenProvider? tokenProvider;
   var sending = false;
@@ -211,7 +211,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   StreamSubscription<Map<String, dynamic>?>? visibilitySubscription;
   StreamSubscription<Map<String, dynamic>?>? stopSubscription;
   var isStopping = false;
-  final locationSpool = DriverLocationSpool();
+  final locationSpool = LocationSpool();
 
   Future<bool> shouldContinueOnlineWork() async {
     try {
@@ -342,7 +342,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
           timeLimit: Duration(seconds: 5),
         ),
       );
-      final point = driverLocationPointFromPosition(position);
+      final point = locationPointFromPosition(position);
       final receivedAt = DateTime.now().toUtc();
       final sampleInterval = previousLocationSampleAt == null
           ? null

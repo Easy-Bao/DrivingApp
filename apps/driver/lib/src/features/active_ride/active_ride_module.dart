@@ -18,7 +18,7 @@ import 'package:design_system/design_system.dart';
 class ActiveRideModule._() {
   static void binds(Injector i) {
     i.addFactory<LiveMapBloc>(
-      (i) => LiveMapBloc(rideRepository: i.get<DriverRideRepository>()),
+      (i) => LiveMapBloc(rideRepository: i.get<RideRepository>()),
     );
   }
 
@@ -27,7 +27,7 @@ class ActiveRideModule._() {
       name: ActiveRideRoutes.pickupNavigation,
       ActiveRideRoutes.pickupNavigationPath,
       child: (context, GoRouterState state) {
-        final data = _DriverTripRouteData.tryParse(
+        final data = _TripRouteData.tryParse(
           RoutePayload.from(extra: state.extra),
         );
         if (data == null) return _tripDataUnavailable();
@@ -39,9 +39,9 @@ class ActiveRideModule._() {
             distance: data.distance,
             fare: data.fare,
             duration: data.duration,
-            rideRepository: Modular.get<DriverRideRepository>(),
+            rideRepository: Modular.get<RideRepository>(),
             chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
-            sessionService: Modular.get<DriverSessionStore>(),
+            sessionService: Modular.get<SessionStore>(),
             lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
           ),
         );
@@ -53,7 +53,7 @@ class ActiveRideModule._() {
       name: ActiveRideRoutes.waitingPassenger,
       ActiveRideRoutes.waitingPassengerPath,
       child: (context, GoRouterState state) {
-        final data = _DriverTripRouteData.tryParse(
+        final data = _TripRouteData.tryParse(
           RoutePayload.from(extra: state.extra),
         );
         if (data == null) return _tripDataUnavailable();
@@ -63,9 +63,9 @@ class ActiveRideModule._() {
           distance: data.distance,
           fare: data.fare,
           duration: data.duration,
-          rideRepository: Modular.get<DriverRideRepository>(),
+          rideRepository: Modular.get<RideRepository>(),
           chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
-          sessionService: Modular.get<DriverSessionStore>(),
+          sessionService: Modular.get<SessionStore>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
         );
       },
@@ -76,7 +76,7 @@ class ActiveRideModule._() {
       name: ActiveRideRoutes.inTransit,
       ActiveRideRoutes.inTransitPath,
       child: (context, GoRouterState state) {
-        final data = _DriverTripRouteData.tryParse(
+        final data = _TripRouteData.tryParse(
           RoutePayload.from(extra: state.extra),
         );
         if (data == null) return _tripDataUnavailable();
@@ -88,7 +88,7 @@ class ActiveRideModule._() {
             distance: data.distance,
             fare: data.fare,
             duration: data.duration,
-            rideRepository: Modular.get<DriverRideRepository>(),
+            rideRepository: Modular.get<RideRepository>(),
             lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
           ),
         );
@@ -100,7 +100,7 @@ class ActiveRideModule._() {
       name: ActiveRideRoutes.fareSummary,
       ActiveRideRoutes.fareSummaryPath,
       child: (context, GoRouterState state) {
-        final data = _DriverTripRouteData.tryParse(
+        final data = _TripRouteData.tryParse(
           RoutePayload.from(extra: state.extra),
         );
         if (data == null) return _tripDataUnavailable();
@@ -122,7 +122,7 @@ class ActiveRideModule._() {
   static List<ModularRoute> shellRoutes = [];
 }
 
-class const _DriverTripRouteData({
+class const _TripRouteData({
   required this.pickup,
   required this.dropoff,
   required this.distance,
@@ -135,7 +135,7 @@ class const _DriverTripRouteData({
   final double fare;
   final String duration;
 
-  static _DriverTripRouteData? tryParse(RoutePayload data) {
+  static _TripRouteData? tryParse(RoutePayload data) {
     final pickup = data.string('pickup');
     final dropoff = data.string('dropoff');
     final distance = data.doubleValue('distance');
@@ -152,7 +152,7 @@ class const _DriverTripRouteData({
         fare < 0) {
       return null;
     }
-    return _DriverTripRouteData(
+    return _TripRouteData(
       pickup: pickup,
       dropoff: dropoff,
       distance: distance,

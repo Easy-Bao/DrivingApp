@@ -7,20 +7,18 @@ void main() {
 
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(DriverIncomingRequestAlert.channel, null);
+        .setMockMethodCallHandler(IncomingRequestAlert.channel, null);
   });
 
   test('uses the alarm alert channel for a new incoming request', () async {
     MethodCall? receivedCall;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(DriverIncomingRequestAlert.channel, (
-          call,
-        ) async {
+        .setMockMethodCallHandler(IncomingRequestAlert.channel, (call) async {
           receivedCall = call;
           return null;
         });
 
-    await DriverIncomingRequestAlert.play();
+    await IncomingRequestAlert.play();
 
     expect(receivedCall?.method, 'playIncomingRideAlert');
   });

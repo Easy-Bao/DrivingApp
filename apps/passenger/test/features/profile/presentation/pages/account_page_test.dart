@@ -35,7 +35,7 @@ void main() {
 
   Widget buildSubject({VoidCallback? onLogout}) {
     return MaterialApp(
-      theme: EasyRideTheme.main,
+      theme: AppTheme.main,
       home: MultiBlocProvider(
         providers: [
           BlocProvider<ProfileCubit>.value(value: profileCubit),
@@ -86,9 +86,9 @@ void main() {
     expect(scaffold.backgroundColor, isNull);
     expect(
       Theme.of(tester.element(find.byType(Scaffold))).scaffoldBackgroundColor,
-      EasyRideTheme.main.scaffoldBackgroundColor,
+      AppTheme.main.scaffoldBackgroundColor,
     );
-    expect(title.style?.color, EasyRideTheme.main.colorScheme.onSurface);
+    expect(title.style?.color, AppTheme.main.colorScheme.onSurface);
     expect(tester.takeException(), isNull);
   });
 

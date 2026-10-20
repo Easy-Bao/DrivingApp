@@ -10,7 +10,7 @@ void main() {
     testWidgets('verify app starts', (tester) async {
       app.main();
       await tester.pumpAndSettle();
-      expect(find.byType(app_widget.DriverApp), findsOneWidget);
+      expect(find.byType(app_widget.App), findsOneWidget);
     });
   });
 }

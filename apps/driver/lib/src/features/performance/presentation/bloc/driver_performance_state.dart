@@ -1,55 +1,50 @@
 import 'package:driver/src/features/performance/domain/entities/driver_performance_stats.dart';
 import 'package:equatable/equatable.dart';
 
-sealed class const DriverPerformanceState() extends Equatable {
-  bool get isLoading => this is DriverPerformanceLoading;
+sealed class const PerformanceState() extends Equatable {
+  bool get isLoading => this is PerformanceLoading;
 
-  DriverPerformanceStats? get stats => switch (this) {
-    DriverPerformanceInitial(:final stats) => stats,
-    DriverPerformanceLoading(:final stats) => stats,
-    DriverPerformanceLoaded(:final stats) => stats,
-    DriverPerformanceFailure(:final stats) => stats,
+  PerformanceStats? get stats => switch (this) {
+    PerformanceInitial(:final stats) => stats,
+    PerformanceLoading(:final stats) => stats,
+    PerformanceLoaded(:final stats) => stats,
+    PerformanceFailure(:final stats) => stats,
   };
 
   String? get errorMessage => switch (this) {
-    DriverPerformanceFailure(:final message) => message,
-    DriverPerformanceInitial() ||
-    DriverPerformanceLoading() ||
-    DriverPerformanceLoaded() => null,
+    PerformanceFailure(:final message) => message,
+    PerformanceInitial() || PerformanceLoading() || PerformanceLoaded() => null,
   };
 }
 
-final class const DriverPerformanceInitial({this.stats})
-    extends DriverPerformanceState {
+final class const PerformanceInitial({this.stats}) extends PerformanceState {
   @override
-  final DriverPerformanceStats? stats;
+  final PerformanceStats? stats;
 
   @override
   List<Object?> get props => [stats];
 }
 
-final class const DriverPerformanceLoading({this.stats})
-    extends DriverPerformanceState {
+final class const PerformanceLoading({this.stats}) extends PerformanceState {
   @override
-  final DriverPerformanceStats? stats;
+  final PerformanceStats? stats;
 
   @override
   List<Object?> get props => [stats];
 }
 
-final class const DriverPerformanceLoaded(this.stats)
-    extends DriverPerformanceState {
+final class const PerformanceLoaded(this.stats) extends PerformanceState {
   @override
-  final DriverPerformanceStats stats;
+  final PerformanceStats stats;
 
   @override
   List<Object?> get props => [stats];
 }
 
-final class const DriverPerformanceFailure({this.stats, required this.message})
-    extends DriverPerformanceState {
+final class const PerformanceFailure({this.stats, required this.message})
+    extends PerformanceState {
   @override
-  final DriverPerformanceStats? stats;
+  final PerformanceStats? stats;
   final String message;
 
   @override

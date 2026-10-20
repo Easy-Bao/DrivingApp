@@ -220,7 +220,7 @@ class _DriverDropdownCardState()
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
       decoration: BoxDecoration(
         color: context.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
@@ -315,7 +315,7 @@ class _DriverDropdownCardState()
               ),
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(EasyRideRadius.sheet),
+                borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(
                   color: context.colorScheme.outlineVariant,
                   width: 1.0,
@@ -545,7 +545,7 @@ class _DriverDropdownCardState()
                                           .colorScheme
                                           .surfaceContainerHighest,
                                       borderRadius: BorderRadius.circular(
-                                        EasyRideRadius.pill,
+                                        AppRadius.pill,
                                       ),
                                       border: Border.all(
                                         color:
@@ -676,7 +676,7 @@ class const _DriverVehicleBadge({required this.driver})
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(
         color: context.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Row(
@@ -711,7 +711,7 @@ class const _DriverLicensePlateBadge({required this.plateNumber})
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Text(

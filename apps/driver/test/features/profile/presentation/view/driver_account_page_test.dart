@@ -15,14 +15,13 @@ import 'package:foundation/foundation.dart';
 
 class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
-class _MockDriverProfileRepository extends Mock
-    implements DriverProfileRepository {}
+class _MockProfileRepository extends Mock implements ProfileRepository {}
 
 Future<void> _noopLogout() async {}
 
 void main() {
   late ModularTestScope scope;
-  late _MockDriverProfileRepository repository;
+  late _MockProfileRepository repository;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({
@@ -34,9 +33,9 @@ void main() {
       'rating': '4.8',
     });
     final preferences = await SharedPreferences.getInstance();
-    repository = _MockDriverProfileRepository();
+    repository = _MockProfileRepository();
     when(() => repository.getCachedAccount()).thenReturn(
-      const DriverAccountSnapshot(
+      const AccountSnapshot(
         name: 'Bao Driver',
         phone: '+639170000001',
         email: 'bao@example.com',
@@ -60,7 +59,7 @@ void main() {
 
     scope = ModularTestScope.fresh()
         .withInstance<SharedPreferences>(preferences)
-        .withInstance<DriverSessionStore>(DriverSessionStore(storage: storage));
+        .withInstance<SessionStore>(SessionStore(storage: storage));
     scope.setUp();
   });
 
@@ -76,10 +75,10 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: BlocProvider(
-          create: (_) => DriverAccountCubit(repository: repository)..load(),
-          child: const DriverAccountPage(onLogout: _noopLogout),
+          create: (_) => AccountCubit(repository: repository)..load(),
+          child: const AccountPage(onLogout: _noopLogout),
         ),
       ),
     );
@@ -120,10 +119,10 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: BlocProvider(
-          create: (_) => DriverAccountCubit(repository: repository)..load(),
-          child: const DriverAccountPage(onLogout: _noopLogout),
+          create: (_) => AccountCubit(repository: repository)..load(),
+          child: const AccountPage(onLogout: _noopLogout),
         ),
       ),
     );
@@ -135,9 +134,9 @@ void main() {
     expect(scaffold.backgroundColor, isNull);
     expect(
       Theme.of(tester.element(find.byType(Scaffold))).scaffoldBackgroundColor,
-      EasyRideTheme.main.scaffoldBackgroundColor,
+      AppTheme.main.scaffoldBackgroundColor,
     );
-    expect(title.style?.color, EasyRideTheme.main.colorScheme.onSurface);
+    expect(title.style?.color, AppTheme.main.colorScheme.onSurface);
     expect(tester.takeException(), isNull);
   });
 }

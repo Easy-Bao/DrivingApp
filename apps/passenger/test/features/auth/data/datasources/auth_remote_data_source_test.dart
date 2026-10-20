@@ -2,17 +2,16 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/features/auth/data/datasources/auth_remote_data_source.dart';
 
 class _MockDio extends Mock implements Dio {}
 
 void main() {
   late _MockDio dio;
-  late PassengerAuthRemoteDataSource dataSource;
+  late AuthRemoteDataSource dataSource;
 
   setUp(() {
     dio = _MockDio();
-    dataSource = PassengerAuthRemoteDataSourceImpl(dio);
+    dataSource = AuthRemoteDataSourceImpl(dio);
   });
 
   test('unwraps a successful authentication response', () async {

@@ -8,9 +8,9 @@ void main() {
     var emergencyStopCompleted = false;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: DriverEmergencyButton(
+          body: EmergencyButton(
             onEmergencyStop: (reason, details) async => true,
             onEmergencyStopCompleted: () => emergencyStopCompleted = true,
           ),
@@ -30,9 +30,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
-          body: DriverEmergencyButton(
+          body: EmergencyButton(
             onEmergencyStop: (reason, details) async => true,
           ),
         ),

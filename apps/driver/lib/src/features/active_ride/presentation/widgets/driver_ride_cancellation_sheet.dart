@@ -1,7 +1,7 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
-final class const DriverCancellationChoice({
+final class const CancellationChoice({
   required this.reason,
   this.details = '',
 }) {
@@ -9,8 +9,8 @@ final class const DriverCancellationChoice({
   final String details;
 }
 
-class DriverRideCancellationSheet extends StatefulWidget {
-  const DriverRideCancellationSheet({super.key});
+class RideCancellationSheet extends StatefulWidget {
+  const RideCancellationSheet({super.key});
 
   static const Map<String, String> cancellationReasons = {
     'passenger_requested_cancellation': 'Passenger asked me to cancel',
@@ -27,12 +27,10 @@ class DriverRideCancellationSheet extends StatefulWidget {
   };
 
   @override
-  State<DriverRideCancellationSheet> createState() =>
-      _DriverRideCancellationSheetState();
+  State<RideCancellationSheet> createState() => _RideCancellationSheetState();
 }
 
-class _DriverRideCancellationSheetState
-    extends State<DriverRideCancellationSheet> {
+class _RideCancellationSheetState extends State<RideCancellationSheet> {
   String? _selectedReason;
   String _details = '';
   String? _validationMessage;
@@ -43,7 +41,7 @@ class _DriverRideCancellationSheetState
     return AlertDialog(
       backgroundColor: context.colorScheme.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       title: Text(
         'Cancel ride?',
@@ -63,7 +61,7 @@ class _DriverRideCancellationSheetState
               ),
             ),
             const SizedBox(height: 16),
-            EasyRideSelectField<String>(
+            AppSelectField<String>(
               key: const ValueKey('driver-cancellation-reason-dropdown'),
               value: _selectedReason,
               menuTitle: 'Reason for cancellation',
@@ -72,11 +70,8 @@ class _DriverRideCancellationSheetState
               ),
               options: [
                 for (final entry
-                    in DriverRideCancellationSheet.cancellationReasons.entries)
-                  EasyRideSelectOption<String>(
-                    value: entry.key,
-                    label: entry.value,
-                  ),
+                    in RideCancellationSheet.cancellationReasons.entries)
+                  AppSelectOption<String>(value: entry.key, label: entry.value),
               ],
               onChanged: (value) {
                 setState(() {
@@ -133,7 +128,7 @@ class _DriverRideCancellationSheetState
                   }
                   Navigator.pop(
                     context,
-                    DriverCancellationChoice(
+                    CancellationChoice(
                       reason: _selectedReason!,
                       details: details,
                     ),
@@ -146,11 +141,9 @@ class _DriverRideCancellationSheetState
   }
 }
 
-Future<DriverCancellationChoice?> showDriverRideCancellationSheet(
-  BuildContext context,
-) {
-  return showDialog<DriverCancellationChoice>(
+Future<CancellationChoice?> showRideCancellationSheet(BuildContext context) {
+  return showDialog<CancellationChoice>(
     context: context,
-    builder: (_) => const DriverRideCancellationSheet(),
+    builder: (_) => const RideCancellationSheet(),
   );
 }

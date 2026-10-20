@@ -8,7 +8,7 @@ class MockDio extends Mock implements Dio {}
 void main() {
   test('uses the server PUT contract for passenger profile updates', () async {
     final dio = MockDio();
-    final dataSource = PassengerProfileRemoteDataSourceImpl(dio);
+    final dataSource = ProfileRemoteDataSourceImpl(dio);
     when(
       () => dio.put<Map<String, dynamic>>(
         any(),
@@ -44,7 +44,7 @@ void main() {
 
   test('uploads and fetches the authenticated passenger avatar', () async {
     final dio = MockDio();
-    final dataSource = PassengerProfileRemoteDataSourceImpl(dio);
+    final dataSource = ProfileRemoteDataSourceImpl(dio);
     when(
       () => dio.post<void>(any(), data: any<dynamic>(named: 'data')),
     ).thenAnswer(

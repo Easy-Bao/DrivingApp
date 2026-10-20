@@ -20,22 +20,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 class DashboardModule._() {
   static void binds(Injector i) {
     i
-      ..addLazySingleton<DriverAvailabilityRemoteDataSource>(
-        (i) => DriverAvailabilityRemoteDataSourceImpl(i.get<Dio>()),
+      ..addLazySingleton<AvailabilityRemoteDataSource>(
+        (i) => AvailabilityRemoteDataSourceImpl(i.get<Dio>()),
       )
       ..addLazySingleton<RideOfferRemoteDataSource>(
         (i) => RideOfferRemoteDataSourceImpl(i.get<Dio>()),
       )
       ..addLazySingleton<DashboardRepository>(
         (i) => DashboardRepositoryImpl(
-          performanceRepository: i.get<DriverPerformanceRepository>(),
-          rideHistoryRepository: i.get<DriverRideHistoryRepository>(),
-          availabilityDataSource: i.get<DriverAvailabilityRemoteDataSource>(),
+          performanceRepository: i.get<PerformanceRepository>(),
+          rideHistoryRepository: i.get<RideHistoryRepository>(),
+          availabilityDataSource: i.get<AvailabilityRemoteDataSource>(),
           rideOfferDataSource: i.get<RideOfferRemoteDataSource>(),
-          rideRepository: i.get<DriverRideRepository>(),
-          sessionService: i.get<DriverSessionStore>(),
+          rideRepository: i.get<RideRepository>(),
+          sessionService: i.get<SessionStore>(),
           preferences: i.get<SharedPreferences>(),
-          backgroundTelemetryService: i.get<DriverBackgroundTelemetry>(),
+          backgroundTelemetryService: i.get<BackgroundTelemetry>(),
         ),
       )
       ..addLazySingleton<DashboardCubit>(
@@ -51,7 +51,7 @@ class DashboardModule._() {
       DashboardRoutes.dashboardPath,
       child: (context, GoRouterState state) => BlocProvider.value(
         value: Modular.get<DashboardCubit>()..initialize(),
-        child: DriverDashboardPage(
+        child: DashboardPage(
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
           realtimeClient: Modular.get<RealtimeWebSocketClient>(),
         ),

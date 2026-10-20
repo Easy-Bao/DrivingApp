@@ -117,7 +117,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
         backgroundColor: context.colorScheme.surface,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(EasyRideRadius.lg),
+            top: Radius.circular(AppRadius.lg),
           ),
         ),
         builder: (sheetContext) {
@@ -271,8 +271,8 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final horizontalPadding = constraints.maxWidth < 360
-                ? EasyRideLayout.pagePadding
-                : EasyRideLayout.pagePaddingWide;
+                ? AppLayout.pagePadding
+                : AppLayout.pagePaddingWide;
             return Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
@@ -435,7 +435,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
               foregroundColor: context.colorScheme.onSurface,
               side: BorderSide(color: context.colorScheme.outlineVariant),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(EasyRideRadius.sheet),
+                borderRadius: BorderRadius.circular(AppRadius.sheet),
               ),
               textStyle: const TextStyle(fontWeight: FontWeight.w700),
             ),
@@ -464,7 +464,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: context.colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(EasyRideRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Text(
         'Default',
@@ -498,15 +498,15 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       label: '$label, $address',
       child: Material(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: InkWell(
           key: ValueKey<String>(_placeKey(label)),
           onTap: onTap,
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           child: Container(
-            padding: const EdgeInsets.all(EasyRideSpacing.lg),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
                 color: isDefault
                     ? context.colorScheme.primary.withValues(alpha: 0.28)
@@ -524,7 +524,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                         : isConfigured
                         ? context.colorScheme.primaryContainer
                         : context.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                   child: Icon(
                     icon,

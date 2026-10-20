@@ -1,12 +1,11 @@
 import 'package:driver/src/app/navigation/driver_floating_tab_bar.dart';
-import 'package:driver/src/app/navigation/driver_navigation_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:design_system/design_system.dart';
 
 void main() {
   test('driver tab coordinator tracks navigation and back history', () {
-    final coordinator = DriverTabNavigationCoordinator();
+    final coordinator = TabNavigationCoordinator();
     addTearDown(coordinator.dispose);
 
     coordinator.initialize(0);
@@ -30,13 +29,13 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           body: Center(
             child: SizedBox(
               width: 280,
               child: StatefulBuilder(
-                builder: (context, setState) => DriverFloatingTabBar(
+                builder: (context, setState) => FloatingTabBar(
                   selectedIndex: selectedIndex,
                   onDestinationSelected: (index) {
                     setState(() => selectedIndex = index);
@@ -50,8 +49,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final tabBar = find.byType(DriverFloatingTabBar);
-    expect(tester.getSize(tabBar).height, DriverFloatingTabBar.height);
+    final tabBar = find.byType(FloatingTabBar);
+    expect(tester.getSize(tabBar).height, FloatingTabBar.height);
     expect(
       find.descendant(of: tabBar, matching: find.byType(AnimatedScale)),
       findsNothing,
@@ -69,18 +68,18 @@ void main() {
       final inkWell = tester.widget<InkWell>(item);
       expect(
         labelWidget.style?.fontSize,
-        EasyRideTheme.main.textTheme.labelMedium?.fontSize,
+        AppTheme.main.textTheme.labelMedium?.fontSize,
       );
       expect(labelWidget.style?.fontWeight, FontWeight.w500);
-      expect(iconWidget.size, EasyRideSize.navigationIcon);
+      expect(iconWidget.size, AppSize.navigationIcon);
       expect(inkWell.splashFactory, NoSplash.splashFactory);
       expect(
         inkWell.overlayColor?.resolve({WidgetState.pressed}),
-        EasyRideTheme.main.colorScheme.primary.withValues(alpha: 0.12),
+        AppTheme.main.colorScheme.primary.withValues(alpha: 0.12),
       );
       expect(
         inkWell.overlayColor?.resolve({WidgetState.hovered}),
-        EasyRideTheme.main.colorScheme.primary.withValues(alpha: 0.08),
+        AppTheme.main.colorScheme.primary.withValues(alpha: 0.08),
       );
     }
 

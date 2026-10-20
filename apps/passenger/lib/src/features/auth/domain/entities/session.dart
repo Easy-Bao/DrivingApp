@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 enum SessionMode { guest, authenticated }
 
-class const PassengerSession.authenticated({
+class const Session.authenticated({
   required this.passengerId,
   this.passengerName = '',
 }) extends Equatable {

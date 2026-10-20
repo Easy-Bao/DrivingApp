@@ -15,18 +15,18 @@ import 'package:go_router_modular/go_router_modular.dart';
 class PerformanceModule._() {
   static void binds(Injector i) {
     i
-      ..addLazySingleton<DriverPerformanceRemoteDataSource>(
-        (i) => DriverPerformanceRemoteDataSourceImpl(i.get<Dio>()),
+      ..addLazySingleton<PerformanceRemoteDataSource>(
+        (i) => PerformanceRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<DriverPerformanceRepository>(
-        (i) => DriverPerformanceRepositoryImpl(
-          dataSource: i.get<DriverPerformanceRemoteDataSource>(),
+      ..addLazySingleton<PerformanceRepository>(
+        (i) => PerformanceRepositoryImpl(
+          dataSource: i.get<PerformanceRemoteDataSource>(),
         ),
       )
-      ..addFactory<DriverPerformanceCubit>(
-        (i) => DriverPerformanceCubit(
-          repository: i.get<DriverPerformanceRepository>(),
-          sessionService: i.get<DriverSessionStore>(),
+      ..addFactory<PerformanceCubit>(
+        (i) => PerformanceCubit(
+          repository: i.get<PerformanceRepository>(),
+          sessionService: i.get<SessionStore>(),
         ),
       );
   }
@@ -37,11 +37,11 @@ class PerformanceModule._() {
       PerformanceRoutes.performancePath,
       child: (context, GoRouterState state) => BlocProvider(
         create: (_) {
-          final cubit = Modular.get<DriverPerformanceCubit>();
+          final cubit = Modular.get<PerformanceCubit>();
           unawaited(cubit.load());
           return cubit;
         },
-        child: const DriverPerformancePage(),
+        child: const PerformancePage(),
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,

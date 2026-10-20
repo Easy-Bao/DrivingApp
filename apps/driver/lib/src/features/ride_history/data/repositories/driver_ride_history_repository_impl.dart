@@ -2,9 +2,9 @@ import 'package:driver/src/features/ride_history/data/data_sources/driver_ride_h
 import 'package:driver/src/features/ride_history/domain/repositories/driver_ride_history_repository.dart';
 import 'package:foundation/foundation.dart';
 
-final class DriverRideHistoryRepositoryImpl({required this._dataSource})
-    implements DriverRideHistoryRepository {
-  final DriverRideHistoryRemoteDataSource _dataSource;
+final class RideHistoryRepositoryImpl({required this._dataSource})
+    implements RideHistoryRepository {
+  final RideHistoryRemoteDataSource _dataSource;
 
   @override
   Future<Result<OffsetPage<Map<String, dynamic>>, Failure>> fetchTripHistory(

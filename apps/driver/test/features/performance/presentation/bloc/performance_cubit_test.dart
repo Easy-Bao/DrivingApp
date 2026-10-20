@@ -11,9 +11,9 @@ import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockPerformanceRepository extends Mock
-    implements DriverPerformanceRepository {}
+    implements PerformanceRepository {}
 
-class _MockSessionService extends Mock implements DriverSessionStore {}
+class _MockSessionService extends Mock implements SessionStore {}
 
 void main() {
   late _MockPerformanceRepository repository;
@@ -26,12 +26,12 @@ void main() {
         .thenAnswer((_) async => 'driver-1');
   });
 
-  blocTest<DriverPerformanceCubit, DriverPerformanceState>(
+  blocTest<PerformanceCubit, PerformanceState>(
     'loads performance statistics independently from profile data',
     build: () {
       when(() => repository.fetchStats('driver-1')).thenAnswer(
         (_) async => const Ok(
-          DriverPerformanceStats(
+          PerformanceStats(
             todayEarningsAmount: 2817,
             todayCompletedTrips: 1,
             totalTrips: 6,
@@ -41,15 +41,15 @@ void main() {
           ),
         ),
       );
-      return DriverPerformanceCubit(
+      return PerformanceCubit(
         repository: repository,
         sessionService: sessionService,
       );
     },
     act: (cubit) => cubit.load(),
     expect: () => [
-      isA<DriverPerformanceLoading>(),
-      isA<DriverPerformanceLoaded>()
+      isA<PerformanceLoading>(),
+      isA<PerformanceLoaded>()
           .having((state) => state.isLoading, 'isLoading', isFalse)
           .having((state) => state.stats.completedTrips, 'completed trips', 5),
     ],
@@ -58,10 +58,10 @@ void main() {
   test(
     'ignores an overlapping load while the first request is active',
     () async {
-      final response = Completer<Result<DriverPerformanceStats, Failure>>();
+      final response = Completer<Result<PerformanceStats, Failure>>();
       when(() => repository.fetchStats('driver-1'))
           .thenAnswer((_) => response.future);
-      final cubit = DriverPerformanceCubit(
+      final cubit = PerformanceCubit(
         repository: repository,
         sessionService: sessionService,
       );
@@ -71,7 +71,7 @@ void main() {
       final second = cubit.load();
       response.complete(
         const Ok(
-          DriverPerformanceStats(
+          PerformanceStats(
             todayEarningsAmount: 100,
             todayCompletedTrips: 1,
             totalTrips: 1,

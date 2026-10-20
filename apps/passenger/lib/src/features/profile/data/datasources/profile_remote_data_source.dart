@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-abstract class PassengerProfileRemoteDataSource {
+abstract class ProfileRemoteDataSource {
   Future<Map<String, dynamic>> fetchProfile(String passengerId);
 
   Future<List<int>> fetchProfileAvatar(String passengerId);
@@ -17,8 +17,8 @@ abstract class PassengerProfileRemoteDataSource {
   });
 }
 
-class PassengerProfileRemoteDataSourceImpl(this._dio)
-    implements PassengerProfileRemoteDataSource {
+class ProfileRemoteDataSourceImpl(this._dio)
+    implements ProfileRemoteDataSource {
   final Dio _dio;
 
   @override

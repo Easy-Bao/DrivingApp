@@ -6,7 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 const _emergencyContactNumber = '911';
 
-typedef PassengerEmergencyStopCallback = Future<bool> Function(
+typedef EmergencyStopCallback = Future<bool> Function(
   String reason,
   String details,
 );
@@ -21,9 +21,9 @@ const _passengerEmergencyStopReasons = <String, String>{
   'other': 'Other serious emergency',
 };
 
-Future<bool> showPassengerEmergencyActionSheet(
+Future<bool> showEmergencyActionSheet(
   BuildContext context, {
-  required PassengerEmergencyStopCallback onEmergencyStop,
+  required EmergencyStopCallback onEmergencyStop,
 }) async {
   return await showModalBottomSheet<bool>(
         context: context,
@@ -31,22 +31,20 @@ Future<bool> showPassengerEmergencyActionSheet(
         useSafeArea: true,
         backgroundColor: Colors.transparent,
         builder: (context) =>
-            _PassengerEmergencyStopSheet(onEmergencyStop: onEmergencyStop),
+            _EmergencyStopSheet(onEmergencyStop: onEmergencyStop),
       ) ??
       false;
 }
 
-class const _PassengerEmergencyStopSheet({required this.onEmergencyStop})
+class const _EmergencyStopSheet({required this.onEmergencyStop})
     extends StatefulWidget {
-  final PassengerEmergencyStopCallback onEmergencyStop;
+  final EmergencyStopCallback onEmergencyStop;
 
   @override
-  State<_PassengerEmergencyStopSheet> createState() =>
-      _PassengerEmergencyStopSheetState();
+  State<_EmergencyStopSheet> createState() => _EmergencyStopSheetState();
 }
 
-class _PassengerEmergencyStopSheetState
-    extends State<_PassengerEmergencyStopSheet> {
+class _EmergencyStopSheetState extends State<_EmergencyStopSheet> {
   String? _selectedReason;
   String _details = '';
   String? _errorMessage;
@@ -117,14 +115,14 @@ class _PassengerEmergencyStopSheetState
       child: Material(
         color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(EasyRideRadius.sheet),
+          top: Radius.circular(AppRadius.sheet),
         ),
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
-            EasyRideSpacing.lg,
-            EasyRideSpacing.lg,
-            EasyRideSpacing.lg,
-            EasyRideSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.lg,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -144,12 +142,11 @@ class _PassengerEmergencyStopSheetState
               ),
               const SizedBox(height: 16),
               SizedBox(
-                height: EasyRideSize.minimumTouchTarget,
+                height: AppSize.minimumTouchTarget,
                 child: OutlinedButton.icon(
                   onPressed: _isSubmitting
                       ? null
-                      : () =>
-                            unawaited(showPassengerEmergencyContacts(context)),
+                      : () => unawaited(showEmergencyContacts(context)),
                   icon: const Icon(Icons.phone_in_talk_outlined),
                   label: const Text('Call emergency services (911)'),
                   style: OutlinedButton.styleFrom(
@@ -159,7 +156,7 @@ class _PassengerEmergencyStopSheetState
                 ),
               ),
               const SizedBox(height: 16),
-              EasyRideSelectField<String>(
+              AppSelectField<String>(
                 key: const ValueKey('passenger-emergency-reason-dropdown'),
                 value: _selectedReason,
                 menuTitle: 'Why are you ending the ride?',
@@ -168,7 +165,7 @@ class _PassengerEmergencyStopSheetState
                 ),
                 options: [
                   for (final entry in _passengerEmergencyStopReasons.entries)
-                    EasyRideSelectOption<String>(
+                    AppSelectOption<String>(
                       value: entry.key,
                       label: entry.value,
                     ),
@@ -207,7 +204,7 @@ class _PassengerEmergencyStopSheetState
               ],
               const SizedBox(height: 12),
               SizedBox(
-                height: EasyRideSize.minimumTouchTarget,
+                height: AppSize.minimumTouchTarget,
                 child: FilledButton.icon(
                   onPressed: _selectedReason == null || _isSubmitting
                       ? null
@@ -232,7 +229,7 @@ class _PassengerEmergencyStopSheetState
   }
 }
 
-Future<void> showPassengerEmergencyContacts(BuildContext context) async {
+Future<void> showEmergencyContacts(BuildContext context) async {
   final emergencyUri = Uri(scheme: 'tel', path: _emergencyContactNumber);
   var launched = false;
   try {

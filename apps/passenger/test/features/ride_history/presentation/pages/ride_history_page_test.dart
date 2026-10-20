@@ -26,7 +26,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          theme: EasyRideTheme.main,
+          theme: AppTheme.main,
           home: MultiBlocProvider(
             providers: [
               BlocProvider<SessionBloc>.value(value: sessionBloc),
@@ -62,7 +62,7 @@ void main() {
     addTearDown(sessionBloc.close);
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: MultiBlocProvider(
           providers: [
             BlocProvider<SessionBloc>.value(value: sessionBloc),
@@ -100,7 +100,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: MultiBlocProvider(
           providers: [BlocProvider<SessionBloc>.value(value: sessionBloc)],
           child: const RecentActivityPage(),
@@ -134,7 +134,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: MultiBlocProvider(
           providers: [
             BlocProvider<SessionBloc>.value(value: sessionBloc),
@@ -166,13 +166,13 @@ void main() {
 
 final class _AuthenticatedSessionRepository implements SessionRepository {
   @override
-  Future<Result<PassengerSession, Failure>> restoreSession() async {
-    return const Ok(PassengerSession.authenticated(passengerId: 'passenger-1'));
+  Future<Result<Session, Failure>> restoreSession() async {
+    return const Ok(Session.authenticated(passengerId: 'passenger-1'));
   }
 
   @override
-  Future<Result<PassengerSession, Failure>> clearSession() async {
-    return const Ok(PassengerSession.guest());
+  Future<Result<Session, Failure>> clearSession() async {
+    return const Ok(Session.guest());
   }
 }
 

@@ -5,10 +5,10 @@ import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:foundation/foundation.dart';
 import 'package:sentry_dio/sentry_dio.dart';
 
-class DriverApiClient._() {
+class ApiClient._() {
   static Dio create({
     required Uri baseUrl,
-    required DriverSessionStore sessionService,
+    required SessionStore sessionService,
     NetworkAvailabilityCoordinator? networkAvailability,
     RefreshableTokenProvider? tokenProvider,
   }) {
@@ -33,7 +33,7 @@ class DriverApiClient._() {
         : null;
 
     dio.interceptors.add(
-      DriverAuthInterceptor(
+      AuthInterceptor(
         sessionService,
         dio: dio,
         refreshClient: refreshClient,

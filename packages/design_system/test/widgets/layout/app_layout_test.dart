@@ -6,12 +6,9 @@ void main() {
   testWidgets('page header uses the shared hierarchy', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: const Scaffold(
-          body: EasyRidePageHeader(
-            title: 'Activity',
-            subtitle: 'Your recent rides',
-          ),
+          body: AppPageHeader(title: 'Activity', subtitle: 'Your recent rides'),
         ),
       ),
     );
@@ -21,11 +18,8 @@ void main() {
 
     expect(title.style?.fontSize, 32);
     expect(title.style?.fontWeight, FontWeight.w800);
-    expect(title.style?.color, EasyRideTheme.main.colorScheme.onSurface);
-    expect(
-      subtitle.style?.color,
-      EasyRideTheme.main.colorScheme.onSurfaceVariant,
-    );
+    expect(title.style?.color, AppTheme.main.colorScheme.onSurface);
+    expect(subtitle.style?.color, AppTheme.main.colorScheme.onSurfaceVariant);
   });
 
   testWidgets('navigation rail renders every destination with selection', (
@@ -34,10 +28,10 @@ void main() {
     var selectedIndex = 0;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: StatefulBuilder(
           builder: (context, setState) => Scaffold(
-            body: EasyRideNavigationRail(
+            body: AppNavigationRail(
               destinations: const [
                 AppTabDestination(icon: Icons.home, label: 'Home'),
                 AppTabDestination(icon: Icons.person, label: 'Account'),

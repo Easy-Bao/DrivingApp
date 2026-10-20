@@ -18,10 +18,8 @@ import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 import 'package:passenger/src/features/profile/profile_routes.dart';
 
-typedef PassengerTabNavigationCoordinator = TabNavigationCoordinator;
-
-class PassengerTabBranchContainer extends StatelessWidget {
-  const PassengerTabBranchContainer({
+class TabBranchContainer extends StatelessWidget {
+  const TabBranchContainer({
     super.key,
     required this.navigationShell,
     required this.children,
@@ -50,8 +48,8 @@ class PassengerTabBranchContainer extends StatelessWidget {
   );
 }
 
-class PassengerShellLayout extends StatefulWidget {
-  const PassengerShellLayout({
+class ShellLayout extends StatefulWidget {
+  const ShellLayout({
     super.key,
     required this.navigationShell,
     required this.inboxCubit,
@@ -64,14 +62,14 @@ class PassengerShellLayout extends StatefulWidget {
   final InboxCubit inboxCubit;
   final RealtimeWebSocketClient realtimeClient;
   final AppLifecycleCoordinator lifecycleCoordinator;
-  final PassengerTabNavigationCoordinator navigationCoordinator;
+  final TabNavigationCoordinator navigationCoordinator;
   final TrackDriverCubit? trackDriverCubit;
 
   @override
-  State<PassengerShellLayout> createState() => _PassengerShellLayoutState();
+  State<ShellLayout> createState() => _ShellLayoutState();
 }
 
-class _PassengerShellLayoutState extends State<PassengerShellLayout> {
+class _ShellLayoutState extends State<ShellLayout> {
   String? _loadedInboxPassengerId;
   String? _activePassengerId;
   StreamSubscription<RealtimeEvent>? _realtimeSubscription;
@@ -184,8 +182,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
     final isAuthenticated = context.select<SessionBloc, bool>(
       (bloc) => bloc.state.isAuthenticated,
     );
-    final isWide =
-        MediaQuery.sizeOf(context).width >= EasyRideLayout.wideBreakpoint;
+    final isWide = MediaQuery.sizeOf(context).width >= AppLayout.wideBreakpoint;
     return BlocListener<SessionBloc, SessionState>(
       listenWhen: (_, current) =>
           current is AuthenticatedSession ||
@@ -251,7 +248,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
                       body: isWide && isAuthenticated
                           ? Row(
                               children: [
-                                PassengerNavigationRail(
+                                ShellNavigationRail(
                                   selectedIndex: selectedIndex,
                                   onDestinationSelected: _onItemTapped,
                                   inboxCubit: widget.inboxCubit,
@@ -284,7 +281,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
                                 context,
                               );
 
-                              Widget floatingTabBar = PassengerFloatingTabBar(
+                              Widget floatingTabBar = FloatingTabBar(
                                 selectedIndex: selectedIndex,
                                 onDestinationSelected: _onItemTapped,
                                 inboxCubit: widget.inboxCubit,
@@ -300,7 +297,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
                                     >(
                                       bloc: trackCubit,
                                       builder: (context, trackState) {
-                                        return PassengerFloatingTabBar(
+                                        return FloatingTabBar(
                                           selectedIndex: selectedIndex,
                                           onDestinationSelected: _onItemTapped,
                                           inboxCubit: widget.inboxCubit,
@@ -384,9 +381,9 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
 
   Future<void> _resumeFromShell() async {
     if (!mounted) return;
-    PassengerSessionStore? session;
+    SessionStore? session;
     try {
-      session = Modular.get<PassengerSessionStore>();
+      session = Modular.get<SessionStore>();
     } catch (_) {}
     String? activeRideId;
     try {

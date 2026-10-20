@@ -13,18 +13,18 @@ import 'package:go_router_modular/go_router_modular.dart';
 class EarningsModule._() {
   static void binds(Injector i) {
     i
-      ..addLazySingleton<DriverEarningsRemoteDataSource>(
-        (i) => DriverEarningsRemoteDataSourceImpl(i.get<Dio>()),
+      ..addLazySingleton<EarningsRemoteDataSource>(
+        (i) => EarningsRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<DriverEarningsRepository>(
-        (i) => DriverEarningsRepositoryImpl(
-          dataSource: i.get<DriverEarningsRemoteDataSource>(),
+      ..addLazySingleton<EarningsRepository>(
+        (i) => EarningsRepositoryImpl(
+          dataSource: i.get<EarningsRemoteDataSource>(),
         ),
       )
-      ..addFactory<DriverEarningsCubit>(
-        (i) => DriverEarningsCubit(
-          repository: i.get<DriverEarningsRepository>(),
-          sessionService: i.get<DriverSessionStore>(),
+      ..addFactory<EarningsCubit>(
+        (i) => EarningsCubit(
+          repository: i.get<EarningsRepository>(),
+          sessionService: i.get<SessionStore>(),
         ),
       );
   }
@@ -35,11 +35,11 @@ class EarningsModule._() {
       EarningsRoutes.earningsPath,
       child: (context, GoRouterState state) => BlocProvider(
         create: (_) {
-          final cubit = Modular.get<DriverEarningsCubit>();
+          final cubit = Modular.get<EarningsCubit>();
           cubit.load();
           return cubit;
         },
-        child: const DriverEarningsPage(),
+        child: const EarningsPage(),
       ),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,

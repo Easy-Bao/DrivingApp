@@ -12,10 +12,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class _MockProfileDataSource extends Mock
-    implements DriverProfileRemoteDataSource {}
+class _MockProfileDataSource extends Mock implements ProfileRemoteDataSource {}
 
-class _MockSessionService extends Mock implements DriverSessionStore {}
+class _MockSessionService extends Mock implements SessionStore {}
 
 void main() {
   testWidgets('displays personal details with editable name and save action', (
@@ -25,15 +24,15 @@ void main() {
     final preferences = await SharedPreferences.getInstance();
     final profileDataSource = _MockProfileDataSource();
 
-    final repository = DriverProfileRepositoryImpl(
+    final repository = ProfileRepositoryImpl(
       profileDataSource: profileDataSource,
       sessionService: _MockSessionService(),
       preferences: preferences,
     );
-    final cubit = DriverAccountCubit(repository: repository)
+    final cubit = AccountCubit(repository: repository)
       ..emit(
-        const DriverAccountState(
-          account: DriverAccountSnapshot(
+        const AccountState(
+          account: AccountSnapshot(
             name: 'Driver Name',
             phone: '+639170000001',
             email: 'driver@example.com',
@@ -44,10 +43,10 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
-        home: BlocProvider<DriverAccountCubit>.value(
+        theme: AppTheme.main,
+        home: BlocProvider<AccountCubit>.value(
           value: cubit,
-          child: DriverPersonalDetailsPage(onBack: () {}),
+          child: PersonalDetailsPage(onBack: () {}),
         ),
       ),
     );

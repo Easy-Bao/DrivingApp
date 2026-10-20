@@ -10,7 +10,7 @@ void main() {
     testWidgets('verify app starts', (tester) async {
       await app.main();
       await tester.pumpAndSettle();
-      expect(find.byType(app_widget.PassengerApp), findsOneWidget);
+      expect(find.byType(app_widget.App), findsOneWidget);
     });
   });
 }

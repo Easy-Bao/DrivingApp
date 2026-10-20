@@ -11,7 +11,7 @@ export 'package:passenger/src/features/profile/presentation/bloc/profile_state.d
 class ProfileCubit extends Cubit<ProfileState> {
   ProfileCubit({required this.repository}) : super(const ProfileState());
 
-  final PassengerProfileRepository repository;
+  final ProfileRepository repository;
 
   Future<void> loadProfile({bool refreshRemote = true}) async {
     if (isClosed || state.isLoading) return;
@@ -36,7 +36,7 @@ class ProfileCubit extends Cubit<ProfileState> {
 
       if (!refreshRemote) return;
 
-      PassengerProfile? profile;
+      Profile? profile;
       Failure? failure;
       (await repository.refreshProfile()).fold(
         (value) => failure = value,

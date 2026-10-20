@@ -1,9 +1,9 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/auth_routes.dart';
-import 'package:passenger/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:passenger/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:passenger/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/forgot_password/forgot_password_bloc.dart';
@@ -92,26 +92,24 @@ class AuthModule extends Module {
   @override
   void binds(Injector i) {
     i
-      ..addLazySingleton<PassengerAuthRemoteDataSource>(
-        (i) => PassengerAuthRemoteDataSourceImpl(i.get()),
+      ..addLazySingleton<AuthRemoteDataSource>(
+        (i) => AuthRemoteDataSourceImpl(i.get()),
       )
-      ..addLazySingleton<PassengerAuthRepository>(
-        (i) => PassengerAuthRepositoryImpl(
-          remoteDataSource: i.get<PassengerAuthRemoteDataSource>(),
-          secureSessionService: i.get<PassengerSessionStore>(),
+      ..addLazySingleton<AuthRepository>(
+        (i) => AuthRepositoryImpl(
+          remoteDataSource: i.get<AuthRemoteDataSource>(),
+          secureSessionService: i.get<SessionStore>(),
           preferences: i.get<SharedPreferences>(),
         ),
       );
-    i.add<SignInBloc>((i) => SignInBloc(i.get<PassengerAuthRepository>()));
-    i.add<SignUpBloc>((i) => SignUpBloc(i.get<PassengerAuthRepository>()));
-    i.add<VerifyOtpBloc>(
-      (i) => VerifyOtpBloc(i.get<PassengerAuthRepository>()),
-    );
+    i.add<SignInBloc>((i) => SignInBloc(i.get<AuthRepository>()));
+    i.add<SignUpBloc>((i) => SignUpBloc(i.get<AuthRepository>()));
+    i.add<VerifyOtpBloc>((i) => VerifyOtpBloc(i.get<AuthRepository>()));
     i.add<ForgotPasswordBloc>(
-      (i) => ForgotPasswordBloc(i.get<PassengerAuthRepository>()),
+      (i) => ForgotPasswordBloc(i.get<AuthRepository>()),
     );
     i.add<ResetPasswordConfirmBloc>(
-      (i) => ResetPasswordConfirmBloc(i.get<PassengerAuthRepository>()),
+      (i) => ResetPasswordConfirmBloc(i.get<AuthRepository>()),
     );
   }
 }

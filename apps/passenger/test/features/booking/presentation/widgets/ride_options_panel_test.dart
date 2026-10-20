@@ -74,7 +74,7 @@ void main() {
           );
 
     return MaterialApp(
-      theme: EasyRideTheme.main,
+      theme: AppTheme.main,
       home: Scaffold(body: panel),
     );
   }
@@ -346,7 +346,7 @@ void main() {
         '1390 Pear Avenue, Mountain View, California 94043, United States of America';
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: const Scaffold(
           body: SizedBox(
             width: 320,
@@ -388,7 +388,7 @@ void main() {
     );
     expect(
       tester.widget<Icon>(find.byIcon(LucideIcons.navigation)).color,
-      EasyRideTheme.main.colorScheme.primary,
+      AppTheme.main.colorScheme.primary,
     );
     expect(tester.takeException(), isNull);
   });
@@ -400,7 +400,7 @@ void main() {
         'International Convention Center and Passenger Terminal';
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: const Scaffold(
           body: SizedBox(
             width: 320,

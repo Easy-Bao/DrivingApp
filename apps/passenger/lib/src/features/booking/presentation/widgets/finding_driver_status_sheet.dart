@@ -45,7 +45,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
       key: const ValueKey<String>('finding-driver-status-sheet'),
       color: colorScheme.surface,
       borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(EasyRideRadius.sheet),
+        top: Radius.circular(AppRadius.sheet),
       ),
       clipBehavior: Clip.antiAlias,
       elevation: 12,
@@ -65,7 +65,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 14),
                   decoration: BoxDecoration(
                     color: colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
               ),
@@ -119,7 +119,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
                       foregroundColor: colorScheme.onPrimary,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                     ),
                   ),
@@ -137,7 +137,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
                       width: 1,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                   ),
                   child: isCanceling
@@ -284,7 +284,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: colorScheme.outlineVariant, width: 0.8),
       ),
       child: Row(

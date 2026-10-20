@@ -11,7 +11,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
-class _FakeDriverDocumentRepository implements DriverDocumentRepository {
+class _FakeDocumentRepository implements DocumentRepository {
   int uploadCount = 0;
 
   @override
@@ -47,8 +47,8 @@ class _CountingXFile extends XFile {
 
 void main() {
   testWidgets('previews a captured photo before upload', (tester) async {
-    final repository = _FakeDriverDocumentRepository();
-    final cubit = DriverDocumentUploadCubit(repository);
+    final repository = _FakeDocumentRepository();
+    final cubit = DocumentUploadCubit(repository);
     addTearDown(cubit.close);
     final photo = _CountingXFile(
       Uint8List.fromList(<int>[0x89, 0x50, 0x4e, 0x47]),
@@ -56,10 +56,10 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: BlocProvider.value(
           value: cubit,
-          child: DriverDocumentUploadPage(pickPhoto: () async => photo),
+          child: DocumentUploadPage(pickPhoto: () async => photo),
         ),
       ),
     );

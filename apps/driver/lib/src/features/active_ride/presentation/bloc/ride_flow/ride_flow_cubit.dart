@@ -16,8 +16,8 @@ class RideFlowCubit({
   required this._rideRepository,
   required this._sessionService,
 }) extends Cubit<RideFlowState> {
-  final DriverRideRepository _rideRepository;
-  final DriverSessionStore _sessionService;
+  final RideRepository _rideRepository;
+  final SessionStore _sessionService;
 
   String? _activeRideId;
   String? _activePassengerId;

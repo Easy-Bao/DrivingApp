@@ -14,13 +14,13 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class const DriverApp({super.key}) extends StatefulWidget {
+class const App({super.key}) extends StatefulWidget {
   @override
-  State<DriverApp> createState() => _DriverAppState();
+  State<App> createState() => _AppState();
 }
 
-class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
-  late final DriverLocationAccessCubit _locationAccessCubit;
+class _AppState extends State<App> with WidgetsBindingObserver {
+  late final LocationAccessCubit _locationAccessCubit;
   late final AppLifecycleCoordinator _lifecycleCoordinator;
   late final NetworkAvailabilityCoordinator _networkAvailabilityCoordinator;
   bool _locationMonitoringRequested = false;
@@ -28,7 +28,7 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    _locationAccessCubit = Modular.get<DriverLocationAccessCubit>();
+    _locationAccessCubit = Modular.get<LocationAccessCubit>();
     _lifecycleCoordinator = Modular.get<AppLifecycleCoordinator>();
     _networkAvailabilityCoordinator =
         Modular.get<NetworkAvailabilityCoordinator>();
@@ -75,7 +75,7 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
 
   Future<void> _setBackgroundTelemetryVisibility(bool isVisible) async {
     try {
-      await Modular.get<DriverBackgroundTelemetry>().setAppVisible(isVisible);
+      await Modular.get<BackgroundTelemetry>().setAppVisible(isVisible);
     } catch (_) {
       // The application can reach its first frame before service bindings are
       // ready. A later lifecycle event or service configuration will sync it.
@@ -86,25 +86,20 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<DriverLocationAccessCubit>.value(
-          value: _locationAccessCubit,
-        ),
+        BlocProvider<LocationAccessCubit>.value(value: _locationAccessCubit),
         BlocProvider<RideFlowCubit>(
           create: (_) => RideFlowCubit(
-            rideRepository: Modular.get<DriverRideRepository>(),
-            sessionService: Modular.get<DriverSessionStore>(),
+            rideRepository: Modular.get<RideRepository>(),
+            sessionService: Modular.get<SessionStore>(),
           ),
         ),
       ],
       child: ModularApp.router(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         debugShowCheckedModeBanner: false,
         title: 'EasyRide Driver',
         builder: (context, child) =>
-            BlocBuilder<
-              DriverLocationAccessCubit,
-              DriverLocationAccessViewState
-            >(
+            BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
               builder: (context, locationState) =>
                   StreamBuilder<NetworkAvailabilityStatus>(
                     stream: _networkAvailabilityCoordinator.changes,
@@ -131,7 +126,7 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
   Widget _buildRouteWithLocationOverlay(
     BuildContext context,
     Widget? child,
-    DriverLocationAccessViewState locationState,
+    LocationAccessViewState locationState,
     bool isUnavailable,
   ) {
     final overlay = _buildLocationOverlay(context, locationState);
@@ -159,20 +154,20 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
 
   Widget? _buildLocationOverlay(
     BuildContext context,
-    DriverLocationAccessViewState locationState,
+    LocationAccessViewState locationState,
   ) {
     final currentPath =
         Modular.routerConfig.routerDelegate.currentConfiguration.uri.path;
     if (!currentPath.startsWith(AppRoutes.driverModulePath)) return null;
 
-    final cubit = BlocProvider.of<DriverLocationAccessCubit>(context);
+    final cubit = BlocProvider.of<LocationAccessCubit>(context);
     return switch (locationState) {
-      DriverLocationAccessChecking() => const LocationAccessOverlay(
+      LocationAccessChecking() => const LocationAccessOverlay(
         state: LocationAccessOverlayState.checking,
         appName: 'EasyRide',
       ),
-      DriverLocationAccessReady() => null,
-      DriverLocationAccessUnavailable(
+      LocationAccessReady() => null,
+      LocationAccessUnavailable(
         accessState: final accessState,
         message: final message,
       ) =>

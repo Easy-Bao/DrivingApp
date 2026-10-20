@@ -6,7 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_state.dart';
 
-class const PassengerFloatingTabBar({
+class const FloatingTabBar({
   super.key,
   required this.selectedIndex,
   required this.onDestinationSelected,
@@ -51,7 +51,7 @@ class const PassengerFloatingTabBar({
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.sheet),
+        borderRadius: BorderRadius.circular(AppRadius.sheet),
         border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: const [
           BoxShadow(
@@ -93,10 +93,10 @@ class const PassengerFloatingTabBar({
     Color color,
   ) => index == 2
       ? _InboxTabIcon(color: color, inboxCubit: inboxCubit)
-      : Icon(destination.icon, size: EasyRideSize.navigationIcon, color: color);
+      : Icon(destination.icon, size: AppSize.navigationIcon, color: color);
 }
 
-class const PassengerNavigationRail({
+class const ShellNavigationRail({
   super.key,
   required this.selectedIndex,
   required this.onDestinationSelected,
@@ -108,17 +108,13 @@ class const PassengerNavigationRail({
 
   @override
   Widget build(BuildContext context) {
-    return EasyRideNavigationRail(
-      destinations: PassengerFloatingTabBar.destinations,
+    return AppNavigationRail(
+      destinations: FloatingTabBar.destinations,
       selectedIndex: selectedIndex,
       onDestinationSelected: onDestinationSelected,
       iconBuilder: (context, index, destination, color) => index == 2
           ? _InboxTabIcon(color: color, inboxCubit: inboxCubit)
-          : Icon(
-              destination.icon,
-              size: EasyRideSize.navigationIcon,
-              color: color,
-            ),
+          : Icon(destination.icon, size: AppSize.navigationIcon, color: color),
     );
   }
 }
@@ -147,7 +143,7 @@ class const _InboxTabIcon({required this.color, required this.inboxCubit})
             children: [
               Icon(
                 LucideIcons.mail,
-                size: EasyRideSize.navigationIcon,
+                size: AppSize.navigationIcon,
                 color: color,
               ),
               if (unreadCount > 0)

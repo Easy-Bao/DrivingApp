@@ -12,7 +12,7 @@ double? _distanceInKm(Map<String, dynamic> value) {
 }
 
 int? remainingBidSeconds(Map<String, dynamic> bid) {
-  final rawExpiry = driverValueAsString(bid['expires_at']);
+  final rawExpiry = valueAsString(bid['expires_at']);
   final expiresAt = rawExpiry == null ? null : DateTime.tryParse(rawExpiry);
   if (expiresAt == null) return null;
   final seconds = expiresAt.difference(DateTime.now()).inSeconds;
@@ -105,7 +105,7 @@ class _BidCountdownHeaderState extends State<_BidCountdownHeader> {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
             color: context.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -132,8 +132,8 @@ class _BidCountdownHeaderState extends State<_BidCountdownHeader> {
   }
 }
 
-class DriverPoolBidCard extends StatelessWidget {
-  const DriverPoolBidCard({
+class PoolBidCard extends StatelessWidget {
+  const PoolBidCard({
     super.key,
     required this.bid,
     required this.submittingBidId,
@@ -150,20 +150,20 @@ class DriverPoolBidCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final pickup = bid['pickup_name']?.toString() ?? '—';
     final dropoff = bid['dropoff_name']?.toString() ?? '—';
-    final fare = driverFareInPesos(bid);
+    final fare = fareInPesos(bid);
     final displayedFare = _offerFare(bid, fare);
     final distance = _distanceInKm(bid);
-    final bidId = driverValueAsString(bid['id']);
+    final bidId = valueAsString(bid['id']);
     final isSubmitting = bidId != null && submittingBidId == bidId;
     final hasSubmittedOffer = _hasPendingOffer(bid);
-    final passengerNote = driverValueAsString(bid['passenger_note']);
+    final passengerNote = valueAsString(bid['passenger_note']);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(EasyRideSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
@@ -183,7 +183,7 @@ class DriverPoolBidCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               decoration: BoxDecoration(
                 color: context.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,7 +222,7 @@ class DriverPoolBidCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: EasyRideSpacing.sm),
+              const SizedBox(width: AppSpacing.sm),
               Text(
                 displayedFare == null ? '—' : formatPesoAmount(displayedFare),
                 style: TextStyle(
@@ -241,7 +241,7 @@ class DriverPoolBidCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: context.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: const Text(
                 'Waiting for the passenger to accept your offer.',
@@ -257,16 +257,13 @@ class DriverPoolBidCard extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: submittingBidId != null ? null : onDecline,
                     style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(
-                        0,
-                        EasyRideSize.minimumTouchTarget,
-                      ),
+                      minimumSize: const Size(0, AppSize.minimumTouchTarget),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       side: BorderSide(
                         color: context.colorScheme.outlineVariant,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     child: Text(
@@ -289,13 +286,10 @@ class DriverPoolBidCard extends StatelessWidget {
                       backgroundColor: context.colorScheme.primary,
                       foregroundColor: context.colorScheme.onPrimary,
                       elevation: 0,
-                      minimumSize: const Size(
-                        0,
-                        EasyRideSize.minimumTouchTarget,
-                      ),
+                      minimumSize: const Size(0, AppSize.minimumTouchTarget),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     child: isSubmitting
@@ -332,7 +326,7 @@ class DriverPoolBidCard extends StatelessWidget {
     return offers.any(
       (offer) =>
           offer is Map &&
-          driverValueAsString(offer['status'])?.toLowerCase() == 'pending',
+          valueAsString(offer['status'])?.toLowerCase() == 'pending',
     );
   }
 
@@ -341,8 +335,8 @@ class DriverPoolBidCard extends StatelessWidget {
     if (offers is List) {
       for (final offer in offers) {
         if (offer is Map &&
-            driverValueAsString(offer['status'])?.toLowerCase() == 'pending') {
-          final amount = driverFareInPesos(Map<String, dynamic>.from(offer));
+            valueAsString(offer['status'])?.toLowerCase() == 'pending') {
+          final amount = fareInPesos(Map<String, dynamic>.from(offer));
           if (amount != null) return amount;
         }
       }

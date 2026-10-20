@@ -34,7 +34,7 @@ void main() {
     TripHistoryFilter? result;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           body: Builder(
             builder: (context) => ElevatedButton(

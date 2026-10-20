@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 
-abstract class DriverRideHistoryRemoteDataSource {
+abstract class RideHistoryRemoteDataSource {
   Future<OffsetPage<Map<String, dynamic>>> fetchTripHistory(
     String driverId, {
     int limit = 25,
@@ -10,8 +10,8 @@ abstract class DriverRideHistoryRemoteDataSource {
   });
 }
 
-class DriverRideHistoryRemoteDataSourceImpl(this._dio)
-    implements DriverRideHistoryRemoteDataSource {
+class RideHistoryRemoteDataSourceImpl(this._dio)
+    implements RideHistoryRemoteDataSource {
   final Dio _dio;
 
   @override

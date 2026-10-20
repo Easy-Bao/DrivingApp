@@ -1,6 +1,6 @@
 import 'package:foundation/foundation.dart';
 
-class const DriverProfile({
+class const Profile({
   this.id,
   this.userId,
   this.role,
@@ -37,7 +37,7 @@ class const DriverProfile({
 
   factory fromJson(Map<String, dynamic> response) {
     final payload = _payload(response);
-    return DriverProfile(
+    return Profile(
       id: _readString(payload, const ['id', 'profile_id', 'profileId']),
       userId: _readString(payload, const ['user_id', 'userId']),
       role: _readString(payload, const ['role']),

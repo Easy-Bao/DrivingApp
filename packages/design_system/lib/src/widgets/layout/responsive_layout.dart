@@ -7,7 +7,7 @@ import 'package:design_system/src/widgets/navigation/floating_tab_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
-class const EasyRidePageHeader({
+class const AppPageHeader({
   super.key,
   required this.title,
   this.subtitle,
@@ -36,7 +36,7 @@ class const EasyRidePageHeader({
         children: [
           if (leading != null) ...[
             leading!,
-            const SizedBox(width: EasyRideSpacing.sm),
+            const SizedBox(width: AppSpacing.sm),
           ],
           Expanded(
             child: Column(
@@ -44,7 +44,7 @@ class const EasyRidePageHeader({
               children: [
                 Text(title, style: titleStyle),
                 if (subtitle != null) ...[
-                  const SizedBox(height: EasyRideSpacing.sm / 2),
+                  const SizedBox(height: AppSpacing.sm / 2),
                   Text(
                     subtitle!,
                     style: context.textStyles.bodyMedium?.copyWith(
@@ -56,7 +56,7 @@ class const EasyRidePageHeader({
             ),
           ),
           if (trailing != null) ...[
-            const SizedBox(width: EasyRideSpacing.sm),
+            const SizedBox(width: AppSpacing.sm),
             trailing!,
           ],
         ],
@@ -65,11 +65,11 @@ class const EasyRidePageHeader({
   }
 }
 
-class const EasyRidePageFrame({
+class const AppPageFrame({
   super.key,
   required this.child,
   this.padding,
-  this.maxWidth = EasyRideLayout.pageMaxWidth,
+  this.maxWidth = AppLayout.pageMaxWidth,
 }) extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -80,16 +80,16 @@ class const EasyRidePageFrame({
     return LayoutBuilder(
       builder: (context, constraints) {
         final horizontalPadding =
-            constraints.maxWidth >= EasyRideLayout.wideBreakpoint
-            ? EasyRideLayout.pagePaddingWide
-            : EasyRideLayout.pagePadding;
+            constraints.maxWidth >= AppLayout.wideBreakpoint
+            ? AppLayout.pagePaddingWide
+            : AppLayout.pagePadding;
         final contentPadding =
             padding ??
             EdgeInsets.fromLTRB(
               horizontalPadding,
-              EasyRideLayout.pagePadding,
+              AppLayout.pagePadding,
               horizontalPadding,
-              EasyRideLayout.pagePadding,
+              AppLayout.pagePadding,
             );
 
         return Align(
@@ -104,12 +104,12 @@ class const EasyRidePageFrame({
   }
 }
 
-class const EasyRideSecondaryPage({
+class const AppSecondaryPage({
   super.key,
   required this.title,
   required this.onBack,
   required this.child,
-  this.maxWidth = EasyRideLayout.pageMaxWidth,
+  this.maxWidth = AppLayout.pageMaxWidth,
 }) extends StatelessWidget {
   final String title;
   final VoidCallback onBack;
@@ -143,12 +143,12 @@ class const EasyRideSecondaryPage({
   }
 }
 
-class const EasyRideSurfaceCard({
+class const AppSurfaceCard({
   super.key,
   required this.child,
-  this.padding = const EdgeInsets.all(EasyRideSpacing.lg),
+  this.padding = const EdgeInsets.all(AppSpacing.lg),
   this.color,
-  this.radius = EasyRideRadius.lg,
+  this.radius = AppRadius.lg,
   this.showBorder = true,
 }) extends StatelessWidget {
   final Widget child;
@@ -176,7 +176,7 @@ class const EasyRideSurfaceCard({
   }
 }
 
-class const EasyRideNavigationRail({
+class const AppNavigationRail({
   super.key,
   required this.destinations,
   required this.selectedIndex,
@@ -230,6 +230,6 @@ class const EasyRideNavigationRail({
     Color color,
   ) {
     return iconBuilder?.call(context, index, destination, color) ??
-        Icon(destination.icon, size: EasyRideSize.navigationIcon, color: color);
+        Icon(destination.icon, size: AppSize.navigationIcon, color: color);
   }
 }

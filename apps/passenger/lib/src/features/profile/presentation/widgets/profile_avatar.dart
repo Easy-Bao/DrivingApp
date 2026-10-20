@@ -23,8 +23,8 @@ class ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cameraButtonSize = size * 0.32 < EasyRideSize.minimumTouchTarget
-        ? EasyRideSize.minimumTouchTarget
+    final cameraButtonSize = size * 0.32 < AppSize.minimumTouchTarget
+        ? AppSize.minimumTouchTarget
         : size * 0.32;
     final cameraIconSize = size * 0.16 < 18 ? 18.0 : size * 0.16;
     final imagePath = this.imagePath;

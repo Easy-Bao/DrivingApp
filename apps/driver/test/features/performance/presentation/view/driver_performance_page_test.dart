@@ -11,9 +11,9 @@ import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockPerformanceRepository extends Mock
-    implements DriverPerformanceRepository {}
+    implements PerformanceRepository {}
 
-class _MockSessionService extends Mock implements DriverSessionStore {}
+class _MockSessionService extends Mock implements SessionStore {}
 
 void main() {
   testWidgets('shows balanced driver performance metrics at compact width', (
@@ -28,7 +28,7 @@ void main() {
         .thenAnswer((_) async => 'driver-1');
     when(() => repository.fetchStats('driver-1')).thenAnswer(
       (_) async => const Ok(
-        DriverPerformanceStats(
+        PerformanceStats(
           todayEarningsAmount: 1245050,
           todayCompletedTrips: 18,
           totalTrips: 20,
@@ -47,13 +47,13 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
-        home: BlocProvider<DriverPerformanceCubit>(
-          create: (_) => DriverPerformanceCubit(
+        theme: AppTheme.main,
+        home: BlocProvider<PerformanceCubit>(
+          create: (_) => PerformanceCubit(
             repository: repository,
             sessionService: sessionService,
           )..load(),
-          child: DriverPerformancePage(onBack: () {}, onRefresh: () async {}),
+          child: PerformancePage(onBack: () {}, onRefresh: () async {}),
         ),
       ),
     );

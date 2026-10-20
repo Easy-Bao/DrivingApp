@@ -123,10 +123,7 @@ void main() {
     (tester) async {
       mapPlatform.autoLoad = false;
       await tester.pumpWidget(
-        MaterialApp(
-          theme: EasyRideTheme.main,
-          home: const SearchDestinationPage(),
-        ),
+        MaterialApp(theme: AppTheme.main, home: const SearchDestinationPage()),
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -218,7 +215,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp.router(theme: EasyRideTheme.main, routerConfig: router),
+      MaterialApp.router(theme: AppTheme.main, routerConfig: router),
     );
     await tester.pumpAndSettle();
 
@@ -265,7 +262,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp.router(theme: EasyRideTheme.main, routerConfig: router),
+      MaterialApp.router(theme: AppTheme.main, routerConfig: router),
     );
     await tester.pumpAndSettle();
 
@@ -311,7 +308,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp.router(theme: EasyRideTheme.main, routerConfig: router),
+      MaterialApp.router(theme: AppTheme.main, routerConfig: router),
     );
     await tester.pumpAndSettle();
 
@@ -351,7 +348,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp.router(theme: EasyRideTheme.main, routerConfig: router),
+      MaterialApp.router(theme: AppTheme.main, routerConfig: router),
     );
     await tester.pumpAndSettle();
 
@@ -403,7 +400,7 @@ void main() {
     addTearDown(router.dispose);
 
     await tester.pumpWidget(
-      MaterialApp.router(theme: EasyRideTheme.main, routerConfig: router),
+      MaterialApp.router(theme: AppTheme.main, routerConfig: router),
     );
     await tester.pumpAndSettle();
 
@@ -461,7 +458,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp.router(theme: EasyRideTheme.main, routerConfig: router),
+      MaterialApp.router(theme: AppTheme.main, routerConfig: router),
     );
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Central');
@@ -493,7 +490,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: const SearchDestinationPage(autofocusSearch: true),
       ),
     );
@@ -523,7 +520,7 @@ void main() {
       final lifecycleCoordinator = scope.get<AppLifecycleCoordinator>();
       await tester.pumpWidget(
         MaterialApp(
-          theme: EasyRideTheme.main,
+          theme: AppTheme.main,
           home: const SearchDestinationPage(autofocusSearch: true),
         ),
       );

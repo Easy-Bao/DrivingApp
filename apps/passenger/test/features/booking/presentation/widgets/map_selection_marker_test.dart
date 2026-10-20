@@ -9,7 +9,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
+        theme: AppTheme.main,
         home: const Scaffold(body: Center(child: MapSelectionMarker())),
       ),
     );
@@ -20,10 +20,7 @@ void main() {
       tester.getSize(marker),
       const Size(MapSelectionMarker.width, MapSelectionMarker.height),
     );
-    expect(
-      MapSelectionMarker.markerColor,
-      EasyRideTheme.main.colorScheme.onSurface,
-    );
+    expect(MapSelectionMarker.markerColor, AppTheme.main.colorScheme.onSurface);
     expect(
       find.descendant(of: marker, matching: find.byType(CustomPaint)),
       findsOneWidget,

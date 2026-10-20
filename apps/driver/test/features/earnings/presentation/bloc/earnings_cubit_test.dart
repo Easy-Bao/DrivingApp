@@ -10,16 +10,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockEarningsRepository extends Mock
-    implements DriverEarningsRepository {}
+class _MockEarningsRepository extends Mock implements EarningsRepository {}
 
-class _MockSessionService extends Mock implements DriverSessionStore {}
+class _MockSessionService extends Mock implements SessionStore {}
 
 void main() {
   late _MockEarningsRepository repository;
   late _MockSessionService sessionService;
 
-  final testSummary = DriverEarningsSummary.fromJson(const {
+  final testSummary = EarningsSummary.fromJson(const {
     'this_week': {'earnings_amount': 1200, 'completed_trips': 2},
   });
 
@@ -30,20 +29,20 @@ void main() {
         .thenAnswer((_) async => 'driver-1');
   });
 
-  blocTest<DriverEarningsCubit, DriverEarningsState>(
+  blocTest<EarningsCubit, EarningsState>(
     'loads earnings through the repository boundary',
     build: () {
       when(() => repository.fetchEarningsSummary('driver-1'))
           .thenAnswer((_) async => Ok(testSummary));
-      return DriverEarningsCubit(
+      return EarningsCubit(
         repository: repository,
         sessionService: sessionService,
       );
     },
     act: (cubit) => cubit.load(),
     expect: () => [
-      const DriverEarningsState(isLoading: true),
-      isA<DriverEarningsState>()
+      const EarningsState(isLoading: true),
+      isA<EarningsState>()
           .having((state) => state.isLoading, 'isLoading', isFalse)
           .having((state) => state.data, 'data', testSummary),
     ],
@@ -52,10 +51,10 @@ void main() {
   test(
     'ignores an overlapping load while the first request is active',
     () async {
-      final response = Completer<Result<DriverEarningsSummary, Failure>>();
+      final response = Completer<Result<EarningsSummary, Failure>>();
       when(() => repository.fetchEarningsSummary('driver-1'))
           .thenAnswer((_) => response.future);
-      final cubit = DriverEarningsCubit(
+      final cubit = EarningsCubit(
         repository: repository,
         sessionService: sessionService,
       );
@@ -72,13 +71,13 @@ void main() {
   );
 
   test('preserves cached earnings when a refresh fails', () async {
-    final responses = <Result<DriverEarningsSummary, Failure>>[
+    final responses = <Result<EarningsSummary, Failure>>[
       Ok(testSummary),
       const Err(NetworkFailure()),
     ];
     when(() => repository.fetchEarningsSummary('driver-1'))
         .thenAnswer((_) async => responses.removeAt(0));
-    final cubit = DriverEarningsCubit(
+    final cubit = EarningsCubit(
       repository: repository,
       sessionService: sessionService,
     );

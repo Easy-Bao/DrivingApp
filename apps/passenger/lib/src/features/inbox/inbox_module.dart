@@ -33,7 +33,7 @@ class InboxModule._() {
       InboxRoutes.inboxPath,
       child: (context, GoRouterState state) => InboxPage(
         inboxCubit: Modular.get<InboxCubit>(),
-        sessionService: Modular.get<PassengerSessionStore>(),
+        sessionService: Modular.get<SessionStore>(),
       ),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,

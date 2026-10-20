@@ -10,24 +10,24 @@ import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 
-class MockDriverRideRepository extends Mock implements DriverRideRepository {}
+class MockRideRepository extends Mock implements RideRepository {}
 
-class MockSecureSessionService extends Mock implements DriverSessionStore {}
+class MockSecureSessionService extends Mock implements SessionStore {}
 
 RideFlowCubit _makeCubit(
-  DriverRideRepository rideRepository,
-  DriverSessionStore sessionService,
+  RideRepository rideRepository,
+  SessionStore sessionService,
 ) => RideFlowCubit(
   rideRepository: rideRepository,
   sessionService: sessionService,
 );
 
 void main() {
-  late MockDriverRideRepository mockRideRepository;
+  late MockRideRepository mockRideRepository;
   late MockSecureSessionService mockSessionService;
 
   setUp(() {
-    mockRideRepository = MockDriverRideRepository();
+    mockRideRepository = MockRideRepository();
     mockSessionService = MockSecureSessionService();
 
     when(() => mockSessionService.readDriverId())

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-abstract final class EasyRideStatusColors {
+abstract final class AppStatusColors {
   static const success = Color(0xFF26845B);
   static const warning = Color(0xFFB45309);
   static const error = Color(0xFFD64545);

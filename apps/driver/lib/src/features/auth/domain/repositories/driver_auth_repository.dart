@@ -1,8 +1,8 @@
 import 'package:foundation/foundation.dart';
 import 'package:driver/src/features/auth/domain/entities/auth_credentials.dart';
 
-abstract interface class DriverAuthRepository {
-  Future<Result<DriverAuthCredentials, Failure>> authenticate({
+abstract interface class AuthRepository {
+  Future<Result<AuthCredentials, Failure>> authenticate({
     required String email,
     required String password,
   });

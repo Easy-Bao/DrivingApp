@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/design_system.dart';
 
-class const DriverFloatingTabBar({
+class const FloatingTabBar({
   super.key,
   required this.selectedIndex,
   required this.onDestinationSelected,
@@ -36,7 +36,7 @@ class const DriverFloatingTabBar({
   }
 }
 
-class const DriverNavigationRail({
+class const ShellNavigationRail({
   super.key,
   required this.selectedIndex,
   required this.onDestinationSelected,
@@ -46,8 +46,8 @@ class const DriverNavigationRail({
 
   @override
   Widget build(BuildContext context) {
-    return EasyRideNavigationRail(
-      destinations: DriverFloatingTabBar.destinations,
+    return AppNavigationRail(
+      destinations: FloatingTabBar.destinations,
       selectedIndex: selectedIndex,
       onDestinationSelected: onDestinationSelected,
     );

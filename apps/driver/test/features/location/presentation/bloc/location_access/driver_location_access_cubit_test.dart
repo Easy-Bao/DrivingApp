@@ -8,20 +8,20 @@ import 'package:driver/src/features/location/domain/repositories/driver_location
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group(DriverLocationAccessCubit, () {
-    late _FakeDriverLocationAccessRepository repository;
+  group(LocationAccessCubit, () {
+    late _FakeLocationAccessRepository repository;
 
-    blocTest<DriverLocationAccessCubit, DriverLocationAccessViewState>(
+    blocTest<LocationAccessCubit, LocationAccessViewState>(
       'exposes unavailable access when the service is disabled',
       build: () {
-        repository = _FakeDriverLocationAccessRepository(
+        repository = _FakeLocationAccessRepository(
           LocationAccessState.serviceDisabled,
         );
-        return DriverLocationAccessCubit(repository: repository);
+        return LocationAccessCubit(repository: repository);
       },
       act: (cubit) => cubit.start(),
       expect: () => const [
-        DriverLocationAccessUnavailable(
+        LocationAccessUnavailable(
           accessState: LocationAccessState.serviceDisabled,
           message:
               'Turn on device location in Settings, then return to EasyRide.',
@@ -29,26 +29,23 @@ void main() {
       ],
     );
 
-    blocTest<DriverLocationAccessCubit, DriverLocationAccessViewState>(
+    blocTest<LocationAccessCubit, LocationAccessViewState>(
       'requests permission once when startup access is denied',
       build: () {
-        repository = _FakeDriverLocationAccessRepository(
-          LocationAccessState.denied,
-        )..permissionResult = LocationAccessState.ready;
-        return DriverLocationAccessCubit(repository: repository);
+        repository = _FakeLocationAccessRepository(LocationAccessState.denied)
+          ..permissionResult = LocationAccessState.ready;
+        return LocationAccessCubit(repository: repository);
       },
       act: (cubit) => cubit.start(),
-      expect: () => const [DriverLocationAccessReady()],
+      expect: () => const [LocationAccessReady()],
       verify: (_) => expect(repository.permissionRequests, 1),
     );
 
-    blocTest<DriverLocationAccessCubit, DriverLocationAccessViewState>(
+    blocTest<LocationAccessCubit, LocationAccessViewState>(
       'reacts when location is lost after becoming ready',
       build: () {
-        repository = _FakeDriverLocationAccessRepository(
-          LocationAccessState.ready,
-        );
-        return DriverLocationAccessCubit(repository: repository);
+        repository = _FakeLocationAccessRepository(LocationAccessState.ready);
+        return LocationAccessCubit(repository: repository);
       },
       act: (cubit) async {
         await cubit.start();
@@ -56,8 +53,8 @@ void main() {
         await Future<void>.delayed(Duration.zero);
       },
       expect: () => const [
-        DriverLocationAccessReady(),
-        DriverLocationAccessUnavailable(
+        LocationAccessReady(),
+        LocationAccessUnavailable(
           accessState: LocationAccessState.serviceDisabled,
           message:
               'Turn on device location in Settings, then return to EasyRide.',
@@ -67,8 +64,8 @@ void main() {
   });
 }
 
-class _FakeDriverLocationAccessRepository(this.currentAccessState)
-    implements DriverLocationAccessRepository {
+class _FakeLocationAccessRepository(this.currentAccessState)
+    implements LocationAccessRepository {
   final StreamController<LocationAccessState> _changes =
       StreamController<LocationAccessState>.broadcast();
 

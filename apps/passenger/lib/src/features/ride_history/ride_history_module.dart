@@ -21,12 +21,12 @@ import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 class RideHistoryModule._() {
   static void binds(Injector i) {
     i
-      ..addLazySingleton<PassengerRideHistoryRemoteDataSource>(
-        (i) => PassengerRideHistoryRemoteDataSourceImpl(i.get<Dio>()),
+      ..addLazySingleton<RideHistoryRemoteDataSource>(
+        (i) => RideHistoryRemoteDataSourceImpl(i.get<Dio>()),
       )
       ..addLazySingleton<RideHistoryRepository>(
         (i) => RideHistoryRepositoryImpl(
-          remoteDataSource: i.get<PassengerRideHistoryRemoteDataSource>(),
+          remoteDataSource: i.get<RideHistoryRemoteDataSource>(),
         ),
       )
       ..addFactory<RideHistoryBloc>(
@@ -38,7 +38,7 @@ class RideHistoryModule._() {
       ..addFactory<RideDetailsCubit>(
         (i) => RideDetailsCubit(
           repository: i.get<TrackRepository>(),
-          sessionService: i.get<PassengerSessionStore>(),
+          sessionService: i.get<SessionStore>(),
         ),
       );
   }
@@ -64,7 +64,7 @@ class RideHistoryModule._() {
         return RideDetailsPage(
           ride: ride,
           trackRepository: Modular.get<TrackRepository>(),
-          sessionService: Modular.get<PassengerSessionStore>(),
+          sessionService: Modular.get<SessionStore>(),
           detailsCubit: Modular.get<RideDetailsCubit>(),
         );
       },
@@ -78,7 +78,7 @@ class RideHistoryModule._() {
         final driverId = state.uri.queryParameters['driverId'] ?? '';
         final driverName = state.uri.queryParameters['driverName'] ?? '';
         final rideId = state.uri.queryParameters['rideId'] ?? '';
-        return PassengerRatingPage(
+        return RatingPage(
           driverId: driverId,
           driverName: driverName,
           rideId: rideId,

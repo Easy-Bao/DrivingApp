@@ -26,8 +26,8 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
-        home: const PassengerPaymentPage(ride: testRide),
+        theme: AppTheme.main,
+        home: const PaymentPage(ride: testRide),
       ),
     );
 
@@ -44,8 +44,8 @@ void main() {
     final backgroundColor = buttonStyle?.backgroundColor?.resolve({});
     final foregroundColor = buttonStyle?.foregroundColor?.resolve({});
 
-    expect(backgroundColor, EasyRideTheme.main.colorScheme.primary);
-    expect(foregroundColor, EasyRideTheme.main.colorScheme.onPrimary);
+    expect(backgroundColor, AppTheme.main.colorScheme.primary);
+    expect(foregroundColor, AppTheme.main.colorScheme.onPrimary);
   });
 
   testWidgets('renders without vertical overflow on compact 360x640 screen', (
@@ -56,8 +56,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
-        home: const PassengerPaymentPage(ride: testRide),
+        theme: AppTheme.main,
+        home: const PaymentPage(ride: testRide),
       ),
     );
 

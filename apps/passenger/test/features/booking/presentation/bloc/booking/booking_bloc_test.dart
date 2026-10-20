@@ -26,7 +26,7 @@ class MockDriverProfileRepository extends Mock
 
 class FakeBookingSessionRequest extends Fake implements BookingSessionRequest {}
 
-class MockSecureSessionService extends Mock implements PassengerSessionStore {}
+class MockSecureSessionService extends Mock implements SessionStore {}
 
 class MockInboxRepository extends Mock implements InboxRepository {}
 
@@ -34,7 +34,7 @@ BookingBloc _makeBookingBloc({
   required DriverRepository driverRepo,
   required BookingRepository bookingRepository,
   required DriverProfileRepository driverProfileRepository,
-  required PassengerSessionStore secureSessionService,
+  required SessionStore secureSessionService,
   InboxCubit? inboxCubit,
   AppLifecycleCoordinator? lifecycleCoordinator,
   int nearestDriverMaxAttempts = 5,

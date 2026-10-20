@@ -15,7 +15,7 @@ void main() {
             child: SizedBox(
               key: headerBoundsKey,
               width: 480,
-              child: DriverActiveRideHeader(
+              child: ActiveRideHeader(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 backButton: const SizedBox(
                   key: ValueKey<String>('back-control'),

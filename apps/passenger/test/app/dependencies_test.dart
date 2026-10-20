@@ -16,7 +16,7 @@ void main() {
     final preferences = await SharedPreferences.getInstance();
 
     await Modular.configure(
-      appModule: PassengerDependencies(preferences: preferences),
+      appModule: AppDependencies(preferences: preferences),
       initialRoute: HomeRoutes.fullHomePath,
       debugLogDiagnostics: false,
       debugLogDiagnosticsGoRouter: false,

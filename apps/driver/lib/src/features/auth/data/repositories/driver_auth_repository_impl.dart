@@ -1,27 +1,26 @@
-import 'package:foundation/foundation.dart';
 import 'package:driver/src/features/auth/data/driver_auth_endpoints.dart';
-import 'package:driver/src/infrastructure/session/driver_session_store.dart';
-import 'package:driver/src/features/auth/data/data_sources/driver_auth_remote_data_source.dart';
 import 'package:driver/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:driver/src/features/auth/domain/repositories/driver_auth_repository.dart';
+import 'package:driver/src/infrastructure/session/driver_session_store.dart';
+import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class DriverAuthRepositoryImpl({
+final class AuthRepositoryImpl({
   required this._remoteDataSource,
   required this._secureSessionService,
-}) implements DriverAuthRepository {
-  final DriverAuthRemoteDataSource _remoteDataSource;
-  final DriverSessionStore _secureSessionService;
+}) implements AuthRepository {
+  final AuthRemoteDataSource _remoteDataSource;
+  final SessionStore _secureSessionService;
 
   @override
-  Future<Result<DriverAuthCredentials, Failure>> authenticate({
+  Future<Result<AuthCredentials, Failure>> authenticate({
     required String email,
     required String password,
   }) async {
     try {
       final responseData = await _remoteDataSource.postData(
-        DriverAuthEndpoints.login,
+        AccountAuthEndpoints.login,
         requestBody: {'email': email, 'password': password, 'role': 'driver'},
       );
 
@@ -80,7 +79,7 @@ final class DriverAuthRepositoryImpl({
       await prefs.setString('plate_number', plateNumber);
       await prefs.setString('rating', rating.toString());
 
-      final credentials = DriverAuthCredentials(
+      final credentials = AuthCredentials(
         driverId: driverId,
         driverName: driverName,
         driverEmail: driverEmail,
@@ -133,7 +132,7 @@ final class DriverAuthRepositoryImpl({
   Future<Result<void, Failure>> resetPassword({required String email}) async {
     try {
       await _remoteDataSource.postJson(
-        DriverAuthEndpoints.forgotPassword,
+        AccountAuthEndpoints.forgotPassword,
         requestBody: {'email': email},
       );
       return const Ok(null);

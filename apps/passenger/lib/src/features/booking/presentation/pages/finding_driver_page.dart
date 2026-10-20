@@ -734,7 +734,7 @@ class const _NearbyDriverSelectionChip({
   @override
   Widget build(BuildContext context) {
     final scheme = context.colorScheme;
-    final radius = BorderRadius.circular(EasyRideRadius.pill);
+    final radius = BorderRadius.circular(AppRadius.pill);
     final foregroundColor = isSelected ? scheme.onPrimary : scheme.onSurface;
     final distance = DistanceFormatter.fromKilometers(driver.distanceKm);
 

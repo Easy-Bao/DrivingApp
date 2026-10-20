@@ -30,27 +30,27 @@ class AccountPage extends StatelessWidget {
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(
-                  maxWidth: EasyRideLayout.pageMaxWidth,
+                  maxWidth: AppLayout.pageMaxWidth,
                 ),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final horizontalPadding = constraints.maxWidth < 360
                         ? 20.0
-                        : EasyRideLayout.pagePaddingWide;
+                        : AppLayout.pagePaddingWide;
                     return SingleChildScrollView(
                       key: const ValueKey<String>('passenger-account-scroll'),
                       physics: const ClampingScrollPhysics(),
                       padding: EdgeInsets.fromLTRB(
                         horizontalPadding,
-                        EasyRideLayout.pagePadding,
+                        AppLayout.pagePadding,
                         horizontalPadding,
                         AppFloatingTabBar.height + 10,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const EasyRidePageHeader(title: 'Account'),
-                          const SizedBox(height: EasyRideSpacing.xxl),
+                          const AppPageHeader(title: 'Account'),
+                          const SizedBox(height: AppSpacing.xxl),
                           _buildProfileSummary(context, visibleState),
                           const SizedBox(height: 28),
                           _buildSectionTitle(context, 'Personal information'),
@@ -170,7 +170,7 @@ class AccountPage extends StatelessWidget {
   }
 
   Widget _buildMenuGroup(BuildContext context, List<_AccountMenuItem> items) {
-    return EasyRideSurfaceCard(
+    return AppSurfaceCard(
       padding: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -198,11 +198,11 @@ class AccountPage extends StatelessWidget {
       onTap: item.onTap,
       child: ConstrainedBox(
         constraints: const BoxConstraints(
-          minHeight: EasyRideSize.minimumTouchTarget + 28,
+          minHeight: AppSize.minimumTouchTarget + 28,
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: EasyRideSpacing.lg,
+            horizontal: AppSpacing.lg,
             vertical: 12,
           ),
           child: Row(
@@ -217,13 +217,13 @@ class AccountPage extends StatelessWidget {
                   color: context.colorScheme.primary,
                 ),
               ),
-              const SizedBox(width: EasyRideSpacing.lg),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(item.title, style: context.textStyles.titleMedium),
-                    const SizedBox(height: EasyRideSpacing.sm / 2),
+                    const SizedBox(height: AppSpacing.sm / 2),
                     Text(
                       item.subtitle,
                       maxLines: 2,
@@ -233,11 +233,11 @@ class AccountPage extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: EasyRideSpacing.sm),
+              const SizedBox(width: AppSpacing.sm),
               Icon(
                 LucideIcons.chevron_right,
                 color: context.colorScheme.onSurfaceVariant,
-                size: EasyRideSize.navigationIcon,
+                size: AppSize.navigationIcon,
               ),
             ],
           ),
@@ -270,7 +270,7 @@ class AccountPage extends StatelessWidget {
           ),
           backgroundColor: context.colorScheme.error.withValues(alpha: 0.04),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
         ),
         child: const Text('Log Out'),

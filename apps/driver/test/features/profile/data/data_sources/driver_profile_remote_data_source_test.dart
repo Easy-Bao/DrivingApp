@@ -10,7 +10,7 @@ void main() {
     'updates the authenticated driver through the shared profile contract',
     () async {
       final dio = _MockDio();
-      final dataSource = DriverProfileRemoteDataSourceImpl(dio);
+      final dataSource = ProfileRemoteDataSourceImpl(dio);
       when(
         () => dio.patch<Map<String, dynamic>>(
           any(),

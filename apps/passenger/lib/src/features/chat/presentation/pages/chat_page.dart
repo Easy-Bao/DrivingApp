@@ -9,8 +9,8 @@ import 'package:passenger/src/core/config/env_config.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/presentation/bloc/chat_cubit.dart';
 
-class PassengerChatPage extends StatefulWidget {
-  const PassengerChatPage({
+class ChatPage extends StatefulWidget {
+  const ChatPage({
     super.key,
     this.roomId,
     this.userId,
@@ -27,10 +27,10 @@ class PassengerChatPage extends StatefulWidget {
   final String? token;
 
   @override
-  State<PassengerChatPage> createState() => _PassengerChatPageState();
+  State<ChatPage> createState() => _ChatPageState();
 }
 
-class _PassengerChatPageState extends State<PassengerChatPage> {
+class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   Timer? _typingStopTimer;
@@ -74,7 +74,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
   Future<void> _connectChat(String roomId, String userId) async {
     final initialized = await _chatCubit.initializeChatRoom(roomId: roomId);
     if (!initialized || !mounted) return;
-    final realtimeUri = PassengerEnvConfig.webSocketBaseUri.replace(
+    final realtimeUri = EnvConfig.webSocketBaseUri.replace(
       path: '/api/v1/chat/ws',
       queryParameters: {'roomId': roomId},
     );
@@ -239,7 +239,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                 ),
                 if (canSendMessage && state.errorMessage == null)
                   SizedBox(
-                    height: EasyRideSize.minimumTouchTarget,
+                    height: AppSize.minimumTouchTarget,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -252,9 +252,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                         child: Material(
                           type: MaterialType.transparency,
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(
-                              EasyRideRadius.lg,
-                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                             onTap: () => _send(_quickReplies[itemIndex]),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
@@ -265,7 +263,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                                 color:
                                     context.colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(
-                                  EasyRideRadius.lg,
+                                  AppRadius.lg,
                                 ),
                                 border: Border.all(
                                   color: context.colorScheme.outlineVariant,
@@ -313,7 +311,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                                 color:
                                     context.colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(
-                                  EasyRideRadius.lg,
+                                  AppRadius.lg,
                                 ),
                                 border: Border.all(
                                   color: context.colorScheme.outlineVariant,
@@ -371,16 +369,17 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                                 size: 20,
                               ),
                               constraints: const BoxConstraints(
-                                minWidth: EasyRideSize.minimumTouchTarget,
-                                minHeight: EasyRideSize.minimumTouchTarget,
+                                minWidth: AppSize.minimumTouchTarget,
+                                minHeight: AppSize.minimumTouchTarget,
                               ),
                               color: !canSendMessage
                                   ? context.colorScheme.onSurfaceVariant
                                   : context.colorScheme.onPrimary,
                               onPressed: !canSendMessage
                                   ? null
-                                  : () =>
-                                      unawaited(_send(_messageController.text)),
+                                  : () => unawaited(
+                                      _send(_messageController.text),
+                                    ),
                             ),
                           ),
                         ],
@@ -463,7 +462,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: context.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(EasyRideRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -524,7 +523,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: context.colorScheme.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(EasyRideRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
           color: context.colorScheme.error.withValues(alpha: 0.22),
         ),
@@ -572,8 +571,8 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                     ? context.colorScheme.onSurface
                     : context.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(EasyRideRadius.lg),
-                  topRight: const Radius.circular(EasyRideRadius.lg),
+                  topLeft: const Radius.circular(AppRadius.lg),
+                  topRight: const Radius.circular(AppRadius.lg),
                   bottomLeft: Radius.circular(isMe ? 20 : 4),
                   bottomRight: Radius.circular(isMe ? 4 : 20),
                 ),

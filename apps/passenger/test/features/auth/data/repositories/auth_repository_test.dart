@@ -1,16 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/data/datasources/auth_endpoints.dart';
-import 'package:passenger/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:passenger/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class MockAuthRemoteDataSource extends Mock
-    implements PassengerAuthRemoteDataSource {}
+class MockAuthRemoteDataSource extends Mock implements AuthRemoteDataSource {}
 
-class MockSecureSessionService extends Mock implements PassengerSessionStore {}
+class MockSecureSessionService extends Mock implements SessionStore {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -18,14 +17,14 @@ void main() {
   late MockAuthRemoteDataSource remoteDataSource;
   late MockSecureSessionService secureSessionService;
   late SharedPreferences preferences;
-  late PassengerAuthRepositoryImpl repository;
+  late AuthRepositoryImpl repository;
 
   setUp(() async {
     remoteDataSource = MockAuthRemoteDataSource();
     secureSessionService = MockSecureSessionService();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     preferences = await SharedPreferences.getInstance();
-    repository = PassengerAuthRepositoryImpl(
+    repository = AuthRepositoryImpl(
       remoteDataSource: remoteDataSource,
       secureSessionService: secureSessionService,
       preferences: preferences,
@@ -93,7 +92,7 @@ void main() {
       () async {
         when(
           () => remoteDataSource.postData(
-            PassengerAuthEndpoints.login,
+            AccountAuthEndpoints.login,
             requestBody: {
               'email': 'passenger@example.com',
               'password': 'secret-password',
@@ -119,14 +118,14 @@ void main() {
           password: 'secret-password',
         );
 
-        late PassengerAuthCredentials credentials;
+        late AuthCredentials credentials;
         result.fold(
           (failure) => fail('Expected credentials, got ${failure.message}'),
           (value) => credentials = value,
         );
         expect(
           credentials,
-          const PassengerAuthCredentials(
+          const AuthCredentials(
             passengerId: '42',
             passengerName: 'Test Passenger',
             passengerEmail: 'passenger@example.com',
@@ -151,7 +150,7 @@ void main() {
       () async {
         when(
           () => remoteDataSource.postData(
-            PassengerAuthEndpoints.login,
+            AccountAuthEndpoints.login,
             requestBody: any(named: 'requestBody'),
           ),
         ).thenAnswer(
@@ -176,7 +175,7 @@ void main() {
     test('returns a failure when the remote data source throws', () async {
       when(
         () => remoteDataSource.postData(
-          PassengerAuthEndpoints.login,
+          AccountAuthEndpoints.login,
           requestBody: any(named: 'requestBody'),
         ),
       ).thenThrow(Exception('gateway unavailable'));
@@ -197,7 +196,7 @@ void main() {
     () async {
       when(
         () => remoteDataSource.postData(
-          PassengerAuthEndpoints.verifyOtp,
+          AccountAuthEndpoints.verifyOtp,
           requestBody: {'email': 'passenger@example.com', 'code': '123456'},
         ),
       ).thenAnswer(
@@ -218,7 +217,7 @@ void main() {
         code: '123456',
       );
 
-      late PassengerAuthCredentials credentials;
+      late AuthCredentials credentials;
       result.fold(
         (failure) => fail('Expected credentials, got ${failure.message}'),
         (value) => credentials = value,
@@ -233,7 +232,7 @@ void main() {
       verify(() => secureSessionService.savePassengerId('42')).called(1);
       verifyNever(
         () => remoteDataSource.postData(
-          PassengerAuthEndpoints.login,
+          AccountAuthEndpoints.login,
           requestBody: any(named: 'requestBody'),
         ),
       );
@@ -245,7 +244,7 @@ void main() {
     () async {
       when(
         () => remoteDataSource.postData(
-          PassengerAuthEndpoints.register,
+          AccountAuthEndpoints.register,
           requestBody: {
             'name': 'Test Passenger',
             'email': 'passenger@example.com',
@@ -280,7 +279,7 @@ void main() {
     () async {
       when(
         () => remoteDataSource.postData(
-          PassengerAuthEndpoints.verifyOtp,
+          AccountAuthEndpoints.verifyOtp,
           requestBody: {'email': 'passenger@example.com', 'code': '123456'},
         ),
       ).thenAnswer(

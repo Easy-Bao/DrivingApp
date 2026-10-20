@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-abstract final class EasyRidePalette {
+abstract final class AppPalette {
   static const emerald = Color(0xFF059669);
 
   static const amber = Color(0xFFF59E0B);

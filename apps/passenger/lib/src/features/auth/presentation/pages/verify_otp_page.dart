@@ -265,9 +265,7 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                           disabledForegroundColor: context.colorScheme.surface
                               .withValues(alpha: 0.5),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              EasyRideRadius.lg,
-                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                           ),
                           elevation: 0,
                         ),
@@ -312,7 +310,7 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           minimumSize: const Size(
                             48,
-                            EasyRideSize.minimumTouchTarget,
+                            AppSize.minimumTouchTarget,
                           ),
                         ),
                         child: Text(

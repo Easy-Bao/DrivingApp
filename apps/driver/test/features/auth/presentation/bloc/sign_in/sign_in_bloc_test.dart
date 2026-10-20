@@ -6,13 +6,13 @@ import 'package:foundation/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockDriverAuthRepository extends Mock implements DriverAuthRepository {}
+class _MockAuthRepository extends Mock implements AuthRepository {}
 
 void main() {
-  late _MockDriverAuthRepository authRepository;
+  late _MockAuthRepository authRepository;
 
   setUp(() {
-    authRepository = _MockDriverAuthRepository();
+    authRepository = _MockAuthRepository();
   });
 
   blocTest<SignInBloc, SignInState>(

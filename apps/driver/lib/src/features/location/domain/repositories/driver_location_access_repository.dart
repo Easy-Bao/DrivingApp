@@ -1,6 +1,6 @@
 import 'package:maps/maps.dart';
 
-abstract interface class DriverLocationAccessRepository {
+abstract interface class LocationAccessRepository {
   Stream<LocationAccessState> get accessStateChanges;
 
   Future<LocationAccessState> startMonitoring();

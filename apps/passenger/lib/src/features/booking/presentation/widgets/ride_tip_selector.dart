@@ -56,7 +56,7 @@ class const RideTipSelector({
                     width: selectedTipAmount == amount ? 1.2 : 0.8,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   materialTapTargetSize: MaterialTapTargetSize.padded,
                   labelStyle: TextStyle(

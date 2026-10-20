@@ -10,27 +10,27 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class const DriverPerformancePage({super.key, this.onBack, this.onRefresh})
+class const PerformancePage({super.key, this.onBack, this.onRefresh})
     extends StatelessWidget {
   final VoidCallback? onBack;
   final Future<void> Function()? onRefresh;
 
   @override
   Widget build(BuildContext context) {
-    return EasyRideSecondaryPage(
+    return AppSecondaryPage(
       title: 'Performance',
       onBack: onBack ?? () => context.pop(),
-      child: BlocBuilder<DriverPerformanceCubit, DriverPerformanceState>(
+      child: BlocBuilder<PerformanceCubit, PerformanceState>(
         builder: (context, state) => RefreshIndicator(
           onRefresh:
               onRefresh ??
-              () => BlocProvider.of<DriverPerformanceCubit>(context).load(),
+              () => BlocProvider.of<PerformanceCubit>(context).load(),
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(
-              EasyRideLayout.pagePadding,
-              EasyRideLayout.pagePadding,
-              EasyRideLayout.pagePadding,
+              AppLayout.pagePadding,
+              AppLayout.pagePadding,
+              AppLayout.pagePadding,
               48,
             ),
             children: [
@@ -48,11 +48,10 @@ class const DriverPerformancePage({super.key, this.onBack, this.onRefresh})
                 AppErrorBanner(
                   message: state.errorMessage!,
                   onRetry: () => unawaited(
-                    BlocProvider.of<DriverPerformanceCubit>(context).load(),
+                    BlocProvider.of<PerformanceCubit>(context).load(),
                   ),
                   onDismiss: () =>
-                      BlocProvider.of<DriverPerformanceCubit>(context)
-                          .dismissError(),
+                      BlocProvider.of<PerformanceCubit>(context).dismissError(),
                 ),
               ],
             ],
@@ -64,7 +63,7 @@ class const DriverPerformancePage({super.key, this.onBack, this.onRefresh})
 }
 
 class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
-  final DriverPerformanceStats? stats;
+  final PerformanceStats? stats;
 
   @override
   Widget build(BuildContext context) {
@@ -74,10 +73,10 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
     final completionRate = stats?.standing.completionRatePercent.round() ?? 0;
 
     return Container(
-      padding: const EdgeInsets.all(EasyRideSpacing.xl),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
         color: context.colorScheme.primary,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: context.colorScheme.primary.withValues(alpha: 0.16),
@@ -122,7 +121,7 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: context.colorScheme.onPrimary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Text(
               '$completionRate% trip completion',
@@ -140,7 +139,7 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
 }
 
 class const _RatingDistribution({required this.stats}) extends StatelessWidget {
-  final DriverPerformanceStats? stats;
+  final PerformanceStats? stats;
 
   @override
   Widget build(BuildContext context) {
@@ -149,10 +148,10 @@ class const _RatingDistribution({required this.stats}) extends StatelessWidget {
     final total = distribution.fold<int>(0, (sum, count) => sum + count);
 
     return Container(
-      padding: const EdgeInsets.all(EasyRideSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
@@ -176,17 +175,17 @@ class const _RatingDistribution({required this.stats}) extends StatelessWidget {
 }
 
 class const _StandingSummary({required this.stats}) extends StatelessWidget {
-  final DriverPerformanceStats? stats;
+  final PerformanceStats? stats;
 
   @override
   Widget build(BuildContext context) {
     final standing = stats?.standing;
     if (standing == null) return const SizedBox.shrink();
     return Container(
-      padding: const EdgeInsets.all(EasyRideSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
@@ -284,7 +283,7 @@ class const _StandingChip({required this.label, required this.value})
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: context.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         '$label: $value',
@@ -316,7 +315,7 @@ class const _RatingDistributionRow({
         const SizedBox(width: 10),
         Expanded(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
             child: LinearProgressIndicator(
               value: fraction,
               minHeight: 8,
@@ -342,7 +341,7 @@ class const _RatingDistributionRow({
 }
 
 class const _PerformanceMetrics({required this.stats}) extends StatelessWidget {
-  final DriverPerformanceStats? stats;
+  final PerformanceStats? stats;
 
   @override
   Widget build(BuildContext context) {
@@ -397,10 +396,10 @@ class const _PerformanceMetricCard({
     return Container(
       width: width,
       constraints: const BoxConstraints(minHeight: 124),
-      padding: const EdgeInsets.all(EasyRideSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(

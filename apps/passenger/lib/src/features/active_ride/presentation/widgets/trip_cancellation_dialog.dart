@@ -26,7 +26,7 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
       builder: (confirmContext) => AlertDialog(
         backgroundColor: confirmContext.colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         title: Text(
           'Discard cancellation?',
@@ -83,7 +83,7 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
       child: AlertDialog(
         backgroundColor: context.colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         title: Text(
           'Cancel ride?',
@@ -114,7 +114,7 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
                 ),
               ),
               const SizedBox(height: 8),
-              EasyRideSelectField<String>(
+              AppSelectField<String>(
                 key: const ValueKey('cancellation-reason-dropdown'),
                 value: _selectedReason,
                 menuTitle: 'Reason for cancellation',
@@ -131,19 +131,19 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
                     vertical: 12,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     borderSide: BorderSide(
                       color: context.colorScheme.outlineVariant,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     borderSide: BorderSide(
                       color: context.colorScheme.outlineVariant,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     borderSide: BorderSide(
                       color: context.colorScheme.primary,
                       width: 1.5,
@@ -153,7 +153,7 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
                 options: [
                   for (final entry
                       in TripCancellationDialog.cancellationReasons.entries)
-                    EasyRideSelectOption<String>(
+                    AppSelectOption<String>(
                       value: entry.key,
                       label: entry.value,
                     ),

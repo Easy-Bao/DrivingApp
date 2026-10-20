@@ -10,7 +10,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DriverDashboardStatsRow(
+          body: DashboardStatsRow(
             isLoadingStats: false,
             earnings: 0,
             completedTrips: 0,
@@ -34,7 +34,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DriverDashboardStatsRow(
+          body: DashboardStatsRow(
             isLoadingStats: false,
             earnings: 0,
             completedTrips: 0,
@@ -65,7 +65,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: DriverDashboardStatsRow(
+          body: DashboardStatsRow(
             isLoadingStats: false,
             hasExistingStats: true,
             earnings: 385.5,
@@ -85,7 +85,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: DriverDashboardStatsRow(
+          body: DashboardStatsRow(
             isLoadingStats: true,
             earnings: 0,
             completedTrips: 0,
@@ -109,7 +109,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: DriverDashboardStatsRow(
+          body: DashboardStatsRow(
             isLoadingStats: true,
             earnings: 0,
             completedTrips: 0,
@@ -131,7 +131,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: DriverDashboardStatsRow(
+          body: DashboardStatsRow(
             isLoadingStats: true,
             hasExistingStats: true,
             earnings: 385.5,
@@ -160,7 +160,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: DriverDashboardStatsRow(
+          body: DashboardStatsRow(
             isLoadingStats: false,
             hasExistingStats: true,
             earnings: 12500.5,
@@ -186,7 +186,7 @@ void main() {
         home: MediaQuery(
           data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
           child: const Scaffold(
-            body: DriverDashboardStatsRow(
+            body: DashboardStatsRow(
               isLoadingStats: false,
               earnings: 12500.5,
               completedTrips: 18,

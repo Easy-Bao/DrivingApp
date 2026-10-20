@@ -7,22 +7,18 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-enum DriverAccountDetailsSection { personal, vehicle }
+enum AccountDetailsSection { personal, vehicle }
 
-class const DriverAccountDetailsForm({
-  super.key,
-  required this.section,
-  this.onBack,
-}) extends StatefulWidget {
-  final DriverAccountDetailsSection section;
+class const AccountDetailsForm({super.key, required this.section, this.onBack})
+    extends StatefulWidget {
+  final AccountDetailsSection section;
   final VoidCallback? onBack;
 
   @override
-  State<DriverAccountDetailsForm> createState() =>
-      _DriverAccountDetailsFormState();
+  State<AccountDetailsForm> createState() => _AccountDetailsFormState();
 }
 
-class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
+class _AccountDetailsFormState extends State<AccountDetailsForm> {
   static const _phonePrefix = '+63';
 
   final _nameController = TextEditingController();
@@ -34,7 +30,7 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
   @override
   void initState() {
     super.initState();
-    _applyAccount(BlocProvider.of<DriverAccountCubit>(context).state.account);
+    _applyAccount(BlocProvider.of<AccountCubit>(context).state.account);
   }
 
   List<TextEditingController> get _controllers => [
@@ -53,7 +49,7 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
     super.dispose();
   }
 
-  void _applyAccount(DriverAccountSnapshot account) {
+  void _applyAccount(AccountSnapshot account) {
     _nameController.text = account.name;
     _phoneController.text = _localPhoneNumber(account.phone);
     _emailController.text = account.email;
@@ -69,14 +65,14 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
   }
 
   String get _pageTitle => switch (widget.section) {
-    DriverAccountDetailsSection.personal => 'Personal Details',
-    DriverAccountDetailsSection.vehicle => 'Vehicle Information',
+    AccountDetailsSection.personal => 'Personal Details',
+    AccountDetailsSection.vehicle => 'Vehicle Information',
   };
 
   Future<void> _submitSave() async {
-    final cubit = BlocProvider.of<DriverAccountCubit>(context);
+    final cubit = BlocProvider.of<AccountCubit>(context);
     final currentAccount = cubit.state.account;
-    final isPersonal = widget.section == DriverAccountDetailsSection.personal;
+    final isPersonal = widget.section == AccountDetailsSection.personal;
     final name = isPersonal ? _nameController.text.trim() : currentAccount.name;
     final vehicleType = isPersonal
         ? currentAccount.vehicleType
@@ -103,7 +99,7 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<DriverAccountCubit, DriverAccountState>(
+    return BlocConsumer<AccountCubit, AccountState>(
       listenWhen: (previous, current) => previous.account != current.account,
       listener: (_, state) {
         _applyAccount(state.account);
@@ -126,19 +122,18 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
               constraints: const BoxConstraints(maxWidth: 560),
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(
-                  EasyRideLayout.pagePaddingWide,
-                  EasyRideLayout.pagePadding,
-                  EasyRideLayout.pagePaddingWide,
-                  EasyRideSpacing.xxl * 2,
+                  AppLayout.pagePaddingWide,
+                  AppLayout.pagePadding,
+                  AppLayout.pagePaddingWide,
+                  AppSpacing.xxl * 2,
                 ),
                 children: [
                   _buildHeader(),
-                  const SizedBox(height: EasyRideSpacing.xxl),
-                  EasyRideSurfaceCard(
+                  const SizedBox(height: AppSpacing.xxl),
+                  AppSurfaceCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children:
-                          widget.section == DriverAccountDetailsSection.personal
+                      children: widget.section == AccountDetailsSection.personal
                           ? _buildPersonalFields(state)
                           : _buildVehicleFields(state),
                     ),
@@ -153,7 +148,7 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
   }
 
   Widget _buildHeader() {
-    final isPersonal = widget.section == DriverAccountDetailsSection.personal;
+    final isPersonal = widget.section == AccountDetailsSection.personal;
     final displayName = _nameController.text.trim();
     return Column(
       children: [
@@ -190,9 +185,9 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
     );
   }
 
-  List<Widget> _buildPersonalFields(DriverAccountState state) {
+  List<Widget> _buildPersonalFields(AccountState state) {
     return [
-      _DriverProfileTextField(
+      _ProfileTextField(
         label: 'Full Name',
         controller: _nameController,
         readOnly: state.isSaving,
@@ -201,7 +196,7 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
       const SizedBox(height: 22),
       _buildPhoneField(),
       const SizedBox(height: 22),
-      _DriverProfileTextField(
+      _ProfileTextField(
         label: 'Email',
         controller: _emailController,
         readOnly: true,
@@ -227,12 +222,9 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
         key: const ValueKey<String>('driver-account-details-save'),
         onPressed: state.isSaving ? null : _submitSave,
         style: ElevatedButton.styleFrom(
-          minimumSize: const Size(
-            double.infinity,
-            EasyRideSize.minimumTouchTarget,
-          ),
+          minimumSize: const Size(double.infinity, AppSize.minimumTouchTarget),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
         ),
         child: state.isSaving
@@ -246,16 +238,16 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
     ];
   }
 
-  List<Widget> _buildVehicleFields(DriverAccountState state) {
+  List<Widget> _buildVehicleFields(AccountState state) {
     return [
-      _DriverProfileTextField(
+      _ProfileTextField(
         label: 'Vehicle Type',
         controller: _vehicleTypeController,
         readOnly: state.isSaving,
         textInputAction: TextInputAction.next,
       ),
       const SizedBox(height: 22),
-      _DriverProfileTextField(
+      _ProfileTextField(
         label: 'Plate Number',
         controller: _plateNumberController,
         readOnly: state.isSaving,
@@ -280,12 +272,9 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
         key: const ValueKey<String>('driver-account-details-save'),
         onPressed: state.isSaving ? null : _submitSave,
         style: ElevatedButton.styleFrom(
-          minimumSize: const Size(
-            double.infinity,
-            EasyRideSize.minimumTouchTarget,
-          ),
+          minimumSize: const Size(double.infinity, AppSize.minimumTouchTarget),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
         ),
         child: state.isSaving
@@ -303,7 +292,7 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _DriverProfileFieldLabel('Mobile Number'),
+        const _ProfileFieldLabel('Mobile Number'),
         const SizedBox(height: 9),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,7 +302,7 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
               width: 88,
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(color: context.colorScheme.outlineVariant),
               ),
               alignment: Alignment.center,
@@ -352,7 +341,7 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
   }
 }
 
-class const _DriverProfileTextField({
+class const _ProfileTextField({
   required this.label,
   required this.controller,
   this.readOnly = false,
@@ -372,7 +361,7 @@ class const _DriverProfileTextField({
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _DriverProfileFieldLabel(label),
+        _ProfileFieldLabel(label),
         const SizedBox(height: 9),
         TextField(
           key: ValueKey<String>('driver-account-field-$label'),
@@ -389,7 +378,7 @@ class const _DriverProfileTextField({
   }
 }
 
-class const _DriverProfileFieldLabel(this.label) extends StatelessWidget {
+class const _ProfileFieldLabel(this.label) extends StatelessWidget {
   final String label;
 
   @override
@@ -408,7 +397,7 @@ InputDecoration _fieldDecoration(
   String? errorText,
 }) {
   final border = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+    borderRadius: BorderRadius.circular(AppRadius.lg),
     borderSide: BorderSide(color: context.colorScheme.outlineVariant),
   );
   return InputDecoration(
@@ -417,7 +406,7 @@ InputDecoration _fieldDecoration(
     filled: true,
     fillColor: context.colorScheme.surface,
     contentPadding: const EdgeInsets.symmetric(
-      horizontal: EasyRideLayout.pagePadding,
+      horizontal: AppLayout.pagePadding,
       vertical: 16,
     ),
     border: border,

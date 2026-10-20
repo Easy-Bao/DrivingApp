@@ -90,7 +90,7 @@ class ActiveRideModule._() {
             rideId: extra is String ? extra : null,
             trackRepository: Modular.get<TrackRepository>(),
             chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
-            sessionService: Modular.get<PassengerSessionStore>(),
+            sessionService: Modular.get<SessionStore>(),
             lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
             liveMapBloc: Modular.get<LiveMapBloc>(),
             onRideTerminated: onRideTerminated,
@@ -101,7 +101,7 @@ class ActiveRideModule._() {
           ride: ride,
           trackRepository: Modular.get<TrackRepository>(),
           chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
-          sessionService: Modular.get<PassengerSessionStore>(),
+          sessionService: Modular.get<SessionStore>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
           liveMapBloc: Modular.get<LiveMapBloc>(),
           onRideTerminated: onRideTerminated,
@@ -120,7 +120,7 @@ class ActiveRideModule._() {
             ? const Scaffold(
                 body: Center(child: Text('Payment data unavailable.')),
               )
-            : PassengerPaymentPage(ride: extra);
+            : PaymentPage(ride: extra);
       },
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,

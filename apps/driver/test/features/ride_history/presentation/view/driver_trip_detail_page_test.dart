@@ -13,9 +13,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.main,
-        home: DriverTripDetailPage(
-          sessionService: DriverSessionStore(),
+        theme: AppTheme.main,
+        home: TripDetailPage(
+          sessionService: SessionStore(),
           trip: {
             'id': 42,
             'passenger_id': 7,
@@ -101,9 +101,9 @@ void main() {
     for (final trip in closedTrips) {
       await tester.pumpWidget(
         MaterialApp(
-          theme: EasyRideTheme.main,
-          home: DriverTripDetailPage(
-            sessionService: DriverSessionStore(),
+          theme: AppTheme.main,
+          home: TripDetailPage(
+            sessionService: SessionStore(),
             trip: {
               'id': 42,
               'passenger_id': 7,

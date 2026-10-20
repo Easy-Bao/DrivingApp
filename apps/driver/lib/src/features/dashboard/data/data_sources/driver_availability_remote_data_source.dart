@@ -1,14 +1,14 @@
 import 'package:dio/dio.dart';
 
-abstract class DriverAvailabilityRemoteDataSource {
+abstract class AvailabilityRemoteDataSource {
   Future<void> updateOnlineStatus({
     required String driverId,
     required bool isOnline,
   });
 }
 
-class DriverAvailabilityRemoteDataSourceImpl(this._dio)
-    implements DriverAvailabilityRemoteDataSource {
+class AvailabilityRemoteDataSourceImpl(this._dio)
+    implements AvailabilityRemoteDataSource {
   final Dio _dio;
 
   @override

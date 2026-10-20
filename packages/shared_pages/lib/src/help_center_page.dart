@@ -63,7 +63,7 @@ class _AppHelpCenterPageState extends State<AppHelpCenterPage> {
   @override
   Widget build(BuildContext context) {
     final visibleTopics = _visibleTopics;
-    return EasyRideSecondaryPage(
+    return AppSecondaryPage(
       title: 'Help Center',
       onBack: widget.onBack,
       maxWidth: 600,

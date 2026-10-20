@@ -1,4 +1,4 @@
-abstract final class EasyRideLayout {
+abstract final class AppLayout {
   static const pagePadding = 20.0;
   static const pagePaddingWide = 24.0;
 

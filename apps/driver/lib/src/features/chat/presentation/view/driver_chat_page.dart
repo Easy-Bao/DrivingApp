@@ -11,7 +11,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-class const DriverChatPage({
+class const ChatPage({
   super.key,
   this.roomId,
   this.userId,
@@ -26,10 +26,10 @@ class const DriverChatPage({
   final ChatRepositoryFactory chatRepositoryFactory;
 
   @override
-  State<DriverChatPage> createState() => _DriverChatPageState();
+  State<ChatPage> createState() => _ChatPageState();
 }
 
-class _DriverChatPageState extends State<DriverChatPage> {
+class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   Timer? _typingStopTimer;
@@ -71,7 +71,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
   Future<void> _connectChat(String roomId, String userId) async {
     final initialized = await _chatCubit.initializeChatRoom(roomId: roomId);
     if (!initialized || !mounted) return;
-    final realtimeUri = DriverEnvConfig.webSocketBaseUri.replace(
+    final realtimeUri = EnvConfig.webSocketBaseUri.replace(
       path: '/api/v1/chat/ws',
       queryParameters: {'roomId': roomId},
     );
@@ -225,7 +225,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                 ),
                 if (canSendMessage && state.errorMessage == null)
                   SizedBox(
-                    height: EasyRideSize.minimumTouchTarget,
+                    height: AppSize.minimumTouchTarget,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -238,9 +238,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                         child: Material(
                           type: MaterialType.transparency,
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(
-                              EasyRideRadius.lg,
-                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                             onTap: () => _send(_quickReplies[itemIndex]),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
@@ -251,7 +249,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                                 color:
                                     context.colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(
-                                  EasyRideRadius.lg,
+                                  AppRadius.lg,
                                 ),
                                 border: Border.all(
                                   color: context.colorScheme.outlineVariant,
@@ -299,7 +297,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                                 color:
                                     context.colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(
-                                  EasyRideRadius.lg,
+                                  AppRadius.lg,
                                 ),
                                 border: Border.all(
                                   color: context.colorScheme.outlineVariant,
@@ -353,8 +351,8 @@ class _DriverChatPageState extends State<DriverChatPage> {
                             ),
                             child: IconButton(
                               constraints: const BoxConstraints(
-                                minWidth: EasyRideSize.minimumTouchTarget,
-                                minHeight: EasyRideSize.minimumTouchTarget,
+                                minWidth: AppSize.minimumTouchTarget,
+                                minHeight: AppSize.minimumTouchTarget,
                               ),
                               icon: const Icon(
                                 LucideIcons.send_horizontal,
@@ -365,7 +363,9 @@ class _DriverChatPageState extends State<DriverChatPage> {
                                   : context.colorScheme.onPrimary,
                               onPressed: !canSendMessage
                                   ? null
-                                  : () => unawaited(_send(_messageController.text)),
+                                  : () => unawaited(
+                                      _send(_messageController.text),
+                                    ),
                             ),
                           ),
                         ],
@@ -475,7 +475,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: context.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(EasyRideRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -533,8 +533,8 @@ class _DriverChatPageState extends State<DriverChatPage> {
                     ? context.colorScheme.primary
                     : context.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(EasyRideRadius.lg),
-                  topRight: const Radius.circular(EasyRideRadius.lg),
+                  topLeft: const Radius.circular(AppRadius.lg),
+                  topRight: const Radius.circular(AppRadius.lg),
                   bottomLeft: Radius.circular(isMe ? 20 : 4),
                   bottomRight: Radius.circular(isMe ? 4 : 20),
                 ),

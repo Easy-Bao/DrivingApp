@@ -23,7 +23,7 @@ class InboxPage extends StatefulWidget {
   });
 
   final InboxCubit inboxCubit;
-  final PassengerSessionStore sessionService;
+  final SessionStore sessionService;
 
   @override
   State<InboxPage> createState() => _InboxPageState();
@@ -57,13 +57,13 @@ class _InboxPageState extends State<InboxPage> {
       slivers: [
         const SliverPadding(
           padding: EdgeInsets.fromLTRB(
-            EasyRideLayout.pagePadding,
+            AppLayout.pagePadding,
             0,
-            EasyRideLayout.pagePadding,
+            AppLayout.pagePadding,
             16,
           ),
           sliver: SliverToBoxAdapter(
-            child: EasyRidePageHeader(
+            child: AppPageHeader(
               title: 'Inbox',
               subtitle: 'Messages and receipts',
             ),
@@ -71,7 +71,7 @@ class _InboxPageState extends State<InboxPage> {
         ),
         SliverPadding(
           padding: const EdgeInsets.symmetric(
-            horizontal: EasyRideLayout.pagePadding,
+            horizontal: AppLayout.pagePadding,
           ),
           sliver: _buildSkeletonNotifications(),
         ),
@@ -123,13 +123,13 @@ class _InboxPageState extends State<InboxPage> {
       slivers: [
         const SliverPadding(
           padding: EdgeInsets.fromLTRB(
-            EasyRideLayout.pagePadding,
+            AppLayout.pagePadding,
             0,
-            EasyRideLayout.pagePadding,
+            AppLayout.pagePadding,
             16,
           ),
           sliver: SliverToBoxAdapter(
-            child: EasyRidePageHeader(
+            child: AppPageHeader(
               title: 'Inbox',
               subtitle: 'Messages and receipts',
             ),
@@ -137,7 +137,7 @@ class _InboxPageState extends State<InboxPage> {
         ),
         SliverPadding(
           padding: const EdgeInsets.symmetric(
-            horizontal: EasyRideLayout.pagePadding,
+            horizontal: AppLayout.pagePadding,
           ),
           sliver: _buildSkeletonNotifications(),
         ),
@@ -156,7 +156,7 @@ class _InboxPageState extends State<InboxPage> {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: context.colorScheme.surface,
-              borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: context.colorScheme.outlineVariant),
             ),
             child: const Row(
@@ -192,25 +192,25 @@ class _InboxPageState extends State<InboxPage> {
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(
-            EasyRideLayout.pagePadding,
+            AppLayout.pagePadding,
             0,
-            EasyRideLayout.pagePadding,
+            AppLayout.pagePadding,
             16,
           ),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              const EasyRidePageHeader(
+              const AppPageHeader(
                 title: 'Inbox',
                 subtitle: 'Messages and receipts',
               ),
-              const SizedBox(height: EasyRideSpacing.sm * 2),
+              const SizedBox(height: AppSpacing.sm * 2),
             ]),
           ),
         ),
         if (state is InboxErrorState)
           SliverPadding(
             padding: const EdgeInsets.symmetric(
-              horizontal: EasyRideLayout.pagePadding,
+              horizontal: AppLayout.pagePadding,
             ),
             sliver: SliverToBoxAdapter(
               child: AppErrorBanner(
@@ -227,7 +227,7 @@ class _InboxPageState extends State<InboxPage> {
         else
           SliverPadding(
             padding: const EdgeInsets.symmetric(
-              horizontal: EasyRideLayout.pagePadding,
+              horizontal: AppLayout.pagePadding,
             ),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {

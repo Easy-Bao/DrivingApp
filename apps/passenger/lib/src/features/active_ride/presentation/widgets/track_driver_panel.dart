@@ -71,7 +71,7 @@ class const TrackDriverPanel({
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(EasyRideRadius.sheet),
+          top: Radius.circular(AppRadius.sheet),
         ),
         boxShadow: [
           BoxShadow(
@@ -165,9 +165,7 @@ class const TrackDriverPanel({
                       backgroundColor: context.colorScheme.errorContainer,
                       side: BorderSide.none,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          EasyRideRadius.pill,
-                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       padding: EdgeInsets.zero,
                     ),
@@ -198,9 +196,7 @@ class const TrackDriverPanel({
                           context.colorScheme.surfaceContainerHighest,
                       side: BorderSide.none,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          EasyRideRadius.pill,
-                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       padding: EdgeInsets.zero,
                     ),
@@ -249,7 +245,7 @@ class const _StatusBadge({required this.text}) extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: context.semanticColors.success.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -303,7 +299,7 @@ class const _DriverCard({
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: context.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         children: [

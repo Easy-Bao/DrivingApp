@@ -2,7 +2,7 @@ import 'package:design_system/src/tokens/status_colors.dart';
 import 'package:flutter/material.dart';
 
 @immutable
-class const EasyRideSemanticColors({
+class const AppSemanticColors({
   required this.success,
   required this.onSuccess,
   required this.warning,
@@ -11,7 +11,7 @@ class const EasyRideSemanticColors({
   required this.rating,
   required this.online,
   required this.offline,
-}) extends ThemeExtension<EasyRideSemanticColors> {
+}) extends ThemeExtension<AppSemanticColors> {
   final Color success;
   final Color onSuccess;
   final Color warning;
@@ -21,19 +21,19 @@ class const EasyRideSemanticColors({
   final Color online;
   final Color offline;
 
-  static const defaults = EasyRideSemanticColors(
-    success: EasyRideStatusColors.success,
+  static const defaults = AppSemanticColors(
+    success: AppStatusColors.success,
     onSuccess: Color(0xFFFFFFFF),
-    warning: EasyRideStatusColors.warning,
+    warning: AppStatusColors.warning,
     onWarning: Color(0xFFFFFFFF),
-    info: EasyRideStatusColors.info,
-    rating: EasyRideStatusColors.rating,
-    online: EasyRideStatusColors.success,
+    info: AppStatusColors.info,
+    rating: AppStatusColors.rating,
+    online: AppStatusColors.success,
     offline: Color(0xFF64748B),
   );
 
   @override
-  EasyRideSemanticColors copyWith({
+  AppSemanticColors copyWith({
     Color? success,
     Color? onSuccess,
     Color? warning,
@@ -43,7 +43,7 @@ class const EasyRideSemanticColors({
     Color? online,
     Color? offline,
   }) {
-    return EasyRideSemanticColors(
+    return AppSemanticColors(
       success: success ?? this.success,
       onSuccess: onSuccess ?? this.onSuccess,
       warning: warning ?? this.warning,
@@ -56,12 +56,9 @@ class const EasyRideSemanticColors({
   }
 
   @override
-  EasyRideSemanticColors lerp(
-    covariant EasyRideSemanticColors? other,
-    double t,
-  ) {
+  AppSemanticColors lerp(covariant AppSemanticColors? other, double t) {
     if (other == null) return this;
-    return EasyRideSemanticColors(
+    return AppSemanticColors(
       success: Color.lerp(success, other.success, t)!,
       onSuccess: Color.lerp(onSuccess, other.onSuccess, t)!,
       warning: Color.lerp(warning, other.warning, t)!,

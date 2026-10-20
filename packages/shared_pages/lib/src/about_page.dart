@@ -20,7 +20,7 @@ class const AppAboutPage({
 
   @override
   Widget build(BuildContext context) {
-    return EasyRideSecondaryPage(
+    return AppSecondaryPage(
       title: 'About EasyRide',
       onBack: onBack,
       maxWidth: 600,
@@ -33,7 +33,7 @@ class const AppAboutPage({
               height: 76,
               decoration: BoxDecoration(
                 color: context.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(EasyRideRadius.xl),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
               alignment: Alignment.center,
               child: Icon(
@@ -43,7 +43,7 @@ class const AppAboutPage({
               ),
             ),
           ),
-          const SizedBox(height: EasyRideSpacing.lg),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             applicationName,
             textAlign: TextAlign.center,
@@ -56,7 +56,7 @@ class const AppAboutPage({
             style: Theme.of(context).textTheme.bodySmall
                 ?.copyWith(color: context.colorScheme.onSurfaceVariant),
           ),
-          const SizedBox(height: EasyRideSpacing.xxl),
+          const SizedBox(height: AppSpacing.xxl),
           Text(
             description,
             textAlign: TextAlign.center,
@@ -65,11 +65,11 @@ class const AppAboutPage({
               height: 1.5,
             ),
           ),
-          const SizedBox(height: EasyRideSpacing.xxl),
+          const SizedBox(height: AppSpacing.xxl),
           Material(
             color: context.colorScheme.surface,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               side: BorderSide(color: context.colorScheme.outlineVariant),
             ),
             clipBehavior: Clip.antiAlias,
