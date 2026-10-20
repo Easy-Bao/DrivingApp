@@ -36,6 +36,26 @@ void main() {
     expect(retried, isEmpty);
   });
 
+  test(
+    'clear discards queued coordinates so another driver cannot send them',
+    () async {
+      final spool = LocationSpool();
+      await spool.enqueue(_point(latitude: 7.1));
+
+      await spool.clear();
+
+      final sent = <double>[];
+      expect(
+        await spool.flush((point) async {
+          sent.add(point.latitude);
+          return true;
+        }),
+        isTrue,
+      );
+      expect(sent, isEmpty);
+    },
+  );
+
   test('retains the failed point and later points for a retry', () async {
     final spool = LocationSpool();
     await spool.enqueue(_point(latitude: 7.1));

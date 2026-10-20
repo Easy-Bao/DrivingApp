@@ -13,11 +13,15 @@ void main() {
         completedSteps.add('telemetry');
         throw StateError('telemetry unavailable');
       },
+      clearLocationSpool: () async {
+        completedSteps.add('spool');
+        throw StateError('storage unavailable');
+      },
       clearSession: () async => completedSteps.add('session'),
     );
 
     await coordinator.logout();
 
-    expect(completedSteps, ['offline', 'telemetry', 'session']);
+    expect(completedSteps, ['offline', 'telemetry', 'spool', 'session']);
   });
 }

@@ -63,6 +63,11 @@ final class LocationSpool {
     );
   }
 
+  /// Discards queued points, e.g. when the owning driver signs out.
+  Future<void> clear() {
+    return _serialize(() => _preferences.remove(_storageKey));
+  }
+
   Future<bool> flush(LocationSender send) {
     return _serialize(
       () => traceTimelineStage('driver.location_spool.flush', () async {

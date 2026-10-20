@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:maps/maps.dart';
 import 'package:driver/src/infrastructure/telemetry/driver_background_telemetry.dart';
+import 'package:driver/src/infrastructure/telemetry/driver_location_spool.dart';
 import 'package:driver/src/features/auth/domain/services/driver_logout_coordinator.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -47,6 +48,7 @@ class AppRouter extends Module {
             );
           },
           stopTelemetry: () => i.get<BackgroundTelemetry>().stop(),
+          clearLocationSpool: () => i.get<LocationSpool>().clear(),
           clearSession: () => i.get<SessionStore>().clearSession(),
         ),
       )

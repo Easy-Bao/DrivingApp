@@ -8,10 +8,12 @@ typedef LogoutStep = Future<void> Function();
 final class const LogoutCoordinator({
   required this._forceOffline,
   required this._stopTelemetry,
+  required this._clearLocationSpool,
   required this._clearSession,
 }) {
   final LogoutStep _forceOffline;
   final LogoutStep _stopTelemetry;
+  final LogoutStep _clearLocationSpool;
   final LogoutStep _clearSession;
 
   Future<void> logout() async {
@@ -30,6 +32,18 @@ final class const LogoutCoordinator({
     } catch (error, stackTrace) {
       developer.log(
         'Unable to stop driver telemetry during logout.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    // Queued points belong to this driver; replaying them under the next
+    // account's token would attribute them to the wrong person.
+    try {
+      await _clearLocationSpool();
+    } catch (error, stackTrace) {
+      developer.log(
+        'Unable to clear queued driver locations during logout.',
         error: error,
         stackTrace: stackTrace,
       );
