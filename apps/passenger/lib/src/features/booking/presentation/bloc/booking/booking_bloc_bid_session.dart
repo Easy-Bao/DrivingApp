@@ -272,22 +272,68 @@ extension _BookingBlocBidSession on BookingBloc {
     Emitter<BookingState> emit,
   ) async {
     _nearestSearchCancelled = true;
-    _cleanupSubscriptions();
-    await _stopBackgroundTelemetry();
     final sessionId = _activeBidSessionId;
+    if (sessionId == null || sessionId.isEmpty) {
+      _cleanupSubscriptions();
+      await _stopBackgroundTelemetry();
+      _activeTrip = null;
+      unawaited(_secureSessionService.deleteActiveBidSessionId());
+      emit(const BookingCanceled());
+      return;
+    }
+
     try {
-      if (sessionId != null && sessionId.isNotEmpty) {
-        await _bookingRepository
-            .cancelSessionResult(sessionId)
-            .timeout(const Duration(seconds: 5));
-      }
+      final result = await _bookingRepository
+          .cancelSessionResult(sessionId)
+          .timeout(const Duration(seconds: 5));
+
+      result.fold(
+        (failure) {
+          final message = failure.message.toLowerCase();
+          final isAlreadyAccepted =
+              message.contains('already accepted') ||
+              message.contains('matched') ||
+              state is BookingDriverMatched;
+
+          if (isAlreadyAccepted) {
+            _cleanupSubscriptions();
+            unawaited(_stopBackgroundTelemetry());
+            _activeBidSessionId = null;
+            _activeTrip = null;
+            unawaited(_secureSessionService.deleteActiveBidSessionId());
+            emit(
+              BookingFailure(
+                failure.message.isNotEmpty
+                    ? failure.message
+                    : 'The booking was already accepted by a driver.',
+              ),
+            );
+            return;
+          }
+
+          // Cancellation failed/rejected: preserve active bid session and trip for retry/reconciliation
+          emit(
+            BookingFailure(
+              failure.message.isNotEmpty
+                  ? failure.message
+                  : 'Unable to cancel booking. Please try again.',
+            ),
+          );
+        },
+        (_) {
+          _cleanupSubscriptions();
+          unawaited(_stopBackgroundTelemetry());
+          _activeBidSessionId = null;
+          _activeTrip = null;
+          unawaited(_secureSessionService.deleteActiveBidSessionId());
+          emit(const BookingCanceled());
+        },
+      );
     } catch (error) {
       dev.log('Unable to confirm booking cancellation: $error');
+      // Timeout or unexpected exception: retain recoverable session ID
+      emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
     }
-    emit(const BookingCanceled());
-    _activeBidSessionId = null;
-    _activeTrip = null;
-    unawaited(_secureSessionService.deleteActiveBidSessionId());
   }
 
   void _onResetBooking(ResetBookingEvent event, Emitter<BookingState> emit) {

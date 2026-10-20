@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
@@ -715,10 +717,8 @@ void main() {
     );
 
     blocTest<BookingBloc, BookingState>(
-      'emits BookingCanceled when the remote cancellation fails',
+      'emits BookingCanceled when no active session exists',
       build: () {
-        when(() => bookingRepository.cancelSession(any()))
-            .thenThrow(Exception('gateway unavailable'));
         return _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -729,5 +729,183 @@ void main() {
       act: (bloc) => bloc.add(const CancelBookingEvent()),
       expect: () => [isA<BookingCanceled>()],
     );
+
+    test('emits BookingCanceled and clears active session when remote cancellation succeeds', () async {
+      when(() => bookingRepository.createSession(any()))
+          .thenAnswer((_) async => const Ok('cancel-session-1'));
+      when(() => bookingRepository.fetchOffers('cancel-session-1'))
+          .thenAnswer((_) async => const Ok([]));
+      when(() => bookingRepository.cancelSession('cancel-session-1'))
+          .thenAnswer((_) async => const Ok(null));
+
+      final bloc = _makeBookingBloc(
+        driverRepo: driverRepo,
+        bookingRepository: bookingRepository,
+        driverProfileRepository: driverProfileRepository,
+        secureSessionService: secureSessionService,
+      );
+      addTearDown(bloc.close);
+
+      final offersReceived = bloc.stream.firstWhere(
+        (state) => state is BookingOffersReceived,
+      );
+      bloc.add(
+        const StartOpenBookingEvent(
+          trip: testTrip,
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          distanceKm: 2,
+          durationMinutes: 5,
+        ),
+      );
+      await offersReceived.timeout(const Duration(milliseconds: 500));
+      expect(bloc.activeBidSessionId, 'cancel-session-1');
+
+      final bookingCanceled = bloc.stream.firstWhere(
+        (state) => state is BookingCanceled,
+      );
+      bloc.add(const CancelBookingEvent());
+      await bookingCanceled.timeout(const Duration(milliseconds: 500));
+
+      expect(bloc.activeBidSessionId, isNull);
+      verify(() => secureSessionService.deleteActiveBidSessionId()).called(1);
+    });
+
+    test('emits BookingFailure and retains active session when remote cancellation fails', () async {
+      when(() => bookingRepository.createSession(any()))
+          .thenAnswer((_) async => const Ok('cancel-session-2'));
+      when(() => bookingRepository.fetchOffers('cancel-session-2'))
+          .thenAnswer((_) async => const Ok([]));
+      when(() => bookingRepository.cancelSession('cancel-session-2'))
+          .thenAnswer((_) async => const Err(ServerFailure('offline')));
+
+      final bloc = _makeBookingBloc(
+        driverRepo: driverRepo,
+        bookingRepository: bookingRepository,
+        driverProfileRepository: driverProfileRepository,
+        secureSessionService: secureSessionService,
+      );
+      addTearDown(bloc.close);
+
+      final offersReceived = bloc.stream.firstWhere(
+        (state) => state is BookingOffersReceived,
+      );
+      bloc.add(
+        const StartOpenBookingEvent(
+          trip: testTrip,
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          distanceKm: 2,
+          durationMinutes: 5,
+        ),
+      );
+      await offersReceived.timeout(const Duration(milliseconds: 500));
+      expect(bloc.activeBidSessionId, 'cancel-session-2');
+
+      final failureState = bloc.stream.firstWhere(
+        (state) => state is BookingFailure,
+      );
+      bloc.add(const CancelBookingEvent());
+      final state = await failureState.timeout(
+        const Duration(milliseconds: 500),
+      );
+
+      expect(state, isA<BookingFailure>());
+      expect((state as BookingFailure).message, contains('offline'));
+      expect(bloc.activeBidSessionId, 'cancel-session-2');
+      verifyNever(() => secureSessionService.deleteActiveBidSessionId());
+    });
+
+    test('emits BookingFailure and retains active session when cancellation times out', () async {
+      when(() => bookingRepository.createSession(any()))
+          .thenAnswer((_) async => const Ok('cancel-session-3'));
+      when(() => bookingRepository.fetchOffers('cancel-session-3'))
+          .thenAnswer((_) async => const Ok([]));
+      when(() => bookingRepository.cancelSession('cancel-session-3'))
+          .thenThrow(TimeoutException('request timed out'));
+
+      final bloc = _makeBookingBloc(
+        driverRepo: driverRepo,
+        bookingRepository: bookingRepository,
+        driverProfileRepository: driverProfileRepository,
+        secureSessionService: secureSessionService,
+      );
+      addTearDown(bloc.close);
+
+      final offersReceived = bloc.stream.firstWhere(
+        (state) => state is BookingOffersReceived,
+      );
+      bloc.add(
+        const StartOpenBookingEvent(
+          trip: testTrip,
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          distanceKm: 2,
+          durationMinutes: 5,
+        ),
+      );
+      await offersReceived.timeout(const Duration(milliseconds: 500));
+      expect(bloc.activeBidSessionId, 'cancel-session-3');
+
+      final failureState = bloc.stream.firstWhere(
+        (state) => state is BookingFailure,
+      );
+      bloc.add(const CancelBookingEvent());
+      final state = await failureState.timeout(
+        const Duration(milliseconds: 500),
+      );
+
+      expect(state, isA<BookingFailure>());
+      expect(bloc.activeBidSessionId, 'cancel-session-3');
+      verifyNever(() => secureSessionService.deleteActiveBidSessionId());
+    });
+
+    test('emits BookingFailure and clears session when session was already accepted', () async {
+      when(() => bookingRepository.createSession(any()))
+          .thenAnswer((_) async => const Ok('cancel-session-4'));
+      when(() => bookingRepository.fetchOffers('cancel-session-4'))
+          .thenAnswer((_) async => const Ok([]));
+      when(
+        () => bookingRepository.cancelSession('cancel-session-4'),
+      ).thenAnswer(
+        (_) async =>
+            const Err(ValidationFailure('The booking was already accepted.')),
+      );
+
+      final bloc = _makeBookingBloc(
+        driverRepo: driverRepo,
+        bookingRepository: bookingRepository,
+        driverProfileRepository: driverProfileRepository,
+        secureSessionService: secureSessionService,
+      );
+      addTearDown(bloc.close);
+
+      final offersReceived = bloc.stream.firstWhere(
+        (state) => state is BookingOffersReceived,
+      );
+      bloc.add(
+        const StartOpenBookingEvent(
+          trip: testTrip,
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          distanceKm: 2,
+          durationMinutes: 5,
+        ),
+      );
+      await offersReceived.timeout(const Duration(milliseconds: 500));
+      expect(bloc.activeBidSessionId, 'cancel-session-4');
+
+      final failureState = bloc.stream.firstWhere(
+        (state) => state is BookingFailure,
+      );
+      bloc.add(const CancelBookingEvent());
+      final state = await failureState.timeout(
+        const Duration(milliseconds: 500),
+      );
+
+      expect(state, isA<BookingFailure>());
+      expect(bloc.activeBidSessionId, isNull);
+      verify(() => secureSessionService.deleteActiveBidSessionId()).called(1);
+    });
   });
 }

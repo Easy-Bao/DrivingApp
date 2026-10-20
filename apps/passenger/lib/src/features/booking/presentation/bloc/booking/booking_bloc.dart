@@ -96,11 +96,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<DriverMatchedEvent>(_onDriverMatched);
   }
 
+  String? get activeBidSessionId => _activeBidSessionId;
+
   bool get hasActiveDriverSearch =>
       state is FindingNearestDriver ||
       state is NearestDriverFound ||
       state is BookingSearching ||
-      state is BookingOffersReceived;
+      state is BookingOffersReceived ||
+      _activeBidSessionId != null;
 
   ActiveDriverSearch? get activeDriverSearch {
     final trip = _activeTrip;

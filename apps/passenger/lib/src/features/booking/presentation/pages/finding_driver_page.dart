@@ -486,6 +486,7 @@ class _FindingDriverPageContentState()
                 setState(() {
                   _driverSearchError = state.message;
                   _isNoDriverFound = false;
+                  _isLeaving = false;
                 });
               }
             } else if (state is BookingCanceled) {
