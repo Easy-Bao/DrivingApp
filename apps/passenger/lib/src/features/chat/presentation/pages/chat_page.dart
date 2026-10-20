@@ -228,10 +228,10 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                               return _buildTyping();
                             }
                             return _buildBubble(
-                              chatHistoryMessages[i],
+                              chatHistoryMessages[index],
                               animate: identical(
                                 state.lastDeliveredMessage,
-                                chatHistoryMessages[i],
+                                chatHistoryMessages[index],
                               ),
                             );
                           },

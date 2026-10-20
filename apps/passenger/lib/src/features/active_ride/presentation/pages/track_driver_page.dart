@@ -377,7 +377,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     unawaited(_chatMessagesPollingTask.dispose());
     unawaited(_chatRepository?.dispose());
     unawaited(_liveMapBloc?.close());
-    for (final manager in [
+    for (final manager in <MapBaseAnnotationManager?>[
       _routeLineManager,
       _passengerMarkerManager,
       _driverMarkerManager,

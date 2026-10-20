@@ -219,16 +219,17 @@ class _FindingDriverPageContentState()
         ),
       );
 
-      BlocProvider.of<LiveMapBloc>(context)
-          .add(AddMapMarkerEvent(lat: lat, lng: lng, isOrigin: true));
+      BlocProvider.of<LiveMapBloc>(
+        context,
+      ).add(AddMapMarkerEvent(lat: latitude, lng: longitude, isOrigin: true));
     }
   }
 
   void _startDirectBooking(DriverModel driver) {
     final pickup = _pickupCoordinate;
     if (pickup == null) return;
-    final pickupLat = pickup.lat;
-    final pickupLng = pickup.lng;
+    final pickupLat = pickup.latitude;
+    final pickupLng = pickup.longitude;
 
     final distanceNum = double.tryParse(
       widget.distance.replaceAll(RegExp(r'[^0-9.]'), ''),
@@ -268,8 +269,8 @@ class _FindingDriverPageContentState()
   void _startOpenBooking() {
     final pickup = _pickupCoordinate;
     if (pickup == null) return;
-    final pickupLat = pickup.lat;
-    final pickupLng = pickup.lng;
+    final pickupLat = pickup.latitude;
+    final pickupLng = pickup.longitude;
 
     final distanceNum = double.tryParse(
       widget.distance.replaceAll(RegExp(r'[^0-9.]'), ''),
@@ -352,8 +353,8 @@ class _FindingDriverPageContentState()
     });
     BlocProvider.of<BookingBloc>(context).add(
       LocateNearestDriverEvent(
-        pickupLat: pickup.lat,
-        pickupLng: pickup.lng,
+        pickupLat: pickup.latitude,
+        pickupLng: pickup.longitude,
         trip: BidSessionTrip(
           rideType: widget.rideType,
           fare: widget.fare,
@@ -380,8 +381,8 @@ class _FindingDriverPageContentState()
         body: Center(child: Text('Your location is unavailable.')),
       );
     }
-    final defaultLat = pickup.lat;
-    final defaultLng = pickup.lng;
+    final defaultLat = pickup.latitude;
+    final defaultLng = pickup.longitude;
 
     return PopScope(
       canPop: false,

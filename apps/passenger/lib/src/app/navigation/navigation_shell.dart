@@ -301,7 +301,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
                                       bloc: trackCubit,
                                       builder: (context, trackState) {
                                         return PassengerFloatingTabBar(
-                                          selectedIndex: sel,
+                                          selectedIndex: selectedIndex,
                                           onDestinationSelected: _onItemTapped,
                                           inboxCubit: widget.inboxCubit,
                                           pagePosition: widget
