@@ -9,11 +9,65 @@ class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 void main() {
   late MockFlutterSecureStorage storage;
   late PassengerSessionStore sessionStore;
+  late Map<String, String> stored;
 
   setUp(() {
     storage = MockFlutterSecureStorage();
     sessionStore = PassengerSessionStore(storage: storage);
-    when(() => storage.delete(key: any(named: 'key'))).thenAnswer((_) async {});
+    stored = {};
+    when(
+      () => storage.write(
+        key: any(named: 'key'),
+        value: any(named: 'value'),
+      ),
+    ).thenAnswer((call) async {
+      stored[call.namedArguments[#key] as String] =
+          call.namedArguments[#value] as String;
+    });
+    when(() => storage.read(key: any(named: 'key')))
+        .thenAnswer((call) async => stored[call.namedArguments[#key]]);
+    when(() => storage.delete(key: any(named: 'key'))).thenAnswer((call) async {
+      stored.remove(call.namedArguments[#key]);
+    });
+  });
+
+  test('remembered sessions survive a new session store', () async {
+    await sessionStore.configurePersistence(rememberMe: true);
+    await sessionStore.saveToken('access');
+    await sessionStore.saveRefreshToken('refresh');
+    await sessionStore.savePassengerId('42');
+    final reopened = PassengerSessionStore(storage: storage);
+    expect(await reopened.readToken(), 'access');
+    expect(await reopened.readRefreshToken(), 'refresh');
+    expect(await reopened.readPassengerId(), '42');
+  });
+
+  test('unchecked sessions and refreshed tokens stay in memory only', () async {
+    await sessionStore.saveToken('previous-access');
+    await sessionStore.saveRefreshToken('previous-refresh');
+    await sessionStore.savePassengerId('previous-user');
+    await sessionStore.configurePersistence(rememberMe: false);
+    await sessionStore.saveToken('access');
+    await sessionStore.saveRefreshToken('refresh');
+    await sessionStore.savePassengerId('42');
+    await sessionStore.saveActiveRideId('ride-1');
+    await sessionStore.saveToken('rotated-access');
+    await sessionStore.saveRefreshToken('rotated-refresh');
+
+    expect(await sessionStore.readToken(), 'rotated-access');
+    expect(await sessionStore.readRefreshToken(), 'rotated-refresh');
+    expect(await sessionStore.readPassengerId(), '42');
+    expect(await sessionStore.readActiveRideId(), 'ride-1');
+    expect(stored, isEmpty);
+    final reopened = PassengerSessionStore(storage: storage);
+    expect(await reopened.readToken(), isNull);
+    expect(await reopened.readRefreshToken(), isNull);
+    expect(await reopened.readPassengerId(), isNull);
+
+    await sessionStore.clearAll();
+    expect(await sessionStore.readToken(), isNull);
+    expect(await sessionStore.readRefreshToken(), isNull);
+    expect(await sessionStore.readPassengerId(), isNull);
   });
 
   test('clears only passenger-owned session keys', () async {

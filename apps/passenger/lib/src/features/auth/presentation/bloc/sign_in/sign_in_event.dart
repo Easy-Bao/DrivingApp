@@ -5,11 +5,15 @@ sealed class const SignInEvent() extends Equatable {
   List<Object?> get props => [];
 }
 
-final class const SignInSubmitted({required this.email, required this.password})
-    extends SignInEvent {
+final class const SignInSubmitted({
+  required this.email,
+  required this.password,
+  this.rememberMe = true,
+}) extends SignInEvent {
   final String email;
   final String password;
+  final bool rememberMe;
 
   @override
-  List<Object?> get props => [email, password];
+  List<Object?> get props => [email, password, rememberMe];
 }

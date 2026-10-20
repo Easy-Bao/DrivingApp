@@ -32,6 +32,11 @@ void main() {
     );
 
     when(() => secureSessionService.saveToken(any())).thenAnswer((_) async {});
+    when(
+      () => secureSessionService.configurePersistence(
+        rememberMe: any(named: 'rememberMe'),
+      ),
+    ).thenAnswer((_) async {});
     when(() => secureSessionService.saveRefreshToken(any()))
         .thenAnswer((_) async {});
     when(() => secureSessionService.savePassengerId(any()))
@@ -39,6 +44,50 @@ void main() {
   });
 
   group('AuthRepository.authenticate', () {
+    test(
+      'keeps an unchecked sign-in choice through OTP verification',
+      () async {
+        when(
+          () => remoteDataSource.postData(
+            any(),
+            requestBody: any(named: 'requestBody'),
+          ),
+        ).thenAnswer(
+          (_) async => {
+            'token': 'access',
+            'refreshToken': 'refresh',
+            'user': {
+              'id': 42,
+              'name': 'Passenger',
+              'email': 'passenger@example.com',
+            },
+            'needsVerification': true,
+          },
+        );
+        expect(
+          (await repository.authenticate(
+            email: 'passenger@example.com',
+            password: 'password',
+            rememberMe: false,
+          )).isOk,
+          isTrue,
+        );
+        expect(
+          (await repository.verifyOtp(
+            email: 'passenger@example.com',
+            code: '123456',
+          )).isOk,
+          isTrue,
+        );
+        verify(
+          () => secureSessionService.configurePersistence(rememberMe: false),
+        ).called(1);
+        verifyNever(
+          () => secureSessionService.configurePersistence(rememberMe: true),
+        );
+      },
+    );
+
     test(
       'maps the server session and persists sensitive identity securely',
       () async {

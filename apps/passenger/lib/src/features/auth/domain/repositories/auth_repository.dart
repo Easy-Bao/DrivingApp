@@ -5,6 +5,7 @@ abstract interface class PassengerAuthRepository {
   Future<Result<PassengerAuthCredentials, Failure>> authenticate({
     required String email,
     required String password,
+    bool rememberMe = true,
   });
 
   Future<Result<Map<String, dynamic>, Failure>> registerPassenger({

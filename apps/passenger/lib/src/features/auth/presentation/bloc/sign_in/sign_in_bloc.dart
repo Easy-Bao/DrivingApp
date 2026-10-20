@@ -40,6 +40,7 @@ class SignInBloc(this._authRepository) extends Bloc<SignInEvent, SignInState> {
     final result = await _authRepository.authenticate(
       email: normalizedEmail,
       password: password,
+      rememberMe: event.rememberMe,
     );
 
     result.fold(

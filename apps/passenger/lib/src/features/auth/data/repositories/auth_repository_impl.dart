@@ -22,6 +22,7 @@ final class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
   Future<Result<PassengerAuthCredentials, Failure>> authenticate({
     required String email,
     required String password,
+    bool rememberMe = true,
   }) async {
     try {
       final responseData = await _remoteDataSource.postData(
@@ -36,7 +37,7 @@ final class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
         responseData,
         fallbackEmail: email,
       );
-      await _persistSession(credentials);
+      await _persistSession(credentials, rememberMe: rememberMe);
       return Ok(credentials);
     } on ServerException catch (error) {
       if (error.statusCode == 401 || error.statusCode == 403) {
@@ -81,6 +82,7 @@ final class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
           'role': 'passenger',
         },
       );
+      await _secureSessionService.configurePersistence(rememberMe: true);
       if (responseData['needsVerification'] != true) {
         final credentials = _credentialsFromResponse(
           responseData,
@@ -180,7 +182,13 @@ final class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
     );
   }
 
-  Future<void> _persistSession(PassengerAuthCredentials credentials) async {
+  Future<void> _persistSession(
+    PassengerAuthCredentials credentials, {
+    bool? rememberMe,
+  }) async {
+    if (rememberMe != null) {
+      await _secureSessionService.configurePersistence(rememberMe: rememberMe);
+    }
     await _secureSessionService.saveToken(credentials.token);
     await _secureSessionService.saveRefreshToken(credentials.refreshToken);
     await _secureSessionService.savePassengerId(credentials.passengerId);

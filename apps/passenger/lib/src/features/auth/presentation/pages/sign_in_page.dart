@@ -34,6 +34,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _isPasswordVisible = false;
+  bool _rememberMe = true;
 
   String? _emailError;
   String? _passwordError;
@@ -332,24 +333,92 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                 ),
                               ),
                               const SizedBox(height: 10),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton(
-                                  onPressed: () {
-                                    unawaited(
-                                      context.pushNamed(
-                                        AuthRoutes.forgotPassword,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Semantics(
+                                        checked: _rememberMe,
+                                        child: TextButton(
+                                          onPressed: isLoading
+                                              ? null
+                                              : () => setState(
+                                                  () => _rememberMe =
+                                                      !_rememberMe,
+                                                ),
+                                          style:
+                                              TextButton.styleFrom(
+                                                foregroundColor: context
+                                                    .colorScheme
+                                                    .onSurface,
+                                                padding: EdgeInsets.zero,
+                                                minimumSize: const Size(0, 48),
+                                                splashFactory:
+                                                    NoSplash.splashFactory,
+                                              ).copyWith(
+                                                overlayColor:
+                                                    WidgetStateProperty.resolveWith(
+                                                      (states) =>
+                                                          states.contains(
+                                                            WidgetState.pressed,
+                                                          )
+                                                          ? Colors.transparent
+                                                          : null,
+                                                    ),
+                                              ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              ExcludeSemantics(
+                                                child: ExcludeFocus(
+                                                  child: IgnorePointer(
+                                                    child: Checkbox(
+                                                      value: _rememberMe,
+                                                      onChanged: isLoading
+                                                          ? null
+                                                          : (value) => setState(
+                                                              () =>
+                                                                  _rememberMe =
+                                                                      value ??
+                                                                      false,
+                                                            ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              const Flexible(
+                                                child: Text('Remember me'),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       ),
-                                    );
-                                  },
-                                  child: Text(
-                                    'Forgot password?',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: context.colorScheme.onSurface,
                                     ),
                                   ),
-                                ),
+                                  Expanded(
+                                    child: Align(
+                                      alignment: Alignment.centerRight,
+                                      child: TextButton(
+                                        onPressed: () {
+                                          unawaited(
+                                            context.pushNamed(
+                                              AuthRoutes.forgotPassword,
+                                            ),
+                                          );
+                                        },
+                                        child: Text(
+                                          'Forgot password?',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                context.colorScheme.onSurface,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 24),
                               Material(
@@ -392,8 +461,9 @@ class _SigninPageContentState extends State<_SigninPageContent> {
 
                               const SizedBox(height: 24),
                               Center(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                child: Wrap(
+                                  alignment: WrapAlignment.center,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     Text(
                                       "Don't have an account?",
@@ -457,7 +527,12 @@ class _SigninPageContentState extends State<_SigninPageContent> {
       return;
     }
 
-    BlocProvider.of<SignInBloc>(context)
-        .add(SignInSubmitted(email: email, password: password));
+    BlocProvider.of<SignInBloc>(context).add(
+      SignInSubmitted(
+        email: email,
+        password: password,
+        rememberMe: _rememberMe,
+      ),
+    );
   }
 }

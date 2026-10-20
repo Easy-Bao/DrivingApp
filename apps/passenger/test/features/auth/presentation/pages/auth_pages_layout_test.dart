@@ -16,6 +16,7 @@ class _UnusedAuthRepository implements PassengerAuthRepository {
   Future<Result<PassengerAuthCredentials, Failure>> authenticate({
     required String email,
     required String password,
+    bool rememberMe = true,
   }) => Future.error(UnimplementedError());
 
   @override
