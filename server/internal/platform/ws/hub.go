@@ -115,13 +115,11 @@ func isDroppable(eventType event.Type) bool {
 }
 
 func (subscription *Subscription) deliver(envelope event.Envelope) bool {
-	// Fast path: enqueue without locking if channel has available capacity.
-	select {
-	case subscription.events <- envelope:
-		return true
-	default:
-	}
-
+	// Every producer serializes on evictionMutex. Eviction drains and refills
+	// the queue, so a lock-free enqueue could consume the freed capacity and
+	// make the refill block forever while the hub read lock is held. With a
+	// single producer at a time, refilling at most the drained count can never
+	// block because the consumer only frees more space.
 	subscription.evictionMutex.Lock()
 	defer subscription.evictionMutex.Unlock()
 

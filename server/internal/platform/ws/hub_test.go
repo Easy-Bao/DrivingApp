@@ -234,3 +234,44 @@ func TestHubEvictsDroppableEventsWithoutClosingSubscription(t *testing.T) {
 		t.Fatal("expected critical event to be queued after evicting telemetry")
 	}
 }
+
+func TestHubConcurrentPublishersOnFullQueueDoNotBlockClose(t *testing.T) {
+	t.Parallel()
+
+	hub := NewHub()
+	subscription := hub.Subscribe("driver:10")
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		var publishers sync.WaitGroup
+		for worker := 0; worker < 16; worker++ {
+			publishers.Add(1)
+			go func() {
+				defer publishers.Done()
+				for i := 0; i < 100; i++ {
+					envelope, err := event.New(
+						fmt.Sprintf("telemetry-%d-%d", worker, i),
+						event.DriverLocationUpdated,
+						time.Now().UTC(),
+						event.Scope{DriverID: "10"},
+						map[string]any{"seq": i},
+					)
+					if err != nil {
+						t.Errorf("New() error = %v", err)
+						return
+					}
+					hub.Publish(envelope)
+				}
+			}()
+		}
+		publishers.Wait()
+		subscription.Close()
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("concurrent publishers or Close blocked on a full queue")
+	}
+}
