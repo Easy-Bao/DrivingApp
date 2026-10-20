@@ -45,7 +45,7 @@ func (assignmentLookupStub) ForRide(_ context.Context, rideID string) (assignmen
 
 func TestEventHandlerKeepsServerIdentityAndTimestamp(t *testing.T) {
 	history := &roomRepositoryStub{}
-	service := application.NewChatService(application.ChatServiceDependencies{History: history}).
+	service := application.NewService(application.Dependencies{History: history}).
 		WithRideAssignmentLookup(assignmentLookupStub{})
 	handler := NewEventHandler(service)
 	before := time.Now().UTC()

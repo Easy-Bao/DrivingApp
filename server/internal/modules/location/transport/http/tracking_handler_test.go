@@ -49,7 +49,7 @@ func TestNearbyDriversClampsThePublicRadiusBoundary(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			store := &nearbyLocationStore{}
-			service := locationapp.NewLocationTrackingService(locationapp.LocationTrackingDependencies{Repository: store})
+			service := locationapp.NewTrackingService(locationapp.TrackingDependencies{Repository: store})
 			handler := NewTrackingHandler(TrackingDependencies{Service: service})
 			request := httptest.NewRequest(
 				http.MethodGet,

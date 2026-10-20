@@ -27,11 +27,11 @@ type AddressResolver interface {
 	ResolveAddress(ctx context.Context, coordinates Coordinates) (string, error)
 }
 
-type RideContextQuery interface {
+type ContextQuery interface {
 	Load(ctx context.Context, passengerID *int, coordinates *Coordinates) (RideContextSnapshot, error)
 }
 
-type Query = RideContextQuery
+type Query = ContextQuery
 
 const (
 	_recentDestinationLimit = 25
@@ -44,7 +44,7 @@ var (
 	ErrQueryUnavailable   = errors.New("passenger ridecontext query is unavailable")
 )
 
-type RideContextQueryService struct {
+type QueryService struct {
 	recentDestinations RecentDestinationReader
 	addressResolver    AddressResolver
 	logger             *slog.Logger
@@ -55,22 +55,22 @@ type QueryDependencies struct {
 	AddressResolver    AddressResolver
 }
 
-func NewQueryService(dependencies QueryDependencies) *RideContextQueryService {
-	return &RideContextQueryService{
+func NewQueryService(dependencies QueryDependencies) *QueryService {
+	return &QueryService{
 		recentDestinations: dependencies.RecentDestinations,
 		addressResolver:    dependencies.AddressResolver,
 		logger:             slog.Default(),
 	}
 }
 
-func (service *RideContextQueryService) WithLogger(logger *slog.Logger) *RideContextQueryService {
+func (service *QueryService) WithLogger(logger *slog.Logger) *QueryService {
 	if logger != nil {
 		service.logger = logger
 	}
 	return service
 }
 
-func (service *RideContextQueryService) Load(
+func (service *QueryService) Load(
 	ctx context.Context,
 	passengerID *int,
 	coordinates *Coordinates,
@@ -132,7 +132,7 @@ func (service *RideContextQueryService) Load(
 	return snapshot, nil
 }
 
-func (service *RideContextQueryService) log() *slog.Logger {
+func (service *QueryService) log() *slog.Logger {
 	if service != nil && service.logger != nil {
 		return service.logger
 	}

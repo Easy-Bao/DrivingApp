@@ -19,8 +19,8 @@ type chatHistory struct {
 	locked      bool
 }
 
-func newChatService(history application.RoomStore) *application.ChatService {
-	return application.NewChatService(application.ChatServiceDependencies{History: history}).
+func newChatService(history application.RoomStore) *application.Service {
+	return application.NewService(application.Dependencies{History: history}).
 		WithRideAssignmentLookup(chatAssignmentLookup{
 			assignment: assignment.Assignment{
 				RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "assigned",

@@ -16,12 +16,12 @@ import (
 )
 
 type TrackingHandler struct {
-	service *locationapp.LocationTrackingService
+	service *locationapp.TrackingService
 	auth    *security.TokenManager
 }
 
 type TrackingDependencies struct {
-	Service       *locationapp.LocationTrackingService
+	Service       *locationapp.TrackingService
 	Auth          *security.TokenManager
 	RouteSecurity *middleware.RouteSecurity
 }

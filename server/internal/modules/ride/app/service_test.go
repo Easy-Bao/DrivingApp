@@ -47,10 +47,10 @@ func newTestRideService(
 	repository RideStore,
 	pricingConfig PricingConfig,
 	publisher EventPublisher,
-	options ...RideServiceOption,
-) *RideService {
-	return NewRideService(
-		RideServiceDependencies{
+	options ...Option,
+) *Service {
+	return NewService(
+		Dependencies{
 			Repository:     repository,
 			PricingConfig:  pricingConfig,
 			EventPublisher: publisher,

@@ -49,9 +49,9 @@ func (stub *driverPresenceSequenceStub) IsOnline(context.Context, string) (bool,
 
 func newLocationTrackingService(
 	repository LocationStore,
-	options ...Option,
-) *LocationTrackingService {
-	return NewLocationTrackingService(LocationTrackingDependencies{Repository: repository}, options...)
+	options ...TrackingOption,
+) *TrackingService {
+	return NewTrackingService(TrackingDependencies{Repository: repository}, options...)
 }
 
 func (stub *locationRepositoryStub) Upsert(_ context.Context, point domain.DriverPoint) error {
@@ -195,8 +195,8 @@ func TestIngestFailsClosedWhenDriverPresenceCannotBeRead(t *testing.T) {
 
 func TestIngestIgnoresTelemetryOlderThanTheConfiguredFreshnessWindow(t *testing.T) {
 	repository := &locationRepositoryStub{}
-	service := NewLocationTrackingService(
-		LocationTrackingDependencies{
+	service := NewTrackingService(
+		TrackingDependencies{
 			Repository: repository,
 			MaxAge:     time.Minute,
 		},

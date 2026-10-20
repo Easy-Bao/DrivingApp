@@ -22,8 +22,8 @@ type roomHistory struct {
 	locked  bool
 }
 
-func newChatService(history chatapplication.RoomStore) *chatapplication.ChatService {
-	return chatapplication.NewChatService(chatapplication.ChatServiceDependencies{History: history})
+func newChatService(history chatapplication.RoomStore) *chatapplication.Service {
+	return chatapplication.NewService(chatapplication.Dependencies{History: history})
 }
 
 func (history *roomHistory) CreateRoom(context.Context, string, string, string) error { return nil }

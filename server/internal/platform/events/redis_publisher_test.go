@@ -46,8 +46,8 @@ func TestRedisEventTransportDeliversAcrossNodes(t *testing.T) {
 	channel := fmt.Sprintf("%s:test:%s", _redisEventChannel, NewID())
 	firstSink := &eventCapture{events: make(chan Envelope, 1)}
 	secondSink := &eventCapture{events: make(chan Envelope, 1)}
-	firstPublisher, firstSubscriber := newDistributedEventTransport(firstClient, channel, firstSink)
-	_, secondSubscriber := newDistributedEventTransport(secondClient, channel, secondSink)
+	firstPublisher, firstSubscriber := newDistributedTransport(firstClient, channel, firstSink)
+	_, secondSubscriber := newDistributedTransport(secondClient, channel, secondSink)
 	stopFirst := runRedisSubscriber(t, ctx, firstSubscriber)
 	defer stopFirst()
 	stopSecond := runRedisSubscriber(t, ctx, secondSubscriber)
@@ -91,7 +91,7 @@ func (capture *eventCapture) Publish(envelope Envelope) {
 func runRedisSubscriber(
 	t *testing.T,
 	ctx context.Context,
-	subscriber *DistributedEventSubscriber,
+	subscriber *DistributedSubscriber,
 ) func() {
 	t.Helper()
 	subscriberContext, cancel := context.WithCancel(ctx)

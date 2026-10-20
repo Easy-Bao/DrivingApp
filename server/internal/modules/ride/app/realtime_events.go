@@ -13,7 +13,7 @@ const (
 	_rideStatusChangedEvent = event.RideStatusChanged
 )
 
-func (service *RideService) publishRide(
+func (service *Service) publishRide(
 	ctx context.Context,
 	eventType event.Type,
 	ride domain.Ride,
@@ -34,7 +34,7 @@ func (service *RideService) publishRide(
 	)
 }
 
-func (service *RideService) publish(
+func (service *Service) publish(
 	ctx context.Context,
 	eventType event.Type,
 	scope event.Scope,

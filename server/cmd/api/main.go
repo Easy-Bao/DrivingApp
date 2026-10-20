@@ -26,7 +26,7 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("load application config: %w", err)
 	}
-	application, err := app.NewApplication(ctx, config)
+	application, err := app.New(ctx, config)
 	if err != nil {
 		return fmt.Errorf("create application: %w", err)
 	}

@@ -14,12 +14,12 @@ import (
 )
 
 type Handler struct {
-	service  *application.ChatService
+	service  *application.Service
 	verifier *security.TokenManager
 }
 
 type Dependencies struct {
-	Service       *application.ChatService
+	Service       *application.Service
 	Verifier      *security.TokenManager
 	RouteSecurity *middleware.RouteSecurity
 }

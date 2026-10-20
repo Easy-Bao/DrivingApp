@@ -116,8 +116,8 @@ func TestLocationHTTPAllowsAuthenticatedRouteCalculation(t *testing.T) {
 
 func newLocationRouter() *chi.Mux {
 	router := chi.NewRouter()
-	locationhttp.NewRouter(application.NewLocationService(
-		application.LocationServiceDependencies{Provider: providerStub{}},
+	locationhttp.NewRouter(application.NewService(
+		application.Dependencies{Provider: providerStub{}},
 	), security.NewTokenManager(locationHTTPTestSecret)).RegisterRoutes(router)
 	return router
 }

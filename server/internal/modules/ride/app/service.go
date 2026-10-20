@@ -18,15 +18,15 @@ type RouteCalculatorFunc = RouteProviderFunc
 
 var errRidePersistenceUnavailable = errors.New("ride persistence is unavailable")
 
-type RideServiceOption func(*RideService)
+type Option func(*Service)
 
-func WithRouteCalculator(calculator RouteCalculator) RideServiceOption {
-	return func(service *RideService) {
+func WithRouteCalculator(calculator RouteCalculator) Option {
+	return func(service *Service) {
 		service.routeCalculator = calculator
 	}
 }
 
-type RideService struct {
+type Service struct {
 	repository        RideStore
 	routeCalculator   RouteCalculator
 	pricingConfig     PricingConfig
@@ -38,7 +38,7 @@ type RideService struct {
 	logger            *slog.Logger
 }
 
-type RideServiceDependencies struct {
+type Dependencies struct {
 	Repository      RideStore
 	PricingConfig   PricingConfig
 	EventPublisher  EventPublisher
@@ -46,14 +46,14 @@ type RideServiceDependencies struct {
 	DriverLocation  DriverLocationReader
 }
 
-func NewRideService(
-	dependencies RideServiceDependencies,
-	options ...RideServiceOption,
-) *RideService {
+func NewService(
+	dependencies Dependencies,
+	options ...Option,
+) *Service {
 	repository := dependencies.Repository
 	pricingConfig := dependencies.PricingConfig
 	activeRideChecker, lifecycleStore, settlementStore := optionalRideCapabilities(repository)
-	service := &RideService{
+	service := &Service{
 		repository:        repository,
 		pricingConfig:     pricingConfig,
 		eventPublisher:    dependencies.EventPublisher,
@@ -111,27 +111,27 @@ func optionalRideCapabilities(
 	return activeRideChecker, lifecycleStore, settlementStore
 }
 
-func (service *RideService) WithLogger(logger *slog.Logger) *RideService {
+func (service *Service) WithLogger(logger *slog.Logger) *Service {
 	if service != nil && logger != nil {
 		service.logger = logger
 	}
 	return service
 }
 
-func (service *RideService) log() *slog.Logger {
+func (service *Service) log() *slog.Logger {
 	if service != nil && service.logger != nil {
 		return service.logger
 	}
 	return slog.Default()
 }
 
-func (service *RideService) PricingConfig() PricingConfig {
+func (service *Service) PricingConfig() PricingConfig {
 	return service.pricingConfig
 }
-func (service *RideService) CreateRide(ctx context.Context, passengerID int, fareAmount int64) (domain.Ride, error) {
+func (service *Service) CreateRide(ctx context.Context, passengerID int, fareAmount int64) (domain.Ride, error) {
 	return service.bookingService.Create(ctx, passengerID, fareAmount)
 }
-func (service *RideService) Get(ctx context.Context, id int) (domain.Ride, error) {
+func (service *Service) Get(ctx context.Context, id int) (domain.Ride, error) {
 	if service.repository == nil {
 		return domain.Ride{}, errRidePersistenceUnavailable
 	}
@@ -142,11 +142,11 @@ func (service *RideService) Get(ctx context.Context, id int) (domain.Ride, error
 	return ride, nil
 }
 
-func (service *RideService) CreateRideWithDetails(ctx context.Context, ride domain.Ride) (domain.Ride, error) {
+func (service *Service) CreateRideWithDetails(ctx context.Context, ride domain.Ride) (domain.Ride, error) {
 	return service.bookingService.CreateWithDetails(ctx, ride)
 }
 
-func (service *RideService) Fare(
+func (service *Service) Fare(
 	ctx context.Context,
 	originLatitude *float64,
 	originLongitude *float64,
@@ -166,7 +166,7 @@ func (service *RideService) Fare(
 	)
 }
 
-func (service *RideService) authoritativeRoute(
+func (service *Service) authoritativeRoute(
 	ctx context.Context,
 	pickupLatitude float64,
 	pickupLongitude float64,
@@ -240,15 +240,15 @@ func contextError(ctx context.Context) error {
 	}
 }
 
-func (service *RideService) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
+func (service *Service) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
 	return service.lifecycleService.AcceptRide(ctx, rideID, driverID)
 }
 
-func (service *RideService) SettleCash(ctx context.Context, request domain.CashSettlementRequest) (domain.Ride, error) {
+func (service *Service) SettleCash(ctx context.Context, request domain.CashSettlementRequest) (domain.Ride, error) {
 	return service.settlementService.SettleCash(ctx, request)
 }
 
-func (service *RideService) UpdateStatus(ctx context.Context, rideID, actorID int, next string) (domain.Ride, error) {
+func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, next string) (domain.Ride, error) {
 	return service.lifecycleService.UpdateStatus(
 		ctx,
 		rideID,
@@ -257,21 +257,21 @@ func (service *RideService) UpdateStatus(ctx context.Context, rideID, actorID in
 	)
 }
 
-func (service *RideService) CancelRide(
+func (service *Service) CancelRide(
 	ctx context.Context,
 	request domain.CancellationRequest,
 ) (domain.Ride, error) {
 	return service.lifecycleService.Cancel(ctx, request)
 }
 
-func (service *RideService) EmergencyStop(
+func (service *Service) EmergencyStop(
 	ctx context.Context,
 	request domain.EmergencyStopRequest,
 ) (domain.Ride, error) {
 	return service.lifecycleService.EmergencyStop(ctx, request)
 }
 
-func (service *RideService) MarkArrived(
+func (service *Service) MarkArrived(
 	ctx context.Context,
 	rideID, driverID int,
 	driverLatitude, driverLongitude float64,
@@ -285,7 +285,7 @@ func (service *RideService) MarkArrived(
 	)
 }
 
-func (service *RideService) StartTrip(
+func (service *Service) StartTrip(
 	ctx context.Context,
 	rideID, driverID int,
 	driverLatitude, driverLongitude float64,
@@ -299,7 +299,7 @@ func (service *RideService) StartTrip(
 	)
 }
 
-func (service *RideService) CompleteTrip(
+func (service *Service) CompleteTrip(
 	ctx context.Context,
 	rideID, driverID int,
 	driverLatitude, driverLongitude float64,
@@ -313,14 +313,14 @@ func (service *RideService) CompleteTrip(
 	)
 }
 
-func (service *RideService) MarkPassengerNoShow(
+func (service *Service) MarkPassengerNoShow(
 	ctx context.Context,
 	rideID, driverID int,
 ) (domain.Ride, error) {
 	return service.lifecycleService.MarkPassengerNoShow(ctx, rideID, driverID)
 }
 
-func (service *RideService) CalculateFare(distanceKm, durationMinutes float64) int64 {
+func (service *Service) CalculateFare(distanceKm, durationMinutes float64) int64 {
 	return service.pricingConfig.FareAmount(distanceKm, durationMinutes)
 }
 
@@ -360,7 +360,7 @@ func validateTrip(
 	return nil
 }
 
-func (service *RideService) DriverStats(ctx context.Context, driverID int) (domain.DriverStats, error) {
+func (service *Service) DriverStats(ctx context.Context, driverID int) (domain.DriverStats, error) {
 	repository, ok := service.repository.(DriverStatisticsReader)
 	if !ok {
 		return domain.DriverStats{}, errors.New("driver analytics persistence is unavailable")
@@ -378,7 +378,7 @@ func (service *RideService) DriverStats(ctx context.Context, driverID int) (doma
 	return stats, nil
 }
 
-func (service *RideService) DriverEarnings(ctx context.Context, driverID int) (domain.DriverEarningsSummary, error) {
+func (service *Service) DriverEarnings(ctx context.Context, driverID int) (domain.DriverEarningsSummary, error) {
 	repository, ok := service.repository.(DriverEarningsReader)
 	if !ok {
 		return domain.DriverEarningsSummary{}, errors.New("driver earnings persistence is unavailable")
@@ -402,7 +402,7 @@ func (service *RideService) DriverEarnings(ctx context.Context, driverID int) (d
 	return summarizeDriverEarnings(entries, now, location), nil
 }
 
-func (service *RideService) DriverTrips(
+func (service *Service) DriverTrips(
 	ctx context.Context,
 	driverID int,
 	query domain.TripHistoryQuery,
@@ -421,7 +421,7 @@ func (service *RideService) DriverTrips(
 	return slices.Clone(rides), nil
 }
 
-func (service *RideService) PassengerRides(
+func (service *Service) PassengerRides(
 	ctx context.Context,
 	passengerID int,
 	query domain.TripHistoryQuery,
@@ -440,7 +440,7 @@ func (service *RideService) PassengerRides(
 	return slices.Clone(rides), nil
 }
 
-func (service *RideService) PassengerActivitySummary(
+func (service *Service) PassengerActivitySummary(
 	ctx context.Context,
 	passengerID int,
 ) (domain.PassengerActivitySummary, error) {
@@ -461,7 +461,7 @@ func (service *RideService) PassengerActivitySummary(
 	return activity, nil
 }
 
-func (service *RideService) PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]domain.Ride, error) {
+func (service *Service) PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]domain.Ride, error) {
 	invalidPassengerID := passengerID <= 0
 	invalidLimit := limit <= 0 || limit > 100
 	if invalidPassengerID || invalidLimit {
@@ -484,7 +484,7 @@ func (service *RideService) PassengerRecentRides(ctx context.Context, passengerI
 	return slices.Clone(rides), nil
 }
 
-func (service *RideService) CreateSafetyReport(
+func (service *Service) CreateSafetyReport(
 	ctx context.Context,
 	report domain.SafetyReport,
 ) (domain.SafetyReport, error) {

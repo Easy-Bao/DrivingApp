@@ -13,7 +13,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
-type LocationTrackingService struct {
+type TrackingService struct {
 	repository     LocationStore
 	assignments    assignment.Lookup
 	presence       DriverPresenceReader
@@ -22,7 +22,7 @@ type LocationTrackingService struct {
 	maxAge         time.Duration
 }
 
-type LocationTrackingDependencies struct {
+type TrackingDependencies struct {
 	Repository LocationStore
 	MaxAge     time.Duration
 }
@@ -35,37 +35,37 @@ const (
 	nearbyCoordinateGrid     = 1_000
 )
 
-type Option func(*LocationTrackingService)
+type TrackingOption func(*TrackingService)
 
-func WithRideAssignments(assignments assignment.Lookup) Option {
-	return func(service *LocationTrackingService) { service.assignments = assignments }
+func WithRideAssignments(assignments assignment.Lookup) TrackingOption {
+	return func(service *TrackingService) { service.assignments = assignments }
 }
 
-func WithDriverPresence(reader DriverPresenceReader) Option {
-	return func(service *LocationTrackingService) { service.presence = reader }
+func WithDriverPresence(reader DriverPresenceReader) TrackingOption {
+	return func(service *TrackingService) { service.presence = reader }
 }
 
-func WithEventPublisher(publisher EventPublisher) Option {
-	return func(service *LocationTrackingService) { service.eventPublisher = publisher }
+func WithEventPublisher(publisher EventPublisher) TrackingOption {
+	return func(service *TrackingService) { service.eventPublisher = publisher }
 }
 
-func WithLogger(logger *slog.Logger) Option {
-	return func(service *LocationTrackingService) {
+func WithLogger(logger *slog.Logger) TrackingOption {
+	return func(service *TrackingService) {
 		if logger != nil {
 			service.logger = logger
 		}
 	}
 }
 
-func NewLocationTrackingService(
-	dependencies LocationTrackingDependencies,
-	options ...Option,
-) *LocationTrackingService {
+func NewTrackingService(
+	dependencies TrackingDependencies,
+	options ...TrackingOption,
+) *TrackingService {
 	maxAge := dependencies.MaxAge
 	if maxAge <= 0 {
 		maxAge = defaultLocationMaxAge
 	}
-	service := &LocationTrackingService{
+	service := &TrackingService{
 		repository: dependencies.Repository,
 		logger:     slog.Default(),
 		maxAge:     maxAge,
@@ -78,7 +78,7 @@ func NewLocationTrackingService(
 	return service
 }
 
-func (service *LocationTrackingService) Ingest(ctx context.Context, point domain.DriverPoint) error {
+func (service *TrackingService) Ingest(ctx context.Context, point domain.DriverPoint) error {
 	logger := service.log()
 	timingsEnabled := ctx != nil && logger.Enabled(ctx, slog.LevelDebug)
 	startTiming := func() time.Time {
@@ -239,7 +239,7 @@ func (service *LocationTrackingService) Ingest(ctx context.Context, point domain
 	}
 	return contextError(ctx)
 }
-func (service *LocationTrackingService) Nearby(
+func (service *TrackingService) Nearby(
 	ctx context.Context,
 	latitude float64,
 	longitude float64,
@@ -266,7 +266,7 @@ func (service *LocationTrackingService) Nearby(
 	return approximateNearbyPoints(points), nil
 }
 
-func (service *LocationTrackingService) Remove(ctx context.Context, driverID string) error {
+func (service *TrackingService) Remove(ctx context.Context, driverID string) error {
 	if err := contextError(ctx); err != nil {
 		return err
 	}
@@ -283,7 +283,7 @@ func (service *LocationTrackingService) Remove(ctx context.Context, driverID str
 	return contextError(ctx)
 }
 
-func (service *LocationTrackingService) Get(ctx context.Context, driverID string) (domain.DriverPoint, error) {
+func (service *TrackingService) Get(ctx context.Context, driverID string) (domain.DriverPoint, error) {
 	if err := contextError(ctx); err != nil {
 		return domain.DriverPoint{}, err
 	}
@@ -301,7 +301,7 @@ func (service *LocationTrackingService) Get(ctx context.Context, driverID string
 	return point, nil
 }
 
-func (service *LocationTrackingService) UpdatePassenger(
+func (service *TrackingService) UpdatePassenger(
 	ctx context.Context,
 	rideID string,
 	passengerID string,
@@ -346,7 +346,7 @@ func (service *LocationTrackingService) UpdatePassenger(
 	return contextError(ctx)
 }
 
-func (service *LocationTrackingService) GetPassengerForDriver(
+func (service *TrackingService) GetPassengerForDriver(
 	ctx context.Context,
 	rideID string,
 	driverID string,
@@ -375,7 +375,7 @@ func (service *LocationTrackingService) GetPassengerForDriver(
 	return point, nil
 }
 
-func (service *LocationTrackingService) GetDriverForRide(
+func (service *TrackingService) GetDriverForRide(
 	ctx context.Context,
 	rideID string,
 	passengerID string,
@@ -404,7 +404,7 @@ func (service *LocationTrackingService) GetDriverForRide(
 	return point, nil
 }
 
-func (service *LocationTrackingService) activeRidesForDriver(
+func (service *TrackingService) activeRidesForDriver(
 	ctx context.Context,
 	driverID string,
 ) ([]assignment.Assignment, error) {
@@ -430,7 +430,7 @@ func (service *LocationTrackingService) activeRidesForDriver(
 	return active, nil
 }
 
-func (service *LocationTrackingService) assignmentForRide(
+func (service *TrackingService) assignmentForRide(
 	ctx context.Context,
 	rideID string,
 ) (assignment.Assignment, error) {
@@ -453,7 +453,7 @@ func (service *LocationTrackingService) assignmentForRide(
 	return rideAssignment, nil
 }
 
-func (service *LocationTrackingService) publish(
+func (service *TrackingService) publish(
 	ctx context.Context,
 	eventType event.Type,
 	scope event.Scope,
@@ -478,21 +478,21 @@ func (service *LocationTrackingService) publish(
 	}
 }
 
-func (service *LocationTrackingService) log() *slog.Logger {
+func (service *TrackingService) log() *slog.Logger {
 	if service != nil && service.logger != nil {
 		return service.logger
 	}
 	return slog.Default()
 }
 
-func (service *LocationTrackingService) maxLocationAge() time.Duration {
+func (service *TrackingService) maxLocationAge() time.Duration {
 	if service != nil && service.maxAge > 0 {
 		return service.maxAge
 	}
 	return defaultLocationMaxAge
 }
 
-func (service *LocationTrackingService) requireOnlineDriver(
+func (service *TrackingService) requireOnlineDriver(
 	ctx context.Context,
 	driverID string,
 ) error {

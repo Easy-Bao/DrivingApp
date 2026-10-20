@@ -17,8 +17,8 @@ type mutableAnalyticsRepository struct {
 	rides []domain.Ride
 }
 
-func newAnalyticsRideService(repository application.RideStore, config application.PricingConfig) *application.RideService {
-	return application.NewRideService(application.RideServiceDependencies{
+func newAnalyticsRideService(repository application.RideStore, config application.PricingConfig) *application.Service {
+	return application.NewService(application.Dependencies{
 		Repository:    repository,
 		PricingConfig: config,
 	})

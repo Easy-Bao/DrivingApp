@@ -17,18 +17,18 @@ const (
 	_maxHistoryEntries = 100
 )
 
-// ChatHistoryStore is the Redis adapter for the bounded chat-room history port.
-type ChatHistoryStore struct{ client *redis.Client }
+// HistoryStore is the Redis adapter for the bounded chat-room history port.
+type HistoryStore struct{ client *redis.Client }
 
-var _ chatapp.RoomStore = (*ChatHistoryStore)(nil)
+var _ chatapp.RoomStore = (*HistoryStore)(nil)
 
-func NewChatHistoryStore(client *redis.Client) *ChatHistoryStore {
-	return &ChatHistoryStore{client: client}
+func NewHistoryStore(client *redis.Client) *HistoryStore {
+	return &HistoryStore{client: client}
 }
 
 // CreateRoom creates a participant-scoped room without extending an existing
 // room's expiry.
-func (repository *ChatHistoryStore) CreateRoom(ctx context.Context, roomID, passengerID, driverID string) error {
+func (repository *HistoryStore) CreateRoom(ctx context.Context, roomID, passengerID, driverID string) error {
 	if err := repository.validate(); err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (repository *ChatHistoryStore) CreateRoom(ctx context.Context, roomID, pass
 }
 
 // Append stores a message and preserves the room's remaining lifetime.
-func (repository *ChatHistoryStore) Append(ctx context.Context, message domain.Message) error {
+func (repository *HistoryStore) Append(ctx context.Context, message domain.Message) error {
 	if err := repository.validate(); err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (repository *ChatHistoryStore) Append(ctx context.Context, message domain.M
 
 // Messages returns valid entries from the bounded room history. Malformed
 // stored entries are ignored so one bad record cannot hide later messages.
-func (repository *ChatHistoryStore) Messages(ctx context.Context, roomID string) ([]domain.Message, error) {
+func (repository *HistoryStore) Messages(ctx context.Context, roomID string) ([]domain.Message, error) {
 	if err := repository.validate(); err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (repository *ChatHistoryStore) Messages(ctx context.Context, roomID string)
 }
 
 // Resolve marks a room closed for the service's subsequent message checks.
-func (repository *ChatHistoryStore) Resolve(ctx context.Context, roomID string) error {
+func (repository *HistoryStore) Resolve(ctx context.Context, roomID string) error {
 	if err := repository.validate(); err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func (repository *ChatHistoryStore) Resolve(ctx context.Context, roomID string) 
 	return nil
 }
 
-func (repository *ChatHistoryStore) IsMember(ctx context.Context, roomID, userID string) (bool, error) {
+func (repository *HistoryStore) IsMember(ctx context.Context, roomID, userID string) (bool, error) {
 	if err := repository.validate(); err != nil {
 		return false, err
 	}
@@ -158,7 +158,7 @@ func (repository *ChatHistoryStore) IsMember(ctx context.Context, roomID, userID
 	return fields["passenger_id"] == userID || fields["driver_id"] == userID, nil
 }
 
-func (repository *ChatHistoryStore) IsLocked(ctx context.Context, roomID string) (bool, error) {
+func (repository *HistoryStore) IsLocked(ctx context.Context, roomID string) (bool, error) {
 	if err := repository.validate(); err != nil {
 		return false, err
 	}
@@ -172,7 +172,7 @@ func (repository *ChatHistoryStore) IsLocked(ctx context.Context, roomID string)
 	return value == "1", nil
 }
 
-func (repository *ChatHistoryStore) RoomParticipants(ctx context.Context, roomID string) (string, string, error) {
+func (repository *HistoryStore) RoomParticipants(ctx context.Context, roomID string) (string, string, error) {
 	if err := repository.validate(); err != nil {
 		return "", "", err
 	}
@@ -186,7 +186,7 @@ func (repository *ChatHistoryStore) RoomParticipants(ctx context.Context, roomID
 func roomKey(roomID string) string     { return "chat:room:" + roomID }
 func messagesKey(roomID string) string { return "chat:room:" + roomID + ":messages" }
 
-func (repository *ChatHistoryStore) validate() error {
+func (repository *HistoryStore) validate() error {
 	if repository == nil || repository.client == nil {
 		return errors.New("chat history store is not configured")
 	}

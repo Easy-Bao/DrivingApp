@@ -29,8 +29,8 @@ type activeSessionsRepository struct {
 	requestedOfferID   int
 }
 
-func newRideService(repository rideapplication.RideStore, config rideapplication.PricingConfig) *rideapplication.RideService {
-	return rideapplication.NewRideService(rideapplication.RideServiceDependencies{
+func newRideService(repository rideapplication.RideStore, config rideapplication.PricingConfig) *rideapplication.Service {
+	return rideapplication.NewService(rideapplication.Dependencies{
 		Repository:    repository,
 		PricingConfig: config,
 	})
@@ -47,7 +47,7 @@ func (router *rideAndDispatchRouter) RegisterRoutes(mux chi.Router) {
 }
 
 func newRideRouter(
-	service *rideapplication.RideService,
+	service *rideapplication.Service,
 	verifier *security.TokenManager,
 	stores ...dispatchapplication.BiddingStore,
 ) *rideAndDispatchRouter {

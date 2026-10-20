@@ -30,7 +30,7 @@ type Application struct {
 	postgresPool    *pgxpool.Pool
 	redisClient     redisClient
 	eventHub        *websockethub.Hub
-	eventSubscriber *eventadapter.DistributedEventSubscriber
+	eventSubscriber *eventadapter.DistributedSubscriber
 	logger          *slog.Logger
 }
 
@@ -38,7 +38,7 @@ type redisClient interface {
 	Close() error
 }
 
-func NewApplication(ctx context.Context, config Config) (*Application, error) {
+func New(ctx context.Context, config Config) (*Application, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}

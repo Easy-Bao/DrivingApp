@@ -28,29 +28,29 @@ const (
 	_maxMatrixDestinations = 10
 )
 
-type LocationService struct {
+type Service struct {
 	provider Provider
 	cache    Cache
 	logger   *slog.Logger
 }
 
-type LocationServiceOption func(*LocationService)
+type Option func(*Service)
 
-type LocationServiceDependencies struct {
+type Dependencies struct {
 	Provider Provider
 }
 
-func WithCache(cache Cache) LocationServiceOption {
-	return func(service *LocationService) {
+func WithCache(cache Cache) Option {
+	return func(service *Service) {
 		service.cache = cache
 	}
 }
 
-func NewLocationService(
-	dependencies LocationServiceDependencies,
-	options ...LocationServiceOption,
-) *LocationService {
-	service := &LocationService{provider: dependencies.Provider, logger: slog.Default()}
+func NewService(
+	dependencies Dependencies,
+	options ...Option,
+) *Service {
+	service := &Service{provider: dependencies.Provider, logger: slog.Default()}
 	for _, option := range options {
 		if option != nil {
 			option(service)
@@ -59,14 +59,14 @@ func NewLocationService(
 	return service
 }
 
-func (service *LocationService) WithLogger(logger *slog.Logger) *LocationService {
+func (service *Service) WithLogger(logger *slog.Logger) *Service {
 	if service != nil && logger != nil {
 		service.logger = logger
 	}
 	return service
 }
 
-func (service *LocationService) Search(
+func (service *Service) Search(
 	ctx context.Context,
 	query string,
 	origin domain.Coordinates,
@@ -96,7 +96,7 @@ func (service *LocationService) Search(
 	return clonePlaces(places), nil
 }
 
-func (service *LocationService) Nearby(
+func (service *Service) Nearby(
 	ctx context.Context,
 	origin domain.Coordinates,
 	page int,
@@ -122,7 +122,7 @@ func (service *LocationService) Nearby(
 	return clonePlaces(places), nil
 }
 
-func (service *LocationService) ReverseGeocode(
+func (service *Service) ReverseGeocode(
 	ctx context.Context,
 	coordinates domain.Coordinates,
 ) (*domain.Place, error) {
@@ -146,7 +146,7 @@ func (service *LocationService) ReverseGeocode(
 	return clonePlace(result), nil
 }
 
-func (service *LocationService) Route(
+func (service *Service) Route(
 	ctx context.Context,
 	origin domain.Coordinates,
 	destination domain.Coordinates,
@@ -174,7 +174,7 @@ func (service *LocationService) Route(
 	return cloneRoute(result), nil
 }
 
-func (service *LocationService) Matrix(
+func (service *Service) Matrix(
 	ctx context.Context,
 	origin domain.Coordinates,
 	destinations []domain.Coordinates,
@@ -249,7 +249,7 @@ func cloneMatrix(value *domain.Matrix) *domain.Matrix {
 	return &cloned
 }
 
-func (service *LocationService) cachedPlaces(ctx context.Context, key string) ([]domain.Place, bool) {
+func (service *Service) cachedPlaces(ctx context.Context, key string) ([]domain.Place, bool) {
 	if service.cache == nil {
 		return nil, false
 	}
@@ -261,7 +261,7 @@ func (service *LocationService) cachedPlaces(ctx context.Context, key string) ([
 	return places, true
 }
 
-func (service *LocationService) storePlaces(ctx context.Context, key string, places []domain.Place) {
+func (service *Service) storePlaces(ctx context.Context, key string, places []domain.Place) {
 	if service.cache == nil {
 		return
 	}
@@ -270,7 +270,7 @@ func (service *LocationService) storePlaces(ctx context.Context, key string, pla
 	}
 }
 
-func (service *LocationService) cachedPlace(ctx context.Context, key string) (*domain.Place, bool) {
+func (service *Service) cachedPlace(ctx context.Context, key string) (*domain.Place, bool) {
 	if service.cache == nil {
 		return nil, false
 	}
@@ -282,7 +282,7 @@ func (service *LocationService) cachedPlace(ctx context.Context, key string) (*d
 	return place, true
 }
 
-func (service *LocationService) storePlace(ctx context.Context, key string, place *domain.Place) {
+func (service *Service) storePlace(ctx context.Context, key string, place *domain.Place) {
 	if service.cache == nil {
 		return
 	}
@@ -291,7 +291,7 @@ func (service *LocationService) storePlace(ctx context.Context, key string, plac
 	}
 }
 
-func (service *LocationService) cachedMatrix(ctx context.Context, key string) (*domain.Matrix, bool) {
+func (service *Service) cachedMatrix(ctx context.Context, key string) (*domain.Matrix, bool) {
 	if service.cache == nil {
 		return nil, false
 	}
@@ -303,7 +303,7 @@ func (service *LocationService) cachedMatrix(ctx context.Context, key string) (*
 	return matrix, true
 }
 
-func (service *LocationService) storeMatrix(ctx context.Context, key string, matrix *domain.Matrix) {
+func (service *Service) storeMatrix(ctx context.Context, key string, matrix *domain.Matrix) {
 	if service.cache == nil {
 		return
 	}
@@ -312,17 +312,17 @@ func (service *LocationService) storeMatrix(ctx context.Context, key string, mat
 	}
 }
 
-func (service *LocationService) logCacheReadFailure(ctx context.Context, err error) {
+func (service *Service) logCacheReadFailure(ctx context.Context, err error) {
 	if !errors.Is(err, ErrCacheMiss) {
 		service.log().DebugContext(ctx, "load location cache entry failed", "error", err, "operation", "get")
 	}
 }
 
-func (service *LocationService) logCacheWriteFailure(ctx context.Context, err error) {
+func (service *Service) logCacheWriteFailure(ctx context.Context, err error) {
 	service.log().DebugContext(ctx, "store location cache entry failed", "error", err, "operation", "set")
 }
 
-func (service *LocationService) log() *slog.Logger {
+func (service *Service) log() *slog.Logger {
 	if service != nil && service.logger != nil {
 		return service.logger
 	}

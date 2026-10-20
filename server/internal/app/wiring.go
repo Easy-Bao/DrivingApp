@@ -84,7 +84,7 @@ type httpRouterDependencies struct {
 
 func newHTTPRouter(
 	dependencies httpRouterDependencies,
-) (*chi.Mux, *websockethub.Hub, *eventadapter.DistributedEventSubscriber) {
+) (*chi.Mux, *websockethub.Hub, *eventadapter.DistributedSubscriber) {
 	config := dependencies.config
 	postgresPool := dependencies.postgresPool
 	redisClient := dependencies.redisClient
@@ -189,7 +189,7 @@ func newHTTPRouter(
 	)
 	eventHub := websockethub.NewHub()
 	assignmentProjection := assignment.NewMemoryProjection()
-	eventPublisher, eventSubscriber := eventadapter.NewDistributedEventTransport(
+	eventPublisher, eventSubscriber := eventadapter.NewDistributedTransport(
 		redisClient,
 		assignmentProjection,
 		eventHub,
@@ -202,8 +202,8 @@ func newHTTPRouter(
 			Authority: assignment.NewRideLookup(rideStore),
 		},
 	)
-	trackingService := locationapplication.NewLocationTrackingService(
-		locationapplication.LocationTrackingDependencies{
+	trackingService := locationapplication.NewTrackingService(
+		locationapplication.TrackingDependencies{
 			Repository: locationredis.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
 			MaxAge:     config.RideLifecycle.DriverLocationMaxAge,
 		},
@@ -231,8 +231,8 @@ func newHTTPRouter(
 		locationapplication.WithEventPublisher(eventPublisher),
 		locationapplication.WithLogger(applicationLogger),
 	)
-	ridesService := rideapplication.NewRideService(
-		rideapplication.RideServiceDependencies{
+	ridesService := rideapplication.NewService(
+		rideapplication.Dependencies{
 			Repository:      rideStore,
 			PricingConfig:   config.Pricing,
 			EventPublisher:  rideEventPublisher,
@@ -311,8 +311,8 @@ func newHTTPRouter(
 		Verifier:   verifier,
 		Authorizer: adminAuthorizer,
 	})
-	locationService := locationapplication.NewLocationService(
-		locationapplication.LocationServiceDependencies{Provider: routingProvider},
+	locationService := locationapplication.NewService(
+		locationapplication.Dependencies{Provider: routingProvider},
 		locationapplication.WithCache(locationredis.NewCache(redisClient)),
 	).WithLogger(applicationLogger)
 	passengerRideContextQuery := rideapplication.NewQueryService(
@@ -341,8 +341,8 @@ func newHTTPRouter(
 		RouteSecurity: routeSecurity,
 	}).RegisterRoutes(router)
 
-	chatRoomStore := chatredis.NewChatHistoryStore(redisClient)
-	chatService := chatapplication.NewChatService(chatapplication.ChatServiceDependencies{History: chatRoomStore}).
+	chatRoomStore := chatredis.NewHistoryStore(redisClient)
+	chatService := chatapplication.NewService(chatapplication.Dependencies{History: chatRoomStore}).
 		WithEventPublisher(eventPublisher).
 		WithRideAssignmentLookup(rideAssignments).
 		WithLogger(applicationLogger)

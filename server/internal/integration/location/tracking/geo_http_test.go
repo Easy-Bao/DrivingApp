@@ -23,7 +23,7 @@ type locationRepository struct{ point domain.DriverPoint }
 type locationAssignmentLookup struct{ value assignment.Assignment }
 
 func newTrackingRouter(
-	service *locationapp.LocationTrackingService,
+	service *locationapp.TrackingService,
 	auth *security.TokenManager,
 ) *locationhttp.TrackingRouter {
 	return locationhttp.NewTrackingRouter(locationhttp.TrackingDependencies{Service: service, Auth: auth})
@@ -31,10 +31,10 @@ func newTrackingRouter(
 
 func newTrackingService(
 	repository locationapp.LocationStore,
-	options ...locationapp.Option,
-) *locationapp.LocationTrackingService {
-	return locationapp.NewLocationTrackingService(
-		locationapp.LocationTrackingDependencies{Repository: repository},
+	options ...locationapp.TrackingOption,
+) *locationapp.TrackingService {
+	return locationapp.NewTrackingService(
+		locationapp.TrackingDependencies{Repository: repository},
 		options...,
 	)
 }

@@ -12,12 +12,12 @@ import (
 )
 
 type LocationResolver struct {
-	service *locationapplication.LocationService
+	service *locationapplication.Service
 }
 
 var _ AddressResolver = (*LocationResolver)(nil)
 
-func NewLocationResolver(service *locationapplication.LocationService) *LocationResolver {
+func NewLocationResolver(service *locationapplication.Service) *LocationResolver {
 	return &LocationResolver{service: service}
 }
 

@@ -10,12 +10,12 @@ import (
 )
 
 type RidesReader struct {
-	service *rideapplication.RideService
+	service *rideapplication.Service
 }
 
 var _ rideapplication.RecentDestinationReader = (*RidesReader)(nil)
 
-func NewRidesReader(service *rideapplication.RideService) *RidesReader {
+func NewRidesReader(service *rideapplication.Service) *RidesReader {
 	return &RidesReader{service: service}
 }
 

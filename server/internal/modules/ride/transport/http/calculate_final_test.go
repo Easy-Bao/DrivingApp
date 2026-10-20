@@ -17,7 +17,7 @@ func TestCalculateFinalUsesServerConfiguredCommission(t *testing.T) {
 		PerMinuteAmount:       50,
 		PlatformCommissionBPS: 1500,
 	}
-	service := application.NewRideService(application.RideServiceDependencies{
+	service := application.NewService(application.Dependencies{
 		PricingConfig: pricingConfig,
 	})
 	handler := NewHandler(Dependencies{Service: service})

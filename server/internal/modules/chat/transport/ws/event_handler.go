@@ -9,11 +9,11 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/domain"
 )
 
-type EventHandler struct{ service *application.ChatService }
+type EventHandler struct{ service *application.Service }
 
 var _ EventSink = (*EventHandler)(nil)
 
-func NewEventHandler(service *application.ChatService) *EventHandler {
+func NewEventHandler(service *application.Service) *EventHandler {
 	return &EventHandler{service: service}
 }
 

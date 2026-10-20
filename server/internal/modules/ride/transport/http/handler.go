@@ -16,12 +16,12 @@ import (
 )
 
 type Handler struct {
-	service  *application.RideService
+	service  *application.Service
 	verifier *security.TokenManager
 }
 
 type Dependencies struct {
-	Service       *application.RideService
+	Service       *application.Service
 	Verifier      *security.TokenManager
 	RouteSecurity *middleware.RouteSecurity
 }

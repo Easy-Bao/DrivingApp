@@ -15,7 +15,7 @@ type Router struct {
 }
 
 func NewRouter(
-	service *locationapp.LocationService,
+	service *locationapp.Service,
 	verifier *security.TokenManager,
 	routeSecurity ...*middleware.RouteSecurity,
 ) *Router {

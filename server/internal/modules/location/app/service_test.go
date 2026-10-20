@@ -14,10 +14,10 @@ type providerStub struct{}
 
 func newLocationService(
 	provider locationapp.Provider,
-	options ...locationapp.LocationServiceOption,
-) *locationapp.LocationService {
-	return locationapp.NewLocationService(
-		locationapp.LocationServiceDependencies{Provider: provider},
+	options ...locationapp.Option,
+) *locationapp.Service {
+	return locationapp.NewService(
+		locationapp.Dependencies{Provider: provider},
 		options...,
 	)
 }

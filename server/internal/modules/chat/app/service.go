@@ -20,48 +20,48 @@ const (
 	_maxMessageBytes     = 4096
 )
 
-type ChatService struct {
+type Service struct {
 	history     RoomStore
 	events      EventPublisher
 	assignments assignment.Lookup
 	logger      *slog.Logger
 }
 
-type ChatServiceDependencies struct {
+type Dependencies struct {
 	History RoomStore
 }
 
-func NewChatService(dependencies ChatServiceDependencies) *ChatService {
-	return &ChatService{history: dependencies.History, logger: slog.Default()}
+func NewService(dependencies Dependencies) *Service {
+	return &Service{history: dependencies.History, logger: slog.Default()}
 }
 
-func (service *ChatService) WithEventPublisher(publisher EventPublisher) *ChatService {
+func (service *Service) WithEventPublisher(publisher EventPublisher) *Service {
 	service.events = publisher
 	return service
 }
 
-func (service *ChatService) WithRideAssignmentLookup(
+func (service *Service) WithRideAssignmentLookup(
 	lookup assignment.Lookup,
-) *ChatService {
+) *Service {
 	service.assignments = lookup
 	return service
 }
 
-func (service *ChatService) WithLogger(logger *slog.Logger) *ChatService {
+func (service *Service) WithLogger(logger *slog.Logger) *Service {
 	if service != nil && logger != nil {
 		service.logger = logger
 	}
 	return service
 }
 
-func (service *ChatService) log() *slog.Logger {
+func (service *Service) log() *slog.Logger {
 	if service != nil && service.logger != nil {
 		return service.logger
 	}
 	return slog.Default()
 }
 
-func (service *ChatService) Relay(ctx context.Context, message domain.Message) error {
+func (service *Service) Relay(ctx context.Context, message domain.Message) error {
 	invalidRoomID := !validRoomID(message.RoomID)
 	invalidSenderID := !validParticipantID(message.SenderID)
 	invalidMessageLength := len(message.Body) == 0 || len(message.Body) > _maxMessageBytes
@@ -95,7 +95,7 @@ func (service *ChatService) Relay(ctx context.Context, message domain.Message) e
 	return nil
 }
 
-func (service *ChatService) PublishTyping(ctx context.Context, roomID, senderID string, isTyping bool) error {
+func (service *Service) PublishTyping(ctx context.Context, roomID, senderID string, isTyping bool) error {
 	if !validRoomID(roomID) || !validParticipantID(senderID) {
 		return domain.ErrInvalidMessage
 	}
@@ -126,7 +126,7 @@ func (service *ChatService) PublishTyping(ctx context.Context, roomID, senderID 
 	return nil
 }
 
-func (service *ChatService) publishRealtimeMessage(ctx context.Context, message domain.Message) {
+func (service *Service) publishRealtimeMessage(ctx context.Context, message domain.Message) {
 	if service.events == nil || service.history == nil {
 		return
 	}
@@ -163,7 +163,7 @@ func (service *ChatService) publishRealtimeMessage(ctx context.Context, message 
 	}
 }
 
-func (service *ChatService) OpenRideRoom(ctx context.Context, rideID, actorID string) error {
+func (service *Service) OpenRideRoom(ctx context.Context, rideID, actorID string) error {
 	if !validRoomID(rideID) || !validParticipantID(actorID) {
 		return domain.ErrInvalidRoom
 	}
@@ -202,7 +202,7 @@ func (service *ChatService) OpenRideRoom(ctx context.Context, rideID, actorID st
 	return nil
 }
 
-func (service *ChatService) communicationAssignment(
+func (service *Service) communicationAssignment(
 	ctx context.Context,
 	rideID string,
 	actorID string,
@@ -228,7 +228,7 @@ func (service *ChatService) communicationAssignment(
 	return rideAssignment, nil
 }
 
-func (service *ChatService) Messages(ctx context.Context, roomID string) ([]domain.Message, error) {
+func (service *Service) Messages(ctx context.Context, roomID string) ([]domain.Message, error) {
 	if !validRoomID(roomID) {
 		return nil, domain.ErrInvalidRoom
 	}
@@ -242,7 +242,7 @@ func (service *ChatService) Messages(ctx context.Context, roomID string) ([]doma
 	return slices.Clone(messages), nil
 }
 
-func (service *ChatService) Resolve(ctx context.Context, roomID string) error {
+func (service *Service) Resolve(ctx context.Context, roomID string) error {
 	if !validRoomID(roomID) {
 		return domain.ErrInvalidRoom
 	}
@@ -255,7 +255,7 @@ func (service *ChatService) Resolve(ctx context.Context, roomID string) error {
 	return nil
 }
 
-func (service *ChatService) CanAccessRoom(ctx context.Context, roomID, userID string) (bool, error) {
+func (service *Service) CanAccessRoom(ctx context.Context, roomID, userID string) (bool, error) {
 	invalidRoomID := !validRoomID(roomID)
 	invalidUserID := !validParticipantID(userID)
 	if invalidRoomID || invalidUserID {
@@ -287,7 +287,7 @@ func (service *ChatService) CanAccessRoom(ctx context.Context, roomID, userID st
 	return true, nil
 }
 
-func (service *ChatService) MessagesForUser(ctx context.Context, roomID, userID string) ([]domain.Message, error) {
+func (service *Service) MessagesForUser(ctx context.Context, roomID, userID string) ([]domain.Message, error) {
 	allowed, err := service.CanAccessRoom(ctx, roomID, userID)
 	if err != nil {
 		return nil, err
@@ -298,7 +298,7 @@ func (service *ChatService) MessagesForUser(ctx context.Context, roomID, userID 
 	return service.Messages(ctx, roomID)
 }
 
-func (service *ChatService) ResolveForUser(ctx context.Context, roomID, userID string) error {
+func (service *Service) ResolveForUser(ctx context.Context, roomID, userID string) error {
 	allowed, err := service.CanAccessRoom(ctx, roomID, userID)
 	if err != nil {
 		return err
