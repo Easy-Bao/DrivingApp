@@ -2,6 +2,7 @@ import 'package:foundation/foundation.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/domain/entities/session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
+import 'package:passenger/src/features/saved_places/data/repositories/saved_places_repository_impl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final class SessionRepositoryImpl implements SessionRepository {
@@ -19,6 +20,8 @@ final class SessionRepositoryImpl implements SessionRepository {
     'passenger_address',
     'passenger_gender',
     'passenger_avatar_path',
+    // Saved places are device-wide, so they must not outlive the account.
+    SavedPlacesRepositoryImpl.storageKey,
   ];
 
   @override

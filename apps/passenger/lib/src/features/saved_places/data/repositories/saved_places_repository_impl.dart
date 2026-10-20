@@ -8,35 +8,35 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 final class SavedPlacesRepositoryImpl({required this._preferences})
     implements SavedPlacesRepository {
-  static const String _storageKey = 'passenger_saved_places_v1';
+  static const String storageKey = 'passenger_saved_places_v1';
 
   final SharedPreferences _preferences;
 
   @override
   Future<List<SavedPlace>> loadPlaces() async {
     try {
-      final raw = _preferences.getString(_storageKey);
+      final raw = _preferences.getString(storageKey);
       if (raw == null || raw.trim().isEmpty) {
         return const [];
       }
 
       final decoded = jsonDecode(raw);
       if (decoded is! List<dynamic>) {
-        await _preferences.remove(_storageKey);
+        await _preferences.remove(storageKey);
         return const [];
       }
 
       final places = <SavedPlace>[];
       for (final item in decoded) {
         if (item is! Map) {
-          await _preferences.remove(_storageKey);
+          await _preferences.remove(storageKey);
           return const [];
         }
         places.add(SavedPlaceModel.fromJson(Map<String, dynamic>.from(item)));
       }
       return places;
     } catch (error) {
-      await _preferences.remove(_storageKey);
+      await _preferences.remove(storageKey);
       return const [];
     }
   }
@@ -57,7 +57,7 @@ final class SavedPlacesRepositoryImpl({required this._preferences})
           )
           .toList();
       await _preferences.setString(
-        _storageKey,
+        storageKey,
         SavedPlaceModel.encodeList(models),
       );
     } catch (error) {

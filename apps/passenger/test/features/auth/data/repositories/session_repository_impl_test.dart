@@ -41,6 +41,7 @@ void main() {
       'passenger_address': 'Old address',
       'passenger_gender': 'Female',
       'passenger_avatar_path': '/tmp/old-avatar.png',
+      'passenger_saved_places_v1': '[{"label":"Home"}]',
     });
     final preferences = await SharedPreferences.getInstance();
     final storage = MockFlutterSecureStorage();
@@ -60,6 +61,7 @@ void main() {
       'passenger_address',
       'passenger_gender',
       'passenger_avatar_path',
+      'passenger_saved_places_v1',
     ]) {
       expect(preferences.containsKey(key), isFalse, reason: key);
     }

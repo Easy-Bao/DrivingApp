@@ -30,6 +30,13 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
     await request;
   }
 
+  /// Drops in-memory places when the passenger session ends so the next
+  /// account never sees them.
+  void clear() {
+    _loadInFlight = null;
+    if (!isClosed) emit(const SavedPlacesState());
+  }
+
   Future<void> invalidateAndReload() async {
     _loadInFlight = null;
     await _loadOnce();
