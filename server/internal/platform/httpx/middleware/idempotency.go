@@ -333,6 +333,20 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 		}
 		defer idempotency.releaseLock(request, lockKey, lockToken)
 
+		// A concurrent request may have stored its result and released the lock
+		// between the first lookup and this acquisition; replay it instead of
+		// running the command a second time.
+		cached, err = idempotency.store.Get(request.Context(), resultKey)
+		if err != nil {
+			writer.Header().Set("Retry-After", "1")
+			writeSecurityError(writer, http.StatusServiceUnavailable, "request protection is temporarily unavailable")
+			return
+		}
+		if len(cached) > 0 {
+			replayIdempotentResponse(writer, cached, fingerprint)
+			return
+		}
+
 		capture := &idempotentResponseWriter{ResponseWriter: writer}
 		next.ServeHTTP(capture, request)
 		if capture.status >= http.StatusOK && capture.status < http.StatusMultipleChoices {

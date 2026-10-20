@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -299,5 +301,64 @@ func TestIdempotencyScopesKeysToPrincipalIdentity(t *testing.T) {
 	}
 	if calls.Load() != 1 {
 		t.Fatalf("expected 1 call (cached replay), got %d", calls.Load())
+	}
+}
+
+type raceIdempotencyStore struct {
+	IdempotencyStore
+	onSetNX func(ctx context.Context, key string)
+}
+
+func (s *raceIdempotencyStore) SetNX(ctx context.Context, key string, value []byte, expiration time.Duration) (bool, error) {
+	if s.onSetNX != nil {
+		s.onSetNX(ctx, key)
+	}
+	return s.IdempotencyStore.SetNX(ctx, key, value, expiration)
+}
+
+func TestIdempotencyRechecksResultAfterLockAcquisition(t *testing.T) {
+	memStore := NewMemoryIdempotencyStore()
+	var calls atomic.Int32
+
+	store := &raceIdempotencyStore{
+		IdempotencyStore: memStore,
+	}
+
+	idempotency := newTestIdempotency(store, WithIdempotencyExpiration(time.Minute))
+	security := NewRouteSecurity(RouteSecurityDependencies{Idempotency: idempotency})
+	handler := security.Middleware(RouteCommand)(
+		http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+			calls.Add(1)
+			writer.Header().Set("Content-Type", "application/json")
+			writer.WriteHeader(http.StatusCreated)
+			_, _ = writer.Write([]byte(`{"created":true}`))
+		}),
+	)
+
+	requestBody := []byte(`{"fare_amount":100}`)
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/rides", bytes.NewReader(requestBody))
+	request.Header.Set("Idempotency-Key", "race-key-1")
+
+	// Simulate request A having completed and stored its result just as request B
+	// acquires the lock.
+	store.onSetNX = func(ctx context.Context, key string) {
+		resultKey := strings.TrimSuffix(key, ":lock") + ":result"
+		record, _ := json.Marshal(idempotentResponse{
+			Fingerprint: requestFingerprint(request, requestBody),
+			Status:      http.StatusCreated,
+			Headers:     map[string][]string{"Content-Type": {"application/json"}},
+			Body:        []byte(`{"created":true}`),
+		})
+		_ = memStore.Set(ctx, resultKey, record, time.Minute)
+	}
+
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusCreated)
+	}
+	if calls.Load() != 0 {
+		t.Fatalf("handler calls = %d, want 0 (replayed from rechecked result)", calls.Load())
 	}
 }
