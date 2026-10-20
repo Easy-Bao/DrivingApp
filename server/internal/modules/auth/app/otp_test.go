@@ -191,3 +191,7 @@ func TestSuspendedPassengerCannotUseVerificationOTP(t *testing.T) {
 		t.Fatal("suspended account was marked verified")
 	}
 }
+
+func (repository *otpRepository) UpgradePasswordHash(_ context.Context, id int, expectedHash, passwordHash string) (bool, error) {
+	return false, nil
+}

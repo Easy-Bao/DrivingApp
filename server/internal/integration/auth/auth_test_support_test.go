@@ -199,3 +199,14 @@ func (store *testRefreshSessionStore) RevokeAll(_ context.Context, userID int, n
 	}
 	return nil
 }
+
+func (repository *repository) UpgradePasswordHash(_ context.Context, id int, expectedHash, passwordHash string) (bool, error) {
+	for email, account := range repository.users {
+		if account.ID == id && account.PasswordHash == expectedHash {
+			account.PasswordHash = passwordHash
+			repository.users[email] = account
+			return true, nil
+		}
+	}
+	return false, nil
+}

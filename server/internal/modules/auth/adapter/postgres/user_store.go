@@ -193,6 +193,30 @@ func (repository *UserRepository) UpdatePassword(ctx context.Context, userID int
 	return nil
 }
 
+func (repository *UserRepository) UpgradePasswordHash(
+	ctx context.Context,
+	userID int,
+	expectedHash string,
+	passwordHash string,
+) (bool, error) {
+	if err := repository.validate(); err != nil {
+		return false, fmt.Errorf("validate user repository: %w", err)
+	}
+	dbUserID, err := toPostgresUserID(userID)
+	if err != nil {
+		return false, fmt.Errorf("convert user id: %w", err)
+	}
+	rows, err := repository.queries.UpgradeUserPasswordHash(ctx, databasepostgres.UpgradeUserPasswordHashParams{
+		ID:           dbUserID,
+		PasswordHash: passwordHash,
+		ExpectedHash: expectedHash,
+	})
+	if err != nil {
+		return false, fmt.Errorf("upgrade password hash for user %d: %w", userID, err)
+	}
+	return rows > 0, nil
+}
+
 func (repository *UserRepository) UpdateEmail(
 	ctx context.Context,
 	userID int,

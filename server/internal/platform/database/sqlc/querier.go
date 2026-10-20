@@ -122,6 +122,7 @@ type Querier interface {
 	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) (int64, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) (int64, error)
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
+	UpgradeUserPasswordHash(ctx context.Context, arg UpgradeUserPasswordHashParams) (int64, error)
 }
 
 var _ Querier = (*Queries)(nil)

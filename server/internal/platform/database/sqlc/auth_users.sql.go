@@ -163,3 +163,25 @@ func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPassword
 	}
 	return result.RowsAffected(), nil
 }
+
+const upgradeUserPasswordHash = `-- name: UpgradeUserPasswordHash :execrows
+UPDATE users
+SET password_hash = $1,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $2
+  AND password_hash = $3
+`
+
+type UpgradeUserPasswordHashParams struct {
+	PasswordHash string `db:"password_hash"`
+	ID           int32  `db:"id"`
+	ExpectedHash string `db:"expected_hash"`
+}
+
+func (q *Queries) UpgradeUserPasswordHash(ctx context.Context, arg UpgradeUserPasswordHashParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upgradeUserPasswordHash, arg.PasswordHash, arg.ID, arg.ExpectedHash)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}

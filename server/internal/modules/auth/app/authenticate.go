@@ -112,7 +112,7 @@ func (service *AuthenticateService) execute(
 		upgradedHash, hashErr := service.hashPassword(password)
 		if hashErr != nil {
 			service.log().WarnContext(ctx, "upgrade legacy password hash failed", "error", hashErr)
-		} else if err := service.repository.UpdatePassword(ctx, account.ID, upgradedHash); err != nil {
+		} else if _, err := service.repository.UpgradePasswordHash(ctx, account.ID, account.PasswordHash, upgradedHash); err != nil {
 			service.log().WarnContext(ctx, "persist upgraded password hash failed", "error", err)
 		}
 	}

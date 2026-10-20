@@ -177,6 +177,46 @@ func TestAuthenticationUpgradesLegacyPasswordHashAfterSuccessfulLogin(t *testing
 	}
 }
 
+// resetDuringLoginRepository simulates a password reset finishing between the
+// login's credential check and its legacy hash upgrade.
+type resetDuringLoginRepository struct {
+	*repository
+	resetHash string
+}
+
+func (r *resetDuringLoginRepository) UpgradePasswordHash(ctx context.Context, id int, expectedHash, passwordHash string) (bool, error) {
+	if err := r.repository.UpdatePassword(ctx, id, r.resetHash); err != nil {
+		return false, err
+	}
+	return r.repository.UpgradePasswordHash(ctx, id, expectedHash, passwordHash)
+}
+
+func TestLegacyHashUpgradeDoesNotOverwriteConcurrentPasswordReset(t *testing.T) {
+	digest := sha256.Sum256([]byte("legacy-8"))
+	legacyHash := hex.EncodeToString(digest[:])
+	base := &repository{users: map[string]domain.User{
+		"legacy@example.test": {
+			ID:           7,
+			Email:        "legacy@example.test",
+			Role:         domain.Passenger,
+			PasswordHash: legacyHash,
+		},
+	}}
+	const resetHash = "hash-from-password-reset"
+	authenticate := newTestAuthenticateService(authapp.AuthenticateDependencies{
+		Repository: &resetDuringLoginRepository{repository: base, resetHash: resetHash},
+		Tokens:     issuer{},
+		Sessions:   newTestRefreshSessionStore(),
+	})
+
+	if _, _, err := authenticate.Execute(context.Background(), "legacy@example.test", "legacy-8"); err != nil {
+		t.Fatalf("legacy authentication returned error: %v", err)
+	}
+	if got := base.users["legacy@example.test"].PasswordHash; got != resetHash {
+		t.Fatalf("password hash = %q, want the reset hash %q", got, resetHash)
+	}
+}
+
 func TestAuthenticationRejectsSuspendedAccount(t *testing.T) {
 	repository := &repository{users: map[string]domain.User{
 		"suspended@example.test": {
@@ -195,4 +235,15 @@ func TestAuthenticationRejectsSuspendedAccount(t *testing.T) {
 	if _, _, err := authenticate.Execute(context.Background(), "suspended@example.test", "secret-8"); !errors.Is(err, domain.ErrAccountSuspended) {
 		t.Fatalf("expected ErrAccountSuspended, got %v", err)
 	}
+}
+
+func (r *repository) UpgradePasswordHash(_ context.Context, id int, expectedHash, passwordHash string) (bool, error) {
+	for email, account := range r.users {
+		if account.ID == id && account.PasswordHash == expectedHash {
+			account.PasswordHash = passwordHash
+			r.users[email] = account
+			return true, nil
+		}
+	}
+	return false, nil
 }

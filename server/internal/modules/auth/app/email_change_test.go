@@ -285,3 +285,7 @@ func TestConfirmEmailChangeRevokesActiveRefreshSessions(t *testing.T) {
 		t.Fatalf("expected session to be revoked after email change, got %v", err)
 	}
 }
+
+func (store *emailChangeUsers) UpgradePasswordHash(_ context.Context, id int, expectedHash, passwordHash string) (bool, error) {
+	return false, nil
+}

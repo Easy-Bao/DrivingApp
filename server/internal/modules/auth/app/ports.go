@@ -57,6 +57,10 @@ type UserStore interface {
 	FindByEmail(ctx context.Context, email string) (domain.User, error)
 	FindByID(ctx context.Context, id int) (domain.User, error)
 	UpdatePassword(ctx context.Context, id int, passwordHash string) error
+	// UpgradePasswordHash replaces expectedHash with passwordHash only while
+	// expectedHash is still current, so a concurrent password change wins.
+	// It reports whether the stored hash was replaced.
+	UpgradePasswordHash(ctx context.Context, id int, expectedHash, passwordHash string) (bool, error)
 }
 
 // VerifiedUserStore adds the state change required after OTP verification.

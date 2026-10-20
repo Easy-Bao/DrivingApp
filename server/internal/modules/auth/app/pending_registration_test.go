@@ -255,3 +255,7 @@ func (store *pendingRegistrationStore) Delete(_ context.Context, _ string) error
 	store.registration = nil
 	return nil
 }
+
+func (repository *pendingUserRepository) UpgradePasswordHash(_ context.Context, id int, expectedHash, passwordHash string) (bool, error) {
+	return false, nil
+}

@@ -16,6 +16,13 @@ SET password_hash = $2,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1;
 
+-- name: UpgradeUserPasswordHash :execrows
+UPDATE users
+SET password_hash = sqlc.arg(password_hash),
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = sqlc.arg(id)
+  AND password_hash = sqlc.arg(expected_hash);
+
 -- name: CreateDriverProfile :exec
 INSERT INTO driver_profiles (user_id, name, vehicle_type, plate_number)
 VALUES ($1, $2, $3, $4);
