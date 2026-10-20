@@ -4,8 +4,10 @@ import 'package:driver/src/features/auth/auth_routes.dart';
 import 'package:driver/src/features/auth/data/repositories/driver_auth_repository_impl.dart';
 import 'package:driver/src/features/auth/domain/repositories/driver_auth_repository.dart';
 import 'package:driver/src/features/auth/presentation/bloc/forgot_password/forgot_password_bloc.dart';
+import 'package:driver/src/features/auth/presentation/bloc/reset_password/reset_password_bloc.dart';
 import 'package:driver/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:driver/src/features/auth/presentation/view/forgot_password_page.dart';
+import 'package:driver/src/features/auth/presentation/view/reset_password_page.dart';
 import 'package:driver/src/features/auth/presentation/view/sign_in_page.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:foundation/foundation.dart';
@@ -28,6 +30,7 @@ class AuthModule extends Module {
     i.add<ForgotPasswordBloc>(
       (i) => ForgotPasswordBloc(i.get<AuthRepository>()),
     );
+    i.add<ResetPasswordBloc>((i) => ResetPasswordBloc(i.get<AuthRepository>()));
   }
 
   @override
@@ -45,6 +48,16 @@ class AuthModule extends Module {
       AuthRoutes.forgotPasswordPath,
       child: (context, GoRouterState state) => ForgotPasswordPage(
         forgotPasswordBloc: Modular.get<ForgotPasswordBloc>(),
+      ),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: AuthRoutes.resetPassword,
+      AuthRoutes.resetPasswordPath,
+      child: (context, GoRouterState state) => ResetPasswordPage(
+        email: state.extra is String ? state.extra! as String : '',
+        resetPasswordBloc: Modular.get<ResetPasswordBloc>(),
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,

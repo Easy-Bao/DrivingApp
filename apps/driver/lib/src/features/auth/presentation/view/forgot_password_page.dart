@@ -1,4 +1,5 @@
 import 'package:design_system/design_system.dart';
+import 'package:driver/src/features/auth/auth_routes.dart';
 import 'package:driver/src/features/auth/presentation/bloc/forgot_password/forgot_password_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -70,11 +71,12 @@ class _ForgotPasswordPageContentState
         child: BlocConsumer<ForgotPasswordBloc, ForgotPasswordState>(
           listener: (context, state) {
             if (state is ForgotPasswordSuccess) {
-              CustomToast.show(
-                context,
-                'Reset link sent to ${_emailController.text.trim()}',
+              final email = _emailController.text.trim();
+              CustomToast.show(context, 'Verification code sent to $email');
+              context.pushReplacementNamed(
+                AuthRoutes.resetPassword,
+                extra: email,
               );
-              context.pop();
             }
           },
           builder: (context, state) {
@@ -111,7 +113,7 @@ class _ForgotPasswordPageContentState
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              "No worries, we'll send you reset instructions. Please enter the email address linked to your account.",
+                              "No worries, we'll email you a verification code. Please enter the email address linked to your account.",
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 15,
@@ -205,7 +207,7 @@ class _ForgotPasswordPageContentState
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
-                                        'Send Reset Link',
+                                        'Send Code',
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,

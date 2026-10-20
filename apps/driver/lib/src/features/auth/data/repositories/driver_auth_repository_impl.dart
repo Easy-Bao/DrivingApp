@@ -140,7 +140,35 @@ final class AuthRepositoryImpl({
       return Err(
         FailureMapper.fromException(
           error,
-          serverMessage: 'Failed to send reset link. Please try again.',
+          serverMessage: 'Failed to send verification code. Please try again.',
+          networkMessage: 'Unable to reach driver auth services. Check your connection and try again.',
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Result<void, Failure>> confirmPasswordReset({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    try {
+      final responseBody = await _remoteDataSource.postJson(
+        AccountAuthEndpoints.resetPassword,
+        requestBody: {'email': email, 'code': code, 'newPassword': newPassword},
+      );
+      if (responseBody['success'] != true) {
+        return const Err(
+          ServerFailure("Couldn't reset your password. Try again."),
+        );
+      }
+      return const Ok(null);
+    } catch (error) {
+      return Err(
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Password reset failed. Please try again.',
           networkMessage: 'Unable to reach driver auth services. Check your connection and try again.',
         ),
       );

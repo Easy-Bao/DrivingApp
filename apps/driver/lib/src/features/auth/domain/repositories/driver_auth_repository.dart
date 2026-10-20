@@ -7,5 +7,13 @@ abstract interface class AuthRepository {
     required String password,
   });
 
+  /// Sends a verification code to [email].
   Future<Result<void, Failure>> resetPassword({required String email});
+
+  /// Completes the reset with the emailed [code].
+  Future<Result<void, Failure>> confirmPasswordReset({
+    required String email,
+    required String code,
+    required String newPassword,
+  });
 }

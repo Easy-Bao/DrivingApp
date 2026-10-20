@@ -23,7 +23,7 @@ void main() {
       ),
     );
     await tester.enterText(find.byType(TextField), 'driver@example.com');
-    await tester.tap(find.text('Send Reset Link'));
+    await tester.tap(find.text('Send Code'));
     await tester.pumpAndSettle();
 
     expect(find.text('Something went wrong. Try again.'), findsOneWidget);
