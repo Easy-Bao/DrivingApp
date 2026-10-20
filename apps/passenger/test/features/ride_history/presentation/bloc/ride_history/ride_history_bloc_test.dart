@@ -1,13 +1,19 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/ride_history/domain/entities/ride_history_overview.dart';
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 class MockRideHistoryRepository extends Mock implements RideHistoryRepository {}
+
+class _MockSessionRepository extends Mock implements SessionRepository {}
 
 RideHistoryBloc _makeCubit(RideHistoryRepository repo) =>
     RideHistoryBloc(repository: repo);
@@ -16,6 +22,104 @@ void main() {
   late MockRideHistoryRepository repo;
 
   setUp(() => repo = MockRideHistoryRepository());
+
+  const overview = RideHistoryOverview(
+    rides: OffsetPage(items: [], hasMore: true, nextOffset: 25),
+    weeklyFareAmount: 1000,
+    weeklyRideCount: 1,
+  );
+
+  for (final pendingPagination in [false, true]) {
+    test(
+      'logout clears history and rejects late ${pendingPagination ? 'pagination' : 'overview'} responses',
+      () async {
+        final session = SessionBloc(
+          sessionRepository: _MockSessionRepository(),
+        );
+        session.add(const SessionAuthenticatedRequested(passengerId: 'a'));
+        await session.stream.first;
+        final response = Completer<Result<RideHistoryOverview, Failure>>();
+        final nextPage = Completer<Result<OffsetPage<RideHistory>, Failure>>();
+        when(
+          () =>
+              repo.fetchRideHistoryOverview(any(), limit: any(named: 'limit')),
+        ).thenAnswer(
+          (_) => pendingPagination
+              ? Future.value(const Ok(overview))
+              : response.future,
+        );
+        when(
+          () => repo.fetchRideHistory(
+            any(),
+            limit: any(named: 'limit'),
+            offset: any(named: 'offset'),
+          ),
+        ).thenAnswer((_) => nextPage.future);
+        final bloc = RideHistoryBloc(repository: repo, sessionBloc: session);
+        addTearDown(() async {
+          await bloc.close();
+          await session.close();
+        });
+        bloc.add(const LoadRideHistoryEvent(passengerId: 'a'));
+        await bloc.stream.firstWhere(
+          (state) => pendingPagination
+              ? state is RideHistoryLoaded
+              : state is RideHistoryLoading,
+        );
+        if (pendingPagination) {
+          bloc.add(const LoadMoreRideHistoryEvent(passengerId: 'a'));
+          await bloc.stream.firstWhere(
+            (state) => state is RideHistoryLoaded && state.isLoadingMore,
+          );
+        }
+        session.add(const SessionGuestRequested());
+        await bloc.stream.firstWhere((state) => state is RideHistoryInitial);
+        if (pendingPagination) {
+          nextPage.complete(Ok(overview.rides));
+        } else {
+          response.complete(const Ok(overview));
+        }
+        await Future<void>.delayed(Duration.zero);
+        expect(bloc.state, isA<RideHistoryInitial>());
+        bloc.add(const LoadRideHistoryEvent(passengerId: 'a'));
+        await Future<void>.delayed(Duration.zero);
+        expect(bloc.state, isA<RideHistoryInitial>());
+      },
+    );
+  }
+
+  test('switching accounts rejects the previous account response', () async {
+    final session = SessionBloc(sessionRepository: _MockSessionRepository());
+    session.add(const SessionAuthenticatedRequested(passengerId: 'a'));
+    await session.stream.first;
+    final oldResponse = Completer<Result<RideHistoryOverview, Failure>>();
+    when(() => repo.fetchRideHistoryOverview('a', limit: any(named: 'limit')))
+        .thenAnswer((_) => oldResponse.future);
+    when(() => repo.fetchRideHistoryOverview('b', limit: any(named: 'limit')))
+        .thenAnswer(
+          (_) async => const Ok(
+            RideHistoryOverview(
+              rides: OffsetPage(items: [], hasMore: false, nextOffset: null),
+              weeklyFareAmount: 2000,
+              weeklyRideCount: 2,
+            ),
+          ),
+        );
+    final bloc = RideHistoryBloc(repository: repo, sessionBloc: session);
+    addTearDown(() async {
+      await bloc.close();
+      await session.close();
+    });
+    bloc.add(const LoadRideHistoryEvent(passengerId: 'a'));
+    await bloc.stream.firstWhere((state) => state is RideHistoryLoading);
+    session.add(const SessionAuthenticatedRequested(passengerId: 'b'));
+    await bloc.stream.firstWhere((state) => state is RideHistoryInitial);
+    bloc.add(const LoadRideHistoryEvent(passengerId: 'b'));
+    await bloc.stream.firstWhere((state) => state is RideHistoryLoaded);
+    oldResponse.complete(const Ok(overview));
+    await Future<void>.delayed(Duration.zero);
+    expect((bloc.state as RideHistoryLoaded).weeklyFareAmount, 2000);
+  });
 
   group('RideHistoryBloc — initial state', () {
     test('starts as RideHistoryInitial', () async {

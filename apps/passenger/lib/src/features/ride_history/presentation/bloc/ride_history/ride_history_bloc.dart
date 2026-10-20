@@ -1,17 +1,38 @@
+import 'dart:async';
+
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 part 'ride_history_event.dart';
 part 'ride_history_state.dart';
 
-class RideHistoryBloc({required this._repository})
+class RideHistoryBloc({required this._repository, SessionBloc? sessionBloc})
     extends Bloc<RideHistoryEvent, RideHistoryState> {
   final RideHistoryRepository _repository;
+
+  final SessionBloc? _sessionBloc = sessionBloc;
+  StreamSubscription<String?>? _sessionSubscription;
+  int _generation = 0;
+
+  static String? _sessionOwner(SessionState state) => switch (state) {
+    AuthenticatedSession(:final passengerId) => passengerId,
+    _ => null,
+  };
+
+  bool _canLoad(String passengerId) =>
+      _sessionBloc == null || _sessionOwner(_sessionBloc.state) == passengerId;
+
+  @override
+  Future<void> close() async {
+    await _sessionSubscription?.cancel();
+    await super.close();
+  }
 
   static const _pageSize = 25;
 
@@ -25,6 +46,19 @@ class RideHistoryBloc({required this._repository})
   };
 
   this : super(const RideHistoryInitial()) {
+    on<_RideHistorySessionChanged>((event, emit) {
+      emit(const RideHistoryInitial());
+    });
+    var owner = sessionBloc == null ? null : _sessionOwner(sessionBloc.state);
+    _sessionSubscription = sessionBloc?.stream
+        .map(_sessionOwner)
+        .distinct()
+        .listen((nextOwner) {
+          if (nextOwner == owner) return;
+          owner = nextOwner;
+          _generation++;
+          add(const _RideHistorySessionChanged());
+        });
     on<LoadRideHistoryEvent>(_onLoad);
     on<RefreshRideHistoryEvent>(_onRefresh, transformer: restartable());
     on<LoadMoreRideHistoryEvent>(_onLoadMore, transformer: droppable());
@@ -34,6 +68,7 @@ class RideHistoryBloc({required this._repository})
     LoadRideHistoryEvent event,
     Emitter<RideHistoryState> emit,
   ) async {
+    if (!_canLoad(event.passengerId)) return;
     var existingRideCount = 0;
     final currentState = state;
     if (currentState is RideHistoryLoaded) {
@@ -55,10 +90,15 @@ class RideHistoryBloc({required this._repository})
     String passengerId,
     Emitter<RideHistoryState> emit,
   ) async {
+    if (!_canLoad(passengerId)) return;
+    final generation = ++_generation;
     final result = await _repository.fetchRideHistoryOverview(
       passengerId,
       limit: _pageSize,
     );
+    if (emit.isDone || generation != _generation || !_canLoad(passengerId)) {
+      return;
+    }
     result.fold(
       (failure) => emit(
         RideHistoryError(message: ErrorHandler.getErrorMessage(failure)),
@@ -79,6 +119,8 @@ class RideHistoryBloc({required this._repository})
     LoadMoreRideHistoryEvent event,
     Emitter<RideHistoryState> emit,
   ) async {
+    if (!_canLoad(event.passengerId)) return;
+    final generation = _generation;
     final current = state;
     if (current is! RideHistoryLoaded ||
         !current.hasMore ||
@@ -92,6 +134,11 @@ class RideHistoryBloc({required this._repository})
       limit: _pageSize,
       offset: current.nextOffset!,
     );
+    if (emit.isDone ||
+        generation != _generation ||
+        !_canLoad(event.passengerId)) {
+      return;
+    }
     result.fold(
       (failure) => emit(
         current.copyWith(

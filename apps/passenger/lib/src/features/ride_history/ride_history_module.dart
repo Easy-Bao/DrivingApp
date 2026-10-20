@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/ride_history/data/datasources/ride_history_remote_data_source.dart';
 import 'package:passenger/src/features/ride_history/data/repositories/ride_history_repository_impl.dart';
@@ -29,7 +30,10 @@ class RideHistoryModule._() {
         ),
       )
       ..addFactory<RideHistoryBloc>(
-        (i) => RideHistoryBloc(repository: i.get<RideHistoryRepository>()),
+        (i) => RideHistoryBloc(
+          repository: i.get<RideHistoryRepository>(),
+          sessionBloc: i.get<SessionBloc>(),
+        ),
       )
       ..addFactory<RideDetailsCubit>(
         (i) => RideDetailsCubit(

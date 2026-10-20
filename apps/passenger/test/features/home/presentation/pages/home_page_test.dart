@@ -510,6 +510,10 @@ void main() {
       final sessionBloc = SessionBloc(
         sessionRepository: _MockSessionRepository(),
       );
+      sessionBloc.add(
+        const SessionAuthenticatedRequested(passengerId: 'passenger-1'),
+      );
+      await sessionBloc.stream.first;
       final locationAccessCubit = _MockLocationAccessCubit();
       final bookingBloc = _MockBookingBloc();
       final publicDriverSummaryCubit = _MockPublicDriverSummaryCubit();
@@ -653,6 +657,11 @@ void main() {
         find.byType(RecentRideHistoryPreview),
       );
       expect(previewWidget.rides.length, 2);
+      sessionBloc.add(const SessionGuestRequested());
+      await tester.pumpAndSettle();
+      expect(find.text('SM City'), findsNothing);
+      expect(find.text('City Hall'), findsNothing);
+      expect(find.byType(RecentRideHistoryPreview), findsNothing);
     },
   );
 

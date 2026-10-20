@@ -410,11 +410,12 @@ class _HomePageState extends State<HomePage> {
   Widget _buildRecentRideHistoryList() {
     final isGuest = context.select<SessionBloc, bool>((bloc) {
       final sessionState = bloc.state;
-      return sessionState is GuestSession || sessionState is SessionFailure;
+      return !sessionState.isAuthenticated;
     });
 
     return BlocBuilder<RideHistoryBloc, RideHistoryState>(
       builder: (context, state) {
+        if (isGuest) return const RecentRideHistoryEmptyState(isGuest: true);
         if (state is RideHistoryLoading && state.hasExistingRides) {
           final itemCount = state.existingRideCount
               .clamp(1, _recentRideHistoryPreviewLimit)

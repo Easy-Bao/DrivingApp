@@ -28,3 +28,5 @@ final class const LoadMoreRideHistoryEvent({required this.passengerId})
   @override
   List<Object?> get props => [passengerId];
 }
+
+final class const _RideHistorySessionChanged() extends RideHistoryEvent;
