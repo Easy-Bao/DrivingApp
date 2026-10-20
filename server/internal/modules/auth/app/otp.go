@@ -146,6 +146,10 @@ func (service *OTPService) RequestVerification(ctx context.Context, email string
 		if account.Role != domain.Passenger {
 			return domain.ErrInvalidCredentials
 		}
+		if account.AccountStatus != "" && account.AccountStatus != "active" {
+			// Match the unknown-account response so suspension is not disclosed.
+			return nil
+		}
 		return service.requestCode(ctx, "verification", account.Email)
 	}
 	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
@@ -181,6 +185,9 @@ func (service *OTPService) VerifyPassenger(ctx context.Context, email, code stri
 	if err == nil && account.ID != 0 {
 		if account.Role != domain.Passenger {
 			return domain.User{}, "", domain.ErrInvalidOTP
+		}
+		if account.AccountStatus != "" && account.AccountStatus != "active" {
+			return domain.User{}, "", domain.ErrAccountSuspended
 		}
 		if err := service.users.MarkVerified(ctx, account.ID); err != nil {
 			return domain.User{}, "", fmt.Errorf("mark passenger verified: %w", err)

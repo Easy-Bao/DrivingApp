@@ -159,3 +159,35 @@ func TestRequestVerificationAntiEnumeration(t *testing.T) {
 		t.Fatal("expected no OTP sent for non-existent account")
 	}
 }
+
+func TestSuspendedPassengerCannotUseVerificationOTP(t *testing.T) {
+	repository := &otpRepository{account: domain.User{
+		ID: 7, Email: "p@example.test", Role: domain.Passenger, AccountStatus: "suspended",
+	}}
+	gateway := &otpGateway{}
+	store := &otpMemoryStore{values: map[string]string{}}
+	service := authapp.NewOTPService(authapp.OTPDependencies{
+		Users:    repository,
+		Store:    store,
+		Gateway:  gateway,
+		Tokens:   otpIssuer{},
+		Sessions: newTestRefreshSessionStore(),
+	})
+
+	if err := service.RequestVerification(context.Background(), "p@example.test"); err != nil {
+		t.Fatalf("RequestVerification() error = %v, want nil", err)
+	}
+	if gateway.sent != "" {
+		t.Fatal("verification code was sent to a suspended account")
+	}
+
+	// A code issued before the suspension must not yield credentials.
+	store.values["verification:p@example.test"] = "123456"
+	_, token, err := service.VerifyPassenger(context.Background(), "p@example.test", "123456")
+	if !errors.Is(err, domain.ErrAccountSuspended) || token != "" {
+		t.Fatalf("VerifyPassenger() = token %q, error %v; want suspended error", token, err)
+	}
+	if repository.marked {
+		t.Fatal("suspended account was marked verified")
+	}
+}
