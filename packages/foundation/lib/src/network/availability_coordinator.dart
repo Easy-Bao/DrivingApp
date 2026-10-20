@@ -60,6 +60,12 @@ final class NetworkAvailabilityCoordinator({
     _setStatus(NetworkAvailabilityStatus.available);
   }
 
+  /// Frees the half-open probe slot without judging network health, for
+  /// requests that ended before reaching the server (e.g. cancellation).
+  void releaseProbe() {
+    _probeInFlight = false;
+  }
+
   void recordFailure() {
     _probeInFlight = false;
     _consecutiveFailures++;
@@ -125,6 +131,11 @@ final class const NetworkAvailabilityInterceptor(this.coordinator)
   void onError(DioException error, ErrorInterceptorHandler handler) {
     if (NetworkAvailabilityCoordinator.isNetworkFailure(error)) {
       coordinator.recordFailure();
+    } else if (error.response != null) {
+      // The server answered, so the network path is healthy.
+      coordinator.recordSuccess();
+    } else if (error.error is! NetworkCircuitOpenException) {
+      coordinator.releaseProbe();
     }
     handler.next(error);
   }
