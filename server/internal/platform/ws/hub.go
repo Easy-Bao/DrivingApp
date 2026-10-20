@@ -127,15 +127,12 @@ func (subscription *Subscription) deliver(envelope event.Envelope) bool {
 		return true
 	}
 
-	// Retry non-blocking send in case consumer drained an event.
 	select {
 	case subscription.events <- envelope:
 		return true
 	default:
 	}
 
-	// Channel is saturated at capacity (_outboundQueueSize).
-	// Drain buffered items to perform priority eviction.
 	var drained []event.Envelope
 drainLoop:
 	for {
@@ -147,7 +144,6 @@ drainLoop:
 		}
 	}
 
-	// Find the oldest droppable event (telemetry/chat) in the buffer.
 	droppableIndex := -1
 	for index, bufferedEvent := range drained {
 		if isDroppable(bufferedEvent.Type) {
@@ -157,7 +153,6 @@ drainLoop:
 	}
 
 	if droppableIndex != -1 {
-		// Evict the droppable event to make room for the new envelope.
 		drained = append(drained[:droppableIndex], drained[droppableIndex+1:]...)
 		drained = append(drained, envelope)
 		for _, bufferedEvent := range drained {
@@ -175,8 +170,6 @@ drainLoop:
 		return true
 	}
 
-	// All buffered events are critical AND incoming envelope is critical.
-	// Queue is truly saturated with critical messages.
 	for _, bufferedEvent := range drained {
 		subscription.events <- bufferedEvent
 	}

@@ -176,7 +176,6 @@ func TestRefreshRejectsSuspendedAccount(t *testing.T) {
 		t.Fatalf("issue session: %v", err)
 	}
 
-	// Suspend the user
 	user.AccountStatus = "suspended"
 	repository.users["active@example.test"] = user
 

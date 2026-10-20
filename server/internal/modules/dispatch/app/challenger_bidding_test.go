@@ -56,7 +56,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 		store := &challengerBiddingStoreStub{session: session}
 		service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
 
-		// Boundary below lower bound (13999 < 14000)
 		_, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 10, DriverID: 1, ProposedFareAmount: 13999,
 		})
@@ -64,7 +63,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 			t.Fatalf("expected ErrInvalidFareOffer for 13999, got %v", err)
 		}
 
-		// Exact lower bound (14000)
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 10, DriverID: 1, ProposedFareAmount: 14000,
 		})
@@ -75,7 +73,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 			t.Fatalf("store received fare %d, want 14000", store.lastOffer.ProposedFareAmount)
 		}
 
-		// Exact upper bound (40000)
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 10, DriverID: 1, ProposedFareAmount: 40000,
 		})
@@ -86,7 +83,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 			t.Fatalf("store received fare %d, want 40000", store.lastOffer.ProposedFareAmount)
 		}
 
-		// Boundary above upper bound (40001 > 40000)
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 10, DriverID: 1, ProposedFareAmount: 40001,
 		})
@@ -105,7 +101,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 		store := &challengerBiddingStoreStub{session: session}
 		service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
 
-		// 4999 rejected
 		_, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 20, DriverID: 1, ProposedFareAmount: 4999,
 		})
@@ -113,7 +108,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 			t.Fatalf("expected ErrInvalidFareOffer for 4999, got %v", err)
 		}
 
-		// 5000 accepted
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 20, DriverID: 1, ProposedFareAmount: 5000,
 		})
@@ -124,7 +118,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 			t.Fatalf("store received fare %d, want 5000", store.lastOffer.ProposedFareAmount)
 		}
 
-		// 12000 accepted
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 20, DriverID: 1, ProposedFareAmount: 12000,
 		})
@@ -132,7 +125,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 			t.Fatalf("expected success for upper bound 12000, got %v", err)
 		}
 
-		// 12001 rejected
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 20, DriverID: 1, ProposedFareAmount: 12001,
 		})
@@ -151,7 +143,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 		store := &challengerBiddingStoreStub{session: session}
 		service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
 
-		// 244999 rejected
 		_, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 30, DriverID: 1, ProposedFareAmount: 244999,
 		})
@@ -159,7 +150,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 			t.Fatalf("expected ErrInvalidFareOffer for 244999, got %v", err)
 		}
 
-		// 245000 accepted
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 30, DriverID: 1, ProposedFareAmount: 245000,
 		})
@@ -167,7 +157,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 			t.Fatalf("expected success for min bound 245000, got %v", err)
 		}
 
-		// 500000 accepted
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 30, DriverID: 1, ProposedFareAmount: 500000,
 		})
@@ -175,7 +164,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 			t.Fatalf("expected success for clamped ceiling 500000, got %v", err)
 		}
 
-		// 500001 rejected
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 30, DriverID: 1, ProposedFareAmount: 500001,
 		})
@@ -192,7 +180,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 		store := &challengerBiddingStoreStub{session: session}
 		service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
 
-		// Negative offer: -1
 		_, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 40, DriverID: 1, ProposedFareAmount: -1,
 		})
@@ -200,7 +187,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 			t.Fatalf("expected ErrInvalidFareOffer for -1, got %v", err)
 		}
 
-		// Large negative offer
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 40, DriverID: 1, ProposedFareAmount: -10000,
 		})
@@ -208,7 +194,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 			t.Fatalf("expected ErrInvalidFareOffer for -10000, got %v", err)
 		}
 
-		// math.MinInt64
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 40, DriverID: 1, ProposedFareAmount: math.MinInt64,
 		})

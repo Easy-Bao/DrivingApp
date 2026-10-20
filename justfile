@@ -1,5 +1,3 @@
-# Justfile configuring native development, build, test, and Docker recipes.
-
 set dotenv-load
 set export
 

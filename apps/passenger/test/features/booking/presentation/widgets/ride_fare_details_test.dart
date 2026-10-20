@@ -28,7 +28,7 @@ void main() {
       baseFare: 20,
       distanceCharge: 10,
       timeCharge: 10,
-      surgeCharge: 12, // Subtotal is 40. Total with surge is 52 -> 52/40 = 1.3x
+      surgeCharge: 12,
       totalFare: 52,
     );
 

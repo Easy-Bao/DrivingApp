@@ -157,7 +157,6 @@ func TestHubClosesSlowSubscriptionWhenQueueIsFull(t *testing.T) {
 	subscription := hub.Subscribe("driver:10")
 	defer subscription.Close()
 
-	// Saturate with critical (non-droppable) events
 	for i := 0; i <= _outboundQueueSize; i++ {
 		envelope, err := event.New(
 			fmt.Sprintf("event-%d", i),
@@ -188,7 +187,6 @@ func TestHubEvictsDroppableEventsWithoutClosingSubscription(t *testing.T) {
 	subscription := hub.Subscribe("driver:10")
 	defer subscription.Close()
 
-	// Publish more than queue capacity of telemetry events
 	totalTelemetry := _outboundQueueSize + 20
 	for i := 0; i < totalTelemetry; i++ {
 		envelope, err := event.New(
@@ -204,12 +202,10 @@ func TestHubEvictsDroppableEventsWithoutClosingSubscription(t *testing.T) {
 		hub.Publish(envelope)
 	}
 
-	// Verify subscription was NOT closed; queue is at capacity
 	if len(subscription.Events()) != _outboundQueueSize {
 		t.Fatalf("expected queue length %d, got %d", _outboundQueueSize, len(subscription.Events()))
 	}
 
-	// Publish a critical lifecycle event - should evict an older telemetry message
 	criticalEnvelope, err := event.New(
 		"critical-1",
 		event.RideStatusChanged,
@@ -222,7 +218,6 @@ func TestHubEvictsDroppableEventsWithoutClosingSubscription(t *testing.T) {
 	}
 	hub.Publish(criticalEnvelope)
 
-	// Verify channel still has _outboundQueueSize items and contains the critical event
 	foundCritical := false
 	for len(subscription.Events()) > 0 {
 		received := <-subscription.Events()

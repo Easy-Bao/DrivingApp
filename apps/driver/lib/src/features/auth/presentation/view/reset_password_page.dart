@@ -6,8 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-/// Second step of password recovery: the emailed one-time code plus the new
-/// password.
 class ResetPasswordPage extends StatelessWidget {
   const ResetPasswordPage({
     super.key,

@@ -11,7 +11,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 )
 
-// Challenger Test Suite for StartTrip proximity and dwell guards
 func TestChallengerStartTrip_BoundaryConditions(t *testing.T) {
 	driverID := 42
 	const radiusMeters = 100.0
@@ -182,7 +181,6 @@ func TestChallengerStartTrip_BoundaryConditions(t *testing.T) {
 	})
 
 	t.Run("Dwell guard: exact boundary tests", func(t *testing.T) {
-		// Exactly 3 seconds:
 		now := time.Now().UTC()
 		threeSecAgo := now.Add(-3005 * time.Millisecond).Format(time.RFC3339Nano)
 		store := &fakeLifecycleStore{
@@ -205,7 +203,6 @@ func TestChallengerStartTrip_BoundaryConditions(t *testing.T) {
 			t.Fatalf("expected in_transit, got %s", updated.Status)
 		}
 
-		// Less than 3s (e.g. 1.5s ago)
 		onePointFiveSecAgo := now.Add(-1500 * time.Millisecond).Format(time.RFC3339Nano)
 		store.ride.ArrivedAt = &onePointFiveSecAgo
 		store.ride.Status = string(domain.RideArrived)
@@ -214,7 +211,6 @@ func TestChallengerStartTrip_BoundaryConditions(t *testing.T) {
 			t.Fatalf("expected ErrInvalidStatusTransition when dwell < 3s, got %v", err)
 		}
 
-		// 0s ago (instant transition)
 		zeroSecAgo := now.Format(time.RFC3339Nano)
 		store.ride.ArrivedAt = &zeroSecAgo
 		_, err = svc.StartTrip(context.Background(), 1, driverID, 14.5995, 120.9842)
@@ -222,7 +218,6 @@ func TestChallengerStartTrip_BoundaryConditions(t *testing.T) {
 			t.Fatalf("expected ErrInvalidStatusTransition when dwell == 0s, got %v", err)
 		}
 
-		// Future timestamp (clock skew in future)
 		futureTime := now.Add(5 * time.Second).Format(time.RFC3339Nano)
 		store.ride.ArrivedAt = &futureTime
 		_, err = svc.StartTrip(context.Background(), 1, driverID, 14.5995, 120.9842)
