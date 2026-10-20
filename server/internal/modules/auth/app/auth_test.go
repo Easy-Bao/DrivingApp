@@ -191,7 +191,7 @@ func (r *resetDuringLoginRepository) UpgradePasswordHash(ctx context.Context, id
 	return r.repository.UpgradePasswordHash(ctx, id, expectedHash, passwordHash)
 }
 
-func TestLegacyHashUpgradeDoesNotOverwriteConcurrentPasswordReset(t *testing.T) {
+func TestConcurrentPasswordResetBeatsLegacyUpgradeAndOldPasswordSession(t *testing.T) {
 	digest := sha256.Sum256([]byte("legacy-8"))
 	legacyHash := hex.EncodeToString(digest[:])
 	base := &repository{users: map[string]domain.User{
@@ -209,8 +209,11 @@ func TestLegacyHashUpgradeDoesNotOverwriteConcurrentPasswordReset(t *testing.T) 
 		Sessions:   newTestRefreshSessionStore(),
 	})
 
-	if _, _, err := authenticate.Execute(context.Background(), "legacy@example.test", "legacy-8"); err != nil {
-		t.Fatalf("legacy authentication returned error: %v", err)
+	// The login verified the superseded password, so it must not keep a
+	// session once the reset has replaced it.
+	_, _, err := authenticate.Execute(context.Background(), "legacy@example.test", "legacy-8")
+	if !errors.Is(err, domain.ErrInvalidCredentials) {
+		t.Fatalf("Execute() error = %v, want invalid credentials", err)
 	}
 	if got := base.users["legacy@example.test"].PasswordHash; got != resetHash {
 		t.Fatalf("password hash = %q, want the reset hash %q", got, resetHash)

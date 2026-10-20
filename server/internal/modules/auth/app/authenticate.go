@@ -108,12 +108,15 @@ func (service *AuthenticateService) execute(
 	if account.AccountStatus != "" && account.AccountStatus != "active" {
 		return domain.User{}, SessionTokens{}, domain.ErrAccountSuspended
 	}
+	currentHash := account.PasswordHash
 	if security.IsLegacyPasswordHash(account.PasswordHash) {
 		upgradedHash, hashErr := service.hashPassword(password)
 		if hashErr != nil {
 			service.log().WarnContext(ctx, "upgrade legacy password hash failed", "error", hashErr)
-		} else if _, err := service.repository.UpgradePasswordHash(ctx, account.ID, account.PasswordHash, upgradedHash); err != nil {
+		} else if upgraded, err := service.repository.UpgradePasswordHash(ctx, account.ID, account.PasswordHash, upgradedHash); err != nil {
 			service.log().WarnContext(ctx, "persist upgraded password hash failed", "error", err)
+		} else if upgraded {
+			currentHash = upgradedHash
 		}
 	}
 	tokens, err := IssueSessionTokens(
@@ -126,7 +129,35 @@ func (service *AuthenticateService) execute(
 	if err != nil {
 		return domain.User{}, SessionTokens{}, fmt.Errorf("issue authentication session: %w", err)
 	}
+	if err := service.ensureCredentialsUnchanged(ctx, account.ID, currentHash); err != nil {
+		return domain.User{}, SessionTokens{}, err
+	}
 	return account, tokens, nil
+}
+
+// ensureCredentialsUnchanged closes the window where a password reset finishes
+// between the credential check and session issuance. Reset replaces the hash
+// before it revokes sessions, so a session issued after that revocation always
+// observes the new hash here and is withdrawn.
+func (service *AuthenticateService) ensureCredentialsUnchanged(
+	ctx context.Context,
+	userID int,
+	verifiedHash string,
+) error {
+	if service.sessions == nil {
+		return nil
+	}
+	latest, err := service.repository.FindByID(ctx, userID)
+	if err == nil && latest.PasswordHash == verifiedHash {
+		return nil
+	}
+	if revokeErr := service.sessions.RevokeAll(context.WithoutCancel(ctx), userID, time.Now().UTC()); revokeErr != nil {
+		service.log().WarnContext(ctx, "revoke session after credential change failed", "error", revokeErr)
+	}
+	if err != nil {
+		return fmt.Errorf("recheck credentials after session issuance: %w", err)
+	}
+	return domain.ErrInvalidCredentials
 }
 
 func (service *AuthenticateService) Refresh(ctx context.Context, rawToken string) (SessionTokens, error) {

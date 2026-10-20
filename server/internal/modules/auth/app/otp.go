@@ -307,6 +307,12 @@ func (service *OTPService) ResetPasswordForRole(
 	if err := service.users.UpdatePassword(ctx, account.ID, passwordHash); err != nil {
 		return fmt.Errorf("update reset password: %w", err)
 	}
+	// Sessions created by logins that verified the old password between the
+	// first revocation and the update are removed here; later logins are
+	// rejected by the credential recheck during authentication.
+	if err := service.sessions.RevokeAll(ctx, account.ID, time.Now().UTC()); err != nil {
+		return UnavailableError(err)
+	}
 	return nil
 }
 
