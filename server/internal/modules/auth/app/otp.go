@@ -422,17 +422,42 @@ func (service *OTPService) ConfirmEmailChange(
 		service.log().WarnContext(ctx, "update verified account email failed", "error", err)
 		return domain.ErrOTPUnavailable
 	}
-	if service.sessions != nil {
-		if err := service.sessions.RevokeAll(ctx, userID, time.Now().UTC()); err != nil {
-			return fmt.Errorf("revoke user sessions after email change: %w", err)
-		}
-	}
+	// The email is already committed and its OTP consumed, so a retry cannot
+	// finish revocation. Keep the old-address notification independent of it
+	// and retry revocation without the request's cancellation.
+	revokeErr := service.revokeSessionsAfterEmailChange(ctx, userID)
 	if service.emailNotifier != nil {
 		if err := service.emailNotifier.NotifyEmailChanged(ctx, account.Email, newEmail); err != nil {
 			service.log().WarnContext(ctx, "notify previous email after account change failed", "error", err)
 		}
 	}
+	if revokeErr != nil {
+		return fmt.Errorf("revoke user sessions after email change: %w", revokeErr)
+	}
 	return nil
+}
+
+const (
+	_emailChangeRevokeAttempts = 3
+	_emailChangeRevokeTimeout  = 5 * time.Second
+)
+
+func (service *OTPService) revokeSessionsAfterEmailChange(ctx context.Context, userID int) error {
+	if service.sessions == nil {
+		return nil
+	}
+	detached := context.WithoutCancel(ctx)
+	var err error
+	for attempt := 0; attempt < _emailChangeRevokeAttempts; attempt++ {
+		attemptCtx, cancel := context.WithTimeout(detached, _emailChangeRevokeTimeout)
+		err = service.sessions.RevokeAll(attemptCtx, userID, time.Now().UTC())
+		cancel()
+		if err == nil {
+			return nil
+		}
+		service.log().WarnContext(ctx, "revoke sessions after email change failed", "attempt", attempt+1, "error", err)
+	}
+	return err
 }
 
 func (service *OTPService) ensureEmailAvailable(ctx context.Context, userID int, email string) error {

@@ -286,6 +286,64 @@ func TestConfirmEmailChangeRevokesActiveRefreshSessions(t *testing.T) {
 	}
 }
 
+type flakyRevokeSessions struct {
+	*testRefreshSessionStore
+	failures int
+	calls    int
+}
+
+func (store *flakyRevokeSessions) RevokeAll(ctx context.Context, userID int, now time.Time) error {
+	store.calls++
+	if store.calls <= store.failures {
+		return errors.New("session store unavailable")
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	return store.testRefreshSessionStore.RevokeAll(ctx, userID, now)
+}
+
+func TestConfirmEmailChangeRetriesRevocationAfterCommit(t *testing.T) {
+	hash, err := bcrypt.GenerateFromPassword([]byte("current-password"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatalf("hash password: %v", err)
+	}
+	users := &emailChangeUsers{accounts: map[int]domain.User{
+		42: {ID: 42, Email: "old@example.test", Role: domain.Passenger, PasswordHash: string(hash), IsVerified: true},
+	}}
+	sender := &emailChangeSender{}
+	notifier := &emailChangeNotifier{}
+	sessions := &flakyRevokeSessions{testRefreshSessionStore: newTestRefreshSessionStore(), failures: 2}
+	if err := sessions.Create(context.Background(), domain.RefreshSession{
+		UserID:    42,
+		TokenHash: authapp.HashRefreshToken("token-for-user-42"),
+		ExpiresAt: time.Now().Add(time.Hour),
+	}); err != nil {
+		t.Fatalf("create session: %v", err)
+	}
+	service := authapp.NewOTPService(authapp.OTPDependencies{
+		Users:         users,
+		EmailChanges:  users,
+		EmailNotifier: notifier,
+		Store:         &emailChangeOTPStore{},
+		Gateway:       sender,
+		Sessions:      sessions,
+	})
+
+	if err := service.RequestEmailChange(context.Background(), 42, "current-password", "new@example.test"); err != nil {
+		t.Fatalf("request email change: %v", err)
+	}
+	// A canceled request must not stop the already-committed revocation.
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+	if err := service.ConfirmEmailChange(canceled, 42, "new@example.test", sender.code); err != nil {
+		t.Fatalf("confirm email change: %v", err)
+	}
+	if _, err := sessions.FindActive(context.Background(), authapp.HashRefreshToken("token-for-user-42"), time.Now()); !errors.Is(err, domain.ErrInvalidRefreshToken) {
+		t.Fatalf("expected session to be revoked after retries, got %v", err)
+	}
+}
+
 func (store *emailChangeUsers) UpgradePasswordHash(_ context.Context, id int, expectedHash, passwordHash string) (bool, error) {
 	return false, nil
 }
