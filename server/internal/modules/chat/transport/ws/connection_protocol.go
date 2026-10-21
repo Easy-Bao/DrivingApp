@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/domain"
 	events "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
@@ -22,14 +23,52 @@ type RoomAuthorizer interface {
 }
 
 type ConnectionProtocol struct {
-	sink  EventSink
-	rooms RoomAuthorizer
+	sink    EventSink
+	rooms   RoomAuthorizer
+	limiter *ChatLimiter
+}
+
+type ConnectionProtocolOption func(*ConnectionProtocol)
+
+func WithMessageRateLimit(limit int, window time.Duration) ConnectionProtocolOption {
+	return func(p *ConnectionProtocol) {
+		if limit > 0 && window > 0 {
+			p.limiter.messageLimit = limit
+			p.limiter.messageWindow = window
+		}
+	}
+}
+
+func WithTypingRateLimit(limit int, window, cooldown time.Duration) ConnectionProtocolOption {
+	return func(p *ConnectionProtocol) {
+		if limit > 0 && window > 0 {
+			p.limiter.typingLimit = limit
+			p.limiter.typingWindow = window
+		}
+		if cooldown > 0 {
+			p.limiter.typingCooldown = cooldown
+		}
+	}
+}
+
+func withLimiterClock(now func() time.Time) ConnectionProtocolOption {
+	return func(p *ConnectionProtocol) {
+		p.limiter.now = now
+	}
 }
 
 var _ websockethub.ConnectionProtocol = (*ConnectionProtocol)(nil)
 
-func NewConnectionProtocol(sink EventSink, rooms RoomAuthorizer) *ConnectionProtocol {
-	return &ConnectionProtocol{sink: sink, rooms: rooms}
+func NewConnectionProtocol(sink EventSink, rooms RoomAuthorizer, opts ...ConnectionProtocolOption) *ConnectionProtocol {
+	protocol := &ConnectionProtocol{
+		sink:    sink,
+		rooms:   rooms,
+		limiter: newChatLimiter(),
+	}
+	for _, opt := range opts {
+		opt(protocol)
+	}
+	return protocol
 }
 
 func (protocol *ConnectionProtocol) ResolveTopics(
@@ -89,6 +128,37 @@ func (protocol *ConnectionProtocol) HandleMessage(
 		return formatWebSocketError("error", "invalid_event", "invalid event"), nil
 	}
 	roomID := request.URL.Query().Get("roomId")
+	if roomID == "" || identity.Subject == "" {
+		return formatWebSocketError("error", "invalid_chat_event", "invalid chat event"), nil
+	}
+
+	var eventHeader struct {
+		Type           string `json:"type"`
+		IsTyping       *bool  `json:"is_typing"`
+		IsTypingLegacy *bool  `json:"isTyping"`
+	}
+	_ = json.Unmarshal(message, &eventHeader)
+
+	if eventHeader.Type == "typing" {
+		isTyping := false
+		if eventHeader.IsTyping != nil {
+			isTyping = *eventHeader.IsTyping
+		} else if eventHeader.IsTypingLegacy != nil {
+			isTyping = *eventHeader.IsTypingLegacy
+		}
+		if protocol != nil && protocol.limiter != nil {
+			if !protocol.limiter.allowTyping(roomID, identity.Subject, isTyping) {
+				return nil, nil
+			}
+		}
+	} else if eventHeader.Type == "CHAT_MESSAGE" || eventHeader.Type == "message" {
+		if protocol != nil && protocol.limiter != nil {
+			if !protocol.limiter.allowMessage(roomID, identity.Subject) {
+				return formatWebSocketError("error", "rate_limit_exceeded", "Too many messages. Please slow down."), nil
+			}
+		}
+	}
+
 	enriched := enrichChatEvent(message, roomID, identity.Subject)
 	if enriched == nil {
 		return formatWebSocketError("error", "invalid_chat_event", "invalid chat event"), nil

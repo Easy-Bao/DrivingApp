@@ -55,6 +55,112 @@ func TestConnectionProtocolReportsClosedRideChatToTheSender(t *testing.T) {
 	}
 }
 
+func TestConnectionProtocolEnforcesMessageRateBudget(t *testing.T) {
+	sink := &protocolEventSinkStub{messages: make(chan []byte, 10)}
+	protocol := NewConnectionProtocol(
+		sink,
+		protocolRoomAuthorizerStub{allowed: true},
+		WithMessageRateLimit(3, time.Minute),
+	)
+	request, _ := http.NewRequest(http.MethodGet, "/api/v1/chat/ws?roomId=ride-1", nil)
+	identity := security.Identity{Subject: "user-1"}
+
+	// Send 3 allowed messages
+	for i := 0; i < 3; i++ {
+		resp, err := protocol.HandleMessage(
+			context.Background(),
+			request,
+			identity,
+			true,
+			[]byte(`{"type":"message","text":"hello"}`),
+		)
+		if err != nil || resp != nil {
+			t.Fatalf("expected message %d allowed, got err=%v resp=%s", i, err, string(resp))
+		}
+	}
+
+	// 4th message exceeds budget
+	resp, err := protocol.HandleMessage(
+		context.Background(),
+		request,
+		identity,
+		true,
+		[]byte(`{"type":"message","text":"overflow"}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var errEvent struct {
+		Type string `json:"type"`
+		Code string `json:"code"`
+	}
+	if err := json.Unmarshal(resp, &errEvent); err != nil {
+		t.Fatal(err)
+	}
+	if errEvent.Code != "rate_limit_exceeded" {
+		t.Fatalf("expected rate_limit_exceeded, got %#v", errEvent)
+	}
+	if len(sink.messages) != 3 {
+		t.Fatalf("sink received %d messages, want 3", len(sink.messages))
+	}
+}
+
+func TestConnectionProtocolCoalescesRedundantTypingEvents(t *testing.T) {
+	sink := &protocolEventSinkStub{messages: make(chan []byte, 10)}
+	protocol := NewConnectionProtocol(
+		sink,
+		protocolRoomAuthorizerStub{allowed: true},
+		WithTypingRateLimit(10, time.Minute, 2*time.Second),
+	)
+	request, _ := http.NewRequest(http.MethodGet, "/api/v1/chat/ws?roomId=ride-1", nil)
+	identity := security.Identity{Subject: "user-1"}
+
+	// First typing: true -> should be handled
+	resp, err := protocol.HandleMessage(
+		context.Background(),
+		request,
+		identity,
+		true,
+		[]byte(`{"type":"typing","is_typing":true}`),
+	)
+	if err != nil || resp != nil {
+		t.Fatalf("first typing event failed: %v, %s", err, string(resp))
+	}
+	if len(sink.messages) != 1 {
+		t.Fatalf("sink received %d events, want 1", len(sink.messages))
+	}
+
+	// Immediate duplicate typing: true -> should be dropped/coalesced
+	resp, err = protocol.HandleMessage(
+		context.Background(),
+		request,
+		identity,
+		true,
+		[]byte(`{"type":"typing","is_typing":true}`),
+	)
+	if err != nil || resp != nil {
+		t.Fatalf("duplicate typing event failed: %v, %s", err, string(resp))
+	}
+	if len(sink.messages) != 1 {
+		t.Fatalf("redundant typing event was not coalesced, sink count = %d", len(sink.messages))
+	}
+
+	// State change to false -> should be handled
+	resp, err = protocol.HandleMessage(
+		context.Background(),
+		request,
+		identity,
+		true,
+		[]byte(`{"type":"typing","is_typing":false}`),
+	)
+	if err != nil || resp != nil {
+		t.Fatalf("typing state change failed: %v, %s", err, string(resp))
+	}
+	if len(sink.messages) != 2 {
+		t.Fatalf("typing state change was not forwarded, sink count = %d", len(sink.messages))
+	}
+}
+
 type protocolRoomAuthorizerStub struct {
 	allowed bool
 	err     error
