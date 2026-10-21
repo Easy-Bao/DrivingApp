@@ -272,6 +272,7 @@ extension _BookingBlocBidSession on BookingBloc {
     Emitter<BookingState> emit,
   ) async {
     _nearestSearchCancelled = true;
+    ++_bookingOperationGeneration;
     final sessionId = _activeBidSessionId;
     if (sessionId == null || sessionId.isEmpty) {
       _cleanupSubscriptions();
@@ -338,6 +339,7 @@ extension _BookingBlocBidSession on BookingBloc {
 
   void _onResetBooking(ResetBookingEvent event, Emitter<BookingState> emit) {
     _nearestSearchCancelled = true;
+    ++_bookingOperationGeneration;
     _cleanupSubscriptions();
     _activeBidSessionId = null;
     unawaited(_secureSessionService.deleteActiveBidSessionId());

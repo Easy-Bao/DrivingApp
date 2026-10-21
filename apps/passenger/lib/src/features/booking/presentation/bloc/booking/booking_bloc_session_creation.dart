@@ -31,6 +31,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
       return;
     }
 
+    final generation = _bookingOperationGeneration;
     try {
       String? sessionId;
       Failure? failure;
@@ -45,6 +46,11 @@ extension _BookingBlocSessionCreation on BookingBloc {
         ),
       )).fold((value) => failure = value, (value) => sessionId = value);
       if (sessionId == null) throw failure!;
+      if (generation != _bookingOperationGeneration) {
+        // Cancelled or reset while the create request was in flight.
+        await _discardObsoleteSession(sessionId!);
+        return;
+      }
       _activeBidSessionId = sessionId;
       unawaited(_secureSessionService.saveActiveBidSessionId(sessionId!));
       _subscribeToSession(sessionId!);
@@ -74,6 +80,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
       return;
     }
 
+    final generation = _bookingOperationGeneration;
     try {
       String? sessionId;
       Failure? failure;
@@ -87,12 +94,34 @@ extension _BookingBlocSessionCreation on BookingBloc {
         ),
       )).fold((value) => failure = value, (value) => sessionId = value);
       if (sessionId == null) throw failure!;
+      if (generation != _bookingOperationGeneration) {
+        // Cancelled or reset while the create request was in flight.
+        await _discardObsoleteSession(sessionId!);
+        return;
+      }
       _activeBidSessionId = sessionId;
       unawaited(_secureSessionService.saveActiveBidSessionId(sessionId!));
       _subscribeToSession(sessionId!);
     } catch (error) {
       _activeTrip = null;
       emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
+    }
+  }
+
+  Future<void> _discardObsoleteSession(String sessionId) async {
+    try {
+      final result = await _bookingRepository
+          .cancelSessionResult(sessionId)
+          .timeout(const Duration(seconds: 5));
+      result.fold(
+        (failure) => dev.log(
+          'Unable to cancel obsolete booking session $sessionId: '
+          '${failure.message}',
+        ),
+        (_) {},
+      );
+    } catch (error) {
+      dev.log('Unable to cancel obsolete booking session $sessionId: $error');
     }
   }
 

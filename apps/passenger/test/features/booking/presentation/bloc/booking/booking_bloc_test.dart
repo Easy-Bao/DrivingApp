@@ -860,6 +860,51 @@ void main() {
       verifyNever(() => secureSessionService.deleteActiveBidSessionId());
     });
 
+    test('cancels a session created after the booking was canceled', () async {
+      final creation = Completer<Result<String, Failure>>();
+      when(() => bookingRepository.createSession(any()))
+          .thenAnswer((_) => creation.future);
+      when(() => bookingRepository.cancelSession('31'))
+          .thenAnswer((_) async => const Ok(null));
+
+      final bloc = _makeBookingBloc(
+        driverRepo: driverRepo,
+        bookingRepository: bookingRepository,
+        driverProfileRepository: driverProfileRepository,
+        secureSessionService: secureSessionService,
+      );
+      addTearDown(bloc.close);
+
+      final searching = bloc.stream.firstWhere(
+        (state) => state is BookingSearching,
+      );
+      bloc.add(
+        const StartOpenBookingEvent(
+          trip: testTrip,
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          distanceKm: 2,
+          durationMinutes: 5,
+        ),
+      );
+      await searching;
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      final canceled = bloc.stream.firstWhere(
+        (state) => state is BookingCanceled,
+      );
+      bloc.add(const CancelBookingEvent());
+      await canceled.timeout(const Duration(milliseconds: 500));
+
+      creation.complete(const Ok('31'));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      verify(() => bookingRepository.cancelSession('31')).called(1);
+      verifyNever(() => bookingRepository.fetchOffers('31'));
+      expect(bloc.activeBidSessionId, isNull);
+      expect(bloc.state, isA<BookingCanceled>());
+    });
+
     test('emits BookingFailure and clears session when session was already accepted', () async {
       when(() => bookingRepository.createSession(any()))
           .thenAnswer((_) async => const Ok('cancel-session-4'));

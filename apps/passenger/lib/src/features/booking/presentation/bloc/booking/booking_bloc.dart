@@ -51,6 +51,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   bool _isRefreshingOffers = false;
   bool _realtimeWasConnected = false;
   String? _activeBidSessionId;
+  int _bookingOperationGeneration = 0;
   BidSessionTrip? _activeTrip;
 
   double? _pickupLat;
