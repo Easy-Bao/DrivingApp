@@ -5,7 +5,7 @@ SELECT id, passenger_id, driver_id, status, fare_amount, ride_type,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, arrived_at, waiting_until,
     cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details
+    cancellation_details, bid_session_id
 FROM rides
 WHERE id = $1
   AND driver_id = $2

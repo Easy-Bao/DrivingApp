@@ -5,7 +5,7 @@ SELECT id, passenger_id, driver_id, status, fare_amount, ride_type,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, arrived_at, waiting_until,
     cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details
+    cancellation_details, bid_session_id
 FROM rides
 WHERE id = $1
   AND status = 'requested'
@@ -95,13 +95,28 @@ INSERT INTO rides (
     passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
-    distance_km, duration_minutes, driver_name, vehicle_type, plate_number
+    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
+    bid_session_id
 )
 VALUES (
     $1, $2, 'accepted', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-    $13, $14, $15
+    $13, $14, $15, $16
 )
 RETURNING *;
+
+-- name: GetRideByBidSessionID :one
+SELECT sqlc.embed(ride),
+    COALESCE(settlement.payment_status, 'unpaid') AS payment_status,
+    COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
+    COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
+    COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
+    settlement.commission_bps,
+    COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
+    COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount
+FROM rides AS ride
+LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
+WHERE ride.bid_session_id = $1
+LIMIT 1;
 
 -- name: AssignRideFromAcceptance :one
 UPDATE rides

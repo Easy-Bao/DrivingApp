@@ -181,6 +181,7 @@ type Ride struct {
 	CancellationReason         string             `db:"cancellation_reason"`
 	CancellationResponsibility string             `db:"cancellation_responsibility"`
 	CancellationDetails        string             `db:"cancellation_details"`
+	BidSessionID               pgtype.Int4        `db:"bid_session_id"`
 }
 
 type RideEvent struct {

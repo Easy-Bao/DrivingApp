@@ -733,3 +733,58 @@ func TestRideCreationRejectsPassengerWithOpenBidSession(t *testing.T) {
 	}
 	assertRowCount(t, ctx, fixture.pool, `SELECT count(*) FROM rides WHERE passenger_id = $1`, passengerID, 0)
 }
+
+func TestReplayAcceptedOfferReturnsOriginalRideNotUnrelatedRide(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	ctx := context.Background()
+	passengerID := 9401
+	driverID := 9402
+	fixture.seedPassenger(t, ctx, passengerID)
+	fixture.seedDriver(t, ctx, driverID)
+
+	// 1. Passenger accepts driver's offer in session 1 -> creates ride 1.
+	session1ID := fixture.createBidSession(t, ctx, passengerID)
+	offer1ID := fixture.createBidOffer(t, ctx, session1ID, driverID)
+
+	acceptance1, err := fixture.dispatchStore.AcceptOffer(ctx, session1ID, offer1ID, passengerID)
+	if err != nil {
+		t.Fatalf("first AcceptOffer() error = %v", err)
+	}
+	ride1ID := acceptance1.Ride.ID
+
+	// Verify replay while R1 is active returns R1.
+	replayActive, err := fixture.dispatchStore.AcceptOffer(ctx, session1ID, offer1ID, passengerID)
+	if err != nil {
+		t.Fatalf("replay AcceptOffer() while R1 active error = %v", err)
+	}
+	if replayActive.Ride.ID != ride1ID {
+		t.Fatalf("replayed ride ID = %d, want original ride %d", replayActive.Ride.ID, ride1ID)
+	}
+
+	// 2. Complete R1.
+	if _, err := fixture.pool.Exec(ctx, `UPDATE rides SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE id = $1`, ride1ID); err != nil {
+		t.Fatalf("complete ride 1: %v", err)
+	}
+
+	// 3. Passenger and driver create another active ride R2 through a second session.
+	session2ID := fixture.createBidSession(t, ctx, passengerID)
+	offer2ID := fixture.createBidOffer(t, ctx, session2ID, driverID)
+
+	acceptance2, err := fixture.dispatchStore.AcceptOffer(ctx, session2ID, offer2ID, passengerID)
+	if err != nil {
+		t.Fatalf("second AcceptOffer() error = %v", err)
+	}
+	ride2ID := acceptance2.Ride.ID
+	if ride2ID == ride1ID {
+		t.Fatalf("second ride ID = %d, want different from ride 1 %d", ride2ID, ride1ID)
+	}
+
+	// 4. Replay AcceptOffer for session 1 / offer 1 while R2 is active.
+	replayCompleted, err := fixture.dispatchStore.AcceptOffer(ctx, session1ID, offer1ID, passengerID)
+	if err != nil {
+		t.Fatalf("replay AcceptOffer() for completed R1 error = %v", err)
+	}
+	if replayCompleted.Ride.ID != ride1ID {
+		t.Fatalf("replayed ride ID = %d, want %d (must NOT return unrelated current ride %d)", replayCompleted.Ride.ID, ride1ID, ride2ID)
+	}
+}

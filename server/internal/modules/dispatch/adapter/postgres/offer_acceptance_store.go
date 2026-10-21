@@ -59,24 +59,20 @@ func (repository *Store) AcceptOffer(
 				for _, candidateOffer := range offers {
 					if candidateOffer.ID == dbOfferID && candidateOffer.Status == "accepted" &&
 						existingSession.AcceptedDriverID.Valid && existingSession.AcceptedDriverID.Int32 == candidateOffer.DriverID {
-						activeRides, ridesErr := transactionQueries.ListActiveRidesForDriver(ctx, pgtype.Int4{
-							Int32: candidateOffer.DriverID,
+						sessionRideRow, rideErr := transactionQueries.GetRideByBidSessionID(ctx, pgtype.Int4{
+							Int32: dbSessionID,
 							Valid: true,
 						})
-						if ridesErr == nil {
-							for _, candidateRide := range activeRides {
-								if candidateRide.Ride.PassengerID == dbPassengerID {
-									sessionValue, sessionErr := fromPostgresBidSession(existingSession)
-									offerValue, offerErr := fromPostgresBidOffer(candidateOffer)
-									rideValue, rideErr := fromPostgresActiveRideRow(candidateRide)
-									if sessionErr == nil && offerErr == nil && rideErr == nil {
-										return dispatchapp.OfferAcceptance{
-											Session: sessionValue,
-											Offer:   offerValue,
-											Ride:    rideValue,
-										}, nil
-									}
-								}
+						if rideErr == nil {
+							sessionValue, sessionErr := fromPostgresBidSession(existingSession)
+							offerValue, offerErr := fromPostgresBidOffer(candidateOffer)
+							rideValue, rideErr := fromPostgresBidSessionRideRow(sessionRideRow)
+							if sessionErr == nil && offerErr == nil && rideErr == nil {
+								return dispatchapp.OfferAcceptance{
+									Session: sessionValue,
+									Offer:   offerValue,
+									Ride:    rideValue,
+								}, nil
 							}
 						}
 					}
@@ -251,6 +247,7 @@ func (repository *Store) AcceptOffer(
 		DriverName:       rideText(acceptedRide.DriverName),
 		VehicleType:      rideText(acceptedRide.VehicleType),
 		PlateNumber:      rideText(acceptedRide.PlateNumber),
+		BidSessionID:     pgtype.Int4{Int32: session.ID, Valid: true},
 	})
 	if err != nil {
 		return dispatchapp.OfferAcceptance{}, acceptedRideConflictError("create accepted ride", err)

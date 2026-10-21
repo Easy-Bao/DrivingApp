@@ -20,7 +20,7 @@ SET status = 'accepted',
     plate_number = $5
 WHERE id = $1
   AND status = 'requested'
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details, bid_session_id
 `
 
 type AcceptRideFromRequestParams struct {
@@ -67,6 +67,7 @@ func (q *Queries) AcceptRideFromRequest(ctx context.Context, arg AcceptRideFromR
 		&i.CancellationReason,
 		&i.CancellationResponsibility,
 		&i.CancellationDetails,
+		&i.BidSessionID,
 	)
 	return i, err
 }
@@ -80,7 +81,7 @@ SET status = 'assigned',
     plate_number = $5
 WHERE id = $1
   AND status = 'requested'
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details, bid_session_id
 `
 
 type AssignRideFromAcceptanceParams struct {
@@ -127,6 +128,7 @@ func (q *Queries) AssignRideFromAcceptance(ctx context.Context, arg AssignRideFr
 		&i.CancellationReason,
 		&i.CancellationResponsibility,
 		&i.CancellationDetails,
+		&i.BidSessionID,
 	)
 	return i, err
 }
@@ -150,13 +152,14 @@ INSERT INTO rides (
     passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
-    distance_km, duration_minutes, driver_name, vehicle_type, plate_number
+    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
+    bid_session_id
 )
 VALUES (
     $1, $2, 'accepted', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-    $13, $14, $15
+    $13, $14, $15, $16
 )
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details, bid_session_id
 `
 
 type CreateAcceptedRideParams struct {
@@ -175,6 +178,7 @@ type CreateAcceptedRideParams struct {
 	DriverName       pgtype.Text   `db:"driver_name"`
 	VehicleType      pgtype.Text   `db:"vehicle_type"`
 	PlateNumber      pgtype.Text   `db:"plate_number"`
+	BidSessionID     pgtype.Int4   `db:"bid_session_id"`
 }
 
 func (q *Queries) CreateAcceptedRide(ctx context.Context, arg CreateAcceptedRideParams) (Ride, error) {
@@ -194,6 +198,7 @@ func (q *Queries) CreateAcceptedRide(ctx context.Context, arg CreateAcceptedRide
 		arg.DriverName,
 		arg.VehicleType,
 		arg.PlateNumber,
+		arg.BidSessionID,
 	)
 	var i Ride
 	err := row.Scan(
@@ -223,6 +228,7 @@ func (q *Queries) CreateAcceptedRide(ctx context.Context, arg CreateAcceptedRide
 		&i.CancellationReason,
 		&i.CancellationResponsibility,
 		&i.CancellationDetails,
+		&i.BidSessionID,
 	)
 	return i, err
 }
@@ -296,6 +302,74 @@ func (q *Queries) GetBidOfferDriverForAcceptance(ctx context.Context, arg GetBid
 	return driver_id, err
 }
 
+const getRideByBidSessionID = `-- name: GetRideByBidSessionID :one
+SELECT ride.id, ride.passenger_id, ride.driver_id, ride.status, ride.fare_amount, ride.ride_type, ride.pickup_latitude, ride.pickup_longitude, ride.pickup_name, ride.dropoff_latitude, ride.dropoff_longitude, ride.dropoff_name, ride.distance_km, ride.duration_minutes, ride.driver_name, ride.vehicle_type, ride.plate_number, ride.driver_rating, ride.created_at, ride.completed_at, ride.arrived_at, ride.waiting_until, ride.cancelled_by, ride.cancellation_reason, ride.cancellation_responsibility, ride.cancellation_details, ride.bid_session_id,
+    COALESCE(settlement.payment_status, 'unpaid') AS payment_status,
+    COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
+    COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
+    COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
+    settlement.commission_bps,
+    COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
+    COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount
+FROM rides AS ride
+LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
+WHERE ride.bid_session_id = $1
+LIMIT 1
+`
+
+type GetRideByBidSessionIDRow struct {
+	Ride               Ride        `db:"ride"`
+	PaymentStatus      string      `db:"payment_status"`
+	CashReceivedAmount int64       `db:"cash_received_amount"`
+	CashChangeAmount   int64       `db:"cash_change_amount"`
+	CashOutcome        string      `db:"cash_outcome"`
+	CommissionBps      pgtype.Int4 `db:"commission_bps"`
+	CommissionAmount   int64       `db:"commission_amount"`
+	DriverPayoutAmount int64       `db:"driver_payout_amount"`
+}
+
+func (q *Queries) GetRideByBidSessionID(ctx context.Context, bidSessionID pgtype.Int4) (GetRideByBidSessionIDRow, error) {
+	row := q.db.QueryRow(ctx, getRideByBidSessionID, bidSessionID)
+	var i GetRideByBidSessionIDRow
+	err := row.Scan(
+		&i.Ride.ID,
+		&i.Ride.PassengerID,
+		&i.Ride.DriverID,
+		&i.Ride.Status,
+		&i.Ride.FareAmount,
+		&i.Ride.RideType,
+		&i.Ride.PickupLatitude,
+		&i.Ride.PickupLongitude,
+		&i.Ride.PickupName,
+		&i.Ride.DropoffLatitude,
+		&i.Ride.DropoffLongitude,
+		&i.Ride.DropoffName,
+		&i.Ride.DistanceKm,
+		&i.Ride.DurationMinutes,
+		&i.Ride.DriverName,
+		&i.Ride.VehicleType,
+		&i.Ride.PlateNumber,
+		&i.Ride.DriverRating,
+		&i.Ride.CreatedAt,
+		&i.Ride.CompletedAt,
+		&i.Ride.ArrivedAt,
+		&i.Ride.WaitingUntil,
+		&i.Ride.CancelledBy,
+		&i.Ride.CancellationReason,
+		&i.Ride.CancellationResponsibility,
+		&i.Ride.CancellationDetails,
+		&i.Ride.BidSessionID,
+		&i.PaymentStatus,
+		&i.CashReceivedAmount,
+		&i.CashChangeAmount,
+		&i.CashOutcome,
+		&i.CommissionBps,
+		&i.CommissionAmount,
+		&i.DriverPayoutAmount,
+	)
+	return i, err
+}
+
 const lockPendingBidOfferForAcceptance = `-- name: LockPendingBidOfferForAcceptance :one
 SELECT id, session_id, driver_id, driver_name, plate_number, vehicle_type,
     proposed_fare, status, created_at
@@ -336,7 +410,7 @@ SELECT id, passenger_id, driver_id, status, fare_amount, ride_type,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, arrived_at, waiting_until,
     cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details
+    cancellation_details, bid_session_id
 FROM rides
 WHERE id = $1
   AND status = 'requested'
@@ -374,6 +448,7 @@ func (q *Queries) LockRequestedRideForAcceptance(ctx context.Context, id int32) 
 		&i.CancellationReason,
 		&i.CancellationResponsibility,
 		&i.CancellationDetails,
+		&i.BidSessionID,
 	)
 	return i, err
 }

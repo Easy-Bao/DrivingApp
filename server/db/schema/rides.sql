@@ -26,6 +26,7 @@ CREATE TABLE rides (
     cancellation_reason text NOT NULL DEFAULT '',
     cancellation_responsibility text NOT NULL DEFAULT '',
     cancellation_details text NOT NULL DEFAULT '',
+    bid_session_id integer,
     CONSTRAINT rides_status_check CHECK (
         status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit', 'completed', 'cancelled')
     ),
@@ -65,7 +66,9 @@ CREATE TABLE rides (
     CONSTRAINT rides_driver_fk
         FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE RESTRICT,
     CONSTRAINT rides_cancelled_by_fkey
-        FOREIGN KEY (cancelled_by) REFERENCES users (id) ON DELETE SET NULL
+        FOREIGN KEY (cancelled_by) REFERENCES users (id) ON DELETE SET NULL,
+    CONSTRAINT rides_bid_session_fk
+        FOREIGN KEY (bid_session_id) REFERENCES bid_sessions (id) ON DELETE RESTRICT
 );
 
 CREATE INDEX ride_passenger_id_created_at
@@ -92,4 +95,8 @@ CREATE UNIQUE INDEX rides_one_active_ride_per_driver_idx
 CREATE INDEX rides_waiting_until_idx
     ON rides (status, waiting_until)
     WHERE status = 'arrived';
+
+CREATE UNIQUE INDEX rides_bid_session_id_idx
+    ON rides (bid_session_id)
+    WHERE bid_session_id IS NOT NULL;
 

@@ -62,6 +62,7 @@ type Querier interface {
 	GetPendingBidOffer(ctx context.Context, arg GetPendingBidOfferParams) (BidOffer, error)
 	GetPrivateObjectByStorageKey(ctx context.Context, storageKey string) (GetPrivateObjectByStorageKeyRow, error)
 	GetReviewByRide(ctx context.Context, rideID pgtype.Int4) (Review, error)
+	GetRideByBidSessionID(ctx context.Context, bidSessionID pgtype.Int4) (GetRideByBidSessionIDRow, error)
 	GetRideByID(ctx context.Context, id int32) (GetRideByIDRow, error)
 	GetRideReportByReporterCategory(ctx context.Context, arg GetRideReportByReporterCategoryParams) (RideReport, error)
 	GetRideReviewContext(ctx context.Context, rideID int32) (GetRideReviewContextRow, error)

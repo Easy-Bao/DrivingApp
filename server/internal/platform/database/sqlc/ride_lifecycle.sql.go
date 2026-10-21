@@ -18,7 +18,7 @@ SET status = 'completed',
 WHERE id = $1
   AND driver_id = $2
   AND status = 'in_transit'
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details, bid_session_id
 `
 
 type CompleteRideParams struct {
@@ -56,6 +56,7 @@ func (q *Queries) CompleteRide(ctx context.Context, arg CompleteRideParams) (Rid
 		&i.CancellationReason,
 		&i.CancellationResponsibility,
 		&i.CancellationDetails,
+		&i.BidSessionID,
 	)
 	return i, err
 }
@@ -111,7 +112,7 @@ WHERE id = $2
   AND driver_id = $3
   AND status = $4
   AND $4 IN ('assigned', 'accepted')
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details, bid_session_id
 `
 
 type MarkRideArrivedParams struct {
@@ -156,6 +157,7 @@ func (q *Queries) MarkRideArrived(ctx context.Context, arg MarkRideArrivedParams
 		&i.CancellationReason,
 		&i.CancellationResponsibility,
 		&i.CancellationDetails,
+		&i.BidSessionID,
 	)
 	return i, err
 }
@@ -175,7 +177,7 @@ WHERE id = $2
   AND status = 'arrived'
   AND waiting_until IS NOT NULL
   AND waiting_until <= CURRENT_TIMESTAMP
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details, bid_session_id
 `
 
 type MarkRidePassengerNoShowParams struct {
@@ -213,6 +215,7 @@ func (q *Queries) MarkRidePassengerNoShow(ctx context.Context, arg MarkRidePasse
 		&i.CancellationReason,
 		&i.CancellationResponsibility,
 		&i.CancellationDetails,
+		&i.BidSessionID,
 	)
 	return i, err
 }
@@ -223,7 +226,7 @@ SET status = 'in_transit'
 WHERE id = $1
   AND driver_id = $2
   AND status = 'arrived'
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details, bid_session_id
 `
 
 type StartRideParams struct {
@@ -261,6 +264,7 @@ func (q *Queries) StartRide(ctx context.Context, arg StartRideParams) (Ride, err
 		&i.CancellationReason,
 		&i.CancellationResponsibility,
 		&i.CancellationDetails,
+		&i.BidSessionID,
 	)
 	return i, err
 }
@@ -279,7 +283,7 @@ SET status = $1,
 WHERE id = $7
   AND status = $8
   AND (passenger_id = $9 OR driver_id = $9)
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details, bid_session_id
 `
 
 type UpdateRideStatusParams struct {
@@ -334,6 +338,7 @@ func (q *Queries) UpdateRideStatus(ctx context.Context, arg UpdateRideStatusPara
 		&i.CancellationReason,
 		&i.CancellationResponsibility,
 		&i.CancellationDetails,
+		&i.BidSessionID,
 	)
 	return i, err
 }

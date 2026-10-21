@@ -82,6 +82,18 @@ func fromPostgresActiveRideRow(item databasepostgres.ListActiveRidesForDriverRow
 	})
 }
 
+func fromPostgresBidSessionRideRow(item databasepostgres.GetRideByBidSessionIDRow) (ridedomain.Ride, error) {
+	return fromPostgresRideProjection(item.Ride, rideSettlementProjection{
+		PaymentStatus:      item.PaymentStatus,
+		CashReceivedAmount: item.CashReceivedAmount,
+		CashChangeAmount:   item.CashChangeAmount,
+		CashOutcome:        item.CashOutcome,
+		CommissionBps:      item.CommissionBps,
+		CommissionAmount:   item.CommissionAmount,
+		DriverPayoutAmount: item.DriverPayoutAmount,
+	})
+}
+
 func fromPostgresAcceptedRideProjection(
 	item databasepostgres.Ride,
 	settlement databasepostgres.RideSettlement,
