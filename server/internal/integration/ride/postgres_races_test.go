@@ -498,7 +498,7 @@ func newPostgresRideFixture(t *testing.T) *postgresRideFixture {
 		"wallet_ledgers.sql",
 		"audit_events.sql",
 	} {
-		schema, err := os.ReadFile(filepath.Join("../../../database/schema", filename))
+		schema, err := os.ReadFile(filepath.Join("../../../db/schema", filename))
 		if err != nil {
 			t.Fatalf("read canonical schema %s: %v", filename, err)
 		}

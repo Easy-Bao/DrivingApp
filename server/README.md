@@ -8,14 +8,14 @@ transient event delivery, and infrastructure adapters.
 The other commands are one-shot developer tools:
 
 - `cmd/migrate` applies the embedded, versioned PostgreSQL migration stream.
-- `cmd/objectstorage-migrate` copies, verifies, and contracts private objects in MinIO.
+- `cmd/storage-migrate` copies, verifies, and contracts private objects in MinIO.
 
-The SQL boundary is intentionally explicit. `internal/platform/database/migrations/`
+The SQL boundary is intentionally explicit. `db/migrations/`
 is the runtime schema history applied by `cmd/migrate`; applied migrations
 are immutable.
-`database/schema/` is the compile-time schema input used by sqlc and must be updated
-alongside a schema migration. `database/queries/` contains handwritten queries, and
-generated query code is written to `internal/platform/database/postgres/`.
+`db/schema/` is the compile-time schema input used by sqlc and must be updated
+alongside a schema migration. `db/queries/` contains handwritten queries, and
+generated query code is written to `internal/platform/database/sqlc/`.
 Regenerate it with `just generate-sqlc` (or `cd server && go tool sqlc generate`).
 
 For a schema change, add the versioned migration first, update the matching
@@ -30,12 +30,12 @@ omit the unit suffix, but never use floating-point values for money.
 
 ## DDD, hexagonal, and modular-monolith boundaries
 
-Each `internal/<module>` directory is a bounded module inside the one Go
+Each `internal/modules/<module>` directory is a bounded module inside the one Go
 process. Its domain package contains business state, invariants, and errors;
-its application package contains use cases; its `ports` package contains
-consumer-owned inbound and outbound contracts; its adapters translate those
-contracts to PostgreSQL, Redis, Mapbox, email, or in-memory infrastructure;
-and its transport package maps HTTP/WebSocket requests to application inputs.
+its application package (`app`) contains use cases and ports (`ports.go`);
+its adapters translate those contracts to PostgreSQL, Redis, Mapbox, email, or
+in-memory infrastructure; and its transport package maps HTTP/WebSocket
+requests to application inputs.
 
 The composition root is `internal/app`: it loads configuration, constructs
 platform services and module adapters, injects ports, and registers routes.
@@ -46,22 +46,18 @@ envelopes, WebSocket hub, security, middleware, and resilience helpers.
 The current module ownership is:
 
 - `dispatch`: driver availability, bidding, offer acceptance, and assignment.
-- `ride`: booking, lifecycle, settlement, and ride-scoped safety reports;
-  the use-case groups live under `internal/ride/{booking,lifecycle,settlement}`.
+- `ride`: booking, lifecycle, settlement, and ride-scoped safety reports.
 - `review`: completed-ride driver and passenger ratings, eligibility, and submission.
-- `auth`, `user`, `admin`, and `driver/documents`: identity, profiles,
-  administration, and driver-document workflows with feature-owned ports.
-- `location` and `location/tracking`: provider-backed location queries and
-  active telemetry, respectively.
-- `chat` and `dispatch/assignment`: communication rooms and ride-assignment
-  lookup/projection, each with domain/application/ports/adapters boundaries.
-  Assignment is shared by chat and tracking through a small lookup contract.
-- `passenger/ridecontext`: the passenger home read model, with its query use
-  case and location/history reader ports separated from transport.
+- `auth`: identity, authentication, sessions, tokens, OTPs, and password reset.
+- `user`: passenger and driver profiles, avatar storage, and notifications.
+- `admin`: administrative verification and back-office management.
+- `driver`: driver onboarding, vehicle documents, and document verification.
+- `location`: Mapbox-backed geolocation, geocoding, reverse geocoding, and route calculation.
+- `chat`: communication rooms and messaging for active rides.
 
 There is no generic `realtime` business module. Chat and tracking own their
 business behavior; the process-local event publisher and WebSocket hub belong
-to `internal/platform`. All modules import the relevant feature `ports` package,
+to `internal/platform`. All modules import the relevant feature ports,
 and no domain or application package may depend on generated sqlc types,
 pgx pools, or Redis clients.
 
