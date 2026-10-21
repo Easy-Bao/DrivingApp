@@ -119,7 +119,7 @@ void main() {
   });
 
   testWidgets(
-    'shows a circular loader and hides map pins until visible tiles render',
+    'shows a circular loader while map tiles load and keeps map pin button visible',
     (tester) async {
       mapPlatform.autoLoad = false;
       await tester.pumpWidget(
@@ -130,7 +130,7 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(
         find.byKey(const ValueKey('search-destination-map-pin')),
-        findsNothing,
+        findsOneWidget,
       );
       mapPlatform.onMapEvent!(_loadedMapEvent());
       await tester.pump();

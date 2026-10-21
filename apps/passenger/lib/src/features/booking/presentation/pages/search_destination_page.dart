@@ -818,7 +818,7 @@ class _SearchDestinationPageState()
                                               ),
                                             ),
                                           ),
-                                        if (t >= 0.4 && _mapReady)
+                                        if (t >= 0.4)
                                           FadeTransition(
                                             opacity: _mapPinFadeAnimation,
                                             child: Transform.scale(
@@ -912,62 +912,57 @@ class _SearchDestinationPageState()
                                 ),
                               ),
                             ),
-                          if (_mapReady)
-                            Positioned(
-                              right: 0,
-                              top: 3,
-                              child: FadeTransition(
-                                opacity: _collapsedControlsFadeAnimation,
-                                child: Transform.scale(
-                                  scale: (1.0 - t * 0.5).clamp(0.0, 1.0),
-                                  child: GestureDetector(
-                                    key: const ValueKey(
-                                      'search-destination-map-pin',
-                                    ),
-                                    onTap: _openMapPin,
-                                    child: SizedBox(
-                                      width: AppSize.minimumTouchTarget,
-                                      height: AppSize.minimumTouchTarget,
-                                      child: Hero(
-                                        tag: BookingRoutes.mapPinHeroTag,
-                                        child: FittedBox(
-                                          child: Material(
-                                            color: context.colorScheme.surface
-                                                .withValues(alpha: 0),
-                                            child: Container(
-                                              width: AppSize.minimumTouchTarget,
-                                              height:
-                                                  AppSize.minimumTouchTarget,
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    context.colorScheme.surface,
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                  color: context
-                                                      .colorScheme
-                                                      .outlineVariant,
-                                                ),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: context
-                                                        .colorScheme
-                                                        .onSurface
-                                                        .withValues(
-                                                          alpha: 0.08,
-                                                        ),
-                                                    blurRadius: 15,
-                                                    offset: const Offset(0, 4),
-                                                  ),
-                                                ],
+                          Positioned(
+                            right: 0,
+                            top: 3,
+                            child: FadeTransition(
+                              opacity: _collapsedControlsFadeAnimation,
+                              child: Transform.scale(
+                                scale: (1.0 - t * 0.5).clamp(0.0, 1.0),
+                                child: GestureDetector(
+                                  key: const ValueKey(
+                                    'search-destination-map-pin',
+                                  ),
+                                  onTap: _openMapPin,
+                                  child: SizedBox(
+                                    width: AppSize.minimumTouchTarget,
+                                    height: AppSize.minimumTouchTarget,
+                                    child: Hero(
+                                      tag: BookingRoutes.mapPinHeroTag,
+                                      child: FittedBox(
+                                        child: Material(
+                                          color: context.colorScheme.surface
+                                              .withValues(alpha: 0),
+                                          child: Container(
+                                            width: AppSize.minimumTouchTarget,
+                                            height: AppSize.minimumTouchTarget,
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  context.colorScheme.surface,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: context
+                                                    .colorScheme
+                                                    .outlineVariant,
                                               ),
-                                              child: Center(
-                                                child: Icon(
-                                                  LucideIcons.map_pin,
+                                              boxShadow: [
+                                                BoxShadow(
                                                   color: context
                                                       .colorScheme
-                                                      .onSurface,
-                                                  size: 20,
+                                                      .onSurface
+                                                      .withValues(alpha: 0.08),
+                                                  blurRadius: 15,
+                                                  offset: const Offset(0, 4),
                                                 ),
+                                              ],
+                                            ),
+                                            child: Center(
+                                              child: Icon(
+                                                LucideIcons.map_pin,
+                                                color: context
+                                                    .colorScheme
+                                                    .onSurface,
+                                                size: 20,
                                               ),
                                             ),
                                           ),
@@ -978,6 +973,7 @@ class _SearchDestinationPageState()
                                 ),
                               ),
                             ),
+                          ),
                         ],
                       ),
                     ),

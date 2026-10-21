@@ -510,6 +510,25 @@ class _FindingDriverPageContentState()
                       ),
                     ),
                   ),
+                  BlocBuilder<BookingBloc, BookingState>(
+                    builder: (context, state) {
+                      final isSearching =
+                          state is FindingNearestDriver ||
+                          state is BookingSearching ||
+                          (state is BookingOffersReceived &&
+                              state.offers.isEmpty) ||
+                          state is BookingSessionRecoveryInProgress;
+                      if (!isSearching) return const SizedBox.shrink();
+                      return Positioned.fill(
+                        child: IgnorePointer(
+                          child: Align(
+                            alignment: const Alignment(0, -0.35),
+                            child: _buildMapRadarOverlay(context),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   SafeArea(
                     child: Align(
                       alignment: Alignment.topLeft,
@@ -621,6 +640,8 @@ class _FindingDriverPageContentState()
                               destination: destination,
                               pickupAddress: pickupAddress,
                               rideType: rideType,
+                              distance: widget.distance,
+                              duration: widget.duration,
                               requestCreated: false,
                               dotAnimation: _dotAnimationController,
                               onCancelPressed: _handleCancel,
@@ -678,6 +699,8 @@ class _FindingDriverPageContentState()
                               destination: destination,
                               pickupAddress: pickupAddress,
                               rideType: rideType,
+                              distance: widget.distance,
+                              duration: widget.duration,
                               requestId: state.sessionId,
                               expiresAt: state.expiresAt,
                               requestCreated:
@@ -699,6 +722,8 @@ class _FindingDriverPageContentState()
                                 destination: destination,
                                 pickupAddress: pickupAddress,
                                 rideType: rideType,
+                                distance: widget.distance,
+                                duration: widget.duration,
                                 requestId: state.sessionId,
                                 expiresAt: state.expiresAt,
                                 requestCreated: true,
@@ -747,6 +772,8 @@ class _FindingDriverPageContentState()
                               destination: destination,
                               pickupAddress: pickupAddress,
                               rideType: rideType,
+                              distance: widget.distance,
+                              duration: widget.duration,
                               requestId: requestCreated
                                   ? state.sessionId
                                   : null,
@@ -766,6 +793,8 @@ class _FindingDriverPageContentState()
                               destination: destination,
                               pickupAddress: pickupAddress,
                               rideType: rideType,
+                              distance: widget.distance,
+                              duration: widget.duration,
                               requestId: requestCreated
                                   ? state.sessionId
                                   : null,
@@ -792,6 +821,69 @@ class _FindingDriverPageContentState()
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMapRadarOverlay(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _dotAnimationController,
+      builder: (context, child) {
+        final t = _dotAnimationController.value;
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Transform.scale(
+              scale: 1.0 + (t * 0.9),
+              child: Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF10B981)
+                      .withValues(alpha: (1.0 - t).clamp(0.0, 1.0) * 0.08),
+                  border: Border.all(
+                    color: const Color(0xFF10B981)
+                        .withValues(alpha: (1.0 - t).clamp(0.0, 1.0) * 0.35),
+                    width: 1.2,
+                  ),
+                ),
+              ),
+            ),
+            Transform.scale(
+              scale: 1.0 + (((t + 0.5) % 1.0) * 0.55),
+              child: Container(
+                width: 95,
+                height: 95,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFF10B981).withValues(
+                      alpha: (1.0 - ((t + 0.5) % 1.0)).clamp(0.0, 1.0) * 0.25,
+                    ),
+                    width: 1.0,
+                  ),
+                ),
+              ),
+            ),
+            Container(
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF10B981),
+                border: Border.all(color: Colors.white, width: 2.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

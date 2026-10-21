@@ -1,31 +1,39 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_status_sheet.dart';
 
-class const FindingDriverSearchingPanel({
-  super.key,
-  required this.message,
-  required this.fare,
-  required this.destination,
-  this.pickupAddress,
-  this.rideType,
-  this.requestId,
-  this.expiresAt,
-  this.requestCreated = false,
-  this.isSendingRequest = false,
-  this.animate = true,
-  this.refreshError,
-  this.onRetryPressed,
-  required this.dotAnimation,
-  required this.onCancelPressed,
-  this.isCanceling = false,
-}) extends StatelessWidget {
+class FindingDriverSearchingPanel extends StatelessWidget {
+  const FindingDriverSearchingPanel({
+    super.key,
+    required this.message,
+    required this.fare,
+    required this.destination,
+    this.pickupAddress,
+    this.rideType,
+    this.distance,
+    this.duration,
+    this.requestId,
+    this.expiresAt,
+    this.requestCreated = false,
+    this.isSendingRequest = false,
+    this.animate = true,
+    this.refreshError,
+    this.onRetryPressed,
+    required this.dotAnimation,
+    required this.onCancelPressed,
+    this.isCanceling = false,
+  });
+
   final String message;
   final double fare;
   final Place destination;
   final String? pickupAddress;
   final String? rideType;
+  final String? distance;
+  final String? duration;
   final String? requestId;
   final DateTime? expiresAt;
   final bool requestCreated;
@@ -37,41 +45,435 @@ class const FindingDriverSearchingPanel({
   final VoidCallback onCancelPressed;
   final bool isCanceling;
 
+  String _resolveBookingId() {
+    final id = requestId?.trim() ?? '';
+    if (id.isEmpty) return 'Pending';
+    if (id.startsWith('BR-') || id.startsWith('REQ-')) return id;
+    return 'BR-$id';
+  }
+
+  String _resolvePickupTitle() {
+    final addr = pickupAddress?.trim() ?? '';
+    if (addr.isEmpty) return 'Current location';
+    final commaIndex = addr.indexOf(',');
+    if (commaIndex > 0) {
+      return addr.substring(0, commaIndex).trim();
+    }
+    return addr;
+  }
+
+  String _resolvePickupSubtitle() {
+    final addr = pickupAddress?.trim() ?? '';
+    if (addr.isEmpty) return 'Current pickup location';
+    return addr;
+  }
+
+  String _resolveDestinationTitle() {
+    final name = destination.name.trim();
+    if (name.isNotEmpty) return name;
+    return destination.displayName;
+  }
+
+  String _resolveDestinationSubtitle() {
+    final full = destination.fullAddress.trim();
+    if (full.isNotEmpty) return full;
+    return _resolveDestinationTitle();
+  }
+
+  String _resolveDropoffMeta() {
+    final parts = <String>[];
+    if (distance != null && distance!.trim().isNotEmpty) {
+      parts.add(distance!.trim());
+    }
+    if (duration != null && duration!.trim().isNotEmpty) {
+      parts.add(duration!.trim());
+    }
+    if (parts.isEmpty) return 'Drop-off Location';
+    return 'Drop-off Location · ${parts.join(' · ')}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FindingDriverStatusSheet(
-      eyebrow: requestCreated
-          ? 'Ride request'
-          : isSendingRequest
-          ? 'Sending request'
-          : 'Driver availability',
-      title: message,
-      message: requestCreated
-          ? 'Your request is open. We’ll update this screen when a driver responds.'
-          : isSendingRequest
-          ? 'We’re sending your request and will confirm when the server accepts it.'
-          : 'We’re checking which drivers are currently nearby.',
-      statusIcon: LucideIcons.search,
-      statusColor: Theme.of(context).colorScheme.primary,
-      statusAnimation: animate ? dotAnimation : null,
-      destination: destination.name,
-      pickupAddress: pickupAddress,
-      rideType: rideType,
-      requestId: requestId,
-      footerMessage:
-          refreshError ??
-          (expiresAt == null
-              ? null
-              : 'Request expires at ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(expiresAt!.toLocal()))}'),
-      fare: fare,
-      onCancelPressed: onCancelPressed,
-      cancelLabel: isSendingRequest || requestCreated
-          ? 'Cancel request'
-          : 'Cancel search',
-      secondaryAction: refreshError == null ? null : onRetryPressed,
-      secondaryActionLabel: refreshError == null ? null : 'Retry update',
-      secondaryActionIcon: LucideIcons.refresh_cw,
-      isCanceling: isCanceling,
+    final colorScheme = context.colorScheme;
+    final displayBookingId = _resolveBookingId();
+    final pickupTitle = _resolvePickupTitle();
+    final pickupSubtitle = _resolvePickupSubtitle();
+    final destinationTitle = _resolveDestinationTitle();
+    final destinationSubtitle = _resolveDestinationSubtitle();
+    final dropoffMeta = _resolveDropoffMeta();
+
+    return Material(
+      key: const ValueKey<String>('finding-driver-searching-panel'),
+      color: colorScheme.surface,
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppRadius.sheet),
+      ),
+      clipBehavior: Clip.antiAlias,
+      elevation: 12,
+      shadowColor: colorScheme.onSurface.withValues(alpha: 0.12),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Searching for a driver',
+                          style: TextStyle(
+                            color: colorScheme.onSurface,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Booking ID: $displayBookingId',
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (displayBookingId.isNotEmpty &&
+                      displayBookingId != 'Pending')
+                    Material(
+                      color: colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.6,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Tooltip(
+                        message: 'Copy Booking ID',
+                        child: InkWell(
+                          key: const ValueKey<String>('copy-booking-id-button'),
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: displayBookingId),
+                            );
+                            if (context.mounted) {
+                              CustomToast.show(context, 'Booking ID copied');
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Icon(
+                              LucideIcons.copy,
+                              size: 18,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                key: const ValueKey<String>('finding-driver-location-card'),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+                    width: 1,
+                  ),
+                ),
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Container(
+                              width: 18,
+                              height: 18,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(0xFF1D4ED8),
+                              ),
+                              child: Center(
+                                child: Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Center(
+                              child: CustomPaint(
+                                size: const Size(2, double.infinity),
+                                painter: _DashedLinePainter(
+                                  color: colorScheme.outlineVariant,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 2),
+                            child: Icon(
+                              LucideIcons.map_pin,
+                              size: 20,
+                              color: Color(0xFF7E22CE),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Pickup Location · Now',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              pickupTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            if (pickupSubtitle.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                pickupSubtitle,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: colorScheme.onSurfaceVariant,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              child: Divider(
+                                height: 1,
+                                thickness: 0.8,
+                                color: colorScheme.outlineVariant.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              dropoffMeta,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              destinationTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            if (destinationSubtitle.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                destinationSubtitle,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: colorScheme.onSurfaceVariant,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (refreshError?.trim().isNotEmpty == true) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        refreshError!,
+                        style: TextStyle(
+                          color: colorScheme.error,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    if (onRetryPressed != null)
+                      TextButton.icon(
+                        onPressed: onRetryPressed,
+                        icon: const Icon(LucideIcons.refresh_cw, size: 14),
+                        label: const Text('Retry'),
+                      ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        LucideIcons.banknote,
+                        size: 20,
+                        color: colorScheme.onSurface,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        rideType?.trim().isNotEmpty == true
+                            ? 'Cash · ${rideType!.trim()}'
+                            : 'Cash',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    formatPesoAmount(fare),
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: colorScheme.onSurface,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 48,
+                child: OutlinedButton(
+                  key: const ValueKey<String>('cancel-booking-button'),
+                  onPressed: isCanceling ? null : onCancelPressed,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFB91C1C),
+                    side: BorderSide(
+                      color: colorScheme.outlineVariant,
+                      width: 1,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ),
+                  child: isCanceling
+                      ? SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: colorScheme.error,
+                          ),
+                        )
+                      : const Text(
+                          'Cancel booking',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
+}
+
+class _DashedLinePainter extends CustomPainter {
+  static const double _dashHeight = 3.5;
+  static const double _gapHeight = 3.5;
+  static const double _strokeWidth = 1.5;
+
+  final Color color;
+
+  const _DashedLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = _strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    double startY = 4.0;
+    while (startY < size.height - 4.0) {
+      final endY = (startY + _dashHeight).clamp(0.0, size.height - 4.0);
+      canvas.drawLine(
+        Offset(size.width / 2, startY),
+        Offset(size.width / 2, endY),
+        paint,
+      );
+      startY += _dashHeight + _gapHeight;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) =>
+      color != oldDelegate.color;
 }
