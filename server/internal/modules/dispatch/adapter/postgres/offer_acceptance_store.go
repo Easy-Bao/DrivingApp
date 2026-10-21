@@ -294,7 +294,19 @@ func mapBidOfferWithdrawals(
 ) ([]dispatchdomain.BidOfferWithdrawal, error) {
 	withdrawals := make([]dispatchdomain.BidOfferWithdrawal, 0, len(rows))
 	for _, item := range rows {
-		offer, err := fromPostgresBidOffer(item.BidOffer)
+		// The offer columns come from the UPDATE's RETURNING relation so the
+		// payload carries the rejected status rather than the pre-update row.
+		offer, err := fromPostgresBidOffer(databasepostgres.BidOffer{
+			ID:           item.OfferID,
+			SessionID:    item.OfferSessionID,
+			DriverID:     item.OfferDriverID,
+			DriverName:   item.OfferDriverName,
+			PlateNumber:  item.OfferPlateNumber,
+			VehicleType:  item.OfferVehicleType,
+			ProposedFare: item.OfferProposedFare,
+			Status:       item.OfferStatus,
+			CreatedAt:    item.OfferCreatedAt,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("map withdrawn bid offer: %w", err)
 		}

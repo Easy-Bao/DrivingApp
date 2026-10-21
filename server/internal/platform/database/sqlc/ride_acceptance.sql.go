@@ -454,13 +454,24 @@ WITH rejected AS (
     WHERE bid_offers.driver_id = $1
       AND bid_offers.status = 'pending'
       AND bid_offers.id <> $2
-    RETURNING bid_offers.id, bid_offers.session_id
+    RETURNING bid_offers.id, bid_offers.session_id, bid_offers.driver_id,
+        bid_offers.driver_name, bid_offers.plate_number,
+        bid_offers.vehicle_type, bid_offers.proposed_fare,
+        bid_offers.status, bid_offers.created_at
 )
-SELECT bid_offers.id, bid_offers.session_id, bid_offers.driver_id, bid_offers.driver_name, bid_offers.plate_number, bid_offers.vehicle_type, bid_offers.proposed_fare, bid_offers.status, bid_offers.created_at, bid_sessions.id, bid_sessions.passenger_id, bid_sessions.ride_type, bid_sessions.pickup_latitude, bid_sessions.pickup_longitude, bid_sessions.pickup_name, bid_sessions.dropoff_latitude, bid_sessions.dropoff_longitude, bid_sessions.dropoff_name, bid_sessions.passenger_note, bid_sessions.distance_km, bid_sessions.duration_minutes, bid_sessions.offered_fare, bid_sessions.status, bid_sessions.target_driver_id, bid_sessions.accepted_driver_id, bid_sessions.expires_at, bid_sessions.created_at
+SELECT rejected.id AS offer_id,
+    rejected.session_id AS offer_session_id,
+    rejected.driver_id AS offer_driver_id,
+    rejected.driver_name AS offer_driver_name,
+    rejected.plate_number AS offer_plate_number,
+    rejected.vehicle_type AS offer_vehicle_type,
+    rejected.proposed_fare AS offer_proposed_fare,
+    rejected.status AS offer_status,
+    rejected.created_at AS offer_created_at,
+    bid_sessions.id, bid_sessions.passenger_id, bid_sessions.ride_type, bid_sessions.pickup_latitude, bid_sessions.pickup_longitude, bid_sessions.pickup_name, bid_sessions.dropoff_latitude, bid_sessions.dropoff_longitude, bid_sessions.dropoff_name, bid_sessions.passenger_note, bid_sessions.distance_km, bid_sessions.duration_minutes, bid_sessions.offered_fare, bid_sessions.status, bid_sessions.target_driver_id, bid_sessions.accepted_driver_id, bid_sessions.expires_at, bid_sessions.created_at
 FROM rejected
-JOIN bid_offers ON bid_offers.id = rejected.id
 JOIN bid_sessions ON bid_sessions.id = rejected.session_id
-ORDER BY bid_offers.id
+ORDER BY rejected.id
 `
 
 type RejectDriverPendingBidOffersParams struct {
@@ -469,8 +480,16 @@ type RejectDriverPendingBidOffersParams struct {
 }
 
 type RejectDriverPendingBidOffersRow struct {
-	BidOffer   BidOffer   `db:"bid_offer"`
-	BidSession BidSession `db:"bid_session"`
+	OfferID           int32              `db:"offer_id"`
+	OfferSessionID    int32              `db:"offer_session_id"`
+	OfferDriverID     int32              `db:"offer_driver_id"`
+	OfferDriverName   pgtype.Text        `db:"offer_driver_name"`
+	OfferPlateNumber  pgtype.Text        `db:"offer_plate_number"`
+	OfferVehicleType  pgtype.Text        `db:"offer_vehicle_type"`
+	OfferProposedFare int64              `db:"offer_proposed_fare"`
+	OfferStatus       string             `db:"offer_status"`
+	OfferCreatedAt    pgtype.Timestamptz `db:"offer_created_at"`
+	BidSession        BidSession         `db:"bid_session"`
 }
 
 func (q *Queries) RejectDriverPendingBidOffers(ctx context.Context, arg RejectDriverPendingBidOffersParams) ([]RejectDriverPendingBidOffersRow, error) {
@@ -483,15 +502,15 @@ func (q *Queries) RejectDriverPendingBidOffers(ctx context.Context, arg RejectDr
 	for rows.Next() {
 		var i RejectDriverPendingBidOffersRow
 		if err := rows.Scan(
-			&i.BidOffer.ID,
-			&i.BidOffer.SessionID,
-			&i.BidOffer.DriverID,
-			&i.BidOffer.DriverName,
-			&i.BidOffer.PlateNumber,
-			&i.BidOffer.VehicleType,
-			&i.BidOffer.ProposedFare,
-			&i.BidOffer.Status,
-			&i.BidOffer.CreatedAt,
+			&i.OfferID,
+			&i.OfferSessionID,
+			&i.OfferDriverID,
+			&i.OfferDriverName,
+			&i.OfferPlateNumber,
+			&i.OfferVehicleType,
+			&i.OfferProposedFare,
+			&i.OfferStatus,
+			&i.OfferCreatedAt,
 			&i.BidSession.ID,
 			&i.BidSession.PassengerID,
 			&i.BidSession.RideType,

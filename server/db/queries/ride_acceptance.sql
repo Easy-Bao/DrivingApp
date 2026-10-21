@@ -60,13 +60,24 @@ WITH rejected AS (
     WHERE bid_offers.driver_id = $1
       AND bid_offers.status = 'pending'
       AND bid_offers.id <> $2
-    RETURNING bid_offers.id, bid_offers.session_id
+    RETURNING bid_offers.id, bid_offers.session_id, bid_offers.driver_id,
+        bid_offers.driver_name, bid_offers.plate_number,
+        bid_offers.vehicle_type, bid_offers.proposed_fare,
+        bid_offers.status, bid_offers.created_at
 )
-SELECT sqlc.embed(bid_offers), sqlc.embed(bid_sessions)
+SELECT rejected.id AS offer_id,
+    rejected.session_id AS offer_session_id,
+    rejected.driver_id AS offer_driver_id,
+    rejected.driver_name AS offer_driver_name,
+    rejected.plate_number AS offer_plate_number,
+    rejected.vehicle_type AS offer_vehicle_type,
+    rejected.proposed_fare AS offer_proposed_fare,
+    rejected.status AS offer_status,
+    rejected.created_at AS offer_created_at,
+    sqlc.embed(bid_sessions)
 FROM rejected
-JOIN bid_offers ON bid_offers.id = rejected.id
 JOIN bid_sessions ON bid_sessions.id = rejected.session_id
-ORDER BY bid_offers.id;
+ORDER BY rejected.id;
 
 -- name: MarkBidSessionAccepted :one
 UPDATE bid_sessions

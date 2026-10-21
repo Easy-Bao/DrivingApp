@@ -58,3 +58,37 @@ func TestFromPostgresBiddingRowsRejectMissingTimestamps(t *testing.T) {
 		t.Fatal("expected missing bid offer timestamp to be rejected")
 	}
 }
+
+func TestMapBidOfferWithdrawalsUsesUpdatedOfferStatus(t *testing.T) {
+	createdAt := bidTimestamp(time.Date(2026, time.January, 2, 3, 0, 0, 0, time.UTC))
+	withdrawals, err := mapBidOfferWithdrawals([]databasepostgres.RejectDriverPendingBidOffersRow{{
+		OfferID:           9,
+		OfferSessionID:    21,
+		OfferDriverID:     11,
+		OfferProposedFare: 4500,
+		OfferStatus:       "rejected",
+		OfferCreatedAt:    createdAt,
+		BidSession: databasepostgres.BidSession{
+			ID:          21,
+			PassengerID: 7,
+			RideType:    "solo",
+			Status:      "open",
+			ExpiresAt:   createdAt,
+			CreatedAt:   createdAt,
+		},
+	}})
+	if err != nil {
+		t.Fatalf("mapBidOfferWithdrawals() error = %v", err)
+	}
+	if len(withdrawals) != 1 {
+		t.Fatalf("withdrawals = %d, want 1", len(withdrawals))
+	}
+	offer := withdrawals[0].Offer
+	if offer.Status != "rejected" || offer.ID != 9 || offer.SessionID != 21 ||
+		offer.DriverID != 11 || offer.ProposedFareAmount != 4500 {
+		t.Fatalf("withdrawn offer = %+v, want rejected offer 9 in session 21", offer)
+	}
+	if withdrawals[0].Session.ID != 21 {
+		t.Fatalf("session id = %d, want 21", withdrawals[0].Session.ID)
+	}
+}
