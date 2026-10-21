@@ -77,10 +77,19 @@ final class NearestDriverFound extends BookingState {
 }
 
 final class BookingSearching extends BookingState {
-  const BookingSearching({required this.isDirect, this.targetDriver});
+  const BookingSearching({
+    required this.isDirect,
+    this.targetDriver,
+    this.sessionId,
+    this.expiresAt,
+    this.refreshError,
+  });
 
   final bool isDirect;
   final DriverModel? targetDriver;
+  final String? sessionId;
+  final DateTime? expiresAt;
+  final String? refreshError;
 }
 
 final class BookingOffersReceived extends BookingState {
@@ -88,11 +97,17 @@ final class BookingOffersReceived extends BookingState {
     required this.offers,
     required this.isDirect,
     this.targetDriver,
+    this.sessionId,
+    this.expiresAt,
+    this.refreshError,
   });
 
   final List<BookingOffer> offers;
   final bool isDirect;
   final DriverModel? targetDriver;
+  final String? sessionId;
+  final DateTime? expiresAt;
+  final String? refreshError;
 }
 
 final class DriverMatchResult {
@@ -120,15 +135,45 @@ final class BookingDriverMatched extends BookingState {
   final String? rideId;
 }
 
+final class BookingSessionRecoveryInProgress extends BookingState {
+  const BookingSessionRecoveryInProgress({required this.sessionId});
+
+  final String sessionId;
+}
+
+final class BookingSessionRecoveryFailure extends BookingState {
+  const BookingSessionRecoveryFailure({
+    required this.sessionId,
+    required this.message,
+  });
+
+  final String sessionId;
+  final String message;
+}
+
+final class BookingRideRecovered extends BookingState {
+  const BookingRideRecovered({required this.sessionId, required this.rideId});
+
+  final String sessionId;
+  final String rideId;
+}
+
 final class BookingCanceled extends BookingState {
   const BookingCanceled();
 }
 
 final class BookingFailure extends BookingState {
-  const BookingFailure(this.message, {this.isNoDriverFound = false});
+  const BookingFailure(
+    this.message, {
+    this.isNoDriverFound = false,
+    this.isRequestExpired = false,
+    this.sessionId,
+  });
 
   final String message;
   final bool isNoDriverFound;
+  final bool isRequestExpired;
+  final String? sessionId;
 }
 
 extension BookingStateModernApi on BookingState {
@@ -136,6 +181,8 @@ extension BookingStateModernApi on BookingState {
     BookingInitial() => 'Ready to request a short hop.',
     FindingNearestDriver() => 'Locating nearest driver.',
     NearestDriverFound(:final driver) => '${driver.displayName} is nearby.',
+    BookingSearching(:final sessionId) when sessionId == null =>
+      'Sending your request.',
     BookingSearching(:final isDirect, :final targetDriver) when isDirect =>
       'Waiting for ${targetDriver?.displayName ?? 'your driver'}.',
     BookingSearching() => 'Finding your driver.',
@@ -148,6 +195,11 @@ extension BookingStateModernApi on BookingState {
       '${offers.length} driver offers available.',
     BookingDriverMatched(:final matchResult) =>
       '${matchResult.driverName} is on the way.',
+    BookingSessionRecoveryInProgress(:final sessionId) when sessionId.isEmpty =>
+      'Sending your request.',
+    BookingSessionRecoveryInProgress() => 'Checking your active request.',
+    BookingSessionRecoveryFailure(:final message) => message,
+    BookingRideRecovered() => 'Your ride was accepted.',
     BookingCanceled() => 'Booking canceled.',
     BookingFailure(:final message) => message,
   };

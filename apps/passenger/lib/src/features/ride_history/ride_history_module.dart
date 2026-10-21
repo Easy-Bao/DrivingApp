@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/core/session/session_store.dart';
+import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
@@ -11,7 +12,6 @@ import 'package:passenger/src/features/ride_history/data/repositories/ride_histo
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
-import 'package:passenger/src/features/ride_history/presentation/pages/rating_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/pages/recent_activity_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/pages/ride_details_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/pages/ride_history_page.dart';
@@ -39,6 +39,7 @@ class RideHistoryModule._() {
         (i) => RideDetailsCubit(
           repository: i.get<TrackRepository>(),
           sessionService: i.get<SessionStore>(),
+          profileRepository: i.get<DriverProfileRepository>(),
         ),
       );
   }
@@ -58,13 +59,16 @@ class RideHistoryModule._() {
       name: RideHistoryRoutes.rideDetails,
       RideHistoryRoutes.rideDetailsPath,
       child: (context, GoRouterState state) {
-        final ride = state.extra is RideHistory
-            ? state.extra as RideHistory
-            : null;
+        final extra = state.extra;
+        final ride = extra is RideHistory ? extra : null;
+        final initialRide = extra is RideSnapshot ? extra : null;
         return RideDetailsPage(
           ride: ride,
+          rideId: ride?.id ?? initialRide?.id,
+          initialRide: initialRide,
           trackRepository: Modular.get<TrackRepository>(),
           sessionService: Modular.get<SessionStore>(),
+          profileRepository: Modular.get<DriverProfileRepository>(),
           detailsCubit: Modular.get<RideDetailsCubit>(),
         );
       },
@@ -75,14 +79,13 @@ class RideHistoryModule._() {
       name: RideHistoryRoutes.passengerRating,
       RideHistoryRoutes.passengerRatingPath,
       child: (context, GoRouterState state) {
-        final driverId = state.uri.queryParameters['driverId'] ?? '';
-        final driverName = state.uri.queryParameters['driverName'] ?? '';
         final rideId = state.uri.queryParameters['rideId'] ?? '';
-        return RatingPage(
-          driverId: driverId,
-          driverName: driverName,
+        return RideDetailsPage(
           rideId: rideId,
+          trackRepository: Modular.get<TrackRepository>(),
+          sessionService: Modular.get<SessionStore>(),
           profileRepository: Modular.get<DriverProfileRepository>(),
+          detailsCubit: Modular.get<RideDetailsCubit>(),
         );
       },
       transition: AppTransitions.modal.toTop,

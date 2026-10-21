@@ -31,6 +31,7 @@ type Ride struct {
 	CashReceivedAmount         int64
 	CashChangeAmount           int64
 	CashOutcome                string
+	CashSettled                bool
 	CancelledBy                *int
 	CancellationReason         string
 	CancellationResponsibility string

@@ -5,6 +5,10 @@ extension type const StorageKeys._(int _) {
   static const String passengerId = 'passenger_id';
   static const String activeRideId = 'active_ride_id';
   static const String activeBidSessionId = 'active_bid_session_id';
+  static const String pendingBidSessionCreation =
+      'pending_bid_session_creation';
+  static const String pendingBidSessionCancellationId =
+      'pending_bid_session_cancellation_id';
 
   static String chatReadAt(String rideId) => 'chat_read_at_${rideId.trim()}';
 }

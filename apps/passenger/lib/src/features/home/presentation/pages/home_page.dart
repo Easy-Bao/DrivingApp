@@ -92,6 +92,7 @@ class _HomePageState extends State<HomePage> {
           listener: (_, _) {
             _loadRecentRideHistory();
             _refreshLocationSnapshot();
+            _bookingBloc.add(const RestoreActiveBookingEvent());
           },
         ),
         BlocListener<RideHistoryBloc, RideHistoryState>(
@@ -154,6 +155,7 @@ class _HomePageState extends State<HomePage> {
                               const SizedBox(height: 20),
                               _buildSearchBar(),
                               _buildPendingBookingBanner(),
+                              _buildActiveBookingBanner(),
                               const SizedBox(height: 16),
                               _buildChipRow(),
                               const SizedBox(height: 24),
@@ -197,6 +199,9 @@ class _HomePageState extends State<HomePage> {
       unawaited(_loadSavedPlaces());
       _loadRecentRideHistory();
       unawaited(_restoreActiveRideOnLaunch());
+      if (BlocProvider.of<SessionBloc>(context).state.isAuthenticated) {
+        _bookingBloc.add(const RestoreActiveBookingEvent());
+      }
       if (!mounted) return;
       if (BlocProvider.of<LocationAccessCubit>(context).state
           is LocationAccessReady) {
@@ -352,6 +357,146 @@ class _HomePageState extends State<HomePage> {
             onContinue: () => unawaited(_continuePendingBooking(draft)),
             onDismiss: () =>
                 BlocProvider.of<BookingDraftCubit>(context).clear(),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActiveBookingBanner() {
+    return BlocBuilder<BookingBloc, BookingState>(
+      bloc: _bookingBloc,
+      builder: (context, state) {
+        final activeSearch = _bookingBloc.activeDriverSearch;
+        final isSearching =
+            state is BookingSearching || state is BookingOffersReceived;
+        final isExpired = state is BookingFailure && state.isRequestExpired;
+        final isRecovering = state is BookingSessionRecoveryInProgress;
+        final recoveryFailed = state is BookingSessionRecoveryFailure;
+        final recoveredRide = state is BookingRideRecovered;
+        if (!isSearching &&
+            !isExpired &&
+            !isRecovering &&
+            !recoveryFailed &&
+            !recoveredRide) {
+          return const SizedBox.shrink();
+        }
+
+        final colors = context.colorScheme;
+        final String title;
+        final String subtitle;
+        if (state is BookingRideRecovered) {
+          title = 'Your driver accepted';
+          subtitle = 'Resume your trip to view the driver and route.';
+        } else if (state is BookingFailure && state.isRequestExpired) {
+          title = 'Your ride request expired';
+          subtitle = 'Review your route and request another driver.';
+        } else if (state is BookingSearching && state.sessionId == null) {
+          title = 'Sending your request';
+          subtitle =
+              activeSearch?.trip.destination.name ?? 'Confirming request';
+        } else if (state is BookingSessionRecoveryFailure) {
+          title = 'Unable to refresh your request';
+          subtitle = state.message;
+        } else if (state is BookingSessionRecoveryInProgress) {
+          title = state.sessionId.isEmpty
+              ? 'Sending your request'
+              : 'Checking your active request';
+          subtitle = 'Your trip details will stay saved while we reconnect.';
+        } else {
+          title = 'Searching for a driver';
+          subtitle =
+              activeSearch?.trip.destination.name ?? 'Your saved trip request';
+        }
+
+        final requestId = switch (state) {
+          BookingSearching(:final sessionId) => sessionId,
+          BookingOffersReceived(:final sessionId) => sessionId,
+          BookingFailure(:final sessionId) when isExpired => sessionId,
+          BookingSessionRecoveryInProgress(:final sessionId) => sessionId,
+          BookingSessionRecoveryFailure(:final sessionId) => sessionId,
+          _ => null,
+        };
+        final String actionLabel;
+        final VoidCallback? onPressed;
+        if (state is BookingRideRecovered) {
+          actionLabel = 'Resume trip';
+          onPressed = () => unawaited(_resumeActiveRideById());
+        } else if (state is BookingSessionRecoveryFailure) {
+          actionLabel = 'Retry';
+          onPressed = () => _bookingBloc.add(const RestoreActiveBookingEvent());
+        } else if (state is BookingSessionRecoveryInProgress) {
+          actionLabel = 'Checking';
+          onPressed = null;
+        } else {
+          actionLabel = 'Continue';
+          onPressed = activeSearch == null
+              ? null
+              : () => unawaited(_canStartOrContinueBooking());
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 12, 8, 12),
+            decoration: BoxDecoration(
+              color: colors.secondaryContainer.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: colors.secondaryContainer),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  state is BookingRideRecovered
+                      ? LucideIcons.car_front
+                      : LucideIcons.route,
+                  size: 20,
+                  color: colors.onSurface,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: colors.onSurface,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: colors.onSurfaceVariant,
+                          fontSize: 12,
+                        ),
+                      ),
+                      if (requestId?.isNotEmpty == true) ...[
+                        const SizedBox(height: 4),
+                        TripReference(
+                          id: requestId!,
+                          label: 'Request ID',
+                          compact: true,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: onPressed,
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(48, AppSize.minimumTouchTarget),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  child: Text(actionLabel),
+                ),
+              ],
+            ),
           ),
         );
       },

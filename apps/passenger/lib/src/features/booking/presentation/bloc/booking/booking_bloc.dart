@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer' as dev;
+import 'dart:math';
 
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:core_domain/core_domain.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
@@ -17,14 +20,13 @@ import 'package:passenger/src/features/booking/domain/repositories/booking_repos
 import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
-import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 
 part 'booking_event.dart';
 part 'booking_state.dart';
 part 'booking_bloc_driver_discovery.dart';
 part 'booking_bloc_session_creation.dart';
 part 'booking_bloc_bid_session.dart';
+part 'booking_bloc_session_recovery.dart';
 
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final DriverRepository _driverRepository;
@@ -32,7 +34,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final DriverProfileRepository _driverProfileRepository;
   final SessionStore _secureSessionService;
   final BackgroundTelemetry? _backgroundTelemetryService;
-  final InboxCubit? _inboxCubit;
   final RealtimeWebSocketClient? _realtimeClient;
   final AppLifecycleCoordinator _lifecycleCoordinator;
   final int _nearestDriverMaxAttempts;
@@ -46,12 +47,13 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   int? _totalTrips;
   int _reviewsRequestGeneration = 0;
   bool _nearestSearchCancelled = false;
-  bool _noDriverNotificationSent = false;
   bool _isAutoAcceptingOffer = false;
+  bool _isCreatingBidSession = false;
+  bool _cancelPendingBidSessionCreation = false;
   bool _isRefreshingOffers = false;
   bool _realtimeWasConnected = false;
+  final Random _idempotencyRandom = Random.secure();
   String? _activeBidSessionId;
-  int _bookingOperationGeneration = 0;
   BidSessionTrip? _activeTrip;
 
   double? _pickupLat;
@@ -65,12 +67,11 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required this._bookingRepository,
     required this._driverProfileRepository,
     required this._secureSessionService,
-    this._inboxCubit,
     this._backgroundTelemetryService,
     this._realtimeClient,
     required this._lifecycleCoordinator,
-    int nearestDriverMaxAttempts = 1,
-    this._nearestDriverRetryDelay = const Duration(seconds: 2),
+    int nearestDriverMaxAttempts = 5,
+    this._nearestDriverRetryDelay = const Duration(seconds: 3),
     Duration offerRefreshInterval = const Duration(seconds: 3),
   }) : assert(nearestDriverMaxAttempts > 0),
        assert(offerRefreshInterval > Duration.zero),
@@ -93,6 +94,16 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<AcceptBidOfferEvent>(_onAcceptBidOffer, transformer: droppable());
     on<CancelBookingEvent>(_onCancelBooking, transformer: droppable());
     on<ResetBookingEvent>(_onResetBooking);
+    on<RestoreActiveBookingEvent>(
+      _onRestoreActiveBooking,
+      transformer: droppable(),
+    );
+    on<RefreshBookingSessionEvent>((_, _) {
+      final sessionId = _activeBidSessionId;
+      if (sessionId != null) {
+        unawaited(_loadOfferSnapshot(sessionId, source: 'manual'));
+      }
+    });
     on<UpdateOffersEvent>(_onUpdateOffers);
     on<DriverMatchedEvent>(_onDriverMatched);
   }
@@ -104,13 +115,17 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       state is NearestDriverFound ||
       state is BookingSearching ||
       state is BookingOffersReceived ||
+      state is BookingSessionRecoveryInProgress ||
+      state is BookingSessionRecoveryFailure ||
       _activeBidSessionId != null;
 
   ActiveDriverSearch? get activeDriverSearch {
     final trip = _activeTrip;
     final pickupLat = _pickupLat;
     final pickupLng = _pickupLng;
-    if (!hasActiveDriverSearch ||
+    final isExpiredRequest =
+        state is BookingFailure && (state as BookingFailure).isRequestExpired;
+    if ((!hasActiveDriverSearch && !isExpiredRequest) ||
         trip == null ||
         pickupLat == null ||
         pickupLng == null) {
@@ -126,7 +141,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   bool get hasActiveBooking =>
       state is BookingSearching ||
       state is BookingOffersReceived ||
-      state is BookingDriverMatched;
+      state is BookingDriverMatched ||
+      state is BookingSessionRecoveryInProgress ||
+      state is BookingSessionRecoveryFailure;
 
   String _pickupNameForTrip(BidSessionTrip trip) {
     final pickupName = trip.pickupAddress?.trim();

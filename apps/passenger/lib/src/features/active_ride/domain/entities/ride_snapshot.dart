@@ -20,7 +20,15 @@ final class const RideSnapshot({
   final double? durationMinutes,
   final int? fareAmount,
   final double? driverRating,
+  final String? paymentStatus,
+  final String? cashOutcome,
+  final int? cashReceivedAmount,
+  final int? cashChangeAmount,
+  final DateTime? completedAt,
+  this.cashSettled = false,
 }) extends Equatable {
+  final bool cashSettled;
+
   RideSnapshot copyWith({
     String? id,
     String? status,
@@ -40,6 +48,12 @@ final class const RideSnapshot({
     double? durationMinutes,
     int? fareAmount,
     double? driverRating,
+    String? paymentStatus,
+    String? cashOutcome,
+    int? cashReceivedAmount,
+    int? cashChangeAmount,
+    DateTime? completedAt,
+    bool? cashSettled,
   }) => RideSnapshot(
     id: id ?? this.id,
     status: status ?? this.status,
@@ -59,6 +73,12 @@ final class const RideSnapshot({
     durationMinutes: durationMinutes ?? this.durationMinutes,
     fareAmount: fareAmount ?? this.fareAmount,
     driverRating: driverRating ?? this.driverRating,
+    paymentStatus: paymentStatus ?? this.paymentStatus,
+    cashOutcome: cashOutcome ?? this.cashOutcome,
+    cashReceivedAmount: cashReceivedAmount ?? this.cashReceivedAmount,
+    cashChangeAmount: cashChangeAmount ?? this.cashChangeAmount,
+    completedAt: completedAt ?? this.completedAt,
+    cashSettled: cashSettled ?? this.cashSettled,
   );
 
   factory fromJson(Map<String, dynamic> json, {String? fallbackId}) {
@@ -82,6 +102,11 @@ final class const RideSnapshot({
       'duration_minutes': rawDurationMinutes,
       'fare_amount': rawFareAmount,
       'fare': rawFare,
+      'payment_status': rawPaymentStatus,
+      'cash_outcome': rawCashOutcome,
+      'cash_received_amount': rawCashReceivedAmount,
+      'cash_change_amount': rawCashChangeAmount,
+      'completed_at': rawCompletedAt,
     } = _canonicalPayload(
       json,
     );
@@ -105,6 +130,14 @@ final class const RideSnapshot({
       durationMinutes: SafeParse.toNullableDouble(rawDurationMinutes),
       fareAmount: _fareAmount(rawFareAmount, rawFare),
       driverRating: SafeParse.toNullableDouble(rawDriverRating),
+      paymentStatus: _nullableString(rawPaymentStatus)?.toLowerCase(),
+      cashOutcome: _nullableString(rawCashOutcome)?.toLowerCase(),
+      cashReceivedAmount: SafeParse.toNullableDouble(rawCashReceivedAmount)
+          ?.round(),
+      cashChangeAmount: SafeParse.toNullableDouble(rawCashChangeAmount)
+          ?.round(),
+      completedAt: _nullableDateTime(rawCompletedAt),
+      cashSettled: json['cash_settled'] == true || json['cashSettled'] == true,
     );
   }
 
@@ -154,6 +187,12 @@ final class const RideSnapshot({
     durationMinutes,
     fareAmount,
     driverRating,
+    paymentStatus,
+    cashOutcome,
+    cashReceivedAmount,
+    cashChangeAmount,
+    completedAt,
+    cashSettled,
   ];
 }
 
@@ -183,6 +222,13 @@ Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
   'duration_minutes': json['duration_minutes'] ?? json['durationMinutes'],
   'fare_amount': json['fare_amount'],
   'fare': json['fare'],
+  'payment_status': json['payment_status'] ?? json['paymentStatus'],
+  'cash_outcome': json['cash_outcome'] ?? json['cashOutcome'],
+  'cash_received_amount':
+      json['cash_received_amount'] ?? json['cashReceivedAmount'],
+  'cash_change_amount': json['cash_change_amount'] ?? json['cashChangeAmount'],
+  'completed_at': json['completed_at'] ?? json['completedAt'],
+  'cash_settled': json['cash_settled'] ?? json['cashSettled'],
 };
 
 int? _fareAmount(Object? rawAmount, Object? rawPesos) {
@@ -200,4 +246,9 @@ int? _fareAmount(Object? rawAmount, Object? rawPesos) {
 String? _nullableString(Object? value) {
   final normalized = SafeParse.toStringValue(value).trim();
   return normalized.isEmpty ? null : normalized;
+}
+
+DateTime? _nullableDateTime(Object? value) {
+  final normalized = SafeParse.toStringValue(value).trim();
+  return normalized.isEmpty ? null : DateTime.tryParse(normalized)?.toUtc();
 }

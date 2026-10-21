@@ -1,205 +1,31 @@
-import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:foundation/foundation.dart';
-import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
-import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
+import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
+import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
+import 'package:passenger/src/features/ride_history/presentation/pages/ride_details_page.dart';
 
-class const PaymentPage({super.key, required this.ride})
-    extends StatelessWidget {
+/// Keeps the legacy completion route while using the shared ride receipt.
+class const PaymentPage({
+  super.key,
+  required this.ride,
+  required this.trackRepository,
+  required this.sessionService,
+  required this.profileRepository,
+}) extends StatelessWidget {
   final RideSnapshot ride;
+  final TrackRepository trackRepository;
+  final SessionStore sessionService;
+  final DriverProfileRepository profileRepository;
 
   @override
   Widget build(BuildContext context) {
-    final fare = (ride.fareAmount ?? 0) / 100;
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: IntrinsicHeight(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: context.semanticColors.success
-                                    .withValues(alpha: 0.12),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.check_rounded,
-                                color: context.semanticColors.success,
-                                size: 34,
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            Text(
-                              'Trip Completed',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 25,
-                                fontWeight: FontWeight.w800,
-                                color: context.colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Pay ${ride.displayDriverName} in cash before you leave the vehicle.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: context.colorScheme.onSurfaceVariant,
-                                fontSize: 14,
-                                height: 1.4,
-                              ),
-                            ),
-                            const SizedBox(height: 28),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 22,
-                              ),
-                              decoration: BoxDecoration(
-                                color: context.colorScheme.surface,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.lg,
-                                ),
-                                border: Border.all(
-                                  color: context.colorScheme.outlineVariant,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Total Cash Fare',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color:
-                                          context.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    formatPesoAmount(fare),
-                                    key: const ValueKey('payment-total-fare'),
-                                    style: TextStyle(
-                                      fontSize: 38,
-                                      fontWeight: FontWeight.w800,
-                                      color: context.colorScheme.onSurface,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 14),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 9,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: context
-                                          .colorScheme
-                                          .surfaceContainerHighest,
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.lg,
-                                      ),
-                                    ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.payments_outlined, size: 17),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Cash Payment',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.info_outline_rounded,
-                                  size: 18,
-                                  color: context.colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    'After paying, continue to share feedback about your driver.',
-                                    style: TextStyle(
-                                      color:
-                                          context.colorScheme.onSurfaceVariant,
-                                      fontSize: 13,
-                                      height: 1.35,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Spacer(),
-                            const SizedBox(height: 24),
-                            ElevatedButton(
-                              key: const ValueKey(
-                                'confirm-cash-payment-button',
-                              ),
-                              onPressed: () => context.goNamed(
-                                RideHistoryRoutes.passengerRating,
-                                queryParameters: {
-                                  'driverId': ride.driverId ?? '',
-                                  'driverName':
-                                      ride.driverName ?? ride.displayDriverName,
-                                  'rideId': ride.id,
-                                },
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: context.colorScheme.primary,
-                                foregroundColor: context.colorScheme.onPrimary,
-                                elevation: 0,
-                                minimumSize: const Size.fromHeight(54),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.lg,
-                                  ),
-                                ),
-                              ),
-                              child: const Text(
-                                'Paid Cash to Driver',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
+    return RideDetailsPage(
+      initialRide: ride,
+      rideId: ride.id,
+      trackRepository: trackRepository,
+      sessionService: sessionService,
+      profileRepository: profileRepository,
     );
   }
 }

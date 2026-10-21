@@ -520,6 +520,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
 
   Widget _buildHeader(BuildContext context) {
     return ActiveRideHeader(
+      rideId: BlocProvider.of<RideFlowCubit>(context).activeRideId,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       backButton: _buildTripBackButton(context, () => context.pop()),
       actions: [

@@ -7,7 +7,6 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
   ) async {
     if (hasActiveDriverSearch) return;
     _nearestSearchCancelled = false;
-    _noDriverNotificationSent = false;
     _isAutoAcceptingOffer = false;
     _totalTrips = null;
     ++_reviewsRequestGeneration;
@@ -61,9 +60,6 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
         _activeTrip = null;
         emit(BookingFailure(ErrorHandler.getErrorMessage(lastFailure!)));
         return;
-      }
-      if (!_nearestSearchCancelled) {
-        _notifyNoDriverFound();
       }
       if (isClosed || _nearestSearchCancelled) return;
       _activeTrip = null;
@@ -174,25 +170,5 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
     }
 
     emit(latestState.copyWith(reviews: reviews, isLoadingReviews: false));
-  }
-
-  void _notifyNoDriverFound() {
-    final inboxCubit = _inboxCubit;
-    if (_noDriverNotificationSent ||
-        inboxCubit == null ||
-        inboxCubit.isClosed) {
-      return;
-    }
-    _noDriverNotificationSent = true;
-    inboxCubit.addLocalNotification(
-      InboxNotification(
-        id: 'no-driver-${DateTime.now().millisecondsSinceEpoch}',
-        title: 'No drivers nearby',
-        message: 'Try searching again when you’re ready.',
-        timestamp: DateTime.now(),
-        type: 'driver',
-        isRead: false,
-      ),
-    );
   }
 }

@@ -110,6 +110,8 @@ class ActiveRideModule._() {
           distance: data.distance,
           fare: data.fare,
           duration: data.duration,
+          rideId: data.rideId,
+          rideRepository: Modular.get<RideRepository>(),
           ridePaymentCompletionHandler:
               Modular.get<RidePaymentCompletionHandler>(),
         );
@@ -128,12 +130,14 @@ class const _TripRouteData({
   required this.distance,
   required this.fare,
   required this.duration,
+  this.rideId,
 }) {
   final String pickup;
   final String dropoff;
   final double distance;
   final double fare;
   final String duration;
+  final String? rideId;
 
   static _TripRouteData? tryParse(RoutePayload data) {
     final pickup = data.string('pickup');
@@ -158,6 +162,7 @@ class const _TripRouteData({
       distance: distance,
       fare: fare,
       duration: duration,
+      rideId: data.string('rideId'),
     );
   }
 }

@@ -510,5 +510,15 @@ func (repository *Store) Session(ctx context.Context, sessionID int) (dispatchdo
 	if err != nil {
 		return dispatchdomain.BidSession{}, fmt.Errorf("map bid session: %w", err)
 	}
+	ride, err := repository.queries.GetRideByBidSessionID(
+		ctx,
+		pgtype.Int4{Int32: dbSessionID, Valid: true},
+	)
+	if err == nil {
+		rideID := int(ride.Ride.ID)
+		session.RideID = &rideID
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		return dispatchdomain.BidSession{}, fmt.Errorf("find ride for bid session: %w", err)
+	}
 	return session, nil
 }

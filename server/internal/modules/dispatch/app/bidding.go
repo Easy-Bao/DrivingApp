@@ -385,6 +385,9 @@ func (service *Service) Session(ctx context.Context, sessionID int) (dispatchdom
 	if err != nil {
 		return dispatchdomain.BidSession{}, fmt.Errorf("load bid session: %w", err)
 	}
+	if isBidStatus(session.Status, "open") && !service.now().UTC().Before(session.ExpiresAt) {
+		session.Status = "expired"
+	}
 	offers, err := service.store.Offers(ctx, sessionID)
 	if err != nil {
 		return dispatchdomain.BidSession{}, fmt.Errorf("load bid session offers: %w", err)

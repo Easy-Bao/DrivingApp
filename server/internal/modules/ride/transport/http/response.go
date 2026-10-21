@@ -33,6 +33,7 @@ type RideResponse struct {
 	CashReceivedAmount         int64   `json:"cash_received_amount"`
 	CashChangeAmount           int64   `json:"cash_change_amount"`
 	CashOutcome                string  `json:"cash_outcome"`
+	CashSettled                bool    `json:"cash_settled"`
 	CancelledBy                *int    `json:"cancelled_by,omitempty"`
 	CancellationReason         string  `json:"cancellation_reason,omitempty"`
 	CancellationResponsibility string  `json:"cancellation_responsibility,omitempty"`
@@ -74,6 +75,7 @@ func NewRideResponse(ride domain.Ride) RideResponse {
 		CashReceivedAmount:         ride.CashReceivedAmount,
 		CashChangeAmount:           ride.CashChangeAmount,
 		CashOutcome:                ride.CashOutcome,
+		CashSettled:                ride.CashSettled,
 		CancelledBy:                ride.CancelledBy,
 		CancellationReason:         ride.CancellationReason,
 		CancellationResponsibility: ride.CancellationResponsibility,

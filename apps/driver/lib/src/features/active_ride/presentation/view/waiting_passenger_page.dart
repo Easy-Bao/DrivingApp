@@ -335,6 +335,8 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                       children: [
                         const SizedBox(height: 12),
                         ActiveRideHeader(
+                          rideId: BlocProvider.of<RideFlowCubit>(context)
+                              .activeRideId,
                           backButton: _buildTripBackButton(
                             context,
                             () => context.pop(),

@@ -33,6 +33,30 @@ func (service *Service) DriverReviews(
 	return slices.Clone(reviews), nil
 }
 
+func (service *Service) PassengerDriverReviewForRide(
+	ctx context.Context,
+	rideID, passengerID int,
+) (domain.Review, error) {
+	if service == nil || service.repository == nil {
+		return domain.Review{}, ErrPersistenceUnavailable
+	}
+	if rideID <= 0 || passengerID <= 0 {
+		return domain.Review{}, domain.ErrReviewNotAllowed
+	}
+	ride, err := service.repository.ReviewableRide(ctx, rideID)
+	if err != nil {
+		return domain.Review{}, fmt.Errorf("load ride for passenger review: %w", err)
+	}
+	if ride.Status != "completed" || ride.PassengerID != passengerID || ride.DriverID == nil {
+		return domain.Review{}, domain.ErrReviewNotAllowed
+	}
+	review, err := service.repository.DriverReviewForRide(ctx, rideID, passengerID)
+	if err != nil {
+		return domain.Review{}, fmt.Errorf("load passenger review for ride: %w", err)
+	}
+	return review, nil
+}
+
 func (service *Service) CreateReview(ctx context.Context, review domain.Review) (domain.Review, error) {
 	if service == nil || service.repository == nil {
 		return domain.Review{}, ErrPersistenceUnavailable

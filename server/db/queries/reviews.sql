@@ -48,6 +48,13 @@ FROM reviews
 WHERE ride_id = sqlc.arg('ride_id')
 LIMIT 1;
 
+-- name: GetDriverReviewByRideAndPassenger :one
+SELECT id, ride_id, driver_id, passenger_id, passenger_name, rating, comment, created_at
+FROM reviews
+WHERE ride_id = sqlc.arg('ride_id')
+  AND passenger_id = sqlc.arg('passenger_id')
+LIMIT 1;
+
 -- name: CreateReview :one
 INSERT INTO reviews (
     ride_id,

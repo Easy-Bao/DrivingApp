@@ -91,6 +91,35 @@ func (repository *ReviewRepository) DriverReviews(
 	return result, nil
 }
 
+func (repository *ReviewRepository) DriverReviewForRide(
+	ctx context.Context,
+	rideID, passengerID int,
+) (domain.Review, error) {
+	dbRideID, err := toPostgresID(rideID, "ride id")
+	if err != nil {
+		return domain.Review{}, domain.ErrReviewNotFound
+	}
+	dbPassengerID, err := toPostgresID(passengerID, "passenger id")
+	if err != nil {
+		return domain.Review{}, domain.ErrReviewNotFound
+	}
+	item, err := repository.queries.GetDriverReviewByRideAndPassenger(ctx, databasepostgres.GetDriverReviewByRideAndPassengerParams{
+		RideID:      pgtype.Int4{Int32: dbRideID, Valid: true},
+		PassengerID: dbPassengerID,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.Review{}, domain.ErrReviewNotFound
+	}
+	if err != nil {
+		return domain.Review{}, fmt.Errorf("find passenger review for ride: %w", err)
+	}
+	review, err := fromPostgresCreatedReview(item)
+	if err != nil {
+		return domain.Review{}, fmt.Errorf("map passenger review for ride: %w", err)
+	}
+	return review, nil
+}
+
 func (repository *ReviewRepository) CreateReview(
 	ctx context.Context,
 	value domain.Review,

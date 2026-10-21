@@ -17,11 +17,23 @@ import (
 )
 
 type reviewRepositoryStub struct {
-	ride domain.ReviewableRide
+	ride   domain.ReviewableRide
+	review domain.Review
 }
 
 func (repository reviewRepositoryStub) ReviewableRide(context.Context, int) (domain.ReviewableRide, error) {
 	return repository.ride, nil
+}
+
+func (repository reviewRepositoryStub) DriverReviewForRide(
+	_ context.Context,
+	rideID, passengerID int,
+) (domain.Review, error) {
+	if repository.review.ID == 0 || repository.review.RideID != rideID ||
+		repository.review.PassengerID != passengerID {
+		return domain.Review{}, domain.ErrReviewNotFound
+	}
+	return repository.review, nil
 }
 
 func (reviewRepositoryStub) DriverReviews(context.Context, int, int, int) ([]domain.Review, error) {
@@ -54,6 +66,11 @@ func TestReviewRoutesKeepPathsRolesAndResponseShapes(t *testing.T) {
 	driverID := 9
 	repository := reviewRepositoryStub{
 		ride: domain.ReviewableRide{Status: "completed", PassengerID: 4, DriverID: &driverID},
+		review: domain.Review{
+			ID: 21, RideID: 7, DriverID: 9, PassengerID: 4,
+			PassengerName: "Ada Passenger", Rating: 5,
+			Comment: "Great trip", CreatedAt: "2026-10-12T14:00:00Z",
+		},
 	}
 	verifier := security.NewTokenManager("review-route-test-secret")
 	passengerToken, err := verifier.IssueWithRole("4", security.RolePassenger)
@@ -90,6 +107,22 @@ func TestReviewRoutesKeepPathsRolesAndResponseShapes(t *testing.T) {
 		driverReview["driver_id"] != float64(9) || driverReview["passenger_id"] != float64(4) ||
 		driverReview["passenger_name"] != "Ada Passenger" {
 		t.Fatalf("unexpected driver review response: %#v", driverReview)
+	}
+
+	request = httptest.NewRequest(http.MethodGet, api.V1Prefix+"/rides/7/my-review", nil)
+	request.Header.Set("Authorization", "Bearer "+passengerToken)
+	response = httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("my ride review status = %d, body = %s", response.Code, response.Body.String())
+	}
+
+	request = httptest.NewRequest(http.MethodGet, api.V1Prefix+"/rides/7/my-review", nil)
+	request.Header.Set("Authorization", "Bearer "+driverToken)
+	response = httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+	if response.Code != http.StatusForbidden {
+		t.Fatalf("driver my-review status = %d, body = %s", response.Code, response.Body.String())
 	}
 
 	request = httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/9/reviews", nil)

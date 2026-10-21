@@ -9,6 +9,7 @@ import (
 
 type bidSessionPayload struct {
 	ID                int               `json:"id"`
+	RideID            *int              `json:"ride_id,omitempty"`
 	PassengerID       int               `json:"passenger_id"`
 	RideType          string            `json:"ride_type"`
 	PickupLatitude    float64           `json:"pickup_latitude"`
@@ -73,6 +74,7 @@ type ridePayload struct {
 	CashReceivedAmount         int64   `json:"cash_received_amount"`
 	CashChangeAmount           int64   `json:"cash_change_amount"`
 	CashOutcome                string  `json:"cash_outcome"`
+	CashSettled                bool    `json:"cash_settled"`
 	CancelledBy                *int    `json:"cancelled_by,omitempty"`
 	CancellationReason         string  `json:"cancellation_reason,omitempty"`
 	CancellationResponsibility string  `json:"cancellation_responsibility,omitempty"`
@@ -102,6 +104,7 @@ func NewPayload(payload map[string]any) map[string]any {
 func newBidSessionPayload(session dispatchdomain.BidSession) bidSessionPayload {
 	return bidSessionPayload{
 		ID:                session.ID,
+		RideID:            session.RideID,
 		PassengerID:       session.PassengerID,
 		RideType:          session.RideType,
 		PickupLatitude:    session.PickupLatitude,
@@ -182,6 +185,7 @@ func newRidePayload(ride domain.Ride) ridePayload {
 		CashReceivedAmount:         ride.CashReceivedAmount,
 		CashChangeAmount:           ride.CashChangeAmount,
 		CashOutcome:                ride.CashOutcome,
+		CashSettled:                ride.CashSettled,
 		CancelledBy:                ride.CancelledBy,
 		CancellationReason:         ride.CancellationReason,
 		CancellationResponsibility: ride.CancellationResponsibility,

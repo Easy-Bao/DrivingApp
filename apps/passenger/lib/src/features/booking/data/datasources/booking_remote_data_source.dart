@@ -1,9 +1,14 @@
 import 'package:dio/dio.dart';
 
 abstract class BookingRemoteDataSource() {
-  Future<Map<String, dynamic>> createSession(Map<String, dynamic> body);
+  Future<Map<String, dynamic>> createSession(
+    Map<String, dynamic> body, {
+    String? idempotencyKey,
+  });
 
   Future<List<Map<String, dynamic>>> fetchOffers(String sessionId);
+
+  Future<Map<String, dynamic>> fetchSession(String sessionId);
 
   Future<Map<String, dynamic>> acceptOffer({
     required String sessionId,
@@ -18,10 +23,16 @@ class BookingRemoteDataSourceImpl(this._dio)
   final Dio _dio;
 
   @override
-  Future<Map<String, dynamic>> createSession(Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>> createSession(
+    Map<String, dynamic> body, {
+    String? idempotencyKey,
+  }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/api/v1/bids',
       data: body,
+      options: idempotencyKey == null
+          ? null
+          : Options(headers: {'Idempotency-Key': idempotencyKey}),
     );
     return response.data ?? const <String, dynamic>{};
   }
@@ -35,6 +46,14 @@ class BookingRemoteDataSourceImpl(this._dio)
       for (final item in response.data ?? const <dynamic>[])
         if (item is Map) Map<String, dynamic>.from(item),
     ];
+  }
+
+  @override
+  Future<Map<String, dynamic>> fetchSession(String sessionId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/api/v1/bids/${Uri.encodeComponent(sessionId)}',
+    );
+    return response.data ?? const <String, dynamic>{};
   }
 
   @override

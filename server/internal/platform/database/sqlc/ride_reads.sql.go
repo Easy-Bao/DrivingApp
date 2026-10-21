@@ -17,6 +17,7 @@ SELECT ride.id, ride.passenger_id, ride.driver_id, ride.status, ride.fare_amount
     COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
     COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
     COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
+    CAST((settlement.settled_at IS NOT NULL) AS boolean) AS cash_settled,
     settlement.commission_bps,
     COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
     COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount,
@@ -36,6 +37,7 @@ type GetRideByIDRow struct {
 	CashReceivedAmount       int64       `db:"cash_received_amount"`
 	CashChangeAmount         int64       `db:"cash_change_amount"`
 	CashOutcome              string      `db:"cash_outcome"`
+	CashSettled              bool        `db:"cash_settled"`
 	CommissionBps            pgtype.Int4 `db:"commission_bps"`
 	CommissionAmount         int64       `db:"commission_amount"`
 	DriverPayoutAmount       int64       `db:"driver_payout_amount"`
@@ -79,6 +81,7 @@ func (q *Queries) GetRideByID(ctx context.Context, id int32) (GetRideByIDRow, er
 		&i.CashReceivedAmount,
 		&i.CashChangeAmount,
 		&i.CashOutcome,
+		&i.CashSettled,
 		&i.CommissionBps,
 		&i.CommissionAmount,
 		&i.DriverPayoutAmount,

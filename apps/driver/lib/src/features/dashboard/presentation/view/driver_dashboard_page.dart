@@ -209,6 +209,7 @@ class _DashboardPageState extends State<DashboardPage>
       context.pushReplacementNamed(
         ActiveRideRoutes.fareSummary,
         extra: {
+          'rideId': ride.id,
           'pickup': ride.pickupName,
           'dropoff': ride.dropoffName,
           'distance': ride.distanceKm ?? 0,

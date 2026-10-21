@@ -164,7 +164,10 @@ class _FindingDriverPageContentState()
     final longitude = pickup.longitude;
 
     final bookingBloc = BlocProvider.of<BookingBloc>(context);
-    if (!bookingBloc.hasActiveDriverSearch) {
+    final isExpiredRequest =
+        bookingBloc.state is BookingFailure &&
+        (bookingBloc.state as BookingFailure).isRequestExpired;
+    if (!bookingBloc.hasActiveDriverSearch && !isExpiredRequest) {
       bookingBloc.add(
         LocateNearestDriverEvent(
           pickupLat: latitude,
@@ -307,15 +310,6 @@ class _FindingDriverPageContentState()
     BlocProvider.of<BookingBloc>(context).add(const CancelBookingEvent());
   }
 
-  void _cancelBiddingSessionOnPop() {
-    if (_isLeaving || _acceptingOfferId != null) return;
-    final bookingBloc = BlocProvider.of<BookingBloc>(context);
-    if (!bookingBloc.hasActiveDriverSearch) return;
-
-    setState(() => _isLeaving = true);
-    bookingBloc.add(const CancelBookingEvent());
-  }
-
   void _returnHome() {
     if (!shouldStartFindingDriverHomeNavigation(
       isMounted: mounted,
@@ -324,7 +318,6 @@ class _FindingDriverPageContentState()
       return;
     }
     _isReturningHome = true;
-    _cancelBiddingSessionOnPop();
     context.goNamed(HomeRoutes.home);
   }
 
@@ -489,6 +482,11 @@ class _FindingDriverPageContentState()
                   _isLeaving = false;
                 });
               }
+            } else if (state is BookingSessionRecoveryFailure) {
+              setState(() {
+                _acceptingOfferId = null;
+                _isLeaving = false;
+              });
             } else if (state is BookingCanceled) {
               _acceptingOfferId = null;
               _returnHome();
@@ -605,23 +603,44 @@ class _FindingDriverPageContentState()
                       ),
                       child: BlocBuilder<BookingBloc, BookingState>(
                         builder: (context, state) {
+                          final activeSearch = BlocProvider.of<BookingBloc>(
+                            context,
+                          ).activeDriverSearch;
+                          final activeTrip = activeSearch?.trip;
+                          final fare = activeTrip?.fare ?? widget.fare;
+                          final destination =
+                              activeTrip?.destination ?? widget.destination;
+                          final pickupAddress =
+                              activeTrip?.pickupAddress ?? widget.pickupAddress;
+                          final rideType =
+                              activeTrip?.rideType ?? widget.rideType;
                           if (state is FindingNearestDriver) {
                             return FindingDriverSearchingPanel(
                               message: state.statusMessage,
-                              fare: widget.fare,
-                              destination: widget.destination,
-                              pickupAddress: widget.pickupAddress,
+                              fare: fare,
+                              destination: destination,
+                              pickupAddress: pickupAddress,
+                              rideType: rideType,
+                              requestCreated: false,
                               dotAnimation: _dotAnimationController,
                               onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
                             );
-                          } else if (_isNoDriverFound &&
-                              state is BookingFailure &&
-                              state.isNoDriverFound) {
+                          } else if ((state is BookingFailure &&
+                                  state.isNoDriverFound &&
+                                  _isNoDriverFound) ||
+                              (state is BookingFailure &&
+                                  state.isRequestExpired)) {
+                            final isExpired = state.isRequestExpired;
                             return FindingDriverNoDriverPanel(
                               fare: widget.fare,
                               destination: widget.destination,
+                              pickupAddress: pickupAddress,
+                              rideType: rideType,
+                              requestExpired: isExpired,
+                              requestId: state.sessionId,
                               onRetryPressed: _retryFindingDriver,
+                              onRequestRidePressed: _startOpenBooking,
                               onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
                             );
@@ -655,9 +674,19 @@ class _FindingDriverPageContentState()
                           } else if (state is BookingSearching) {
                             return FindingDriverSearchingPanel(
                               message: state.statusMessage,
-                              fare: widget.fare,
-                              destination: widget.destination,
-                              pickupAddress: widget.pickupAddress,
+                              fare: fare,
+                              destination: destination,
+                              pickupAddress: pickupAddress,
+                              rideType: rideType,
+                              requestId: state.sessionId,
+                              expiresAt: state.expiresAt,
+                              requestCreated:
+                                  state.sessionId?.isNotEmpty == true,
+                              isSendingRequest: state.sessionId == null,
+                              refreshError: state.refreshError,
+                              onRetryPressed: () =>
+                                  BlocProvider.of<BookingBloc>(context)
+                                      .add(const RefreshBookingSessionEvent()),
                               dotAnimation: _dotAnimationController,
                               onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
@@ -666,9 +695,18 @@ class _FindingDriverPageContentState()
                             if (state.offers.isEmpty) {
                               return FindingDriverSearchingPanel(
                                 message: state.statusMessage,
-                                fare: widget.fare,
-                                destination: widget.destination,
-                                pickupAddress: widget.pickupAddress,
+                                fare: fare,
+                                destination: destination,
+                                pickupAddress: pickupAddress,
+                                rideType: rideType,
+                                requestId: state.sessionId,
+                                expiresAt: state.expiresAt,
+                                requestCreated: true,
+                                refreshError: state.refreshError,
+                                onRetryPressed: () =>
+                                    BlocProvider.of<BookingBloc>(
+                                      context,
+                                    ).add(const RefreshBookingSessionEvent()),
                                 dotAnimation: _dotAnimationController,
                                 onCancelPressed: _handleCancel,
                                 isCanceling: _isLeaving,
@@ -676,6 +714,7 @@ class _FindingDriverPageContentState()
                             }
                             return FindingDriverBidsPanel(
                               offers: state.offers,
+                              requestId: state.sessionId,
                               onAcceptOfferPressed: (offer) {
                                 if (_isLeaving || _acceptingOfferId != null) {
                                   return;
@@ -697,6 +736,48 @@ class _FindingDriverPageContentState()
                               },
                               onCancelPressed: _handleCancel,
                               acceptingOfferId: _acceptingOfferId,
+                              isCanceling: _isLeaving,
+                            );
+                          } else if (state
+                              is BookingSessionRecoveryInProgress) {
+                            final requestCreated = state.sessionId.isNotEmpty;
+                            return FindingDriverSearchingPanel(
+                              message: state.statusMessage,
+                              fare: fare,
+                              destination: destination,
+                              pickupAddress: pickupAddress,
+                              rideType: rideType,
+                              requestId: requestCreated
+                                  ? state.sessionId
+                                  : null,
+                              requestCreated: requestCreated,
+                              isSendingRequest: !requestCreated,
+                              dotAnimation: _dotAnimationController,
+                              onCancelPressed: _handleCancel,
+                              isCanceling: _isLeaving,
+                            );
+                          } else if (state is BookingSessionRecoveryFailure) {
+                            final requestCreated = state.sessionId.isNotEmpty;
+                            return FindingDriverSearchingPanel(
+                              message: requestCreated
+                                  ? 'Unable to refresh your request'
+                                  : 'We could not confirm your request yet',
+                              fare: fare,
+                              destination: destination,
+                              pickupAddress: pickupAddress,
+                              rideType: rideType,
+                              requestId: requestCreated
+                                  ? state.sessionId
+                                  : null,
+                              requestCreated: requestCreated,
+                              isSendingRequest: !requestCreated,
+                              animate: false,
+                              refreshError: state.message,
+                              onRetryPressed: () =>
+                                  BlocProvider.of<BookingBloc>(context)
+                                      .add(const RestoreActiveBookingEvent()),
+                              dotAnimation: _dotAnimationController,
+                              onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
                             );
                           }

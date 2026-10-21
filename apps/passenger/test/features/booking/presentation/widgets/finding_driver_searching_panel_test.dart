@@ -28,9 +28,45 @@ void main() {
     );
 
     expect(
-      find.text('We’re checking nearby drivers for your ride.'),
+      find.text('We’re checking which drivers are currently nearby.'),
       findsOneWidget,
     );
     expect(find.textContaining('Solo'), findsNothing);
   });
+
+  testWidgets(
+    'shows route, request reference, ride type, and cash for an open request',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: FindingDriverSearchingPanel(
+              message: 'Finding your driver.',
+              fare: 100,
+              destination: destination,
+              pickupAddress: 'Pickup address',
+              rideType: 'Solo Ride',
+              requestId: '31',
+              requestCreated: true,
+              dotAnimation: const AlwaysStoppedAnimation<double>(0),
+              onCancelPressed: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Request ID 31'), findsOneWidget);
+      expect(find.text('Pickup address'), findsOneWidget);
+      expect(find.text('Destination'), findsOneWidget);
+      expect(find.text('Solo Ride'), findsOneWidget);
+      expect(find.text('Cash'), findsOneWidget);
+      expect(
+        find.text(
+          'Your request is open. We’ll update this screen when a driver responds.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Cancel request'), findsOneWidget);
+    },
+  );
 }

@@ -11,6 +11,8 @@ abstract interface class DriverProfileRepository {
     int limit = 20,
   });
 
+  Future<Result<DriverReview?, Failure>> fetchMyRideReview(String rideId);
+
   Future<Result<void, Failure>> submitReview({
     required String driverId,
     required String rideId,
@@ -37,6 +39,15 @@ extension DriverProfileRepositoryResultApi on DriverProfileRepository {
     return _captureDriverProfileResult(
       () => fetchReviews(driverId, page: page, limit: limit),
       message: 'Driver reviews are temporarily unavailable.',
+    );
+  }
+
+  Future<Result<DriverReview?, DomainFailure>> fetchMyRideReviewResult(
+    String rideId,
+  ) {
+    return _captureDriverProfileResult(
+      () => fetchMyRideReview(rideId),
+      message: 'Your ride rating is temporarily unavailable.',
     );
   }
 

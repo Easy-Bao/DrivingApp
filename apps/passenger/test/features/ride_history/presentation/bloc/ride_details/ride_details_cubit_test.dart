@@ -6,19 +6,25 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
+import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 
 class MockTrackRepository extends Mock implements TrackRepository {}
 
 class MockSessionStore extends Mock implements SessionStore {}
 
+class MockDriverProfileRepository extends Mock
+    implements DriverProfileRepository {}
+
 void main() {
   late MockTrackRepository repository;
   late MockSessionStore sessionService;
+  late MockDriverProfileRepository profileRepository;
 
   setUp(() {
     repository = MockTrackRepository();
     sessionService = MockSessionStore();
+    profileRepository = MockDriverProfileRepository();
     when(() => sessionService.readPassengerId())
         .thenAnswer((_) async => 'passenger-1');
   });
@@ -47,6 +53,7 @@ void main() {
     final cubit = RideDetailsCubit(
       repository: repository,
       sessionService: sessionService,
+      profileRepository: profileRepository,
     );
     final firstLoad = cubit.load('303');
     final secondLoad = cubit.load('303');
@@ -90,6 +97,7 @@ void main() {
       final cubit = RideDetailsCubit(
         repository: repository,
         sessionService: sessionService,
+        profileRepository: profileRepository,
       );
       await cubit.load('404');
 
@@ -124,6 +132,7 @@ void main() {
       final cubit = RideDetailsCubit(
         repository: repository,
         sessionService: sessionService,
+        profileRepository: profileRepository,
       );
       await cubit.load('505');
 
@@ -132,4 +141,60 @@ void main() {
       await cubit.close();
     },
   );
+
+  test('loads and submits a ride rating through presentation state', () async {
+    when(() => repository.fetchRide('606')).thenAnswer(
+      (_) async => const Ok(
+        RideSnapshot(
+          id: '606',
+          status: 'completed',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+        ),
+      ),
+    );
+    when(() => repository.fetchCounterparty('606')).thenAnswer(
+      (_) async => const Err(ServerFailure('Contact details unavailable.')),
+    );
+    when(() => profileRepository.fetchMyRideReview('606'))
+        .thenAnswer((_) async => const Ok(null));
+    when(
+      () => profileRepository.submitReview(
+        driverId: 'driver-6',
+        rideId: '606',
+        rating: 5,
+        comment: 'Great trip',
+      ),
+    ).thenAnswer((_) async => const Ok(null));
+
+    final cubit = RideDetailsCubit(
+      repository: repository,
+      sessionService: sessionService,
+      profileRepository: profileRepository,
+    );
+    await cubit.load('606');
+    await cubit.loadMyReview('606');
+    expect(cubit.state.isLoadingReview, isFalse);
+    expect(cubit.state.submittedReview, isNull);
+
+    await cubit.submitRating(
+      driverId: 'driver-6',
+      rideId: '606',
+      rating: 5,
+      comment: 'Great trip',
+    );
+
+    expect(cubit.state.isSubmittingReview, isFalse);
+    expect(cubit.state.submittedReview?.rating, 5);
+    expect(cubit.state.submittedReview?.comment, 'Great trip');
+    verify(
+      () => profileRepository.submitReview(
+        driverId: 'driver-6',
+        rideId: '606',
+        rating: 5,
+        comment: 'Great trip',
+      ),
+    ).called(1);
+    await cubit.close();
+  });
 }

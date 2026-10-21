@@ -8,6 +8,7 @@ import (
 var (
 	ErrReviewNotAllowed = errors.New("reviews are allowed only after a completed ride")
 	ErrInvalidRating    = errors.New("rating must be between 1 and 5")
+	ErrReviewNotFound   = errors.New("passenger review not found")
 )
 
 type Review struct {

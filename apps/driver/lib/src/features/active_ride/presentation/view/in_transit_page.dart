@@ -240,6 +240,7 @@ class _InTransitPageState extends State<InTransitPage> {
       this.context.pushReplacementNamed(
         ActiveRideRoutes.fareSummary,
         extra: {
+          'rideId': rideCubit.activeRideId,
           'pickup': widget.pickup,
           'dropoff': widget.dropoff,
           'distance': widget.distance,
@@ -319,6 +320,8 @@ class _InTransitPageState extends State<InTransitPage> {
                   ),
                   SafeArea(
                     child: ActiveRideHeader(
+                      rideId: BlocProvider.of<RideFlowCubit>(context)
+                          .activeRideId,
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                       backButton: _buildTripBackButton(
                         context,

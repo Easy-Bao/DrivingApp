@@ -204,6 +204,7 @@ type rideSettlementProjection struct {
 	CashReceivedAmount int64
 	CashChangeAmount   int64
 	CashOutcome        string
+	CashSettled        bool
 	CommissionBps      pgtype.Int4
 	CommissionAmount   int64
 	DriverPayoutAmount int64
@@ -217,6 +218,7 @@ func fromPostgresRideRow(item databasepostgres.GetRideByIDRow) (domain.Ride, err
 			CashReceivedAmount: item.CashReceivedAmount,
 			CashChangeAmount:   item.CashChangeAmount,
 			CashOutcome:        item.CashOutcome,
+			CashSettled:        item.CashSettled,
 			CommissionBps:      item.CommissionBps,
 			CommissionAmount:   item.CommissionAmount,
 			DriverPayoutAmount: item.DriverPayoutAmount,
@@ -267,6 +269,7 @@ func fromPostgresRideProjection(
 	if projection.CashOutcome != "" {
 		ride.CashOutcome = projection.CashOutcome
 	}
+	ride.CashSettled = projection.CashSettled
 	if projection.CommissionBps.Valid {
 		commissionBps := int64(projection.CommissionBps.Int32)
 		ride.CommissionBPS = &commissionBps
@@ -282,6 +285,7 @@ func rideSettlementProjectionFromRecord(item databasepostgres.RideSettlement) ri
 		CashReceivedAmount: item.CashReceivedAmount,
 		CashChangeAmount:   item.CashChangeAmount,
 		CashOutcome:        item.CashOutcome,
+		CashSettled:        item.SettledAt.Valid,
 		CommissionBps:      item.CommissionBps,
 		CommissionAmount:   item.CommissionAmount,
 		DriverPayoutAmount: item.DriverPayoutAmount,

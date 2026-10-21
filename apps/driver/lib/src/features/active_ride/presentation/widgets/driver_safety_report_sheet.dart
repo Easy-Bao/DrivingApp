@@ -188,6 +188,11 @@ class _SafetyReportSheetState extends State<_SafetyReportSheet> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TripReference(id: widget.rideId, label: 'Booking ID'),
+                ),
+                const SizedBox(height: AppSpacing.md),
                 AppSelectField<String>(
                   key: const ValueKey('driver-safety-report-category'),
                   value: _category,

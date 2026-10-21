@@ -16,6 +16,7 @@ var (
 
 type BidSession struct {
 	ID                int
+	RideID            *int
 	PassengerID       int
 	RideType          string
 	PickupLatitude    float64

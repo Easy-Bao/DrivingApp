@@ -4,6 +4,7 @@ import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/booking/data/datasources/booking_remote_data_source.dart';
 import 'package:passenger/src/features/booking/domain/entities/accepted_booking.dart';
+import 'package:passenger/src/features/booking/domain/entities/bid_session_snapshot.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_offer.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_session_request.dart';
 import 'package:passenger/src/features/booking/domain/repositories/booking_repository.dart';
@@ -21,24 +22,14 @@ final class BookingRepositoryImpl implements BookingRepository {
       return const Err(ValidationFailure('The booking request is invalid.'));
     }
     try {
-      final response = await _dataSource.createSession({
-        'ride_type': request.rideType,
-        'pickup_latitude': request.pickupLatitude,
-        'pickup_longitude': request.pickupLongitude,
-        'pickup_name': request.pickupName,
-        'dropoff_latitude': request.dropoffLatitude,
-        'dropoff_longitude': request.dropoffLongitude,
-        'dropoff_name': request.dropoffName,
-        'distance_km': request.distanceKm,
-        'duration_minutes': request.durationMinutes,
-        'target_driver_id': ?request.targetDriverId,
-        'custom_fare': request.customFareAmount,
-        'passenger_note': request.passengerNote,
-      });
+      final response = await _dataSource.createSession(
+        request.toJson(),
+        idempotencyKey: request.idempotencyKey,
+      );
       final sessionId = SafeParse.toStringValue(response['id']).trim();
       if (sessionId.isEmpty) {
         return const Err(
-          ValidationFailure('The booking response has no session ID.'),
+          ServerFailure('The booking response has no session ID.'),
         );
       }
       return Ok(sessionId);
@@ -59,6 +50,25 @@ final class BookingRepositoryImpl implements BookingRepository {
             .whereType<BookingOffer>()
             .toList(growable: false),
       );
+    } catch (error) {
+      return Err(_mapFailure(error));
+    }
+  }
+
+  @override
+  Future<Result<BidSessionSnapshot, Failure>> fetchSession(
+    String sessionId,
+  ) async {
+    try {
+      final session = BidSessionSnapshot.fromJson(
+        await _dataSource.fetchSession(sessionId),
+      );
+      if (session.id.isEmpty || session.status.isEmpty) {
+        return const Err(
+          ValidationFailure('The booking status response is incomplete.'),
+        );
+      }
+      return Ok(session);
     } catch (error) {
       return Err(_mapFailure(error));
     }
@@ -122,8 +132,14 @@ Failure _mapFailure(Object error) {
         403,
       );
     }
-    if (statusCode == 400 || statusCode == 409 || statusCode == 422) {
+    if (statusCode == 400 || statusCode == 422) {
       return const ValidationFailure('The booking request was rejected.');
+    }
+    if (statusCode == 409) {
+      return const ServerFailure.withStatusCode(
+        'The request is already being processed. Please retry.',
+        409,
+      );
     }
     if (statusCode == null) {
       if (error.type == DioExceptionType.connectionTimeout ||

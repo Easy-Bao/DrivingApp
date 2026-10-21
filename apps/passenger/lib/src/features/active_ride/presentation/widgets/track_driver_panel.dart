@@ -129,7 +129,9 @@ class const TrackDriverPanel({
               color: context.colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
+          TripReference(id: ride.id, compact: true),
+          const SizedBox(height: 12),
           _DriverCard(
             driverName: resolvedDriverName,
             vehicleSummary: resolvedVehicleSummary,

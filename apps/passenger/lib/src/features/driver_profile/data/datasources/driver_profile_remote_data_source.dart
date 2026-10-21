@@ -9,6 +9,8 @@ abstract class DriverProfileRemoteDataSource {
     int limit = 20,
   });
 
+  Future<Map<String, dynamic>?> fetchMyRideReview(String rideId);
+
   Future<bool> submitReview({
     required String driverId,
     required String rideId,
@@ -46,6 +48,18 @@ class DriverProfileRemoteDataSourceImpl(this._dio)
       for (final item in response.data ?? const <dynamic>[])
         if (item is Map) Map<String, dynamic>.from(item),
     ];
+  }
+
+  @override
+  Future<Map<String, dynamic>?> fetchMyRideReview(String rideId) async {
+    final parsedRideId = int.tryParse(rideId);
+    if (parsedRideId == null || parsedRideId <= 0) {
+      throw const FormatException('Ride identifier is invalid.');
+    }
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/api/v1/rides/${Uri.encodeComponent(rideId)}/my-review',
+    );
+    return response.data;
   }
 
   @override

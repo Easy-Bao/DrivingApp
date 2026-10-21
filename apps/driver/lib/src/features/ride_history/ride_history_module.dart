@@ -5,6 +5,7 @@ import 'package:driver/src/features/ride_history/domain/repositories/driver_ride
 import 'package:driver/src/features/ride_history/presentation/bloc/trip_history_cubit.dart';
 import 'package:driver/src/features/ride_history/presentation/view/driver_trip_detail_page.dart';
 import 'package:driver/src/features/ride_history/presentation/view/driver_trip_history_page.dart';
+import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/ride_history/ride_history_routes.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:design_system/design_system.dart';
@@ -37,6 +38,7 @@ class RideHistoryModule._() {
       child: (context, GoRouterState state) => TripDetailPage(
         trip: SafeRouteExtra.asMap(state.extra),
         sessionService: Modular.get<SessionStore>(),
+        rideRepository: Modular.get<RideRepository>(),
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,

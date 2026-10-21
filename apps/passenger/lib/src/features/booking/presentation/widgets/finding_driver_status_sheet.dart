@@ -1,6 +1,5 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 
 class FindingDriverStatusSheet extends StatelessWidget {
@@ -12,12 +11,20 @@ class FindingDriverStatusSheet extends StatelessWidget {
     required this.statusIcon,
     required this.statusColor,
     required this.destination,
+    this.pickupAddress,
+    this.rideType,
+    this.requestId,
+    this.footerMessage,
     required this.fare,
     required this.onCancelPressed,
     this.statusAnimation,
     this.primaryAction,
     this.primaryActionLabel,
     this.primaryActionIcon,
+    this.secondaryAction,
+    this.secondaryActionLabel,
+    this.secondaryActionIcon,
+    this.cancelLabel = 'Cancel search',
     this.isCanceling = false,
   });
 
@@ -27,12 +34,20 @@ class FindingDriverStatusSheet extends StatelessWidget {
   final IconData statusIcon;
   final Color statusColor;
   final String destination;
+  final String? pickupAddress;
+  final String? rideType;
+  final String? requestId;
+  final String? footerMessage;
   final double fare;
   final VoidCallback onCancelPressed;
   final Animation<double>? statusAnimation;
   final VoidCallback? primaryAction;
   final String? primaryActionLabel;
   final IconData? primaryActionIcon;
+  final VoidCallback? secondaryAction;
+  final String? secondaryActionLabel;
+  final IconData? secondaryActionIcon;
+  final String cancelLabel;
   final bool isCanceling;
 
   @override
@@ -100,6 +115,17 @@ class FindingDriverStatusSheet extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               _buildTripContext(colorScheme),
+              if (footerMessage?.trim().isNotEmpty == true) ...[
+                const SizedBox(height: 8),
+                Text(
+                  footerMessage!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
               if (hasPrimaryAction) ...[
                 const SizedBox(height: 14),
                 SizedBox(
@@ -122,6 +148,17 @@ class FindingDriverStatusSheet extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                     ),
+                  ),
+                ),
+              ],
+              if (secondaryAction != null && secondaryActionLabel != null) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: isCanceling ? null : secondaryAction,
+                    icon: Icon(secondaryActionIcon, size: 18),
+                    label: Text(secondaryActionLabel!),
                   ),
                 ),
               ],
@@ -148,9 +185,9 @@ class FindingDriverStatusSheet extends StatelessWidget {
                             color: colorScheme.onSurface,
                           ),
                         )
-                      : const Text(
-                          'Cancel search',
-                          style: TextStyle(
+                      : Text(
+                          cancelLabel,
+                          style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
                           ),
@@ -287,74 +324,76 @@ class FindingDriverStatusSheet extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: colorScheme.outlineVariant, width: 0.8),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: colorScheme.primary,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              LucideIcons.map_pin,
-              size: 18,
-              color: colorScheme.onPrimary,
-            ),
+          CompactRouteTimeline(
+            pickup: pickupAddress?.trim().isNotEmpty == true
+                ? pickupAddress!.trim()
+                : 'Current location',
+            dropoff: destination,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'GOING TO',
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (requestId?.trim().isNotEmpty == true)
+                Flexible(
+                  child: TripReference(
+                    id: requestId!,
+                    label: 'Request ID',
+                    compact: true,
                   ),
                 ),
-                const SizedBox(height: 2),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'ESTIMATED CASH FARE',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    formatPesoAmount(fare),
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          if (rideType?.trim().isNotEmpty == true) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    rideType!,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
                 Text(
-                  destination,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  'Cash',
                   style: TextStyle(
-                    color: colorScheme.onSurface,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                'ESTIMATE',
-                style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                formatPesoAmount(fare),
-                style: TextStyle(
-                  color: colorScheme.onSurface,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.3,
-                ),
-              ),
-            ],
-          ),
+          ],
         ],
       ),
     );

@@ -116,11 +116,17 @@ class ActiveRideModule._() {
       ActiveRideRoutes.passengerPaymentPath,
       child: (context, GoRouterState state) {
         final extra = state.extra;
-        return extra is! RideSnapshot
-            ? const Scaffold(
-                body: Center(child: Text('Payment data unavailable.')),
-              )
-            : PaymentPage(ride: extra);
+        if (extra is! RideSnapshot) {
+          return const Scaffold(
+            body: Center(child: Text('Trip details are unavailable.')),
+          );
+        }
+        return PaymentPage(
+          ride: extra,
+          trackRepository: Modular.get<TrackRepository>(),
+          sessionService: Modular.get<SessionStore>(),
+          profileRepository: Modular.get<DriverProfileRepository>(),
+        );
       },
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,

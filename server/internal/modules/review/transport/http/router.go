@@ -35,6 +35,10 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	}
 
 	withAuthenticatedPolicy(middleware.RouteRead).Get(api.V1Prefix+"/drivers/{id}/reviews", router.handler.DriverReviews)
+	withAuthenticatedPolicy(middleware.RouteRead, passengerOnly).Get(
+		api.V1Prefix+"/rides/{id}/my-review",
+		router.handler.PassengerDriverReviewForRide,
+	)
 	withAuthenticatedPolicy(middleware.RouteCommand, passengerOnly).Post(
 		api.V1Prefix+"/drivers/{id}/reviews",
 		router.handler.CreateReview,

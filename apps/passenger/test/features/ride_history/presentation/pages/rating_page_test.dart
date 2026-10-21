@@ -20,6 +20,11 @@ class _DriverProfileRepositoryStub implements DriverProfileRepository {
   }) async => const Ok([]);
 
   @override
+  Future<Result<DriverReview?, Failure>> fetchMyRideReview(
+    String rideId,
+  ) async => const Ok(null);
+
+  @override
   Future<Result<void, Failure>> submitReview({
     required String driverId,
     required String rideId,

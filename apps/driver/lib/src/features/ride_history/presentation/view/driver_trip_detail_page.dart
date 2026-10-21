@@ -1,6 +1,8 @@
 import 'package:driver/src/presentation/formatters/driver_value_formatters.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/chat/chat_routes.dart';
+import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -11,9 +13,11 @@ class const TripDetailPage({
   super.key,
   required this.trip,
   required this.sessionService,
+  this.rideRepository,
 }) extends StatefulWidget {
   final Map<String, dynamic> trip;
   final SessionStore sessionService;
+  final RideRepository? rideRepository;
 
   @override
   State<TripDetailPage> createState() => _TripDetailPageState();
@@ -150,6 +154,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
     final toName = valueAsString(widget.trip['dropoff_name']) ?? 'Drop-off';
     final fare = fareInPesos(widget.trip);
     final rideType = sentenceCase(widget.trip['ride_type'], 'Solo ride');
+    final tripId = valueAsString(widget.trip['id']) ?? '';
     final dateValue =
         valueAsString(widget.trip['completed_at']) ??
         valueAsString(widget.trip['created_at']) ??
@@ -176,6 +181,21 @@ class _TripDetailPageState extends State<TripDetailPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (tripId.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TripReference(id: tripId, label: 'Booking ID'),
+                        ),
+                        if (widget.rideRepository case final repository?)
+                          SafetyReportButton(
+                            rideId: tripId,
+                            rideRepository: repository,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,

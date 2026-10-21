@@ -69,8 +69,18 @@ final class const CancelBookingEvent() extends BookingEvent;
 
 final class const ResetBookingEvent() extends BookingEvent;
 
-final class const UpdateOffersEvent(this.offers) extends BookingEvent {
+final class const RestoreActiveBookingEvent() extends BookingEvent;
+
+final class const RefreshBookingSessionEvent() extends BookingEvent;
+
+final class const UpdateOffersEvent(
+  this.offers, {
+  this.session,
+  this.refreshError,
+}) extends BookingEvent {
   final List<BookingOffer> offers;
+  final BidSessionSnapshot? session;
+  final String? refreshError;
 }
 
 final class const DriverMatchedEvent(this.matchResult) extends BookingEvent {

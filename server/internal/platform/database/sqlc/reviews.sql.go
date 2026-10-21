@@ -110,6 +110,35 @@ func (q *Queries) CreateReview(ctx context.Context, arg CreateReviewParams) (Rev
 	return i, err
 }
 
+const getDriverReviewByRideAndPassenger = `-- name: GetDriverReviewByRideAndPassenger :one
+SELECT id, ride_id, driver_id, passenger_id, passenger_name, rating, comment, created_at
+FROM reviews
+WHERE ride_id = $1
+  AND passenger_id = $2
+LIMIT 1
+`
+
+type GetDriverReviewByRideAndPassengerParams struct {
+	RideID      pgtype.Int4 `db:"ride_id"`
+	PassengerID int32       `db:"passenger_id"`
+}
+
+func (q *Queries) GetDriverReviewByRideAndPassenger(ctx context.Context, arg GetDriverReviewByRideAndPassengerParams) (Review, error) {
+	row := q.db.QueryRow(ctx, getDriverReviewByRideAndPassenger, arg.RideID, arg.PassengerID)
+	var i Review
+	err := row.Scan(
+		&i.ID,
+		&i.RideID,
+		&i.DriverID,
+		&i.PassengerID,
+		&i.PassengerName,
+		&i.Rating,
+		&i.Comment,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getPassengerName = `-- name: GetPassengerName :one
 SELECT COALESCE(
     NULLIF(BTRIM(passenger_profile.name), ''),

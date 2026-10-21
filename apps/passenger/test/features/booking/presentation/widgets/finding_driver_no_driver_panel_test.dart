@@ -12,8 +12,11 @@ void main() {
     longitude: 123.44,
   );
 
-  testWidgets('allows the passenger to retry finding a driver', (tester) async {
+  testWidgets('offers a real ride request after empty discovery', (
+    tester,
+  ) async {
     var retryCount = 0;
+    var requestCount = 0;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -21,6 +24,9 @@ void main() {
           body: FindingDriverNoDriverPanel(
             fare: 100,
             destination: destination,
+            pickupAddress: 'Pickup address',
+            rideType: 'Solo Ride',
+            onRequestRidePressed: () => requestCount++,
             onRetryPressed: () => retryCount++,
             onCancelPressed: () {},
           ),
@@ -28,10 +34,19 @@ void main() {
       ),
     );
 
-    expect(find.text('No drivers nearby'), findsOneWidget);
-    expect(find.text('Try again when you’re ready.'), findsOneWidget);
-    expect(find.textContaining('Solo'), findsNothing);
-    await tester.tap(find.text('Try again'));
+    expect(find.text('No nearby drivers yet'), findsOneWidget);
+    expect(
+      find.textContaining('You can request a ride anyway'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Solo Ride'), findsOneWidget);
+    expect(find.text('Cash'), findsOneWidget);
+    await tester.tap(find.text('Request a ride'));
+    await tester.pump();
+    expect(requestCount, 1);
+
+    await tester.tap(find.text('Check again'));
+    await tester.pump();
 
     expect(retryCount, 1);
   });

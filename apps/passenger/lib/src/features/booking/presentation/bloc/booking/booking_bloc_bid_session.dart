@@ -86,17 +86,62 @@ extension _BookingBlocBidSession on BookingBloc {
       );
     }
     try {
-      (await _bookingRepository.fetchOffersResult(sessionId)).fold(
-        (failure) =>
-            dev.log('Failed to refresh booking offers: ${failure.message}'),
-        (offers) {
-          if (!isClosed &&
-              _lifecycleCoordinator.isForeground &&
-              _activeBidSessionId == sessionId) {
-            add(UpdateOffersEvent(offers));
+      DateTime? expiresAt;
+      String? sessionStatus;
+      BidSessionSnapshot? sessionSnapshot;
+      String? refreshError;
+      (await _bookingRepository.fetchSessionResult(sessionId)).fold(
+        (failure) {
+          refreshError = ErrorHandler.getErrorMessage(failure);
+          dev.log('Failed to refresh booking session: ${failure.message}');
+        },
+        (session) {
+          if (session.id == sessionId) {
+            sessionSnapshot = session;
+            expiresAt = session.expiresAt;
+            sessionStatus = session.status;
           }
         },
       );
+      if (_activeBidSessionId != sessionId || isClosed) return;
+      if (sessionSnapshot?.isAccepted == true ||
+          sessionSnapshot?.isCancelled == true) {
+        add(UpdateOffersEvent(const [], session: sessionSnapshot));
+        return;
+      }
+      if (sessionSnapshot?.isExpired == true) {
+        add(UpdateOffersEvent(const [], session: sessionSnapshot));
+        return;
+      }
+
+      List<BookingOffer>? offersSnapshot;
+      (await _bookingRepository.fetchOffersResult(sessionId)).fold((failure) {
+        refreshError ??= ErrorHandler.getErrorMessage(failure);
+        dev.log('Failed to refresh booking offers: ${failure.message}');
+      }, (offers) => offersSnapshot = offers);
+      if (!isClosed &&
+          _lifecycleCoordinator.isForeground &&
+          _activeBidSessionId == sessionId) {
+        final previousOffers = switch (state) {
+          BookingOffersReceived(:final offers) => offers,
+          _ => const <BookingOffer>[],
+        };
+        add(
+          UpdateOffersEvent(
+            offersSnapshot ?? previousOffers,
+            session:
+                sessionSnapshot ??
+                (sessionStatus == null
+                    ? null
+                    : BidSessionSnapshot(
+                        id: sessionId,
+                        status: sessionStatus!,
+                        expiresAt: expiresAt,
+                      )),
+            refreshError: refreshError,
+          ),
+        );
+      }
     } finally {
       _isRefreshingOffers = false;
     }
@@ -106,6 +151,28 @@ extension _BookingBlocBidSession on BookingBloc {
     UpdateOffersEvent event,
     Emitter<BookingState> emit,
   ) async {
+    final session = event.session;
+    if (session?.isAccepted == true) {
+      await _recoverAcceptedSession(session!, emit);
+      return;
+    }
+    if (session?.isCancelled == true) {
+      await _clearPendingBooking(session!.id);
+      emit(const BookingCanceled());
+      return;
+    }
+    if (session?.isExpired == true) {
+      await _clearPendingBooking(session!.id);
+      emit(
+        BookingFailure(
+          'This request expired before a driver accepted it.',
+          isRequestExpired: true,
+          sessionId: session.id,
+        ),
+      );
+      return;
+    }
+
     final isDirectBooking = switch (state) {
       BookingSearching(:final isDirect) => isDirect,
       BookingOffersReceived(:final isDirect) => isDirect,
@@ -165,6 +232,9 @@ extension _BookingBlocBidSession on BookingBloc {
           offers: event.offers,
           isDirect: current.isDirect,
           targetDriver: current.targetDriver,
+          sessionId: current.sessionId,
+          expiresAt: session?.expiresAt ?? current.expiresAt,
+          refreshError: event.refreshError,
         ),
       );
     } else if (state is BookingOffersReceived) {
@@ -174,6 +244,9 @@ extension _BookingBlocBidSession on BookingBloc {
           offers: event.offers,
           isDirect: current.isDirect,
           targetDriver: current.targetDriver,
+          sessionId: current.sessionId,
+          expiresAt: session?.expiresAt ?? current.expiresAt,
+          refreshError: event.refreshError,
         ),
       );
     }
@@ -235,6 +308,8 @@ extension _BookingBlocBidSession on BookingBloc {
       }
       await _secureSessionService.saveActiveRideId(rideId);
       await _secureSessionService.deleteActiveBidSessionId();
+      await _secureSessionService.deletePendingBidSessionCreation();
+      await _secureSessionService.deletePendingBidSessionCancellationId();
       _activeBidSessionId = null;
       _cleanupSubscriptions();
       _activeTrip = null;
@@ -262,8 +337,12 @@ extension _BookingBlocBidSession on BookingBloc {
     } catch (error) {
       _isAutoAcceptingOffer = false;
       _cleanupSubscriptions();
-      _activeTrip = null;
-      emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
+      emit(
+        BookingSessionRecoveryFailure(
+          sessionId: sessionId,
+          message: ErrorHandler.getErrorMessage(error),
+        ),
+      );
     }
   }
 
@@ -272,77 +351,82 @@ extension _BookingBlocBidSession on BookingBloc {
     Emitter<BookingState> emit,
   ) async {
     _nearestSearchCancelled = true;
-    ++_bookingOperationGeneration;
+    if (_isCreatingBidSession) {
+      _cancelPendingBidSessionCreation = true;
+      try {
+        await _secureSessionService.requestPendingBidSessionCancellation();
+        final sessionId = _activeBidSessionId;
+        if (sessionId?.isNotEmpty == true) {
+          await _secureSessionService.savePendingBidSessionCancellationId(
+            sessionId!,
+          );
+        }
+        emit(BookingSessionRecoveryInProgress(sessionId: sessionId ?? ''));
+      } catch (error) {
+        emit(
+          BookingSessionRecoveryFailure(
+            sessionId: '',
+            message: ErrorHandler.getErrorMessage(error),
+          ),
+        );
+      }
+      return;
+    }
+
     final sessionId = _activeBidSessionId;
     if (sessionId == null || sessionId.isEmpty) {
+      PendingBidSessionCreation? pendingCreation;
+      try {
+        pendingCreation = await _secureSessionService
+            .readPendingBidSessionCreation();
+        if (pendingCreation != null) {
+          _cancelPendingBidSessionCreation = true;
+          await _secureSessionService.requestPendingBidSessionCancellation();
+          emit(const BookingSessionRecoveryInProgress(sessionId: ''));
+          await _createOrRecoverPendingSession(newRequest: null, emit: emit);
+          return;
+        }
+      } catch (error) {
+        emit(
+          BookingSessionRecoveryFailure(
+            sessionId: '',
+            message: ErrorHandler.getErrorMessage(error),
+          ),
+        );
+        return;
+      }
       _cleanupSubscriptions();
       await _stopBackgroundTelemetry();
       _activeTrip = null;
-      unawaited(_secureSessionService.deleteActiveBidSessionId());
+      _pickupLat = null;
+      _pickupLng = null;
       emit(const BookingCanceled());
       return;
     }
 
     try {
-      final result = await _bookingRepository
-          .cancelSessionResult(sessionId)
-          .timeout(const Duration(seconds: 5));
-
-      result.fold(
-        (failure) {
-          final message = failure.message.toLowerCase();
-          final isAlreadyAccepted =
-              message.contains('already accepted') ||
-              message.contains('matched') ||
-              state is BookingDriverMatched;
-
-          if (isAlreadyAccepted) {
-            _cleanupSubscriptions();
-            unawaited(_stopBackgroundTelemetry());
-            _activeBidSessionId = null;
-            _activeTrip = null;
-            unawaited(_secureSessionService.deleteActiveBidSessionId());
-            emit(
-              BookingFailure(
-                failure.message.isNotEmpty
-                    ? failure.message
-                    : 'The booking was already accepted by a driver.',
-              ),
-            );
-            return;
-          }
-
-          // Cancellation failed/rejected: preserve active bid session and trip for retry/reconciliation
-          emit(
-            BookingFailure(
-              failure.message.isNotEmpty
-                  ? failure.message
-                  : 'Unable to cancel booking. Please try again.',
-            ),
-          );
-        },
-        (_) {
-          _cleanupSubscriptions();
-          unawaited(_stopBackgroundTelemetry());
-          _activeBidSessionId = null;
-          _activeTrip = null;
-          unawaited(_secureSessionService.deleteActiveBidSessionId());
-          emit(const BookingCanceled());
-        },
+      await _secureSessionService.savePendingBidSessionCancellationId(
+        sessionId,
       );
+      await _cancelPersistedBookingSession(sessionId, emit);
     } catch (error) {
-      dev.log('Unable to confirm booking cancellation: $error');
-      // Timeout or unexpected exception: retain recoverable session ID
-      emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
+      dev.log('Unable to persist booking cancellation: $error');
+      emit(
+        BookingSessionRecoveryFailure(
+          sessionId: sessionId,
+          message: ErrorHandler.getErrorMessage(error),
+        ),
+      );
     }
   }
 
-  void _onResetBooking(ResetBookingEvent event, Emitter<BookingState> emit) {
+  Future<void> _onResetBooking(
+    ResetBookingEvent event,
+    Emitter<BookingState> emit,
+  ) async {
+    if (_isCreatingBidSession || _activeBidSessionId != null) return;
     _nearestSearchCancelled = true;
-    ++_bookingOperationGeneration;
     _cleanupSubscriptions();
-    _activeBidSessionId = null;
-    unawaited(_secureSessionService.deleteActiveBidSessionId());
     _activeTrip = null;
     _pickupLat = null;
     _pickupLng = null;
@@ -352,6 +436,8 @@ extension _BookingBlocBidSession on BookingBloc {
     _totalTrips = null;
     ++_reviewsRequestGeneration;
     _isAutoAcceptingOffer = false;
+    await _secureSessionService.deletePendingBidSessionCreation();
+    await _secureSessionService.deletePendingBidSessionCancellationId();
     emit(const BookingInitial());
   }
 

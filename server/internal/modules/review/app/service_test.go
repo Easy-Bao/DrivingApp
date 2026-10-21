@@ -21,6 +21,17 @@ func (repository *reviewRepositoryStub) ReviewableRide(_ context.Context, rideID
 	return repository.ride, nil
 }
 
+func (repository *reviewRepositoryStub) DriverReviewForRide(
+	_ context.Context,
+	rideID, passengerID int,
+) (domain.Review, error) {
+	repository.requestedReviewRideID = rideID
+	if repository.review.ID == 0 || repository.review.PassengerID != passengerID {
+		return domain.Review{}, domain.ErrReviewNotFound
+	}
+	return repository.review, nil
+}
+
 func (repository *reviewRepositoryStub) DriverReviews(
 	context.Context,
 	int,
@@ -111,5 +122,23 @@ func TestDriverReviewsReturnAnIndependentSlice(t *testing.T) {
 	reviews[0].ID = 99
 	if repository.review.ID != 3 {
 		t.Fatalf("repository review changed through result slice: %#v", repository.review)
+	}
+}
+
+func TestPassengerCanReadOnlyTheirSubmittedReviewForACompletedRide(t *testing.T) {
+	driverID := 9
+	repository := &reviewRepositoryStub{
+		ride:   domain.ReviewableRide{Status: "completed", PassengerID: 4, DriverID: &driverID},
+		review: domain.Review{ID: 3, RideID: 7, PassengerID: 4, DriverID: 9, Rating: 5},
+	}
+	service := NewService(repository)
+
+	review, err := service.PassengerDriverReviewForRide(context.Background(), 7, 4)
+	if err != nil || review.ID != 3 || repository.requestedReviewRideID != 7 {
+		t.Fatalf("PassengerDriverReviewForRide() = %#v, %v", review, err)
+	}
+	_, err = service.PassengerDriverReviewForRide(context.Background(), 7, 5)
+	if !errors.Is(err, domain.ErrReviewNotAllowed) {
+		t.Fatalf("wrong passenger error = %v, want ErrReviewNotAllowed", err)
 	}
 }

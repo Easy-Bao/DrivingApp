@@ -61,6 +61,25 @@ final class DriverProfileRepositoryImpl({required this._dataSource})
   }
 
   @override
+  Future<Result<DriverReview?, Failure>> fetchMyRideReview(
+    String rideId,
+  ) async {
+    try {
+      final raw = await _dataSource.fetchMyRideReview(rideId);
+      if (raw == null) return const Ok(null);
+      final review = DriverReview.fromJson(raw);
+      if (review.rating < 1 || review.rating > 5) {
+        return const Err(
+          ValidationFailure('The saved ride rating is invalid.'),
+        );
+      }
+      return Ok(review);
+    } catch (error) {
+      return Err(_mapFailure(error));
+    }
+  }
+
+  @override
   Future<Result<void, Failure>> submitReview({
     required String driverId,
     required String rideId,

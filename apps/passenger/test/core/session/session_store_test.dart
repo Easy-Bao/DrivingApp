@@ -113,4 +113,30 @@ void main() {
 
     expect(restored, readAt);
   });
+
+  test(
+    'saves an ambiguous booking request and cancellation intent together',
+    () async {
+      await sessionStore.savePendingBidSessionCreation(
+        idempotencyKey: 'retry-key-12345678',
+        requestPayload: '{"ride_type":"solo"}',
+      );
+      await sessionStore.requestPendingBidSessionCancellation();
+      await sessionStore.attachPendingBidSessionId('request-31');
+
+      final restored = await SessionStore(storage: storage)
+          .readPendingBidSessionCreation();
+
+      expect(restored?.idempotencyKey, 'retry-key-12345678');
+      expect(restored?.requestPayload, '{"ride_type":"solo"}');
+      expect(restored?.cancelRequested, isTrue);
+      expect(restored?.sessionId, 'request-31');
+      expect(stored.keys, contains(StorageKeys.pendingBidSessionCreation));
+      expect(
+        stored.keys,
+        isNot(contains('pending_bid_session_idempotency_key')),
+      );
+      expect(stored.keys, isNot(contains('pending_bid_session_payload')));
+    },
+  );
 }

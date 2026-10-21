@@ -59,7 +59,11 @@ void main() {
   });
 
   test('uses the direct target in searching and matched states', () {
-    const searching = BookingSearching(isDirect: true, targetDriver: driver);
+    const searching = BookingSearching(
+      isDirect: true,
+      targetDriver: driver,
+      sessionId: 'request-1',
+    );
     const matched = BookingDriverMatched(
       matchResult: DriverMatchResult(
         driverId: 'driver-7',

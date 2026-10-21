@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,9 +16,6 @@ import 'package:passenger/src/features/booking/domain/repositories/driver_reposi
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
-import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox_state.dart';
 
 class MockDriverRepo extends Mock implements DriverRepository {}
 
@@ -30,14 +28,11 @@ class FakeBookingSessionRequest extends Fake implements BookingSessionRequest {}
 
 class MockSecureSessionService extends Mock implements SessionStore {}
 
-class MockInboxRepository extends Mock implements InboxRepository {}
-
 BookingBloc _makeBookingBloc({
   required DriverRepository driverRepo,
   required BookingRepository bookingRepository,
   required DriverProfileRepository driverProfileRepository,
   required SessionStore secureSessionService,
-  InboxCubit? inboxCubit,
   AppLifecycleCoordinator? lifecycleCoordinator,
   int nearestDriverMaxAttempts = 5,
   Duration nearestDriverRetryDelay = const Duration(seconds: 2),
@@ -47,7 +42,6 @@ BookingBloc _makeBookingBloc({
   bookingRepository: bookingRepository,
   driverProfileRepository: driverProfileRepository,
   secureSessionService: secureSessionService,
-  inboxCubit: inboxCubit,
   lifecycleCoordinator: lifecycleCoordinator ?? AppLifecycleCoordinator(),
   nearestDriverMaxAttempts: nearestDriverMaxAttempts,
   nearestDriverRetryDelay: nearestDriverRetryDelay,
@@ -63,16 +57,78 @@ void main() {
   late MockBookingRepository bookingRepository;
   late MockDriverProfileRepository driverProfileRepository;
   late MockSecureSessionService secureSessionService;
-  late MockInboxRepository inboxRepository;
+  PendingBidSessionCreation? pendingCreation;
+  String? pendingCancellationId;
 
   setUp(() {
     driverRepo = MockDriverRepo();
     bookingRepository = MockBookingRepository();
     driverProfileRepository = MockDriverProfileRepository();
     secureSessionService = MockSecureSessionService();
-    inboxRepository = MockInboxRepository();
+    pendingCreation = null;
+    pendingCancellationId = null;
     when(() => secureSessionService.readPassengerId())
         .thenAnswer((_) async => 'pass-001');
+    when(() => secureSessionService.readActiveRideId())
+        .thenAnswer((_) async => null);
+    when(() => secureSessionService.readActiveBidSessionId())
+        .thenAnswer((_) async => null);
+    when(() => secureSessionService.readPendingBidSessionCreation())
+        .thenAnswer((_) async => pendingCreation);
+    when(() => secureSessionService.readPendingBidSessionCancellationId())
+        .thenAnswer((_) async => pendingCancellationId);
+    when(
+      () => secureSessionService.savePendingBidSessionCreation(
+        idempotencyKey: any(named: 'idempotencyKey'),
+        requestPayload: any(named: 'requestPayload'),
+        cancelRequested: any(named: 'cancelRequested'),
+        sessionId: any(named: 'sessionId'),
+      ),
+    ).thenAnswer((invocation) async {
+      pendingCreation = (
+        idempotencyKey: invocation.namedArguments[#idempotencyKey] as String,
+        requestPayload: invocation.namedArguments[#requestPayload] as String,
+        cancelRequested: invocation.namedArguments[#cancelRequested] as bool,
+        sessionId: invocation.namedArguments[#sessionId] as String?,
+      );
+    });
+    when(() => secureSessionService.requestPendingBidSessionCancellation())
+        .thenAnswer((_) async {
+          final current = pendingCreation;
+          if (current != null) {
+            pendingCreation = (
+              idempotencyKey: current.idempotencyKey,
+              requestPayload: current.requestPayload,
+              cancelRequested: true,
+              sessionId: current.sessionId,
+            );
+          }
+        });
+    when(() => secureSessionService.attachPendingBidSessionId(any()))
+        .thenAnswer((invocation) async {
+          final current = pendingCreation;
+          if (current != null) {
+            pendingCreation = (
+              idempotencyKey: current.idempotencyKey,
+              requestPayload: current.requestPayload,
+              cancelRequested: current.cancelRequested,
+              sessionId: invocation.positionalArguments.single as String,
+            );
+          }
+        });
+    when(() => secureSessionService.deletePendingBidSessionCreation())
+        .thenAnswer((_) async {
+          pendingCreation = null;
+        });
+    when(
+      () => secureSessionService.savePendingBidSessionCancellationId(any()),
+    ).thenAnswer((invocation) async {
+      pendingCancellationId = invocation.positionalArguments.single as String;
+    });
+    when(() => secureSessionService.deletePendingBidSessionCancellationId())
+        .thenAnswer((_) async {
+          pendingCancellationId = null;
+        });
     when(() => secureSessionService.saveActiveBidSessionId(any()))
         .thenAnswer((_) async {});
     when(() => secureSessionService.deleteActiveBidSessionId())
@@ -152,24 +208,84 @@ void main() {
     );
   });
 
-  group('BookingBloc — LocateNearestDriverEvent', () {
+  group('BookingBloc — RestoreActiveBookingEvent', () {
     test(
-      'publishes an inbox notice after one authoritative empty lookup',
+      'replays the saved create request with its original idempotency key',
       () async {
-        when(
-          () => driverRepo.getNearbyDrivers(
-            lat: any(named: 'lat'),
-            lng: any(named: 'lng'),
-          ),
-        ).thenAnswer((_) async => const Ok([]));
-        final inboxCubit = InboxCubit(inboxRepository: inboxRepository);
+        const request = BookingSessionRequest(
+          rideType: 'Solo Ride',
+          pickupLatitude: 7.828,
+          pickupLongitude: 123.434,
+          pickupName: 'Pickup address',
+          dropoffLatitude: 7.83,
+          dropoffLongitude: 123.44,
+          dropoffName: 'Destination address',
+          distanceKm: 2,
+          durationMinutes: 5,
+          customFareAmount: 10000,
+          passengerNote: '',
+        );
+        pendingCreation = (
+          idempotencyKey: 'saved-key-12345678',
+          requestPayload: jsonEncode(request.toJson()),
+          cancelRequested: false,
+          sessionId: null,
+        );
+        when(() => bookingRepository.createSession(any()))
+            .thenAnswer((_) async => const Ok('restored-session'));
+
         final bloc = _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
           driverProfileRepository: driverProfileRepository,
           secureSessionService: secureSessionService,
-          inboxCubit: inboxCubit,
-          nearestDriverMaxAttempts: 1,
+        );
+        addTearDown(bloc.close);
+
+        final restored = bloc.stream.firstWhere(
+          (state) =>
+              state is BookingSearching &&
+              state.sessionId == 'restored-session',
+        );
+        bloc.add(const RestoreActiveBookingEvent());
+        await restored.timeout(const Duration(milliseconds: 500));
+
+        final replay =
+            verify(() => bookingRepository.createSession(captureAny()))
+                    .captured
+                    .single
+                as BookingSessionRequest;
+        expect(replay.idempotencyKey, 'saved-key-12345678');
+        expect(replay.toJson(), request.toJson());
+        expect(bloc.activeBidSessionId, 'restored-session');
+        expect(
+          bloc.activeDriverSearch?.trip.destination.name,
+          'Destination address',
+        );
+      },
+    );
+  });
+
+  group('BookingBloc — LocateNearestDriverEvent', () {
+    test(
+      'retries empty discovery before showing the request action state',
+      () async {
+        var lookupCount = 0;
+        when(
+          () => driverRepo.getNearbyDrivers(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer((_) async {
+          lookupCount++;
+          return const Ok([]);
+        });
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+          nearestDriverMaxAttempts: 3,
           nearestDriverRetryDelay: Duration.zero,
         );
 
@@ -186,15 +302,50 @@ void main() {
 
         final failureState = await failure as BookingFailure;
         expect(failureState.message, 'No drivers nearby');
-        final inboxState = inboxCubit.state as InboxLoadedState;
-        expect(inboxState.notifications.single.title, 'No drivers nearby');
+        expect(failureState.isNoDriverFound, isTrue);
+        expect(lookupCount, 3);
         verify(() => driverRepo.getNearbyDrivers(lat: 7.828, lng: 123.434))
-            .called(1);
+            .called(3);
 
         await bloc.close();
-        await inboxCubit.close();
       },
     );
+
+    test('uses the bounded five-lookup production default', () async {
+      var lookupCount = 0;
+      when(
+        () => driverRepo.getNearbyDrivers(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer((_) async {
+        lookupCount++;
+        return const Ok([]);
+      });
+      final bloc = BookingBloc(
+        driverRepository: driverRepo,
+        bookingRepository: bookingRepository,
+        driverProfileRepository: driverProfileRepository,
+        secureSessionService: secureSessionService,
+        lifecycleCoordinator: AppLifecycleCoordinator(),
+        nearestDriverRetryDelay: Duration.zero,
+      );
+      addTearDown(bloc.close);
+
+      final failure = bloc.stream.firstWhere(
+        (state) => state is BookingFailure,
+      );
+      bloc.add(
+        const LocateNearestDriverEvent(
+          pickupLat: 7.828,
+          pickupLng: 123.434,
+          trip: testTrip,
+        ),
+      );
+      await failure.timeout(const Duration(milliseconds: 500));
+
+      expect(lookupCount, 5);
+    });
 
     test(
       'keeps the active trip available when the search leaves the page',
@@ -471,6 +622,9 @@ void main() {
           'direct booking',
           isTrue,
         ),
+        isA<BookingSearching>()
+            .having((state) => state.isDirect, 'direct booking', isTrue)
+            .having((state) => state.sessionId, 'request ID', isNotNull),
         isA<BookingOffersReceived>()
             .having((state) => state.isDirect, 'direct booking', isTrue)
             .having((state) => state.offers, 'offers', isEmpty),
@@ -512,6 +666,9 @@ void main() {
           'open booking',
           isFalse,
         ),
+        isA<BookingSearching>()
+            .having((state) => state.isDirect, 'open booking', isFalse)
+            .having((state) => state.sessionId, 'request ID', '202'),
         isA<BookingOffersReceived>()
             .having((state) => state.isDirect, 'open booking', isFalse)
             .having((state) => state.offers, 'offers', isEmpty),
@@ -658,24 +815,28 @@ void main() {
     });
 
     test(
-      'does not report a deliberate cancellation as no driver found',
+      'retries an ambiguous creation with the same request before canceling',
       () async {
-        final inboxCubit = InboxCubit(inboxRepository: inboxRepository);
+        var createCalls = 0;
+        when(() => bookingRepository.createSession(any()))
+            .thenAnswer((_) async {
+              createCalls++;
+              if (createCalls == 1) {
+                return const Err(ServerFailure('Booking request timed out.'));
+              }
+              return const Ok('created-after-retry');
+            });
+        when(() => bookingRepository.cancelSession('created-after-retry'))
+            .thenAnswer((_) async => const Ok(null));
         final bloc = _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
           driverProfileRepository: driverProfileRepository,
           secureSessionService: secureSessionService,
-          inboxCubit: inboxCubit,
-        );
-        when(() => bookingRepository.createSession(any())).thenAnswer(
-          (_) async =>
-              const Err(ValidationFailure('Booking session was not created.')),
         );
 
-        final searchState = expectLater(
-          bloc.stream,
-          emits(isA<BookingSearching>()),
+        final initialFailure = bloc.stream.firstWhere(
+          (state) => state is BookingSessionRecoveryFailure,
         );
         bloc.add(
           const StartOpenBookingEvent(
@@ -686,19 +847,25 @@ void main() {
             durationMinutes: 5,
           ),
         );
-        await searchState;
+        await initialFailure;
 
-        final canceledState = expectLater(
-          bloc.stream,
-          emits(isA<BookingCanceled>()),
+        final canceledState = bloc.stream.firstWhere(
+          (state) => state is BookingCanceled,
         );
         bloc.add(const CancelBookingEvent());
         await canceledState;
 
-        expect(inboxCubit.state, isA<InboxInitialState>());
+        final captured = verify(
+          () => bookingRepository.createSession(captureAny()),
+        ).captured.cast<BookingSessionRequest>();
+        expect(captured, hasLength(2));
+        expect(captured[0].idempotencyKey, isNotEmpty);
+        expect(captured[1].idempotencyKey, captured[0].idempotencyKey);
+        expect(captured[1].toJson(), captured[0].toJson());
+        expect(pendingCreation, isNull);
+        expect(pendingCancellationId, isNull);
 
         await bloc.close();
-        await inboxCubit.close();
       },
     );
 
@@ -778,6 +945,15 @@ void main() {
           .thenAnswer((_) async => const Ok([]));
       when(() => bookingRepository.cancelSession('cancel-session-2'))
           .thenAnswer((_) async => const Err(ServerFailure('offline')));
+      when(() => bookingRepository.fetchSession('cancel-session-2')).thenAnswer(
+        (_) async => const Ok(
+          BidSessionSnapshot(
+            id: 'cancel-session-2',
+            status: 'open',
+            expiresAt: null,
+          ),
+        ),
+      );
 
       final bloc = _makeBookingBloc(
         driverRepo: driverRepo,
@@ -803,15 +979,18 @@ void main() {
       expect(bloc.activeBidSessionId, 'cancel-session-2');
 
       final failureState = bloc.stream.firstWhere(
-        (state) => state is BookingFailure,
+        (state) => state is BookingSessionRecoveryFailure,
       );
       bloc.add(const CancelBookingEvent());
       final state = await failureState.timeout(
         const Duration(milliseconds: 500),
       );
 
-      expect(state, isA<BookingFailure>());
-      expect((state as BookingFailure).message, contains('offline'));
+      expect(state, isA<BookingSessionRecoveryFailure>());
+      expect(
+        (state as BookingSessionRecoveryFailure).message,
+        contains('offline'),
+      );
       expect(bloc.activeBidSessionId, 'cancel-session-2');
       verifyNever(() => secureSessionService.deleteActiveBidSessionId());
     });
@@ -823,6 +1002,15 @@ void main() {
           .thenAnswer((_) async => const Ok([]));
       when(() => bookingRepository.cancelSession('cancel-session-3'))
           .thenThrow(TimeoutException('request timed out'));
+      when(() => bookingRepository.fetchSession('cancel-session-3')).thenAnswer(
+        (_) async => const Ok(
+          BidSessionSnapshot(
+            id: 'cancel-session-3',
+            status: 'open',
+            expiresAt: null,
+          ),
+        ),
+      );
 
       final bloc = _makeBookingBloc(
         driverRepo: driverRepo,
@@ -848,109 +1036,143 @@ void main() {
       expect(bloc.activeBidSessionId, 'cancel-session-3');
 
       final failureState = bloc.stream.firstWhere(
-        (state) => state is BookingFailure,
+        (state) => state is BookingSessionRecoveryFailure,
       );
       bloc.add(const CancelBookingEvent());
       final state = await failureState.timeout(
         const Duration(milliseconds: 500),
       );
 
-      expect(state, isA<BookingFailure>());
+      expect(state, isA<BookingSessionRecoveryFailure>());
       expect(bloc.activeBidSessionId, 'cancel-session-3');
       verifyNever(() => secureSessionService.deleteActiveBidSessionId());
     });
 
-    test('cancels a session created after the booking was canceled', () async {
-      final creation = Completer<Result<String, Failure>>();
-      when(() => bookingRepository.createSession(any()))
-          .thenAnswer((_) => creation.future);
-      when(() => bookingRepository.cancelSession('31'))
-          .thenAnswer((_) async => const Ok(null));
+    test(
+      'cancels a session after the pending create request resolves',
+      () async {
+        final creation = Completer<Result<String, Failure>>();
+        when(() => bookingRepository.createSession(any()))
+            .thenAnswer((_) => creation.future);
+        when(() => bookingRepository.cancelSession('31'))
+            .thenAnswer((_) async => const Ok(null));
 
-      final bloc = _makeBookingBloc(
-        driverRepo: driverRepo,
-        bookingRepository: bookingRepository,
-        driverProfileRepository: driverProfileRepository,
-        secureSessionService: secureSessionService,
-      );
-      addTearDown(bloc.close);
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+        );
+        addTearDown(bloc.close);
 
-      final searching = bloc.stream.firstWhere(
-        (state) => state is BookingSearching,
-      );
-      bloc.add(
-        const StartOpenBookingEvent(
-          trip: testTrip,
-          pickupLat: 7.82,
-          pickupLng: 123.43,
-          distanceKm: 2,
-          durationMinutes: 5,
-        ),
-      );
-      await searching;
-      await Future<void>.delayed(const Duration(milliseconds: 20));
+        final searching = bloc.stream.firstWhere(
+          (state) => state is BookingSearching,
+        );
+        bloc.add(
+          const StartOpenBookingEvent(
+            trip: testTrip,
+            pickupLat: 7.82,
+            pickupLng: 123.43,
+            distanceKm: 2,
+            durationMinutes: 5,
+          ),
+        );
+        await searching;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
 
-      final canceled = bloc.stream.firstWhere(
-        (state) => state is BookingCanceled,
-      );
-      bloc.add(const CancelBookingEvent());
-      await canceled.timeout(const Duration(milliseconds: 500));
+        final cancellationRequested = bloc.stream.firstWhere(
+          (state) => state is BookingSessionRecoveryInProgress,
+        );
+        bloc.add(const CancelBookingEvent());
+        await cancellationRequested.timeout(const Duration(milliseconds: 500));
+        verifyNever(() => bookingRepository.cancelSession('31'));
 
-      creation.complete(const Ok('31'));
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+        final canceled = bloc.stream.firstWhere(
+          (state) => state is BookingCanceled,
+        );
+        creation.complete(const Ok('31'));
+        await canceled.timeout(const Duration(milliseconds: 500));
 
-      verify(() => bookingRepository.cancelSession('31')).called(1);
-      verifyNever(() => bookingRepository.fetchOffers('31'));
-      expect(bloc.activeBidSessionId, isNull);
-      expect(bloc.state, isA<BookingCanceled>());
-    });
+        verify(() => bookingRepository.cancelSession('31')).called(1);
+        verifyNever(() => bookingRepository.fetchOffers('31'));
+        expect(bloc.activeBidSessionId, isNull);
+        expect(bloc.state, isA<BookingCanceled>());
+      },
+    );
 
-    test('emits BookingFailure and clears session when session was already accepted', () async {
-      when(() => bookingRepository.createSession(any()))
-          .thenAnswer((_) async => const Ok('cancel-session-4'));
-      when(() => bookingRepository.fetchOffers('cancel-session-4'))
-          .thenAnswer((_) async => const Ok([]));
-      when(
-        () => bookingRepository.cancelSession('cancel-session-4'),
-      ).thenAnswer(
-        (_) async =>
-            const Err(ValidationFailure('The booking was already accepted.')),
-      );
+    test(
+      'recovers an accepted session when cancellation loses the race',
+      () async {
+        var sessionReads = 0;
+        when(() => bookingRepository.createSession(any()))
+            .thenAnswer((_) async => const Ok('cancel-session-4'));
+        when(() => bookingRepository.fetchOffers('cancel-session-4'))
+            .thenAnswer((_) async => const Ok([]));
+        when(
+          () => bookingRepository.cancelSession('cancel-session-4'),
+        ).thenAnswer(
+          (_) async =>
+              const Err(ValidationFailure('The booking was already accepted.')),
+        );
+        when(() => bookingRepository.fetchSession('cancel-session-4'))
+            .thenAnswer((_) async {
+              sessionReads++;
+              if (sessionReads == 1) {
+                return const Ok(
+                  BidSessionSnapshot(
+                    id: 'cancel-session-4',
+                    status: 'open',
+                    expiresAt: null,
+                  ),
+                );
+              }
+              return const Ok(
+                BidSessionSnapshot(
+                  id: 'cancel-session-4',
+                  status: 'accepted',
+                  expiresAt: null,
+                  rideId: 'ride-55',
+                ),
+              );
+            });
 
-      final bloc = _makeBookingBloc(
-        driverRepo: driverRepo,
-        bookingRepository: bookingRepository,
-        driverProfileRepository: driverProfileRepository,
-        secureSessionService: secureSessionService,
-      );
-      addTearDown(bloc.close);
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+        );
+        addTearDown(bloc.close);
 
-      final offersReceived = bloc.stream.firstWhere(
-        (state) => state is BookingOffersReceived,
-      );
-      bloc.add(
-        const StartOpenBookingEvent(
-          trip: testTrip,
-          pickupLat: 7.82,
-          pickupLng: 123.43,
-          distanceKm: 2,
-          durationMinutes: 5,
-        ),
-      );
-      await offersReceived.timeout(const Duration(milliseconds: 500));
-      expect(bloc.activeBidSessionId, 'cancel-session-4');
+        final offersReceived = bloc.stream.firstWhere(
+          (state) => state is BookingOffersReceived,
+        );
+        bloc.add(
+          const StartOpenBookingEvent(
+            trip: testTrip,
+            pickupLat: 7.82,
+            pickupLng: 123.43,
+            distanceKm: 2,
+            durationMinutes: 5,
+          ),
+        );
+        await offersReceived.timeout(const Duration(milliseconds: 500));
+        expect(bloc.activeBidSessionId, 'cancel-session-4');
 
-      final failureState = bloc.stream.firstWhere(
-        (state) => state is BookingFailure,
-      );
-      bloc.add(const CancelBookingEvent());
-      final state = await failureState.timeout(
-        const Duration(milliseconds: 500),
-      );
+        final recoveredRide = bloc.stream.firstWhere(
+          (state) => state is BookingRideRecovered,
+        );
+        bloc.add(const CancelBookingEvent());
+        final state = await recoveredRide.timeout(
+          const Duration(milliseconds: 500),
+        );
 
-      expect(state, isA<BookingFailure>());
-      expect(bloc.activeBidSessionId, isNull);
-      verify(() => secureSessionService.deleteActiveBidSessionId()).called(1);
-    });
+        expect(state, isA<BookingRideRecovered>());
+        expect(bloc.activeBidSessionId, isNull);
+        expect((state as BookingRideRecovered).rideId, 'ride-55');
+        verify(() => secureSessionService.saveActiveRideId('ride-55'))
+            .called(1);
+      },
+    );
   });
 }

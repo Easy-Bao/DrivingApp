@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:driver/src/features/active_ride/domain/services/ride_payment_completion_handler.dart';
+import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,6 +28,8 @@ class const FareSummaryPage({
   required this.fare,
   required this.duration,
   required this.ridePaymentCompletionHandler,
+  this.rideId,
+  this.rideRepository,
 }) extends StatefulWidget {
   final String pickup;
   final String dropoff;
@@ -33,6 +37,8 @@ class const FareSummaryPage({
   final double distance;
   final double fare;
   final RidePaymentCompletionHandler ridePaymentCompletionHandler;
+  final String? rideId;
+  final RideRepository? rideRepository;
 
   @override
   State<FareSummaryPage> createState() => _FareSummaryPageState();
@@ -222,6 +228,9 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final rideId = widget.rideId?.trim().isNotEmpty == true
+        ? widget.rideId
+        : null;
     return PopScope<void>(
       canPop: _canLeavePage,
       onPopInvokedWithResult: (didPop, _) {
@@ -242,6 +251,25 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                 child: Column(
                   children: [
                     _buildHeader(context),
+                    if (rideId?.isNotEmpty == true) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TripReference(
+                              id: rideId!,
+                              label: 'Booking ID',
+                              compact: true,
+                            ),
+                          ),
+                          if (widget.rideRepository != null)
+                            SafetyReportButton(
+                              rideId: rideId,
+                              rideRepository: widget.rideRepository!,
+                            ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     Expanded(
                       child: SingleChildScrollView(

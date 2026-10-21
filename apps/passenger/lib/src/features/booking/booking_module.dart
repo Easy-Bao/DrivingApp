@@ -25,7 +25,6 @@ import 'package:passenger/src/features/booking/presentation/pages/map_pin_page.d
 import 'package:passenger/src/features/booking/presentation/pages/ride_selection_page.dart';
 import 'package:passenger/src/features/booking/presentation/pages/search_destination_page.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile_cubit.dart';
 
 class BookingModule._() {
@@ -60,7 +59,6 @@ class BookingModule._() {
           bookingRepository: i.get<BookingRepository>(),
           driverProfileRepository: i.get<DriverProfileRepository>(),
           secureSessionService: i.get<SessionStore>(),
-          inboxCubit: i.get<InboxCubit>(),
           backgroundTelemetryService: i.get<BackgroundTelemetry>(),
           realtimeClient: i.get<RealtimeWebSocketClient>(),
           lifecycleCoordinator: i.get<AppLifecycleCoordinator>(),

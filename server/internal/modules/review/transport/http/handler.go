@@ -52,6 +52,34 @@ func (handler *Handler) DriverReviews(writer http.ResponseWriter, request *http.
 	response.JSON(writer, http.StatusOK, NewReviewResponses(items))
 }
 
+func (handler *Handler) PassengerDriverReviewForRide(writer http.ResponseWriter, request *http.Request) {
+	passengerID, ok := middleware.AuthenticatedUserID(request, handler.verifier)
+	if !ok {
+		response.Error(writer, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	rideID, err := strconv.Atoi(chi.URLParam(request, "id"))
+	if err != nil || rideID <= 0 {
+		response.Error(writer, http.StatusBadRequest, "invalid ride id")
+		return
+	}
+	item, err := handler.service.PassengerDriverReviewForRide(request.Context(), rideID, passengerID)
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrReviewNotAllowed):
+			response.Error(writer, http.StatusNotFound, "review not found")
+		case errors.Is(err, domain.ErrReviewNotFound):
+			writer.WriteHeader(http.StatusNoContent)
+		case errors.Is(err, application.ErrPersistenceUnavailable):
+			response.Error(writer, http.StatusServiceUnavailable, "Review service is temporarily unavailable.")
+		default:
+			response.Error(writer, http.StatusInternalServerError, "Review status is temporarily unavailable.")
+		}
+		return
+	}
+	response.JSON(writer, http.StatusOK, NewReviewResponse(item))
+}
+
 func (handler *Handler) CreateReview(writer http.ResponseWriter, request *http.Request) {
 	passengerID, ok := middleware.AuthenticatedUserID(request, handler.verifier)
 	if !ok {

@@ -5,7 +5,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
     StartDirectBookingEvent event,
     Emitter<BookingState> emit,
   ) async {
-    if (hasActiveBooking) return;
+    if (hasActiveBooking || _isCreatingBidSession) return;
     final targetDriver = event.targetDriver;
     final targetDriverId = int.tryParse(targetDriver.id);
     if (targetDriverId == null || targetDriverId <= 0) {
@@ -15,114 +15,337 @@ extension _BookingBlocSessionCreation on BookingBloc {
       );
       return;
     }
+
+    _isCreatingBidSession = true;
+    _cancelPendingBidSessionCreation = false;
     _isAutoAcceptingOffer = false;
-    _activeTrip = event.trip;
-    _pickupLat = event.pickupLat;
-    _pickupLng = event.pickupLng;
-    _pickupName = _pickupNameForTrip(event.trip);
-    _dropoffLat = event.trip.destination.latitude;
-    _dropoffLng = event.trip.destination.longitude;
-    emit(BookingSearching(isDirect: true, targetDriver: targetDriver));
-
-    final passengerId = await _secureSessionService.readPassengerId() ?? '';
-    if (passengerId.isEmpty) {
-      _activeTrip = null;
-      emit(BookingFailure(ErrorHandler.getErrorMessage(const AuthFailure())));
-      return;
-    }
-
-    final generation = _bookingOperationGeneration;
-    try {
-      String? sessionId;
-      Failure? failure;
-      (await _bookingRepository.createSessionResult(
-        _bookingRequest(
-          trip: event.trip,
-          pickupLat: event.pickupLat,
-          pickupLng: event.pickupLng,
-          distanceKm: event.distanceKm,
-          durationMinutes: event.durationMinutes,
-          targetDriverId: targetDriverId,
-        ),
-      )).fold((value) => failure = value, (value) => sessionId = value);
-      if (sessionId == null) throw failure!;
-      if (generation != _bookingOperationGeneration) {
-        // Cancelled or reset while the create request was in flight.
-        await _discardObsoleteSession(sessionId!);
-        return;
-      }
-      _activeBidSessionId = sessionId;
-      unawaited(_secureSessionService.saveActiveBidSessionId(sessionId!));
-      _subscribeToSession(sessionId!);
-    } catch (error) {
-      _activeTrip = null;
-      emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
-    }
+    _setTripContext(
+      event.trip,
+      pickupLat: event.pickupLat,
+      pickupLng: event.pickupLng,
+    );
+    emit(
+      BookingSearching(
+        isDirect: true,
+        targetDriver: targetDriver,
+        expiresAt: null,
+      ),
+    );
+    await _requirePassengerAndCreate(
+      request: _bookingRequest(
+        trip: event.trip,
+        pickupLat: event.pickupLat,
+        pickupLng: event.pickupLng,
+        distanceKm: event.distanceKm,
+        durationMinutes: event.durationMinutes,
+        targetDriverId: targetDriverId,
+      ),
+      targetDriver: targetDriver,
+      emit: emit,
+    );
   }
 
   Future<void> _onStartOpenBooking(
     StartOpenBookingEvent event,
     Emitter<BookingState> emit,
   ) async {
-    if (hasActiveBooking) return;
-    _activeTrip = event.trip;
-    _pickupLat = event.pickupLat;
-    _pickupLng = event.pickupLng;
-    _pickupName = _pickupNameForTrip(event.trip);
-    _dropoffLat = event.trip.destination.latitude;
-    _dropoffLng = event.trip.destination.longitude;
+    if (hasActiveBooking || _isCreatingBidSession) return;
+    _isCreatingBidSession = true;
+    _cancelPendingBidSessionCreation = false;
+    _setTripContext(
+      event.trip,
+      pickupLat: event.pickupLat,
+      pickupLng: event.pickupLng,
+    );
     emit(const BookingSearching(isDirect: false));
+    await _requirePassengerAndCreate(
+      request: _bookingRequest(
+        trip: event.trip,
+        pickupLat: event.pickupLat,
+        pickupLng: event.pickupLng,
+        distanceKm: event.distanceKm,
+        durationMinutes: event.durationMinutes,
+      ),
+      emit: emit,
+    );
+  }
 
-    final passengerId = await _secureSessionService.readPassengerId() ?? '';
-    if (passengerId.isEmpty) {
+  Future<void> _requirePassengerAndCreate({
+    required BookingSessionRequest request,
+    required Emitter<BookingState> emit,
+    DriverModel? targetDriver,
+  }) async {
+    String? passengerId;
+    try {
+      passengerId = await _secureSessionService.readPassengerId();
+    } catch (error) {
+      final cancellationRequested = _cancelPendingBidSessionCreation;
       _activeTrip = null;
-      emit(BookingFailure(ErrorHandler.getErrorMessage(const AuthFailure())));
+      _isCreatingBidSession = false;
+      _cancelPendingBidSessionCreation = false;
+      emit(
+        cancellationRequested
+            ? const BookingCanceled()
+            : BookingFailure(ErrorHandler.getErrorMessage(error)),
+      );
+      return;
+    }
+    if (passengerId?.trim().isNotEmpty != true) {
+      final cancellationRequested = _cancelPendingBidSessionCreation;
+      _activeTrip = null;
+      _isCreatingBidSession = false;
+      _cancelPendingBidSessionCreation = false;
+      emit(
+        cancellationRequested
+            ? const BookingCanceled()
+            : BookingFailure(ErrorHandler.getErrorMessage(const AuthFailure())),
+      );
       return;
     }
 
-    final generation = _bookingOperationGeneration;
+    await _createOrRecoverPendingSession(
+      newRequest: request,
+      targetDriver: targetDriver,
+      emit: emit,
+    );
+  }
+
+  Future<void> _createOrRecoverPendingSession({
+    required BookingSessionRequest? newRequest,
+    required Emitter<BookingState> emit,
+    DriverModel? targetDriver,
+  }) async {
+    if (!_isCreatingBidSession) {
+      _isCreatingBidSession = true;
+    }
     try {
-      String? sessionId;
-      Failure? failure;
-      (await _bookingRepository.createSessionResult(
-        _bookingRequest(
-          trip: event.trip,
-          pickupLat: event.pickupLat,
-          pickupLng: event.pickupLng,
-          distanceKm: event.distanceKm,
-          durationMinutes: event.durationMinutes,
-        ),
-      )).fold((value) => failure = value, (value) => sessionId = value);
-      if (sessionId == null) throw failure!;
-      if (generation != _bookingOperationGeneration) {
-        // Cancelled or reset while the create request was in flight.
-        await _discardObsoleteSession(sessionId!);
+      var pending = await _secureSessionService.readPendingBidSessionCreation();
+      if (pending == null) {
+        if (newRequest == null) return;
+        final requestPayload = jsonEncode(newRequest.toJson());
+        final idempotencyKey = _newIdempotencyKey();
+        await _secureSessionService.savePendingBidSessionCreation(
+          idempotencyKey: idempotencyKey,
+          requestPayload: requestPayload,
+        );
+        if (_cancelPendingBidSessionCreation) {
+          await _secureSessionService.requestPendingBidSessionCancellation();
+        }
+        pending = (
+          idempotencyKey: idempotencyKey,
+          requestPayload: requestPayload,
+          cancelRequested: false,
+          sessionId: null,
+        );
+      }
+
+      final decodedPayload = jsonDecode(pending.requestPayload);
+      if (decodedPayload is! Map) {
+        throw const FormatException('The saved ride request is invalid.');
+      }
+      final storedRequest = BookingSessionRequest.fromJson(
+        Map<String, dynamic>.from(decodedPayload),
+      ).copyWith(idempotencyKey: pending.idempotencyKey);
+      if (!storedRequest.isValid || storedRequest.customFareAmount <= 0) {
+        throw const ValidationFailure(
+          'The saved ride request is incomplete. Please start a new request.',
+        );
+      }
+
+      _restoreTripContextFromRequest(storedRequest);
+      final isDirect = storedRequest.targetDriverId != null;
+      final matchingTargetDriver =
+          isDirect &&
+              storedRequest.targetDriverId.toString() == targetDriver?.id
+          ? targetDriver
+          : null;
+      _cancelPendingBidSessionCreation = pending.cancelRequested;
+
+      var sessionId = pending.sessionId;
+      if (sessionId == null || sessionId.isEmpty) {
+        if (state is! BookingSearching ||
+            (state as BookingSearching).sessionId != null) {
+          emit(
+            BookingSearching(
+              isDirect: isDirect,
+              targetDriver: matchingTargetDriver,
+              sessionId: null,
+            ),
+          );
+        }
+        String? createdSessionId;
+        Failure? failure;
+        (await _bookingRepository.createSessionResult(storedRequest)).fold(
+          (value) => failure = value,
+          (value) => createdSessionId = value,
+        );
+        if (createdSessionId == null) {
+          if (failure is ValidationFailure) {
+            await _secureSessionService.deletePendingBidSessionCreation();
+            _activeTrip = null;
+            emit(
+              _cancelPendingBidSessionCreation
+                  ? const BookingCanceled()
+                  : BookingFailure(failure!.message),
+            );
+            return;
+          }
+          throw failure!;
+        }
+        sessionId = createdSessionId!;
+        await _secureSessionService.attachPendingBidSessionId(sessionId);
+      }
+
+      final resolvedSessionId = sessionId;
+      _activeBidSessionId = resolvedSessionId;
+      await _secureSessionService.saveActiveBidSessionId(resolvedSessionId);
+      final currentPending = await _secureSessionService
+          .readPendingBidSessionCreation();
+      final cancellationRequested =
+          _cancelPendingBidSessionCreation ||
+          currentPending?.cancelRequested == true;
+      if (cancellationRequested) {
+        await _secureSessionService.savePendingBidSessionCancellationId(
+          resolvedSessionId,
+        );
+        emit(BookingSessionRecoveryInProgress(sessionId: resolvedSessionId));
+        await _cancelPersistedBookingSession(resolvedSessionId, emit);
         return;
       }
-      _activeBidSessionId = sessionId;
-      unawaited(_secureSessionService.saveActiveBidSessionId(sessionId!));
-      _subscribeToSession(sessionId!);
+
+      await _secureSessionService.deletePendingBidSessionCreation();
+      final cancellationSessionId = await _secureSessionService
+          .readPendingBidSessionCancellationId();
+      if (cancellationSessionId == resolvedSessionId) {
+        emit(BookingSessionRecoveryInProgress(sessionId: resolvedSessionId));
+        await _cancelPersistedBookingSession(resolvedSessionId, emit);
+        return;
+      }
+      emit(
+        BookingSearching(
+          isDirect: isDirect,
+          targetDriver: matchingTargetDriver,
+          sessionId: resolvedSessionId,
+        ),
+      );
+      _subscribeToSession(resolvedSessionId);
     } catch (error) {
-      _activeTrip = null;
-      emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
+      final sessionId = _activeBidSessionId ?? '';
+      emit(
+        BookingSessionRecoveryFailure(
+          sessionId: sessionId,
+          message: ErrorHandler.getErrorMessage(error),
+        ),
+      );
+    } finally {
+      _isCreatingBidSession = false;
+      _cancelPendingBidSessionCreation = false;
     }
   }
 
-  Future<void> _discardObsoleteSession(String sessionId) async {
+  Future<void> _cancelPersistedBookingSession(
+    String sessionId,
+    Emitter<BookingState> emit,
+  ) async {
     try {
       final result = await _bookingRepository
           .cancelSessionResult(sessionId)
           .timeout(const Duration(seconds: 5));
-      result.fold(
-        (failure) => dev.log(
-          'Unable to cancel obsolete booking session $sessionId: '
-          '${failure.message}',
+      var canceled = false;
+      Failure? failure;
+      result.fold((value) => failure = value, (_) => canceled = true);
+      if (canceled) {
+        await _clearPendingBooking(sessionId);
+        emit(const BookingCanceled());
+        return;
+      }
+      failure ??= const ServerFailure(
+        'The request cancellation is unconfirmed.',
+      );
+
+      BidSessionSnapshot? snapshot;
+      Failure? refreshFailure;
+      (await _bookingRepository.fetchSessionResult(sessionId))
+          .fold((value) => refreshFailure = value, (value) => snapshot = value);
+      if (snapshot?.isAccepted == true) {
+        await _recoverAcceptedSession(snapshot!, emit);
+        return;
+      }
+      if (snapshot?.isCancelled == true) {
+        await _clearPendingBooking(sessionId);
+        emit(const BookingCanceled());
+        return;
+      }
+      emit(
+        BookingSessionRecoveryFailure(
+          sessionId: sessionId,
+          message: refreshFailure?.message ?? failure!.message,
         ),
-        (_) {},
       );
     } catch (error) {
-      dev.log('Unable to cancel obsolete booking session $sessionId: $error');
+      emit(
+        BookingSessionRecoveryFailure(
+          sessionId: sessionId,
+          message: ErrorHandler.getErrorMessage(error),
+        ),
+      );
     }
+  }
+
+  Future<void> _clearPendingBooking(String sessionId) async {
+    if (_activeBidSessionId == sessionId) _activeBidSessionId = null;
+    await _secureSessionService.deleteActiveBidSessionId();
+    await _secureSessionService.deletePendingBidSessionCreation();
+    await _secureSessionService.deletePendingBidSessionCancellationId();
+    _cleanupSubscriptions();
+    _activeTrip = null;
+    _pickupLat = null;
+    _pickupLng = null;
+    _pickupName = null;
+    _dropoffLat = null;
+    _dropoffLng = null;
+  }
+
+  String _newIdempotencyKey() => List<String>.generate(
+    32,
+    (_) => _idempotencyRandom.nextInt(16).toRadixString(16),
+  ).join();
+
+  void _setTripContext(
+    BidSessionTrip trip, {
+    required double pickupLat,
+    required double pickupLng,
+  }) {
+    _activeTrip = trip;
+    _pickupLat = pickupLat;
+    _pickupLng = pickupLng;
+    _pickupName = _pickupNameForTrip(trip);
+    _dropoffLat = trip.destination.latitude;
+    _dropoffLng = trip.destination.longitude;
+  }
+
+  void _restoreTripContextFromRequest(BookingSessionRequest request) {
+    final destination = Place(
+      id: 'request-pending',
+      name: request.dropoffName,
+      fullAddress: request.dropoffName,
+      latitude: request.dropoffLatitude,
+      longitude: request.dropoffLongitude,
+    );
+    _activeTrip = BidSessionTrip(
+      rideType: request.rideType,
+      fare: request.customFareAmount / 100,
+      destination: destination,
+      distance: '${request.distanceKm.toStringAsFixed(1)} km',
+      duration: '${request.durationMinutes.round()} min',
+      pickupAddress: request.pickupName,
+      passengerNote: request.passengerNote,
+    );
+    _pickupLat = request.pickupLatitude;
+    _pickupLng = request.pickupLongitude;
+    _pickupName = request.pickupName;
+    _dropoffLat = request.dropoffLatitude;
+    _dropoffLng = request.dropoffLongitude;
   }
 
   BookingSessionRequest _bookingRequest({
