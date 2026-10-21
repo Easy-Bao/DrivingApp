@@ -17,7 +17,7 @@ func TestNewAcceptedRideSnapshotsAssignmentAndSettlement(t *testing.T) {
 			DistanceKm:      4.5,
 			DurationMinutes: 16,
 		},
-		DriverAssignmentSnapshot{Name: "Ada", VehicleType: "sedan", PlateNumber: "ABC 123"},
+		DriverAssignmentSnapshot{Name: "Ada", VehicleType: "sedan", PlateNumber: "ABC 123", Rating: 4.8},
 		1500,
 	)
 	if err != nil {
@@ -29,7 +29,7 @@ func TestNewAcceptedRideSnapshotsAssignmentAndSettlement(t *testing.T) {
 	if ride.FareAmount != 5200 || ride.CommissionAmount != 780 || ride.DriverPayoutAmount != 4420 {
 		t.Fatalf("accepted ride settlement = %+v", ride)
 	}
-	if ride.DriverName != "Ada" || ride.VehicleType != "sedan" || ride.PlateNumber != "ABC 123" {
+	if ride.DriverName != "Ada" || ride.VehicleType != "sedan" || ride.PlateNumber != "ABC 123" || ride.DriverRating != 4.8 {
 		t.Fatalf("accepted ride driver snapshot = %+v", ride)
 	}
 }

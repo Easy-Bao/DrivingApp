@@ -218,6 +218,7 @@ func (repository *Store) AcceptOffer(
 			Name:        profile.Name,
 			VehicleType: profile.VehicleType,
 			PlateNumber: profile.PlateNumber,
+			Rating:      profile.Rating,
 		},
 		repository.platformCommissionBPS,
 	)
@@ -247,6 +248,7 @@ func (repository *Store) AcceptOffer(
 		DriverName:       rideText(acceptedRide.DriverName),
 		VehicleType:      rideText(acceptedRide.VehicleType),
 		PlateNumber:      rideText(acceptedRide.PlateNumber),
+		DriverRating:     rideRating(acceptedRide.DriverRating),
 		BidSessionID:     pgtype.Int4{Int32: session.ID, Valid: true},
 	})
 	if err != nil {

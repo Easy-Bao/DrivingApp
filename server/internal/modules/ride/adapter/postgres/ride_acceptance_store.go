@@ -96,11 +96,12 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 		return domain.Ride{}, err
 	}
 	updatedRide, err := transactionQueries.AcceptRideFromRequest(ctx, databasepostgres.AcceptRideFromRequestParams{
-		ID:          trip.ID,
-		DriverID:    pgtype.Int4{Int32: profile.UserID, Valid: true},
-		DriverName:  rideText(profile.Name),
-		VehicleType: rideText(profile.VehicleType),
-		PlateNumber: rideText(profile.PlateNumber),
+		ID:           trip.ID,
+		DriverID:     pgtype.Int4{Int32: profile.UserID, Valid: true},
+		DriverName:   rideText(profile.Name),
+		VehicleType:  rideText(profile.VehicleType),
+		PlateNumber:  rideText(profile.PlateNumber),
+		DriverRating: rideRating(profile.Rating),
 	})
 	if err != nil {
 		return domain.Ride{}, driverActiveRideConflictError("accept ride", err)

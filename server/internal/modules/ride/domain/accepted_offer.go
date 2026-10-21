@@ -4,6 +4,7 @@ type DriverAssignmentSnapshot struct {
 	Name        string
 	VehicleType string
 	PlateNumber string
+	Rating      float64
 }
 
 func NewAcceptedRide(
@@ -27,6 +28,7 @@ func NewAcceptedRide(
 	ride.DriverName = driver.Name
 	ride.VehicleType = driver.VehicleType
 	ride.PlateNumber = driver.PlateNumber
+	ride.DriverRating = driver.Rating
 	ride.CommissionBPS = &settlement.CommissionBPS
 	ride.CommissionAmount = settlement.CommissionAmount
 	ride.DriverPayoutAmount = settlement.DriverPayoutAmount

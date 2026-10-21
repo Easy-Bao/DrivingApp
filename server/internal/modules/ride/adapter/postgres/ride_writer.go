@@ -100,6 +100,13 @@ func rideFloat(value float64) pgtype.Float8 {
 	return pgtype.Float8{Float64: value, Valid: true}
 }
 
+func rideRating(value float64) pgtype.Float8 {
+	if value <= 0 {
+		return pgtype.Float8{}
+	}
+	return pgtype.Float8{Float64: value, Valid: true}
+}
+
 func rideText(value string) pgtype.Text {
 	return pgtype.Text{String: value, Valid: true}
 }

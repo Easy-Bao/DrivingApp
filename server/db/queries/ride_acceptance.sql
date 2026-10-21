@@ -96,11 +96,11 @@ INSERT INTO rides (
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    bid_session_id
+    driver_rating, bid_session_id
 )
 VALUES (
     $1, $2, 'accepted', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-    $13, $14, $15, $16
+    $13, $14, $15, $16, $17
 )
 RETURNING *;
 
@@ -124,7 +124,8 @@ SET status = 'assigned',
     driver_id = $2,
     driver_name = $3,
     vehicle_type = $4,
-    plate_number = $5
+    plate_number = $5,
+    driver_rating = $6
 WHERE id = $1
   AND status = 'requested'
 RETURNING *;
@@ -135,7 +136,8 @@ SET status = 'accepted',
     driver_id = $2,
     driver_name = $3,
     vehicle_type = $4,
-    plate_number = $5
+    plate_number = $5,
+    driver_rating = $6
 WHERE id = $1
   AND status = 'requested'
 RETURNING *;

@@ -17,18 +17,20 @@ SET status = 'accepted',
     driver_id = $2,
     driver_name = $3,
     vehicle_type = $4,
-    plate_number = $5
+    plate_number = $5,
+    driver_rating = $6
 WHERE id = $1
   AND status = 'requested'
 RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details, bid_session_id
 `
 
 type AcceptRideFromRequestParams struct {
-	ID          int32       `db:"id"`
-	DriverID    pgtype.Int4 `db:"driver_id"`
-	DriverName  pgtype.Text `db:"driver_name"`
-	VehicleType pgtype.Text `db:"vehicle_type"`
-	PlateNumber pgtype.Text `db:"plate_number"`
+	ID           int32         `db:"id"`
+	DriverID     pgtype.Int4   `db:"driver_id"`
+	DriverName   pgtype.Text   `db:"driver_name"`
+	VehicleType  pgtype.Text   `db:"vehicle_type"`
+	PlateNumber  pgtype.Text   `db:"plate_number"`
+	DriverRating pgtype.Float8 `db:"driver_rating"`
 }
 
 func (q *Queries) AcceptRideFromRequest(ctx context.Context, arg AcceptRideFromRequestParams) (Ride, error) {
@@ -38,6 +40,7 @@ func (q *Queries) AcceptRideFromRequest(ctx context.Context, arg AcceptRideFromR
 		arg.DriverName,
 		arg.VehicleType,
 		arg.PlateNumber,
+		arg.DriverRating,
 	)
 	var i Ride
 	err := row.Scan(
@@ -78,18 +81,20 @@ SET status = 'assigned',
     driver_id = $2,
     driver_name = $3,
     vehicle_type = $4,
-    plate_number = $5
+    plate_number = $5,
+    driver_rating = $6
 WHERE id = $1
   AND status = 'requested'
 RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details, bid_session_id
 `
 
 type AssignRideFromAcceptanceParams struct {
-	ID          int32       `db:"id"`
-	DriverID    pgtype.Int4 `db:"driver_id"`
-	DriverName  pgtype.Text `db:"driver_name"`
-	VehicleType pgtype.Text `db:"vehicle_type"`
-	PlateNumber pgtype.Text `db:"plate_number"`
+	ID           int32         `db:"id"`
+	DriverID     pgtype.Int4   `db:"driver_id"`
+	DriverName   pgtype.Text   `db:"driver_name"`
+	VehicleType  pgtype.Text   `db:"vehicle_type"`
+	PlateNumber  pgtype.Text   `db:"plate_number"`
+	DriverRating pgtype.Float8 `db:"driver_rating"`
 }
 
 func (q *Queries) AssignRideFromAcceptance(ctx context.Context, arg AssignRideFromAcceptanceParams) (Ride, error) {
@@ -99,6 +104,7 @@ func (q *Queries) AssignRideFromAcceptance(ctx context.Context, arg AssignRideFr
 		arg.DriverName,
 		arg.VehicleType,
 		arg.PlateNumber,
+		arg.DriverRating,
 	)
 	var i Ride
 	err := row.Scan(
@@ -153,11 +159,11 @@ INSERT INTO rides (
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    bid_session_id
+    driver_rating, bid_session_id
 )
 VALUES (
     $1, $2, 'accepted', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-    $13, $14, $15, $16
+    $13, $14, $15, $16, $17
 )
 RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details, bid_session_id
 `
@@ -178,6 +184,7 @@ type CreateAcceptedRideParams struct {
 	DriverName       pgtype.Text   `db:"driver_name"`
 	VehicleType      pgtype.Text   `db:"vehicle_type"`
 	PlateNumber      pgtype.Text   `db:"plate_number"`
+	DriverRating     pgtype.Float8 `db:"driver_rating"`
 	BidSessionID     pgtype.Int4   `db:"bid_session_id"`
 }
 
@@ -198,6 +205,7 @@ func (q *Queries) CreateAcceptedRide(ctx context.Context, arg CreateAcceptedRide
 		arg.DriverName,
 		arg.VehicleType,
 		arg.PlateNumber,
+		arg.DriverRating,
 		arg.BidSessionID,
 	)
 	var i Ride

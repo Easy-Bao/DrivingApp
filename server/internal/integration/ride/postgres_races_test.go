@@ -788,3 +788,66 @@ func TestReplayAcceptedOfferReturnsOriginalRideNotUnrelatedRide(t *testing.T) {
 		t.Fatalf("replayed ride ID = %d, want %d (must NOT return unrelated current ride %d)", replayCompleted.Ride.ID, ride1ID, ride2ID)
 	}
 }
+
+func TestAcceptedRideCapturesDriverRatingSnapshot(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	ctx := context.Background()
+	passengerID := 9501
+	driverID := 9502
+	fixture.seedPassenger(t, ctx, passengerID)
+	fixture.seedDriver(t, ctx, driverID) // rating seeded as 4.8
+
+	// Path 1: Bid session acceptance captures driver rating snapshot.
+	sessionID := fixture.createBidSession(t, ctx, passengerID)
+	offerID := fixture.createBidOffer(t, ctx, sessionID, driverID)
+
+	acceptance, err := fixture.dispatchStore.AcceptOffer(ctx, sessionID, offerID, passengerID)
+	if err != nil {
+		t.Fatalf("AcceptOffer() error = %v", err)
+	}
+	if acceptance.Ride.DriverRating != 4.8 {
+		t.Fatalf("acceptance.Ride.DriverRating = %f, want 4.8", acceptance.Ride.DriverRating)
+	}
+
+	var storedRating float64
+	if err := fixture.pool.QueryRow(ctx, `SELECT driver_rating FROM rides WHERE id = $1`, acceptance.Ride.ID).Scan(&storedRating); err != nil {
+		t.Fatalf("read stored driver rating: %v", err)
+	}
+	if storedRating != 4.8 {
+		t.Fatalf("stored driver_rating in rides = %f, want 4.8", storedRating)
+	}
+
+	// Update driver's rating in profile (e.g. subsequent review changes profile to 3.5).
+	if _, err := fixture.pool.Exec(ctx, `UPDATE driver_profiles SET rating = 3.5 WHERE user_id = $1`, driverID); err != nil {
+		t.Fatalf("update driver rating in profile: %v", err)
+	}
+
+	// Stored historical snapshot must remain 4.8.
+	if err := fixture.pool.QueryRow(ctx, `SELECT driver_rating FROM rides WHERE id = $1`, acceptance.Ride.ID).Scan(&storedRating); err != nil {
+		t.Fatalf("re-read stored driver rating: %v", err)
+	}
+	if storedRating != 4.8 {
+		t.Fatalf("stored driver_rating changed to %f, want immutable 4.8", storedRating)
+	}
+
+	// Complete the ride.
+	if _, err := fixture.pool.Exec(ctx, `UPDATE rides SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE id = $1`, acceptance.Ride.ID); err != nil {
+		t.Fatalf("complete ride: %v", err)
+	}
+
+	// Path 2: Direct ride acceptance also captures current driver rating snapshot (3.5).
+	tripID := fixture.createRide(t, ctx, passengerID, 0, string(domain.RideRequested), 3000)
+	acceptedTrip, err := fixture.store.AcceptRide(ctx, tripID, driverID)
+	if err != nil {
+		t.Fatalf("AcceptRide() error = %v", err)
+	}
+	if acceptedTrip.DriverRating != 3.5 {
+		t.Fatalf("acceptedTrip.DriverRating = %f, want 3.5", acceptedTrip.DriverRating)
+	}
+	if err := fixture.pool.QueryRow(ctx, `SELECT driver_rating FROM rides WHERE id = $1`, tripID).Scan(&storedRating); err != nil {
+		t.Fatalf("read direct ride driver_rating: %v", err)
+	}
+	if storedRating != 3.5 {
+		t.Fatalf("stored direct ride driver_rating = %f, want 3.5", storedRating)
+	}
+}
