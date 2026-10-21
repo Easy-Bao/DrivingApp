@@ -186,6 +186,33 @@ func (q *Queries) LockDriverProfileForOnlineStatus(ctx context.Context, arg Lock
 	return i, err
 }
 
+const lockPassengerProfileByUserID = `-- name: LockPassengerProfileByUserID :one
+SELECT id, user_id, name, address, gender, avatar_storage_key,
+    avatar_content_type, preferred_ride_type, created_at, updated_at
+FROM passenger_profiles
+WHERE user_id = $1
+LIMIT 1
+FOR UPDATE
+`
+
+func (q *Queries) LockPassengerProfileByUserID(ctx context.Context, userID int32) (PassengerProfile, error) {
+	row := q.db.QueryRow(ctx, lockPassengerProfileByUserID, userID)
+	var i PassengerProfile
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.Address,
+		&i.Gender,
+		&i.AvatarStorageKey,
+		&i.AvatarContentType,
+		&i.PreferredRideType,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateDriverOnlineStatus = `-- name: UpdateDriverOnlineStatus :one
 UPDATE driver_profiles
 SET is_online = $1,

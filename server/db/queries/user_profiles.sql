@@ -32,6 +32,14 @@ FROM passenger_profiles
 WHERE user_id = $1
 LIMIT 1;
 
+-- name: LockPassengerProfileByUserID :one
+SELECT id, user_id, name, address, gender, avatar_storage_key,
+    avatar_content_type, preferred_ride_type, created_at, updated_at
+FROM passenger_profiles
+WHERE user_id = $1
+LIMIT 1
+FOR UPDATE;
+
 -- name: UpdateUserProfile :one
 UPDATE users
 SET name = $2,

@@ -273,7 +273,7 @@ func (repository *ProfileRepository) SaveAvatar(
 		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
 	}
 
-	passengerProfile, err := repository.queries.GetPassengerProfileByUserIDFull(ctx, dbUserID)
+	_, err = repository.queries.GetPassengerProfileByUserIDFull(ctx, dbUserID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.Profile{}, domain.ErrAvatarNotFound
 	}
@@ -285,7 +285,28 @@ func (repository *ProfileRepository) SaveAvatar(
 	if err != nil {
 		return domain.Profile{}, fmt.Errorf("store passenger avatar: %w", err)
 	}
-	updatedRows, err := repository.queries.UpdatePassengerAvatar(ctx, databasepostgres.UpdatePassengerAvatarParams{
+
+	transaction, err := repository.pool.Begin(ctx)
+	if err != nil {
+		repository.cleanupAvatar(ctx, storageKey)
+		return domain.Profile{}, fmt.Errorf("begin passenger avatar transaction: %w", err)
+	}
+	defer func() {
+		platformdatabase.Rollback(ctx, transaction)
+	}()
+
+	transactionQueries := repository.queries.WithTx(transaction)
+	passengerProfile, err := transactionQueries.LockPassengerProfileByUserID(ctx, dbUserID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		repository.cleanupAvatar(ctx, storageKey)
+		return domain.Profile{}, domain.ErrAvatarNotFound
+	}
+	if err != nil {
+		repository.cleanupAvatar(ctx, storageKey)
+		return domain.Profile{}, fmt.Errorf("lock passenger avatar profile: %w", err)
+	}
+
+	updatedRows, err := transactionQueries.UpdatePassengerAvatar(ctx, databasepostgres.UpdatePassengerAvatarParams{
 		ID:                passengerProfile.ID,
 		AvatarStorageKey:  toPostgresProfileText(storageKey),
 		AvatarContentType: toPostgresProfileText(contentType),
@@ -299,6 +320,11 @@ func (repository *ProfileRepository) SaveAvatar(
 		return domain.Profile{}, domain.ErrAvatarNotFound
 	}
 
+	if err := transaction.Commit(ctx); err != nil {
+		repository.cleanupAvatar(ctx, storageKey)
+		return domain.Profile{}, fmt.Errorf("commit passenger avatar transaction: %w", err)
+	}
+
 	oldStorageKey := strings.TrimSpace(profileTextValue(passengerProfile.AvatarStorageKey))
 	if oldStorageKey != "" && oldStorageKey != storageKey {
 		repository.cleanupAvatar(ctx, oldStorageKey)
@@ -310,7 +336,7 @@ func (repository *ProfileRepository) cleanupAvatar(ctx context.Context, storageK
 	cleanupContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
 	defer cancel()
 	if err := repository.avatarStorage.Delete(cleanupContext, storageKey); err != nil {
-		repository.log().WarnContext(ctx, "delete passenger avatar object failed", "error", err, "operation", "delete")
+		repository.log().WarnContext(ctx, "delete passenger avatar object failed", "error", err, "operation", "delete", "storage_key", storageKey)
 	}
 }
 
