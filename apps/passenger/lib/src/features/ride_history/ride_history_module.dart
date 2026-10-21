@@ -1,6 +1,7 @@
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
@@ -33,6 +34,7 @@ class RideHistoryModule._() {
         (i) => RideHistoryBloc(
           repository: i.get<RideHistoryRepository>(),
           sessionBloc: i.get<SessionBloc>(),
+          lifecycleCoordinator: i.get<AppLifecycleCoordinator>(),
         ),
       )
       ..addFactory<RideDetailsCubit>(

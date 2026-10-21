@@ -1,5 +1,7 @@
 part of 'ride_history_bloc.dart';
 
+enum RideHistoryFailureKind { connection, server, other }
+
 sealed class const RideHistoryState() extends Equatable {
   @override
   List<Object?> get props => [];
@@ -76,10 +78,15 @@ final class const RideHistoryLoaded({
   ];
 }
 
-final class const RideHistoryError({required this.message})
-    extends RideHistoryState {
+final class const RideHistoryError({
+  required this.message,
+  this.failureKind = RideHistoryFailureKind.other,
+  this.retryAutomatically = false,
+}) extends RideHistoryState {
   final String message;
+  final RideHistoryFailureKind failureKind;
+  final bool retryAutomatically;
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, failureKind, retryAutomatically];
 }

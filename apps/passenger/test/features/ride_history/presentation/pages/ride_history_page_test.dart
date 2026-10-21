@@ -17,6 +17,104 @@ import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 void main() {
   testWidgets(
+    'shows a server status offline and refreshes activity automatically',
+    (tester) async {
+      final sessionBloc = SessionBloc(
+        sessionRepository: _AuthenticatedSessionRepository(),
+      );
+      final repository = _RecoveringRideHistoryRepository();
+      addTearDown(sessionBloc.close);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: AppNetworkStatusScope(
+            isUnavailable: false,
+            child: MultiBlocProvider(
+              providers: [
+                BlocProvider<SessionBloc>.value(value: sessionBloc),
+                BlocProvider<RideHistoryBloc>(
+                  create: (_) => RideHistoryBloc(repository: repository),
+                ),
+              ],
+              child: const RideHistoryPage(),
+            ),
+          ),
+        ),
+      );
+
+      sessionBloc.add(const SessionStarted());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Server error: Activity is unavailable. Checking again automatically.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Could not load activity'), findsOneWidget);
+      expect(find.text('Retry'), findsNothing);
+      expect(repository.overviewCalls, 1);
+
+      await tester.pump(const Duration(seconds: 15));
+      await tester.pumpAndSettle();
+
+      expect(repository.overviewCalls, 2);
+      expect(find.text('No rides yet'), findsOneWidget);
+      expect(
+        find.text(
+          'Server error: Activity is unavailable. Checking again automatically.',
+        ),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'suppresses page status banner when network scope is unavailable to avoid overlapping banners',
+    (tester) async {
+      final sessionBloc = SessionBloc(
+        sessionRepository: _AuthenticatedSessionRepository(),
+      );
+      final repository = _RecoveringRideHistoryRepository();
+      addTearDown(sessionBloc.close);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: AppNetworkStatusScope(
+            isUnavailable: true,
+            child: MultiBlocProvider(
+              providers: [
+                BlocProvider<SessionBloc>.value(value: sessionBloc),
+                BlocProvider<RideHistoryBloc>(
+                  create: (_) => RideHistoryBloc(repository: repository),
+                ),
+              ],
+              child: const RideHistoryPage(),
+            ),
+          ),
+        ),
+      );
+
+      sessionBloc.add(const SessionStarted());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Server error: Activity is unavailable. Checking again automatically.',
+        ),
+        findsNothing,
+      );
+      expect(find.text('Could not load activity'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'loads the empty state when authentication resolves after the page mounts',
     (tester) async {
       final sessionBloc = SessionBloc(
@@ -102,7 +200,13 @@ void main() {
       MaterialApp(
         theme: AppTheme.main,
         home: MultiBlocProvider(
-          providers: [BlocProvider<SessionBloc>.value(value: sessionBloc)],
+          providers: [
+            BlocProvider<SessionBloc>.value(value: sessionBloc),
+            BlocProvider<RideHistoryBloc>(
+              create: (_) =>
+                  RideHistoryBloc(repository: _EmptyRideHistoryRepository()),
+            ),
+          ],
           child: const RecentActivityPage(),
         ),
       ),
@@ -231,6 +335,43 @@ final class _PendingRideHistoryRepository implements RideHistoryRepository {
     String passengerId, {
     int limit = 25,
   }) => completer.future;
+
+  @override
+  Future<Result<OffsetPage<RideHistory>, Failure>> fetchRideHistory(
+    String passengerId, {
+    int limit = 25,
+    int offset = 0,
+  }) async => const Ok(
+    OffsetPage<RideHistory>(items: [], hasMore: false, nextOffset: null),
+  );
+}
+
+final class _RecoveringRideHistoryRepository implements RideHistoryRepository {
+  int overviewCalls = 0;
+
+  @override
+  Future<Result<RideHistoryOverview, Failure>> fetchRideHistoryOverview(
+    String passengerId, {
+    int limit = 25,
+  }) async {
+    overviewCalls++;
+    if (overviewCalls == 1) {
+      return const Err(
+        ServerFailure.withStatusCode('Activity is unavailable.', 503),
+      );
+    }
+    return const Ok(
+      RideHistoryOverview(
+        rides: OffsetPage<RideHistory>(
+          items: [],
+          hasMore: false,
+          nextOffset: null,
+        ),
+        weeklyFareAmount: 0,
+        weeklyRideCount: 0,
+      ),
+    );
+  }
 
   @override
   Future<Result<OffsetPage<RideHistory>, Failure>> fetchRideHistory(

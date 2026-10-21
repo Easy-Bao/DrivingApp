@@ -54,136 +54,169 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: RefreshIndicator(
-          color: context.colorScheme.onSurface,
-          onRefresh: _loadRideHistory,
-          child: BlocListener<SessionBloc, SessionState>(
-            listenWhen: (_, current) => current is AuthenticatedSession,
-            listener: (_, _) => unawaited(_loadRideHistory()),
-            child: BlocBuilder<SessionBloc, SessionState>(
-              builder: (context, sessionState) => switch (sessionState) {
-                SessionLoading() => _RideHistoryLoadingView(
-                  title: widget.title,
-                  subtitle: 'Checking your account',
-                  showBackButton: widget.showBackButton,
-                  showSubtitle: widget.showHeaderSubtitle,
-                  showSummary: widget.showSummary,
-                  showFilters: widget.showFilters,
-                  itemCount: _defaultSkeletonCount,
-                ),
-                GuestSession() || SessionFailure() => _RideHistoryMessageView(
-                  headerTitle: widget.title,
-                  subtitle: 'Sign in to view your ride history',
-                  title: 'Guest mode',
-                  message: 'Sign in to see your recent trips.',
-                  showBackButton: widget.showBackButton,
-                  showSubtitle: widget.showHeaderSubtitle,
-                ),
-                AuthenticatedSession() =>
-                  BlocBuilder<RideHistoryBloc, RideHistoryState>(
-                    builder: (context, state) => switch (state) {
-                      RideHistoryInitial() => _RideHistoryLoadingView(
-                        title: widget.title,
-                        subtitle: 'Preparing your activity',
-                        showBackButton: widget.showBackButton,
-                        showSubtitle: widget.showHeaderSubtitle,
-                        showSummary: widget.showSummary,
-                        showFilters: widget.showFilters,
-                        itemCount: _defaultSkeletonCount,
+      body: BlocBuilder<RideHistoryBloc, RideHistoryState>(
+        builder: (context, rideHistoryState) {
+          final errorState = rideHistoryState is RideHistoryError
+              ? rideHistoryState
+              : null;
+          final retryAutomatically = errorState?.retryAutomatically ?? false;
+          final statusMessage = switch (errorState?.failureKind) {
+            RideHistoryFailureKind.connection => 'Connection issue: Activity is unavailable. Checking again automatically.',
+            RideHistoryFailureKind.server => 'Server error: Activity is unavailable. Checking again automatically.',
+            _ => '',
+          };
+          return Column(
+            children: [
+              AppStatusBanner(
+                isVisible: retryAutomatically,
+                message: statusMessage,
+                tone: AppStatusBannerTone.error,
+              ),
+              Expanded(
+                child: SafeArea(
+                  top: !retryAutomatically,
+                  bottom: false,
+                  child: RefreshIndicator(
+                    color: context.colorScheme.onSurface,
+                    onRefresh: _loadRideHistory,
+                    child: BlocListener<SessionBloc, SessionState>(
+                      listenWhen: (_, current) =>
+                          current is AuthenticatedSession,
+                      listener: (_, _) => unawaited(_loadRideHistory()),
+                      child: BlocBuilder<SessionBloc, SessionState>(
+                        builder: (context, sessionState) =>
+                            switch (sessionState) {
+                              SessionLoading() => _RideHistoryLoadingView(
+                                title: widget.title,
+                                subtitle: 'Checking your account',
+                                showBackButton: widget.showBackButton,
+                                showSubtitle: widget.showHeaderSubtitle,
+                                showSummary: widget.showSummary,
+                                showFilters: widget.showFilters,
+                                itemCount: _defaultSkeletonCount,
+                              ),
+                              GuestSession() ||
+                              SessionFailure() => _RideHistoryMessageView(
+                                headerTitle: widget.title,
+                                subtitle: 'Sign in to view your ride history',
+                                title: 'Guest mode',
+                                message: 'Sign in to see your recent trips.',
+                                showBackButton: widget.showBackButton,
+                                showSubtitle: widget.showHeaderSubtitle,
+                              ),
+                              AuthenticatedSession() =>
+                                BlocBuilder<RideHistoryBloc, RideHistoryState>(
+                                  builder: (context, state) => switch (state) {
+                                    RideHistoryInitial() =>
+                                      _RideHistoryLoadingView(
+                                        title: widget.title,
+                                        subtitle: 'Preparing your activity',
+                                        showBackButton: widget.showBackButton,
+                                        showSubtitle: widget.showHeaderSubtitle,
+                                        showSummary: widget.showSummary,
+                                        showFilters: widget.showFilters,
+                                        itemCount: _defaultSkeletonCount,
+                                      ),
+                                    RideHistoryLoading(:final existingRideCount)
+                                        when existingRideCount > 0 =>
+                                      _RideHistoryLoadingView(
+                                        title: widget.title,
+                                        subtitle: widget.subtitle,
+                                        showBackButton: widget.showBackButton,
+                                        showSubtitle: widget.showHeaderSubtitle,
+                                        showSummary: widget.showSummary,
+                                        showFilters: widget.showFilters,
+                                        itemCount: existingRideCount
+                                            .clamp(
+                                              _defaultSkeletonCount,
+                                              _maximumSkeletonCount,
+                                            )
+                                            .toInt(),
+                                      ),
+                                    RideHistoryLoading() =>
+                                      _RideHistoryLoadingView(
+                                        title: widget.title,
+                                        subtitle: 'Loading your activity',
+                                        showBackButton: widget.showBackButton,
+                                        showSubtitle: widget.showHeaderSubtitle,
+                                        showSummary: widget.showSummary,
+                                        showFilters: widget.showFilters,
+                                        itemCount: _defaultSkeletonCount,
+                                      ),
+                                    RideHistoryError(
+                                      :final message,
+                                      :final failureKind,
+                                      :final retryAutomatically,
+                                    ) =>
+                                      _RideHistoryMessageView(
+                                        headerTitle: widget.title,
+                                        subtitle: widget.subtitle,
+                                        title: 'Could not load activity',
+                                        message: switch (failureKind) {
+                                          RideHistoryFailureKind.connection
+                                              when retryAutomatically =>
+                                            'We’ll update this page automatically when your connection returns.',
+                                          RideHistoryFailureKind.server
+                                              when retryAutomatically =>
+                                            'We’ll update this page automatically when the server responds.',
+                                          _ => message,
+                                        },
+                                        icon: null,
+                                        showBackButton: widget.showBackButton,
+                                        showSubtitle: widget.showHeaderSubtitle,
+                                      ),
+                                    RideHistoryLoaded(
+                                      :final past,
+                                      :final upcoming,
+                                    )
+                                        when past.isEmpty && upcoming.isEmpty =>
+                                      _RideHistoryMessageView(
+                                        headerTitle: widget.title,
+                                        subtitle: widget.subtitle,
+                                        title: 'No rides yet',
+                                        message: 'Your completed and cancelled rides will appear here.',
+                                        showBackButton: widget.showBackButton,
+                                        showSubtitle: widget.showHeaderSubtitle,
+                                      ),
+                                    RideHistoryLoaded(
+                                      :final past,
+                                      :final upcoming,
+                                      :final hasMore,
+                                      :final isLoadingMore,
+                                      :final loadMoreError,
+                                      :final weeklyFareAmount,
+                                      :final weeklyRideCount,
+                                    ) =>
+                                      RideHistoryListView(
+                                        headerTitle: widget.title,
+                                        headerSubtitle: widget.subtitle,
+                                        showBackButton: widget.showBackButton,
+                                        showHeaderSubtitle:
+                                            widget.showHeaderSubtitle,
+                                        showSummary: widget.showSummary,
+                                        showFilters: widget.showFilters,
+                                        activeRides: upcoming,
+                                        pastRides: past,
+                                        referenceTime: DateTime.now(),
+                                        onRideTap: _openRide,
+                                        hasMore: hasMore,
+                                        isLoadingMore: isLoadingMore,
+                                        loadMoreError: loadMoreError,
+                                        onLoadMore: _loadMoreRideHistory,
+                                        weeklyFare: weeklyFareAmount / 100,
+                                        weeklyRideCount: weeklyRideCount,
+                                      ),
+                                  },
+                                ),
+                            },
                       ),
-                      RideHistoryLoading(:final existingRideCount)
-                          when existingRideCount > 0 =>
-                        _RideHistoryLoadingView(
-                          title: widget.title,
-                          subtitle: widget.subtitle,
-                          showBackButton: widget.showBackButton,
-                          showSubtitle: widget.showHeaderSubtitle,
-                          showSummary: widget.showSummary,
-                          showFilters: widget.showFilters,
-                          itemCount: existingRideCount
-                              .clamp(
-                                _defaultSkeletonCount,
-                                _maximumSkeletonCount,
-                              )
-                              .toInt(),
-                        ),
-                      RideHistoryLoading() => _RideHistoryLoadingView(
-                        title: widget.title,
-                        subtitle: 'Loading your activity',
-                        showBackButton: widget.showBackButton,
-                        showSubtitle: widget.showHeaderSubtitle,
-                        showSummary: widget.showSummary,
-                        showFilters: widget.showFilters,
-                        itemCount: _defaultSkeletonCount,
-                      ),
-                      RideHistoryError()
-                          when AppNetworkStatusScope.isUnavailableOf(context) =>
-                        _RideHistoryLoadingView(
-                          title: widget.title,
-                          subtitle: widget.subtitle,
-                          showBackButton: widget.showBackButton,
-                          showSubtitle: widget.showHeaderSubtitle,
-                          showSummary: widget.showSummary,
-                          showFilters: widget.showFilters,
-                          itemCount: _defaultSkeletonCount,
-                        ),
-                      RideHistoryError(:final message) =>
-                        _RideHistoryMessageView(
-                          headerTitle: widget.title,
-                          subtitle: widget.subtitle,
-                          title: 'Could not load activity',
-                          message: message,
-                          icon: LucideIcons.wifi_off,
-                          actionLabel: 'Retry',
-                          onAction: _loadRideHistory,
-                          showBackButton: widget.showBackButton,
-                          showSubtitle: widget.showHeaderSubtitle,
-                        ),
-                      RideHistoryLoaded(:final past, :final upcoming)
-                          when past.isEmpty && upcoming.isEmpty =>
-                        _RideHistoryMessageView(
-                          headerTitle: widget.title,
-                          subtitle: widget.subtitle,
-                          title: 'No rides yet',
-                          message: 'Your completed and cancelled rides will appear here.',
-                          showBackButton: widget.showBackButton,
-                          showSubtitle: widget.showHeaderSubtitle,
-                        ),
-                      RideHistoryLoaded(
-                        :final past,
-                        :final upcoming,
-                        :final hasMore,
-                        :final isLoadingMore,
-                        :final loadMoreError,
-                        :final weeklyFareAmount,
-                        :final weeklyRideCount,
-                      ) =>
-                        RideHistoryListView(
-                          headerTitle: widget.title,
-                          headerSubtitle: widget.subtitle,
-                          showBackButton: widget.showBackButton,
-                          showHeaderSubtitle: widget.showHeaderSubtitle,
-                          showSummary: widget.showSummary,
-                          showFilters: widget.showFilters,
-                          activeRides: upcoming,
-                          pastRides: past,
-                          referenceTime: DateTime.now(),
-                          onRideTap: _openRide,
-                          hasMore: hasMore,
-                          isLoadingMore: isLoadingMore,
-                          loadMoreError: loadMoreError,
-                          onLoadMore: _loadMoreRideHistory,
-                          weeklyFare: weeklyFareAmount / 100,
-                          weeklyRideCount: weeklyRideCount,
-                        ),
-                    },
+                    ),
                   ),
-              },
-            ),
-          ),
-        ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -233,8 +266,6 @@ class _RideHistoryMessageView extends StatelessWidget {
     this.showBackButton = false,
     this.showSubtitle = true,
     this.icon = LucideIcons.route,
-    this.actionLabel,
-    this.onAction,
   });
   final String subtitle;
   final String title;
@@ -242,9 +273,7 @@ class _RideHistoryMessageView extends StatelessWidget {
   final String headerTitle;
   final bool showBackButton;
   final bool showSubtitle;
-  final IconData icon;
-  final String? actionLabel;
-  final Future<void> Function()? onAction;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -278,25 +307,27 @@ class _RideHistoryMessageView extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: context.colorScheme.surface,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: context.colorScheme.outlineVariant,
-                      width: 1,
+                if (icon case final icon?) ...[
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.surface,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: context.colorScheme.outlineVariant,
+                        width: 1,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      icon,
+                      size: 30,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    icon,
-                    size: 30,
-                    color: context.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
+                ],
                 Text(
                   title,
                   textAlign: TextAlign.center,
@@ -318,25 +349,6 @@ class _RideHistoryMessageView extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (actionLabel != null && onAction != null) ...[
-                  const SizedBox(height: 20),
-                  FilledButton.icon(
-                    onPressed: onAction,
-                    icon: const Icon(LucideIcons.refresh_cw, size: 16),
-                    label: Text(actionLabel!),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: context.colorScheme.onSurface,
-                      foregroundColor: context.colorScheme.surface,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),

@@ -41,13 +41,13 @@ void main() {
       button.style!.overlayColor!.resolve({WidgetState.pressed}),
       Colors.transparent,
     );
-    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
+    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
     await tester.tap(find.text('Remember me'));
     await tester.pump();
-    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
+    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
     await tester.tapAt(tester.getCenter(find.byType(Checkbox)));
     await tester.pump();
-    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
+    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
   });
 
   for (final rememberMe in [true, false]) {
@@ -75,7 +75,7 @@ void main() {
         );
         await tester.enterText(find.byType(TextField).at(1), 'test-password');
         await tester.ensureVisible(find.text('Remember me'));
-        if (!rememberMe) {
+        if (rememberMe) {
           await tester.tap(find.text('Remember me'));
           await tester.pump();
         }

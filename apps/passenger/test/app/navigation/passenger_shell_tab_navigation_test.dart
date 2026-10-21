@@ -138,11 +138,15 @@ void main() {
       expect(inkWell.splashFactory, NoSplash.splashFactory);
       expect(
         inkWell.overlayColor?.resolve({WidgetState.pressed}),
-        AppTheme.main.colorScheme.primary.withValues(alpha: 0.12),
+        Colors.transparent,
       );
       expect(
         inkWell.overlayColor?.resolve({WidgetState.hovered}),
-        AppTheme.main.colorScheme.primary.withValues(alpha: 0.08),
+        Colors.transparent,
+      );
+      expect(
+        inkWell.overlayColor?.resolve({WidgetState.focused}),
+        AppTheme.main.colorScheme.primary.withValues(alpha: 0.12),
       );
     }
 

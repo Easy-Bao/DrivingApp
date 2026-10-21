@@ -8,7 +8,7 @@ sealed class const SignInEvent() extends Equatable {
 final class const SignInSubmitted({
   required this.email,
   required this.password,
-  this.rememberMe = true,
+  this.rememberMe = false,
 }) extends SignInEvent {
   final String email;
   final String password;

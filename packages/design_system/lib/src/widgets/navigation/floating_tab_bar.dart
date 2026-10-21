@@ -30,6 +30,7 @@ class AppFloatingTabBar extends StatelessWidget {
     required this.indicatorKey,
     this.pagePosition,
     this.iconBuilder,
+    this.showInteractionFeedback = true,
 
     /// When true the widget renders only the inner tab-row content with no outer
     /// container decoration, border, or shadow. Use when a parent supplies the
@@ -45,6 +46,7 @@ class AppFloatingTabBar extends StatelessWidget {
   final ValueChanged<int> onDestinationSelected;
   final ValueListenable<double>? pagePosition;
   final AppTabIconBuilder? iconBuilder;
+  final bool showInteractionFeedback;
   final String itemKeyPrefix;
   final String indicatorKey;
   final bool bare;
@@ -96,6 +98,7 @@ class AppFloatingTabBar extends StatelessWidget {
                 pagePosition: visualPagePosition,
                 itemCount: destinations.length,
                 color: colorScheme.surfaceContainerHighest,
+                capsuleKeyPrefix: indicatorKey,
               ),
             ),
             Row(
@@ -109,6 +112,7 @@ class AppFloatingTabBar extends StatelessWidget {
                       pagePosition: visualPagePosition,
                       itemKeyPrefix: itemKeyPrefix,
                       iconBuilder: iconBuilder,
+                      showInteractionFeedback: showInteractionFeedback,
                       onTap: onDestinationSelected,
                     ),
                   ),
@@ -122,6 +126,7 @@ class AppFloatingTabBar extends StatelessWidget {
     if (bare) return inner;
 
     return Container(
+      height: height,
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -155,6 +160,7 @@ class _AppFloatingTabItem extends StatelessWidget {
     required this.pagePosition,
     required this.itemKeyPrefix,
     required this.iconBuilder,
+    required this.showInteractionFeedback,
     required this.onTap,
   });
 
@@ -164,6 +170,7 @@ class _AppFloatingTabItem extends StatelessWidget {
   final double pagePosition;
   final String itemKeyPrefix;
   final AppTabIconBuilder? iconBuilder;
+  final bool showInteractionFeedback;
   final ValueChanged<int> onTap;
 
   @override
@@ -192,7 +199,15 @@ class _AppFloatingTabItem extends StatelessWidget {
         child: InkWell(
           key: ValueKey<String>('$itemKeyPrefix-$index'),
           borderRadius: BorderRadius.circular(AppRadius.pill),
+          splashFactory: showInteractionFeedback
+              ? null
+              : NoSplash.splashFactory,
           overlayColor: WidgetStateProperty.resolveWith<Color>((states) {
+            if (states.contains(WidgetState.focused) &&
+                !states.contains(WidgetState.pressed)) {
+              return colorScheme.primary.withValues(alpha: 0.12);
+            }
+            if (!showInteractionFeedback) return Colors.transparent;
             if (states.contains(WidgetState.pressed)) {
               return colorScheme.primary.withValues(alpha: 0.12);
             }

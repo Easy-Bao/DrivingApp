@@ -34,7 +34,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _isPasswordVisible = false;
-  bool _rememberMe = true;
+  bool _rememberMe = false;
 
   String? _emailError;
   String? _passwordError;

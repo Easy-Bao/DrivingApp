@@ -16,7 +16,7 @@ class _UnusedAuthRepository implements AuthRepository {
   Future<Result<AuthCredentials, Failure>> authenticate({
     required String email,
     required String password,
-    bool rememberMe = true,
+    bool rememberMe = false,
   }) => Future.error(UnimplementedError());
 
   @override

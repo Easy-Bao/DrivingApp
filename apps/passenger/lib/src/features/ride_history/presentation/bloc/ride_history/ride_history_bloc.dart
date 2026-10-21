@@ -12,13 +12,22 @@ import 'package:passenger/src/features/ride_history/ride_history.dart';
 part 'ride_history_event.dart';
 part 'ride_history_state.dart';
 
-class RideHistoryBloc({required this._repository, SessionBloc? sessionBloc})
-    extends Bloc<RideHistoryEvent, RideHistoryState> {
+class RideHistoryBloc({
+  required this._repository,
+  SessionBloc? sessionBloc,
+  AppLifecycleCoordinator? lifecycleCoordinator,
+}) extends Bloc<RideHistoryEvent, RideHistoryState> {
   final RideHistoryRepository _repository;
+  final AppLifecycleCoordinator _lifecycleCoordinator =
+      lifecycleCoordinator ?? AppLifecycleCoordinator();
+  final bool _ownsLifecycleCoordinator = lifecycleCoordinator == null;
 
   final SessionBloc? _sessionBloc = sessionBloc;
   StreamSubscription<String?>? _sessionSubscription;
+  AppLifecyclePeriodicTask? _automaticRetryTask;
   int _generation = 0;
+
+  static const _automaticRetryInterval = Duration(seconds: 15);
 
   static String? _sessionOwner(SessionState state) => switch (state) {
     AuthenticatedSession(:final passengerId) => passengerId,
@@ -31,6 +40,8 @@ class RideHistoryBloc({required this._repository, SessionBloc? sessionBloc})
   @override
   Future<void> close() async {
     await _sessionSubscription?.cancel();
+    await _stopAutomaticRetry();
+    if (_ownsLifecycleCoordinator) await _lifecycleCoordinator.dispose();
     await super.close();
   }
 
@@ -47,6 +58,7 @@ class RideHistoryBloc({required this._repository, SessionBloc? sessionBloc})
 
   this : super(const RideHistoryInitial()) {
     on<_RideHistorySessionChanged>((event, emit) {
+      unawaited(_stopAutomaticRetry());
       emit(const RideHistoryInitial());
     });
     var owner = sessionBloc == null ? null : _sessionOwner(sessionBloc.state);
@@ -60,7 +72,7 @@ class RideHistoryBloc({required this._repository, SessionBloc? sessionBloc})
           add(const _RideHistorySessionChanged());
         });
     on<LoadRideHistoryEvent>(_onLoad);
-    on<RefreshRideHistoryEvent>(_onRefresh, transformer: restartable());
+    on<RefreshRideHistoryEvent>(_onRefresh, transformer: droppable());
     on<LoadMoreRideHistoryEvent>(_onLoadMore, transformer: droppable());
   }
 
@@ -69,6 +81,7 @@ class RideHistoryBloc({required this._repository, SessionBloc? sessionBloc})
     Emitter<RideHistoryState> emit,
   ) async {
     if (!_canLoad(event.passengerId)) return;
+    unawaited(_stopAutomaticRetry());
     var existingRideCount = 0;
     final currentState = state;
     if (currentState is RideHistoryLoaded) {
@@ -100,10 +113,23 @@ class RideHistoryBloc({required this._repository, SessionBloc? sessionBloc})
       return;
     }
     result.fold(
-      (failure) => emit(
-        RideHistoryError(message: ErrorHandler.getErrorMessage(failure)),
-      ),
+      (failure) {
+        final retryAutomatically = _shouldRetryAutomatically(failure);
+        emit(
+          RideHistoryError(
+            message: ErrorHandler.getErrorMessage(failure),
+            failureKind: _failureKind(failure),
+            retryAutomatically: retryAutomatically,
+          ),
+        );
+        if (retryAutomatically) {
+          _startAutomaticRetry(passengerId);
+        } else {
+          unawaited(_stopAutomaticRetry());
+        }
+      },
       (overview) {
+        unawaited(_stopAutomaticRetry());
         emit(
           _loadedState(
             overview.rides,
@@ -113,6 +139,48 @@ class RideHistoryBloc({required this._repository, SessionBloc? sessionBloc})
         );
       },
     );
+  }
+
+  bool _shouldRetryAutomatically(Failure failure) {
+    if (failure is NetworkFailure) return true;
+    if (failure is! ServerFailure) return false;
+    final statusCode = failure.statusCode;
+    return statusCode == null ||
+        statusCode == 408 ||
+        statusCode == 429 ||
+        statusCode >= 500;
+  }
+
+  RideHistoryFailureKind _failureKind(Failure failure) => switch (failure) {
+    NetworkFailure() => RideHistoryFailureKind.connection,
+    ServerFailure() => RideHistoryFailureKind.server,
+    _ => RideHistoryFailureKind.other,
+  };
+
+  void _startAutomaticRetry(String passengerId) {
+    if (_automaticRetryTask != null || isClosed) return;
+    final task = AppLifecyclePeriodicTask(
+      lifecycleCoordinator: _lifecycleCoordinator,
+      interval: _automaticRetryInterval,
+      onTick: () {
+        final currentState = state;
+        if (isClosed ||
+            currentState is! RideHistoryError ||
+            !currentState.retryAutomatically ||
+            !_canLoad(passengerId)) {
+          return;
+        }
+        add(RefreshRideHistoryEvent(passengerId: passengerId));
+      },
+    );
+    _automaticRetryTask = task;
+    task.start();
+  }
+
+  Future<void> _stopAutomaticRetry() async {
+    final task = _automaticRetryTask;
+    _automaticRetryTask = null;
+    await task?.dispose();
   }
 
   Future<void> _onLoadMore(

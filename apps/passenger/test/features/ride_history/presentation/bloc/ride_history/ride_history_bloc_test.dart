@@ -218,11 +218,18 @@ void main() {
           'existing ride count',
           0,
         ),
-        isA<RideHistoryError>().having(
-          (s) => s.message,
-          'error message',
-          'Something went wrong. Try again.',
-        ),
+        isA<RideHistoryError>()
+            .having(
+              (s) => s.message,
+              'error message',
+              'Something went wrong. Try again.',
+            )
+            .having(
+              (s) => s.failureKind,
+              'failure kind',
+              RideHistoryFailureKind.server,
+            )
+            .having((s) => s.retryAutomatically, 'automatic retry', isTrue),
       ],
     );
 

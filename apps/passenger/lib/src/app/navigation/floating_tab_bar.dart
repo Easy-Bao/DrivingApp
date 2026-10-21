@@ -43,6 +43,7 @@ class const FloatingTabBar({
         itemKeyPrefix: 'passenger-floating-tab-item',
         indicatorKey: 'passenger-floating-tab-indicator',
         iconBuilder: _buildIcon,
+        showInteractionFeedback: false,
       );
     }
 
@@ -80,6 +81,7 @@ class const FloatingTabBar({
             itemKeyPrefix: 'passenger-floating-tab-item',
             indicatorKey: 'passenger-floating-tab-indicator',
             iconBuilder: _buildIcon,
+            showInteractionFeedback: false,
           ),
         ],
       ),
