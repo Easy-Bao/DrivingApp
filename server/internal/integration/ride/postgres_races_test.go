@@ -714,3 +714,22 @@ func TestListDriverRidesFiltersActiveAndTerminalTrips(t *testing.T) {
 		t.Fatalf("activeTrips[0].Status = %s, want in_transit", activeTrips[0].Status)
 	}
 }
+
+func TestRideCreationRejectsPassengerWithOpenBidSession(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	ctx := context.Background()
+	passengerID := 9301
+	fixture.seedPassenger(t, ctx, passengerID)
+	fixture.createBidSession(t, ctx, passengerID)
+
+	_, err := fixture.store.CreateRide(ctx, domain.Ride{
+		PassengerID: passengerID,
+		Status:      string(domain.RideRequested),
+		FareAmount:  2500,
+		RideType:    "Solo Ride",
+	})
+	if !errors.Is(err, domain.ErrActiveBooking) {
+		t.Fatalf("CreateRide() error = %v, want %v", err, domain.ErrActiveBooking)
+	}
+	assertRowCount(t, ctx, fixture.pool, `SELECT count(*) FROM rides WHERE passenger_id = $1`, passengerID, 0)
+}
