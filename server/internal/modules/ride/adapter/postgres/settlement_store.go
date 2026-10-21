@@ -116,7 +116,7 @@ func (repository *RideRepository) SettleCash(
 				ledgerIdempotencyKey,
 			)
 		}
-		if err := creditNativeDriverWallet(ctx, transactionQueries, profile, validated.Snapshot.DriverPayoutAmount); err != nil {
+		if err := creditNativeDriverWallet(ctx, transactionQueries, profile.UserID, validated.Snapshot.DriverPayoutAmount); err != nil {
 			return domain.Ride{}, fmt.Errorf("credit driver wallet: %w", err)
 		}
 	}
@@ -225,13 +225,13 @@ func (repository *RideRepository) ensureNativeRideSettlement(
 func creditNativeDriverWallet(
 	ctx context.Context,
 	queries *databasepostgres.Queries,
-	profile databasepostgres.DriverProfile,
+	driverUserID int32,
 	amount int64,
 ) error {
-	account, err := queries.GetDriverWalletAccountForUpdate(ctx, profile.UserID)
+	account, err := queries.GetDriverWalletAccountForUpdate(ctx, driverUserID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		account, err = queries.CreateDriverWalletAccount(ctx, databasepostgres.CreateDriverWalletAccountParams{
-			DriverID: profile.UserID,
+			DriverID: driverUserID,
 			Balance:  0,
 		})
 	}

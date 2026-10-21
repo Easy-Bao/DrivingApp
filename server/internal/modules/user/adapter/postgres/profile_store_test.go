@@ -50,6 +50,23 @@ func TestProfileMappingsPreserveAccountContactDetails(t *testing.T) {
 		t.Fatalf("driver online timestamp = %v, want %v", driver.OnlineLastSeenAt, lastSeen)
 	}
 
+	driverFromFull := driverProfileFromFullRow(account, databasepostgres.GetDriverProfileByUserIDFullRow{
+		ID:          17,
+		UserID:      11,
+		Name:        "Driver",
+		VehicleType: "sedan",
+		PlateNumber: "ABC123",
+		Rating:      4.95,
+		IsOnline:    true,
+		OnlineLastSeenAt: pgtype.Timestamptz{
+			Time:  lastSeen,
+			Valid: true,
+		},
+	})
+	if driverFromFull.Rating != 4.95 {
+		t.Fatalf("driverFromFull.Rating = %v, want 4.95", driverFromFull.Rating)
+	}
+
 	passenger := passengerProfileFromPostgres(account, databasepostgres.PassengerProfile{
 		ID:                23,
 		UserID:            11,

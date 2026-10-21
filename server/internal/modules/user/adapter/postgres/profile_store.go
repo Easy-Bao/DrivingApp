@@ -91,7 +91,7 @@ func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domai
 
 	driverProfile, err := repository.queries.GetDriverProfileByUserIDFull(ctx, dbUserID)
 	if err == nil {
-		return driverProfileFromPostgres(account, driverProfile), nil
+		return driverProfileFromFullRow(account, driverProfile), nil
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return domain.Profile{}, fmt.Errorf("find driver profile: %w", err)
@@ -158,7 +158,7 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 		if updateErr != nil {
 			return domain.Profile{}, fmt.Errorf("update driver profile: %w", updateErr)
 		}
-		updated = driverProfileFromPostgres(account, driverProfile)
+		updated = driverProfileFromUpdateRow(account, driverProfile)
 	case "passenger":
 		passengerProfile, updateErr := transactionQueries.UpdatePassengerProfile(
 			ctx,
@@ -467,20 +467,72 @@ func (repository *ProfileRepository) validate() error {
 	return nil
 }
 
-func driverProfileFromPostgres(account databasepostgres.User, profile databasepostgres.DriverProfile) domain.Profile {
+func driverProfileFromRow(
+	account databasepostgres.User,
+	id int32,
+	userID int32,
+	name string,
+	vehicleType string,
+	plateNumber string,
+	rating float64,
+	isOnline bool,
+	onlineLastSeenAtVal pgtype.Timestamptz,
+) domain.Profile {
 	return domain.Profile{
-		ID:               int(profile.ID),
-		UserID:           int(profile.UserID),
+		ID:               int(id),
+		UserID:           int(userID),
 		Role:             "driver",
-		Name:             profile.Name,
+		Name:             name,
 		Phone:            account.Phone,
 		Email:            account.Email,
-		VehicleType:      profile.VehicleType,
-		PlateNumber:      profile.PlateNumber,
-		Rating:           profile.Rating,
-		IsOnline:         profile.IsOnline,
-		OnlineLastSeenAt: onlineLastSeenAt(profile.OnlineLastSeenAt),
+		VehicleType:      vehicleType,
+		PlateNumber:      plateNumber,
+		Rating:           rating,
+		IsOnline:         isOnline,
+		OnlineLastSeenAt: onlineLastSeenAt(onlineLastSeenAtVal),
 	}
+}
+
+func driverProfileFromPostgres(account databasepostgres.User, profile databasepostgres.DriverProfile) domain.Profile {
+	return driverProfileFromRow(
+		account,
+		profile.ID,
+		profile.UserID,
+		profile.Name,
+		profile.VehicleType,
+		profile.PlateNumber,
+		profile.Rating,
+		profile.IsOnline,
+		profile.OnlineLastSeenAt,
+	)
+}
+
+func driverProfileFromFullRow(account databasepostgres.User, profile databasepostgres.GetDriverProfileByUserIDFullRow) domain.Profile {
+	return driverProfileFromRow(
+		account,
+		profile.ID,
+		profile.UserID,
+		profile.Name,
+		profile.VehicleType,
+		profile.PlateNumber,
+		profile.Rating,
+		profile.IsOnline,
+		profile.OnlineLastSeenAt,
+	)
+}
+
+func driverProfileFromUpdateRow(account databasepostgres.User, profile databasepostgres.UpdateDriverProfileRow) domain.Profile {
+	return driverProfileFromRow(
+		account,
+		profile.ID,
+		profile.UserID,
+		profile.Name,
+		profile.VehicleType,
+		profile.PlateNumber,
+		profile.Rating,
+		profile.IsOnline,
+		profile.OnlineLastSeenAt,
+	)
 }
 
 func onlineLastSeenAt(value pgtype.Timestamptz) *time.Time {

@@ -30,16 +30,34 @@ func (q *Queries) DeleteNotification(ctx context.Context, arg DeleteNotification
 }
 
 const getDriverProfileByUserIDFull = `-- name: GetDriverProfileByUserIDFull :one
-SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online,
+SELECT id, user_id, name, vehicle_type, plate_number,
+    COALESCE(
+        (SELECT AVG(rating) FROM reviews WHERE driver_id = driver_profiles.user_id),
+        driver_profiles.rating
+    )::double precision AS rating,
+    is_online,
     online_last_seen_at, created_at, updated_at
 FROM driver_profiles
 WHERE user_id = $1
 LIMIT 1
 `
 
-func (q *Queries) GetDriverProfileByUserIDFull(ctx context.Context, userID int32) (DriverProfile, error) {
+type GetDriverProfileByUserIDFullRow struct {
+	ID               int32              `db:"id"`
+	UserID           int32              `db:"user_id"`
+	Name             string             `db:"name"`
+	VehicleType      string             `db:"vehicle_type"`
+	PlateNumber      string             `db:"plate_number"`
+	Rating           float64            `db:"rating"`
+	IsOnline         bool               `db:"is_online"`
+	OnlineLastSeenAt pgtype.Timestamptz `db:"online_last_seen_at"`
+	CreatedAt        pgtype.Timestamptz `db:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `db:"updated_at"`
+}
+
+func (q *Queries) GetDriverProfileByUserIDFull(ctx context.Context, userID int32) (GetDriverProfileByUserIDFullRow, error) {
 	row := q.db.QueryRow(ctx, getDriverProfileByUserIDFull, userID)
-	var i DriverProfile
+	var i GetDriverProfileByUserIDFullRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
@@ -281,9 +299,16 @@ SET name = $2,
     vehicle_type = $3,
     plate_number = $4,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
-RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online,
-    online_last_seen_at, created_at, updated_at
+WHERE driver_profiles.id = $1
+RETURNING driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
+    driver_profiles.vehicle_type, driver_profiles.plate_number,
+    COALESCE(
+        (SELECT AVG(rating) FROM reviews WHERE driver_id = driver_profiles.user_id),
+        driver_profiles.rating
+    )::double precision AS rating,
+    driver_profiles.is_online,
+    driver_profiles.online_last_seen_at, driver_profiles.created_at,
+    driver_profiles.updated_at
 `
 
 type UpdateDriverProfileParams struct {
@@ -293,14 +318,27 @@ type UpdateDriverProfileParams struct {
 	PlateNumber string `db:"plate_number"`
 }
 
-func (q *Queries) UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfileParams) (DriverProfile, error) {
+type UpdateDriverProfileRow struct {
+	ID               int32              `db:"id"`
+	UserID           int32              `db:"user_id"`
+	Name             string             `db:"name"`
+	VehicleType      string             `db:"vehicle_type"`
+	PlateNumber      string             `db:"plate_number"`
+	Rating           float64            `db:"rating"`
+	IsOnline         bool               `db:"is_online"`
+	OnlineLastSeenAt pgtype.Timestamptz `db:"online_last_seen_at"`
+	CreatedAt        pgtype.Timestamptz `db:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `db:"updated_at"`
+}
+
+func (q *Queries) UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfileParams) (UpdateDriverProfileRow, error) {
 	row := q.db.QueryRow(ctx, updateDriverProfile,
 		arg.ID,
 		arg.Name,
 		arg.VehicleType,
 		arg.PlateNumber,
 	)
-	var i DriverProfile
+	var i UpdateDriverProfileRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
