@@ -8,32 +8,34 @@ import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_fare_details.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_options_loading_view.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_tip_selector.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/ride_trip_summary.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
-class const RideOptionsPanel({
-  super.key,
-  required this.passengerName,
-  required this.pickupLabel,
-  required this.destinationName,
-  required this.destinationAddress,
-  required this.fareResult,
-  required this.onBookPressed,
-  required this.customFareController,
-  required this.customFareError,
-  required this.isLoadingFare,
-  required this.fareError,
-  required this.onRetryFare,
-  required this.onCustomFareChanged,
-  required this.notesController,
-  required this.onNotesChanged,
-  required this.selectedTipAmount,
-  required this.onTipSelected,
-  required this.totalFare,
-  this.isExpanded = false,
-  this.scrollController,
-  this.onPageBackPressed,
-}) extends StatefulWidget {
+enum _RideOptionsView { summary, offer, tip, note, fareDetails }
+
+class RideOptionsPanel extends StatefulWidget {
+  const RideOptionsPanel({
+    super.key,
+    required this.passengerName,
+    required this.pickupLabel,
+    required this.destinationName,
+    required this.destinationAddress,
+    required this.fareResult,
+    required this.onBookPressed,
+    required this.customFareController,
+    required this.customFareError,
+    required this.isLoadingFare,
+    required this.fareError,
+    required this.onRetryFare,
+    required this.onCustomFareChanged,
+    required this.notesController,
+    required this.onNotesChanged,
+    required this.selectedTipAmount,
+    required this.onTipSelected,
+    required this.totalFare,
+    this.isExpanded = false,
+    this.scrollController,
+    this.onPageBackPressed,
+  });
+
   final String passengerName;
   final String pickupLabel;
   final String destinationName;
@@ -59,17 +61,9 @@ class const RideOptionsPanel({
   State<RideOptionsPanel> createState() => _RideOptionsPanelState();
 }
 
-enum _RideOptionsPanelView() {
-  summary,
-  customOffer,
-  tripNote,
-  fareDetails,
-}
-
-class _RideOptionsPanelState() extends State<RideOptionsPanel> {
-  static const _viewTransitionDuration = Duration(milliseconds: 260);
-
-  _RideOptionsPanelView _currentView = _RideOptionsPanelView.summary;
+class _RideOptionsPanelState extends State<RideOptionsPanel> {
+  _RideOptionsView _currentView = _RideOptionsView.summary;
+  bool _isNavigatingForward = true;
 
   FareEstimate? get _fareResult => widget.fareResult;
 
@@ -89,20 +83,507 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
 
   String _currency(double amount) => formatPesoAmount(amount);
 
-  void _showView(_RideOptionsPanelView view) {
-    if (!mounted) return;
-    setState(() => _currentView = view);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final controller = widget.scrollController;
-      if (!mounted || controller == null || !controller.hasClients) return;
-      if (controller.offset > 0) controller.jumpTo(0);
+  void _showView(_RideOptionsView view) {
+    setState(() {
+      _isNavigatingForward = true;
+      _currentView = view;
     });
   }
 
-  void _saveCustomOffer() {
-    if (_hasValidFare) {
-      _showView(_RideOptionsPanelView.summary);
-    }
+  void _backToSummary() {
+    setState(() {
+      _isNavigatingForward = false;
+      _currentView = _RideOptionsView.summary;
+    });
+  }
+
+  Widget _buildSheetHeader({required String title, required String details}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IconButton(
+          key: const ValueKey('panel-back'),
+          onPressed: _backToSummary,
+          tooltip: 'Back to trip summary',
+          constraints: const BoxConstraints.tightFor(
+            width: AppSize.minimumTouchTarget,
+            height: AppSize.minimumTouchTarget,
+          ),
+          padding: EdgeInsets.zero,
+          style: IconButton.styleFrom(shape: const CircleBorder()),
+          icon: Icon(
+            LucideIcons.arrow_left,
+            color: context.colorScheme.onSurface,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: context.colorScheme.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                details,
+                style: TextStyle(
+                  color: context.colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOfferView(BuildContext context) {
+    final minimumFare = _minimumFare;
+    if (minimumFare == null) return const SizedBox.shrink();
+
+    return ConstrainedBox(
+      key: const ValueKey(_RideOptionsView.offer),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.72,
+      ),
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSheetHeader(
+              title: 'Set your offer',
+              details: 'Match or raise the calculated fare.',
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: context.colorScheme.surface,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(
+                  color: context.colorScheme.outlineVariant,
+                  width: 0.8,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Calculated minimum',
+                    style: TextStyle(
+                      color: context.colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _currency(minimumFare),
+                          style: TextStyle(
+                            color: context.colorScheme.onSurface,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                        ),
+                        child: Text(
+                          'Minimum',
+                          style: TextStyle(
+                            color: context.colorScheme.onSurfaceVariant,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(height: 1, color: context.colorScheme.outlineVariant),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Your offer',
+                    key: const ValueKey('custom-offer-label'),
+                    style: TextStyle(
+                      color: context.colorScheme.onSurface,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    key: const ValueKey('custom-offer-input'),
+                    controller: widget.customFareController,
+                    autofocus: true,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d*\.?\d{0,2}'),
+                      ),
+                    ],
+                    textInputAction: TextInputAction.done,
+                    onChanged: (value) {
+                      widget.onCustomFareChanged(value);
+                      setState(() {});
+                    },
+                    onSubmitted: (_) {
+                      if (_hasValidFare) {
+                        _backToSummary();
+                      }
+                    },
+                    decoration: InputDecoration(
+                      prefixText: '₱ ',
+                      hintText: '0.00',
+                      helperText: widget.customFareError == null
+                          ? 'Match or raise the calculated fare.'
+                          : null,
+                      helperMaxLines: 2,
+                      errorText: widget.customFareError,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      for (final increment in const [10, 20, 50]) ...[
+                        InkWell(
+                          onTap: () {
+                            final current =
+                                double.tryParse(
+                                  widget.customFareController.text,
+                                ) ??
+                                minimumFare;
+                            final next = current + increment;
+                            widget.customFareController.text = next
+                                .toStringAsFixed(2);
+                            widget.onCustomFareChanged(
+                              widget.customFareController.text,
+                            );
+                            setState(() {});
+                          },
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: context.colorScheme.surface,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              border: Border.all(
+                                color: context.colorScheme.outlineVariant,
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Text(
+                              '+₱$increment',
+                              style: TextStyle(
+                                color: context.colorScheme.onSurface,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: FilledButton(
+                key: const ValueKey('custom-offer-save'),
+                onPressed: _hasValidFare ? _backToSummary : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: context.colorScheme.onSurface,
+                  foregroundColor: context.colorScheme.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                child: const Text('Save offer'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTipView(BuildContext context) {
+    return ConstrainedBox(
+      key: const ValueKey(_RideOptionsView.tip),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.72,
+      ),
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSheetHeader(
+              title: 'Tip your driver',
+              details: '100% of your tip goes directly to the driver.',
+            ),
+            const SizedBox(height: 16),
+            RideTipSelector(
+              selectedTipAmount: widget.selectedTipAmount,
+              onTipSelected: (amount) {
+                widget.onTipSelected(amount);
+                setState(() {});
+              },
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: FilledButton(
+                key: const ValueKey('tip-save-button'),
+                onPressed: _backToSummary,
+                style: FilledButton.styleFrom(
+                  backgroundColor: context.colorScheme.onSurface,
+                  foregroundColor: context.colorScheme.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                child: const Text('Done'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoteView(BuildContext context) {
+    return ConstrainedBox(
+      key: const ValueKey(_RideOptionsView.note),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.72,
+      ),
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSheetHeader(
+              title: 'Add a trip note',
+              details: 'Help your driver find you quickly.',
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: context.colorScheme.surface,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: context.colorScheme.outlineVariant),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        LucideIcons.file_text,
+                        size: 18,
+                        color: context.colorScheme.onSurface,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Pickup note',
+                        style: TextStyle(
+                          color: context.colorScheme.onSurface,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Optional · visible to your driver before pickup.',
+                    style: TextStyle(
+                      color: context.colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    key: const ValueKey('trip-note-input'),
+                    controller: widget.notesController,
+                    autofocus: true,
+                    minLines: 3,
+                    maxLines: 5,
+                    maxLength: 160,
+                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                    inputFormatters: [LengthLimitingTextInputFormatter(160)],
+                    textCapitalization: TextCapitalization.sentences,
+                    textInputAction: TextInputAction.newline,
+                    onChanged: (value) {
+                      widget.onNotesChanged(value);
+                      setState(() {});
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'For example: Meet me at the side entrance.',
+                      contentPadding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+                      alignLabelWithHint: true,
+                      counterStyle: TextStyle(
+                        color: context.colorScheme.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final preset in const [
+                        'Wait at lobby',
+                        'Near entrance',
+                        'Have luggage',
+                        'Call on arrival',
+                      ])
+                        InkWell(
+                          onTap: () {
+                            final current = widget.notesController.text.trim();
+                            final next = current.isEmpty
+                                ? preset
+                                : current.contains(preset)
+                                ? current
+                                : '$current. $preset';
+                            final clamped = next.length > 160
+                                ? next.substring(0, 160)
+                                : next;
+                            widget.notesController.text = clamped;
+                            widget.onNotesChanged(widget.notesController.text);
+                            setState(() {});
+                          },
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: context.colorScheme.surface,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              border: Border.all(
+                                color: context.colorScheme.outlineVariant,
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Text(
+                              preset,
+                              style: TextStyle(
+                                color: context.colorScheme.onSurfaceVariant,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: FilledButton(
+                key: const ValueKey('trip-note-save'),
+                onPressed: _backToSummary,
+                style: FilledButton.styleFrom(
+                  backgroundColor: context.colorScheme.onSurface,
+                  foregroundColor: context.colorScheme.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                child: const Text('Save note'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFareDetailsView(BuildContext context) {
+    final fareResult = _fareResult;
+    if (fareResult == null) return const SizedBox.shrink();
+
+    return ConstrainedBox(
+      key: const ValueKey(_RideOptionsView.fareDetails),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.72,
+      ),
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: RideFareDetails(
+          passengerName: widget.passengerName,
+          fareResult: fareResult,
+          offeredFare: _enteredFare ?? fareResult.totalFare,
+          tipAmount: widget.selectedTipAmount,
+          totalFare: widget.totalFare,
+          onBackPressed: _backToSummary,
+        ),
+      ),
+    );
   }
 
   Widget _buildLoadingContent({bool showPrimaryAction = true}) {
@@ -169,346 +650,65 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
     );
   }
 
-  Widget _buildActionRow({
+  Widget _buildActionButton({
     required Key key,
     required IconData icon,
-    required String title,
-    required String details,
+    required String label,
+    required bool isActive,
     required VoidCallback onTap,
   }) {
     return Material(
-      color: context.colorScheme.surface.withValues(alpha: 0),
+      color: Colors.transparent,
       child: InkWell(
         key: key,
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(14),
         child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
-            color: context.colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            color: isActive
+                ? context.colorScheme.surfaceContainerHighest
+                : context.colorScheme.surface,
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: context.colorScheme.outlineVariant,
-              width: 0.8,
+              color: isActive
+                  ? context.colorScheme.primary.withValues(alpha: 0.5)
+                  : context.colorScheme.outlineVariant,
+              width: 1,
             ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x06000000),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
           ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: context.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(
-                    color: context.colorScheme.outlineVariant,
-                    width: 0.6,
-                  ),
-                ),
-                child: Icon(
-                  icon,
-                  color: context.colorScheme.onSurface,
-                  size: 19,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: context.colorScheme.onSurface,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      details,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: context.colorScheme.onSurfaceVariant,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
               Icon(
-                LucideIcons.chevron_right,
-                color: context.colorScheme.onSurfaceVariant,
-                size: 18,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTotalFareCard() {
-    return Material(
-      color: context.colorScheme.surface.withValues(alpha: 0),
-      child: InkWell(
-        key: const ValueKey('fare-summary'),
-        onTap: _hasValidFare
-            ? () => _showView(_RideOptionsPanelView.fareDetails)
-            : null,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          decoration: BoxDecoration(
-            color: context.colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: context.colorScheme.outlineVariant,
-              width: 0.8,
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x06000000),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Total fare',
-                      style: TextStyle(
-                        color: context.colorScheme.onSurface,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'View fare calculation',
-                      style: TextStyle(
-                        color: context.colorScheme.onSurfaceVariant,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                _currency(widget.totalFare),
-                style: TextStyle(
-                  color: context.colorScheme.onSurface,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
+                icon,
+                size: 16,
+                color: isActive
+                    ? context.colorScheme.primary
+                    : context.colorScheme.onSurface,
               ),
               const SizedBox(width: 6),
-              Icon(
-                LucideIcons.chevron_right,
-                color: context.colorScheme.onSurfaceVariant,
-                size: 18,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPrimaryButton({
-    Key? key,
-    required String label,
-    required VoidCallback? onPressed,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: FilledButton(
-        key: key,
-        onPressed: onPressed,
-        style: FilledButton.styleFrom(
-          backgroundColor: context.colorScheme.onSurface,
-          foregroundColor: context.colorScheme.surface,
-          disabledBackgroundColor: context.colorScheme.surfaceContainerHighest,
-          disabledForegroundColor: context.colorScheme.onSurfaceVariant
-              .withValues(alpha: 0.45),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-          textStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.2,
-          ),
-        ),
-        child: Text(label),
-      ),
-    );
-  }
-
-  Widget _buildSummaryPrimaryAction() {
-    final fareResult = _fareResult;
-    return _buildPrimaryButton(
-      onPressed: _hasValidFare ? widget.onBookPressed : null,
-      label: fareResult == null
-          ? widget.isLoadingFare
-                ? 'Calculating fare…'
-                : 'Fare unavailable'
-          : 'Book directly',
-    );
-  }
-
-  Widget _buildCustomOfferPrimaryAction() {
-    return _buildPrimaryButton(
-      key: const ValueKey('custom-offer-save'),
-      onPressed: _hasValidFare ? _saveCustomOffer : null,
-      label: 'Save offer',
-    );
-  }
-
-  Widget _buildTripNotePrimaryAction() {
-    return _buildPrimaryButton(
-      key: const ValueKey('trip-note-save'),
-      onPressed: () => _showView(_RideOptionsPanelView.summary),
-      label: 'Save note',
-    );
-  }
-
-  Widget? _buildPinnedPrimaryAction() {
-    if (widget.isLoadingFare) {
-      return const Bone.button(
-        key: ValueKey('ride-options-loading-primary-action'),
-        width: double.infinity,
-        height: 50,
-        borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
-      );
-    }
-
-    if (_currentView == _RideOptionsPanelView.summary && !widget.isExpanded) {
-      return _buildSummaryPrimaryAction();
-    }
-
-    return switch (_currentView) {
-      _RideOptionsPanelView.summary => _buildSummaryPrimaryAction(),
-      _RideOptionsPanelView.customOffer when _minimumFare != null =>
-        _buildCustomOfferPrimaryAction(),
-      _RideOptionsPanelView.customOffer => _buildSummaryPrimaryAction(),
-      _RideOptionsPanelView.tripNote => _buildTripNotePrimaryAction(),
-      _RideOptionsPanelView.fareDetails => null,
-    };
-  }
-
-  Widget _buildPanelHeader({required String title, required String details}) {
-    return _buildIndependentHeader(
-      backKey: const ValueKey('panel-back'),
-      onBackPressed: () => _showView(_RideOptionsPanelView.summary),
-      tooltip: 'Back to trip summary',
-      title: title,
-      details: details,
-    );
-  }
-
-  Widget _buildIndependentHeader({
-    required Key backKey,
-    required VoidCallback onBackPressed,
-    required String tooltip,
-    required String title,
-    required String details,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildPanelBackButton(
-          key: backKey,
-          onPressed: onBackPressed,
-          tooltip: tooltip,
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: context.colorScheme.onSurface,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                details,
-                style: TextStyle(
-                  color: context.colorScheme.onSurfaceVariant,
-                  fontSize: 12,
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: context.colorScheme.onSurface,
+                  ),
                 ),
               ),
             ],
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildPanelBackButton({
-    required Key key,
-    required VoidCallback onPressed,
-    required String tooltip,
-  }) {
-    return IconButton(
-      key: key,
-      onPressed: onPressed,
-      tooltip: tooltip,
-      constraints: const BoxConstraints.tightFor(
-        width: AppSize.minimumTouchTarget,
-        height: AppSize.minimumTouchTarget,
-      ),
-      padding: EdgeInsets.zero,
-      style: IconButton.styleFrom(shape: const CircleBorder()),
-      icon: Icon(
-        LucideIcons.arrow_left,
-        color: context.colorScheme.onSurface,
-        size: 20,
       ),
     );
   }
 
-  Widget _buildExpandedSummaryHeader() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: _buildIndependentHeader(
-        backKey: const ValueKey('panel-page-back'),
-        onBackPressed:
-            widget.onPageBackPressed ??
-            () => _showView(_RideOptionsPanelView.summary),
-        tooltip: 'Back to map',
-        title: 'Trip details',
-        details: 'Review your ride before booking.',
-      ),
-    );
-  }
-
-  Widget _buildSummaryContent({bool showPrimaryAction = true}) {
+  Widget _buildSummaryView(BuildContext context) {
     final fareResult = _fareResult;
     final enteredFare = _enteredFare;
     final minimumFare = _minimumFare;
@@ -517,527 +717,403 @@ class _RideOptionsPanelState() extends State<RideOptionsPanel> {
     final note = widget.notesController.text.trim();
 
     return Column(
-      key: const ValueKey('trip-summary-content'),
+      key: const ValueKey(_RideOptionsView.summary),
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (widget.isExpanded) _buildExpandedSummaryHeader(),
-        RideTripSummary(
-          pickupLabel: widget.pickupLabel,
-          destinationName: widget.destinationName,
-          destinationAddress: widget.destinationAddress,
+        Container(
+          key: const ValueKey('trip-summary-card'),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: context.colorScheme.surfaceContainerHighest.withValues(
+              alpha: 0.5,
+            ),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Row(
+            children: [
+              Column(
+                children: [
+                  Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF22C55E).withValues(alpha: 0.25),
+                    ),
+                    child: Center(
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFF16A34A),
+                        ),
+                      ),
+                    ),
+                  ),
+                  CustomPaint(
+                    size: const Size(2, 22),
+                    painter: _DottedLinePainter(
+                      color: context.colorScheme.outlineVariant,
+                    ),
+                  ),
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F172A),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pickup',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      widget.pickupLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: context.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Destination',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      widget.destinationName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: context.colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         if (fareResult == null)
           _buildFareStatus()
         else ...[
-          _buildActionRow(
-            key: const ValueKey('custom-offer-trigger'),
-            icon: LucideIcons.sliders_horizontal,
-            title: 'Set your offer',
-            details: hasCustomOffer
-                ? 'Your offer: ${_currency(enteredFare)}'
-                : 'Optional · use a fare above the calculated minimum',
-            onTap: () => _showView(_RideOptionsPanelView.customOffer),
-          ),
-          const SizedBox(height: 16),
-          RideTipSelector(
-            selectedTipAmount: widget.selectedTipAmount,
-            onTipSelected: widget.onTipSelected,
-          ),
-          const SizedBox(height: 16),
-          _buildActionRow(
-            key: const ValueKey('trip-note-trigger'),
-            icon: LucideIcons.file_text,
-            title: 'Add a trip note',
-            details: note.isEmpty
-                ? 'Optional pickup or accessibility instructions'
-                : 'Note added',
-            onTap: () => _showView(_RideOptionsPanelView.tripNote),
-          ),
-          const SizedBox(height: 12),
-          _buildTotalFareCard(),
-          const SizedBox(height: 12),
-        ],
-        if (showPrimaryAction) _buildSummaryPrimaryAction(),
-      ],
-    );
-  }
-
-  Widget _buildCustomOfferContent({bool showPrimaryAction = true}) {
-    final minimumFare = _minimumFare;
-    if (minimumFare == null) {
-      return _buildSummaryContent(showPrimaryAction: showPrimaryAction);
-    }
-
-    return Column(
-      key: const ValueKey('custom-offer-content'),
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildPanelHeader(
-          title: 'Set your offer',
-          details: 'Match or raise the calculated fare.',
-        ),
-        const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
-          decoration: BoxDecoration(
-            color: context.colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: context.colorScheme.outlineVariant,
-              width: 0.8,
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x06000000),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Calculated minimum',
-                style: TextStyle(
-                  color: context.colorScheme.onSurfaceVariant,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Text(
-                      _currency(minimumFare),
-                      style: TextStyle(
-                        color: context.colorScheme.onSurface,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                    ),
-                    child: Text(
-                      'Minimum',
-                      style: TextStyle(
-                        color: context.colorScheme.onSurfaceVariant,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Divider(height: 1, color: context.colorScheme.outlineVariant),
-              const SizedBox(height: 16),
-              Text(
-                'Your offer',
-                key: const ValueKey('custom-offer-label'),
-                style: TextStyle(
-                  color: context.colorScheme.onSurface,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                key: const ValueKey('custom-offer-input'),
-                controller: widget.customFareController,
-                autofocus: true,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-                ],
-                textInputAction: TextInputAction.done,
-                onChanged: (value) {
-                  widget.onCustomFareChanged(value);
-                  setState(() {});
-                },
-                onSubmitted: (_) => _saveCustomOffer(),
-                decoration: InputDecoration(
-                  prefixText: '₱ ',
-                  hintText: '0.00',
-                  helperText: widget.customFareError == null
-                      ? 'Match or raise the calculated fare.'
-                      : null,
-                  helperMaxLines: 2,
-                  errorText: widget.customFareError,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  for (final increment in const [10, 20, 50]) ...[
-                    InkWell(
-                      onTap: () {
-                        final current =
-                            double.tryParse(widget.customFareController.text) ??
-                            minimumFare;
-                        final next = current + increment;
-                        widget.customFareController.text = next.toStringAsFixed(
-                          2,
-                        );
-                        widget.onCustomFareChanged(
-                          widget.customFareController.text,
-                        );
-                        setState(() {});
-                      },
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: context.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(
-                            color: context.colorScheme.outlineVariant,
-                            width: 0.8,
-                          ),
-                        ),
-                        child: Text(
-                          '+₱$increment',
-                          style: TextStyle(
-                            color: context.colorScheme.onSurface,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        if (showPrimaryAction) _buildCustomOfferPrimaryAction(),
-      ],
-    );
-  }
-
-  Widget _buildTripNoteContent({bool showPrimaryAction = true}) {
-    return Column(
-      key: const ValueKey('trip-note-content'),
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildPanelHeader(
-          title: 'Add a trip note',
-          details: 'Help your driver find you quickly.',
-        ),
-        const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-          decoration: BoxDecoration(
-            color: context.colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: context.colorScheme.outlineVariant),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x06000000),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    child: Icon(
-                      LucideIcons.file_text,
-                      size: 18,
-                      color: context.colorScheme.onSurface,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        'Total fare',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      Text(
+                        ' · ',
+                        style: TextStyle(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      Icon(
+                        LucideIcons.banknote,
+                        size: 14,
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Cash',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 11),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pickup note',
-                          style: TextStyle(
-                            color: context.colorScheme.onSurface,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Optional · visible to your driver before pickup.',
-                          style: TextStyle(
-                            color: context.colorScheme.onSurfaceVariant,
-                            fontSize: 12,
-                            height: 1.3,
-                          ),
-                        ),
-                      ],
+                  const SizedBox(height: 2),
+                  Text(
+                    _currency(widget.totalFare),
+                    key: const ValueKey('total-fare-amount'),
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      color: context.colorScheme.onSurface,
+                      letterSpacing: -0.8,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              TextField(
-                key: const ValueKey('trip-note-input'),
-                controller: widget.notesController,
-                autofocus: true,
-                minLines: 4,
-                maxLines: 5,
-                maxLength: 160,
-                maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                inputFormatters: [LengthLimitingTextInputFormatter(160)],
-                textCapitalization: TextCapitalization.sentences,
-                textInputAction: TextInputAction.newline,
-                onChanged: (value) {
-                  widget.onNotesChanged(value);
-                  setState(() {});
-                },
-                decoration: InputDecoration(
-                  hintText: 'For example: Meet me at the side entrance.',
-                  contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                  alignLabelWithHint: true,
-                  counterStyle: TextStyle(
-                    color: context.colorScheme.onSurfaceVariant,
-                    fontSize: 11,
+              InkWell(
+                key: const ValueKey('fare-summary'),
+                onTap: _hasValidFare
+                    ? () => _showView(_RideOptionsView.fareDetails)
+                    : null,
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 6,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Fare details',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: context.colorScheme.onSurface,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        LucideIcons.chevron_down,
+                        size: 16,
+                        color: context.colorScheme.onSurface,
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final preset in const [
-                    'Wait at lobby',
-                    'Near entrance',
-                    'Have luggage',
-                    'Call on arrival',
-                  ])
-                    InkWell(
-                      onTap: () {
-                        final current = widget.notesController.text.trim();
-                        final next = current.isEmpty
-                            ? preset
-                            : current.contains(preset)
-                            ? current
-                            : '$current. $preset';
-                        final clamped = next.length > 160
-                            ? next.substring(0, 160)
-                            : next;
-                        widget.notesController.text = clamped;
-                        widget.onNotesChanged(widget.notesController.text);
-                        setState(() {});
-                      },
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: context.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(
-                            color: context.colorScheme.outlineVariant,
-                            width: 0.8,
-                          ),
-                        ),
-                        child: Text(
-                          preset,
-                          style: TextStyle(
-                            color: context.colorScheme.onSurfaceVariant,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildActionButton(
+                  key: const ValueKey('custom-offer-trigger'),
+                  icon: LucideIcons.sliders_horizontal,
+                  label: hasCustomOffer
+                      ? 'Your offer: ${_currency(enteredFare)}'
+                      : 'Offer',
+                  isActive: hasCustomOffer,
+                  onTap: () => _showView(_RideOptionsView.offer),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildActionButton(
+                  key: const ValueKey('tip-trigger'),
+                  icon: LucideIcons.sparkles,
+                  label: widget.selectedTipAmount > 0
+                      ? 'Tip: ${_currency(widget.selectedTipAmount.toDouble())}'
+                      : 'Tip',
+                  isActive: widget.selectedTipAmount > 0,
+                  onTap: () => _showView(_RideOptionsView.tip),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildActionButton(
+                  key: const ValueKey('trip-note-trigger'),
+                  icon: LucideIcons.file_text,
+                  label: note.isNotEmpty ? 'Note added' : 'Note',
+                  isActive: note.isNotEmpty,
+                  onTap: () => _showView(_RideOptionsView.note),
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 16),
+        ],
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: FilledButton(
+            key: const ValueKey('book-directly-button'),
+            onPressed: _hasValidFare ? widget.onBookPressed : null,
+            style: FilledButton.styleFrom(
+              backgroundColor: context.colorScheme.onSurface,
+              foregroundColor: context.colorScheme.surface,
+              disabledBackgroundColor:
+                  context.colorScheme.surfaceContainerHighest,
+              disabledForegroundColor: context.colorScheme.onSurfaceVariant
+                  .withValues(alpha: 0.45),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.2,
+              ),
+            ),
+            child: Text(
+              fareResult == null
+                  ? widget.isLoadingFare
+                        ? 'Calculating fare…'
+                        : 'Fare unavailable'
+                  : 'Book directly',
+            ),
+          ),
         ),
-        const SizedBox(height: 16),
-        if (showPrimaryAction) _buildTripNotePrimaryAction(),
       ],
     );
   }
 
-  Widget _buildFareDetailsContent(FareEstimate fareResult) {
-    return Column(
-      key: const ValueKey('fare-details-content'),
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        RideFareDetails(
-          passengerName: widget.passengerName,
-          fareResult: fareResult,
-          offeredFare: _enteredFare ?? fareResult.totalFare,
-          tipAmount: widget.selectedTipAmount,
-          totalFare: widget.totalFare,
-          onBackPressed: () => _showView(_RideOptionsPanelView.summary),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContent({bool showPrimaryAction = true}) {
-    if (widget.isLoadingFare) {
-      return _buildLoadingContent(showPrimaryAction: showPrimaryAction);
+  Widget _buildCurrentView(BuildContext context) {
+    switch (_currentView) {
+      case _RideOptionsView.summary:
+        return _buildSummaryView(context);
+      case _RideOptionsView.offer:
+        return _buildOfferView(context);
+      case _RideOptionsView.tip:
+        return _buildTipView(context);
+      case _RideOptionsView.note:
+        return _buildNoteView(context);
+      case _RideOptionsView.fareDetails:
+        return _buildFareDetailsView(context);
     }
-
-    final fareResult = _fareResult;
-    return switch (_currentView) {
-      _RideOptionsPanelView.summary => _buildSummaryContent(
-        showPrimaryAction: showPrimaryAction,
-      ),
-      _RideOptionsPanelView.customOffer => _buildCustomOfferContent(
-        showPrimaryAction: showPrimaryAction,
-      ),
-      _RideOptionsPanelView.tripNote => _buildTripNoteContent(
-        showPrimaryAction: showPrimaryAction,
-      ),
-      _RideOptionsPanelView.fareDetails when fareResult != null =>
-        _buildFareDetailsContent(fareResult),
-      _RideOptionsPanelView.fareDetails => _buildSummaryContent(
-        showPrimaryAction: showPrimaryAction,
-      ),
-    };
-  }
-
-  Offset _entryOffsetForCurrentView() {
-    return switch (_currentView) {
-      _RideOptionsPanelView.customOffer ||
-      _RideOptionsPanelView.tripNote => const Offset(-0.12, 0),
-      _RideOptionsPanelView.fareDetails => const Offset(0.12, 0),
-      _RideOptionsPanelView.summary => const Offset(-0.08, 0),
-    };
   }
 
   @override
   Widget build(BuildContext context) {
-    final entryOffset = _entryOffsetForCurrentView();
-    final mediaPadding = MediaQuery.paddingOf(context);
-    final viewInsets = MediaQuery.viewInsetsOf(context);
-    final bottomInset = viewInsets.bottom > mediaPadding.bottom
-        ? viewInsets.bottom
-        : mediaPadding.bottom;
-    final topPadding = widget.isExpanded ? mediaPadding.top + 8 : 12.0;
-    final pinnedAction = _buildPinnedPrimaryAction();
-    final isActionPinned = pinnedAction != null;
-    return AnimatedContainer(
-      key: const ValueKey('ride-options-panel'),
-      duration: _viewTransitionDuration,
-      curve: Curves.easeOutCubic,
-      padding: EdgeInsets.fromLTRB(20, topPadding, 20, 16 + bottomInset),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: widget.isExpanded
-            ? BorderRadius.zero
-            : const BorderRadius.vertical(
-                top: Radius.circular(AppRadius.sheet),
-              ),
-        boxShadow: widget.isExpanded
-            ? const []
-            : [
-                BoxShadow(
-                  color: context.colorScheme.onSurface.withValues(alpha: 0.12),
-                  blurRadius: 30,
-                  offset: const Offset(0, -10),
-                ),
-              ],
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          SingleChildScrollView(
-            controller: widget.scrollController,
-            padding: EdgeInsets.only(bottom: isActionPinned ? 68 : 0),
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+    if (widget.isLoadingFare) {
+      return _buildLoadingContent(showPrimaryAction: true);
+    }
+
+    return PopScope(
+      canPop: _currentView == _RideOptionsView.summary,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _backToSummary();
+        }
+      },
+      child: Container(
+        key: const ValueKey('ride-options-panel'),
+        decoration: BoxDecoration(
+          color: context.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.sheet),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: context.colorScheme.onSurface.withValues(alpha: 0.12),
+              blurRadius: 24,
+              offset: const Offset(0, -8),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (!widget.isExpanded)
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
+                ),
                 AnimatedSize(
-                  duration: _viewTransitionDuration,
+                  duration: const Duration(milliseconds: 280),
                   curve: Curves.easeOutCubic,
-                  alignment: Alignment.topCenter,
+                  alignment: Alignment.bottomCenter,
                   child: AnimatedSwitcher(
-                    duration: _viewTransitionDuration,
+                    duration: const Duration(milliseconds: 280),
                     switchInCurve: Curves.easeOutCubic,
                     switchOutCurve: Curves.easeInCubic,
-                    layoutBuilder: (currentChild, _) => ClipRect(
-                      child: currentChild ?? const SizedBox.shrink(),
-                    ),
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: entryOffset,
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: child,
-                      ),
-                    ),
-                    child: _buildContent(showPrimaryAction: !isActionPinned),
+                    layoutBuilder: (currentChild, previousChildren) {
+                      return Stack(
+                        alignment: Alignment.bottomCenter,
+                        children: <Widget>[...previousChildren, ?currentChild],
+                      );
+                    },
+                    transitionBuilder: (child, animation) {
+                      final isIncoming = child.key == ValueKey(_currentView);
+                      final inBegin = _isNavigatingForward
+                          ? const Offset(0.0, 0.35)
+                          : const Offset(0.0, -0.35);
+                      final outEnd = _isNavigatingForward
+                          ? const Offset(0.0, -0.35)
+                          : const Offset(0.0, 0.35);
+
+                      final offsetAnimation = Tween<Offset>(
+                        begin: isIncoming ? inBegin : Offset.zero,
+                        end: isIncoming ? Offset.zero : outEnd,
+                      ).animate(animation);
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: FadeTransition(opacity: animation, child: child),
+                      );
+                    },
+                    child: _buildCurrentView(context),
                   ),
                 ),
               ],
             ),
           ),
-          if (pinnedAction != null)
-            Positioned(left: 0, right: 0, bottom: 0, child: pinnedAction),
-        ],
+        ),
       ),
     );
   }
+}
+
+class _DottedLinePainter extends CustomPainter {
+  final Color color;
+
+  const _DottedLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+
+    double startY = 3.0;
+    while (startY < size.height - 3.0) {
+      canvas.drawCircle(Offset(size.width / 2, startY), 1.0, paint);
+      startY += 5.0;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DottedLinePainter oldDelegate) =>
+      color != oldDelegate.color;
 }
 
 @Preview(

@@ -2,211 +2,161 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class const RideOptionsLoadingView({super.key, this.showPrimaryAction = true})
-    extends StatelessWidget {
+class RideOptionsLoadingView extends StatelessWidget {
+  const RideOptionsLoadingView({super.key, this.showPrimaryAction = true});
+
   final bool showPrimaryAction;
 
   @override
   Widget build(BuildContext context) {
-    return Skeletonizer.zone(
-      key: const ValueKey('ride-options-loading'),
-      child: Column(
-        key: const ValueKey('ride-options-loading-content'),
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildTripSummary(context),
-          const SizedBox(height: 16),
-          _buildActionRow(context),
-          const SizedBox(height: 16),
-          _buildTipSelector(),
-          const SizedBox(height: 16),
-          _buildActionRow(context),
-          const SizedBox(height: 12),
-          _buildTotalFare(context),
-          const SizedBox(height: 12),
-          if (showPrimaryAction)
-            const Bone.button(
-              width: double.infinity,
-              height: 50,
-              borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: context.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: context.colorScheme.onSurface.withValues(alpha: 0.12),
+            blurRadius: 24,
+            offset: const Offset(0, -8),
+          ),
         ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          child: Skeletonizer.zone(
+            key: const ValueKey('ride-options-loading'),
+            child: Column(
+              key: const ValueKey('ride-options-loading-content'),
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                _buildRouteCard(context),
+                const SizedBox(height: 16),
+                _buildFareRow(context),
+                const SizedBox(height: 16),
+                _buildActionButtons(context),
+                const SizedBox(height: 16),
+                if (showPrimaryAction)
+                  const Bone.button(
+                    key: ValueKey('ride-options-loading-primary-action'),
+                    width: double.infinity,
+                    height: 52,
+                    borderRadius: BorderRadius.all(Radius.circular(14)),
+                  ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildTripSummary(BuildContext context) {
+  Widget _buildRouteCard(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colorScheme.outlineVariant),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        color: context.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.5,
+        ),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Column(
             children: [
-              Bone.icon(size: 18),
-              SizedBox(height: 10),
-              Bone(width: 2, height: 38),
-              SizedBox(height: 10),
-              Bone.icon(size: 18),
+              Bone.circle(size: 14),
+              SizedBox(height: 4),
+              Bone(width: 2, height: 22),
+              SizedBox(height: 4),
+              Bone.square(
+                size: 12,
+                borderRadius: BorderRadius.all(Radius.circular(3)),
+              ),
             ],
           ),
-          SizedBox(width: 12),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Bone.text(width: 48, fontSize: 11),
-                SizedBox(height: 3),
-                Bone.text(width: 140, fontSize: 14),
-                SizedBox(height: 22),
-                Bone.text(width: 78, fontSize: 11),
-                SizedBox(height: 3),
-                Bone.text(width: 120, fontSize: 14),
-                SizedBox(height: 3),
-                Bone.multiText(lines: 2, width: 210, fontSize: 12),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionRow(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colorScheme.outlineVariant),
-      ),
-      child: const Row(
-        children: [
-          Bone.square(
-            size: 40,
-            borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Bone.text(width: 100, fontSize: 14),
                 SizedBox(height: 4),
-                Bone.text(width: 190, fontSize: 12),
+                Bone.text(width: 140, fontSize: 15),
+                SizedBox(height: 10),
+                Bone.text(width: 68, fontSize: 11),
+                SizedBox(height: 4),
+                Bone.text(width: 160, fontSize: 15),
               ],
             ),
           ),
-          SizedBox(width: 8),
-          Bone.icon(size: 19),
         ],
       ),
     );
   }
 
-  Widget _buildTipSelector() {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Bone.text(width: 72, fontSize: 14),
-        SizedBox(height: 4),
-        Bone.text(width: 190, fontSize: 12),
-        SizedBox(height: 10),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
+  Widget _buildFareRow(BuildContext context) {
+    return Container(
+      key: const ValueKey('ride-options-loading-total-fare'),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Bone.button(
-                width: 56,
-                height: 34,
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-              ),
-              SizedBox(width: 6),
-              Bone.button(
-                width: 50,
-                height: 34,
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-              ),
-              SizedBox(width: 6),
-              Bone.button(
-                width: 50,
-                height: 34,
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-              ),
-              SizedBox(width: 6),
-              Bone.button(
-                width: 50,
-                height: 34,
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-              ),
-              SizedBox(width: 6),
-              Bone.button(
-                width: 50,
-                height: 34,
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-              ),
-              SizedBox(width: 6),
-              Bone.button(
-                width: 56,
-                height: 34,
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-              ),
+              Bone.text(width: 90, fontSize: 13),
+              SizedBox(height: 4),
+              Bone.text(width: 120, fontSize: 32),
             ],
+          ),
+          Padding(
+            padding: EdgeInsets.only(bottom: 6),
+            child: Bone.text(width: 75, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context) {
+    return const Row(
+      children: [
+        Expanded(
+          child: Bone.button(
+            height: 48,
+            borderRadius: BorderRadius.all(Radius.circular(14)),
+          ),
+        ),
+        SizedBox(width: 10),
+        Expanded(
+          child: Bone.button(
+            height: 48,
+            borderRadius: BorderRadius.all(Radius.circular(14)),
+          ),
+        ),
+        SizedBox(width: 10),
+        Expanded(
+          child: Bone.button(
+            height: 48,
+            borderRadius: BorderRadius.all(Radius.circular(14)),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildTotalFare(BuildContext context) {
-    return Container(
-      key: const ValueKey('ride-options-loading-total-fare'),
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colorScheme.outlineVariant),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: const Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Bone.text(width: 82, fontSize: 15),
-                SizedBox(height: 4),
-                Bone.text(width: 130, fontSize: 12),
-              ],
-            ),
-          ),
-          Bone.text(width: 56, fontSize: 20),
-          SizedBox(width: 8),
-          Bone.icon(size: 18),
-        ],
-      ),
     );
   }
 }

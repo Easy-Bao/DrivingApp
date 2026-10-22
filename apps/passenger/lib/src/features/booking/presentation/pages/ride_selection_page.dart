@@ -22,20 +22,22 @@ import 'package:passenger/src/features/booking/presentation/widgets/ride_options
 import 'package:passenger/src/features/booking/presentation/widgets/ride_tip_selector.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile_cubit.dart';
 
-class const RideSelectionPage({
-  super.key,
-  required this.destination,
-  this.distance,
-  this.duration,
-  this.distanceKm,
-  this.rideType = 'solo',
-  this.pickupAddress,
-  this.pickupLatitude,
-  this.pickupLongitude,
-  this.initialTipAmount = 0,
-  this.initialNotes = '',
-  required this.fareRepository,
-}) extends StatefulWidget {
+class RideSelectionPage extends StatefulWidget {
+  const RideSelectionPage({
+    super.key,
+    required this.destination,
+    this.distance,
+    this.duration,
+    this.distanceKm,
+    this.rideType = 'solo',
+    this.pickupAddress,
+    this.pickupLatitude,
+    this.pickupLongitude,
+    this.initialTipAmount = 0,
+    this.initialNotes = '',
+    required this.fareRepository,
+  });
+
   final Place destination;
   final String? distance;
   final String? duration;
@@ -52,16 +54,10 @@ class const RideSelectionPage({
   State<RideSelectionPage> createState() => _RideSelectionPageState();
 }
 
-class _RideSelectionPageState() extends State<RideSelectionPage> {
-  static const _panelInitialSize = 0.8;
-  static const _panelMinSize = 0.34;
-  static const _panelMaxSize = 1.0;
-  static const _panelAnimationDuration = Duration(milliseconds: 320);
-
+class _RideSelectionPageState extends State<RideSelectionPage> {
   late int _selectedTipAmount;
   final TextEditingController _customFareController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
-  late final DraggableScrollableController _panelController;
   FareEstimate? _fareResult;
   String? _fareError;
   String? _customFareError;
@@ -72,7 +68,6 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
   Future<Route?>? _routeRequest;
   late final FareEstimateCubit _fareEstimateCubit;
   bool _isResolvingPickup = true;
-  bool _isPanelExpanded = false;
   ({double lat, double lng})? _resolvedPickup;
 
   ({double lat, double lng})? get _pickupCoordinate {
@@ -133,8 +128,6 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
   void initState() {
     super.initState();
     _fareEstimateCubit = FareEstimateCubit(repository: widget.fareRepository);
-    _panelController = DraggableScrollableController()
-      ..addListener(_onPanelExtentChanged);
     _selectedTipAmount =
         RideTipSelector.tipOptions.contains(widget.initialTipAmount)
         ? widget.initialTipAmount
@@ -154,13 +147,6 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
     } else {
       unawaited(_resolvePickupLocation());
     }
-  }
-
-  void _onPanelExtentChanged() {
-    if (!mounted || !_panelController.isAttached) return;
-    final isExpanded = _panelController.size >= _panelMaxSize - 0.02;
-    if (isExpanded == _isPanelExpanded) return;
-    setState(() => _isPanelExpanded = isExpanded);
   }
 
   Future<void> _resolvePickupLocation() async {
@@ -392,7 +378,6 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
   @override
   void dispose() {
     unawaited(_fareEstimateCubit.close());
-    _panelController.dispose();
     _customFareController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -566,21 +551,13 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
               ),
             ),
 
-            AnimatedOpacity(
-              opacity: _isPanelExpanded ? 0 : 1,
-              duration: _panelAnimationDuration,
-              curve: Curves.easeOutCubic,
-              child: IgnorePointer(
-                ignoring: _isPanelExpanded,
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppLayout.pagePadding,
-                      vertical: 8,
-                    ),
-                    child: _buildMapBackButton(context),
-                  ),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppLayout.pagePadding,
+                  vertical: 8,
                 ),
+                child: _buildMapBackButton(context),
               ),
             ),
 
@@ -591,45 +568,25 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
                   final isWide = constraints.maxWidth > 600.0;
                   return SizedBox(
                     width: isWide ? 600.0 : constraints.maxWidth,
-                    height: constraints.maxHeight,
-                    child: DraggableScrollableSheet(
-                      controller: _panelController,
-                      expand: false,
-                      initialChildSize: _panelInitialSize,
-                      minChildSize: _panelMinSize,
-                      maxChildSize: _panelMaxSize,
-                      snap: true,
-                      snapSizes: const [
-                        _panelMinSize,
-                        _panelInitialSize,
-                        _panelMaxSize,
-                      ],
-                      snapAnimationDuration: _panelAnimationDuration,
-                      shouldCloseOnMinExtent: false,
-                      builder: (context, scrollController) {
-                        return RideOptionsPanel(
-                          passengerName: passengerName,
-                          pickupLabel: _pickupLabel,
-                          destinationName: widget.destination.name,
-                          destinationAddress: widget.destination.fullAddress,
-                          fareResult: _fareResult,
-                          customFareController: _customFareController,
-                          customFareError: _customFareError,
-                          isLoadingFare: _isLoadingFare,
-                          fareError: _fareError,
-                          onRetryFare: _retryFareCalculation,
-                          onCustomFareChanged: _onCustomFareChanged,
-                          notesController: _notesController,
-                          onNotesChanged: _onNotesChanged,
-                          selectedTipAmount: _selectedTipAmount,
-                          onTipSelected: _onTipSelected,
-                          totalFare: _totalFare,
-                          isExpanded: _isPanelExpanded,
-                          scrollController: scrollController,
-                          onPageBackPressed: () => context.pop(),
-                          onBookPressed: () => unawaited(_handleBookPressed()),
-                        );
-                      },
+                    child: RideOptionsPanel(
+                      passengerName: passengerName,
+                      pickupLabel: _pickupLabel,
+                      destinationName: widget.destination.name,
+                      destinationAddress: widget.destination.fullAddress,
+                      fareResult: _fareResult,
+                      customFareController: _customFareController,
+                      customFareError: _customFareError,
+                      isLoadingFare: _isLoadingFare,
+                      fareError: _fareError,
+                      onRetryFare: _retryFareCalculation,
+                      onCustomFareChanged: _onCustomFareChanged,
+                      notesController: _notesController,
+                      onNotesChanged: _onNotesChanged,
+                      selectedTipAmount: _selectedTipAmount,
+                      onTipSelected: _onTipSelected,
+                      totalFare: _totalFare,
+                      onPageBackPressed: () => context.pop(),
+                      onBookPressed: () => unawaited(_handleBookPressed()),
                     ),
                   );
                 },

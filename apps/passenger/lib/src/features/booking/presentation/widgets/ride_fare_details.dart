@@ -4,15 +4,16 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 
-class const RideFareDetails({
-  super.key,
-  required this.passengerName,
-  required this.fareResult,
-  required this.offeredFare,
-  required this.tipAmount,
-  required this.totalFare,
-  required this.onBackPressed,
-}) extends StatelessWidget {
+class RideFareDetails extends StatelessWidget {
+  const RideFareDetails({
+    super.key,
+    required this.passengerName,
+    required this.fareResult,
+    required this.offeredFare,
+    required this.tipAmount,
+    required this.totalFare,
+    required this.onBackPressed,
+  });
   final String passengerName;
   final FareEstimate fareResult;
   final double offeredFare;

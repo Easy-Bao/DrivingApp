@@ -20,6 +20,7 @@ void main() {
     bool isLoadingFare = false,
     String? fareError,
     VoidCallback? onRetryFare,
+    int selectedTipAmount = 0,
     ValueChanged<int>? onTipSelected,
     String passengerName = 'Avery Cruz',
     String? offeredFare,
@@ -50,7 +51,7 @@ void main() {
         onCustomFareChanged: (_) {},
         notesController: effectiveNotesController,
         onNotesChanged: (_) {},
-        selectedTipAmount: 0,
+        selectedTipAmount: selectedTipAmount,
         onTipSelected: onTipSelected ?? (_) {},
         totalFare: totalFare ?? result?.totalFare ?? 0,
         isExpanded: isExpanded,
@@ -138,11 +139,14 @@ void main() {
   ) async {
     await tester.pumpWidget(buildPanel());
 
-    expect(find.text('Trip Details'), findsOneWidget);
+    expect(find.text('Pickup'), findsOneWidget);
+    expect(find.text('Destination'), findsOneWidget);
     expect(find.text('Current location'), findsOneWidget);
     expect(find.text('Central Park'), findsOneWidget);
     expect(find.text('Calculated fare'), findsNothing);
-    expect(find.text('Set your offer'), findsOneWidget);
+    expect(find.text('Offer'), findsOneWidget);
+    expect(find.text('Tip'), findsOneWidget);
+    expect(find.text('Note'), findsOneWidget);
     expect(find.text('Book directly'), findsOneWidget);
     expect(find.text('Solo Ride'), findsNothing);
     expect(find.text('4.2 km'), findsNothing);
@@ -178,21 +182,21 @@ void main() {
     expect(find.text('Your offer: ₱40.00'), findsOneWidget);
   });
 
-  testWidgets('keeps the current sheet extent when opening an editor', (
+  testWidgets('opens a custom offer view and cancels with back', (
     tester,
   ) async {
-    final sheetController = DraggableScrollableController();
-    addTearDown(sheetController.dispose);
-    await tester.pumpWidget(buildPanel(sheetController: sheetController));
-
-    expect(sheetController.isAttached, isTrue);
-    expect(sheetController.size, closeTo(0.8, 0.001));
+    await tester.pumpWidget(buildPanel());
 
     await tester.tap(find.byKey(const ValueKey('custom-offer-trigger')));
     await tester.pumpAndSettle();
 
-    expect(sheetController.size, closeTo(0.8, 0.001));
     expect(find.text('Set your offer'), findsOneWidget);
+    expect(find.byKey(const ValueKey('custom-offer-save')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('panel-back')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Set your offer'), findsNothing);
   });
 
   testWidgets('opens a dedicated trip note editor instead of an inline field', (
@@ -248,7 +252,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('fare-details')), findsOneWidget);
-    expect(find.text('Fare details'), findsOneWidget);
     expect(find.text('Avery Cruz'), findsOneWidget);
     expect(find.text('Base fare'), findsOneWidget);
     expect(find.text('Distance'), findsOneWidget);
@@ -267,78 +270,50 @@ void main() {
 
     await tester.tap(find.byTooltip('Back to trip summary'));
     await tester.pumpAndSettle();
-    expect(find.text('Trip Details'), findsOneWidget);
+    expect(find.byKey(const ValueKey('fare-details')), findsNothing);
+    expect(find.byKey(const ValueKey('trip-summary-card')), findsOneWidget);
   });
 
-  testWidgets('shows a page back affordance when the sheet is expanded', (
-    tester,
-  ) async {
-    var pageBackRequests = 0;
-    await tester.pumpWidget(
-      buildPanel(isExpanded: true, onPageBackPressed: () => pageBackRequests++),
-    );
-
-    expect(find.byKey(const ValueKey('panel-page-back')), findsOneWidget);
-    expect(find.text('Review your ride before booking.'), findsOneWidget);
-
-    await tester.tap(find.byKey(const ValueKey('panel-page-back')));
-    expect(pageBackRequests, 1);
-  });
-
-  testWidgets('pins the editor action to the current sheet edge', (
-    tester,
-  ) async {
-    final sheetController = DraggableScrollableController();
-    addTearDown(sheetController.dispose);
-    await tester.pumpWidget(buildPanel(sheetController: sheetController));
-
-    await tester.tap(find.byKey(const ValueKey('custom-offer-trigger')));
-    await tester.pumpAndSettle();
-
-    final panelBottom = tester
-        .getRect(find.byKey(const ValueKey('ride-options-panel')))
-        .bottom;
-    final actionBottom = tester
-        .getRect(find.byKey(const ValueKey('custom-offer-save')))
-        .bottom;
-    expect(panelBottom - actionBottom, closeTo(16, 1));
-    expect(sheetController.size, closeTo(0.8, 0.001));
-
-    final backRect = tester.getRect(find.byKey(const ValueKey('panel-back')));
-    final titleRect = tester.getRect(find.text('Set your offer'));
-    expect(titleRect.left, greaterThanOrEqualTo(backRect.right + 8));
-    expect(titleRect.top, closeTo(backRect.top, 1));
-  });
-
-  testWidgets('pins the compact summary booking action to the sheet edge', (
-    tester,
-  ) async {
-    final sheetController = DraggableScrollableController();
-    addTearDown(sheetController.dispose);
-    await tester.pumpWidget(buildPanel(sheetController: sheetController));
-
-    sheetController.jumpTo(0.34);
-    await tester.pump();
-
-    expect(
-      find.ancestor(
-        of: find.text('Book directly'),
-        matching: find.byType(Positioned),
-      ),
-      findsOneWidget,
-    );
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('selects a tip from the summary', (tester) async {
+  testWidgets('selects a tip from the tip view', (tester) async {
     var selectedTip = 0;
     await tester.pumpWidget(
-      buildPanel(onTipSelected: (amount) => selectedTip = amount),
+      StatefulBuilder(
+        builder: (context, setState) => buildPanel(
+          selectedTipAmount: selectedTip,
+          onTipSelected: (amount) => setState(() => selectedTip = amount),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('tip-trigger')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tip your driver'), findsOneWidget);
+    expect(
+      find.text('100% of your tip goes directly to the driver.'),
+      findsOneWidget,
     );
 
     await tester.tap(find.text('₱20'));
+    await tester.pump();
     expect(selectedTip, 20);
-    expect(find.text('No tip'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('tip-save-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tip your driver'), findsNothing);
+    expect(find.text('Tip: ₱20.00'), findsOneWidget);
+  });
+
+  testWidgets('renders anchored book directly action and trip summary', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildPanel());
+
+    expect(find.byKey(const ValueKey('book-directly-button')), findsOneWidget);
+    expect(find.text('Book directly'), findsOneWidget);
+    expect(find.byKey(const ValueKey('trip-summary-card')), findsOneWidget);
+    expect(find.byKey(const ValueKey('total-fare-amount')), findsOneWidget);
   });
 
   testWidgets('shows only the primary destination name', (tester) async {
