@@ -231,8 +231,16 @@ void main() {
           cancelRequested: false,
           sessionId: null,
         );
-        when(() => bookingRepository.createSession(any()))
-            .thenAnswer((_) async => const Ok('restored-session'));
+        when(() => bookingRepository.createSession(any())).thenAnswer(
+          (_) async => const Ok(
+            BidSessionSnapshot(
+              id: 'restored-session',
+              status: 'open',
+              expiresAt: null,
+              bookingReference: '701612345678901',
+            ),
+          ),
+        );
 
         final bloc = _makeBookingBloc(
           driverRepo: driverRepo,
@@ -581,8 +589,16 @@ void main() {
         );
         when(() => driverProfileRepository.fetchReviews(any()))
             .thenAnswer((_) async => const Ok([]));
-        when(() => bookingRepository.createSession(any()))
-            .thenAnswer((_) async => const Ok('101'));
+        when(() => bookingRepository.createSession(any())).thenAnswer(
+          (_) async => const Ok(
+            BidSessionSnapshot(
+              id: '101',
+              status: 'open',
+              expiresAt: null,
+              bookingReference: '701612345678901',
+            ),
+          ),
+        );
         return _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -642,8 +658,16 @@ void main() {
     blocTest<BookingBloc, BookingState>(
       'accepts a numeric session ID returned by the server',
       build: () {
-        when(() => bookingRepository.createSession(any()))
-            .thenAnswer((_) async => const Ok('202'));
+        when(() => bookingRepository.createSession(any())).thenAnswer(
+          (_) async => const Ok(
+            BidSessionSnapshot(
+              id: '202',
+              status: 'open',
+              expiresAt: null,
+              bookingReference: '701612345678901',
+            ),
+          ),
+        );
         return _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -668,7 +692,12 @@ void main() {
         ),
         isA<BookingSearching>()
             .having((state) => state.isDirect, 'open booking', isFalse)
-            .having((state) => state.sessionId, 'request ID', '202'),
+            .having((state) => state.sessionId, 'request ID', '202')
+            .having(
+              (state) => state.bookingReference,
+              'public booking number',
+              '701612345678901',
+            ),
         isA<BookingOffersReceived>()
             .having((state) => state.isDirect, 'open booking', isFalse)
             .having((state) => state.offers, 'offers', isEmpty),
@@ -678,8 +707,16 @@ void main() {
     test(
       'persists an open booking before listening for driver offers',
       () async {
-        when(() => bookingRepository.createSession(any()))
-            .thenAnswer((_) async => const Ok('cash-booking'));
+        when(() => bookingRepository.createSession(any())).thenAnswer(
+          (_) async => const Ok(
+            BidSessionSnapshot(
+              id: 'cash-booking',
+              status: 'open',
+              expiresAt: null,
+              bookingReference: '701612345678901',
+            ),
+          ),
+        );
         final bloc = _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -716,8 +753,16 @@ void main() {
     );
 
     test('cancels the persisted booking ID when dispatch expires', () async {
-      when(() => bookingRepository.createSession(any()))
-          .thenAnswer((_) async => const Ok('expired-cash-booking'));
+      when(() => bookingRepository.createSession(any())).thenAnswer(
+        (_) async => const Ok(
+          BidSessionSnapshot(
+            id: 'expired-cash-booking',
+            status: 'open',
+            expiresAt: null,
+            bookingReference: '701612345678901',
+          ),
+        ),
+      );
       final bloc = _makeBookingBloc(
         driverRepo: driverRepo,
         bookingRepository: bookingRepository,
@@ -762,8 +807,16 @@ void main() {
       'matches a direct booking from snapshot polling when realtime is absent',
       () async {
         var fetchCount = 0;
-        when(() => bookingRepository.createSession(any()))
-            .thenAnswer((_) async => const Ok('26'));
+        when(() => bookingRepository.createSession(any())).thenAnswer(
+          (_) async => const Ok(
+            BidSessionSnapshot(
+              id: '26',
+              status: 'open',
+              expiresAt: null,
+              bookingReference: '701612345678901',
+            ),
+          ),
+        );
         when(() => bookingRepository.fetchOffers('26')).thenAnswer((_) async {
           fetchCount++;
           if (fetchCount == 1) return const Ok([]);
@@ -847,8 +900,16 @@ void main() {
     test('stops offer polling after the booking session is canceled', () async {
       final lifecycleCoordinator = AppLifecycleCoordinator();
       var fetchCount = 0;
-      when(() => bookingRepository.createSession(any()))
-          .thenAnswer((_) async => const Ok('cancel-session'));
+      when(() => bookingRepository.createSession(any())).thenAnswer(
+        (_) async => const Ok(
+          BidSessionSnapshot(
+            id: 'cancel-session',
+            status: 'open',
+            expiresAt: null,
+            bookingReference: '701612345678901',
+          ),
+        ),
+      );
       when(() => bookingRepository.fetchOffers('cancel-session'))
           .thenAnswer((_) async {
             fetchCount++;
@@ -907,7 +968,14 @@ void main() {
               if (createCalls == 1) {
                 return const Err(ServerFailure('Booking request timed out.'));
               }
-              return const Ok('created-after-retry');
+              return const Ok(
+                BidSessionSnapshot(
+                  id: 'created-after-retry',
+                  status: 'open',
+                  expiresAt: null,
+                  bookingReference: '701612345678901',
+                ),
+              );
             });
         when(() => bookingRepository.cancelSession('created-after-retry'))
             .thenAnswer((_) async => const Ok(null));
@@ -981,8 +1049,16 @@ void main() {
     );
 
     test('emits BookingCanceled and clears active session when remote cancellation succeeds', () async {
-      when(() => bookingRepository.createSession(any()))
-          .thenAnswer((_) async => const Ok('cancel-session-1'));
+      when(() => bookingRepository.createSession(any())).thenAnswer(
+        (_) async => const Ok(
+          BidSessionSnapshot(
+            id: 'cancel-session-1',
+            status: 'open',
+            expiresAt: null,
+            bookingReference: '701612345678901',
+          ),
+        ),
+      );
       when(() => bookingRepository.fetchOffers('cancel-session-1'))
           .thenAnswer((_) async => const Ok([]));
       when(() => bookingRepository.cancelSession('cancel-session-1'))
@@ -1022,8 +1098,16 @@ void main() {
     });
 
     test('emits BookingFailure and retains active session when remote cancellation fails', () async {
-      when(() => bookingRepository.createSession(any()))
-          .thenAnswer((_) async => const Ok('cancel-session-2'));
+      when(() => bookingRepository.createSession(any())).thenAnswer(
+        (_) async => const Ok(
+          BidSessionSnapshot(
+            id: 'cancel-session-2',
+            status: 'open',
+            expiresAt: null,
+            bookingReference: '701612345678901',
+          ),
+        ),
+      );
       when(() => bookingRepository.fetchOffers('cancel-session-2'))
           .thenAnswer((_) async => const Ok([]));
       when(() => bookingRepository.cancelSession('cancel-session-2'))
@@ -1079,8 +1163,16 @@ void main() {
     });
 
     test('emits BookingFailure and retains active session when cancellation times out', () async {
-      when(() => bookingRepository.createSession(any()))
-          .thenAnswer((_) async => const Ok('cancel-session-3'));
+      when(() => bookingRepository.createSession(any())).thenAnswer(
+        (_) async => const Ok(
+          BidSessionSnapshot(
+            id: 'cancel-session-3',
+            status: 'open',
+            expiresAt: null,
+            bookingReference: '701612345678901',
+          ),
+        ),
+      );
       when(() => bookingRepository.fetchOffers('cancel-session-3'))
           .thenAnswer((_) async => const Ok([]));
       when(() => bookingRepository.cancelSession('cancel-session-3'))
@@ -1134,7 +1226,7 @@ void main() {
     test(
       'cancels a session after the pending create request resolves',
       () async {
-        final creation = Completer<Result<String, Failure>>();
+        final creation = Completer<Result<BidSessionSnapshot, Failure>>();
         when(() => bookingRepository.createSession(any()))
             .thenAnswer((_) => creation.future);
         when(() => bookingRepository.cancelSession('31'))
@@ -1173,7 +1265,16 @@ void main() {
         final canceled = bloc.stream.firstWhere(
           (state) => state is BookingCanceled,
         );
-        creation.complete(const Ok('31'));
+        creation.complete(
+          const Ok(
+            BidSessionSnapshot(
+              id: '31',
+              status: 'open',
+              expiresAt: null,
+              bookingReference: '701612345678901',
+            ),
+          ),
+        );
         await canceled.timeout(const Duration(milliseconds: 500));
 
         verify(() => bookingRepository.cancelSession('31')).called(1);
@@ -1187,8 +1288,16 @@ void main() {
       'recovers an accepted session when cancellation loses the race',
       () async {
         var sessionReads = 0;
-        when(() => bookingRepository.createSession(any()))
-            .thenAnswer((_) async => const Ok('cancel-session-4'));
+        when(() => bookingRepository.createSession(any())).thenAnswer(
+          (_) async => const Ok(
+            BidSessionSnapshot(
+              id: 'cancel-session-4',
+              status: 'open',
+              expiresAt: null,
+              bookingReference: '701612345678901',
+            ),
+          ),
+        );
         when(() => bookingRepository.fetchOffers('cancel-session-4'))
             .thenAnswer((_) async => const Ok([]));
         when(

@@ -5,6 +5,7 @@ void main() {
   test('destructures canonical and legacy snapshot fields', () {
     final snapshot = RideSnapshot.fromJson(const {
       'id': 303,
+      'booking_reference': '701612345678901',
       'status': ' Accepted ',
       'pickup': 'Terminal A',
       'destination': 'Terminal B',
@@ -26,6 +27,7 @@ void main() {
     });
 
     expect(snapshot.id, '303');
+    expect(snapshot.bookingReference, '701612345678901');
     expect(snapshot.status, 'accepted');
     expect(snapshot.pickupName, 'Terminal A');
     expect(snapshot.dropoffName, 'Terminal B');

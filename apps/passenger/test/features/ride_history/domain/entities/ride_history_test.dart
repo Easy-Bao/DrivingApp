@@ -5,6 +5,7 @@ void main() {
   test('destructures legacy ride-history aliases with safe coercion', () {
     final ride = RideHistory.fromJson(const {
       'id': 11,
+      'booking_reference': '701612345678901',
       'pickup_name': 'Makati',
       'dropoff_name': 'BGC',
       'pickup_latitude': '14.5547',
@@ -22,6 +23,15 @@ void main() {
     });
 
     expect(ride.id, '11');
+    expect(ride.bookingReference, '701612345678901');
+    expect(
+      RideHistory.fromJson(ride.toJson()).bookingReference,
+      '701612345678901',
+    );
+    expect(
+      ride.copyWith(status: 'cancelled').bookingReference,
+      '701612345678901',
+    );
     expect(ride.pickup, 'Makati');
     expect(ride.destination, 'BGC');
     expect(ride.pickupLat, 14.5547);

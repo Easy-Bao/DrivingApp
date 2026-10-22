@@ -4,13 +4,13 @@ import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'dart:async';
 import 'dart:developer' as dev;
 
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core_domain/core_domain.dart';
-import 'package:maps/maps.dart';
-import 'package:driver/src/infrastructure/session/driver_session_store.dart';
-import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
+import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
+import 'package:driver/src/infrastructure/session/driver_session_store.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
+import 'package:maps/maps.dart';
 
 class RideFlowCubit({
   required this._rideRepository,
@@ -20,6 +20,7 @@ class RideFlowCubit({
   final SessionStore _sessionService;
 
   String? _activeRideId;
+  String? _activeBookingReference;
   String? _activePassengerId;
   String? _activePassengerName;
   Timer? _waitTimer;
@@ -45,6 +46,7 @@ class RideFlowCubit({
   String? get lastStartFailureMessage => _lastStartFailureMessage;
 
   String? get activeRideId => _activeRideId;
+  String? get activeBookingReference => _activeBookingReference;
   String? get activePassengerId => _activePassengerId;
   String get activePassengerName => _activePassengerName ?? 'Passenger';
   DateTime? get _passengerNoShowEligibleAt =>
@@ -201,6 +203,7 @@ class RideFlowCubit({
 
   Future<bool> resumeRide({
     required String rideId,
+    String? bookingReference,
     required String status,
     required String passengerName,
     String? passengerId,
@@ -244,6 +247,7 @@ class RideFlowCubit({
     _waitTimer?.cancel();
     _isActionInFlight = true;
     _activeRideId = typedRideId.normalized;
+    _activeBookingReference = bookingReference;
     _activePassengerId = passengerId;
     _activePassengerName = passengerName;
     await _saveActiveRideSession(typedRideId.normalized);

@@ -16,6 +16,7 @@ void main() {
               key: headerBoundsKey,
               width: 480,
               child: ActiveRideHeader(
+                bookingReference: '701612345678901',
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 backButton: const SizedBox(
                   key: ValueKey<String>('back-control'),
@@ -42,6 +43,7 @@ void main() {
       ),
     );
 
+    expect(find.text('Booking ID 701612345678901'), findsOneWidget);
     final headerBounds = tester.getRect(find.byKey(headerBoundsKey));
     final backBounds = tester.getRect(
       find.byKey(const ValueKey<String>('back-control')),

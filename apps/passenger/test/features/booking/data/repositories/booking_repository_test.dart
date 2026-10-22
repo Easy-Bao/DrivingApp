@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/booking/data/datasources/booking_remote_data_source.dart';
 import 'package:passenger/src/features/booking/data/repositories/booking_repository_impl.dart';
+import 'package:passenger/src/features/booking/domain/entities/bid_session_snapshot.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_session_request.dart';
 import 'package:passenger/src/features/booking/domain/repositories/booking_repository.dart';
 
@@ -28,7 +29,11 @@ void main() {
       sentBody = Map<String, dynamic>.from(
         invocation.positionalArguments.single as Map,
       );
-      return <String, dynamic>{'id': 77};
+      return <String, dynamic>{
+        'id': 77,
+        'booking_reference': '701612345678901',
+        'status': 'open',
+      };
     });
 
     final result = await repository.createSession(
@@ -48,7 +53,12 @@ void main() {
       ),
     );
 
-    expect(result, const Ok<String, Failure>('77'));
+    final created = result.fold(
+      (failure) => throw StateError(failure.message),
+      (value) => value,
+    );
+    expect(created.id, '77');
+    expect(created.bookingReference, '701612345678901');
     expect(sentBody?['target_driver_id'], 42);
     expect(sentBody?['custom_fare'], 2764);
     expect(sentBody?['dropoff_latitude'], 7.85);
@@ -56,8 +66,13 @@ void main() {
   });
 
   test('exposes legacy repository success through a strict result', () async {
-    when(() => dataSource.createSession(any()))
-        .thenAnswer((_) async => <String, dynamic>{'id': 77});
+    when(() => dataSource.createSession(any())).thenAnswer(
+      (_) async => <String, dynamic>{
+        'id': 77,
+        'booking_reference': '701612345678901',
+        'status': 'open',
+      },
+    );
 
     final BookingRepository contract = repository;
     final result = await contract.createSessionResult(
@@ -76,8 +91,14 @@ void main() {
       ),
     );
 
-    expect(result, isA<Ok<String, DomainFailure>>());
-    expect(result.fold((failure) => failure, (value) => value), '77');
+    expect(result, isA<Ok<BidSessionSnapshot, DomainFailure>>());
+    expect(
+      result.fold(
+        (failure) => throw StateError(failure.message),
+        (value) => value.id,
+      ),
+      '77',
+    );
   });
 
   test(

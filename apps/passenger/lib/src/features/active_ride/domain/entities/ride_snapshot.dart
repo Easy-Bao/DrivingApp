@@ -3,6 +3,7 @@ import 'package:foundation/foundation.dart';
 
 final class const RideSnapshot({
   required final String id,
+  final String bookingReference = '',
   required final String status,
   required final String pickupName,
   required final String dropoffName,
@@ -31,6 +32,7 @@ final class const RideSnapshot({
 
   RideSnapshot copyWith({
     String? id,
+    String? bookingReference,
     String? status,
     String? pickupName,
     String? dropoffName,
@@ -56,6 +58,7 @@ final class const RideSnapshot({
     bool? cashSettled,
   }) => RideSnapshot(
     id: id ?? this.id,
+    bookingReference: bookingReference ?? this.bookingReference,
     status: status ?? this.status,
     pickupName: pickupName ?? this.pickupName,
     dropoffName: dropoffName ?? this.dropoffName,
@@ -113,6 +116,9 @@ final class const RideSnapshot({
 
     return RideSnapshot(
       id: _nullableString(rawId) ?? fallbackId ?? '',
+      bookingReference: SafeParse.toStringValue(
+        json['booking_reference'] ?? json['bookingReference'],
+      ).trim(),
       status: SafeParse.toStringValue(rawStatus).trim().toLowerCase(),
       pickupName: SafeParse.toStringValue(rawPickupName, 'Pickup').trim(),
       dropoffName: SafeParse.toStringValue(rawDropoffName, 'Dropoff').trim(),
@@ -170,6 +176,7 @@ final class const RideSnapshot({
   @override
   List<Object?> get props => [
     id,
+    bookingReference,
     status,
     pickupName,
     dropoffName,

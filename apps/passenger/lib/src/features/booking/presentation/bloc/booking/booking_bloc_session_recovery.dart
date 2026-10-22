@@ -83,6 +83,7 @@ extension _BookingBlocSessionRecovery on BookingBloc {
             'No driver accepted this request before it expired.',
             isRequestExpired: true,
             sessionId: sessionId,
+            bookingReference: snapshot!.bookingReference,
           ),
         );
         return;
@@ -129,6 +130,7 @@ extension _BookingBlocSessionRecovery on BookingBloc {
           isDirect: snapshot!.targetDriverId != null,
           sessionId: sessionId,
           expiresAt: snapshot!.expiresAt,
+          bookingReference: snapshot!.bookingReference,
         ),
       );
       _subscribeToSession(sessionId);
@@ -175,7 +177,13 @@ extension _BookingBlocSessionRecovery on BookingBloc {
       _activeBidSessionId = null;
       _activeTrip = null;
       _cleanupSubscriptions();
-      emit(BookingRideRecovered(sessionId: snapshot.id, rideId: rideId));
+      emit(
+        BookingRideRecovered(
+          sessionId: snapshot.id,
+          rideId: rideId,
+          bookingReference: snapshot.bookingReference,
+        ),
+      );
     } catch (error) {
       if (isClosed) return;
       emit(

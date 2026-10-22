@@ -7,9 +7,11 @@ import 'package:foundation/foundation.dart';
 class const SafetyReportButton({
   super.key,
   required this.rideId,
+  this.bookingReference = '',
   required this.rideRepository,
 }) extends StatelessWidget {
   final String? rideId;
+  final String bookingReference;
   final RideRepository rideRepository;
 
   @override
@@ -21,6 +23,7 @@ class const SafetyReportButton({
               final submitted = await showSafetyReportSheet(
                 context,
                 rideId: rideId!,
+                bookingReference: bookingReference,
                 rideRepository: rideRepository,
               );
               if (submitted && context.mounted) {
@@ -45,6 +48,7 @@ class const SafetyReportButton({
 Future<bool> showSafetyReportSheet(
   BuildContext context, {
   required String rideId,
+  String bookingReference = '',
   required RideRepository rideRepository,
 }) async {
   return await showModalBottomSheet<bool>(
@@ -52,8 +56,11 @@ Future<bool> showSafetyReportSheet(
         isScrollControlled: true,
         useSafeArea: true,
         backgroundColor: Colors.transparent,
-        builder: (context) =>
-            _SafetyReportSheet(rideId: rideId, rideRepository: rideRepository),
+        builder: (context) => _SafetyReportSheet(
+          rideId: rideId,
+          bookingReference: bookingReference,
+          rideRepository: rideRepository,
+        ),
       ) ??
       false;
 }
@@ -80,9 +87,11 @@ const _driverSafetyReportOptions = <_SafetyReportOption>[
 
 class const _SafetyReportSheet({
   required this.rideId,
+  this.bookingReference = '',
   required this.rideRepository,
 }) extends StatefulWidget {
   final String rideId;
+  final String bookingReference;
   final RideRepository rideRepository;
 
   @override
@@ -190,7 +199,10 @@ class _SafetyReportSheetState extends State<_SafetyReportSheet> {
                 const SizedBox(height: AppSpacing.md),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: TripReference(id: widget.rideId, label: 'Booking ID'),
+                  child: TripReference(
+                    id: widget.bookingReference,
+                    label: 'Booking ID',
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 AppSelectField<String>(

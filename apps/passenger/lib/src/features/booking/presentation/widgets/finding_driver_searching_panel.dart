@@ -16,7 +16,7 @@ class FindingDriverSearchingPanel extends StatelessWidget {
     this.tipAmount,
     this.distance,
     this.duration,
-    this.requestId,
+    this.bookingReference = '',
     this.expiresAt,
     this.requestCreated = false,
     this.isSendingRequest = false,
@@ -35,7 +35,7 @@ class FindingDriverSearchingPanel extends StatelessWidget {
   final int? tipAmount;
   final String? distance;
   final String? duration;
-  final String? requestId;
+  final String bookingReference;
   final DateTime? expiresAt;
   final bool requestCreated;
   final bool isSendingRequest;
@@ -44,13 +44,6 @@ class FindingDriverSearchingPanel extends StatelessWidget {
   final VoidCallback? onRetryPressed;
   final VoidCallback onCancelPressed;
   final bool isCanceling;
-
-  String _resolveBookingId() {
-    final id = requestId?.trim() ?? '';
-    if (id.isEmpty) return 'Pending';
-    if (id.startsWith('BR-') || id.startsWith('REQ-')) return id;
-    return 'BR-$id';
-  }
 
   String _resolvePickupTitle() {
     final addr = pickupAddress?.trim() ?? '';
@@ -95,7 +88,7 @@ class FindingDriverSearchingPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final displayBookingId = _resolveBookingId();
+    final displayBookingId = bookingReference.trim();
     final pickupTitle = _resolvePickupTitle();
     final pickupSubtitle = _resolvePickupSubtitle();
     final destinationTitle = _resolveDestinationTitle();
@@ -163,7 +156,7 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                displayBookingId == 'Pending'
+                                displayBookingId.isEmpty
                                     ? message
                                     : 'Booking ID: $displayBookingId',
                                 maxLines: 1,
@@ -175,7 +168,7 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            if (displayBookingId != 'Pending') ...[
+                            if (displayBookingId.isNotEmpty) ...[
                               const SizedBox(width: 8),
                               Material(
                                 color: colorScheme.surfaceContainerHighest

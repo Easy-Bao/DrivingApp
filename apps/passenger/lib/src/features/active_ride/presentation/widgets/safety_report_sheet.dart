@@ -7,9 +7,11 @@ import 'package:passenger/src/features/active_ride/domain/repositories/track_rep
 class const SafetyReportButton({
   super.key,
   required this.rideId,
+  this.bookingReference = '',
   required this.trackRepository,
 }) extends StatelessWidget {
   final String? rideId;
+  final String bookingReference;
   final TrackRepository trackRepository;
 
   @override
@@ -21,6 +23,7 @@ class const SafetyReportButton({
               final submitted = await showSafetyReportSheet(
                 context,
                 rideId: rideId!,
+                bookingReference: bookingReference,
                 trackRepository: trackRepository,
               );
               if (submitted && context.mounted) {
@@ -45,6 +48,7 @@ class const SafetyReportButton({
 Future<bool> showSafetyReportSheet(
   BuildContext context, {
   required String rideId,
+  String bookingReference = '',
   required TrackRepository trackRepository,
 }) async {
   return await showModalBottomSheet<bool>(
@@ -57,6 +61,7 @@ Future<bool> showSafetyReportSheet(
         backgroundColor: Colors.transparent,
         builder: (context) => _SafetyReportSheet(
           rideId: rideId,
+          bookingReference: bookingReference,
           trackRepository: trackRepository,
         ),
       ) ??
@@ -89,9 +94,11 @@ const _passengerSafetyReportOptions = <_SafetyReportOption>[
 
 class const _SafetyReportSheet({
   required this.rideId,
+  this.bookingReference = '',
   required this.trackRepository,
 }) extends StatefulWidget {
   final String rideId;
+  final String bookingReference;
   final TrackRepository trackRepository;
 
   @override
@@ -191,7 +198,10 @@ class _SafetyReportSheetState extends State<_SafetyReportSheet> {
                 const SizedBox(height: AppSpacing.md),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: TripReference(id: widget.rideId, label: 'Booking ID'),
+                  child: TripReference(
+                    id: widget.bookingReference,
+                    label: 'Booking ID',
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 AppSelectField<String>(

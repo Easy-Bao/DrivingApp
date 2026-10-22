@@ -2,23 +2,23 @@ import 'package:maps/maps.dart';
 
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/active_ride/active_ride_routes.dart';
+import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
-import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_active_ride_header.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_emergency_button.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_completion_slider.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_passenger_card.dart';
-import 'package:driver/src/features/active_ride/presentation/widgets/driver_active_ride_header.dart';
-import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
-import 'package:driver/src/features/active_ride/presentation/widgets/driver_emergency_button.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class const InTransitPage({
@@ -241,6 +241,7 @@ class _InTransitPageState extends State<InTransitPage> {
         ActiveRideRoutes.fareSummary,
         extra: {
           'rideId': rideCubit.activeRideId,
+          'bookingReference': rideCubit.activeBookingReference,
           'pickup': widget.pickup,
           'dropoff': widget.dropoff,
           'distance': widget.distance,
@@ -320,8 +321,8 @@ class _InTransitPageState extends State<InTransitPage> {
                   ),
                   SafeArea(
                     child: ActiveRideHeader(
-                      rideId: BlocProvider.of<RideFlowCubit>(context)
-                          .activeRideId,
+                      bookingReference: BlocProvider.of<RideFlowCubit>(context)
+                          .activeBookingReference,
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                       backButton: _buildTripBackButton(
                         context,
@@ -337,6 +338,10 @@ class _InTransitPageState extends State<InTransitPage> {
                           },
                         ),
                         SafetyReportButton(
+                          bookingReference:
+                              BlocProvider.of<RideFlowCubit>(context)
+                                  .activeBookingReference ??
+                              '',
                           rideId: BlocProvider.of<RideFlowCubit>(context)
                               .activeRideId,
                           rideRepository: widget.rideRepository,

@@ -4,6 +4,7 @@ import "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 
 type RideResponse struct {
 	ID                         int     `json:"id"`
+	BookingReference           string  `json:"booking_reference,omitempty"`
 	PassengerID                int     `json:"passenger_id"`
 	DriverID                   *int    `json:"driver_id,omitempty"`
 	Status                     string  `json:"status"`
@@ -46,6 +47,7 @@ type RideResponse struct {
 func NewRideResponse(ride domain.Ride) RideResponse {
 	return RideResponse{
 		ID:                         ride.ID,
+		BookingReference:           ride.BookingReference,
 		PassengerID:                ride.PassengerID,
 		DriverID:                   ride.DriverID,
 		Status:                     ride.Status,

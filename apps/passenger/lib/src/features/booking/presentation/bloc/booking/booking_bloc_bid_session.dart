@@ -240,6 +240,9 @@ extension _BookingBlocBidSession on BookingBloc {
           isDirect: current.isDirect,
           targetDriver: current.targetDriver,
           sessionId: current.sessionId,
+          bookingReference: session?.bookingReference.isNotEmpty == true
+              ? session!.bookingReference
+              : current.bookingReference,
           expiresAt: session?.expiresAt ?? current.expiresAt,
           refreshError: event.refreshError,
         ),
@@ -252,6 +255,9 @@ extension _BookingBlocBidSession on BookingBloc {
           isDirect: current.isDirect,
           targetDriver: current.targetDriver,
           sessionId: current.sessionId,
+          bookingReference: session?.bookingReference.isNotEmpty == true
+              ? session!.bookingReference
+              : current.bookingReference,
           expiresAt: session?.expiresAt ?? current.expiresAt,
           refreshError: event.refreshError,
         ),

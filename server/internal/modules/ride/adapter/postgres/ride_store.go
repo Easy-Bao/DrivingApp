@@ -169,6 +169,7 @@ func fromPostgresRide(item databasepostgres.Ride) (domain.Ride, error) {
 	}
 	return domain.Ride{
 		ID:                         int(item.ID),
+		BookingReference:           item.BookingReference,
 		PassengerID:                int(item.PassengerID),
 		DriverID:                   driverID,
 		Status:                     item.Status,

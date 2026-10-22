@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:driver/src/features/active_ride/domain/services/ride_payment_completion_handler.dart';
+import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
+import 'package:driver/src/features/active_ride/domain/services/ride_payment_completion_handler.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
@@ -9,9 +10,8 @@ import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 
 const _cashOutcomeLabels = <String, String>{
   'paid': 'Paid in full',
@@ -29,6 +29,7 @@ class const FareSummaryPage({
   required this.duration,
   required this.ridePaymentCompletionHandler,
   this.rideId,
+  this.bookingReference = '',
   this.rideRepository,
 }) extends StatefulWidget {
   final String pickup;
@@ -38,6 +39,7 @@ class const FareSummaryPage({
   final double fare;
   final RidePaymentCompletionHandler ridePaymentCompletionHandler;
   final String? rideId;
+  final String bookingReference;
   final RideRepository? rideRepository;
 
   @override
@@ -257,13 +259,14 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                         children: [
                           Expanded(
                             child: TripReference(
-                              id: rideId!,
+                              id: widget.bookingReference,
                               label: 'Booking ID',
                               compact: true,
                             ),
                           ),
                           if (widget.rideRepository != null)
                             SafetyReportButton(
+                              bookingReference: widget.bookingReference,
                               rideId: rideId,
                               rideRepository: widget.rideRepository!,
                             ),

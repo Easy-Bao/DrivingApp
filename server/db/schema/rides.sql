@@ -1,5 +1,6 @@
 CREATE TABLE rides (
     id serial PRIMARY KEY,
+    booking_reference text NOT NULL DEFAULT allocate_booking_reference(),
     passenger_id integer NOT NULL,
     driver_id integer,
     status text NOT NULL DEFAULT 'requested',
@@ -27,6 +28,11 @@ CREATE TABLE rides (
     cancellation_responsibility text NOT NULL DEFAULT '',
     cancellation_details text NOT NULL DEFAULT '',
     bid_session_id integer,
+    CONSTRAINT rides_booking_reference_key UNIQUE (booking_reference),
+    CONSTRAINT rides_booking_reference_fkey
+        FOREIGN KEY (booking_reference) REFERENCES booking_references (reference),
+    CONSTRAINT rides_session_booking_reference_fkey
+        FOREIGN KEY (bid_session_id, booking_reference) REFERENCES bid_sessions (id, booking_reference),
     CONSTRAINT rides_status_check CHECK (
         status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit', 'completed', 'cancelled')
     ),

@@ -8,6 +8,21 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 )
 
+func TestRideResponseIncludesPublicBookingReference(t *testing.T) {
+	value := NewRideResponse(domain.Ride{ID: 7, BookingReference: "701612345678901", PassengerID: 101})
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(encoded, &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload["booking_reference"] != "701612345678901" || payload["id"] != float64(7) {
+		t.Fatalf("booking reference or internal ID changed: %s", encoded)
+	}
+}
+
 func TestResponseMappersPreserveWireShapes(t *testing.T) {
 	contactAllowedUntil := "2026-10-12T14:30:00Z"
 	tests := []struct {

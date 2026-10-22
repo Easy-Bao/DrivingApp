@@ -402,7 +402,13 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
             if (rideId != null) ...[
               Align(
                 alignment: Alignment.centerLeft,
-                child: TripReference(id: rideId, label: 'Booking ID'),
+                child: TripReference(
+                  id:
+                      snapshot?.bookingReference ??
+                      widget.ride?.bookingReference ??
+                      '',
+                  label: 'Booking ID',
+                ),
               ),
               const SizedBox(height: 12),
             ],
@@ -589,6 +595,10 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                     ),
                   ],
                   SafetyReportButton(
+                    bookingReference:
+                        snapshot?.bookingReference ??
+                        widget.ride?.bookingReference ??
+                        '',
                     rideId: rideId,
                     trackRepository: widget.trackRepository,
                   ),

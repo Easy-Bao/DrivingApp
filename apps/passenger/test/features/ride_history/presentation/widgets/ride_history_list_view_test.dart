@@ -109,7 +109,7 @@ void main() {
       date: 'Aug 22, 2:57 PM',
       price: '₱123456789.00',
       status: 'completed',
-    );
+    ).copyWith(bookingReference: '701612345678901');
 
     await _pumpHistory(
       tester,
@@ -123,6 +123,7 @@ void main() {
     );
     await tester.pump();
 
+    expect(find.text('701612345678901'), findsOneWidget);
     expect(selectedRideId, 'narrow-ride');
     expect(tester.takeException(), isNull);
   });

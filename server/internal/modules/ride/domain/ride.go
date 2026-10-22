@@ -2,6 +2,7 @@ package domain
 
 type Ride struct {
 	ID                         int
+	BookingReference           string `json:"booking_reference"`
 	PassengerID                int
 	DriverID                   *int
 	Status                     string

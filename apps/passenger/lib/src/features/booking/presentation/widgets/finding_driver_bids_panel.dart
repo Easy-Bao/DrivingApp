@@ -10,14 +10,14 @@ class const FindingDriverBidsPanel({
   required this.onAcceptOfferPressed,
   required this.onCancelPressed,
   this.acceptingOfferId,
-  this.requestId,
+  this.bookingReference,
   this.isCanceling = false,
 }) extends StatelessWidget {
   final List<BookingOffer> offers;
   final ValueChanged<BookingOffer> onAcceptOfferPressed;
   final VoidCallback onCancelPressed;
   final String? acceptingOfferId;
-  final String? requestId;
+  final String? bookingReference;
   final bool isCanceling;
 
   @override
@@ -73,9 +73,13 @@ class const FindingDriverBidsPanel({
                 color: context.colorScheme.onSurfaceVariant,
               ),
             ),
-            if (requestId?.trim().isNotEmpty == true) ...[
+            if (bookingReference?.trim().isNotEmpty == true) ...[
               const SizedBox(height: 8),
-              TripReference(id: requestId!, label: 'Request ID', compact: true),
+              TripReference(
+                id: bookingReference!,
+                label: 'Booking ID',
+                compact: true,
+              ),
             ],
             const SizedBox(height: 12),
             Expanded(

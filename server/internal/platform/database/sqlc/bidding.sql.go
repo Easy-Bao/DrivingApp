@@ -17,7 +17,7 @@ SET status = 'cancelled'
 WHERE id = $1
   AND passenger_id = $2
   AND status = 'open'
-RETURNING id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
+RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
     passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at
@@ -33,6 +33,7 @@ func (q *Queries) CancelBidSession(ctx context.Context, arg CancelBidSessionPara
 	var i BidSession
 	err := row.Scan(
 		&i.ID,
+		&i.BookingReference,
 		&i.PassengerID,
 		&i.RideType,
 		&i.PickupLatitude,
@@ -159,7 +160,7 @@ VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
     COALESCE($16::timestamptz, CURRENT_TIMESTAMP)
 )
-RETURNING id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
+RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
     passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at
@@ -206,6 +207,7 @@ func (q *Queries) CreateBidSession(ctx context.Context, arg CreateBidSessionPara
 	var i BidSession
 	err := row.Scan(
 		&i.ID,
+		&i.BookingReference,
 		&i.PassengerID,
 		&i.RideType,
 		&i.PickupLatitude,
@@ -246,7 +248,7 @@ func (q *Queries) ExpireBidSessions(ctx context.Context, arg ExpireBidSessionsPa
 }
 
 const getBidSessionByID = `-- name: GetBidSessionByID :one
-SELECT id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
+SELECT id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
     passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at
@@ -260,6 +262,7 @@ func (q *Queries) GetBidSessionByID(ctx context.Context, id int32) (BidSession, 
 	var i BidSession
 	err := row.Scan(
 		&i.ID,
+		&i.BookingReference,
 		&i.PassengerID,
 		&i.RideType,
 		&i.PickupLatitude,
@@ -450,7 +453,7 @@ func (q *Queries) HasPendingBidOffer(ctx context.Context, arg HasPendingBidOffer
 }
 
 const listActiveBidSessions = `-- name: ListActiveBidSessions :many
-SELECT sessions.id, sessions.passenger_id, sessions.ride_type,
+SELECT sessions.id, sessions.booking_reference, sessions.passenger_id, sessions.ride_type,
     sessions.pickup_latitude, sessions.pickup_longitude, sessions.pickup_name,
     sessions.dropoff_latitude, sessions.dropoff_longitude, sessions.dropoff_name,
     sessions.passenger_note, sessions.distance_km, sessions.duration_minutes,
@@ -474,6 +477,7 @@ func (q *Queries) ListActiveBidSessions(ctx context.Context, expiresAt pgtype.Ti
 		var i BidSession
 		if err := rows.Scan(
 			&i.ID,
+			&i.BookingReference,
 			&i.PassengerID,
 			&i.RideType,
 			&i.PickupLatitude,
@@ -593,7 +597,7 @@ func (q *Queries) ListPendingBidOffersForDriver(ctx context.Context, arg ListPen
 }
 
 const listTargetedActiveBidSessions = `-- name: ListTargetedActiveBidSessions :many
-SELECT sessions.id, sessions.passenger_id, sessions.ride_type,
+SELECT sessions.id, sessions.booking_reference, sessions.passenger_id, sessions.ride_type,
     sessions.pickup_latitude, sessions.pickup_longitude, sessions.pickup_name,
     sessions.dropoff_latitude, sessions.dropoff_longitude, sessions.dropoff_name,
     sessions.passenger_note, sessions.distance_km, sessions.duration_minutes,
@@ -629,6 +633,7 @@ func (q *Queries) ListTargetedActiveBidSessions(ctx context.Context, arg ListTar
 		var i BidSession
 		if err := rows.Scan(
 			&i.ID,
+			&i.BookingReference,
 			&i.PassengerID,
 			&i.RideType,
 			&i.PickupLatitude,
@@ -658,7 +663,7 @@ func (q *Queries) ListTargetedActiveBidSessions(ctx context.Context, arg ListTar
 }
 
 const lockActiveBidSessionForOffer = `-- name: LockActiveBidSessionForOffer :one
-SELECT id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
+SELECT id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
     passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at
@@ -680,6 +685,7 @@ func (q *Queries) LockActiveBidSessionForOffer(ctx context.Context, arg LockActi
 	var i BidSession
 	err := row.Scan(
 		&i.ID,
+		&i.BookingReference,
 		&i.PassengerID,
 		&i.RideType,
 		&i.PickupLatitude,

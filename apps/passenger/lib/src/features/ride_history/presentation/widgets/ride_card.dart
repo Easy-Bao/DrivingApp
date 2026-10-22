@@ -101,6 +101,16 @@ class ActiveRideCard extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
+                if (ride.bookingReference.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    ride.bookingReference,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
                 if (ride.pickup.trim().isNotEmpty) ...[
                   const SizedBox(height: 3),
                   Text(
@@ -186,6 +196,19 @@ class PastRideCard extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
+                      if (ride.bookingReference.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          ride.bookingReference,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: context.colorScheme.onSurfaceVariant,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                        ),
+                      ],
                       if (metadata.isNotEmpty) ...[
                         const SizedBox(height: 3),
                         Text(

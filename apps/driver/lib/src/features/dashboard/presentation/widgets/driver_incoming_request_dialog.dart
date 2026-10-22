@@ -323,6 +323,12 @@ class _IncomingRequestDialogState extends State<IncomingRequestDialog>
                         ],
                       ),
                       const SizedBox(height: 18),
+                      if (valueAsString(widget.bid['booking_reference'])
+                          case final String reference
+                          when reference.isNotEmpty) ...[
+                        TripReference(id: reference, compact: true),
+                        const SizedBox(height: 12),
+                      ],
                       CompactRouteTimeline(pickup: pickup, dropoff: dropoff),
                       if (passengerNote != null) ...[
                         const SizedBox(height: 12),

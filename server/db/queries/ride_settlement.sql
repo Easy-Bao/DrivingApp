@@ -1,5 +1,5 @@
 -- name: LockCompletedRideForCashSettlement :one
-SELECT id, passenger_id, driver_id, status, fare_amount, ride_type,
+SELECT id, booking_reference, passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,

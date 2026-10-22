@@ -85,7 +85,7 @@ SET status = 'accepted',
     accepted_driver_id = $2
 WHERE id = $1
   AND status = 'open'
-RETURNING id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
+RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
     passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at;
@@ -96,11 +96,12 @@ INSERT INTO rides (
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, bid_session_id
+    driver_rating, bid_session_id, booking_reference
 )
 VALUES (
     $1, $2, 'accepted', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-    $13, $14, $15, $16, $17
+    $13, $14, $15, $16, $17,
+    COALESCE((SELECT booking_reference FROM bid_sessions WHERE id = $17), allocate_booking_reference())
 )
 RETURNING *;
 

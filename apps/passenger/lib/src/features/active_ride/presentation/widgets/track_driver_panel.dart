@@ -130,7 +130,7 @@ class const TrackDriverPanel({
             ),
           ),
           const SizedBox(height: 10),
-          TripReference(id: ride.id, compact: true),
+          TripReference(id: ride.bookingReference, compact: true),
           const SizedBox(height: 12),
           _DriverCard(
             driverName: resolvedDriverName,

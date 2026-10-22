@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-import 'package:driver/src/infrastructure/session/driver_session_store.dart';
-import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
+import 'package:design_system/design_system.dart';
+import 'package:driver/src/features/active_ride/active_ride_routes.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/active_ride/domain/services/ride_payment_completion_handler.dart';
-import 'package:driver/src/features/active_ride/active_ride_routes.dart';
-import 'package:driver/src/features/active_ride/presentation/view/pickup_navigation_page.dart';
+import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/view/fare_summary_page.dart';
 import 'package:driver/src/features/active_ride/presentation/view/in_transit_page.dart';
+import 'package:driver/src/features/active_ride/presentation/view/pickup_navigation_page.dart';
 import 'package:driver/src/features/active_ride/presentation/view/waiting_passenger_page.dart';
+import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
 
 class ActiveRideModule._() {
   static void binds(Injector i) {
@@ -111,6 +111,7 @@ class ActiveRideModule._() {
           fare: data.fare,
           duration: data.duration,
           rideId: data.rideId,
+          bookingReference: data.bookingReference,
           rideRepository: Modular.get<RideRepository>(),
           ridePaymentCompletionHandler:
               Modular.get<RidePaymentCompletionHandler>(),
@@ -131,6 +132,7 @@ class const _TripRouteData({
   required this.fare,
   required this.duration,
   this.rideId,
+  this.bookingReference = '',
 }) {
   final String pickup;
   final String dropoff;
@@ -138,6 +140,7 @@ class const _TripRouteData({
   final double fare;
   final String duration;
   final String? rideId;
+  final String bookingReference;
 
   static _TripRouteData? tryParse(RoutePayload data) {
     final pickup = data.string('pickup');
@@ -163,6 +166,7 @@ class const _TripRouteData({
       fare: fare,
       duration: duration,
       rideId: data.string('rideId'),
+      bookingReference: data.string('bookingReference') ?? '',
     );
   }
 }

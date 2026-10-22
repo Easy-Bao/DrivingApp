@@ -12,7 +12,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
     required this.destination,
     this.pickupAddress,
     this.rideType,
-    this.requestId,
+    this.bookingReference,
     required this.fare,
     required this.onCancelPressed,
     this.primaryAction,
@@ -28,7 +28,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
   final String destination;
   final String? pickupAddress;
   final String? rideType;
-  final String? requestId;
+  final String? bookingReference;
   final double fare;
   final VoidCallback onCancelPressed;
   final VoidCallback? primaryAction;
@@ -114,11 +114,11 @@ class FindingDriverStatusSheet extends StatelessWidget {
                   destination: destination,
                   fare: fare,
                 ),
-                if (requestId?.trim().isNotEmpty == true) ...[
+                if (bookingReference?.trim().isNotEmpty == true) ...[
                   const SizedBox(height: 12),
                   TripReference(
-                    id: requestId!,
-                    label: 'Request ID',
+                    id: bookingReference!,
+                    label: 'Booking ID',
                     compact: true,
                   ),
                 ],

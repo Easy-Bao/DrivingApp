@@ -3,25 +3,25 @@ import 'package:maps/maps.dart';
 
 import 'dart:async';
 
-import 'package:driver/src/infrastructure/session/driver_session_store.dart';
-import 'package:driver/src/features/chat/chat_routes.dart';
+import 'package:design_system/design_system.dart';
+import 'package:driver/src/features/active_ride/active_ride_routes.dart';
+import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
-import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
-import 'package:driver/src/features/active_ride/presentation/widgets/pickup_navigation_panel.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_active_ride_header.dart';
-import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_emergency_button.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_ride_cancellation_sheet.dart';
-import 'package:driver/src/features/active_ride/active_ride_routes.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/pickup_navigation_panel.dart';
+import 'package:driver/src/features/chat/chat_routes.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
+import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
+import 'package:go_router_modular/go_router_modular.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -520,7 +520,8 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
 
   Widget _buildHeader(BuildContext context) {
     return ActiveRideHeader(
-      rideId: BlocProvider.of<RideFlowCubit>(context).activeRideId,
+      bookingReference: BlocProvider.of<RideFlowCubit>(context)
+          .activeBookingReference,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       backButton: _buildTripBackButton(context, () => context.pop()),
       actions: [
@@ -531,6 +532,9 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
           },
         ),
         SafetyReportButton(
+          bookingReference:
+              BlocProvider.of<RideFlowCubit>(context).activeBookingReference ??
+              '',
           rideId: BlocProvider.of<RideFlowCubit>(context).activeRideId,
           rideRepository: widget.rideRepository,
         ),

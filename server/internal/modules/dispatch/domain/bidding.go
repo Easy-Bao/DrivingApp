@@ -16,6 +16,7 @@ var (
 
 type BidSession struct {
 	ID                int
+	BookingReference  string `json:"booking_reference"`
 	RideID            *int
 	PassengerID       int
 	RideType          string

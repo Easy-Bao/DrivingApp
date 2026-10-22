@@ -162,6 +162,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
       _cancelPendingBidSessionCreation = pending.cancelRequested;
 
       var sessionId = pending.sessionId;
+      var bookingReference = '';
       if (sessionId == null || sessionId.isEmpty) {
         if (state is! BookingSearching ||
             (state as BookingSearching).sessionId != null) {
@@ -173,13 +174,12 @@ extension _BookingBlocSessionCreation on BookingBloc {
             ),
           );
         }
-        String? createdSessionId;
+        BidSessionSnapshot? createdSession;
         Failure? failure;
-        (await _bookingRepository.createSessionResult(storedRequest)).fold(
-          (value) => failure = value,
-          (value) => createdSessionId = value,
-        );
-        if (createdSessionId == null) {
+        (await _bookingRepository.createSessionResult(
+          storedRequest,
+        )).fold((value) => failure = value, (value) => createdSession = value);
+        if (createdSession == null) {
           if (failure is ValidationFailure) {
             await _secureSessionService.deletePendingBidSessionCreation();
             _activeTrip = null;
@@ -192,7 +192,8 @@ extension _BookingBlocSessionCreation on BookingBloc {
           }
           throw failure!;
         }
-        sessionId = createdSessionId!;
+        sessionId = createdSession!.id;
+        bookingReference = createdSession!.bookingReference;
         await _secureSessionService.attachPendingBidSessionId(sessionId);
       }
 
@@ -226,6 +227,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
           isDirect: isDirect,
           targetDriver: matchingTargetDriver,
           sessionId: resolvedSessionId,
+          bookingReference: bookingReference,
         ),
       );
       _subscribeToSession(resolvedSessionId);
@@ -253,6 +255,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
             'This request expired before a driver accepted it.',
             isRequestExpired: true,
             sessionId: sessionId,
+            bookingReference: state.publicBookingReference,
           )
         : const BookingCanceled();
     try {

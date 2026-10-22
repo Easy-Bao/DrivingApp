@@ -3,9 +3,11 @@ import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'dart:async';
 import 'dart:developer' as dev;
 
-import 'package:maps/maps.dart';
-import 'package:driver/src/presentation/formatters/driver_value_formatters.dart';
-import 'package:foundation/foundation.dart';
+import 'package:design_system/design_system.dart';
+import 'package:driver/src/features/active_ride/active_ride_routes.dart';
+import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
+import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_active_trip_card.dart';
@@ -17,16 +19,14 @@ import 'package:driver/src/features/location/presentation/bloc/location_access/d
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver/src/features/profile/profile_routes.dart';
 import 'package:driver/src/infrastructure/notifications/driver_incoming_request_alert.dart';
-import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
-import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
-import 'package:driver/src/features/dashboard/dashboard_routes.dart';
-import 'package:go_router_modular/go_router_modular.dart';
+import 'package:driver/src/presentation/formatters/driver_value_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:driver/src/features/active_ride/active_ride_routes.dart';
-import 'package:design_system/design_system.dart';
+import 'package:go_router_modular/go_router_modular.dart';
+import 'package:maps/maps.dart';
 
 bool _isActiveTripStatus(Object? value) {
   return const {
@@ -210,6 +210,7 @@ class _DashboardPageState extends State<DashboardPage>
         ActiveRideRoutes.fareSummary,
         extra: {
           'rideId': ride.id,
+          'bookingReference': ride.bookingReference,
           'pickup': ride.pickupName,
           'dropoff': ride.dropoffName,
           'distance': ride.distanceKm ?? 0,
@@ -774,6 +775,7 @@ class _DashboardPageState extends State<DashboardPage>
 
     final resumed = await rideFlowCubit.resumeRide(
       rideId: rideId,
+      bookingReference: resolvedTrip.bookingReference,
       status: resolvedTrip.status.isEmpty ? 'accepted' : resolvedTrip.status,
       passengerName: resolvedTrip.passengerName ?? 'Passenger',
       passengerId: resolvedTrip.passengerId,

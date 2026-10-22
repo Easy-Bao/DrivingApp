@@ -15,7 +15,7 @@ final class BookingRepositoryImpl implements BookingRepository {
   final BookingRemoteDataSource _dataSource;
 
   @override
-  Future<Result<String, Failure>> createSession(
+  Future<Result<BidSessionSnapshot, Failure>> createSession(
     BookingSessionRequest request,
   ) async {
     if (!request.isValid) {
@@ -26,13 +26,14 @@ final class BookingRepositoryImpl implements BookingRepository {
         request.toJson(),
         idempotencyKey: request.idempotencyKey,
       );
-      final sessionId = SafeParse.toStringValue(response['id']).trim();
+      final session = BidSessionSnapshot.fromJson(response);
+      final sessionId = session.id;
       if (sessionId.isEmpty) {
         return const Err(
           ServerFailure('The booking response has no session ID.'),
         );
       }
-      return Ok(sessionId);
+      return Ok(session);
     } catch (error) {
       return Err(_mapFailure(error));
     }

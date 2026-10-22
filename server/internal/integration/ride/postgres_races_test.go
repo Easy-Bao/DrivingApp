@@ -80,6 +80,61 @@ JOIN rides ON rides.id = settlement.ride_id
 WHERE rides.passenger_id = $1`, passengerID, 1)
 }
 
+func TestConcurrentBookingReferenceAllocation(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	results := make(chan string, 32)
+	failures := make(chan error, 32)
+	var workers sync.WaitGroup
+	for range 32 {
+		workers.Go(func() {
+			var reference string
+			err := fixture.pool.QueryRow(t.Context(), "SELECT allocate_booking_reference()").Scan(&reference)
+			if err != nil {
+				failures <- err
+				return
+			}
+			results <- reference
+		})
+	}
+	workers.Wait()
+	close(results)
+	close(failures)
+	for err := range failures {
+		t.Fatalf("allocate concurrent reference: %v", err)
+	}
+	unique := make(map[string]bool)
+	for reference := range results {
+		if unique[reference] {
+			t.Fatalf("duplicate reference: %q", reference)
+		}
+		unique[reference] = true
+	}
+	if len(unique) != 32 {
+		t.Fatalf("allocated %d references, want 32", len(unique))
+	}
+}
+
+func TestBookingReferenceSurvivesOfferAcceptance(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	ctx := t.Context()
+	fixture.seedPassenger(t, ctx, 501)
+	fixture.seedDriver(t, ctx, 601)
+	sessionID := fixture.createBidSession(t, ctx, 501)
+	offerID := fixture.createBidOffer(t, ctx, sessionID, 601)
+	session, err := fixture.dispatchStore.Session(ctx, sessionID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	accepted, err := fixture.dispatchStore.AcceptOffer(ctx, sessionID, offerID, 501)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(session.BookingReference) != 15 || session.BookingReference[:4] != "7016" ||
+		accepted.Session.BookingReference != session.BookingReference || accepted.Ride.BookingReference != session.BookingReference {
+		t.Fatalf("reference changed across acceptance: %q %q %q", session.BookingReference, accepted.Session.BookingReference, accepted.Ride.BookingReference)
+	}
+}
+
 func TestConcurrentOfferAcceptanceAssignsDriverToOneSession(t *testing.T) {
 	fixture := newPostgresRideFixture(t)
 	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
@@ -489,8 +544,9 @@ func newPostgresRideFixture(t *testing.T) *postgresRideFixture {
 	for _, filename := range []string{
 		"users.sql",
 		"profiles.sql",
-		"rides.sql",
+		"booking_references.sql",
 		"bid_sessions.sql",
+		"rides.sql",
 		"bid_offers.sql",
 		"ride_settlements.sql",
 		"ride_events.sql",

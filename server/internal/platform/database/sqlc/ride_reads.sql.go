@@ -12,7 +12,7 @@ import (
 )
 
 const getRideByID = `-- name: GetRideByID :one
-SELECT ride.id, ride.passenger_id, ride.driver_id, ride.status, ride.fare_amount, ride.ride_type, ride.pickup_latitude, ride.pickup_longitude, ride.pickup_name, ride.dropoff_latitude, ride.dropoff_longitude, ride.dropoff_name, ride.distance_km, ride.duration_minutes, ride.driver_name, ride.vehicle_type, ride.plate_number, ride.driver_rating, ride.created_at, ride.completed_at, ride.arrived_at, ride.waiting_until, ride.cancelled_by, ride.cancellation_reason, ride.cancellation_responsibility, ride.cancellation_details, ride.bid_session_id,
+SELECT ride.id, ride.booking_reference, ride.passenger_id, ride.driver_id, ride.status, ride.fare_amount, ride.ride_type, ride.pickup_latitude, ride.pickup_longitude, ride.pickup_name, ride.dropoff_latitude, ride.dropoff_longitude, ride.dropoff_name, ride.distance_km, ride.duration_minutes, ride.driver_name, ride.vehicle_type, ride.plate_number, ride.driver_rating, ride.created_at, ride.completed_at, ride.arrived_at, ride.waiting_until, ride.cancelled_by, ride.cancellation_reason, ride.cancellation_responsibility, ride.cancellation_details, ride.bid_session_id,
     COALESCE(settlement.payment_status, 'unpaid') AS payment_status,
     COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
     COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
@@ -51,6 +51,7 @@ func (q *Queries) GetRideByID(ctx context.Context, id int32) (GetRideByIDRow, er
 	var i GetRideByIDRow
 	err := row.Scan(
 		&i.Ride.ID,
+		&i.Ride.BookingReference,
 		&i.Ride.PassengerID,
 		&i.Ride.DriverID,
 		&i.Ride.Status,
@@ -93,7 +94,7 @@ func (q *Queries) GetRideByID(ctx context.Context, id int32) (GetRideByIDRow, er
 }
 
 const listActiveRidesForDriver = `-- name: ListActiveRidesForDriver :many
-SELECT ride.id, ride.passenger_id, ride.driver_id, ride.status, ride.fare_amount, ride.ride_type, ride.pickup_latitude, ride.pickup_longitude, ride.pickup_name, ride.dropoff_latitude, ride.dropoff_longitude, ride.dropoff_name, ride.distance_km, ride.duration_minutes, ride.driver_name, ride.vehicle_type, ride.plate_number, ride.driver_rating, ride.created_at, ride.completed_at, ride.arrived_at, ride.waiting_until, ride.cancelled_by, ride.cancellation_reason, ride.cancellation_responsibility, ride.cancellation_details, ride.bid_session_id,
+SELECT ride.id, ride.booking_reference, ride.passenger_id, ride.driver_id, ride.status, ride.fare_amount, ride.ride_type, ride.pickup_latitude, ride.pickup_longitude, ride.pickup_name, ride.dropoff_latitude, ride.dropoff_longitude, ride.dropoff_name, ride.distance_km, ride.duration_minutes, ride.driver_name, ride.vehicle_type, ride.plate_number, ride.driver_rating, ride.created_at, ride.completed_at, ride.arrived_at, ride.waiting_until, ride.cancelled_by, ride.cancellation_reason, ride.cancellation_responsibility, ride.cancellation_details, ride.bid_session_id,
     COALESCE(settlement.payment_status, 'unpaid') AS payment_status,
     COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
     COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
@@ -130,6 +131,7 @@ func (q *Queries) ListActiveRidesForDriver(ctx context.Context, driverID pgtype.
 		var i ListActiveRidesForDriverRow
 		if err := rows.Scan(
 			&i.Ride.ID,
+			&i.Ride.BookingReference,
 			&i.Ride.PassengerID,
 			&i.Ride.DriverID,
 			&i.Ride.Status,

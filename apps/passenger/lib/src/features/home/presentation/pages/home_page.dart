@@ -409,14 +409,7 @@ class _HomePageState extends State<HomePage> {
               activeSearch?.trip.destination.name ?? 'Your saved trip request';
         }
 
-        final requestId = switch (state) {
-          BookingSearching(:final sessionId) => sessionId,
-          BookingOffersReceived(:final sessionId) => sessionId,
-          BookingFailure(:final sessionId) when isExpired => sessionId,
-          BookingSessionRecoveryInProgress(:final sessionId) => sessionId,
-          BookingSessionRecoveryFailure(:final sessionId) => sessionId,
-          _ => null,
-        };
+        final requestId = state.publicBookingReference;
         final String actionLabel;
         final VoidCallback? onPressed;
         if (state is BookingRideRecovered) {
@@ -476,11 +469,11 @@ class _HomePageState extends State<HomePage> {
                           fontSize: 12,
                         ),
                       ),
-                      if (requestId?.isNotEmpty == true) ...[
+                      if (requestId.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         TripReference(
-                          id: requestId!,
-                          label: 'Request ID',
+                          id: requestId,
+                          label: 'Booking ID',
                           compact: true,
                         ),
                       ],

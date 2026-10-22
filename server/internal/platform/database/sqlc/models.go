@@ -33,6 +33,7 @@ type BidOffer struct {
 
 type BidSession struct {
 	ID               int32              `db:"id"`
+	BookingReference string             `db:"booking_reference"`
 	PassengerID      int32              `db:"passenger_id"`
 	RideType         string             `db:"ride_type"`
 	PickupLatitude   float64            `db:"pickup_latitude"`
@@ -50,6 +51,10 @@ type BidSession struct {
 	AcceptedDriverID pgtype.Int4        `db:"accepted_driver_id"`
 	ExpiresAt        pgtype.Timestamptz `db:"expires_at"`
 	CreatedAt        pgtype.Timestamptz `db:"created_at"`
+}
+
+type BookingReference struct {
+	Reference string `db:"reference"`
 }
 
 type DriverDocument struct {
@@ -156,6 +161,7 @@ type Review struct {
 
 type Ride struct {
 	ID                         int32              `db:"id"`
+	BookingReference           string             `db:"booking_reference"`
 	PassengerID                int32              `db:"passenger_id"`
 	DriverID                   pgtype.Int4        `db:"driver_id"`
 	Status                     string             `db:"status"`

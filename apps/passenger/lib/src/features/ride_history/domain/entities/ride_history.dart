@@ -3,6 +3,7 @@ import 'package:foundation/foundation.dart';
 
 class const RideHistory({
   required this.id,
+  this.bookingReference = '',
   required this.pickup,
   required this.destination,
   required this.pickupLat,
@@ -19,6 +20,7 @@ class const RideHistory({
   this.driverRating,
 }) extends Equatable {
   final String id;
+  final String bookingReference;
   final String pickup;
   final String destination;
   final double pickupLat;
@@ -72,6 +74,9 @@ class const RideHistory({
 
     return RideHistory(
       id: SafeParse.toStringValue(rawId),
+      bookingReference: SafeParse.toStringValue(
+        json['booking_reference'] ?? json['bookingReference'],
+      ).trim(),
       pickup: SafeParse.toStringValue(rawPickup),
       destination: SafeParse.toStringValue(rawDestination),
       pickupLat: SafeParse.toDouble(rawPickupLat),
@@ -92,6 +97,7 @@ class const RideHistory({
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'booking_reference': bookingReference,
       'pickup': pickup,
       'destination': destination,
       'pickupLat': pickupLat,
@@ -111,6 +117,7 @@ class const RideHistory({
 
   RideHistory copyWith({
     String? id,
+    String? bookingReference,
     String? pickup,
     String? destination,
     double? pickupLat,
@@ -128,6 +135,7 @@ class const RideHistory({
   }) {
     return RideHistory(
       id: id ?? this.id,
+      bookingReference: bookingReference ?? this.bookingReference,
       pickup: pickup ?? this.pickup,
       destination: destination ?? this.destination,
       pickupLat: pickupLat ?? this.pickupLat,
@@ -148,6 +156,7 @@ class const RideHistory({
   @override
   List<Object?> get props => [
     id,
+    bookingReference,
     pickup,
     destination,
     pickupLat,

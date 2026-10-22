@@ -2,6 +2,7 @@ import 'package:foundation/foundation.dart';
 
 final class const BidSessionSnapshot({
   required this.id,
+  this.bookingReference = '',
   required this.status,
   required this.expiresAt,
   this.createdAt,
@@ -22,6 +23,7 @@ final class const BidSessionSnapshot({
   this.rideId,
 }) {
   final String id;
+  final String bookingReference;
   final String status;
   final DateTime? expiresAt;
   final DateTime? createdAt;
@@ -52,6 +54,9 @@ final class const BidSessionSnapshot({
     final createdAtValue = _value(json, 'created_at', 'createdAt');
     return BidSessionSnapshot(
       id: SafeParse.toStringValue(json['id']).trim(),
+      bookingReference: SafeParse.toStringValue(
+        json['booking_reference'] ?? json['bookingReference'],
+      ).trim(),
       status: SafeParse.toStringValue(json['status']).trim().toLowerCase(),
       expiresAt: DateTime.tryParse(expiresAtValue)?.toUtc(),
       createdAt: DateTime.tryParse(createdAtValue)?.toUtc(),

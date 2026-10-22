@@ -618,7 +618,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               pickupAddress: pickupAddress,
                               rideType: rideType,
                               requestExpired: isExpired,
-                              requestId: state.sessionId,
+                              bookingReference: state.publicBookingReference,
                               onRetryPressed: _retryFindingDriver,
                               onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
@@ -660,7 +660,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               tipAmount: widget.tipAmount,
                               distance: widget.distance,
                               duration: widget.duration,
-                              requestId: state.sessionId,
+                              bookingReference: state.publicBookingReference,
                               expiresAt: state.expiresAt,
                               requestCreated:
                                   state.sessionId?.isNotEmpty == true,
@@ -683,7 +683,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                                 tipAmount: widget.tipAmount,
                                 distance: widget.distance,
                                 duration: widget.duration,
-                                requestId: state.sessionId,
+                                bookingReference: state.publicBookingReference,
                                 expiresAt: state.expiresAt,
                                 requestCreated: true,
                                 refreshError: state.refreshError,
@@ -697,7 +697,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                             }
                             return FindingDriverBidsPanel(
                               offers: state.offers,
-                              requestId: state.sessionId,
+                              bookingReference: state.publicBookingReference,
                               onAcceptOfferPressed: (offer) {
                                 if (_isLeaving || _acceptingOfferId != null) {
                                   return;
@@ -733,9 +733,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               tipAmount: widget.tipAmount,
                               distance: widget.distance,
                               duration: widget.duration,
-                              requestId: requestCreated
-                                  ? state.sessionId
-                                  : null,
+                              bookingReference: state.publicBookingReference,
                               requestCreated: requestCreated,
                               isSendingRequest: !requestCreated,
                               onCancelPressed: _handleCancel,
@@ -754,9 +752,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               tipAmount: widget.tipAmount,
                               distance: widget.distance,
                               duration: widget.duration,
-                              requestId: requestCreated
-                                  ? state.sessionId
-                                  : null,
+                              bookingReference: state.publicBookingReference,
                               requestCreated: requestCreated,
                               isSendingRequest: !requestCreated,
                               animate: false,

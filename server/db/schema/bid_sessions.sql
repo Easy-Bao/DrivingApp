@@ -1,5 +1,6 @@
 CREATE TABLE bid_sessions (
     id serial PRIMARY KEY,
+    booking_reference text NOT NULL DEFAULT allocate_booking_reference(),
     passenger_id integer NOT NULL,
     ride_type text NOT NULL DEFAULT 'Solo Ride',
     pickup_latitude double precision NOT NULL,
@@ -17,6 +18,10 @@ CREATE TABLE bid_sessions (
     accepted_driver_id integer,
     expires_at timestamptz NOT NULL,
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT bid_sessions_booking_reference_key UNIQUE (booking_reference),
+    CONSTRAINT bid_sessions_id_booking_reference_key UNIQUE (id, booking_reference),
+    CONSTRAINT bid_sessions_booking_reference_fkey
+        FOREIGN KEY (booking_reference) REFERENCES booking_references (reference),
     CONSTRAINT bid_sessions_status_check
         CHECK (status IN ('open', 'accepted', 'cancelled', 'expired')),
     CONSTRAINT bid_sessions_offer_check CHECK (offered_fare >= 0),

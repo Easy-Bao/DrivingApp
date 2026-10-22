@@ -151,6 +151,7 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
   RideHistory _mapToModel(Map<String, dynamic> raw) {
     return RideHistory(
       id: SafeParse.toStringValue(raw['id']),
+      bookingReference: SafeParse.toStringValue(raw['booking_reference']),
       pickup: _shortenAddress(SafeParse.toStringValue(raw['pickup_name'])),
       destination: _shortenAddress(
         SafeParse.toStringValue(raw['dropoff_name']),

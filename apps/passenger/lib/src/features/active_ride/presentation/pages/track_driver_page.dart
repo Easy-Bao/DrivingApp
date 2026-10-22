@@ -609,6 +609,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     final submitted = await showSafetyReportSheet(
       context,
       rideId: widget.ride.id,
+      bookingReference: widget.ride.bookingReference,
       trackRepository: widget.trackRepository,
     );
     if (!mounted || !submitted) return;

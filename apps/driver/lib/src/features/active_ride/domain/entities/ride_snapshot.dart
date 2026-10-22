@@ -1,11 +1,12 @@
-import 'package:equatable/equatable.dart';
 import 'package:core_domain/core_domain.dart';
+import 'package:equatable/equatable.dart';
 import 'package:foundation/foundation.dart';
 
 import 'package:driver/src/features/active_ride/domain/entities/ride_status.dart';
 
 final class const RideSnapshot({
   required final String id,
+  final String bookingReference = '',
   required final String status,
   required final String pickupName,
   required final String dropoffName,
@@ -59,6 +60,9 @@ final class const RideSnapshot({
 
     return RideSnapshot(
       id: _nullableString(rawId) ?? fallbackId ?? '',
+      bookingReference: SafeParse.toStringValue(
+        json['booking_reference'] ?? json['bookingReference'],
+      ).trim(),
       status: SafeParse.toStringValue(rawStatus).trim().toLowerCase(),
       pickupName: SafeParse.toStringValue(rawPickupName, 'Pickup').trim(),
       dropoffName: SafeParse.toStringValue(rawDropoffName, 'Dropoff').trim(),
@@ -110,6 +114,7 @@ final class const RideSnapshot({
   @override
   List<Object?> get props => [
     id,
+    bookingReference,
     status,
     pickupName,
     dropoffName,

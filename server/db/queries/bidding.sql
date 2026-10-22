@@ -39,7 +39,7 @@ VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
     COALESCE(sqlc.narg('created_at')::timestamptz, CURRENT_TIMESTAMP)
 )
-RETURNING id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
+RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
     passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at;
@@ -98,7 +98,7 @@ SELECT EXISTS (
 );
 
 -- name: ListActiveBidSessions :many
-SELECT sessions.id, sessions.passenger_id, sessions.ride_type,
+SELECT sessions.id, sessions.booking_reference, sessions.passenger_id, sessions.ride_type,
     sessions.pickup_latitude, sessions.pickup_longitude, sessions.pickup_name,
     sessions.dropoff_latitude, sessions.dropoff_longitude, sessions.dropoff_name,
     sessions.passenger_note, sessions.distance_km, sessions.duration_minutes,
@@ -111,7 +111,7 @@ ORDER BY sessions.created_at, sessions.id
 LIMIT 50;
 
 -- name: ListTargetedActiveBidSessions :many
-SELECT sessions.id, sessions.passenger_id, sessions.ride_type,
+SELECT sessions.id, sessions.booking_reference, sessions.passenger_id, sessions.ride_type,
     sessions.pickup_latitude, sessions.pickup_longitude, sessions.pickup_name,
     sessions.dropoff_latitude, sessions.dropoff_longitude, sessions.dropoff_name,
     sessions.passenger_note, sessions.distance_km, sessions.duration_minutes,
@@ -145,7 +145,7 @@ WHERE offers.driver_id = $1
 ORDER BY sessions.created_at, sessions.id;
 
 -- name: GetBidSessionByID :one
-SELECT id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
+SELECT id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
     passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at
@@ -154,7 +154,7 @@ WHERE id = $1
 LIMIT 1;
 
 -- name: LockActiveBidSessionForOffer :one
-SELECT id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
+SELECT id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
     passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at
@@ -197,7 +197,7 @@ SET status = 'cancelled'
 WHERE id = $1
   AND passenger_id = $2
   AND status = 'open'
-RETURNING id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
+RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
     passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at;

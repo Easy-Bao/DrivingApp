@@ -33,6 +33,7 @@ func fromPostgresBidSession(item databasepostgres.BidSession) (dispatchdomain.Bi
 	}
 	return dispatchdomain.BidSession{
 		ID:                int(item.ID),
+		BookingReference:  item.BookingReference,
 		PassengerID:       int(item.PassengerID),
 		RideType:          item.RideType,
 		PickupLatitude:    item.PickupLatitude,
@@ -133,6 +134,7 @@ func fromPostgresRideProjection(
 	}
 	ride := ridedomain.Ride{
 		ID:                         int(item.ID),
+		BookingReference:           item.BookingReference,
 		PassengerID:                int(item.PassengerID),
 		DriverID:                   driverID,
 		Status:                     item.Status,

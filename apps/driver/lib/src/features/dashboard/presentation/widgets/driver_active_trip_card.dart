@@ -1,8 +1,8 @@
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.dart';
-import 'package:foundation/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:foundation/foundation.dart';
 
 class ActiveTripCard extends StatelessWidget {
   const ActiveTripCard({super.key, required this.trip, required this.onResume});
@@ -70,6 +70,10 @@ class ActiveTripCard extends StatelessWidget {
               ),
             ],
           ),
+          if (trip.bookingReference.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            TripReference(id: trip.bookingReference, compact: true),
+          ],
           const SizedBox(height: 12),
           Row(
             children: [

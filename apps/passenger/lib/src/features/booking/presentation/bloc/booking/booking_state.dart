@@ -81,6 +81,7 @@ final class BookingSearching extends BookingState {
     required this.isDirect,
     this.targetDriver,
     this.sessionId,
+    this.bookingReference = '',
     this.expiresAt,
     this.refreshError,
   });
@@ -88,6 +89,7 @@ final class BookingSearching extends BookingState {
   final bool isDirect;
   final DriverModel? targetDriver;
   final String? sessionId;
+  final String bookingReference;
   final DateTime? expiresAt;
   final String? refreshError;
 }
@@ -98,6 +100,7 @@ final class BookingOffersReceived extends BookingState {
     required this.isDirect,
     this.targetDriver,
     this.sessionId,
+    this.bookingReference = '',
     this.expiresAt,
     this.refreshError,
   });
@@ -106,6 +109,7 @@ final class BookingOffersReceived extends BookingState {
   final bool isDirect;
   final DriverModel? targetDriver;
   final String? sessionId;
+  final String bookingReference;
   final DateTime? expiresAt;
   final String? refreshError;
 }
@@ -136,25 +140,36 @@ final class BookingDriverMatched extends BookingState {
 }
 
 final class BookingSessionRecoveryInProgress extends BookingState {
-  const BookingSessionRecoveryInProgress({required this.sessionId});
+  const BookingSessionRecoveryInProgress({
+    required this.sessionId,
+    this.bookingReference = '',
+  });
 
   final String sessionId;
+  final String bookingReference;
 }
 
 final class BookingSessionRecoveryFailure extends BookingState {
   const BookingSessionRecoveryFailure({
     required this.sessionId,
+    this.bookingReference = '',
     required this.message,
   });
 
   final String sessionId;
+  final String bookingReference;
   final String message;
 }
 
 final class BookingRideRecovered extends BookingState {
-  const BookingRideRecovered({required this.sessionId, required this.rideId});
+  const BookingRideRecovered({
+    required this.sessionId,
+    required this.rideId,
+    this.bookingReference = '',
+  });
 
   final String sessionId;
+  final String bookingReference;
   final String rideId;
 }
 
@@ -168,15 +183,27 @@ final class BookingFailure extends BookingState {
     this.isNoDriverFound = false,
     this.isRequestExpired = false,
     this.sessionId,
+    this.bookingReference = '',
   });
 
   final String message;
   final bool isNoDriverFound;
   final bool isRequestExpired;
   final String? sessionId;
+  final String bookingReference;
 }
 
 extension BookingStateModernApi on BookingState {
+  String get publicBookingReference => switch (this) {
+    BookingSearching(:final bookingReference) ||
+    BookingOffersReceived(:final bookingReference) ||
+    BookingFailure(:final bookingReference) ||
+    BookingSessionRecoveryInProgress(:final bookingReference) ||
+    BookingSessionRecoveryFailure(:final bookingReference) ||
+    BookingRideRecovered(:final bookingReference) => bookingReference,
+    _ => '',
+  };
+
   String get statusMessage => switch (this) {
     BookingInitial() => 'Ready to request a short hop.',
     FindingNearestDriver() => 'Locating nearest driver.',

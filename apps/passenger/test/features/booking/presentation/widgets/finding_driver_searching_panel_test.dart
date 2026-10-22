@@ -24,7 +24,7 @@ void main() {
             message: 'Searching for a driver',
             fare: 27.57,
             destination: destination,
-            requestId: '4821',
+            bookingReference: '701612345678901',
             requestCreated: true,
             onCancelPressed: () {},
           ),
@@ -33,7 +33,7 @@ void main() {
     );
 
     expect(find.text('Searching for a driver'), findsOneWidget);
-    expect(find.text('Booking ID: BR-4821'), findsOneWidget);
+    expect(find.text('Booking ID: 701612345678901'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('copy-booking-id-button')),
       findsOneWidget,
@@ -53,7 +53,7 @@ void main() {
               pickupAddress: 'Mountain View, California',
               distance: '3.2 km',
               duration: '9 mins',
-              requestId: '4821',
+              bookingReference: '701612345678901',
               requestCreated: true,
               onCancelPressed: () {},
             ),
@@ -199,7 +199,7 @@ void main() {
             message: 'Searching for a driver',
             fare: 27.57,
             destination: destination,
-            requestId: 'BR-4821',
+            bookingReference: '701612345678901',
             onCancelPressed: () {},
           ),
         ),
@@ -209,6 +209,6 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('copy-booking-id-button')));
     await tester.pump();
 
-    expect(copiedText, 'BR-4821');
+    expect(copiedText, '701612345678901');
   });
 }

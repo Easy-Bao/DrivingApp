@@ -5,7 +5,9 @@ import 'package:passenger/src/features/booking/domain/entities/booking_offer.dar
 import 'package:passenger/src/features/booking/domain/entities/booking_session_request.dart';
 
 abstract interface class BookingRepository() {
-  Future<Result<String, Failure>> createSession(BookingSessionRequest request);
+  Future<Result<BidSessionSnapshot, Failure>> createSession(
+    BookingSessionRequest request,
+  );
 
   Future<Result<List<BookingOffer>, Failure>> fetchOffers(String sessionId);
 
@@ -20,7 +22,7 @@ abstract interface class BookingRepository() {
 }
 
 extension BookingRepositoryResultApi on BookingRepository {
-  Future<Result<String, DomainFailure>> createSessionResult(
+  Future<Result<BidSessionSnapshot, DomainFailure>> createSessionResult(
     BookingSessionRequest request,
   ) => _captureBookingResult(() => createSession(request));
 
