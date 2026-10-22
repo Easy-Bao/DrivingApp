@@ -186,6 +186,8 @@ class BookingModule._() {
           destination: destination,
           distance: distance,
           duration: duration,
+          distanceKm: data.doubleValue('distanceKm'),
+          durationMinutes: data.doubleValue('durationMinutes'),
           pickupLatitude: data.doubleValue('pickupLat'),
           pickupLongitude: data.doubleValue('pickupLng'),
           pickupAddress: data.string('pickupAddress'),

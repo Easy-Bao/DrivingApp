@@ -676,6 +676,89 @@ void main() {
     );
 
     test(
+      'persists an open booking before listening for driver offers',
+      () async {
+        when(() => bookingRepository.createSession(any()))
+            .thenAnswer((_) async => const Ok('cash-booking'));
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+        );
+        addTearDown(bloc.close);
+        final created = bloc.stream.firstWhere(
+          (state) =>
+              state is BookingSearching && state.sessionId == 'cash-booking',
+        );
+        bloc.add(
+          const StartOpenBookingEvent(
+            trip: testTrip,
+            pickupLat: 7.82,
+            pickupLng: 123.43,
+            distanceKm: 2,
+            durationMinutes: 5,
+          ),
+        );
+        await created.timeout(const Duration(seconds: 1));
+        verifyInOrder([
+          () => bookingRepository.createSession(any()),
+          () => secureSessionService.saveActiveBidSessionId('cash-booking'),
+        ]);
+        verifyNever(
+          () => driverRepo.getNearbyDrivers(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        );
+        expect(bloc.activeBidSessionId, 'cash-booking');
+      },
+    );
+
+    test('cancels the persisted booking ID when dispatch expires', () async {
+      when(() => bookingRepository.createSession(any()))
+          .thenAnswer((_) async => const Ok('expired-cash-booking'));
+      final bloc = _makeBookingBloc(
+        driverRepo: driverRepo,
+        bookingRepository: bookingRepository,
+        driverProfileRepository: driverProfileRepository,
+        secureSessionService: secureSessionService,
+      );
+      addTearDown(bloc.close);
+      final created = bloc.stream.firstWhere(
+        (state) => state is BookingOffersReceived,
+      );
+      bloc.add(
+        const StartOpenBookingEvent(
+          trip: testTrip,
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          distanceKm: 2,
+          durationMinutes: 5,
+        ),
+      );
+      await created.timeout(const Duration(seconds: 1));
+      final expired = bloc.stream.firstWhere(
+        (state) => state is BookingFailure && state.isRequestExpired,
+      );
+      bloc.add(
+        UpdateOffersEvent(
+          const [],
+          session: BidSessionSnapshot(
+            id: 'expired-cash-booking',
+            status: 'expired',
+            expiresAt: DateTime.now().subtract(const Duration(seconds: 1)),
+          ),
+        ),
+      );
+      await expired.timeout(const Duration(seconds: 1));
+      verify(() => bookingRepository.cancelSession('expired-cash-booking'))
+          .called(1);
+      expect(bloc.activeBidSessionId, isNull);
+      expect(pendingCancellationId, isNull);
+    });
+
+    test(
       'matches a direct booking from snapshot polling when realtime is absent',
       () async {
         var fetchCount = 0;

@@ -44,8 +44,8 @@ func TestLoadApplicationUsesDefaults(t *testing.T) {
 	if config.RideLifecycle != rideapplication.DefaultLifecycleConfig() {
 		t.Fatalf("ride lifecycle defaults = %#v", config.RideLifecycle)
 	}
-	if config.Bidding.SessionDuration != 5*time.Minute {
-		t.Fatalf("bid session duration = %s, want 5m", config.Bidding.SessionDuration)
+	if config.Bidding.SessionDuration != 90*time.Second {
+		t.Fatalf("bid session duration = %s, want 90s", config.Bidding.SessionDuration)
 	}
 	if config.Mail.FromName != "DriveApp" || config.Mail.Subject != "DriveApp verification code" ||
 		config.Mail.Security != "starttls" || config.Mail.Timeout != 10*time.Second {

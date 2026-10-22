@@ -162,14 +162,21 @@ extension _BookingBlocBidSession on BookingBloc {
       return;
     }
     if (session?.isExpired == true) {
-      await _clearPendingBooking(session!.id);
-      emit(
-        BookingFailure(
-          'This request expired before a driver accepted it.',
-          isRequestExpired: true,
-          sessionId: session.id,
-        ),
-      );
+      final sessionId = session!.id;
+      if (_activeBidSessionId != sessionId) return;
+      try {
+        await _secureSessionService.savePendingBidSessionCancellationId(
+          sessionId,
+        );
+        await _cancelPersistedBookingSession(sessionId, emit, expired: true);
+      } catch (error) {
+        emit(
+          BookingSessionRecoveryFailure(
+            sessionId: sessionId,
+            message: ErrorHandler.getErrorMessage(error),
+          ),
+        );
+      }
       return;
     }
 

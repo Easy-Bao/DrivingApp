@@ -44,6 +44,8 @@ class FindingDriverPage extends StatelessWidget {
     required this.destination,
     required this.distance,
     required this.duration,
+    this.distanceKm,
+    this.durationMinutes,
     this.pickupAddress,
     this.pickupLatitude,
     this.pickupLongitude,
@@ -60,6 +62,8 @@ class FindingDriverPage extends StatelessWidget {
   final Place destination;
   final String distance;
   final String duration;
+  final double? distanceKm;
+  final double? durationMinutes;
   final String? pickupAddress;
   final double? pickupLatitude;
   final double? pickupLongitude;
@@ -83,6 +87,8 @@ class FindingDriverPage extends StatelessWidget {
         destination: destination,
         distance: distance,
         duration: duration,
+        distanceKm: distanceKm,
+        durationMinutes: durationMinutes,
         pickupAddress: pickupAddress,
         pickupLatitude: pickupLatitude,
         pickupLongitude: pickupLongitude,
@@ -103,6 +109,8 @@ class FindingDriverPageContent extends StatefulWidget {
     required this.destination,
     required this.distance,
     required this.duration,
+    this.distanceKm,
+    this.durationMinutes,
     this.pickupAddress,
     this.pickupLatitude,
     this.pickupLongitude,
@@ -117,6 +125,8 @@ class FindingDriverPageContent extends StatefulWidget {
   final Place destination;
   final String distance;
   final String duration;
+  final double? distanceKm;
+  final double? durationMinutes;
   final String? pickupAddress;
   final double? pickupLatitude;
   final double? pickupLongitude;
@@ -165,29 +175,12 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
       _locationUnavailable = true;
       return;
     }
-    final latitude = pickup.latitude;
-    final longitude = pickup.longitude;
-
     final bookingBloc = BlocProvider.of<BookingBloc>(context);
     final isExpiredRequest =
         bookingBloc.state is BookingFailure &&
         (bookingBloc.state as BookingFailure).isRequestExpired;
     if (!bookingBloc.hasActiveDriverSearch && !isExpiredRequest) {
-      bookingBloc.add(
-        LocateNearestDriverEvent(
-          pickupLat: latitude,
-          pickupLng: longitude,
-          trip: BidSessionTrip(
-            rideType: widget.rideType,
-            fare: widget.fare,
-            destination: widget.destination,
-            distance: widget.distance,
-            duration: widget.duration,
-            pickupAddress: widget.pickupAddress,
-            passengerNote: widget.passengerNote,
-          ),
-        ),
-      );
+      _startOpenBooking();
     }
   }
 
@@ -233,12 +226,12 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     final pickupLat = pickup.latitude;
     final pickupLng = pickup.longitude;
 
-    final distanceNum = double.tryParse(
-      widget.distance.replaceAll(RegExp(r'[^0-9.]'), ''),
-    );
-    final durationNum = double.tryParse(
-      widget.duration.replaceAll(RegExp(r'[^0-9.]'), ''),
-    );
+    final distanceNum =
+        widget.distanceKm ??
+        double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), ''));
+    final durationNum =
+        widget.durationMinutes ??
+        double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), ''));
     if (distanceNum == null || durationNum == null) return;
 
     setState(() {
@@ -274,12 +267,12 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     final pickupLat = pickup.latitude;
     final pickupLng = pickup.longitude;
 
-    final distanceNum = double.tryParse(
-      widget.distance.replaceAll(RegExp(r'[^0-9.]'), ''),
-    );
-    final durationNum = double.tryParse(
-      widget.duration.replaceAll(RegExp(r'[^0-9.]'), ''),
-    );
+    final distanceNum =
+        widget.distanceKm ??
+        double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), ''));
+    final durationNum =
+        widget.durationMinutes ??
+        double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), ''));
     if (distanceNum == null || durationNum == null) return;
 
     final tripMetadata = BidSessionTrip(
@@ -343,21 +336,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
       _driverSearchError = null;
       _isLeaving = false;
     });
-    BlocProvider.of<BookingBloc>(context).add(
-      LocateNearestDriverEvent(
-        pickupLat: pickup.latitude,
-        pickupLng: pickup.longitude,
-        trip: BidSessionTrip(
-          rideType: widget.rideType,
-          fare: widget.fare,
-          destination: widget.destination,
-          distance: widget.distance,
-          duration: widget.duration,
-          pickupAddress: widget.pickupAddress,
-          passengerNote: widget.passengerNote,
-        ),
-      ),
-    );
+    _startOpenBooking();
   }
 
   @override

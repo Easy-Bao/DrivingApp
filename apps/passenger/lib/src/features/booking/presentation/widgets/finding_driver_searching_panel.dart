@@ -163,7 +163,9 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                'Booking ID: $displayBookingId',
+                                displayBookingId == 'Pending'
+                                    ? message
+                                    : 'Booking ID: $displayBookingId',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(

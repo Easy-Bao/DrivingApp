@@ -12,6 +12,7 @@ import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
+import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_draft.dart';
 import 'package:passenger/src/features/booking/domain/repositories/fare_repository.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
@@ -62,6 +63,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   String? _fareError;
   String? _customFareError;
   bool _isLoadingFare = true;
+  bool _isStartingBooking = false;
   AppMapController? _mapController;
   Widget? _cachedMapView;
   Route? _route;
@@ -314,6 +316,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   }
 
   Future<void> _handleBookPressed() async {
+    if (_isStartingBooking) return;
     final fare = _selectedFare;
     final minimumFare = _minimumFare;
     if (fare == null || minimumFare == null || fare < minimumFare) {
@@ -322,7 +325,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     final totalFare = fare + _selectedTipAmount;
 
     final bookingBloc = BlocProvider.of<BookingBloc>(context);
-    if (bookingBloc.hasActiveBooking) {
+    if (bookingBloc.hasActiveBooking || bookingBloc.hasActiveDriverSearch) {
       CustomToast.show(
         context,
         'A driver search is already in progress.',
@@ -351,10 +354,41 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
       return;
     }
 
+    final pickup = _pickupCoordinate;
+    final distanceKm = _effectiveDistanceKm;
+    final durationMinutes = _effectiveDurationMinutes;
+    if (pickup == null || distanceKm == null || durationMinutes == null) {
+      CustomToast.show(
+        context,
+        'Trip details are unavailable. Please try again.',
+        isError: true,
+      );
+      return;
+    }
+    final note = _notesController.text.trim();
+    final passengerNote = note.length > 160 ? note.substring(0, 160) : note;
+    _isStartingBooking = true;
     BlocProvider.of<BookingDraftCubit>(context).clear();
     unawaited(HapticFeedback.lightImpact());
-    unawaited(
-      context.pushNamed(
+    bookingBloc.add(
+      StartOpenBookingEvent(
+        trip: BidSessionTrip(
+          rideType: widget.rideType,
+          fare: totalFare,
+          destination: widget.destination,
+          distance: _distanceLabel,
+          duration: _durationLabel,
+          pickupAddress: _pickupLabel,
+          passengerNote: passengerNote,
+        ),
+        pickupLat: pickup.lat,
+        pickupLng: pickup.lng,
+        distanceKm: distanceKm,
+        durationMinutes: durationMinutes,
+      ),
+    );
+    try {
+      await context.pushNamed(
         BookingRoutes.findingDriver,
         extra: {
           'rideType': widget.rideType,
@@ -364,15 +398,17 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
           'destination': widget.destination,
           'distance': _distanceLabel,
           'duration': _durationLabel,
-          'pickupAddress': widget.pickupAddress,
-          'pickupLat': _pickupCoordinate?.lat,
-          'pickupLng': _pickupCoordinate?.lng,
-          'passengerNote': _notesController.text.trim().length > 160
-              ? _notesController.text.trim().substring(0, 160)
-              : _notesController.text.trim(),
+          'distanceKm': distanceKm,
+          'durationMinutes': durationMinutes,
+          'pickupAddress': _pickupLabel,
+          'pickupLat': pickup.lat,
+          'pickupLng': pickup.lng,
+          'passengerNote': passengerNote,
         },
-      ),
-    );
+      );
+    } finally {
+      _isStartingBooking = false;
+    }
   }
 
   @override

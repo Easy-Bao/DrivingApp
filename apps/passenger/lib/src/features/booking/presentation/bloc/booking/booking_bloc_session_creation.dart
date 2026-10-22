@@ -245,8 +245,16 @@ extension _BookingBlocSessionCreation on BookingBloc {
 
   Future<void> _cancelPersistedBookingSession(
     String sessionId,
-    Emitter<BookingState> emit,
-  ) async {
+    Emitter<BookingState> emit, {
+    bool expired = false,
+  }) async {
+    final BookingState terminalState = expired
+        ? BookingFailure(
+            'This request expired before a driver accepted it.',
+            isRequestExpired: true,
+            sessionId: sessionId,
+          )
+        : const BookingCanceled();
     try {
       final result = await _bookingRepository
           .cancelSessionResult(sessionId)
@@ -256,7 +264,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
       result.fold((value) => failure = value, (_) => canceled = true);
       if (canceled) {
         await _clearPendingBooking(sessionId);
-        emit(const BookingCanceled());
+        emit(terminalState);
         return;
       }
       failure ??= const ServerFailure(
@@ -271,9 +279,9 @@ extension _BookingBlocSessionCreation on BookingBloc {
         await _recoverAcceptedSession(snapshot!, emit);
         return;
       }
-      if (snapshot?.isCancelled == true) {
+      if (snapshot?.isCancelled == true || snapshot?.isExpired == true) {
         await _clearPendingBooking(sessionId);
-        emit(const BookingCanceled());
+        emit(terminalState);
         return;
       }
       emit(

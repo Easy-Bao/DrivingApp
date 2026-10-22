@@ -2,7 +2,7 @@ package app
 
 import "time"
 
-const DefaultSessionDuration = 5 * time.Minute
+const DefaultSessionDuration = 90 * time.Second
 
 type Config struct {
 	SessionDuration time.Duration
