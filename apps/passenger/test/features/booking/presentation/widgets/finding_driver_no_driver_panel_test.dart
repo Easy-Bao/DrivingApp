@@ -24,7 +24,7 @@ void main() {
             fare: 100,
             destination: destination,
             pickupAddress: 'Pickup address',
-            rideType: 'Solo Ride',
+
             onRetryPressed: () => retryCount++,
             onCancelPressed: () {},
           ),

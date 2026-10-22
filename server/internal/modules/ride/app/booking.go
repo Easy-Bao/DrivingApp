@@ -94,7 +94,6 @@ func (service *BookingService) Create(ctx context.Context, passengerID int, fare
 		PassengerID: passengerID,
 		Status:      string(domain.RideRequested),
 		FareAmount:  fareAmount,
-		RideType:    "Solo Ride",
 	})
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("create ride: %w", err)
@@ -151,9 +150,7 @@ func (service *BookingService) CreateWithDetails(ctx context.Context, ride domai
 	ride.DurationMinutes = metrics.DurationMinutes
 	ride.FareAmount = service.calculateFare(metrics.DistanceKm, metrics.DurationMinutes)
 	ride.Status = string(domain.RideRequested)
-	if ride.RideType == "" {
-		ride.RideType = "solo"
-	}
+
 	created, err := service.writer.CreateRide(ctx, ride)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("create ride with details: %w", err)

@@ -186,12 +186,6 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                                       await Clipboard.setData(
                                         ClipboardData(text: displayBookingId),
                                       );
-                                      if (context.mounted) {
-                                        CustomToast.show(
-                                          context,
-                                          'Booking ID copied',
-                                        );
-                                      }
                                     },
                                     child: Padding(
                                       padding: const EdgeInsets.all(12),

@@ -88,7 +88,6 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
     );
     if (!mounted || !context.mounted) return;
     if (success) {
-      CustomToast.show(context, 'Details updated successfully.');
       if (widget.onBack != null) {
         widget.onBack!();
       } else {

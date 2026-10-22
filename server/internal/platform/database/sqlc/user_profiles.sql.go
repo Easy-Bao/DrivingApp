@@ -381,7 +381,6 @@ UPDATE passenger_profiles
 SET name = $2,
     address = $3,
     gender = $4,
-    preferred_ride_type = $5,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING id, user_id, name, address, gender, avatar_storage_key,
@@ -389,11 +388,10 @@ RETURNING id, user_id, name, address, gender, avatar_storage_key,
 `
 
 type UpdatePassengerProfileParams struct {
-	ID                int32       `db:"id"`
-	Name              string      `db:"name"`
-	Address           pgtype.Text `db:"address"`
-	Gender            string      `db:"gender"`
-	PreferredRideType pgtype.Text `db:"preferred_ride_type"`
+	ID      int32       `db:"id"`
+	Name    string      `db:"name"`
+	Address pgtype.Text `db:"address"`
+	Gender  string      `db:"gender"`
 }
 
 func (q *Queries) UpdatePassengerProfile(ctx context.Context, arg UpdatePassengerProfileParams) (PassengerProfile, error) {
@@ -402,7 +400,6 @@ func (q *Queries) UpdatePassengerProfile(ctx context.Context, arg UpdatePassenge
 		arg.Name,
 		arg.Address,
 		arg.Gender,
-		arg.PreferredRideType,
 	)
 	var i PassengerProfile
 	err := row.Scan(

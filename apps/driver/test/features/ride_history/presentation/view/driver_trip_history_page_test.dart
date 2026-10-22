@@ -70,7 +70,7 @@ void main() {
                   'created_at': '2026-08-19T10:00:00Z',
                   'pickup_name': 'Mountain View',
                   'dropoff_name': 'Vista Slope',
-                  'ride_type': 'solo',
+
                   'fare_amount': 2973,
                   'distance_km': 1.8,
                 },

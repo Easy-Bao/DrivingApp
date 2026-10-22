@@ -38,6 +38,8 @@ class LiveMapBloc() extends Bloc<LiveMapEvent, LiveMapState> {
     Emitter<LiveMapState> emit,
   ) async {
     if (!identical(_mapController, event.controller)) {
+      // Queue incoming marker work until the previous map is cleared.
+      _mapController = null;
       _invalidateMapOperations();
       final initializationGeneration = _mapViewGeneration;
       await _clearAllMarkers();

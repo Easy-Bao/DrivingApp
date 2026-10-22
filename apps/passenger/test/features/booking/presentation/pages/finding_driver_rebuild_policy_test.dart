@@ -14,7 +14,6 @@ const _destination = Place(
 );
 
 const _trip = BidSessionTrip(
-  rideType: 'solo',
   fare: 26,
   destination: _destination,
   distance: '1.2 km',

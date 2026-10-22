@@ -106,7 +106,6 @@ UPDATE passenger_profiles
 SET name = $2,
     address = $3,
     gender = $4,
-    preferred_ride_type = $5,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING id, user_id, name, address, gender, avatar_storage_key,

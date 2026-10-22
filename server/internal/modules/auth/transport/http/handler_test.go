@@ -65,16 +65,15 @@ func TestAuthSessionResponseVerificationState(t *testing.T) {
 func TestAuthSessionResponseKeepsAccountFieldsAtTheHTTPBoundary(t *testing.T) {
 	payload := authSessionResponse(
 		domain.User{
-			ID:                7,
-			Email:             "driver@example.com",
-			Phone:             "+639171234567",
-			Name:              "Ada Driver",
-			Role:              domain.Driver,
-			PasswordHash:      "must-not-leak",
-			IsVerified:        true,
-			VehicleType:       "Motorcycle",
-			PlateNumber:       "ABC123",
-			PreferredRideType: "solo",
+			ID:           7,
+			Email:        "driver@example.com",
+			Phone:        "+639171234567",
+			Name:         "Ada Driver",
+			Role:         domain.Driver,
+			PasswordHash: "must-not-leak",
+			IsVerified:   true,
+			VehicleType:  "Motorcycle",
+			PlateNumber:  "ABC123",
 		},
 		authapp.SessionTokens{AccessToken: "access", RefreshToken: "refresh"},
 		false,
@@ -98,7 +97,7 @@ func TestAuthSessionResponseKeepsAccountFieldsAtTheHTTPBoundary(t *testing.T) {
 		t.Fatal("session response user is not an object")
 	}
 	if user["isVerified"] != true || user["vehicleType"] != "Motorcycle" ||
-		user["plateNumber"] != "ABC123" || user["preferred_ride_type"] != "solo" {
+		user["plateNumber"] != "ABC123" {
 		t.Fatalf("unexpected account response fields: %#v", user)
 	}
 	for _, field := range []string{"PasswordHash", "password_hash", "passwordHash"} {

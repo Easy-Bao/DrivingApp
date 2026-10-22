@@ -212,11 +212,6 @@ class _InTransitPageState extends State<InTransitPage> {
       final position = await LocationService.getCurrentPosition();
       if (!mounted) return;
       if (position == null) {
-        CustomToast.show(
-          this.context,
-          'Your current location is unavailable. Enable location and try again.',
-          isError: true,
-        );
         return;
       }
       final finalFare = await rideCubit.completeRide(
@@ -224,16 +219,6 @@ class _InTransitPageState extends State<InTransitPage> {
         driverLongitude: position.longitude,
       );
       if (finalFare == null) {
-        if (mounted) {
-          final state = rideCubit.state;
-          CustomToast.show(
-            this.context,
-            state is RideFlowError
-                ? state.message
-                : 'Unable to complete the trip. Please try again.',
-            isError: true,
-          );
-        }
         return;
       }
       if (!mounted) return;
@@ -263,17 +248,6 @@ class _InTransitPageState extends State<InTransitPage> {
     if (!mounted) return false;
     final stopped = await BlocProvider.of<RideFlowCubit>(context)
         .emergencyStop(reason: reason, details: details);
-    if (!stopped && mounted) {
-      final failureMessage = BlocProvider.of<RideFlowCubit>(context)
-          .state
-          .failureMessage;
-      CustomToast.show(
-        context,
-        failureMessage ??
-            'The ride could not be ended for safety. Please try again.',
-        isError: true,
-      );
-    }
     return stopped;
   }
 

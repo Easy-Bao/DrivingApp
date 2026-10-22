@@ -197,11 +197,6 @@ class _DashboardPageState extends State<DashboardPage>
 
       final fare = ride.farePesos;
       if (fare == null || fare <= 0) {
-        CustomToast.show(
-          context,
-          'The completed cash fare is unavailable. Please try again.',
-          isError: true,
-        );
         return;
       }
 
@@ -362,11 +357,7 @@ class _DashboardPageState extends State<DashboardPage>
 
   void _refreshRequestCountdowns() {
     if (!mounted || !_isForeground) return;
-    final offerExpired = BlocProvider.of<DashboardCubit>(context)
-        .removeExpiredRideOffers();
-    if (offerExpired && mounted) {
-      CustomToast.show(context, 'Your offer expired without being selected.');
-    }
+    BlocProvider.of<DashboardCubit>(context).removeExpiredRideOffers();
   }
 
   void _startRequestCountdownTimer() {
@@ -456,18 +447,11 @@ class _DashboardPageState extends State<DashboardPage>
             'canceled',
           }.contains(valueAsString(session['status'])?.toLowerCase());
       final reason = valueAsString(payload['reason']);
-      final wasResolved = reason == 'another_driver_selected' || wasClosed
-          ? BlocProvider.of<DashboardCubit>(context)
-                .resolveSubmittedOffer(sessionId)
-          : false;
-      if (wasResolved && mounted) {
-        CustomToast.show(
-          context,
-          reason == 'another_driver_selected'
-              ? 'The passenger selected another driver for this ride.'
-              : 'The passenger closed this ride offer.',
-        );
+      if (reason == 'another_driver_selected' || wasClosed) {
+        BlocProvider.of<DashboardCubit>(context)
+            .resolveSubmittedOffer(sessionId);
       }
+
       unawaited(_pollRideData(_pollGeneration));
       return;
     }
@@ -684,13 +668,7 @@ class _DashboardPageState extends State<DashboardPage>
         error: error,
         stackTrace: stackTrace,
       );
-      if (context.mounted) {
-        CustomToast.show(
-          context,
-          ErrorHandler.getErrorMessage(error, stackTrace),
-          isError: true,
-        );
-      }
+
       return false;
     }
   }
@@ -699,11 +677,6 @@ class _DashboardPageState extends State<DashboardPage>
     if (_submittingBidId != null) return;
     final cubit = BlocProvider.of<DashboardCubit>(context);
     if (cubit.state.hasActiveRide) {
-      CustomToast.show(
-        context,
-        'Finish your current trip before submitting another offer.',
-        isError: true,
-      );
       return;
     }
 
@@ -713,28 +686,8 @@ class _DashboardPageState extends State<DashboardPage>
 
     if (mounted) setState(() => _submittingBidId = sessionId);
     try {
-      final success = await cubit.submitRideOffer(
-        sessionId: sessionId,
-        farePesos: fare,
-      );
-
-      if (mounted) {
-        if (!success && cubit.state.errorMessage == null) {
-          CustomToast.show(
-            context,
-            "Couldn't submit your offer. Try again.",
-            isError: true,
-          );
-        }
-      }
+      await cubit.submitRideOffer(sessionId: sessionId, farePesos: fare);
     } catch (error) {
-      if (mounted) {
-        CustomToast.show(
-          context,
-          'Unable to submit the offer. Please try again.',
-          isError: true,
-        );
-      }
       debugPrint('Unable to submit driver offer: $error');
     } finally {
       if (mounted) setState(() => _submittingBidId = null);
@@ -758,11 +711,6 @@ class _DashboardPageState extends State<DashboardPage>
     final distance = resolvedTrip.distanceKm;
     final duration = resolvedTrip.durationMinutes;
     if (fare == null || distance == null || duration == null) {
-      CustomToast.show(
-        context,
-        'Trip details are unavailable. Please try again.',
-        isError: true,
-      );
       return;
     }
     final status = resolvedTrip.status;
@@ -809,15 +757,7 @@ class _DashboardPageState extends State<DashboardPage>
     if (rideFlowCubit.activeRideId == rideId) {
       await rideFlowCubit.reset();
     }
-    if (mounted) {
-      CustomToast.show(
-        context,
-        trip.status == 'completed'
-            ? 'This trip is already complete.'
-            : 'This trip is no longer active.',
-        isError: true,
-      );
-    }
+
     return true;
   }
 

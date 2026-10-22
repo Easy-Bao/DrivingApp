@@ -10,9 +10,9 @@ import (
 
 func TestFromPostgresBidSessionMapsNullableIdentityFields(t *testing.T) {
 	item := databasepostgres.BidSession{
-		ID:             17,
-		PassengerID:    7,
-		RideType:       "solo",
+		ID:          17,
+		PassengerID: 7,
+
 		PassengerNote:  pgtype.Text{String: "Call on arrival", Valid: true},
 		TargetDriverID: pgtype.Int4{Int32: 11, Valid: true},
 		ExpiresAt:      bidTimestamp(time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)),
@@ -71,10 +71,10 @@ func TestMapBidOfferWithdrawalsUsesUpdatedOfferStatus(t *testing.T) {
 		BidSession: databasepostgres.BidSession{
 			ID:          21,
 			PassengerID: 7,
-			RideType:    "solo",
-			Status:      "open",
-			ExpiresAt:   createdAt,
-			CreatedAt:   createdAt,
+
+			Status:    "open",
+			ExpiresAt: createdAt,
+			CreatedAt: createdAt,
 		},
 	}})
 	if err != nil {

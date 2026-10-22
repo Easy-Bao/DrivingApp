@@ -13,6 +13,7 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/track_drive
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_state.dart';
 import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/home/presentation/widgets/active_ride_banner.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
@@ -56,6 +57,7 @@ class ShellLayout extends StatefulWidget {
     required this.realtimeClient,
     required this.lifecycleCoordinator,
     required this.navigationCoordinator,
+    required this.bookingStates,
     this.trackDriverCubit,
   });
   final StatefulNavigationShell navigationShell;
@@ -64,6 +66,7 @@ class ShellLayout extends StatefulWidget {
   final AppLifecycleCoordinator lifecycleCoordinator;
   final TabNavigationCoordinator navigationCoordinator;
   final TrackDriverCubit? trackDriverCubit;
+  final Stream<BookingState> bookingStates;
 
   @override
   State<ShellLayout> createState() => _ShellLayoutState();
@@ -73,6 +76,7 @@ class _ShellLayoutState extends State<ShellLayout> {
   String? _loadedInboxPassengerId;
   String? _activePassengerId;
   StreamSubscription<RealtimeEvent>? _realtimeSubscription;
+  late final StreamSubscription<BookingState> _bookingSubscription;
   late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
   bool _isForeground = true;
 
@@ -90,6 +94,11 @@ class _ShellLayoutState extends State<ShellLayout> {
     _realtimeSubscription = widget.realtimeClient.events.listen(
       _handleRealtimeEvent,
     );
+    _bookingSubscription = widget.bookingStates.listen((state) {
+      if (mounted && state is BookingFailure && state.isRequestExpired) {
+        unawaited(_loadInboxNotifications(refresh: true));
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _forceHomeForGuest();
@@ -103,6 +112,7 @@ class _ShellLayoutState extends State<ShellLayout> {
     widget.navigationCoordinator.removeListener(_onNavigationChanged);
     unawaited(_lifecycleSubscription.cancel());
     unawaited(_realtimeSubscription?.cancel());
+    unawaited(_bookingSubscription.cancel());
     unawaited(widget.realtimeClient.stop());
     super.dispose();
   }
@@ -120,15 +130,19 @@ class _ShellLayoutState extends State<ShellLayout> {
     if (_isForeground) return;
     _isForeground = true;
     if (_activePassengerId != null) {
-      unawaited(widget.realtimeClient.start());
+      unawaited(_loadInboxNotifications(refresh: true));
     }
   }
 
   void _onNavigationChanged() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    setState(() {});
+    if (widget.navigationCoordinator.selectedIndex == 2) {
+      unawaited(_loadInboxNotifications(refresh: true));
+    }
   }
 
-  Future<void> _loadInboxNotifications() async {
+  Future<void> _loadInboxNotifications({bool refresh = false}) async {
     final sessionState = BlocProvider.of<SessionBloc>(context).state;
     if (sessionState is! AuthenticatedSession || widget.inboxCubit.isClosed) {
       return;
@@ -137,7 +151,7 @@ class _ShellLayoutState extends State<ShellLayout> {
     if (_isForeground) {
       unawaited(widget.realtimeClient.start());
     }
-    if (sessionState.passengerId == _loadedInboxPassengerId) return;
+    if (!refresh && sessionState.passengerId == _loadedInboxPassengerId) return;
     _loadedInboxPassengerId = sessionState.passengerId;
     await widget.inboxCubit.loadNotifications(sessionState.passengerId);
   }
@@ -319,10 +333,10 @@ class _ShellLayoutState extends State<ShellLayout> {
                                   bottom: bottomPadding + 10,
                                 ),
                                 child: FractionallySizedBox(
-                                  widthFactor: 0.94,
+                                  widthFactor: 0.86,
                                   child: ConstrainedBox(
                                     constraints: const BoxConstraints(
-                                      maxWidth: 520,
+                                      maxWidth: 440,
                                     ),
                                     child: floatingTabBar,
                                   ),

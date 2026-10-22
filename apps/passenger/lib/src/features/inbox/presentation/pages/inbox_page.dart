@@ -40,15 +40,9 @@ class _InboxPageState extends State<InboxPage> {
   }
 
   Future<void> _initializeInbox() async {
-    if (BlocProvider.of<SessionBloc>(context).state is! AuthenticatedSession) {
-      return;
-    }
-    if (_inboxCubit.state is! InboxLoadedState) {
-      final passengerId = await widget.sessionService.readPassengerId() ?? '';
-      if (passengerId.isNotEmpty) {
-        unawaited(_inboxCubit.loadNotifications(passengerId));
-      }
-    }
+    final session = BlocProvider.of<SessionBloc>(context).state;
+    if (session is! AuthenticatedSession) return;
+    await _inboxCubit.loadNotifications(session.passengerId);
   }
 
   Widget _buildLoadingState() {

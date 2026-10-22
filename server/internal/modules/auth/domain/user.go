@@ -8,15 +8,15 @@ const (
 )
 
 type User struct {
-	ID                int
-	Email             string
-	Phone             string
-	Name              string
-	Role              Role
-	PasswordHash      string
-	IsVerified        bool
-	VehicleType       string
-	PlateNumber       string
-	PreferredRideType string
-	AccountStatus     string
+	ID           int
+	Email        string
+	Phone        string
+	Name         string
+	Role         Role
+	PasswordHash string
+	IsVerified   bool
+	VehicleType  string
+	PlateNumber  string
+
+	AccountStatus string
 }

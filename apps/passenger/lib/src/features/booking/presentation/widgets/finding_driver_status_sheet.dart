@@ -11,7 +11,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
     required this.statusColor,
     required this.destination,
     this.pickupAddress,
-    this.rideType,
+
     this.bookingReference,
     required this.fare,
     required this.onCancelPressed,
@@ -27,7 +27,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
   final Color statusColor;
   final String destination;
   final String? pickupAddress;
-  final String? rideType;
+
   final String? bookingReference;
   final double fare;
   final VoidCallback onCancelPressed;

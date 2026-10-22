@@ -21,11 +21,20 @@ class MapCameraService._() {
     double latitude,
     double longitude, {
     double? zoom,
+    EdgeInsets? viewportPadding,
     bool animate = true,
   }) => traceTimelineStage('maps.camera.move', () async {
     final camera = mapbox.CameraOptions(
       center: mapbox.Point(coordinates: mapbox.Position(longitude, latitude)),
       zoom: zoom,
+      padding: viewportPadding == null
+          ? null
+          : mapbox.MbxEdgeInsets(
+              top: viewportPadding.top,
+              left: viewportPadding.left,
+              bottom: viewportPadding.bottom,
+              right: viewportPadding.right,
+            ),
     );
 
     if (animate) {
@@ -69,6 +78,7 @@ class MapCameraService._() {
     AppMapController controller,
     List<LatLng> points, {
     double padding = 80.0,
+    EdgeInsets? viewportPadding,
     double? maxZoom,
   }) => traceTimelineStage('maps.camera.fit_bounds', () async {
     if (points.isEmpty) return;
@@ -95,15 +105,18 @@ class MapCameraService._() {
       infiniteBounds: false,
     );
 
+    final insets =
+        viewportPadding ??
+        EdgeInsets.fromLTRB(padding, padding, padding, padding + 100);
     final camera = await traceTimelineStage(
       'maps.camera.calculate_bounds',
       () => controller.native.cameraForCoordinateBounds(
         bounds,
         mapbox.MbxEdgeInsets(
-          top: padding,
-          left: padding,
-          bottom: padding + 100,
-          right: padding,
+          top: insets.top,
+          left: insets.left,
+          bottom: insets.bottom,
+          right: insets.right,
         ),
         null,
         null,

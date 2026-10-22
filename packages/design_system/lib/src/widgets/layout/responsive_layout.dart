@@ -110,8 +110,10 @@ class const AppSecondaryPage({
   required this.onBack,
   required this.child,
   this.maxWidth = AppLayout.pageMaxWidth,
+  this.subtitle,
 }) extends StatelessWidget {
   final String title;
+  final String? subtitle;
   final VoidCallback onBack;
   final Widget child;
   final double maxWidth;
@@ -126,7 +128,24 @@ class const AppSecondaryPage({
           onPressed: onBack,
           icon: const Icon(LucideIcons.arrow_left),
         ),
-        title: Text(title),
+        toolbarHeight: subtitle == null ? kToolbarHeight : 72,
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(title),
+            if (subtitle case final subtitle?) ...[
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
+        ),
         centerTitle: true,
       ),
       body: SafeArea(

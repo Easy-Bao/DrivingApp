@@ -8,7 +8,7 @@ class const FindingDriverNoDriverPanel({
   required this.fare,
   required this.destination,
   this.pickupAddress,
-  this.rideType,
+
   this.bookingReference,
   this.requestExpired = false,
   required this.onRetryPressed,
@@ -18,7 +18,7 @@ class const FindingDriverNoDriverPanel({
   final double fare;
   final Place destination;
   final String? pickupAddress;
-  final String? rideType;
+
   final String? bookingReference;
   final bool requestExpired;
   final VoidCallback onRetryPressed;
@@ -36,7 +36,7 @@ class const FindingDriverNoDriverPanel({
       statusColor: Theme.of(context).colorScheme.onSurface,
       destination: destination.name,
       pickupAddress: pickupAddress,
-      rideType: rideType,
+
       bookingReference: bookingReference,
       fare: fare,
       primaryAction: onRetryPressed,

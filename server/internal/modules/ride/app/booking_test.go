@@ -57,7 +57,7 @@ func TestServiceCreateWithDetailsUsesAuthoritativeMetrics(t *testing.T) {
 	if ride.ID != 41 || ride.DistanceKm != 4 || ride.DurationMinutes != 20 || ride.FareAmount != 600 {
 		t.Fatalf("created ride = %#v", ride)
 	}
-	if writer.created.RideType != "solo" || writer.created.Status != string(domain.RideRequested) {
+	if writer.created.Status != string(domain.RideRequested) {
 		t.Fatalf("persisted ride defaults = %#v", writer.created)
 	}
 	if published != event.RideOfferCreated {

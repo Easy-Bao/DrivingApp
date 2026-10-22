@@ -8,10 +8,10 @@ import (
 )
 
 type bidSessionPayload struct {
-	ID                int               `json:"id"`
-	RideID            *int              `json:"ride_id,omitempty"`
-	PassengerID       int               `json:"passenger_id"`
-	RideType          string            `json:"ride_type"`
+	ID          int  `json:"id"`
+	RideID      *int `json:"ride_id,omitempty"`
+	PassengerID int  `json:"passenger_id"`
+
 	PickupLatitude    float64           `json:"pickup_latitude"`
 	PickupLongitude   float64           `json:"pickup_longitude"`
 	PickupName        string            `json:"pickup_name"`
@@ -44,12 +44,12 @@ type bidOfferPayload struct {
 }
 
 type ridePayload struct {
-	ID                         int     `json:"id"`
-	PassengerID                int     `json:"passenger_id"`
-	DriverID                   *int    `json:"driver_id,omitempty"`
-	Status                     string  `json:"status"`
-	FareAmount                 int64   `json:"fare_amount"`
-	RideType                   string  `json:"ride_type,omitempty"`
+	ID          int    `json:"id"`
+	PassengerID int    `json:"passenger_id"`
+	DriverID    *int   `json:"driver_id,omitempty"`
+	Status      string `json:"status"`
+	FareAmount  int64  `json:"fare_amount"`
+
 	PickupLatitude             float64 `json:"pickup_latitude,omitempty"`
 	PickupLongitude            float64 `json:"pickup_longitude,omitempty"`
 	PickupName                 string  `json:"pickup_name,omitempty"`
@@ -103,10 +103,10 @@ func NewPayload(payload map[string]any) map[string]any {
 
 func newBidSessionPayload(session dispatchdomain.BidSession) bidSessionPayload {
 	return bidSessionPayload{
-		ID:                session.ID,
-		RideID:            session.RideID,
-		PassengerID:       session.PassengerID,
-		RideType:          session.RideType,
+		ID:          session.ID,
+		RideID:      session.RideID,
+		PassengerID: session.PassengerID,
+
 		PickupLatitude:    session.PickupLatitude,
 		PickupLongitude:   session.PickupLongitude,
 		PickupName:        session.PickupName,
@@ -155,12 +155,12 @@ func newBidOfferPayloads(offers []dispatchdomain.BidOffer) []bidOfferPayload {
 
 func newRidePayload(ride domain.Ride) ridePayload {
 	return ridePayload{
-		ID:                         ride.ID,
-		PassengerID:                ride.PassengerID,
-		DriverID:                   ride.DriverID,
-		Status:                     ride.Status,
-		FareAmount:                 ride.FareAmount,
-		RideType:                   ride.RideType,
+		ID:          ride.ID,
+		PassengerID: ride.PassengerID,
+		DriverID:    ride.DriverID,
+		Status:      ride.Status,
+		FareAmount:  ride.FareAmount,
+
 		PickupLatitude:             ride.PickupLatitude,
 		PickupLongitude:            ride.PickupLongitude,
 		PickupName:                 ride.PickupName,

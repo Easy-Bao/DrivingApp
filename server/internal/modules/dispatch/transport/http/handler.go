@@ -54,8 +54,8 @@ func (handler *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	session, err := handler.service.CreateSession(r.Context(), dispatchdomain.BidSession{
-		PassengerID:      passengerID,
-		RideType:         input.RideType,
+		PassengerID: passengerID,
+
 		PickupLatitude:   input.PickupLatitude,
 		PickupLongitude:  input.PickupLongitude,
 		PickupName:       input.PickupName,

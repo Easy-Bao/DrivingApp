@@ -22,7 +22,7 @@ func TestBiddingResponseMappersPreserveWireShapes(t *testing.T) {
 		{
 			name: "bid session with offer",
 			value: NewBidSessionResponse(domain.BidSession{
-				ID: 31, BookingReference: "701612345678901", PassengerID: 7, RideType: "solo",
+				ID: 31, BookingReference: "701612345678901", PassengerID: 7,
 				PickupLatitude: 6.7, PickupLongitude: 122.1, PickupName: "Pickup",
 				DropoffLatitude: 6.71, DropoffLongitude: 122.11, DropoffName: "Dropoff",
 				PassengerNote: "two bags", DistanceKm: 2, DurationMinutes: 10,
@@ -36,7 +36,7 @@ func TestBiddingResponseMappersPreserveWireShapes(t *testing.T) {
 					Status: "pending", CreatedAt: createdAt,
 				}},
 			}),
-			want: `{"id":31,"booking_reference":"701612345678901","passenger_id":7,"ride_type":"solo","pickup_latitude":6.7,"pickup_longitude":122.1,"pickup_name":"Pickup","dropoff_latitude":6.71,"dropoff_longitude":122.11,"dropoff_name":"Dropoff","passenger_note":"two bags","distance_km":2,"duration_minutes":10,"offered_fare":1200,"custom_fare":1500,"status":"open","target_driver_id":9,"expires_at":"2026-10-12T14:02:00Z","created_at":"2026-10-12T14:00:00Z","offers":[{"id":45,"session_id":31,"driver_id":9,"driver_name":"Ada Driver","plate_number":"ABC123","vehicle_type":"Motorcycle","proposed_fare":1300,"status":"pending","created_at":"2026-10-12T14:00:00Z"}]}`,
+			want: `{"id":31,"booking_reference":"701612345678901","passenger_id":7,"pickup_latitude":6.7,"pickup_longitude":122.1,"pickup_name":"Pickup","dropoff_latitude":6.71,"dropoff_longitude":122.11,"dropoff_name":"Dropoff","passenger_note":"two bags","distance_km":2,"duration_minutes":10,"offered_fare":1200,"custom_fare":1500,"status":"open","target_driver_id":9,"expires_at":"2026-10-12T14:02:00Z","created_at":"2026-10-12T14:00:00Z","offers":[{"id":45,"session_id":31,"driver_id":9,"driver_name":"Ada Driver","plate_number":"ABC123","vehicle_type":"Motorcycle","proposed_fare":1300,"status":"pending","created_at":"2026-10-12T14:00:00Z"}]}`,
 		},
 		{
 			name: "bid offer omits optional fields",
@@ -54,7 +54,7 @@ func TestBiddingResponseMappersPreserveWireShapes(t *testing.T) {
 				Ride:    ridedto.RideResponse{ID: 303, PassengerID: 7, Status: "accepted"},
 				RideID:  303,
 			},
-			want: `{"session":{"id":31,"passenger_id":7,"ride_type":"","pickup_latitude":0,"pickup_longitude":0,"pickup_name":"","dropoff_latitude":0,"dropoff_longitude":0,"dropoff_name":"","distance_km":0,"duration_minutes":0,"offered_fare":0,"status":"accepted","expires_at":"0001-01-01T00:00:00Z","created_at":"0001-01-01T00:00:00Z"},"offer":{"id":45,"session_id":31,"driver_id":9,"proposed_fare":0,"status":"accepted","created_at":"0001-01-01T00:00:00Z"},"ride":{"id":303,"passenger_id":7,"status":"accepted","fare_amount":0,"payment_status":"","cash_received_amount":0,"cash_change_amount":0,"cash_outcome":"","cash_settled":false,"commission_amount":0,"driver_payout_amount":0},"ride_id":303}`,
+			want: `{"session":{"id":31,"passenger_id":7,"pickup_latitude":0,"pickup_longitude":0,"pickup_name":"","dropoff_latitude":0,"dropoff_longitude":0,"dropoff_name":"","distance_km":0,"duration_minutes":0,"offered_fare":0,"status":"accepted","expires_at":"0001-01-01T00:00:00Z","created_at":"0001-01-01T00:00:00Z"},"offer":{"id":45,"session_id":31,"driver_id":9,"proposed_fare":0,"status":"accepted","created_at":"0001-01-01T00:00:00Z"},"ride":{"id":303,"passenger_id":7,"status":"accepted","fare_amount":0,"payment_status":"","cash_received_amount":0,"cash_change_amount":0,"cash_outcome":"","cash_settled":false,"commission_amount":0,"driver_payout_amount":0},"ride_id":303}`,
 		},
 	}
 

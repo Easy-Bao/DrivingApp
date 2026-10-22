@@ -106,9 +106,7 @@ func (service *Service) CreateSession(ctx context.Context, session dispatchdomai
 	}
 	session.DistanceKm = metrics.DistanceKm
 	session.DurationMinutes = metrics.DurationMinutes
-	if session.RideType == "" {
-		session.RideType = "solo"
-	}
+
 	minimumFare := service.calculateFare(metrics.DistanceKm, metrics.DurationMinutes)
 	if minimumFare <= 0 {
 		return dispatchdomain.BidSession{}, ridedomain.ErrInvalidTrip

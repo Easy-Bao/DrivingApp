@@ -30,7 +30,7 @@ class RideSelectionPage extends StatefulWidget {
     this.distance,
     this.duration,
     this.distanceKm,
-    this.rideType = 'solo',
+
     this.pickupAddress,
     this.pickupLatitude,
     this.pickupLongitude,
@@ -43,7 +43,7 @@ class RideSelectionPage extends StatefulWidget {
   final String? distance;
   final String? duration;
   final double? distanceKm;
-  final String rideType;
+
   final String? pickupAddress;
   final double? pickupLatitude;
   final double? pickupLongitude;
@@ -312,7 +312,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
       _customFareError = enteredFare == null
           ? 'Enter a valid custom offer.'
           : enteredFare < minimumFare
-          ? 'Custom offer cannot be lower than calculated minimum fare.'
+          ? 'Offer must be at least ${formatPesoAmount(minimumFare)}.'
           : null;
     });
   }
@@ -365,11 +365,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
 
     final bookingBloc = BlocProvider.of<BookingBloc>(context);
     if (bookingBloc.hasActiveBooking || bookingBloc.hasActiveDriverSearch) {
-      CustomToast.show(
-        context,
-        'A driver search is already in progress.',
-        isError: true,
-      );
       return;
     }
 
@@ -377,11 +372,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     final distanceKm = _effectiveDistanceKm;
     final durationMinutes = _effectiveDurationMinutes;
     if (pickup == null || distanceKm == null || durationMinutes == null) {
-      CustomToast.show(
-        context,
-        'Trip details are unavailable. Please try again.',
-        isError: true,
-      );
       return;
     }
     final note = _notesController.text.trim();
@@ -392,7 +382,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     bookingBloc.add(
       StartOpenBookingEvent(
         trip: BidSessionTrip(
-          rideType: widget.rideType,
           fare: totalFare,
           destination: widget.destination,
           distance: _distanceLabel,
@@ -410,7 +399,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
       await context.pushNamed(
         BookingRoutes.findingDriver,
         extra: {
-          'rideType': widget.rideType,
           'fare': totalFare,
           'baseFare': fare,
           'tipAmount': _selectedTipAmount,

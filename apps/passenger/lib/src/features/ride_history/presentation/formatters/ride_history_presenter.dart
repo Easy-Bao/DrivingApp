@@ -76,7 +76,6 @@ final class RideHistoryPresenter(
     final values = <String>[
       if (moment.hasTime && moment.dateTime != null)
         _formatClockTime(moment.dateTime!),
-      rideTypeLabel(ride),
     ];
     return values.where((value) => value.isNotEmpty).join(' · ');
   }
@@ -129,12 +128,6 @@ final class RideHistoryPresenter(
   double priceValue(String price) {
     final normalized = price.replaceAll(RegExp(r'[^0-9.\-]'), '');
     return double.tryParse(normalized) ?? 0;
-  }
-
-  String rideTypeLabel(RideHistory ride) {
-    final vehicleType = ride.vehicleType.trim().toLowerCase();
-    if (vehicleType.isEmpty) return '';
-    return vehicleType.contains('share') ? 'Shared ride' : 'Solo ride';
   }
 
   String destinationLabel(RideHistory ride) {

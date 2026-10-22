@@ -195,7 +195,7 @@ func TestCreateRideBuildsRequestedRide(t *testing.T) {
 		t.Fatalf("created ride id = %d, want 12", ride.ID)
 	}
 	if stub.created.PassengerID != 2 || stub.created.FareAmount != 2500 ||
-		stub.created.Status != "requested" || stub.created.RideType != "Solo Ride" {
+		stub.created.Status != "requested" {
 		t.Fatalf("persisted ride = %#v", stub.created)
 	}
 }

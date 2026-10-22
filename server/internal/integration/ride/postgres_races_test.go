@@ -782,7 +782,6 @@ func TestRideCreationRejectsPassengerWithOpenBidSession(t *testing.T) {
 		PassengerID: passengerID,
 		Status:      string(domain.RideRequested),
 		FareAmount:  2500,
-		RideType:    "Solo Ride",
 	})
 	if !errors.Is(err, domain.ErrActiveBooking) {
 		t.Fatalf("CreateRide() error = %v, want %v", err, domain.ErrActiveBooking)

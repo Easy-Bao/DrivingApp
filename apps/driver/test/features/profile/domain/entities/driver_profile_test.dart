@@ -39,7 +39,7 @@ void main() {
         'avatar_path': '/tmp/passenger.png',
         'avatar_url': '/api/v1/passengers/7/avatar',
         'avatar_data': 'cGhvdG8=',
-        'preferredRideType': 'solo',
+
         'rating': double.nan,
         'averageRating': 5,
         'isOnline': false,
@@ -54,7 +54,7 @@ void main() {
     expect(profile.avatarPath, '/tmp/passenger.png');
     expect(profile.avatarUrl, '/api/v1/passengers/7/avatar');
     expect(profile.avatarData, 'cGhvdG8=');
-    expect(profile.preferredRideType, 'solo');
+
     expect(profile.rating, 5);
     expect(profile.isOnline, isFalse);
   });

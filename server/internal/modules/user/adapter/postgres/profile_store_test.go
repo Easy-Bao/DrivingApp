@@ -68,19 +68,18 @@ func TestProfileMappingsPreserveAccountContactDetails(t *testing.T) {
 	}
 
 	passenger := passengerProfileFromPostgres(account, databasepostgres.PassengerProfile{
-		ID:                23,
-		UserID:            11,
-		Name:              "Passenger",
-		Address:           pgtype.Text{String: "Makati", Valid: true},
-		Gender:            domain.DefaultGender,
-		AvatarStorageKey:  pgtype.Text{String: "db/v1/avatar", Valid: true},
-		PreferredRideType: pgtype.Text{String: "solo-ride", Valid: true},
+		ID:               23,
+		UserID:           11,
+		Name:             "Passenger",
+		Address:          pgtype.Text{String: "Makati", Valid: true},
+		Gender:           domain.DefaultGender,
+		AvatarStorageKey: pgtype.Text{String: "db/v1/avatar", Valid: true},
 	})
 	invalidRole := passenger.Role != "passenger"
 	invalidAddress := passenger.Address != "Makati"
 	missingAvatarURL := passenger.AvatarURL == ""
-	invalidRideType := passenger.PreferredRideType != "solo-ride"
-	if invalidRole || invalidAddress || missingAvatarURL || invalidRideType {
+
+	if invalidRole || invalidAddress || missingAvatarURL {
 		t.Fatalf("passenger profile = %+v", passenger)
 	}
 }

@@ -1,7 +1,6 @@
 package http
 
 type BidSessionRequest struct {
-	RideType         string  `json:"ride_type"`
 	PickupLatitude   float64 `json:"pickup_latitude"`
 	PickupLongitude  float64 `json:"pickup_longitude"`
 	PickupName       string  `json:"pickup_name"`

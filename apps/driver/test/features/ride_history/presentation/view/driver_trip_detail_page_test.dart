@@ -27,7 +27,7 @@ void main() {
                 .toIso8601String(),
             'pickup_name': 'Mountain View',
             'dropoff_name': 'Aikido of Mountain View',
-            'ride_type': 'solo',
+
             'fare_amount': 2973,
             'distance_km': 1.8,
             'duration_minutes': 6,
@@ -72,13 +72,8 @@ void main() {
       find.text('Friendly passenger and ready at pickup.'),
       findsOneWidget,
     );
-    expect(find.text('Ride type'), findsOneWidget);
-    expect(find.text('Solo'), findsOneWidget);
-    expect(
-      tester.widget<Text>(find.text('Ride type')).textAlign,
-      TextAlign.center,
-    );
-    expect(tester.widget<Text>(find.text('Solo')).textAlign, TextAlign.center);
+    expect(find.text('Ride type'), findsNothing);
+    expect(find.text('Solo'), findsNothing);
     expect(find.text('RIDE TYPE'), findsNothing);
     expect(find.text('TOTAL FARE'), findsNothing);
     expect(tester.takeException(), isNull);

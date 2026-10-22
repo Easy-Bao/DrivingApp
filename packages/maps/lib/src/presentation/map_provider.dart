@@ -330,12 +330,14 @@ class MapProvider._() {
     double lat,
     double lng, {
     double? zoom,
+    EdgeInsets? viewportPadding,
     bool animate = true,
   }) => MapCameraService.moveCamera(
     controller,
     lat,
     lng,
     zoom: zoom,
+    viewportPadding: viewportPadding,
     animate: animate,
   );
 
@@ -352,11 +354,13 @@ class MapProvider._() {
     AppMapController controller,
     List<LatLng> points, {
     double padding = 80.0,
+    EdgeInsets? viewportPadding,
     double? maxZoom,
   }) => MapCameraService.fitBounds(
     controller,
     points,
     padding: padding,
+    viewportPadding: viewportPadding,
     maxZoom: maxZoom,
   );
 

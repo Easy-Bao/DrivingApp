@@ -201,10 +201,10 @@ func (repository *Store) AcceptOffer(
 	driverID := offerValue.DriverID
 	acceptedRide, err := domain.NewAcceptedRide(
 		domain.Ride{
-			PassengerID:      sessionValue.PassengerID,
-			DriverID:         &driverID,
-			FareAmount:       offerValue.ProposedFareAmount,
-			RideType:         sessionValue.RideType,
+			PassengerID: sessionValue.PassengerID,
+			DriverID:    &driverID,
+			FareAmount:  offerValue.ProposedFareAmount,
+
 			PickupLatitude:   sessionValue.PickupLatitude,
 			PickupLongitude:  sessionValue.PickupLongitude,
 			PickupName:       sessionValue.PickupName,
@@ -233,10 +233,10 @@ func (repository *Store) AcceptOffer(
 		return dispatchapp.OfferAcceptance{}, err
 	}
 	createdRide, err := transactionQueries.CreateAcceptedRide(ctx, databasepostgres.CreateAcceptedRideParams{
-		PassengerID:      session.PassengerID,
-		DriverID:         pgtype.Int4{Int32: dbAcceptedDriverID, Valid: true},
-		FareAmount:       acceptedRide.FareAmount,
-		RideType:         acceptedRide.RideType,
+		PassengerID: session.PassengerID,
+		DriverID:    pgtype.Int4{Int32: dbAcceptedDriverID, Valid: true},
+		FareAmount:  acceptedRide.FareAmount,
+
 		PickupLatitude:   rideFloat(acceptedRide.PickupLatitude),
 		PickupLongitude:  rideFloat(acceptedRide.PickupLongitude),
 		PickupName:       rideText(acceptedRide.PickupName),

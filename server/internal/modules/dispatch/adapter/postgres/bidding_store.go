@@ -83,8 +83,8 @@ func (repository *Store) CreateSession(
 	}
 
 	created, err := transactionQueries.CreateBidSession(ctx, databasepostgres.CreateBidSessionParams{
-		PassengerID:      passengerID,
-		RideType:         value.RideType,
+		PassengerID: passengerID,
+
 		PickupLatitude:   value.PickupLatitude,
 		PickupLongitude:  value.PickupLongitude,
 		PickupName:       value.PickupName,

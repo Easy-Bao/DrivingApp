@@ -74,7 +74,6 @@ final class ProfileRepositoryImpl implements ProfileRepository {
         avatarPath: cached.avatarPath,
         avatarUrl: remote.avatarUrl,
         avatarData: avatarData,
-        preferredRideType: remote.preferredRideType,
       );
       await _cache(profile);
       return Ok(profile);
@@ -147,7 +146,6 @@ final class ProfileRepositoryImpl implements ProfileRepository {
         avatarPath: normalizedAvatarPath,
         avatarUrl: remote.avatarUrl,
         avatarData: avatarData,
-        preferredRideType: remote.preferredRideType,
       );
       await _cache(profile);
       return Ok(profile);

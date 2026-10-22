@@ -2,26 +2,25 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/presentation/formatters/search_destination_formatters.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/search_destination_results.dart';
 
 class const SearchDestinationPage({
   super.key,
-  this.preselectedRideType,
+
   this.pickupAddress,
   this.autofocusSearch = false,
   this.returnToMapPin = false,
 }) extends StatefulWidget {
   static const searchDebounceDuration = Duration(milliseconds: 300);
 
-  final String? preselectedRideType;
   final String? pickupAddress;
   final bool autofocusSearch;
   final bool returnToMapPin;
@@ -451,9 +450,6 @@ class _SearchDestinationPageState()
     _isOpeningRideSelection = true;
     _clearSearchAfterSelection();
     final queryParams = <String, String>{};
-    if (widget.preselectedRideType != null) {
-      queryParams['rideType'] = widget.preselectedRideType!;
-    }
     if (widget.pickupAddress != null) {
       queryParams['pickupAddress'] = widget.pickupAddress!;
     }

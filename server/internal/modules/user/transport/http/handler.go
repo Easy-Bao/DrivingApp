@@ -102,9 +102,7 @@ func applyProfileUpdate(current domain.Profile, input UpdateProfileRequest) doma
 	if input.Gender != nil {
 		current.Gender = *input.Gender
 	}
-	if input.PreferredRideType != nil {
-		current.PreferredRideType = *input.PreferredRideType
-	}
+
 	if input.VehicleType != nil {
 		current.VehicleType = *input.VehicleType
 	}

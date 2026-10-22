@@ -605,15 +605,12 @@ func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
 }
 
 func domainRide(passengerID int, input CreateRideRequest) domain.Ride {
-	rideType := input.RideType
-	if rideType == "" {
-		rideType = "solo"
-	}
+
 	return domain.Ride{
-		PassengerID:      passengerID,
-		FareAmount:       input.FareAmount,
-		Status:           "requested",
-		RideType:         rideType,
+		PassengerID: passengerID,
+		FareAmount:  input.FareAmount,
+		Status:      "requested",
+
 		PickupLatitude:   input.PickupLatitude,
 		PickupLongitude:  input.PickupLongitude,
 		PickupName:       input.PickupName,

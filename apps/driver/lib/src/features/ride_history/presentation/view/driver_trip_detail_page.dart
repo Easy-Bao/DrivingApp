@@ -153,7 +153,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
     final fromName = valueAsString(widget.trip['pickup_name']) ?? 'Pickup';
     final toName = valueAsString(widget.trip['dropoff_name']) ?? 'Drop-off';
     final fare = fareInPesos(widget.trip);
-    final rideType = sentenceCase(widget.trip['ride_type'], 'Solo ride');
+
     final tripId = valueAsString(widget.trip['id']) ?? '';
     final dateValue =
         valueAsString(widget.trip['completed_at']) ??
@@ -245,7 +245,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
                   _buildTripSummaryCard(
                     fromName: fromName,
                     toName: toName,
-                    rideType: rideType,
+
                     fare: fare,
                   ),
                   const SizedBox(height: 20),
@@ -344,7 +344,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
   Widget _buildTripSummaryCard({
     required String fromName,
     required String toName,
-    required String rideType,
+
     required double? fare,
   }) {
     return Card(
@@ -399,15 +399,6 @@ class _TripDetailPageState extends State<TripDetailPage> {
             ),
             const SizedBox(height: 14),
             _buildRouteTimeline(fromName: fromName, toName: toName),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 14),
-              child: Divider(height: 1),
-            ),
-            Row(
-              children: [
-                Expanded(child: _buildTripMetric('Ride type', rideType)),
-              ],
-            ),
           ],
         ),
       ),
@@ -486,44 +477,6 @@ class _TripDetailPageState extends State<TripDetailPage> {
             fontSize: 14,
             fontWeight: FontWeight.w700,
             color: context.colorScheme.onSurface,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTripMetric(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(
-          width: double.infinity,
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: context.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        const SizedBox(height: 3),
-        SizedBox(
-          width: double.infinity,
-          child: Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: context.colorScheme.onSurface,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
           ),
         ),
       ],

@@ -38,7 +38,6 @@ void main() {
 
     final result = await repository.createSession(
       const BookingSessionRequest(
-        rideType: 'solo',
         pickupLatitude: 7.828,
         pickupLongitude: 123.434,
         pickupName: 'Mountain View',
@@ -77,7 +76,6 @@ void main() {
     final BookingRepository contract = repository;
     final result = await contract.createSessionResult(
       const BookingSessionRequest(
-        rideType: 'solo',
         pickupLatitude: 7.828,
         pickupLongitude: 123.434,
         pickupName: 'Mountain View',
@@ -115,7 +113,6 @@ void main() {
 
       final result = await repository.createSession(
         const BookingSessionRequest(
-          rideType: 'solo',
           pickupLatitude: 7.828,
           pickupLongitude: 123.434,
           pickupName: 'Mountain View',

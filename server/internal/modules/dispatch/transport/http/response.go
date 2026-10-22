@@ -8,11 +8,11 @@ import (
 )
 
 type BidSessionResponse struct {
-	ID                int                `json:"id"`
-	BookingReference  string             `json:"booking_reference,omitempty"`
-	RideID            *int               `json:"ride_id,omitempty"`
-	PassengerID       int                `json:"passenger_id"`
-	RideType          string             `json:"ride_type"`
+	ID               int    `json:"id"`
+	BookingReference string `json:"booking_reference,omitempty"`
+	RideID           *int   `json:"ride_id,omitempty"`
+	PassengerID      int    `json:"passenger_id"`
+
 	PickupLatitude    float64            `json:"pickup_latitude"`
 	PickupLongitude   float64            `json:"pickup_longitude"`
 	PickupName        string             `json:"pickup_name"`
@@ -53,11 +53,11 @@ type AcceptedOfferResponse struct {
 
 func NewBidSessionResponse(session domain.BidSession) BidSessionResponse {
 	return BidSessionResponse{
-		ID:                session.ID,
-		BookingReference:  session.BookingReference,
-		RideID:            session.RideID,
-		PassengerID:       session.PassengerID,
-		RideType:          session.RideType,
+		ID:               session.ID,
+		BookingReference: session.BookingReference,
+		RideID:           session.RideID,
+		PassengerID:      session.PassengerID,
+
 		PickupLatitude:    session.PickupLatitude,
 		PickupLongitude:   session.PickupLongitude,
 		PickupName:        session.PickupName,

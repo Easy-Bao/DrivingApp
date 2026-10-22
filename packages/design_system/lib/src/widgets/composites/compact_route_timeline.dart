@@ -36,7 +36,7 @@ class const CompactRouteTimeline({
               Expanded(
                 child: _RouteStopRow(
                   icon: LucideIcons.map_pin,
-                  color: colors.primary,
+                  color: colors.onSurface,
                   label: pickupLabel,
                   value: pickup,
                   layoutScale: layoutScale,
@@ -45,7 +45,7 @@ class const CompactRouteTimeline({
               Expanded(
                 child: _RouteStopRow(
                   icon: LucideIcons.navigation,
-                  color: colors.tertiary,
+                  color: colors.onSurface,
                   label: dropoffLabel,
                   value: dropoff,
                   layoutScale: layoutScale,

@@ -34,18 +34,17 @@ func (q *Queries) CreateDriverProfile(ctx context.Context, arg CreateDriverProfi
 }
 
 const createPassengerProfile = `-- name: CreatePassengerProfile :exec
-INSERT INTO passenger_profiles (user_id, name, preferred_ride_type)
-VALUES ($1, $2, $3)
+INSERT INTO passenger_profiles (user_id, name)
+VALUES ($1, $2)
 `
 
 type CreatePassengerProfileParams struct {
-	UserID            int32       `db:"user_id"`
-	Name              string      `db:"name"`
-	PreferredRideType pgtype.Text `db:"preferred_ride_type"`
+	UserID int32  `db:"user_id"`
+	Name   string `db:"name"`
 }
 
 func (q *Queries) CreatePassengerProfile(ctx context.Context, arg CreatePassengerProfileParams) error {
-	_, err := q.db.Exec(ctx, createPassengerProfile, arg.UserID, arg.Name, arg.PreferredRideType)
+	_, err := q.db.Exec(ctx, createPassengerProfile, arg.UserID, arg.Name)
 	return err
 }
 

@@ -152,14 +152,14 @@ func (q *Queries) CreateBidOffer(ctx context.Context, arg CreateBidOfferParams) 
 
 const createBidSession = `-- name: CreateBidSession :one
 INSERT INTO bid_sessions (
-    passenger_id, ride_type, pickup_latitude, pickup_longitude, pickup_name,
+    passenger_id, pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name, passenger_note,
     distance_km, duration_minutes, offered_fare, status,
     target_driver_id, expires_at, created_at
 )
 VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-    COALESCE($16::timestamptz, CURRENT_TIMESTAMP)
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+    COALESCE($15::timestamptz, CURRENT_TIMESTAMP)
 )
 RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
@@ -169,7 +169,6 @@ RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, picku
 
 type CreateBidSessionParams struct {
 	PassengerID      int32              `db:"passenger_id"`
-	RideType         string             `db:"ride_type"`
 	PickupLatitude   float64            `db:"pickup_latitude"`
 	PickupLongitude  float64            `db:"pickup_longitude"`
 	PickupName       string             `db:"pickup_name"`
@@ -189,7 +188,6 @@ type CreateBidSessionParams struct {
 func (q *Queries) CreateBidSession(ctx context.Context, arg CreateBidSessionParams) (BidSession, error) {
 	row := q.db.QueryRow(ctx, createBidSession,
 		arg.PassengerID,
-		arg.RideType,
 		arg.PickupLatitude,
 		arg.PickupLongitude,
 		arg.PickupName,

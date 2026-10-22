@@ -20,18 +20,12 @@ class const SafetyReportButton({
     return IconButton(
       onPressed: canReport
           ? () async {
-              final submitted = await showSafetyReportSheet(
+              await showSafetyReportSheet(
                 context,
                 rideId: rideId!,
                 bookingReference: bookingReference,
                 trackRepository: trackRepository,
               );
-              if (submitted && context.mounted) {
-                CustomToast.show(
-                  context,
-                  'Report submitted and linked to this ride.',
-                );
-              }
             }
           : null,
       tooltip: 'Report a safety issue',

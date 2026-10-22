@@ -41,6 +41,7 @@ class AppRouter extends Module {
     StatefulShellModularRoute(
       builder: (context, GoRouterState state, navigationShell) => ShellLayout(
         inboxCubit: Modular.get<InboxCubit>(),
+        bookingStates: Modular.get<BookingBloc>().stream,
         realtimeClient: Modular.get<RealtimeWebSocketClient>(),
         lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
         navigationCoordinator: Modular.get<TabNavigationCoordinator>(),

@@ -264,11 +264,6 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       final position = await LocationService.getCurrentPosition();
       if (!mounted) return;
       if (position == null) {
-        CustomToast.show(
-          this.context,
-          'Your current location is unavailable. Enable location and try again.',
-          isError: true,
-        );
         return;
       }
       await rideCubit.arriveAtPickup(
@@ -283,12 +278,6 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       );
       if (!mounted) return;
       if (!rideCubit.state.isWaitingAtPickup) {
-        CustomToast.show(
-          this.context,
-          rideCubit.state.failureMessage ??
-              'Unable to confirm arrival. Please try again.',
-          isError: true,
-        );
         return;
       }
       this.context.pushReplacementNamed(
@@ -302,13 +291,6 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
         },
       );
     } catch (error) {
-      if (mounted) {
-        CustomToast.show(
-          this.context,
-          rideCubit.state.failureMessage ?? ErrorHandler.getErrorMessage(error),
-          isError: true,
-        );
-      }
       debugPrint('Unable to confirm driver arrival: $error');
     } finally {
       if (mounted) {
@@ -332,16 +314,6 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       if (!mounted) return;
       if (canceled) {
         context.pop();
-      } else {
-        final failureMessage = BlocProvider.of<RideFlowCubit>(context)
-            .state
-            .failureMessage;
-        CustomToast.show(
-          context,
-          failureMessage ??
-              'The ride could not be cancelled. Please try again.',
-          isError: true,
-        );
       }
     } finally {
       if (mounted) setState(() => _isCancellingRide = false);
@@ -352,17 +324,6 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
     if (!mounted) return false;
     final stopped = await BlocProvider.of<RideFlowCubit>(context)
         .emergencyStop(reason: reason, details: details);
-    if (!stopped && mounted) {
-      final failureMessage = BlocProvider.of<RideFlowCubit>(context)
-          .state
-          .failureMessage;
-      CustomToast.show(
-        context,
-        failureMessage ??
-            'The ride could not be ended for safety. Please try again.',
-        isError: true,
-      );
-    }
     return stopped;
   }
 

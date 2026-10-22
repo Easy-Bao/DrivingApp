@@ -155,7 +155,6 @@ void main() {
   );
 
   const testTrip = BidSessionTrip(
-    rideType: 'Solo Ride',
     fare: 100,
     destination: Place(
       id: 'destination-1',
@@ -213,7 +212,6 @@ void main() {
       'replays the saved create request with its original idempotency key',
       () async {
         const request = BookingSessionRequest(
-          rideType: 'Solo Ride',
           pickupLatitude: 7.828,
           pickupLongitude: 123.434,
           pickupName: 'Pickup address',
@@ -561,7 +559,6 @@ void main() {
       score: 1,
     );
     const pickupTrip = BidSessionTrip(
-      rideType: 'Solo Ride',
       fare: 100,
       destination: Place(
         id: 'destination-1',

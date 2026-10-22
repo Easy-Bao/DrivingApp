@@ -78,10 +78,6 @@ class _ResetPasswordContentState extends State<_ResetPasswordContent> {
         child: BlocConsumer<ResetPasswordBloc, ResetPasswordState>(
           listener: (context, state) {
             if (state is ResetPasswordSuccess) {
-              CustomToast.show(
-                context,
-                'Password updated. Sign in with your new password.',
-              );
               context.goNamed(AuthRoutes.signin);
             }
           },

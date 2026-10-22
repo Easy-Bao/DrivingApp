@@ -6,7 +6,6 @@ import 'package:passenger/src/features/booking/presentation/bloc/booking/booking
 
 void main() {
   const trip = BidSessionTrip(
-    rideType: 'Short Hop',
     fare: 350,
     destination: Place(
       id: 'destination',

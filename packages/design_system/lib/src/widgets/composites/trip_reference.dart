@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
-import 'package:design_system/src/widgets/feedback/toast.dart';
 
 class const TripReference({
   super.key,
@@ -51,8 +50,6 @@ class const TripReference({
               ),
               onPressed: () async {
                 await Clipboard.setData(ClipboardData(text: normalizedId));
-                if (!context.mounted) return;
-                CustomToast.show(context, '$label copied');
               },
               icon: Icon(
                 Icons.copy_rounded,

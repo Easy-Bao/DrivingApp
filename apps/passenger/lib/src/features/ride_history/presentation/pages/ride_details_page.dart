@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart' hide Route;
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:maps/maps.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
@@ -14,6 +12,7 @@ import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
+import 'package:passenger/src/features/ride_history/presentation/widgets/ride_details_map.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_rating_prompt.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -49,7 +48,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   bool _showLostFoundChat = false;
   bool _canContactCounterparty = false;
   String _passengerId = '';
-  Future<Route?>? _routeFuture;
 
   String? get _rideId =>
       widget.ride?.id ?? widget.initialRide?.id ?? widget.rideId;
@@ -59,28 +57,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   @override
   void initState() {
     super.initState();
-    final ride = widget.ride;
-    if (ride != null) {
-      _routeFuture = MapProvider.getRoute(
-        ride.pickupLat,
-        ride.pickupLng,
-        ride.destLat,
-        ride.destLng,
-      );
-    } else {
-      final snapshot = widget.initialRide;
-      if (snapshot?.pickupLatitude != null &&
-          snapshot?.pickupLongitude != null &&
-          snapshot?.dropoffLatitude != null &&
-          snapshot?.dropoffLongitude != null) {
-        _routeFuture = MapProvider.getRoute(
-          snapshot!.pickupLatitude!,
-          snapshot.pickupLongitude!,
-          snapshot.dropoffLatitude!,
-          snapshot.dropoffLongitude!,
-        );
-      }
-    }
     _detailsCubit =
         widget.detailsCubit ??
         RideDetailsCubit(
@@ -169,35 +145,14 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
       if (driverProfile == null ||
           !driverProfile.contactAllowed ||
           driverProfile.phone.trim().isEmpty) {
-        if (mounted) {
-          CustomToast.show(
-            context,
-            'Driver contact is currently unavailable.',
-            isError: true,
-          );
-        }
         return;
       }
       final phone = driverProfile.phone.trim();
       final uri = Uri.parse('tel:$phone');
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
-      } else if (mounted) {
-        CustomToast.show(
-          context,
-          'Unable to launch phone dialer.',
-          isError: true,
-        );
       }
-    } catch (_) {
-      if (mounted) {
-        CustomToast.show(
-          context,
-          'Unable to reach driver at this time.',
-          isError: true,
-        );
-      }
-    }
+    } catch (_) {}
   }
 
   Widget _buildReceiptSummary(
@@ -272,82 +227,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     return parts[0][0].toUpperCase();
   }
 
-  Future<void> _onMapCreated(AppMapController controller) async {
-    final ride = widget.ride;
-    final snapshot = _snapshot;
-    final pickupLatitude = ride?.pickupLat ?? snapshot?.pickupLatitude;
-    final pickupLongitude = ride?.pickupLng ?? snapshot?.pickupLongitude;
-    final dropoffLatitude = ride?.destLat ?? snapshot?.dropoffLatitude;
-    final dropoffLongitude = ride?.destLng ?? snapshot?.dropoffLongitude;
-    if (pickupLatitude == null ||
-        pickupLongitude == null ||
-        dropoffLatitude == null ||
-        dropoffLongitude == null) {
-      return;
-    }
-    final routeColor = context.colorScheme.primary;
-
-    try {
-      unawaited(
-        MapProvider.fitBounds(controller, [
-          LatLng(pickupLatitude, pickupLongitude),
-          LatLng(dropoffLatitude, dropoffLongitude),
-        ], padding: 44.0),
-      );
-
-      unawaited(
-        Future.wait([
-          MapProvider.addMarker(
-            controller,
-            pickupLatitude,
-            pickupLongitude,
-            isOrigin: true,
-          ),
-          MapProvider.addMarker(
-            controller,
-            dropoffLatitude,
-            dropoffLongitude,
-            isOrigin: false,
-          ),
-        ]),
-      );
-
-      final initialBuffer = Float64List.fromList([
-        pickupLongitude,
-        pickupLatitude,
-        dropoffLongitude,
-        dropoffLatitude,
-      ]);
-      await MapProvider.addPolylineBuffer(
-        controller,
-        initialBuffer,
-        color: routeColor.withValues(alpha: 0.35),
-        width: 3.5,
-      );
-
-      final route =
-          await (_routeFuture ??
-              MapProvider.getRoute(
-                pickupLatitude,
-                pickupLongitude,
-                dropoffLatitude,
-                dropoffLongitude,
-              ));
-
-      if (!mounted) return;
-      if (route != null && route.hasGeometry) {
-        await MapProvider.addPolylineBuffer(
-          controller,
-          route.coordinateBuffer,
-          color: routeColor,
-          width: 4.5,
-        );
-      }
-    } catch (error) {
-      debugPrint('RideDetailsPage._onMapCreated failed: $error');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final ride = widget.ride;
@@ -363,13 +242,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     final pickupLongitude = ride?.pickupLng ?? snapshot?.pickupLongitude;
     final dropoffLatitude = ride?.destLat ?? snapshot?.dropoffLatitude;
     final dropoffLongitude = ride?.destLng ?? snapshot?.dropoffLongitude;
-    final centerLat = pickupLatitude != null && dropoffLatitude != null
-        ? (pickupLatitude + dropoffLatitude) / 2
-        : 7.8300;
-    final centerLng = pickupLongitude != null && dropoffLongitude != null
-        ? (pickupLongitude + dropoffLongitude) / 2
-        : 123.4400;
-
     final status = (snapshot?.status ?? ride?.status ?? 'unknown')
         .toLowerCase();
     final isCompleted = status == 'completed';
@@ -393,25 +265,18 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
 
     return AppSecondaryPage(
       title: isCompleted ? 'Trip receipt' : 'Ride details',
+      subtitle:
+          (snapshot?.bookingReference ?? ride?.bookingReference ?? '')
+              .trim()
+              .isEmpty
+          ? null
+          : 'Booking ID - ${snapshot?.bookingReference ?? ride?.bookingReference}',
       onBack: () => context.pop(),
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Column(
           children: [
-            if (rideId != null) ...[
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TripReference(
-                  id:
-                      snapshot?.bookingReference ??
-                      widget.ride?.bookingReference ??
-                      '',
-                  label: 'Booking ID',
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
             if (isCompleted) ...[
               _buildReceiptSummary(context, snapshot, fare),
               if (snapshot?.driverId?.trim().isNotEmpty == true &&
@@ -454,12 +319,17 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(AppRadius.lg - 1),
-                  child: MapProvider.buildMapView(
-                    latitude: centerLat,
-                    longitude: centerLng,
-                    zoom: 13.0,
-                    interactive: false,
-                    onMapCreated: _onMapCreated,
+                  child: RideDetailsMap(
+                    key: ValueKey((
+                      pickupLatitude,
+                      pickupLongitude,
+                      dropoffLatitude,
+                      dropoffLongitude,
+                    )),
+                    pickupLatitude: pickupLatitude,
+                    pickupLongitude: pickupLongitude,
+                    dropoffLatitude: dropoffLatitude,
+                    dropoffLongitude: dropoffLongitude,
                   ),
                 ),
               ),
@@ -488,7 +358,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: context.colorScheme.primaryContainer,
+                      color: context.colorScheme.surfaceContainerHighest,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
@@ -499,7 +369,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: context.colorScheme.onPrimaryContainer,
+                        color: context.colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -682,8 +552,8 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                         ride?.destination ??
                         snapshot?.dropoffName ??
                         'Destination Location',
-                    pickupLabel: 'Pickup',
-                    dropoffLabel: 'Drop Off',
+                    pickupLabel: 'Pick up',
+                    dropoffLabel: 'Drop off',
                   ),
                 ],
               ),

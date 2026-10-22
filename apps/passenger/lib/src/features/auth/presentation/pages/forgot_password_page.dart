@@ -77,10 +77,6 @@ class _ForgotPasswordPageContentState
         child: BlocConsumer<ForgotPasswordBloc, ForgotPasswordState>(
           listener: (context, state) {
             if (state is ForgotPasswordSuccess) {
-              CustomToast.show(
-                context,
-                'Reset link sent to ${_emailController.text.trim()}',
-              );
               context.pop();
             } else if (state is ForgotPasswordFailure) {
               setState(() => _submissionError = state.errorMessage);

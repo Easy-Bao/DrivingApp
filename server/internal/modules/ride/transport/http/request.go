@@ -1,8 +1,8 @@
 package http
 
 type CreateRideRequest struct {
-	FareAmount       int64   `json:"fare_amount"`
-	RideType         string  `json:"ride_type"`
+	FareAmount int64 `json:"fare_amount"`
+
 	PickupLatitude   float64 `json:"pickup_latitude"`
 	PickupLongitude  float64 `json:"pickup_longitude"`
 	PickupName       string  `json:"pickup_name"`

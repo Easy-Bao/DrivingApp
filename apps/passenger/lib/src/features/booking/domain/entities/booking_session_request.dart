@@ -2,7 +2,6 @@ import 'package:core_domain/core_domain.dart';
 import 'package:foundation/foundation.dart';
 
 class const BookingSessionRequest({
-  required this.rideType,
   required this.pickupLatitude,
   required this.pickupLongitude,
   required this.pickupName,
@@ -16,7 +15,6 @@ class const BookingSessionRequest({
   this.targetDriverId,
   this.idempotencyKey,
 }) {
-  final String rideType;
   final double pickupLatitude;
   final double pickupLongitude;
   final String pickupName;
@@ -32,7 +30,6 @@ class const BookingSessionRequest({
 
   BookingSessionRequest copyWith({String? idempotencyKey}) =>
       BookingSessionRequest(
-        rideType: rideType,
         pickupLatitude: pickupLatitude,
         pickupLongitude: pickupLongitude,
         pickupName: pickupName,
@@ -48,7 +45,6 @@ class const BookingSessionRequest({
       );
 
   Map<String, dynamic> toJson() => {
-    'ride_type': rideType,
     'pickup_latitude': pickupLatitude,
     'pickup_longitude': pickupLongitude,
     'pickup_name': pickupName,
@@ -64,7 +60,6 @@ class const BookingSessionRequest({
 
   factory BookingSessionRequest.fromJson(Map<String, dynamic> json) =>
       BookingSessionRequest(
-        rideType: SafeParse.toStringValue(json['ride_type']).trim(),
         pickupLatitude: SafeParse.toDouble(json['pickup_latitude']),
         pickupLongitude: SafeParse.toDouble(json['pickup_longitude']),
         pickupName: SafeParse.toStringValue(json['pickup_name']).trim(),
@@ -89,7 +84,6 @@ class const BookingSessionRequest({
   FareCents get customFare => FareCents(customFareAmount);
 
   bool get isValid =>
-      rideType.trim().isNotEmpty &&
       isValidRideCoordinates(pickupCoordinates) &&
       isValidRideCoordinates(dropoffCoordinates) &&
       routeDistance.value.isFinite &&

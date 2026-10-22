@@ -168,13 +168,13 @@ func fromPostgresRide(item databasepostgres.Ride) (domain.Ride, error) {
 		driverID = &value
 	}
 	return domain.Ride{
-		ID:                         int(item.ID),
-		BookingReference:           item.BookingReference,
-		PassengerID:                int(item.PassengerID),
-		DriverID:                   driverID,
-		Status:                     item.Status,
-		FareAmount:                 item.FareAmount,
-		RideType:                   item.RideType,
+		ID:               int(item.ID),
+		BookingReference: item.BookingReference,
+		PassengerID:      int(item.PassengerID),
+		DriverID:         driverID,
+		Status:           item.Status,
+		FareAmount:       item.FareAmount,
+
 		PickupLatitude:             rideFloatValue(item.PickupLatitude),
 		PickupLongitude:            rideFloatValue(item.PickupLongitude),
 		PickupName:                 rideTextValue(item.PickupName),

@@ -85,14 +85,9 @@ func (repository *UserRepository) Create(ctx context.Context, account domain.Use
 			PlateNumber: account.PlateNumber,
 		})
 	case domain.Passenger:
-		preferredRideType := account.PreferredRideType
-		if preferredRideType == "" {
-			preferredRideType = "solo-ride"
-		}
 		err = transactionQueries.CreatePassengerProfile(ctx, databasepostgres.CreatePassengerProfileParams{
-			UserID:            created.ID,
-			Name:              account.Name,
-			PreferredRideType: toPostgresText(preferredRideType),
+			UserID: created.ID,
+			Name:   account.Name,
 		})
 	}
 	if err != nil {
@@ -107,7 +102,6 @@ func (repository *UserRepository) Create(ctx context.Context, account domain.Use
 	result.Name = account.Name
 	result.VehicleType = account.VehicleType
 	result.PlateNumber = account.PlateNumber
-	result.PreferredRideType = account.PreferredRideType
 	return result, nil
 }
 
@@ -263,7 +257,6 @@ func (repository *UserRepository) withProfile(ctx context.Context, account domai
 			return domain.User{}, fmt.Errorf("find passenger profile for user %d: %w", account.ID, err)
 		}
 		account.Name = profile.Name
-		account.PreferredRideType = textValue(profile.PreferredRideType)
 	default:
 		return domain.User{}, domain.ErrInvalidRole
 	}

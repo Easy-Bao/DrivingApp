@@ -344,7 +344,6 @@ extension _BookingBlocSessionCreation on BookingBloc {
       longitude: request.dropoffLongitude,
     );
     _activeTrip = BidSessionTrip(
-      rideType: request.rideType,
       fare: request.customFareAmount / 100,
       destination: destination,
       distance: '${request.distanceKm.toStringAsFixed(1)} km',
@@ -368,7 +367,6 @@ extension _BookingBlocSessionCreation on BookingBloc {
     int? targetDriverId,
   }) {
     return BookingSessionRequest(
-      rideType: trip.rideType,
       pickupLatitude: pickupLat,
       pickupLongitude: pickupLng,
       pickupName: _pickupName ?? _pickupNameForTrip(trip),

@@ -11,14 +11,13 @@ func TestPendingRegistrationRecordPreservesRedisPayload(t *testing.T) {
 	t.Parallel()
 
 	registration := domain.PendingRegistration{
-		Email:             "driver@example.test",
-		Phone:             "+639171234567",
-		Name:              "Sample Driver",
-		PasswordHash:      "hashed-password",
-		Role:              domain.Driver,
-		VehicleType:       "car",
-		PlateNumber:       "ABC1234",
-		PreferredRideType: "",
+		Email:        "driver@example.test",
+		Phone:        "+639171234567",
+		Name:         "Sample Driver",
+		PasswordHash: "hashed-password",
+		Role:         domain.Driver,
+		VehicleType:  "car",
+		PlateNumber:  "ABC1234",
 	}
 	want := []byte(`{"email":"driver@example.test","phone":"+639171234567","name":"Sample Driver","password_hash":"hashed-password","role":"driver","vehicle_type":"car","plate_number":"ABC1234"}`)
 
@@ -42,14 +41,13 @@ func TestPendingRegistrationRecordPreservesRedisPayload(t *testing.T) {
 func TestDecodePendingRegistrationReadsExistingPayload(t *testing.T) {
 	t.Parallel()
 
-	payload := []byte(`{"email":"passenger@example.test","phone":"+639189876543","name":"Sample Passenger","password_hash":"hashed-password","role":"passenger","preferred_ride_type":"motorcycle"}`)
+	payload := []byte(`{"email":"passenger@example.test","phone":"+639189876543","name":"Sample Passenger","password_hash":"hashed-password","role":"passenger"}`)
 	want := domain.PendingRegistration{
-		Email:             "passenger@example.test",
-		Phone:             "+639189876543",
-		Name:              "Sample Passenger",
-		PasswordHash:      "hashed-password",
-		Role:              domain.Passenger,
-		PreferredRideType: "motorcycle",
+		Email:        "passenger@example.test",
+		Phone:        "+639189876543",
+		Name:         "Sample Passenger",
+		PasswordHash: "hashed-password",
+		Role:         domain.Passenger,
 	}
 
 	got, err := decodePendingRegistration(payload)

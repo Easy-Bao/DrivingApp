@@ -84,26 +84,24 @@ func pendingKey(email string) string {
 }
 
 type pendingRegistrationRecord struct {
-	Email             string      `json:"email"`
-	Phone             string      `json:"phone"`
-	Name              string      `json:"name"`
-	PasswordHash      string      `json:"password_hash"`
-	Role              domain.Role `json:"role"`
-	VehicleType       string      `json:"vehicle_type,omitempty"`
-	PlateNumber       string      `json:"plate_number,omitempty"`
-	PreferredRideType string      `json:"preferred_ride_type,omitempty"`
+	Email        string      `json:"email"`
+	Phone        string      `json:"phone"`
+	Name         string      `json:"name"`
+	PasswordHash string      `json:"password_hash"`
+	Role         domain.Role `json:"role"`
+	VehicleType  string      `json:"vehicle_type,omitempty"`
+	PlateNumber  string      `json:"plate_number,omitempty"`
 }
 
 func encodePendingRegistration(registration domain.PendingRegistration) ([]byte, error) {
 	return json.Marshal(pendingRegistrationRecord{
-		Email:             registration.Email,
-		Phone:             registration.Phone,
-		Name:              registration.Name,
-		PasswordHash:      registration.PasswordHash,
-		Role:              registration.Role,
-		VehicleType:       registration.VehicleType,
-		PlateNumber:       registration.PlateNumber,
-		PreferredRideType: registration.PreferredRideType,
+		Email:        registration.Email,
+		Phone:        registration.Phone,
+		Name:         registration.Name,
+		PasswordHash: registration.PasswordHash,
+		Role:         registration.Role,
+		VehicleType:  registration.VehicleType,
+		PlateNumber:  registration.PlateNumber,
 	})
 }
 
@@ -113,13 +111,12 @@ func decodePendingRegistration(payload []byte) (domain.PendingRegistration, erro
 		return domain.PendingRegistration{}, err
 	}
 	return domain.PendingRegistration{
-		Email:             record.Email,
-		Phone:             record.Phone,
-		Name:              record.Name,
-		PasswordHash:      record.PasswordHash,
-		Role:              record.Role,
-		VehicleType:       record.VehicleType,
-		PlateNumber:       record.PlateNumber,
-		PreferredRideType: record.PreferredRideType,
+		Email:        record.Email,
+		Phone:        record.Phone,
+		Name:         record.Name,
+		PasswordHash: record.PasswordHash,
+		Role:         record.Role,
+		VehicleType:  record.VehicleType,
+		PlateNumber:  record.PlateNumber,
 	}, nil
 }

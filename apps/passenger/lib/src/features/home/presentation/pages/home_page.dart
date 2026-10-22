@@ -819,7 +819,6 @@ class _HomePageState extends State<HomePage> {
         await context.pushNamed(
           BookingRoutes.findingDriver,
           extra: {
-            'rideType': trip.rideType,
             'fare': trip.fare,
             'destination': trip.destination,
             'distance': trip.distance,

@@ -71,7 +71,6 @@ class BookingModule._() {
       name: BookingRoutes.searchDestination,
       BookingRoutes.searchDestinationPath,
       child: (context, GoRouterState state) => SearchDestinationPage(
-        preselectedRideType: state.uri.queryParameters['rideType'],
         pickupAddress: state.uri.queryParameters['pickupAddress'],
         autofocusSearch: state.uri.queryParameters['focus'] == '1',
         returnToMapPin: state.uri.queryParameters['returnToMapPin'] == '1',
@@ -144,7 +143,7 @@ class BookingModule._() {
               distance: distance,
               duration: duration,
               distanceKm: distanceKm,
-              rideType: data.string('rideType') ?? 'solo',
+
               initialTipAmount: data.intValue('tipAmount') ?? 0,
               initialNotes: data.string('notes') ?? '',
               pickupLatitude: data.doubleValue('pickupLat'),
@@ -179,7 +178,6 @@ class BookingModule._() {
           );
         }
         return FindingDriverPage(
-          rideType: data.string('rideType') ?? 'Solo Ride',
           fare: fare,
           baseFare: baseFare,
           tipAmount: data.intValue('tipAmount'),

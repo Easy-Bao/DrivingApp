@@ -3,13 +3,13 @@ package http
 import "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 
 type RideResponse struct {
-	ID                         int     `json:"id"`
-	BookingReference           string  `json:"booking_reference,omitempty"`
-	PassengerID                int     `json:"passenger_id"`
-	DriverID                   *int    `json:"driver_id,omitempty"`
-	Status                     string  `json:"status"`
-	FareAmount                 int64   `json:"fare_amount"`
-	RideType                   string  `json:"ride_type,omitempty"`
+	ID               int    `json:"id"`
+	BookingReference string `json:"booking_reference,omitempty"`
+	PassengerID      int    `json:"passenger_id"`
+	DriverID         *int   `json:"driver_id,omitempty"`
+	Status           string `json:"status"`
+	FareAmount       int64  `json:"fare_amount"`
+
 	PickupLatitude             float64 `json:"pickup_latitude,omitempty"`
 	PickupLongitude            float64 `json:"pickup_longitude,omitempty"`
 	PickupName                 string  `json:"pickup_name,omitempty"`
@@ -46,13 +46,13 @@ type RideResponse struct {
 
 func NewRideResponse(ride domain.Ride) RideResponse {
 	return RideResponse{
-		ID:                         ride.ID,
-		BookingReference:           ride.BookingReference,
-		PassengerID:                ride.PassengerID,
-		DriverID:                   ride.DriverID,
-		Status:                     ride.Status,
-		FareAmount:                 ride.FareAmount,
-		RideType:                   ride.RideType,
+		ID:               ride.ID,
+		BookingReference: ride.BookingReference,
+		PassengerID:      ride.PassengerID,
+		DriverID:         ride.DriverID,
+		Status:           ride.Status,
+		FareAmount:       ride.FareAmount,
+
 		PickupLatitude:             ride.PickupLatitude,
 		PickupLongitude:            ride.PickupLongitude,
 		PickupName:                 ride.PickupName,

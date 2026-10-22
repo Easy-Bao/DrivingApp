@@ -241,7 +241,6 @@ extension _BookingBlocSessionRecovery on BookingBloc {
       longitude: dropoffLongitude,
     );
     _activeTrip = BidSessionTrip(
-      rideType: snapshot.rideType ?? 'solo',
       fare: fareAmount / 100,
       destination: destination,
       distance: '${distanceKm.toStringAsFixed(1)} km',

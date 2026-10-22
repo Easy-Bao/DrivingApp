@@ -419,11 +419,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
           .cancelTripRequest(reason: reason);
       if (mounted && !canceled) {
         setState(() => _errorMessage = "Couldn't cancel the ride. Try again.");
-        CustomToast.show(
-          context,
-          "Couldn't cancel the ride. Try again.",
-          isError: true,
-        );
       }
     } catch (_) {
       if (mounted) {
@@ -445,11 +440,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         setState(
           () => _errorMessage =
               'The ride could not be ended for safety. Please try again.',
-        );
-        CustomToast.show(
-          context,
-          'The ride could not be ended for safety. Please try again.',
-          isError: true,
         );
       }
       return stopped;
@@ -526,7 +516,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                 ? failure.message
                 : 'Unable to reach driver at this time.';
             setState(() => _errorMessage = message);
-            CustomToast.show(context, message, isError: true);
           }
           return (false, '');
         },
@@ -535,7 +524,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
             if (mounted) {
               const message = 'Driver contact is currently unavailable.';
               setState(() => _errorMessage = message);
-              CustomToast.show(context, message, isError: true);
             }
             return (false, '');
           }
@@ -550,14 +538,12 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         } else if (mounted) {
           const message = 'Unable to launch phone dialer.';
           setState(() => _errorMessage = message);
-          CustomToast.show(context, message, isError: true);
         }
       }
     } catch (_) {
       if (mounted) {
         const message = 'Unable to reach driver at this time.';
         setState(() => _errorMessage = message);
-        CustomToast.show(context, message, isError: true);
       }
     }
   }
@@ -613,7 +599,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       trackRepository: widget.trackRepository,
     );
     if (!mounted || !submitted) return;
-    CustomToast.show(context, 'Report submitted and linked to this ride.');
   }
 
   Future<void> _initializeChatRepository() async {

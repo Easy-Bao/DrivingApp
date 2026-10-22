@@ -6,7 +6,7 @@ final class const BidSessionSnapshot({
   required this.status,
   required this.expiresAt,
   this.createdAt,
-  this.rideType,
+
   this.pickupLatitude,
   this.pickupLongitude,
   this.pickupName,
@@ -27,7 +27,7 @@ final class const BidSessionSnapshot({
   final String status;
   final DateTime? expiresAt;
   final DateTime? createdAt;
-  final String? rideType;
+
   final double? pickupLatitude;
   final double? pickupLongitude;
   final String? pickupName;
@@ -60,7 +60,7 @@ final class const BidSessionSnapshot({
       status: SafeParse.toStringValue(json['status']).trim().toLowerCase(),
       expiresAt: DateTime.tryParse(expiresAtValue)?.toUtc(),
       createdAt: DateTime.tryParse(createdAtValue)?.toUtc(),
-      rideType: _nullableString(json['ride_type'] ?? json['rideType']),
+
       pickupLatitude: SafeParse.toNullableDouble(
         json['pickup_latitude'] ?? json['pickupLatitude'],
       ),

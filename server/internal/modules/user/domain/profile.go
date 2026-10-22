@@ -14,19 +14,19 @@ var ErrDriverAvailabilityBlocked = errors.New(
 )
 
 type Profile struct {
-	ID                int
-	UserID            int
-	Role              string
-	Name              string
-	Phone             string
-	Email             string
-	Address           string
-	Gender            string
-	AvatarURL         string
-	PreferredRideType string
-	VehicleType       string
-	PlateNumber       string
-	Rating            float64
-	IsOnline          bool
-	OnlineLastSeenAt  *time.Time
+	ID        int
+	UserID    int
+	Role      string
+	Name      string
+	Phone     string
+	Email     string
+	Address   string
+	Gender    string
+	AvatarURL string
+
+	VehicleType      string
+	PlateNumber      string
+	Rating           float64
+	IsOnline         bool
+	OnlineLastSeenAt *time.Time
 }

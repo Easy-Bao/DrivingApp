@@ -112,6 +112,13 @@ Future<void> bootstrapApp() async {
         ),
       );
     } catch (error, stackTrace) {
+      developer.log(
+        'Passenger startup failed.',
+        name: 'passenger-app',
+        error: error,
+        stackTrace: stackTrace,
+        level: 1000,
+      );
       captureFirstFrameTiming();
       runApp(
         SafeClientErrorApp(

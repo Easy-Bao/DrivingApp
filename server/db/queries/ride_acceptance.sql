@@ -92,16 +92,16 @@ RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, picku
 
 -- name: CreateAcceptedRide :one
 INSERT INTO rides (
-    passenger_id, driver_id, status, fare_amount, ride_type,
+    passenger_id, driver_id, status, fare_amount,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, bid_session_id, booking_reference
 )
 VALUES (
-    $1, $2, 'accepted', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-    $13, $14, $15, $16, $17,
-    COALESCE((SELECT booking_reference FROM bid_sessions WHERE id = $17), allocate_booking_reference())
+    $1, $2, 'accepted', $3, $4, $5, $6, $7, $8, $9, $10, $11,
+    $12, $13, $14, $15, $16,
+    COALESCE((SELECT booking_reference FROM bid_sessions WHERE id = $16), allocate_booking_reference())
 )
 RETURNING *;
 

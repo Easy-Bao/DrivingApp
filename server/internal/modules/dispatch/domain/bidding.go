@@ -15,11 +15,11 @@ var (
 )
 
 type BidSession struct {
-	ID                int
-	BookingReference  string `json:"booking_reference"`
-	RideID            *int
-	PassengerID       int
-	RideType          string
+	ID               int
+	BookingReference string `json:"booking_reference"`
+	RideID           *int
+	PassengerID      int
+
 	PickupLatitude    float64
 	PickupLongitude   float64
 	PickupName        string

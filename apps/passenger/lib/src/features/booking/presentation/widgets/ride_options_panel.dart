@@ -231,6 +231,13 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                           : null,
                       helperMaxLines: 2,
                       errorText: widget.customFareError,
+                      errorMaxLines: 3,
+                      errorStyle: TextStyle(
+                        color: context.colorScheme.error,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        height: 1.35,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),

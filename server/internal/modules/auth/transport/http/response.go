@@ -16,27 +16,25 @@ type SessionData struct {
 }
 
 type AccountResponse struct {
-	ID                int         `json:"id"`
-	Email             string      `json:"email"`
-	Phone             string      `json:"phone"`
-	Name              string      `json:"name"`
-	Role              domain.Role `json:"role"`
-	IsVerified        bool        `json:"isVerified"`
-	VehicleType       string      `json:"vehicleType,omitempty"`
-	PlateNumber       string      `json:"plateNumber,omitempty"`
-	PreferredRideType string      `json:"preferred_ride_type,omitempty"`
+	ID          int         `json:"id"`
+	Email       string      `json:"email"`
+	Phone       string      `json:"phone"`
+	Name        string      `json:"name"`
+	Role        domain.Role `json:"role"`
+	IsVerified  bool        `json:"isVerified"`
+	VehicleType string      `json:"vehicleType,omitempty"`
+	PlateNumber string      `json:"plateNumber,omitempty"`
 }
 
 func NewAccountResponse(account domain.User) AccountResponse {
 	return AccountResponse{
-		ID:                account.ID,
-		Email:             account.Email,
-		Phone:             account.Phone,
-		Name:              account.Name,
-		Role:              account.Role,
-		IsVerified:        account.IsVerified,
-		VehicleType:       account.VehicleType,
-		PlateNumber:       account.PlateNumber,
-		PreferredRideType: account.PreferredRideType,
+		ID:          account.ID,
+		Email:       account.Email,
+		Phone:       account.Phone,
+		Name:        account.Name,
+		Role:        account.Role,
+		IsVerified:  account.IsVerified,
+		VehicleType: account.VehicleType,
+		PlateNumber: account.PlateNumber,
 	}
 }

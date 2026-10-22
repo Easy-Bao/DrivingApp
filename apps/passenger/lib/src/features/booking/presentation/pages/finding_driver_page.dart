@@ -37,7 +37,7 @@ bool shouldStartFindingDriverHomeNavigation({
 class FindingDriverPage extends StatelessWidget {
   const FindingDriverPage({
     super.key,
-    required this.rideType,
+
     required this.fare,
     this.baseFare,
     this.tipAmount,
@@ -55,7 +55,6 @@ class FindingDriverPage extends StatelessWidget {
     required this.liveMapBloc,
   });
 
-  final String rideType;
   final double fare;
   final double? baseFare;
   final int? tipAmount;
@@ -80,7 +79,6 @@ class FindingDriverPage extends StatelessWidget {
         BlocProvider<LiveMapBloc>(create: (_) => liveMapBloc),
       ],
       child: FindingDriverPageContent(
-        rideType: rideType,
         fare: fare,
         baseFare: baseFare,
         tipAmount: tipAmount,
@@ -102,7 +100,7 @@ class FindingDriverPage extends StatelessWidget {
 class FindingDriverPageContent extends StatefulWidget {
   const FindingDriverPageContent({
     super.key,
-    required this.rideType,
+
     required this.fare,
     this.baseFare,
     this.tipAmount,
@@ -118,7 +116,6 @@ class FindingDriverPageContent extends StatefulWidget {
     required this.profileRepository,
   });
 
-  final String rideType;
   final double fare;
   final double? baseFare;
   final int? tipAmount;
@@ -139,7 +136,12 @@ class FindingDriverPageContent extends StatefulWidget {
 }
 
 class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
-  bool _initialized = false;
+  final GlobalKey _sheetKey = GlobalKey();
+  AppMapController? _mapController;
+  Widget? _cachedMap;
+  bool _mapLoaded = false;
+  bool _focusScheduled = false;
+  EdgeInsets? _lastViewportPadding;
   DriverModel? _selectedDriver;
   List<DriverModel> _nearbyDrivers = [];
   bool _isLeaving = false;
@@ -197,26 +199,73 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     setState(() => _isViewingDriverProfile = false);
   }
 
-  void _onMapCreated(AppMapController controller, BuildContext context) {
-    if (!_initialized) {
-      _initialized = true;
-      final pickup = _pickupCoordinate;
-      if (pickup == null) return;
-      final latitude = pickup.latitude;
-      final longitude = pickup.longitude;
+  void _onMapCreated(AppMapController controller) {
+    _mapController = controller;
+    _mapLoaded = false;
+    _lastViewportPadding = null;
+  }
 
-      BlocProvider.of<LiveMapBloc>(context).add(
-        InitializeMapEvent(
-          controller: controller,
-          defaultLat: latitude,
-          defaultLng: longitude,
-          routeColor: context.colorScheme.primary,
-        ),
+  void _onMapLoaded() {
+    final controller = _mapController;
+    final pickup = _pickupCoordinate;
+    if (!mounted || controller == null || pickup == null) return;
+    _mapLoaded = true;
+    BlocProvider.of<LiveMapBloc>(context).add(
+      InitializeMapEvent(
+        controller: controller,
+        defaultLat: pickup.latitude,
+        defaultLng: pickup.longitude,
+        routeColor: context.colorScheme.onSurface,
+      ),
+    );
+    BlocProvider.of<LiveMapBloc>(context).add(
+      AddMapMarkerEvent(
+        lat: pickup.latitude,
+        lng: pickup.longitude,
+        isOrigin: true,
+      ),
+    );
+    _schedulePickupFocus();
+  }
+
+  void _schedulePickupFocus() {
+    if (_focusScheduled) return;
+    _focusScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusScheduled = false;
+      if (mounted) unawaited(_focusPickup());
+    });
+  }
+
+  Future<void> _focusPickup() async {
+    final controller = _mapController;
+    final pickup = _pickupCoordinate;
+    final sheetHeight = _sheetKey.currentContext?.size?.height;
+    if (!_mapLoaded ||
+        controller == null ||
+        pickup == null ||
+        sheetHeight == null) {
+      return;
+    }
+    final insets = EdgeInsets.fromLTRB(
+      24,
+      MediaQuery.paddingOf(context).top + 64,
+      24,
+      sheetHeight + 24,
+    );
+    if (_lastViewportPadding == insets) return;
+    _lastViewportPadding = insets;
+    try {
+      await MapProvider.moveCamera(
+        controller,
+        pickup.latitude,
+        pickup.longitude,
+        zoom: 14.5,
+        viewportPadding: insets,
+        animate: false,
       );
-
-      BlocProvider.of<LiveMapBloc>(
-        context,
-      ).add(AddMapMarkerEvent(lat: latitude, lng: longitude, isOrigin: true));
+    } catch (_) {
+      if (mounted && controller == _mapController) _lastViewportPadding = null;
     }
   }
 
@@ -240,7 +289,6 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     });
 
     final tripMetadata = BidSessionTrip(
-      rideType: widget.rideType,
       fare: widget.fare,
       destination: widget.destination,
       distance: widget.distance,
@@ -276,7 +324,6 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     if (distanceNum == null || durationNum == null) return;
 
     final tripMetadata = BidSessionTrip(
-      rideType: widget.rideType,
       fare: widget.fare,
       destination: widget.destination,
       distance: widget.distance,
@@ -478,13 +525,13 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                   Positioned.fill(
                     child: Container(
                       color: context.colorScheme.surfaceContainerHighest,
-                      child: MapProvider.buildMapView(
+                      child: _cachedMap ??= MapProvider.buildMapView(
                         latitude: defaultLat,
                         longitude: defaultLng,
                         zoom: 14.5,
                         interactive: true,
-                        onMapCreated: (controller) =>
-                            _onMapCreated(controller, context),
+                        onMapCreated: _onMapCreated,
+                        onMapLoaded: _onMapLoaded,
                       ),
                     ),
                   ),
@@ -576,11 +623,13 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: ConstrainedBox(
+                      key: _sheetKey,
                       constraints: BoxConstraints(
                         maxWidth: isWideScreen ? 600.0 : double.infinity,
                       ),
                       child: BlocBuilder<BookingBloc, BookingState>(
                         builder: (context, state) {
+                          _schedulePickupFocus();
                           final activeSearch = BlocProvider.of<BookingBloc>(
                             context,
                           ).activeDriverSearch;
@@ -590,8 +639,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               activeTrip?.destination ?? widget.destination;
                           final pickupAddress =
                               activeTrip?.pickupAddress ?? widget.pickupAddress;
-                          final rideType =
-                              activeTrip?.rideType ?? widget.rideType;
+
                           if (state is FindingNearestDriver) {
                             return FindingDriverSearchingPanel(
                               message: state.statusMessage,
@@ -616,7 +664,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               fare: widget.fare,
                               destination: widget.destination,
                               pickupAddress: pickupAddress,
-                              rideType: rideType,
+
                               requestExpired: isExpired,
                               bookingReference: state.publicBookingReference,
                               onRetryPressed: _retryFindingDriver,

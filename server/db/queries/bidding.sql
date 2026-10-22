@@ -43,13 +43,13 @@ SELECT EXISTS (
 
 -- name: CreateBidSession :one
 INSERT INTO bid_sessions (
-    passenger_id, ride_type, pickup_latitude, pickup_longitude, pickup_name,
+    passenger_id, pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name, passenger_note,
     distance_km, duration_minutes, offered_fare, status,
     target_driver_id, expires_at, created_at
 )
 VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
     COALESCE(sqlc.narg('created_at')::timestamptz, CURRENT_TIMESTAMP)
 )
 RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,

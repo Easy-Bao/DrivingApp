@@ -27,12 +27,12 @@ func TestToPostgresWaitSecondsRequiresPositiveWholeSeconds(t *testing.T) {
 
 func TestFromPostgresRideMapsOptionalFieldsAndTimestamps(t *testing.T) {
 	item := databasepostgres.Ride{
-		ID:             19,
-		PassengerID:    7,
-		DriverID:       pgtype.Int4{Int32: 11, Valid: true},
-		Status:         "assigned",
-		FareAmount:     3200,
-		RideType:       "solo",
+		ID:          19,
+		PassengerID: 7,
+		DriverID:    pgtype.Int4{Int32: 11, Valid: true},
+		Status:      "assigned",
+		FareAmount:  3200,
+
 		PickupLatitude: pgtype.Float8{Float64: 14.6, Valid: true},
 		PickupName:     pgtype.Text{String: "Makati", Valid: true},
 		DriverName:     pgtype.Text{String: "Ada", Valid: true},

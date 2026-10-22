@@ -11,6 +11,7 @@ import 'package:passenger/src/app/navigation/navigation_shell.dart';
 import 'package:passenger/src/features/auth/domain/entities/session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
@@ -311,6 +312,7 @@ GoRouter _createRouter(
       StatefulShellRoute(
         builder: (context, state, navigationShell) => ShellLayout(
           inboxCubit: inboxCubit,
+          bookingStates: const Stream<BookingState>.empty(),
           realtimeClient: realtimeClient,
           lifecycleCoordinator: lifecycleCoordinator,
           navigationCoordinator: navigationCoordinator,

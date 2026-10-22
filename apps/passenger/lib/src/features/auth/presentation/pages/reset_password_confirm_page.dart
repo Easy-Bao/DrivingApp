@@ -108,7 +108,6 @@ class _ResetPasswordConfirmPageContentState
             BlocConsumer<ResetPasswordConfirmBloc, ResetPasswordConfirmState>(
               listener: (context, state) {
                 if (state is ResetPasswordConfirmSuccess) {
-                  CustomToast.show(context, 'Password updated');
                   context.goNamed(AuthRoutes.signin);
                 } else if (state is ResetPasswordConfirmFailure) {
                   setState(() => _submissionError = state.errorMessage);

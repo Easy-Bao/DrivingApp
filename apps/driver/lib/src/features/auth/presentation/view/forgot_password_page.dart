@@ -41,10 +41,6 @@ class _ForgotPasswordPageContentState
   void _submitResetLink(BuildContext context) {
     FocusScope.of(context).unfocus();
     final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      CustomToast.show(context, 'Enter your email address.', isError: true);
-      return;
-    }
 
     BlocProvider.of<ForgotPasswordBloc>(context)
         .add(ForgotPasswordSubmitted(email: email));
@@ -72,7 +68,6 @@ class _ForgotPasswordPageContentState
           listener: (context, state) {
             if (state is ForgotPasswordSuccess) {
               final email = _emailController.text.trim();
-              CustomToast.show(context, 'Verification code sent to $email');
               context.pushReplacementNamed(
                 AuthRoutes.resetPassword,
                 extra: email,

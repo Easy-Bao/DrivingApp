@@ -19,12 +19,12 @@ func TestAcceptedRideProjectionPreservesRideAndSettlementSnapshot(t *testing.T) 
 	commissionBPS := int32(1500)
 	ride, err := fromPostgresAcceptedRideProjection(
 		databasepostgres.Ride{
-			ID:               17,
-			PassengerID:      7,
-			DriverID:         pgtype.Int4{Int32: 11, Valid: true},
-			Status:           "assigned",
-			FareAmount:       5000,
-			RideType:         "solo",
+			ID:          17,
+			PassengerID: 7,
+			DriverID:    pgtype.Int4{Int32: 11, Valid: true},
+			Status:      "assigned",
+			FareAmount:  5000,
+
 			PickupLatitude:   pgtype.Float8{Float64: 14.5, Valid: true},
 			PickupLongitude:  pgtype.Float8{Float64: 121.0, Valid: true},
 			PickupName:       pgtype.Text{String: "Origin", Valid: true},

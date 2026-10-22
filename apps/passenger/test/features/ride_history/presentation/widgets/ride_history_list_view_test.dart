@@ -50,7 +50,7 @@ void main() {
       expect(rideCount.data, '2');
       expect(find.text('Today · Aug 22'), findsOneWidget);
       expect(find.text('Yesterday · Aug 21'), findsOneWidget);
-      expect(find.text('2:57 PM · Solo ride'), findsOneWidget);
+      expect(find.text('2:57 PM'), findsOneWidget);
       expect(find.text('Driver'), findsNothing);
       expect(find.text('Cash'), findsNothing);
     },
@@ -64,8 +64,8 @@ void main() {
       alwaysUse24HourFormat: true,
     );
 
-    expect(find.text('14:57 · Solo ride'), findsOneWidget);
-    expect(find.text('2:57 PM · Solo ride'), findsNothing);
+    expect(find.text('14:57'), findsOneWidget);
+    expect(find.text('2:57 PM'), findsNothing);
   });
 
   testWidgets(

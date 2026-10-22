@@ -119,7 +119,7 @@ void main() {
     () async {
       await sessionStore.savePendingBidSessionCreation(
         idempotencyKey: 'retry-key-12345678',
-        requestPayload: '{"ride_type":"solo"}',
+        requestPayload: '{"pickup_name":"Pickup"}',
       );
       await sessionStore.requestPendingBidSessionCancellation();
       await sessionStore.attachPendingBidSessionId('request-31');
@@ -128,7 +128,7 @@ void main() {
           .readPendingBidSessionCreation();
 
       expect(restored?.idempotencyKey, 'retry-key-12345678');
-      expect(restored?.requestPayload, '{"ride_type":"solo"}');
+      expect(restored?.requestPayload, '{"pickup_name":"Pickup"}');
       expect(restored?.cancelRequested, isTrue);
       expect(restored?.sessionId, 'request-31');
       expect(stored.keys, contains(StorageKeys.pendingBidSessionCreation));

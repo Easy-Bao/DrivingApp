@@ -13,7 +13,7 @@ class Profile {
     this.avatarPath = '',
     this.avatarUrl = '',
     this.avatarData = '',
-    this.preferredRideType = '',
+
     this.vehicleType = '',
     this.plateNumber = '',
     this.rating,
@@ -31,7 +31,7 @@ class Profile {
   final String avatarPath;
   final String avatarUrl;
   final String avatarData;
-  final String preferredRideType;
+
   final String vehicleType;
   final String plateNumber;
   final double? rating;
@@ -71,12 +71,6 @@ class Profile {
       avatarUrl: _readString(payload, const ['avatar_url', 'avatarUrl']) ?? '',
       avatarData:
           _readString(payload, const ['avatar_data', 'avatarData']) ?? '',
-      preferredRideType:
-          _readString(payload, const [
-            'preferred_ride_type',
-            'preferredRideType',
-          ]) ??
-          '',
       vehicleType:
           _readString(payload, const ['vehicle_type', 'vehicleType']) ?? '',
       plateNumber:

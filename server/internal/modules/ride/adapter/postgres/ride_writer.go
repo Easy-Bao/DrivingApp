@@ -70,10 +70,10 @@ func (repository *RideRepository) CreateRide(ctx context.Context, value domain.R
 	}
 
 	item, err := transactionQueries.CreateRide(ctx, databasepostgres.CreateRideParams{
-		PassengerID:      passengerID,
-		Status:           string(normalizedStatus),
-		FareAmount:       value.FareAmount,
-		RideType:         value.RideType,
+		PassengerID: passengerID,
+		Status:      string(normalizedStatus),
+		FareAmount:  value.FareAmount,
+
 		PickupLatitude:   rideFloat(value.PickupLatitude),
 		PickupLongitude:  rideFloat(value.PickupLongitude),
 		PickupName:       rideText(value.PickupName),

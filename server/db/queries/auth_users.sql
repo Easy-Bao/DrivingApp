@@ -28,8 +28,8 @@ INSERT INTO driver_profiles (user_id, name, vehicle_type, plate_number)
 VALUES ($1, $2, $3, $4);
 
 -- name: CreatePassengerProfile :exec
-INSERT INTO passenger_profiles (user_id, name, preferred_ride_type)
-VALUES ($1, $2, $3);
+INSERT INTO passenger_profiles (user_id, name)
+VALUES ($1, $2);
 
 -- name: GetDriverProfileByUserID :one
 SELECT name, vehicle_type, plate_number

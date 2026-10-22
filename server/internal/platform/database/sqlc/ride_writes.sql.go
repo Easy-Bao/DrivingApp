@@ -13,12 +13,12 @@ import (
 
 const createRide = `-- name: CreateRide :one
 INSERT INTO rides (
-    passenger_id, status, fare_amount, ride_type,
+    passenger_id, status, fare_amount,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 RETURNING id, booking_reference, passenger_id, driver_id, status, fare_amount, ride_type, pickup_latitude, pickup_longitude, pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name, distance_km, duration_minutes, driver_name, vehicle_type, plate_number, driver_rating, created_at, completed_at, arrived_at, waiting_until, cancelled_by, cancellation_reason, cancellation_responsibility, cancellation_details, bid_session_id
 `
 
@@ -26,7 +26,6 @@ type CreateRideParams struct {
 	PassengerID      int32         `db:"passenger_id"`
 	Status           string        `db:"status"`
 	FareAmount       int64         `db:"fare_amount"`
-	RideType         string        `db:"ride_type"`
 	PickupLatitude   pgtype.Float8 `db:"pickup_latitude"`
 	PickupLongitude  pgtype.Float8 `db:"pickup_longitude"`
 	PickupName       pgtype.Text   `db:"pickup_name"`
@@ -42,7 +41,6 @@ func (q *Queries) CreateRide(ctx context.Context, arg CreateRideParams) (Ride, e
 		arg.PassengerID,
 		arg.Status,
 		arg.FareAmount,
-		arg.RideType,
 		arg.PickupLatitude,
 		arg.PickupLongitude,
 		arg.PickupName,

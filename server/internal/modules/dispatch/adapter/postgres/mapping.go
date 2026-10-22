@@ -32,10 +32,10 @@ func fromPostgresBidSession(item databasepostgres.BidSession) (dispatchdomain.Bi
 		acceptedDriverID = &value
 	}
 	return dispatchdomain.BidSession{
-		ID:                int(item.ID),
-		BookingReference:  item.BookingReference,
-		PassengerID:       int(item.PassengerID),
-		RideType:          item.RideType,
+		ID:               int(item.ID),
+		BookingReference: item.BookingReference,
+		PassengerID:      int(item.PassengerID),
+
 		PickupLatitude:    item.PickupLatitude,
 		PickupLongitude:   item.PickupLongitude,
 		PickupName:        item.PickupName,
@@ -133,13 +133,13 @@ func fromPostgresRideProjection(
 		driverID = &value
 	}
 	ride := ridedomain.Ride{
-		ID:                         int(item.ID),
-		BookingReference:           item.BookingReference,
-		PassengerID:                int(item.PassengerID),
-		DriverID:                   driverID,
-		Status:                     item.Status,
-		FareAmount:                 item.FareAmount,
-		RideType:                   item.RideType,
+		ID:               int(item.ID),
+		BookingReference: item.BookingReference,
+		PassengerID:      int(item.PassengerID),
+		DriverID:         driverID,
+		Status:           item.Status,
+		FareAmount:       item.FareAmount,
+
 		PickupLatitude:             dispatchFloatValue(item.PickupLatitude),
 		PickupLongitude:            dispatchFloatValue(item.PickupLongitude),
 		PickupName:                 dispatchTextValue(item.PickupName),

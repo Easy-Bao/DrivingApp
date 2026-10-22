@@ -163,11 +163,10 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 		passengerProfile, updateErr := transactionQueries.UpdatePassengerProfile(
 			ctx,
 			databasepostgres.UpdatePassengerProfileParams{
-				ID:                dbProfileID,
-				Name:              profile.Name,
-				Address:           toPostgresProfileText(profile.Address),
-				Gender:            profile.Gender,
-				PreferredRideType: toPostgresProfileText(profile.PreferredRideType),
+				ID:      dbProfileID,
+				Name:    profile.Name,
+				Address: toPostgresProfileText(profile.Address),
+				Gender:  profile.Gender,
 			},
 		)
 		if updateErr != nil {
@@ -557,16 +556,15 @@ func passengerProfileFromPostgres(
 	profile databasepostgres.PassengerProfile,
 ) domain.Profile {
 	return domain.Profile{
-		ID:                int(profile.ID),
-		UserID:            int(profile.UserID),
-		Role:              "passenger",
-		Name:              profile.Name,
-		Phone:             account.Phone,
-		Email:             account.Email,
-		Address:           profileTextValue(profile.Address),
-		Gender:            profile.Gender,
-		AvatarURL:         passengerAvatarURL(int(profile.UserID), profileTextValue(profile.AvatarStorageKey)),
-		PreferredRideType: profileTextValue(profile.PreferredRideType),
+		ID:        int(profile.ID),
+		UserID:    int(profile.UserID),
+		Role:      "passenger",
+		Name:      profile.Name,
+		Phone:     account.Phone,
+		Email:     account.Email,
+		Address:   profileTextValue(profile.Address),
+		Gender:    profile.Gender,
+		AvatarURL: passengerAvatarURL(int(profile.UserID), profileTextValue(profile.AvatarStorageKey)),
 	}
 }
 

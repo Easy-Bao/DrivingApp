@@ -90,14 +90,13 @@ func (service *RegisterService) PreparePassenger(
 		return domain.PendingRegistration{}, fmt.Errorf("check existing passenger account: %w", err)
 	}
 	return domain.PendingRegistration{
-		Email:             normalized.Email,
-		Phone:             normalized.Phone,
-		Name:              normalized.Name,
-		PasswordHash:      normalized.PasswordHash,
-		Role:              normalized.Role,
-		VehicleType:       normalized.VehicleType,
-		PlateNumber:       normalized.PlateNumber,
-		PreferredRideType: normalized.PreferredRideType,
+		Email:        normalized.Email,
+		Phone:        normalized.Phone,
+		Name:         normalized.Name,
+		PasswordHash: normalized.PasswordHash,
+		Role:         normalized.Role,
+		VehicleType:  normalized.VehicleType,
+		PlateNumber:  normalized.PlateNumber,
 	}, nil
 }
 
@@ -122,15 +121,14 @@ func (service *RegisterService) CommitPendingPassenger(
 		return domain.User{}, "", fmt.Errorf("check existing passenger account: %w", err)
 	}
 	return service.create(ctx, domain.User{
-		Email:             pending.Email,
-		Phone:             pending.Phone,
-		Name:              pending.Name,
-		Role:              pending.Role,
-		PasswordHash:      pending.PasswordHash,
-		IsVerified:        true,
-		VehicleType:       pending.VehicleType,
-		PlateNumber:       pending.PlateNumber,
-		PreferredRideType: pending.PreferredRideType,
+		Email:        pending.Email,
+		Phone:        pending.Phone,
+		Name:         pending.Name,
+		Role:         pending.Role,
+		PasswordHash: pending.PasswordHash,
+		IsVerified:   true,
+		VehicleType:  pending.VehicleType,
+		PlateNumber:  pending.PlateNumber,
 	})
 }
 
@@ -154,26 +152,24 @@ func (service *RegisterService) register(
 		return domain.User{}, "", fmt.Errorf("check existing account: %w", err)
 	}
 	return service.create(ctx, domain.User{
-		Email:             normalized.Email,
-		Phone:             normalized.Phone,
-		Name:              normalized.Name,
-		Role:              normalized.Role,
-		PasswordHash:      normalized.PasswordHash,
-		VehicleType:       normalized.VehicleType,
-		PlateNumber:       normalized.PlateNumber,
-		PreferredRideType: normalized.PreferredRideType,
+		Email:        normalized.Email,
+		Phone:        normalized.Phone,
+		Name:         normalized.Name,
+		Role:         normalized.Role,
+		PasswordHash: normalized.PasswordHash,
+		VehicleType:  normalized.VehicleType,
+		PlateNumber:  normalized.PlateNumber,
 	})
 }
 
 type normalizedRegistration struct {
-	Email             string
-	Phone             string
-	Name              string
-	PasswordHash      string
-	Role              domain.Role
-	VehicleType       string
-	PlateNumber       string
-	PreferredRideType string
+	Email        string
+	Phone        string
+	Name         string
+	PasswordHash string
+	Role         domain.Role
+	VehicleType  string
+	PlateNumber  string
 }
 
 func normalizeInput(
@@ -202,16 +198,14 @@ func normalizeInput(
 	if err != nil {
 		return normalizedRegistration{}, fmt.Errorf("hash registration password: %w", err)
 	}
-	//TODO: Remove PreferredRideType instead default solo
 	return normalizedRegistration{
-		Email:             email,
-		Phone:             phone,
-		Name:              name,
-		PasswordHash:      passwordHash,
-		Role:              role,
-		VehicleType:       vehicleType,
-		PlateNumber:       plateNumber,
-		PreferredRideType: "solo-ride",
+		Email:        email,
+		Phone:        phone,
+		Name:         name,
+		PasswordHash: passwordHash,
+		Role:         role,
+		VehicleType:  vehicleType,
+		PlateNumber:  plateNumber,
 	}, nil
 }
 

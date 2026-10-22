@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 import 'package:maps/maps.dart';
 
 class const BidSessionTrip({
-  required this.rideType,
   required this.fare,
   required this.destination,
   required this.distance,
@@ -10,7 +9,6 @@ class const BidSessionTrip({
   this.pickupAddress,
   this.passengerNote = '',
 }) extends Equatable {
-  final String rideType;
   final double fare;
   final Place destination;
   final String distance;
@@ -20,7 +18,6 @@ class const BidSessionTrip({
 
   @override
   List<Object?> get props => [
-    rideType,
     fare,
     destination,
     distance,

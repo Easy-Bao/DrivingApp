@@ -375,7 +375,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
     final fromName = valueAsString(trip['pickup_name']) ?? 'Pickup';
     final toName = valueAsString(trip['dropoff_name']) ?? 'Drop-off';
     final formattedFareAmount = fareInPesos(trip);
-    final rideType = sentenceCase(trip['ride_type'], 'Solo ride');
+
     final distance =
         trip['distance_km'] is num &&
             (trip['distance_km'] as num).isFinite &&
@@ -451,11 +451,6 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(child: _tripMeta('Ride type', rideType)),
-                      Container(
-                        width: 1,
-                        color: context.colorScheme.outlineVariant,
-                      ),
                       Expanded(child: _tripMeta('Distance', distance)),
                       Container(
                         width: 1,
