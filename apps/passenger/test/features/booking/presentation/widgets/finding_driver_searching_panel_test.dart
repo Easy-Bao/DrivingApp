@@ -82,7 +82,7 @@ void main() {
   );
 
   testWidgets(
-    'shows cash fare and cancel booking button which triggers callback',
+    'shows banknote icon, fare breakdown, and cancel booking button which triggers callback',
     (tester) async {
       var canceled = false;
       await tester.pumpWidget(
@@ -92,7 +92,6 @@ void main() {
               message: 'Searching for a driver',
               fare: 27.57,
               destination: destination,
-              rideType: 'Solo Ride',
               dotAnimation: const AlwaysStoppedAnimation<double>(0),
               onCancelPressed: () => canceled = true,
             ),
@@ -100,14 +99,64 @@ void main() {
         ),
       );
 
-      expect(find.text('Cash · Solo Ride'), findsOneWidget);
-      expect(find.text('₱27.57'), findsOneWidget);
+      expect(find.byIcon(LucideIcons.banknote), findsOneWidget);
+      expect(find.text('₱27.57 | Tip: ₱0.00'), findsOneWidget);
+      expect(find.text('Total: ₱27.57'), findsOneWidget);
+      expect(find.textContaining('Solo'), findsNothing);
+
+      final cardFinder = find.byKey(
+        const ValueKey<String>('finding-driver-location-card'),
+      );
+      expect(cardFinder, findsOneWidget);
+      expect(
+        find.descendant(of: cardFinder, matching: find.text('Total: 27.57')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: cardFinder, matching: find.text('Total: ₱27.57')),
+        findsOneWidget,
+      );
 
       final cancelBtn = find.text('Cancel booking');
       expect(cancelBtn, findsOneWidget);
       await tester.tap(cancelBtn);
       await tester.pump();
       expect(canceled, isTrue);
+    },
+  );
+
+  testWidgets(
+    'shows fare, tip, and total when tip is added and keeps amount inside card',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: FindingDriverSearchingPanel(
+              message: 'Searching for a driver',
+              fare: 37.57,
+              baseFare: 27.57,
+              tipAmount: 10,
+              destination: destination,
+              dotAnimation: const AlwaysStoppedAnimation<double>(0),
+              onCancelPressed: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(LucideIcons.banknote), findsOneWidget);
+      expect(find.text('₱27.57 | Tip: ₱10.00'), findsOneWidget);
+      expect(find.text('Total: ₱37.57'), findsOneWidget);
+      expect(find.textContaining('Solo'), findsNothing);
+
+      final cardFinder = find.byKey(
+        const ValueKey<String>('finding-driver-location-card'),
+      );
+      expect(cardFinder, findsOneWidget);
+      expect(
+        find.descendant(of: cardFinder, matching: find.text('Total: ₱37.57')),
+        findsOneWidget,
+      );
     },
   );
 

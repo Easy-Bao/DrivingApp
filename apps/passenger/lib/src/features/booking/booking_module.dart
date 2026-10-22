@@ -170,6 +170,7 @@ class BookingModule._() {
           );
         }
         final fare = data.doubleValue('fare');
+        final baseFare = data.doubleValue('baseFare');
         final distance = data.string('distance');
         final duration = data.string('duration');
         if (fare == null || fare <= 0 || distance == null || duration == null) {
@@ -180,6 +181,8 @@ class BookingModule._() {
         return FindingDriverPage(
           rideType: data.string('rideType') ?? 'Solo Ride',
           fare: fare,
+          baseFare: baseFare,
+          tipAmount: data.intValue('tipAmount'),
           destination: destination,
           distance: distance,
           duration: duration,

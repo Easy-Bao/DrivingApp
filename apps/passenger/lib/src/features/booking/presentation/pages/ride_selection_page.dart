@@ -373,6 +373,8 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
         extra: {
           'rideType': widget.rideType,
           'fare': totalFare,
+          'baseFare': fare,
+          'tipAmount': _selectedTipAmount,
           'destination': widget.destination,
           'distance': _distanceLabel,
           'duration': _durationLabel,

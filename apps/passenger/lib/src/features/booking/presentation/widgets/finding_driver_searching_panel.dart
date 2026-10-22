@@ -10,9 +10,10 @@ class FindingDriverSearchingPanel extends StatelessWidget {
     super.key,
     required this.message,
     required this.fare,
+    this.baseFare,
     required this.destination,
     this.pickupAddress,
-    this.rideType,
+    this.tipAmount,
     this.distance,
     this.duration,
     this.requestId,
@@ -29,9 +30,10 @@ class FindingDriverSearchingPanel extends StatelessWidget {
 
   final String message;
   final double fare;
+  final double? baseFare;
   final Place destination;
   final String? pickupAddress;
-  final String? rideType;
+  final int? tipAmount;
   final String? distance;
   final String? duration;
   final String? requestId;
@@ -102,6 +104,18 @@ class FindingDriverSearchingPanel extends StatelessWidget {
     final destinationSubtitle = _resolveDestinationSubtitle();
     final dropoffMeta = _resolveDropoffMeta();
 
+    final resolvedTip = tipAmount ?? 0;
+    final resolvedBaseFare =
+        baseFare ??
+        (fare >= resolvedTip && resolvedTip > 0 ? fare - resolvedTip : fare);
+    final resolvedTotalFare = baseFare != null && tipAmount != null
+        ? baseFare! + resolvedTip
+        : fare;
+
+    final displayFare = formatPesoAmount(resolvedBaseFare);
+    final displayTip = formatPesoAmount(resolvedTip.toDouble());
+    final displayTotal = formatPesoAmount(resolvedTotalFare);
+
     return Material(
       key: const ValueKey<String>('finding-driver-searching-panel'),
       color: colorScheme.surface,
@@ -147,48 +161,61 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          'Booking ID: $displayBookingId',
-                          style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Booking ID: $displayBookingId',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            if (displayBookingId != 'Pending') ...[
+                              const SizedBox(width: 8),
+                              Material(
+                                color: colorScheme.surfaceContainerHighest
+                                    .withValues(alpha: 0.6),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Tooltip(
+                                  message: 'Copy Booking ID',
+                                  child: InkWell(
+                                    key: const ValueKey<String>(
+                                      'copy-booking-id-button',
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    onTap: () async {
+                                      await Clipboard.setData(
+                                        ClipboardData(text: displayBookingId),
+                                      );
+                                      if (context.mounted) {
+                                        CustomToast.show(
+                                          context,
+                                          'Booking ID copied',
+                                        );
+                                      }
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Icon(
+                                        LucideIcons.copy,
+                                        size: 18,
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  if (displayBookingId.isNotEmpty &&
-                      displayBookingId != 'Pending')
-                    Material(
-                      color: colorScheme.surfaceContainerHighest.withValues(
-                        alpha: 0.6,
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Tooltip(
-                        message: 'Copy Booking ID',
-                        child: InkWell(
-                          key: const ValueKey<String>('copy-booking-id-button'),
-                          borderRadius: BorderRadius.circular(8),
-                          onTap: () async {
-                            await Clipboard.setData(
-                              ClipboardData(text: displayBookingId),
-                            );
-                            if (context.mounted) {
-                              CustomToast.show(context, 'Booking ID copied');
-                            }
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Icon(
-                              LucideIcons.copy,
-                              size: 18,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -212,139 +239,195 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                     width: 1,
                   ),
                 ),
-                child: IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Column(
+                child: Column(
+                  children: [
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Container(
-                              width: 18,
-                              height: 18,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Color(0xFF1D4ED8),
-                              ),
-                              child: Center(
+                          Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
                                 child: Container(
-                                  width: 6,
-                                  height: 6,
+                                  width: 18,
+                                  height: 18,
                                   decoration: const BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: Colors.white,
+                                    color: Color(0xFF1D4ED8),
+                                  ),
+                                  child: Center(
+                                    child: Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Center(
-                              child: CustomPaint(
-                                size: const Size(2, double.infinity),
-                                painter: _DashedLinePainter(
-                                  color: colorScheme.outlineVariant,
+                              Expanded(
+                                child: Center(
+                                  child: CustomPaint(
+                                    size: const Size(2, double.infinity),
+                                    painter: _DashedLinePainter(
+                                      color: colorScheme.outlineVariant,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                              const Padding(
+                                padding: EdgeInsets.only(bottom: 2),
+                                child: Icon(
+                                  LucideIcons.map_pin,
+                                  size: 20,
+                                  color: Color(0xFF7E22CE),
+                                ),
+                              ),
+                            ],
                           ),
-                          const Padding(
-                            padding: EdgeInsets.only(bottom: 2),
-                            child: Icon(
-                              LucideIcons.map_pin,
-                              size: 20,
-                              color: Color(0xFF7E22CE),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Pickup Location · Now',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  pickupTitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                                if (pickupSubtitle.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    pickupSubtitle,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                      color: colorScheme.onSurfaceVariant,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ],
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
+                                  child: Divider(
+                                    height: 1,
+                                    thickness: 0.8,
+                                    color: colorScheme.outlineVariant
+                                        .withValues(alpha: 0.5),
+                                  ),
+                                ),
+                                Text(
+                                  dropoffMeta,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  destinationTitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                                if (destinationSubtitle.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    destinationSubtitle,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                      color: colorScheme.onSurfaceVariant,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Pickup Location · Now',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              pickupTitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                            if (pickupSubtitle.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                pickupSubtitle,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                  color: colorScheme.onSurfaceVariant,
-                                  height: 1.3,
-                                ),
-                              ),
-                            ],
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              child: Divider(
-                                height: 1,
-                                thickness: 0.8,
-                                color: colorScheme.outlineVariant.withValues(
-                                  alpha: 0.5,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              dropoffMeta,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              destinationTitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                            if (destinationSubtitle.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                destinationSubtitle,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                  color: colorScheme.onSurfaceVariant,
-                                  height: 1.3,
-                                ),
-                              ),
-                            ],
-                          ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Divider(
+                        height: 1,
+                        thickness: 0.8,
+                        color: colorScheme.outlineVariant.withValues(
+                          alpha: 0.5,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(
+                          LucideIcons.banknote,
+                          size: 22,
+                          color: colorScheme.onSurface,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '$displayFare | Tip: $displayTip',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Total: $displayTotal',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: colorScheme.onSurface,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               if (refreshError?.trim().isNotEmpty == true) ...[
@@ -369,41 +452,6 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                   ],
                 ),
               ],
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        LucideIcons.banknote,
-                        size: 20,
-                        color: colorScheme.onSurface,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        rideType?.trim().isNotEmpty == true
-                            ? 'Cash · ${rideType!.trim()}'
-                            : 'Cash',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    formatPesoAmount(fare),
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: colorScheme.onSurface,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 16),
               SizedBox(
                 height: 48,

@@ -34,23 +34,29 @@ bool shouldStartFindingDriverHomeNavigation({
   required bool isNavigationInFlight,
 }) => isMounted && !isNavigationInFlight;
 
-class const FindingDriverPage({
-  super.key,
-  required this.rideType,
-  required this.fare,
-  required this.destination,
-  required this.distance,
-  required this.duration,
-  this.pickupAddress,
-  this.pickupLatitude,
-  this.pickupLongitude,
-  this.passengerNote = '',
-  required this.profileRepository,
-  required this.bookingBloc,
-  required this.liveMapBloc,
-}) extends StatelessWidget {
+class FindingDriverPage extends StatelessWidget {
+  const FindingDriverPage({
+    super.key,
+    required this.rideType,
+    required this.fare,
+    this.baseFare,
+    this.tipAmount,
+    required this.destination,
+    required this.distance,
+    required this.duration,
+    this.pickupAddress,
+    this.pickupLatitude,
+    this.pickupLongitude,
+    this.passengerNote = '',
+    required this.profileRepository,
+    required this.bookingBloc,
+    required this.liveMapBloc,
+  });
+
   final String rideType;
   final double fare;
+  final double? baseFare;
+  final int? tipAmount;
   final Place destination;
   final String distance;
   final String duration;
@@ -72,6 +78,8 @@ class const FindingDriverPage({
       child: FindingDriverPageContent(
         rideType: rideType,
         fare: fare,
+        baseFare: baseFare,
+        tipAmount: tipAmount,
         destination: destination,
         distance: distance,
         duration: duration,
@@ -85,21 +93,27 @@ class const FindingDriverPage({
   }
 }
 
-class const FindingDriverPageContent({
-  super.key,
-  required this.rideType,
-  required this.fare,
-  required this.destination,
-  required this.distance,
-  required this.duration,
-  this.pickupAddress,
-  this.pickupLatitude,
-  this.pickupLongitude,
-  this.passengerNote = '',
-  required this.profileRepository,
-}) extends StatefulWidget {
+class FindingDriverPageContent extends StatefulWidget {
+  const FindingDriverPageContent({
+    super.key,
+    required this.rideType,
+    required this.fare,
+    this.baseFare,
+    this.tipAmount,
+    required this.destination,
+    required this.distance,
+    required this.duration,
+    this.pickupAddress,
+    this.pickupLatitude,
+    this.pickupLongitude,
+    this.passengerNote = '',
+    required this.profileRepository,
+  });
+
   final String rideType;
   final double fare;
+  final double? baseFare;
+  final int? tipAmount;
   final Place destination;
   final String distance;
   final String duration;
@@ -637,9 +651,10 @@ class _FindingDriverPageContentState()
                             return FindingDriverSearchingPanel(
                               message: state.statusMessage,
                               fare: fare,
+                              baseFare: widget.baseFare,
                               destination: destination,
                               pickupAddress: pickupAddress,
-                              rideType: rideType,
+                              tipAmount: widget.tipAmount,
                               distance: widget.distance,
                               duration: widget.duration,
                               requestCreated: false,
@@ -696,9 +711,10 @@ class _FindingDriverPageContentState()
                             return FindingDriverSearchingPanel(
                               message: state.statusMessage,
                               fare: fare,
+                              baseFare: widget.baseFare,
                               destination: destination,
                               pickupAddress: pickupAddress,
-                              rideType: rideType,
+                              tipAmount: widget.tipAmount,
                               distance: widget.distance,
                               duration: widget.duration,
                               requestId: state.sessionId,
@@ -719,9 +735,10 @@ class _FindingDriverPageContentState()
                               return FindingDriverSearchingPanel(
                                 message: state.statusMessage,
                                 fare: fare,
+                                baseFare: widget.baseFare,
                                 destination: destination,
                                 pickupAddress: pickupAddress,
-                                rideType: rideType,
+                                tipAmount: widget.tipAmount,
                                 distance: widget.distance,
                                 duration: widget.duration,
                                 requestId: state.sessionId,
@@ -769,9 +786,10 @@ class _FindingDriverPageContentState()
                             return FindingDriverSearchingPanel(
                               message: state.statusMessage,
                               fare: fare,
+                              baseFare: widget.baseFare,
                               destination: destination,
                               pickupAddress: pickupAddress,
-                              rideType: rideType,
+                              tipAmount: widget.tipAmount,
                               distance: widget.distance,
                               duration: widget.duration,
                               requestId: requestCreated
@@ -790,9 +808,10 @@ class _FindingDriverPageContentState()
                                   ? 'Unable to refresh your request'
                                   : 'We could not confirm your request yet',
                               fare: fare,
+                              baseFare: widget.baseFare,
                               destination: destination,
                               pickupAddress: pickupAddress,
-                              rideType: rideType,
+                              tipAmount: widget.tipAmount,
                               distance: widget.distance,
                               duration: widget.duration,
                               requestId: requestCreated
