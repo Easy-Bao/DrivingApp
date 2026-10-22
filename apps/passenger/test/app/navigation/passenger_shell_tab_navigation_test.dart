@@ -240,16 +240,6 @@ void main() {
     expect(router.state.uri.path, HomeRoutes.fullHomePath);
     expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
 
-    await tester.tap(
-      find.byKey(const ValueKey<String>('home-view-all-activity')),
-    );
-    await tester.pumpAndSettle();
-    expect(router.state.uri.path, RideHistoryRoutes.fullRecentActivityPath);
-    expect(navigationCoordinator.selectedIndex, 0);
-    expect(
-      find.byKey(const ValueKey<String>('recent-activity-page')),
-      findsOneWidget,
-    );
     expect(tester.takeException(), isNull);
   });
 
@@ -306,53 +296,6 @@ void main() {
     expect(navigationCoordinator.selectedIndex, 0);
     expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
   });
-
-  testWidgets('View all activity can be popped back to Home', (tester) async {
-    final sessionBloc = SessionBloc(sessionRepository: _SessionRepositoryStub())
-      ..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
-    final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
-    final realtimeClient = RealtimeWebSocketClient(
-      uri: Uri.parse('ws://localhost/realtime'),
-      tokenProvider: () async => 'test-token',
-      connector: _RealtimeSocketConnectorStub(),
-    );
-    final navigationCoordinator = TabNavigationCoordinator();
-    final lifecycleCoordinator = AppLifecycleCoordinator();
-    final router = _createRouter(
-      inboxCubit,
-      realtimeClient,
-      navigationCoordinator,
-      lifecycleCoordinator,
-    );
-    addTearDown(() async {
-      router.dispose();
-      await sessionBloc.close();
-      await inboxCubit.close();
-      await realtimeClient.dispose();
-      navigationCoordinator.dispose();
-      await lifecycleCoordinator.dispose();
-    });
-
-    await tester.pumpWidget(
-      BlocProvider<SessionBloc>.value(
-        value: sessionBloc,
-        child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(
-      find.byKey(const ValueKey<String>('home-view-all-activity')),
-    );
-    await tester.pumpAndSettle();
-    expect(router.state.uri.path, RideHistoryRoutes.fullRecentActivityPath);
-
-    await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
-
-    expect(router.state.uri.path, HomeRoutes.fullHomePath);
-    expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
-  });
 }
 
 GoRouter _createRouter(
@@ -365,14 +308,6 @@ GoRouter _createRouter(
   return GoRouter(
     initialLocation: initialLocation,
     routes: [
-      GoRoute(
-        name: RideHistoryRoutes.recentActivity,
-        path: RideHistoryRoutes.fullRecentActivityPath,
-        builder: (_, _) => const ColoredBox(
-          key: ValueKey<String>('recent-activity-page'),
-          color: Colors.white,
-        ),
-      ),
       StatefulShellRoute(
         builder: (context, state, navigationShell) => ShellLayout(
           inboxCubit: inboxCubit,
@@ -397,26 +332,9 @@ GoRouter _createRouter(
               GoRoute(
                 name: HomeRoutes.home,
                 path: HomeRoutes.fullHomePath,
-                builder: (context, _) => ColoredBox(
-                  key: const ValueKey<String>('home-page'),
+                builder: (_, _) => const ColoredBox(
+                  key: ValueKey<String>('home-page'),
                   color: Colors.white,
-                  child: BlocBuilder<SessionBloc, SessionState>(
-                    builder: (context, sessionState) {
-                      if (!sessionState.isAuthenticated) {
-                        return const SizedBox.shrink();
-                      }
-                      return Align(
-                        alignment: Alignment.topRight,
-                        child: TextButton(
-                          key: const ValueKey<String>('home-view-all-activity'),
-                          onPressed: () => context.pushNamed(
-                            RideHistoryRoutes.recentActivity,
-                          ),
-                          child: const Text('View all'),
-                        ),
-                      );
-                    },
-                  ),
                 ),
               ),
             ],

@@ -17,6 +17,7 @@ SET status = 'cancelled'
 WHERE id = $1
   AND passenger_id = $2
   AND status = 'open'
+  AND expires_at > CURRENT_TIMESTAMP
 RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
     passenger_note, distance_km, duration_minutes, offered_fare,
@@ -230,11 +231,24 @@ func (q *Queries) CreateBidSession(ctx context.Context, arg CreateBidSessionPara
 }
 
 const expireBidSessions = `-- name: ExpireBidSessions :exec
-UPDATE bid_sessions
-SET status = 'expired'
-WHERE passenger_id = $1
-  AND status = 'open'
-  AND expires_at <= $2
+WITH expired AS (
+    UPDATE bid_sessions
+    SET status = 'expired'
+    WHERE passenger_id = $1
+      AND status = 'open'
+      AND expires_at <= $2
+    RETURNING id, passenger_id, booking_reference
+), rejected_offers AS (
+    UPDATE bid_offers
+    SET status = 'rejected'
+    WHERE status = 'pending'
+      AND session_id IN (SELECT id FROM expired)
+)
+INSERT INTO notifications (user_id, type, title, body)
+SELECT passenger_id, 'ride', 'No nearby driver found',
+    'No nearby driver was found for Booking ID - ' || booking_reference ||
+    '. Your request has expired. Please try searching again.'
+FROM expired
 `
 
 type ExpireBidSessionsParams struct {

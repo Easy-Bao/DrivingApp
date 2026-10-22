@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_route_connector.dart';
 
 class FindingDriverSearchingPanel extends StatelessWidget {
   const FindingDriverSearchingPanel({
@@ -142,8 +143,8 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Searching for a driver',
+                        _SearchingDriverTitle(
+                          animate: animate,
                           style: TextStyle(
                             color: colorScheme.onSurface,
                             fontSize: 20,
@@ -158,7 +159,7 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                               child: Text(
                                 displayBookingId.isEmpty
                                     ? message
-                                    : 'Booking ID: $displayBookingId',
+                                    : 'Booking ID - $displayBookingId',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -250,9 +251,10 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                               ),
                               Expanded(
                                 child: Center(
-                                  child: CustomPaint(
-                                    size: const Size(2, double.infinity),
-                                    painter: _DashedLinePainter(
+                                  child: SizedBox(
+                                    width: 2,
+                                    height: double.infinity,
+                                    child: FindingDriverRouteConnector(
                                       color: colorScheme.outlineVariant,
                                     ),
                                   ),
@@ -463,35 +465,72 @@ class FindingDriverSearchingPanel extends StatelessWidget {
   }
 }
 
-class _DashedLinePainter extends CustomPainter {
-  static const double _dashHeight = 3.5;
-  static const double _gapHeight = 3.5;
-  static const double _strokeWidth = 1.5;
+class _SearchingDriverTitle extends StatefulWidget {
+  const _SearchingDriverTitle({required this.animate, required this.style});
 
-  final Color color;
-
-  const _DashedLinePainter({required this.color});
+  final bool animate;
+  final TextStyle style;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = _strokeWidth
-      ..strokeCap = StrokeCap.round;
+  State<_SearchingDriverTitle> createState() => _SearchingDriverTitleState();
+}
 
-    double startY = 4.0;
-    while (startY < size.height - 4.0) {
-      final endY = (startY + _dashHeight).clamp(0.0, size.height - 4.0);
-      canvas.drawLine(
-        Offset(size.width / 2, startY),
-        Offset(size.width / 2, endY),
-        paint,
-      );
-      startY += _dashHeight + _gapHeight;
+class _SearchingDriverTitleState extends State<_SearchingDriverTitle>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1500),
+  )..addListener(_updateDots);
+  int _dotCount = 3;
+
+  void _updateDots() {
+    final next = 3 - (_controller.value * 3).floor().clamp(0, 2);
+    if (next != _dotCount) setState(() => _dotCount = next);
+  }
+
+  void _updateAnimation() {
+    if (widget.animate && !MediaQuery.disableAnimationsOf(context)) {
+      if (!_controller.isAnimating) _controller.repeat();
+    } else {
+      _controller.stop();
+      _controller.value = 0;
     }
   }
 
   @override
-  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) =>
-      color != oldDelegate.color;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateAnimation();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SearchingDriverTitle oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.animate != widget.animate) _updateAnimation();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        text: 'Searching for a driver',
+        children: [
+          TextSpan(text: '.' * _dotCount),
+          // Keep the title width stable throughout the dots cycle.
+          TextSpan(
+            text: '.' * (3 - _dotCount),
+            style: const TextStyle(color: Colors.transparent),
+          ),
+        ],
+      ),
+      style: widget.style,
+      semanticsLabel: 'Searching for a driver',
+    );
+  }
 }

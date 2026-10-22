@@ -370,12 +370,10 @@ class _HomePageState extends State<HomePage> {
         final activeSearch = _bookingBloc.activeDriverSearch;
         final isSearching =
             state is BookingSearching || state is BookingOffersReceived;
-        final isExpired = state is BookingFailure && state.isRequestExpired;
         final isRecovering = state is BookingSessionRecoveryInProgress;
         final recoveryFailed = state is BookingSessionRecoveryFailure;
         final recoveredRide = state is BookingRideRecovered;
         if (!isSearching &&
-            !isExpired &&
             !isRecovering &&
             !recoveryFailed &&
             !recoveredRide) {
@@ -388,9 +386,6 @@ class _HomePageState extends State<HomePage> {
         if (state is BookingRideRecovered) {
           title = 'Your driver accepted';
           subtitle = 'Resume your trip to view the driver and route.';
-        } else if (state is BookingFailure && state.isRequestExpired) {
-          title = 'Your ride request expired';
-          subtitle = 'Review your route and request another driver.';
         } else if (state is BookingSearching && state.sessionId == null) {
           title = 'Sending your request';
           subtitle =
@@ -440,14 +435,6 @@ class _HomePageState extends State<HomePage> {
             ),
             child: Row(
               children: [
-                Icon(
-                  state is BookingRideRecovered
-                      ? LucideIcons.car_front
-                      : LucideIcons.route,
-                  size: 20,
-                  color: colors.onSurface,
-                ),
-                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -480,10 +467,19 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
+                const SizedBox(width: AppSpacing.sm),
                 TextButton(
                   onPressed: onPressed,
                   style: TextButton.styleFrom(
+                    backgroundColor: colors.surfaceContainerHighest,
+                    foregroundColor: colors.onSurface,
+                    disabledBackgroundColor: colors.surfaceContainerHighest,
+                    disabledForegroundColor: colors.onSurfaceVariant,
                     minimumSize: const Size(48, AppSize.minimumTouchTarget),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
                     textStyle: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   child: Text(actionLabel),
@@ -532,20 +528,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildRecentRideHistoryHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text('Recent activity', style: context.textStyles.titleLarge),
-        if (context.select<SessionBloc, bool>(
-          (bloc) => bloc.state.isAuthenticated,
-        ))
-          TextButton(
-            onPressed: () =>
-                context.pushNamed(RideHistoryRoutes.recentActivity),
-            child: const Text('View all'),
-          ),
-      ],
-    );
+    return Text('Recent activity', style: context.textStyles.titleLarge);
   }
 
   Widget _buildRecentRideHistoryList() {

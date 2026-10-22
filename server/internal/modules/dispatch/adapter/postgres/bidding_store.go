@@ -445,6 +445,12 @@ func (repository *Store) CancelSession(
 	if err != nil {
 		return dispatchdomain.BidSession{}, err
 	}
+	if err := repository.queries.ExpireBidSessions(ctx, databasepostgres.ExpireBidSessionsParams{
+		PassengerID: dbPassengerID,
+		ExpiresAt:   bidTimestamp(time.Now().UTC()),
+	}); err != nil {
+		return dispatchdomain.BidSession{}, fmt.Errorf("expire passenger bid sessions before cancellation: %w", err)
+	}
 	item, err := repository.queries.CancelBidSession(ctx, databasepostgres.CancelBidSessionParams{
 		ID:          dbSessionID,
 		PassengerID: dbPassengerID,

@@ -43,7 +43,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Booking ID 701612345678901'), findsOneWidget);
+    expect(find.text('Booking ID - 701612345678901'), findsOneWidget);
     final headerBounds = tester.getRect(find.byKey(headerBoundsKey));
     final backBounds = tester.getRect(
       find.byKey(const ValueKey<String>('back-control')),

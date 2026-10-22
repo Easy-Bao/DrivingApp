@@ -32,8 +32,8 @@ void main() {
       ),
     );
 
-    expect(find.text('Searching for a driver'), findsOneWidget);
-    expect(find.text('Booking ID: 701612345678901'), findsOneWidget);
+    expect(find.text('Searching for a driver...'), findsOneWidget);
+    expect(find.text('Booking ID - 701612345678901'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('copy-booking-id-button')),
       findsOneWidget,

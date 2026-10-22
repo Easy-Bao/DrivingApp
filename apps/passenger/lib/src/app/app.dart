@@ -16,6 +16,7 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/track_drive
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
+import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -66,6 +67,22 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                         isUnavailable: status.isConnectionUnavailable,
                         child: MultiBlocListener(
                           listeners: [
+                            BlocListener<BookingBloc, BookingState>(
+                              bloc: Modular.get<BookingBloc>(),
+                              listenWhen: (_, current) =>
+                                  current is BookingFailure &&
+                                  current.isRequestExpired,
+                              listener: (context, _) {
+                                final session = _sessionBloc.state;
+                                if (session is AuthenticatedSession) {
+                                  unawaited(
+                                    Modular.get<InboxCubit>().loadNotifications(
+                                      session.passengerId,
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
                             BlocListener<SessionBloc, SessionState>(
                               listenWhen: (_, current) =>
                                   current is GuestSession ||

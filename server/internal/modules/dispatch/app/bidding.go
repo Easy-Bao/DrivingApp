@@ -352,7 +352,8 @@ func (service *Service) recoverCancelledSession(
 	if err != nil || recovered.PassengerID != passengerID {
 		return dispatchdomain.BidSession{}, false
 	}
-	return recovered, isBidStatus(recovered.Status, "cancelled")
+	return recovered, isBidStatus(recovered.Status, "cancelled") ||
+		isBidStatus(recovered.Status, "expired")
 }
 
 func (service *Service) recoverRejectedOffer(

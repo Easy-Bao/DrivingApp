@@ -2,6 +2,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_route_connector.dart';
 
 class FindingDriverTripCard extends StatelessWidget {
   const FindingDriverTripCard({
@@ -31,9 +32,10 @@ class FindingDriverTripCard extends StatelessWidget {
     required String label,
     required String value,
     String? details,
+    bool connectToNext = false,
   }) {
     final colors = context.colorScheme;
-    return Row(
+    final stop = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
@@ -80,6 +82,19 @@ class FindingDriverTripCard extends StatelessWidget {
         ),
       ],
     );
+    if (!connectToNext) return stop;
+    return Stack(
+      children: [
+        Positioned(
+          left: 8,
+          top: 24,
+          bottom: 0,
+          width: 2,
+          child: FindingDriverRouteConnector(color: colors.outlineVariant),
+        ),
+        Padding(padding: const EdgeInsets.only(bottom: 14), child: stop),
+      ],
+    );
   }
 
   @override
@@ -101,8 +116,8 @@ class FindingDriverTripCard extends StatelessWidget {
             label: 'Pick up',
             value: pickup,
             details: pickupDetails,
+            connectToNext: true,
           ),
-          const SizedBox(height: 14),
           _stop(
             context,
             icon: LucideIcons.navigation,

@@ -11,7 +11,6 @@ import 'package:passenger/src/features/auth/presentation/bloc/session/session_bl
 import 'package:passenger/src/features/ride_history/domain/entities/ride_history_overview.dart';
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
-import 'package:passenger/src/features/ride_history/presentation/pages/recent_activity_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/pages/ride_history_page.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 
@@ -186,85 +185,6 @@ void main() {
     repository.complete();
     await tester.pumpAndSettle();
     expect(find.text('No rides yet'), findsOneWidget);
-  });
-
-  testWidgets('Recent Activity skeleton matches its compact loaded layout', (
-    tester,
-  ) async {
-    final sessionBloc = SessionBloc(
-      sessionRepository: _AuthenticatedSessionRepository(),
-    );
-    addTearDown(sessionBloc.close);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.main,
-        home: MultiBlocProvider(
-          providers: [
-            BlocProvider<SessionBloc>.value(value: sessionBloc),
-            BlocProvider<RideHistoryBloc>(
-              create: (_) =>
-                  RideHistoryBloc(repository: _EmptyRideHistoryRepository()),
-            ),
-          ],
-          child: const RecentActivityPage(),
-        ),
-      ),
-    );
-
-    await tester.pump();
-
-    expect(
-      find.byKey(const ValueKey<String>('activity-loading-skeleton')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey<String>('activity-loading-summary')),
-      findsNothing,
-    );
-    expect(
-      find.byKey(const ValueKey<String>('activity-loading-filters')),
-      findsNothing,
-    );
-  });
-
-  testWidgets('keeps Recent Activity separate from the Activity tab', (
-    tester,
-  ) async {
-    final sessionBloc = SessionBloc(
-      sessionRepository: _AuthenticatedSessionRepository(),
-    );
-    addTearDown(sessionBloc.close);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.main,
-        home: MultiBlocProvider(
-          providers: [
-            BlocProvider<SessionBloc>.value(value: sessionBloc),
-            BlocProvider<RideHistoryBloc>(
-              create: (_) =>
-                  RideHistoryBloc(repository: _EmptyRideHistoryRepository()),
-            ),
-          ],
-          child: const RecentActivityPage(),
-        ),
-      ),
-    );
-
-    final recentPage = tester.widget<RideHistoryPage>(
-      find.byType(RideHistoryPage),
-    );
-    expect(recentPage.title, 'Recent activity');
-    expect(recentPage.showBackButton, isTrue);
-    expect(recentPage.showHeaderSubtitle, isFalse);
-    expect(recentPage.showSummary, isFalse);
-    expect(recentPage.showFilters, isFalse);
-    expect(
-      find.byKey(const ValueKey<String>('recent-activity-back-button')),
-      findsOneWidget,
-    );
-    expect(find.text('Your latest rides'), findsNothing);
   });
 }
 

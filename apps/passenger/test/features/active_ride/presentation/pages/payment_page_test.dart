@@ -66,13 +66,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Trip receipt'), findsOneWidget);
-    expect(find.text('Booking ID ride-123'), findsOneWidget);
+    expect(find.text('Booking ID - ride-123'), findsOneWidget);
     expect(find.text('Total fare'), findsOneWidget);
     expect(find.text('₱185.00'), findsOneWidget);
-    expect(
-      find.text('Cash · Awaiting driver confirmation.'),
-      findsOneWidget,
-    );
+    expect(find.text('Cash · Awaiting driver confirmation.'), findsOneWidget);
     expect(find.text('How was your ride with Juan Dela Cruz?'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -97,7 +94,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Trip receipt'), findsOneWidget);
-    expect(find.text('Booking ID ride-123'), findsOneWidget);
+    expect(find.text('Booking ID - ride-123'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

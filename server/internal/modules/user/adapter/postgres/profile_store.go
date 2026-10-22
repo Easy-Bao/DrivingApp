@@ -409,6 +409,15 @@ func (repository *ProfileRepository) Notifications(
 		return nil, fmt.Errorf("convert notification offset: %w", err)
 	}
 
+	// Materialize elapsed requests when Inbox is opened, including after the
+	// passenger was offline. The expiry transition also writes its notice.
+	if err := repository.queries.ExpireBidSessions(ctx, databasepostgres.ExpireBidSessionsParams{
+		PassengerID: dbUserID,
+		ExpiresAt:   pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true},
+	}); err != nil {
+		return nil, fmt.Errorf("expire bid sessions before loading notifications: %w", err)
+	}
+
 	items, err := repository.queries.ListNotifications(ctx, databasepostgres.ListNotificationsParams{
 		UserID: dbUserID,
 		Limit:  dbLimit,

@@ -34,7 +34,7 @@ class const TripReference({
           children: [
             Flexible(
               child: SelectableText(
-                '$label $normalizedId',
+                '$label - $normalizedId',
                 style: TextStyle(
                   color: colors.onSurface,
                   fontSize: compact ? 12 : 14,

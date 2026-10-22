@@ -13,7 +13,6 @@ import 'package:passenger/src/features/ride_history/data/repositories/ride_histo
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
-import 'package:passenger/src/features/ride_history/presentation/pages/recent_activity_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/pages/ride_details_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/pages/ride_history_page.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
@@ -47,16 +46,6 @@ class RideHistoryModule._() {
   }
 
   static List<ModularRoute> routes = [
-    ChildRoute(
-      name: RideHistoryRoutes.recentActivity,
-      RideHistoryRoutes.recentActivityPath,
-      child: (context, GoRouterState state) => BlocProvider<RideHistoryBloc>(
-        create: (_) => Modular.get<RideHistoryBloc>(),
-        child: const RecentActivityPage(),
-      ),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
     ChildRoute(
       name: RideHistoryRoutes.rideDetails,
       RideHistoryRoutes.rideDetailsPath,
