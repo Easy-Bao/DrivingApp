@@ -7,6 +7,7 @@ import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_fare_details.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_options_loading_view.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/ride_panel_header.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_tip_selector.dart';
 
 enum _RideOptionsView { summary, offer, tip, note, fareDetails }
@@ -63,7 +64,6 @@ class RideOptionsPanel extends StatefulWidget {
 
 class _RideOptionsPanelState extends State<RideOptionsPanel> {
   _RideOptionsView _currentView = _RideOptionsView.summary;
-  bool _isNavigatingForward = true;
 
   FareEstimate? get _fareResult => widget.fareResult;
 
@@ -85,65 +85,15 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
 
   void _showView(_RideOptionsView view) {
     setState(() {
-      _isNavigatingForward = true;
       _currentView = view;
     });
   }
 
   void _backToSummary() {
+    FocusScope.of(context).unfocus();
     setState(() {
-      _isNavigatingForward = false;
       _currentView = _RideOptionsView.summary;
     });
-  }
-
-  Widget _buildSheetHeader({required String title, required String details}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        IconButton(
-          key: const ValueKey('panel-back'),
-          onPressed: _backToSummary,
-          tooltip: 'Back to trip summary',
-          constraints: const BoxConstraints.tightFor(
-            width: AppSize.minimumTouchTarget,
-            height: AppSize.minimumTouchTarget,
-          ),
-          padding: EdgeInsets.zero,
-          style: IconButton.styleFrom(shape: const CircleBorder()),
-          icon: Icon(
-            LucideIcons.arrow_left,
-            color: context.colorScheme.onSurface,
-            size: 20,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: context.colorScheme.onSurface,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                details,
-                style: TextStyle(
-                  color: context.colorScheme.onSurfaceVariant,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
   }
 
   Widget _buildOfferView(BuildContext context) {
@@ -153,7 +103,12 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
     return ConstrainedBox(
       key: const ValueKey(_RideOptionsView.offer),
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.72,
+        maxHeight:
+            (MediaQuery.sizeOf(context).height -
+                    MediaQuery.viewInsetsOf(context).bottom -
+                    MediaQuery.paddingOf(context).vertical -
+                    80)
+                .clamp(0.0, MediaQuery.sizeOf(context).height * 0.72),
       ),
       child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
@@ -161,7 +116,9 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSheetHeader(
+            RidePanelHeader(
+              closeKey: const ValueKey('panel-back'),
+              onClose: _backToSummary,
               title: 'Set your offer',
               details: 'Match or raise the calculated fare.',
             ),
@@ -240,7 +197,6 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                   TextField(
                     key: const ValueKey('custom-offer-input'),
                     controller: widget.customFareController,
-                    autofocus: true,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
@@ -259,6 +215,12 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                         _backToSummary();
                       }
                     },
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      color: context.colorScheme.onSurface,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
                     decoration: InputDecoration(
                       prefixText: '₱ ',
                       hintText: '0.00',
@@ -270,52 +232,24 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
-                      for (final increment in const [10, 20, 50]) ...[
-                        InkWell(
-                          onTap: () {
-                            final current =
-                                double.tryParse(
-                                  widget.customFareController.text,
-                                ) ??
-                                minimumFare;
-                            final next = current + increment;
-                            widget.customFareController.text = next
-                                .toStringAsFixed(2);
+                      for (final increment in const [10, 20, 50])
+                        ActionChip(
+                          label: Text('+₱$increment'),
+                          materialTapTargetSize: MaterialTapTargetSize.padded,
+                          onPressed: () {
+                            final current = _enteredFare ?? minimumFare;
+                            widget.customFareController.text =
+                                (current + increment).toStringAsFixed(2);
                             widget.onCustomFareChanged(
                               widget.customFareController.text,
                             );
                             setState(() {});
                           },
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: context.colorScheme.surface,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              border: Border.all(
-                                color: context.colorScheme.outlineVariant,
-                                width: 0.8,
-                              ),
-                            ),
-                            child: Text(
-                              '+₱$increment',
-                              style: TextStyle(
-                                color: context.colorScheme.onSurface,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
                         ),
-                        const SizedBox(width: 8),
-                      ],
                     ],
                   ),
                 ],
@@ -352,7 +286,12 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
     return ConstrainedBox(
       key: const ValueKey(_RideOptionsView.tip),
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.72,
+        maxHeight:
+            (MediaQuery.sizeOf(context).height -
+                    MediaQuery.viewInsetsOf(context).bottom -
+                    MediaQuery.paddingOf(context).vertical -
+                    80)
+                .clamp(0.0, MediaQuery.sizeOf(context).height * 0.72),
       ),
       child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
@@ -360,7 +299,9 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSheetHeader(
+            RidePanelHeader(
+              closeKey: const ValueKey('panel-back'),
+              onClose: _backToSummary,
               title: 'Tip your driver',
               details: '100% of your tip goes directly to the driver.',
             ),
@@ -403,7 +344,12 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
     return ConstrainedBox(
       key: const ValueKey(_RideOptionsView.note),
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.72,
+        maxHeight:
+            (MediaQuery.sizeOf(context).height -
+                    MediaQuery.viewInsetsOf(context).bottom -
+                    MediaQuery.paddingOf(context).vertical -
+                    80)
+                .clamp(0.0, MediaQuery.sizeOf(context).height * 0.72),
       ),
       child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
@@ -411,7 +357,9 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSheetHeader(
+            RidePanelHeader(
+              closeKey: const ValueKey('panel-back'),
+              onClose: _backToSummary,
               title: 'Add a trip note',
               details: 'Help your driver find you quickly.',
             ),
@@ -457,7 +405,6 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                   TextField(
                     key: const ValueKey('trip-note-input'),
                     controller: widget.notesController,
-                    autofocus: true,
                     minLines: 3,
                     maxLines: 5,
                     maxLength: 160,
@@ -490,8 +437,10 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                         'Have luggage',
                         'Call on arrival',
                       ])
-                        InkWell(
-                          onTap: () {
+                        ActionChip(
+                          label: Text(preset),
+                          materialTapTargetSize: MaterialTapTargetSize.padded,
+                          onPressed: () {
                             final current = widget.notesController.text.trim();
                             final next = current.isEmpty
                                 ? preset
@@ -505,31 +454,6 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                             widget.onNotesChanged(widget.notesController.text);
                             setState(() {});
                           },
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: context.colorScheme.surface,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              border: Border.all(
-                                color: context.colorScheme.outlineVariant,
-                                width: 0.8,
-                              ),
-                            ),
-                            child: Text(
-                              preset,
-                              style: TextStyle(
-                                color: context.colorScheme.onSurfaceVariant,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
                         ),
                     ],
                   ),
@@ -570,7 +494,12 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
     return ConstrainedBox(
       key: const ValueKey(_RideOptionsView.fareDetails),
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.72,
+        maxHeight:
+            (MediaQuery.sizeOf(context).height -
+                    MediaQuery.viewInsetsOf(context).bottom -
+                    MediaQuery.paddingOf(context).vertical -
+                    80)
+                .clamp(0.0, MediaQuery.sizeOf(context).height * 0.72),
       ),
       child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
@@ -652,7 +581,6 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
 
   Widget _buildActionButton({
     required Key key,
-    required IconData icon,
     required String label,
     required bool isActive,
     required VoidCallback onTap,
@@ -678,30 +606,17 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
               width: 1,
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 16,
-                color: isActive
-                    ? context.colorScheme.primary
-                    : context.colorScheme.onSurface,
+          child: Center(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: context.colorScheme.onSurface,
               ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: context.colorScheme.onSurface,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -734,23 +649,10 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
             children: [
               Column(
                 children: [
-                  Container(
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF22C55E).withValues(alpha: 0.25),
-                    ),
-                    child: Center(
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFF16A34A),
-                        ),
-                      ),
-                    ),
+                  Icon(
+                    LucideIcons.map_pin,
+                    size: 18,
+                    color: context.colorScheme.onSurface,
                   ),
                   CustomPaint(
                     size: const Size(2, 22),
@@ -758,13 +660,10 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                       color: context.colorScheme.outlineVariant,
                     ),
                   ),
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
+                  Icon(
+                    LucideIcons.navigation,
+                    size: 18,
+                    color: context.colorScheme.onSurface,
                   ),
                 ],
               ),
@@ -774,7 +673,7 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Pickup',
+                      'Pick up',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -794,7 +693,7 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Destination',
+                      'Drop off',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -826,54 +725,57 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Total fare',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          'Total fare',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        Text(
+                          ' · ',
+                          style: TextStyle(
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        Icon(
+                          LucideIcons.banknote,
+                          size: 14,
                           color: context.colorScheme.onSurfaceVariant,
                         ),
-                      ),
-                      Text(
-                        ' · ',
-                        style: TextStyle(
-                          color: context.colorScheme.onSurfaceVariant,
+                        const SizedBox(width: 4),
+                        Text(
+                          'Cash',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                      Icon(
-                        LucideIcons.banknote,
-                        size: 14,
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Cash',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: context.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _currency(widget.totalFare),
-                    key: const ValueKey('total-fare-amount'),
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w800,
-                      color: context.colorScheme.onSurface,
-                      letterSpacing: -0.8,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      _currency(widget.totalFare),
+                      key: const ValueKey('total-fare-amount'),
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                        color: context.colorScheme.onSurface,
+                        letterSpacing: -0.8,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                ),
               ),
               InkWell(
                 key: const ValueKey('fare-summary'),
@@ -883,8 +785,8 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                 borderRadius: BorderRadius.circular(6),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 6,
+                    horizontal: 8,
+                    vertical: 14,
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -900,7 +802,7 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                       ),
                       const SizedBox(width: 4),
                       Icon(
-                        LucideIcons.chevron_down,
+                        LucideIcons.chevron_up,
                         size: 16,
                         color: context.colorScheme.onSurface,
                       ),
@@ -916,7 +818,6 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
               Expanded(
                 child: _buildActionButton(
                   key: const ValueKey('custom-offer-trigger'),
-                  icon: LucideIcons.sliders_horizontal,
                   label: hasCustomOffer
                       ? 'Your offer: ${_currency(enteredFare)}'
                       : 'Offer',
@@ -928,7 +829,6 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
               Expanded(
                 child: _buildActionButton(
                   key: const ValueKey('tip-trigger'),
-                  icon: LucideIcons.sparkles,
                   label: widget.selectedTipAmount > 0
                       ? 'Tip: ${_currency(widget.selectedTipAmount.toDouble())}'
                       : 'Tip',
@@ -940,7 +840,6 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
               Expanded(
                 child: _buildActionButton(
                   key: const ValueKey('trip-note-trigger'),
-                  icon: LucideIcons.file_text,
                   label: note.isNotEmpty ? 'Note added' : 'Note',
                   isActive: note.isNotEmpty,
                   onTap: () => _showView(_RideOptionsView.note),
@@ -1006,6 +905,11 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
       return _buildLoadingContent(showPrimaryAction: true);
     }
 
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final duration = reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 240);
+
     return PopScope(
       canPop: _currentView == _RideOptionsView.summary,
       onPopInvokedWithResult: (didPop, _) {
@@ -1015,6 +919,7 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
       },
       child: Container(
         key: const ValueKey('ride-options-panel'),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
           borderRadius: const BorderRadius.vertical(
@@ -1047,40 +952,66 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                     ),
                   ),
                 ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 280),
-                  curve: Curves.easeOutCubic,
-                  alignment: Alignment.bottomCenter,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 280),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    layoutBuilder: (currentChild, previousChildren) {
-                      return Stack(
-                        alignment: Alignment.bottomCenter,
-                        children: <Widget>[...previousChildren, ?currentChild],
-                      );
-                    },
-                    transitionBuilder: (child, animation) {
-                      final isIncoming = child.key == ValueKey(_currentView);
-                      final inBegin = _isNavigatingForward
-                          ? const Offset(0.0, 0.35)
-                          : const Offset(0.0, -0.35);
-                      final outEnd = _isNavigatingForward
-                          ? const Offset(0.0, -0.35)
-                          : const Offset(0.0, 0.35);
-
-                      final offsetAnimation = Tween<Offset>(
-                        begin: isIncoming ? inBegin : Offset.zero,
-                        end: isIncoming ? Offset.zero : outEnd,
-                      ).animate(animation);
-
-                      return SlideTransition(
-                        position: offsetAnimation,
-                        child: FadeTransition(opacity: animation, child: child),
-                      );
-                    },
-                    child: _buildCurrentView(context),
+                Flexible(
+                  child: AnimatedSize(
+                    duration: duration,
+                    curve: Curves.easeInOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: AnimatedSwitcher(
+                      duration: duration,
+                      reverseDuration: reduceMotion
+                          ? Duration.zero
+                          : const Duration(milliseconds: 160),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      layoutBuilder: (currentChild, previousChildren) {
+                        return Stack(
+                          alignment: Alignment.topCenter,
+                          clipBehavior: Clip.hardEdge,
+                          children: [
+                            // Outgoing content must not hold the sheet open.
+                            for (final child in previousChildren)
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: ExcludeSemantics(
+                                    child: ClipRect(
+                                      child: OverflowBox(
+                                        alignment: Alignment.topCenter,
+                                        minHeight: 0,
+                                        maxHeight: double.infinity,
+                                        child: child,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ?currentChild,
+                          ],
+                        );
+                      },
+                      transitionBuilder: (child, animation) {
+                        final isSummary =
+                            child.key ==
+                            const ValueKey(_RideOptionsView.summary);
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: reduceMotion || isSummary
+                                ? Offset.zero
+                                : const Offset(0, 0.08),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: SingleChildScrollView(
+                        key: ValueKey(_currentView),
+                        physics: const ClampingScrollPhysics(),
+                        child: _buildCurrentView(context),
+                      ),
+                    ),
                   ),
                 ),
               ],

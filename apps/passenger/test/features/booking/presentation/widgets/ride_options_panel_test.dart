@@ -139,14 +139,39 @@ void main() {
   ) async {
     await tester.pumpWidget(buildPanel());
 
-    expect(find.text('Pickup'), findsOneWidget);
-    expect(find.text('Destination'), findsOneWidget);
+    expect(find.text('Pick up'), findsOneWidget);
+    expect(find.text('Drop off'), findsOneWidget);
     expect(find.text('Current location'), findsOneWidget);
     expect(find.text('Central Park'), findsOneWidget);
     expect(find.text('Calculated fare'), findsNothing);
     expect(find.text('Offer'), findsOneWidget);
     expect(find.text('Tip'), findsOneWidget);
     expect(find.text('Note'), findsOneWidget);
+    for (final key in [
+      'custom-offer-trigger',
+      'tip-trigger',
+      'trip-note-trigger',
+    ]) {
+      expect(
+        find.descendant(
+          of: find.byKey(ValueKey(key)),
+          matching: find.byType(Icon),
+        ),
+        findsNothing,
+      );
+    }
+    final routeCard = find.byKey(const ValueKey('trip-summary-card'));
+    for (final icon in [LucideIcons.map_pin, LucideIcons.navigation]) {
+      final marker = find.descendant(
+        of: routeCard,
+        matching: find.byIcon(icon),
+      );
+      expect(marker, findsOneWidget);
+      expect(
+        tester.widget<Icon>(marker).color,
+        AppTheme.main.colorScheme.onSurface,
+      );
+    }
     expect(find.text('Book directly'), findsOneWidget);
     expect(find.text('Solo Ride'), findsNothing);
     expect(find.text('4.2 km'), findsNothing);
@@ -156,9 +181,7 @@ void main() {
     expect(find.byType(HeroMode), findsNothing);
   });
 
-  testWidgets('opens a custom offer panel from the left and saves the offer', (
-    tester,
-  ) async {
+  testWidgets('opens a custom offer panel and saves the offer', (tester) async {
     await tester.pumpWidget(buildPanel());
 
     await tester.tap(find.byKey(const ValueKey('custom-offer-trigger')));
@@ -182,7 +205,7 @@ void main() {
     expect(find.text('Your offer: ₱40.00'), findsOneWidget);
   });
 
-  testWidgets('opens a custom offer view and cancels with back', (
+  testWidgets('closes a custom offer view with the downward chevron', (
     tester,
   ) async {
     await tester.pumpWidget(buildPanel());
@@ -260,8 +283,8 @@ void main() {
     expect(find.text('Custom offer adjustment'), findsOneWidget);
     expect(find.text('+₱6.83'), findsOneWidget);
     expect(find.text('No tip added'), findsOneWidget);
-    expect(find.text('Pickup'), findsNothing);
-    expect(find.text('Destination'), findsNothing);
+    expect(find.text('Pick up'), findsNothing);
+    expect(find.text('Drop off'), findsNothing);
     expect(find.text('Not now'), findsNothing);
     expect(
       tester.widget<Padding>(find.byKey(const ValueKey('fare-details'))),
@@ -304,6 +327,57 @@ void main() {
     expect(find.text('Tip your driver'), findsNothing);
     expect(find.text('Tip: ₱20.00'), findsOneWidget);
   });
+
+  testWidgets('shrinks the sheet during dismissal without a lingering panel', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildPanel());
+    final panel = find.byKey(const ValueKey('ride-options-panel'));
+    final summaryHeight = tester.getSize(panel).height;
+
+    await tester.tap(find.byKey(const ValueKey('fare-summary')));
+    await tester.pumpAndSettle();
+    final detailsHeight = tester.getSize(panel).height;
+    expect(detailsHeight, greaterThan(summaryHeight));
+    expect(find.byIcon(LucideIcons.chevron_down), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Back to trip summary'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 80));
+    expect(tester.getSize(panel).height, lessThan(detailsHeight));
+    expect(tester.getSize(panel).height, greaterThan(summaryHeight));
+
+    await tester.pumpAndSettle();
+    expect(tester.getSize(panel).height, closeTo(summaryHeight, 0.1));
+    expect(find.byKey(const ValueKey('fare-details')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'keeps note actions reachable above the keyboard on a narrow screen',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetViewInsets);
+      await tester.pumpWidget(buildPanel());
+
+      await tester.tap(find.byKey(const ValueKey('trip-note-trigger')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('trip-note-input')));
+      tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+      await tester.pumpAndSettle();
+      final save = find.byKey(const ValueKey('trip-note-save'));
+      await tester.ensureVisible(save);
+      await tester.pumpAndSettle();
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('trip-note-input')), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('renders anchored book directly action and trip summary', (
     tester,

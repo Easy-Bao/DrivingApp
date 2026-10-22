@@ -1,8 +1,8 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/booking/booking.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/ride_panel_header.dart';
 
 class RideFareDetails extends StatelessWidget {
   const RideFareDetails({
@@ -43,7 +43,7 @@ class RideFareDetails extends StatelessWidget {
   }) {
     final valueStyle = TextStyle(
       color: context.colorScheme.onSurface,
-      fontSize: emphasize ? 14 : 13,
+      fontSize: emphasize ? 16 : 14,
       fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
       fontFeatures: const [FontFeature.tabularFigures()],
     );
@@ -57,7 +57,7 @@ class RideFareDetails extends StatelessWidget {
               label,
               style: TextStyle(
                 color: context.colorScheme.onSurfaceVariant,
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -86,59 +86,10 @@ class RideFareDetails extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Tooltip(
-                message: 'Back to trip summary',
-                child: InkWell(
-                  onTap: onBackPressed,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  child: Container(
-                    width: AppSize.minimumTouchTarget,
-                    height: AppSize.minimumTouchTarget,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: context.colorScheme.surface,
-                      border: Border.all(
-                        color: context.colorScheme.outlineVariant,
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Icon(
-                      LucideIcons.arrow_left,
-                      color: context.colorScheme.onSurface,
-                      size: 19,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Fare details',
-                      style: TextStyle(
-                        color: context.colorScheme.onSurface,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      'How your total is calculated',
-                      style: TextStyle(
-                        color: context.colorScheme.onSurfaceVariant,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          RidePanelHeader(
+            title: 'Fare details',
+            details: 'How your total is calculated',
+            onClose: onBackPressed,
           ),
           if (normalizedPassengerName.isNotEmpty) ...[
             const SizedBox(height: 14),
@@ -149,13 +100,6 @@ class RideFareDetails extends StatelessWidget {
                 color: context.colorScheme.surface,
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(color: context.colorScheme.outlineVariant),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x06000000),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
               ),
               child: _amountRow(context, 'Passenger', normalizedPassengerName),
             ),
@@ -168,13 +112,6 @@ class RideFareDetails extends StatelessWidget {
               color: context.colorScheme.surface,
               borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: context.colorScheme.outlineVariant),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x06000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,19 +175,12 @@ class RideFareDetails extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: context.colorScheme.surface,
+              color: context.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
                 color: context.colorScheme.outlineVariant,
                 width: 0.8,
               ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x06000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ],
             ),
             child: Row(
               children: [
@@ -268,7 +198,7 @@ class RideFareDetails extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Transparent pricing · No hidden fees',
+                        'Pay your driver in cash',
                         style: TextStyle(
                           color: context.colorScheme.onSurfaceVariant,
                           fontSize: 11,

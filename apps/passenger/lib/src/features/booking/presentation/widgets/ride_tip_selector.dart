@@ -37,46 +37,56 @@ class const RideTipSelector({
           ),
         ),
         const SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            children: [
-              for (final amount in tipOptions) ...[
-                ChoiceChip(
-                  label: Text(_labelFor(amount)),
-                  selected: selectedTipAmount == amount,
-                  onSelected: (_) => onTipSelected(amount),
-                  selectedColor: context.colorScheme.onSurface,
-                  backgroundColor: context.colorScheme.surface,
-                  side: BorderSide(
-                    color: selectedTipAmount == amount
-                        ? context.colorScheme.onSurface
-                        : context.colorScheme.outlineVariant,
-                    width: selectedTipAmount == amount ? 1.2 : 0.8,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth < 280 ? 2 : 3;
+            final width = (constraints.maxWidth - (columns - 1) * 8) / columns;
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final amount in tipOptions)
+                  SizedBox(
+                    width: width,
+                    child: ChoiceChip(
+                      label: SizedBox(
+                        width: double.infinity,
+                        child: Text(
+                          _labelFor(amount),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      selected: selectedTipAmount == amount,
+                      onSelected: (_) => onTipSelected(amount),
+                      selectedColor: context.colorScheme.onSurface,
+                      backgroundColor: context.colorScheme.surface,
+                      side: BorderSide(
+                        color: selectedTipAmount == amount
+                            ? context.colorScheme.onSurface
+                            : context.colorScheme.outlineVariant,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
+                      materialTapTargetSize: MaterialTapTargetSize.padded,
+                      labelStyle: TextStyle(
+                        color: selectedTipAmount == amount
+                            ? context.colorScheme.surface
+                            : context.colorScheme.onSurface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                      showCheckmark: false,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 14,
+                      ),
+                    ),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  materialTapTargetSize: MaterialTapTargetSize.padded,
-                  labelStyle: TextStyle(
-                    color: selectedTipAmount == amount
-                        ? context.colorScheme.surface
-                        : context.colorScheme.onSurface,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                  showCheckmark: false,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                ),
-                if (amount != tipOptions.last) const SizedBox(width: 8),
               ],
-            ],
-          ),
+            );
+          },
         ),
       ],
     );
