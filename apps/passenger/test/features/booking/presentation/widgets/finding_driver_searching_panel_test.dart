@@ -26,7 +26,6 @@ void main() {
             destination: destination,
             requestId: '4821',
             requestCreated: true,
-            dotAnimation: const AlwaysStoppedAnimation<double>(0),
             onCancelPressed: () {},
           ),
         ),
@@ -56,18 +55,17 @@ void main() {
               duration: '9 mins',
               requestId: '4821',
               requestCreated: true,
-              dotAnimation: const AlwaysStoppedAnimation<double>(0),
               onCancelPressed: () {},
             ),
           ),
         ),
       );
 
-      expect(find.text('Pickup Location · Now'), findsOneWidget);
+      expect(find.text('Pick up · Now'), findsOneWidget);
       expect(find.text('Mountain View'), findsOneWidget);
       expect(find.text('Mountain View, California'), findsOneWidget);
 
-      expect(find.text('Drop-off Location · 3.2 km · 9 mins'), findsOneWidget);
+      expect(find.text('Drop off · 3.2 km · 9 mins'), findsOneWidget);
       expect(find.text('Pet Express - Mall Of Asia'), findsOneWidget);
       expect(
         find.text(
@@ -76,13 +74,12 @@ void main() {
         findsOneWidget,
       );
 
-      // Verify the purple pin icon is present
       expect(find.byIcon(LucideIcons.map_pin), findsOneWidget);
     },
   );
 
   testWidgets(
-    'shows banknote icon, fare breakdown, and cancel booking button which triggers callback',
+    'keeps fare and tip above the total without a money icon and cancels',
     (tester) async {
       var canceled = false;
       await tester.pumpWidget(
@@ -92,16 +89,28 @@ void main() {
               message: 'Searching for a driver',
               fare: 27.57,
               destination: destination,
-              dotAnimation: const AlwaysStoppedAnimation<double>(0),
               onCancelPressed: () => canceled = true,
             ),
           ),
         ),
       );
 
-      expect(find.byIcon(LucideIcons.banknote), findsOneWidget);
+      expect(find.byIcon(LucideIcons.banknote), findsNothing);
       expect(find.text('₱27.57 | Tip: ₱0.00'), findsOneWidget);
       expect(find.text('Total: ₱27.57'), findsOneWidget);
+      final breakdownPosition = tester.getTopLeft(
+        find.text('₱27.57 | Tip: ₱0.00'),
+      );
+      final totalPosition = tester.getTopLeft(find.text('Total: ₱27.57'));
+      expect(totalPosition.dy, greaterThan(breakdownPosition.dy));
+      expect(totalPosition.dx, breakdownPosition.dx);
+      for (final icon in [LucideIcons.map_pin, LucideIcons.navigation]) {
+        expect(
+          tester.widget<Icon>(find.byIcon(icon)).color,
+          Theme.of(tester.element(find.byIcon(icon))).colorScheme.onSurface,
+        );
+      }
+
       expect(find.textContaining('Solo'), findsNothing);
 
       final cardFinder = find.byKey(
@@ -117,6 +126,16 @@ void main() {
         findsOneWidget,
       );
 
+      final cancelButton = tester.widget<FilledButton>(
+        find.byKey(const ValueKey('cancel-booking-button')),
+      );
+      final colors = Theme.of(tester.element(find.byType(FilledButton)))
+          .colorScheme;
+      expect(
+        cancelButton.style!.backgroundColor!.resolve({}),
+        colors.onSurface,
+      );
+      expect(cancelButton.style!.foregroundColor!.resolve({}), colors.surface);
       final cancelBtn = find.text('Cancel booking');
       expect(cancelBtn, findsOneWidget);
       await tester.tap(cancelBtn);
@@ -137,14 +156,13 @@ void main() {
               baseFare: 27.57,
               tipAmount: 10,
               destination: destination,
-              dotAnimation: const AlwaysStoppedAnimation<double>(0),
               onCancelPressed: () {},
             ),
           ),
         ),
       );
 
-      expect(find.byIcon(LucideIcons.banknote), findsOneWidget);
+      expect(find.byIcon(LucideIcons.banknote), findsNothing);
       expect(find.text('₱27.57 | Tip: ₱10.00'), findsOneWidget);
       expect(find.text('Total: ₱37.57'), findsOneWidget);
       expect(find.textContaining('Solo'), findsNothing);
@@ -182,7 +200,6 @@ void main() {
             fare: 27.57,
             destination: destination,
             requestId: 'BR-4821',
-            dotAnimation: const AlwaysStoppedAnimation<double>(0),
             onCancelPressed: () {},
           ),
         ),

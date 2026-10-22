@@ -11,7 +11,6 @@ class const FindingDriverNoDriverPanel({
   this.rideType,
   this.requestId,
   this.requestExpired = false,
-  this.onRequestRidePressed,
   required this.onRetryPressed,
   required this.onCancelPressed,
   this.isCanceling = false,
@@ -22,7 +21,6 @@ class const FindingDriverNoDriverPanel({
   final String? rideType;
   final String? requestId;
   final bool requestExpired;
-  final VoidCallback? onRequestRidePressed;
   final VoidCallback onRetryPressed;
   final VoidCallback onCancelPressed;
   final bool isCanceling;
@@ -30,28 +28,19 @@ class const FindingDriverNoDriverPanel({
   @override
   Widget build(BuildContext context) {
     return FindingDriverStatusSheet(
-      eyebrow: requestExpired ? 'Request ended' : 'Driver search',
-      title: requestExpired
-          ? 'No driver accepted in time'
-          : 'No nearby drivers yet',
+      title: requestExpired ? 'No driver found' : 'No drivers nearby',
       message: requestExpired
-          ? 'This request expired. You can check again or start a new request.'
-          : 'You can request a ride anyway. Nearby drivers can still respond while your request is open.',
-      statusIcon: LucideIcons.search,
-      statusColor: Theme.of(context).colorScheme.primary,
+          ? 'Your request has ended. Try searching again for an available driver.'
+          : 'We couldn’t find an available driver nearby. Try searching again in a moment.',
+      statusIcon: LucideIcons.search_x,
+      statusColor: Theme.of(context).colorScheme.onSurface,
       destination: destination.name,
       pickupAddress: pickupAddress,
       rideType: rideType,
       requestId: requestId,
       fare: fare,
-      primaryAction: onRequestRidePressed ?? onRetryPressed,
-      primaryActionLabel: onRequestRidePressed == null
-          ? 'Try again'
-          : 'Request a ride',
-      primaryActionIcon: LucideIcons.search,
-      secondaryAction: onRetryPressed,
-      secondaryActionLabel: 'Check again',
-      secondaryActionIcon: LucideIcons.refresh_cw,
+      primaryAction: onRetryPressed,
+      primaryActionLabel: 'Retry search',
       onCancelPressed: onCancelPressed,
       isCanceling: isCanceling,
     );

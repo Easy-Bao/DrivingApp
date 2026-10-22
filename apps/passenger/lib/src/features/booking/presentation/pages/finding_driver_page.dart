@@ -128,10 +128,7 @@ class FindingDriverPageContent extends StatefulWidget {
       _FindingDriverPageContentState();
 }
 
-class _FindingDriverPageContentState()
-    extends State<FindingDriverPageContent>
-    with TickerProviderStateMixin {
-  late AnimationController _dotAnimationController;
+class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
   bool _initialized = false;
   DriverModel? _selectedDriver;
   List<DriverModel> _nearbyDrivers = [];
@@ -163,12 +160,6 @@ class _FindingDriverPageContentState()
   @override
   void initState() {
     super.initState();
-    _dotAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    unawaited(_dotAnimationController.repeat());
-
     final pickup = _pickupCoordinate;
     if (pickup == null) {
       _locationUnavailable = true;
@@ -211,12 +202,6 @@ class _FindingDriverPageContentState()
   void _hideDriverProfile() {
     if (!mounted) return;
     setState(() => _isViewingDriverProfile = false);
-  }
-
-  @override
-  void dispose() {
-    _dotAnimationController.dispose();
-    super.dispose();
   }
 
   void _onMapCreated(AppMapController controller, BuildContext context) {
@@ -524,25 +509,6 @@ class _FindingDriverPageContentState()
                       ),
                     ),
                   ),
-                  BlocBuilder<BookingBloc, BookingState>(
-                    builder: (context, state) {
-                      final isSearching =
-                          state is FindingNearestDriver ||
-                          state is BookingSearching ||
-                          (state is BookingOffersReceived &&
-                              state.offers.isEmpty) ||
-                          state is BookingSessionRecoveryInProgress;
-                      if (!isSearching) return const SizedBox.shrink();
-                      return Positioned.fill(
-                        child: IgnorePointer(
-                          child: Align(
-                            alignment: const Alignment(0, -0.35),
-                            child: _buildMapRadarOverlay(context),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
                   SafeArea(
                     child: Align(
                       alignment: Alignment.topLeft,
@@ -658,7 +624,6 @@ class _FindingDriverPageContentState()
                               distance: widget.distance,
                               duration: widget.duration,
                               requestCreated: false,
-                              dotAnimation: _dotAnimationController,
                               onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
                             );
@@ -676,7 +641,6 @@ class _FindingDriverPageContentState()
                               requestExpired: isExpired,
                               requestId: state.sessionId,
                               onRetryPressed: _retryFindingDriver,
-                              onRequestRidePressed: _startOpenBooking,
                               onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
                             );
@@ -726,7 +690,6 @@ class _FindingDriverPageContentState()
                               onRetryPressed: () =>
                                   BlocProvider.of<BookingBloc>(context)
                                       .add(const RefreshBookingSessionEvent()),
-                              dotAnimation: _dotAnimationController,
                               onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
                             );
@@ -749,7 +712,6 @@ class _FindingDriverPageContentState()
                                     BlocProvider.of<BookingBloc>(
                                       context,
                                     ).add(const RefreshBookingSessionEvent()),
-                                dotAnimation: _dotAnimationController,
                                 onCancelPressed: _handleCancel,
                                 isCanceling: _isLeaving,
                               );
@@ -797,7 +759,6 @@ class _FindingDriverPageContentState()
                                   : null,
                               requestCreated: requestCreated,
                               isSendingRequest: !requestCreated,
-                              dotAnimation: _dotAnimationController,
                               onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
                             );
@@ -824,7 +785,6 @@ class _FindingDriverPageContentState()
                               onRetryPressed: () =>
                                   BlocProvider.of<BookingBloc>(context)
                                       .add(const RestoreActiveBookingEvent()),
-                              dotAnimation: _dotAnimationController,
                               onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
                             );
@@ -840,69 +800,6 @@ class _FindingDriverPageContentState()
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildMapRadarOverlay(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _dotAnimationController,
-      builder: (context, child) {
-        final t = _dotAnimationController.value;
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            Transform.scale(
-              scale: 1.0 + (t * 0.9),
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF10B981)
-                      .withValues(alpha: (1.0 - t).clamp(0.0, 1.0) * 0.08),
-                  border: Border.all(
-                    color: const Color(0xFF10B981)
-                        .withValues(alpha: (1.0 - t).clamp(0.0, 1.0) * 0.35),
-                    width: 1.2,
-                  ),
-                ),
-              ),
-            ),
-            Transform.scale(
-              scale: 1.0 + (((t + 0.5) % 1.0) * 0.55),
-              child: Container(
-                width: 95,
-                height: 95,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFF10B981).withValues(
-                      alpha: (1.0 - ((t + 0.5) % 1.0)).clamp(0.0, 1.0) * 0.25,
-                    ),
-                    width: 1.0,
-                  ),
-                ),
-              ),
-            ),
-            Container(
-              width: 16,
-              height: 16,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF10B981),
-                border: Border.all(color: Colors.white, width: 2.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 }

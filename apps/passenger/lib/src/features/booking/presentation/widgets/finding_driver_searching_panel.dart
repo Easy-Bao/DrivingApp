@@ -23,7 +23,6 @@ class FindingDriverSearchingPanel extends StatelessWidget {
     this.animate = true,
     this.refreshError,
     this.onRetryPressed,
-    required this.dotAnimation,
     required this.onCancelPressed,
     this.isCanceling = false,
   });
@@ -43,7 +42,6 @@ class FindingDriverSearchingPanel extends StatelessWidget {
   final bool animate;
   final String? refreshError;
   final VoidCallback? onRetryPressed;
-  final Animation<double> dotAnimation;
   final VoidCallback onCancelPressed;
   final bool isCanceling;
 
@@ -90,8 +88,8 @@ class FindingDriverSearchingPanel extends StatelessWidget {
     if (duration != null && duration!.trim().isNotEmpty) {
       parts.add(duration!.trim());
     }
-    if (parts.isEmpty) return 'Drop-off Location';
-    return 'Drop-off Location · ${parts.join(' · ')}';
+    if (parts.isEmpty) return 'Drop off';
+    return 'Drop off · ${parts.join(' · ')}';
   }
 
   @override
@@ -200,7 +198,7 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                                       }
                                     },
                                     child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
+                                      padding: const EdgeInsets.all(12),
                                       child: Icon(
                                         LucideIcons.copy,
                                         size: 18,
@@ -249,23 +247,10 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                             children: [
                               Padding(
                                 padding: const EdgeInsets.only(top: 2),
-                                child: Container(
-                                  width: 18,
-                                  height: 18,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Color(0xFF1D4ED8),
-                                  ),
-                                  child: Center(
-                                    child: Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
+                                child: Icon(
+                                  LucideIcons.map_pin,
+                                  size: 20,
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                               Expanded(
@@ -278,12 +263,12 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              const Padding(
-                                padding: EdgeInsets.only(bottom: 2),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 2),
                                 child: Icon(
-                                  LucideIcons.map_pin,
+                                  LucideIcons.navigation,
                                   size: 20,
-                                  color: Color(0xFF7E22CE),
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -294,7 +279,7 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Pickup Location · Now',
+                                  'Pick up · Now',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
@@ -389,12 +374,6 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Icon(
-                          LucideIcons.banknote,
-                          size: 22,
-                          color: colorScheme.onSurface,
-                        ),
-                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -444,10 +423,9 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                       ),
                     ),
                     if (onRetryPressed != null)
-                      TextButton.icon(
+                      TextButton(
                         onPressed: onRetryPressed,
-                        icon: const Icon(LucideIcons.refresh_cw, size: 14),
-                        label: const Text('Retry'),
+                        child: const Text('Retry'),
                       ),
                   ],
                 ),
@@ -455,15 +433,12 @@ class FindingDriverSearchingPanel extends StatelessWidget {
               const SizedBox(height: 16),
               SizedBox(
                 height: 48,
-                child: OutlinedButton(
+                child: FilledButton(
                   key: const ValueKey<String>('cancel-booking-button'),
                   onPressed: isCanceling ? null : onCancelPressed,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFB91C1C),
-                    side: BorderSide(
-                      color: colorScheme.outlineVariant,
-                      width: 1,
-                    ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colorScheme.onSurface,
+                    foregroundColor: colorScheme.surface,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
@@ -473,7 +448,7 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                           dimension: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: colorScheme.error,
+                            color: colorScheme.surface,
                           ),
                         )
                       : const Text(

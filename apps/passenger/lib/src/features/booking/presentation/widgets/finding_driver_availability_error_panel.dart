@@ -22,7 +22,6 @@ class const FindingDriverAvailabilityErrorPanel({
   @override
   Widget build(BuildContext context) {
     return FindingDriverStatusSheet(
-      eyebrow: 'Connection issue',
       title: 'Driver search unavailable',
       message: message,
       statusIcon: LucideIcons.circle_alert,
@@ -31,7 +30,6 @@ class const FindingDriverAvailabilityErrorPanel({
       fare: fare,
       primaryAction: onRetryPressed,
       primaryActionLabel: 'Try again',
-      primaryActionIcon: LucideIcons.refresh_cw,
       onCancelPressed: onCancelPressed,
       isCanceling: isCanceling,
     );
