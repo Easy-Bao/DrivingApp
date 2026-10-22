@@ -172,6 +172,16 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   }
 
   Future<void> _initializeTripDetails() async {
+    if (!mounted) return;
+    if (BlocProvider.of<SessionBloc>(context).state is! AuthenticatedSession) {
+      setState(() {
+        _isLoadingFare = false;
+        _fareError = null;
+        _fareResult = null;
+        _customFareController.clear();
+      });
+      return;
+    }
     if (mounted) {
       setState(() {
         _isLoadingFare = true;
@@ -215,6 +225,10 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   }
 
   Future<Route?> _loadRoute() async {
+    if (!mounted ||
+        BlocProvider.of<SessionBloc>(context).state is! AuthenticatedSession) {
+      return null;
+    }
     final cachedRoute = _route;
     if (cachedRoute != null) return cachedRoute;
 
@@ -317,6 +331,31 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
 
   Future<void> _handleBookPressed() async {
     if (_isStartingBooking) return;
+    final sessionState = BlocProvider.of<SessionBloc>(context).state;
+    if (sessionState is! AuthenticatedSession) {
+      BlocProvider.of<BookingDraftCubit>(context).save(
+        BookingDraft(
+          destination: widget.destination,
+          pickupAddress: widget.pickupAddress,
+          tipAmount: _selectedTipAmount,
+          notes: _notesController.text.trim(),
+        ),
+      );
+      _isStartingBooking = true;
+      try {
+        final action = await showBookingAuthBottomSheet(context);
+        if (!mounted || action == null) return;
+        final authRoute = switch (action) {
+          BookingAuthAction.signIn => AuthRoutes.signin,
+          BookingAuthAction.signUp => AuthRoutes.signup,
+        };
+        unawaited(context.pushNamed(authRoute));
+      } finally {
+        _isStartingBooking = false;
+      }
+      return;
+    }
+
     final fare = _selectedFare;
     final minimumFare = _minimumFare;
     if (fare == null || minimumFare == null || fare < minimumFare) {
@@ -331,26 +370,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         'A driver search is already in progress.',
         isError: true,
       );
-      return;
-    }
-
-    final sessionState = BlocProvider.of<SessionBloc>(context).state;
-    if (sessionState is! AuthenticatedSession) {
-      BlocProvider.of<BookingDraftCubit>(context).save(
-        BookingDraft(
-          destination: widget.destination,
-          pickupAddress: widget.pickupAddress,
-          tipAmount: _selectedTipAmount,
-          notes: _notesController.text.trim(),
-        ),
-      );
-      final action = await showBookingAuthBottomSheet(context);
-      if (!mounted || action == null) return;
-      final authRoute = switch (action) {
-        BookingAuthAction.signIn => AuthRoutes.signin,
-        BookingAuthAction.signUp => AuthRoutes.signup,
-      };
-      unawaited(context.pushNamed(authRoute));
       return;
     }
 
@@ -510,8 +529,11 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final requiresSignIn = context.select<SessionBloc, bool>(
+      (bloc) => bloc.state is! AuthenticatedSession,
+    );
     final pickup = _pickupCoordinate;
-    if (pickup == null) {
+    if (pickup == null && !requiresSignIn) {
       return Scaffold(
         backgroundColor: context.colorScheme.surface,
         body: Center(
@@ -528,8 +550,8 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         ),
       );
     }
-    final defaultLat = pickup.lat;
-    final defaultLng = pickup.lng;
+    final defaultLat = pickup?.lat ?? widget.destination.latitude;
+    final defaultLng = pickup?.lng ?? widget.destination.longitude;
     final sessionPassengerName = context.select<SessionBloc, String>(
       (bloc) => switch (bloc.state) {
         AuthenticatedSession(:final passengerName) => passengerName,
@@ -543,37 +565,54 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         ? profilePassengerName
         : sessionPassengerName;
 
-    return BlocListener<FareEstimateCubit, FareEstimateState>(
-      bloc: _fareEstimateCubit,
-      listener: (context, state) {
-        switch (state) {
-          case FareEstimateInitial():
-            break;
-          case FareEstimateLoading():
-            setState(() {
-              _isLoadingFare = true;
-              _fareError = null;
-              _customFareError = null;
-            });
-          case FareEstimateLoaded(value: final fareResult):
-            setState(() {
-              _fareResult = fareResult;
-              _customFareController.text = fareResult.totalFare.toStringAsFixed(
-                2,
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<SessionBloc, SessionState>(
+          listenWhen: (previous, current) =>
+              (previous is AuthenticatedSession) !=
+              (current is AuthenticatedSession),
+          listener: (context, state) {
+            unawaited(_initializeTripDetails());
+            if (state is AuthenticatedSession) {
+              unawaited(
+                BlocProvider.of<ProfileCubit>(context)
+                    .loadProfile(refreshRemote: true),
               );
-              _isLoadingFare = false;
-              _fareError = null;
-              _customFareError = null;
-            });
-          case FareEstimateFailure(message: final message):
-            setState(() {
-              _isLoadingFare = false;
-              _fareError = message;
-              _fareResult = null;
-              _customFareController.clear();
-            });
-        }
-      },
+            }
+          },
+        ),
+        BlocListener<FareEstimateCubit, FareEstimateState>(
+          bloc: _fareEstimateCubit,
+          listener: (context, state) {
+            switch (state) {
+              case FareEstimateInitial():
+                break;
+              case FareEstimateLoading():
+                setState(() {
+                  _isLoadingFare = true;
+                  _fareError = null;
+                  _customFareError = null;
+                });
+              case FareEstimateLoaded(value: final fareResult):
+                setState(() {
+                  _fareResult = fareResult;
+                  _customFareController.text = fareResult.totalFare
+                      .toStringAsFixed(2);
+                  _isLoadingFare = false;
+                  _fareError = null;
+                  _customFareError = null;
+                });
+              case FareEstimateFailure(message: final message):
+                setState(() {
+                  _isLoadingFare = false;
+                  _fareError = message;
+                  _fareResult = null;
+                  _customFareController.clear();
+                });
+            }
+          },
+        ),
+      ],
       child: Scaffold(
         backgroundColor: context.colorScheme.surface,
         body: Stack(
@@ -606,6 +645,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
                     width: isWide ? 600.0 : constraints.maxWidth,
                     child: RideOptionsPanel(
                       passengerName: passengerName,
+                      requiresSignIn: requiresSignIn,
                       pickupLabel: _pickupLabel,
                       destinationName: widget.destination.name,
                       destinationAddress: widget.destination.fullAddress,

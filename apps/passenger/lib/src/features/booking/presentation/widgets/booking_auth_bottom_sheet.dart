@@ -52,7 +52,7 @@ class const BookingAuthBottomSheet({super.key}) extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Your route and fare are ready. Sign in or create an account to continue.',
+              'Sign in or create an account to see your route and fare, then book your ride.',
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

@@ -33,6 +33,7 @@ class RideOptionsPanel extends StatefulWidget {
     required this.onTipSelected,
     required this.totalFare,
     this.isExpanded = false,
+    this.requiresSignIn = false,
     this.scrollController,
     this.onPageBackPressed,
   });
@@ -55,6 +56,7 @@ class RideOptionsPanel extends StatefulWidget {
   final ValueChanged<int> onTipSelected;
   final double totalFare;
   final bool isExpanded;
+  final bool requiresSignIn;
   final ScrollController? scrollController;
   final VoidCallback? onPageBackPressed;
 
@@ -718,7 +720,17 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
           ),
         ),
         const SizedBox(height: 16),
-        if (fareResult == null)
+        if (widget.requiresSignIn)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              'Sign in or create an account to see your route and fare, then book a ride.',
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          )
+        else if (fareResult == null)
           _buildFareStatus()
         else ...[
           Row(
@@ -854,7 +866,9 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
           height: 52,
           child: FilledButton(
             key: const ValueKey('book-directly-button'),
-            onPressed: _hasValidFare ? widget.onBookPressed : null,
+            onPressed: widget.requiresSignIn || _hasValidFare
+                ? widget.onBookPressed
+                : null,
             style: FilledButton.styleFrom(
               backgroundColor: context.colorScheme.onSurface,
               foregroundColor: context.colorScheme.surface,
@@ -872,7 +886,9 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
               ),
             ),
             child: Text(
-              fareResult == null
+              widget.requiresSignIn
+                  ? 'Sign in to book'
+                  : fareResult == null
                   ? widget.isLoadingFare
                         ? 'Calculating fare…'
                         : 'Fare unavailable'
@@ -901,7 +917,7 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.isLoadingFare) {
+    if (widget.isLoadingFare && !widget.requiresSignIn) {
       return _buildLoadingContent(showPrimaryAction: true);
     }
 

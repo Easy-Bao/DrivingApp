@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart' hide Route;
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
@@ -70,7 +72,10 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
         widget.destinationLat,
         widget.destinationLng,
       );
-      final routeRequest = origin == null
+      if (!mounted) return;
+      final isAuthenticated =
+          BlocProvider.of<SessionBloc>(context).state is AuthenticatedSession;
+      final routeRequest = origin == null || !isAuthenticated
           ? Future<Route?>.value(null)
           : MapProvider.getRoute(
               origin.lat,
