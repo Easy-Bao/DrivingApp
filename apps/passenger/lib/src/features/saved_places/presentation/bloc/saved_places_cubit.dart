@@ -7,7 +7,7 @@ import 'package:passenger/src/features/saved_places/presentation/bloc/saved_plac
 
 class SavedPlacesCubit extends Cubit<SavedPlacesState> {
   SavedPlacesCubit({required this.repository})
-      : super(const SavedPlacesState());
+    : super(const SavedPlacesState());
 
   final SavedPlacesRepository repository;
   SavedPlacesRepository get _repository => repository;
@@ -34,7 +34,7 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
   /// account never sees them.
   void clear() {
     _loadInFlight = null;
-    if (!isClosed) emit(const SavedPlacesState());
+    if (!isClosed) emit(const SavedPlacesState(isLoading: false));
   }
 
   Future<void> invalidateAndReload() async {

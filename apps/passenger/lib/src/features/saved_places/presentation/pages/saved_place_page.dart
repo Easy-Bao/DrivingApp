@@ -11,6 +11,7 @@ import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_state.dart';
+import 'package:passenger/src/features/saved_places/presentation/widgets/saved_place_auth.dart';
 import 'package:passenger/src/features/saved_places/presentation/widgets/saved_place_icon.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -42,6 +43,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     if (_isPlaceFlowOpen) return;
     _isPlaceFlowOpen = true;
     try {
+      if (!await ensureSavedPlaceAuthentication(context) || !mounted) return;
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
       final selectedPlace = await context.pushNamed<Place>(
         BookingRoutes.mapPin,
@@ -86,6 +88,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     if (_isPlaceFlowOpen) return;
     _isPlaceFlowOpen = true;
     try {
+      if (!await ensureSavedPlaceAuthentication(context) || !mounted) return;
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
       final selectedPlace = await context.pushNamed<Place>(
         BookingRoutes.mapPin,

@@ -7,9 +7,14 @@ enum BookingAuthAction() {
   signUp,
 }
 
-Future<BookingAuthAction?> showBookingAuthBottomSheet(BuildContext context) {
+Future<BookingAuthAction?> showBookingAuthBottomSheet(
+  BuildContext context, {
+  String title = 'Create an account to book',
+  String message = 'Sign in or create an account to see your route and fare, then book your ride.',
+}) {
   return showModalBottomSheet<BookingAuthAction>(
     context: context,
+    useRootNavigator: true,
     backgroundColor: context.colorScheme.surface,
     isScrollControlled: true,
     isDismissible: true,
@@ -17,11 +22,17 @@ Future<BookingAuthAction?> showBookingAuthBottomSheet(BuildContext context) {
     showDragHandle: false,
     barrierColor: context.colorScheme.onSurface.withValues(alpha: 0.54),
     useSafeArea: true,
-    builder: (_) => const BookingAuthBottomSheet(),
+    builder: (_) => BookingAuthBottomSheet(title: title, message: message),
   );
 }
 
-class const BookingAuthBottomSheet({super.key}) extends StatelessWidget {
+class const BookingAuthBottomSheet({
+  super.key,
+  this.title = 'Create an account to book',
+  this.message = 'Sign in or create an account to see your route and fare, then book your ride.',
+}) extends StatelessWidget {
+  final String title;
+  final String message;
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -46,13 +57,13 @@ class const BookingAuthBottomSheet({super.key}) extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(
-              'Create an account to book',
+              title,
               style: Theme.of(context).textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Sign in or create an account to see your route and fare, then book your ride.',
+              message,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

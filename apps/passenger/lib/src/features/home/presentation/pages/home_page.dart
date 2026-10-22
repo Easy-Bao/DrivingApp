@@ -33,6 +33,7 @@ import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_state.dart';
+import 'package:passenger/src/features/saved_places/presentation/widgets/saved_place_auth.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 bool shouldStartHomeNavigation({
@@ -298,9 +299,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildChipRow() {
+    final isAuthenticated = context.select<SessionBloc, bool>(
+      (bloc) => bloc.state.isAuthenticated,
+    );
     return BlocBuilder<SavedPlacesCubit, SavedPlacesState>(
       builder: (context, state) {
-        if (state.isLoading && state.places.isNotEmpty) {
+        if (isAuthenticated && state.isLoading && state.places.isNotEmpty) {
           final placeholderCount = state.places.length + 1;
           return Skeletonizer.zone(
             child: SingleChildScrollView(
@@ -324,7 +328,7 @@ class _HomePageState extends State<HomePage> {
         }
 
         return SavedPlaceQuickActions(
-          places: state.places,
+          places: isAuthenticated ? state.places : const [],
           onPlaceTap: (place) => unawaited(_handleSavedPlaceTap(place)),
           onPlaceLongPress: (place) {
             final index = state.places.indexOf(place);
@@ -615,6 +619,7 @@ class _HomePageState extends State<HomePage> {
     if (_isSavedPlaceFlowOpen) return;
     _isSavedPlaceFlowOpen = true;
     try {
+      if (!await ensureSavedPlaceAuthentication(context) || !mounted) return;
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
       final selectedPlace = await context.pushNamed<Place>(
         BookingRoutes.mapPin,
@@ -852,6 +857,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _handleSavedPlaceTap(SavedPlace place) async {
+    if (!await ensureSavedPlaceAuthentication(context) || !mounted) return;
     if (!await _canStartOrContinueBooking() || !mounted) return;
     if (place.hasLocation) {
       _isNavigationInFlight = true;
@@ -907,10 +913,16 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadSavedPlaces() async {
     if (!mounted) return;
-    await BlocProvider.of<SavedPlacesCubit>(context).loadPlaces();
+    final cubit = BlocProvider.of<SavedPlacesCubit>(context);
+    if (!BlocProvider.of<SessionBloc>(context).state.isAuthenticated) {
+      cubit.clear();
+      return;
+    }
+    await cubit.loadPlaces();
   }
 
   Future _showChipOptions(int index, String label) async {
+    if (!await ensureSavedPlaceAuthentication(context) || !mounted) return;
     await showModalBottomSheet(
       context: context,
       backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
