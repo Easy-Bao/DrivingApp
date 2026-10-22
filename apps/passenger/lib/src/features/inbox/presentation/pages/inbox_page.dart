@@ -226,28 +226,36 @@ class _InboxPageState extends State<InboxPage> {
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 final notification = notifications[index];
-                return Dismissible(
-                  key: Key(notification.id),
-                  direction: DismissDirection.endToStart,
-                  onDismissed: (_) => _inboxCubit.dismissNotification(index),
-                  background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 24),
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
+                return Padding(
+                  key: ValueKey(notification.id),
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    child: ColoredBox(
                       color: context.colorScheme.error.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
+                      child: Dismissible(
+                        key: Key(notification.id),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (_) =>
+                            _inboxCubit.dismissNotification(index),
+                        background: Align(
+                          alignment: Alignment.centerRight,
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 24),
+                            child: Icon(
+                              LucideIcons.trash_2,
+                              color: context.colorScheme.error,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                        child: InboxNotificationCard(
+                          notification: notification,
+                          onTap: () =>
+                              unawaited(_openNotification(notification, index)),
+                        ),
+                      ),
                     ),
-                    child: Icon(
-                      LucideIcons.trash_2,
-                      color: context.colorScheme.error,
-                      size: 20,
-                    ),
-                  ),
-                  child: InboxNotificationCard(
-                    notification: notification,
-                    onTap: () =>
-                        unawaited(_openNotification(notification, index)),
                   ),
                 );
               }, childCount: notifications.length),

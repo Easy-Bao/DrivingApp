@@ -244,8 +244,7 @@ WITH expired AS (
 )
 INSERT INTO notifications (user_id, type, title, body)
 SELECT passenger_id, 'ride', 'No nearby driver found',
-    'No nearby driver was found for Booking ID - ' || booking_reference ||
-    '. Your request has expired. Please try searching again.'
+    'No nearby driver was found for Booking ID - ' || booking_reference || '.'
 FROM expired
 `
 

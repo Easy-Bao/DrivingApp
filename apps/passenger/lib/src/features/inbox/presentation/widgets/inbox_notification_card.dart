@@ -14,21 +14,18 @@ class InboxNotificationCard extends StatelessWidget {
   final VoidCallback onTap;
 
   String _formatTimestamp(DateTime timestamp) {
+    final local = timestamp.toLocal();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final dateToCheck = DateTime(
-      timestamp.year,
-      timestamp.month,
-      timestamp.day,
-    );
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    final dateToCheck = DateTime(local.year, local.month, local.day);
 
     if (dateToCheck == today) {
-      final twelveHourValue = timestamp.hour > 12
-          ? timestamp.hour - 12
-          : (timestamp.hour == 0 ? 12 : timestamp.hour);
-      final meridiemPeriod = timestamp.hour >= 12 ? 'PM' : 'AM';
-      final paddedMinute = timestamp.minute.toString().padLeft(2, '0');
+      final twelveHourValue = local.hour > 12
+          ? local.hour - 12
+          : (local.hour == 0 ? 12 : local.hour);
+      final meridiemPeriod = local.hour >= 12 ? 'PM' : 'AM';
+      final paddedMinute = local.minute.toString().padLeft(2, '0');
       return '$twelveHourValue:$paddedMinute $meridiemPeriod';
     } else if (dateToCheck == yesterday) {
       return 'Yesterday';
@@ -47,12 +44,19 @@ class InboxNotificationCard extends StatelessWidget {
         'Nov',
         'Dec',
       ];
-      return '${months[timestamp.month - 1]} ${timestamp.day}';
+      return '${months[local.month - 1]} ${local.day}';
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Existing Inbox records still contain the earlier, longer wording.
+    final message = notification.title == 'No nearby driver found'
+        ? notification.message.replaceFirst(
+            ' Your request has expired. Please try searching again.',
+            '',
+          )
+        : notification.message;
     final isReceipt =
         notification.type == 'ride' ||
         notification.title.toLowerCase().contains('receipt');
@@ -82,80 +86,74 @@ class InboxNotificationCard extends StatelessWidget {
       side: BorderSide(color: context.colorScheme.outlineVariant),
     );
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Semantics(
-        button: true,
-        label: '${notification.title}. ${notification.message}',
-        hint: 'Opens notification',
-        child: Material(
-          color: context.colorScheme.surface,
-          shape: shape,
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: AppSize.minimumTouchTarget,
-                    height: AppSize.minimumTouchTarget,
-                    decoration: BoxDecoration(
-                      color: circleBackgroundColor,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(icon, color: iconColor, size: 20),
+    return Semantics(
+      button: true,
+      label: '${notification.title}. $message',
+      hint: 'Opens notification',
+      child: Material(
+        color: context.colorScheme.surface,
+        shape: shape,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: AppSize.minimumTouchTarget,
+                  height: AppSize.minimumTouchTarget,
+                  decoration: BoxDecoration(
+                    color: circleBackgroundColor,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  const SizedBox(width: AppSpacing.lg),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          notification.title,
-                          style: context.textStyles.titleMedium,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          notification.message,
-                          style: context.textStyles.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                  alignment: Alignment.center,
+                  child: Icon(icon, color: iconColor, size: 20),
+                ),
+                const SizedBox(width: AppSpacing.lg),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _formatTimestamp(notification.timestamp),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: context.colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        notification.title,
+                        style: context.textStyles.titleMedium,
                       ),
-                      if (!notification.isRead) ...[
-                        const SizedBox(height: 8),
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: context.colorScheme.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
+                      const SizedBox(height: 4),
+                      Text(message, style: context.textStyles.bodySmall),
                     ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _formatTimestamp(notification.timestamp),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: context.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (!notification.isRead) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: context.colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
             ),
           ),
         ),
