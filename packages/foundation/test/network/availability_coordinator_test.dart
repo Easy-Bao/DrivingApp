@@ -52,31 +52,34 @@ void main() {
     expect(coordinator.tryAcquireRequest(), isTrue);
   });
 
-  test('http error response releases the half-open probe', () {
-    var now = DateTime(2026);
-    final coordinator = NetworkAvailabilityCoordinator(
-      failureThreshold: 1,
-      now: () => now,
-    );
-    final interceptor = NetworkAvailabilityInterceptor(coordinator);
-    coordinator.recordFailure();
-    now = now.add(const Duration(seconds: 6));
-    expect(coordinator.tryAcquireRequest(), isTrue);
+  test(
+    'http server error releases the probe and reports service unavailability',
+    () {
+      var now = DateTime(2026);
+      final coordinator = NetworkAvailabilityCoordinator(
+        failureThreshold: 1,
+        now: () => now,
+      );
+      final interceptor = NetworkAvailabilityInterceptor(coordinator);
+      coordinator.recordFailure();
+      now = now.add(const Duration(seconds: 6));
+      expect(coordinator.tryAcquireRequest(), isTrue);
 
-    final request = RequestOptions(path: '/');
-    interceptor.onError(
-      DioException(
-        requestOptions: request,
-        response: Response<dynamic>(requestOptions: request, statusCode: 500),
-        type: DioExceptionType.badResponse,
-      ),
-      // ignore: invalid_use_of_protected_member
-      ErrorInterceptorHandler()..future.ignore(),
-    );
+      final request = RequestOptions(path: '/');
+      interceptor.onError(
+        DioException(
+          requestOptions: request,
+          response: Response<dynamic>(requestOptions: request, statusCode: 500),
+          type: DioExceptionType.badResponse,
+        ),
+        // ignore: invalid_use_of_protected_member
+        ErrorInterceptorHandler()..future.ignore(),
+      );
 
-    expect(coordinator.tryAcquireRequest(), isTrue);
-    expect(coordinator.status, NetworkAvailabilityStatus.available);
-  });
+      expect(coordinator.tryAcquireRequest(), isTrue);
+      expect(coordinator.status, NetworkAvailabilityStatus.serviceUnavailable);
+    },
+  );
 
   test(
     'Dio rejects circuit-open requests without another adapter attempt',

@@ -10,10 +10,12 @@ class const AppNetworkStatusBanner({
   this.isVisible = true,
   this.isActiveTracking = true,
   this.usePositioned = false,
+  this.isServiceUnavailable = false,
 }) extends StatelessWidget {
   final bool isVisible;
   final bool isActiveTracking;
   final bool usePositioned;
+  final bool isServiceUnavailable;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +25,9 @@ class const AppNetworkStatusBanner({
     return AppStatusBanner(
       isVisible: shouldShow,
       ignoreNetworkScope: true,
-      message: 'Connection unavailable. Retrying automatically.',
+      message: isServiceUnavailable && !isNetworkUnavailable
+          ? 'Some features are temporarily unavailable. Please try again shortly.'
+          : 'Connection unavailable. Retrying automatically.',
       tone: AppStatusBannerTone.warning,
       usePositioned: usePositioned,
     );

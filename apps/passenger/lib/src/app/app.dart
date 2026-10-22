@@ -60,10 +60,10 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                     stream: _networkAvailabilityCoordinator.changes,
                     initialData: _networkAvailabilityCoordinator.status,
                     builder: (context, snapshot) {
-                      final isUnavailable =
-                          snapshot.data != NetworkAvailabilityStatus.available;
+                      final status =
+                          snapshot.data ?? NetworkAvailabilityStatus.available;
                       return AppNetworkStatusScope(
-                        isUnavailable: isUnavailable,
+                        isUnavailable: status.isConnectionUnavailable,
                         child: MultiBlocListener(
                           listeners: [
                             BlocListener<SessionBloc, SessionState>(
@@ -95,7 +95,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                             context,
                             child,
                             locationState,
-                            isUnavailable,
+                            status,
                           ),
                         ),
                       );
@@ -192,8 +192,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     BuildContext context,
     Widget? child,
     LocationAccessViewState locationState,
-    bool isUnavailable,
+    NetworkAvailabilityStatus status,
   ) {
+    final isUnavailable = status != NetworkAvailabilityStatus.available;
     final overlay = _buildLocationOverlay(context, locationState);
     final routeContent = Stack(
       fit: StackFit.expand,
@@ -203,7 +204,10 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     return Column(
       children: [
         if (isUnavailable)
-          const AppNetworkStatusBanner(isVisible: true, usePositioned: false),
+          AppNetworkStatusBanner(
+            isServiceUnavailable:
+                status == NetworkAvailabilityStatus.serviceUnavailable,
+          ),
         Expanded(
           child: isUnavailable
               ? MediaQuery.removePadding(

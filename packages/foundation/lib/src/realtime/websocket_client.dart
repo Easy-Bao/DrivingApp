@@ -254,10 +254,14 @@ final class RealtimeWebSocketClient({
     final networkAvailability = _networkAvailability;
     if (networkAvailability == null) return;
 
+    var wasConnectionUnavailable =
+        networkAvailability.status.isConnectionUnavailable;
     _networkSubscription = networkAvailability.changes.listen((status) {
-      if (status == NetworkAvailabilityStatus.available) {
+      final isConnectionUnavailable = status.isConnectionUnavailable;
+      if (wasConnectionUnavailable && !isConnectionUnavailable) {
         unawaited(reconnectNow());
       }
+      wasConnectionUnavailable = isConnectionUnavailable;
     });
   }
 

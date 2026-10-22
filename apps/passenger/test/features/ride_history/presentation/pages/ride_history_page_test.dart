@@ -17,7 +17,7 @@ import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 void main() {
   testWidgets(
-    'shows a server status offline and refreshes activity automatically',
+    'shows a friendly activity fallback and refreshes automatically',
     (tester) async {
       final sessionBloc = SessionBloc(
         sessionRepository: _AuthenticatedSessionRepository(),
@@ -50,7 +50,7 @@ void main() {
 
       expect(
         find.text(
-          'Server error: Activity is unavailable. Checking again automatically.',
+          'Your activity is temporarily unavailable. We’ll try again automatically.',
         ),
         findsOneWidget,
       );
@@ -65,7 +65,7 @@ void main() {
       expect(find.text('No rides yet'), findsOneWidget);
       expect(
         find.text(
-          'Server error: Activity is unavailable. Checking again automatically.',
+          'Your activity is temporarily unavailable. We’ll try again automatically.',
         ),
         findsNothing,
       );

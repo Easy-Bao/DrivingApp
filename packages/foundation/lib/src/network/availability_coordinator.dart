@@ -4,7 +4,14 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:foundation/src/errors/exceptions.dart';
 
-enum NetworkAvailabilityStatus { available, degraded, unavailable }
+enum NetworkAvailabilityStatus {
+  available,
+  degraded,
+  unavailable,
+  serviceUnavailable;
+
+  bool get isConnectionUnavailable => this == degraded || this == unavailable;
+}
 
 typedef NetworkNow = DateTime Function();
 
@@ -30,6 +37,7 @@ final class NetworkAvailabilityCoordinator({
     sync: true,
   );
   NetworkAvailabilityStatus _status = NetworkAvailabilityStatus.available;
+  final Set<(String, String)> _failedEndpoints = {};
   int _consecutiveFailures = 0;
   DateTime? _circuitOpenUntil;
   bool _probeInFlight = false;
@@ -57,7 +65,32 @@ final class NetworkAvailabilityCoordinator({
     _consecutiveFailures = 0;
     _circuitOpenUntil = null;
     _probeInFlight = false;
-    _setStatus(NetworkAvailabilityStatus.available);
+    _setStatus(
+      _failedEndpoints.isEmpty
+          ? NetworkAvailabilityStatus.available
+          : NetworkAvailabilityStatus.serviceUnavailable,
+    );
+  }
+
+  /// HTTP failures affect service availability without opening the connection
+  /// circuit. Only a response from the affected endpoint clears its failure.
+  void recordResponse(Response<dynamic> response) {
+    final code = response.statusCode;
+    if (code == null) {
+      releaseProbe();
+      return;
+    }
+    final request = response.requestOptions;
+    final endpoint = (
+      request.method,
+      request.uri.replace(query: '').toString(),
+    );
+    if (code >= 500 && code < 600) {
+      _failedEndpoints.add(endpoint);
+    } else {
+      _failedEndpoints.remove(endpoint);
+    }
+    recordSuccess();
   }
 
   /// Frees the half-open probe slot without judging network health, for
@@ -123,7 +156,7 @@ final class const NetworkAvailabilityInterceptor(this.coordinator)
     Response<dynamic> response,
     ResponseInterceptorHandler handler,
   ) {
-    coordinator.recordSuccess();
+    coordinator.recordResponse(response);
     handler.next(response);
   }
 
@@ -132,8 +165,7 @@ final class const NetworkAvailabilityInterceptor(this.coordinator)
     if (NetworkAvailabilityCoordinator.isNetworkFailure(error)) {
       coordinator.recordFailure();
     } else if (error.response != null) {
-      // The server answered, so the network path is healthy.
-      coordinator.recordSuccess();
+      coordinator.recordResponse(error.response!);
     } else if (error.error is! NetworkCircuitOpenException) {
       coordinator.releaseProbe();
     }
