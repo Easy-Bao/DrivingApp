@@ -28,7 +28,7 @@ type RideRepository struct {
 	allowUnverifiedTestDrivers bool
 }
 
-type RideStoreConfig struct {
+type RideRepositoryConfig struct {
 	Pool                       *pgxpool.Pool
 	Logger                     *slog.Logger
 	PlatformCommissionBPS      int64
@@ -44,7 +44,7 @@ var (
 	} = (*RideRepository)(nil)
 )
 
-func NewRideRepository(config RideStoreConfig) (*RideRepository, error) {
+func NewRideRepository(config RideRepositoryConfig) (*RideRepository, error) {
 	if config.Pool == nil {
 		return nil, errors.New("postgresql pool is required")
 	}
@@ -76,12 +76,6 @@ func (repository *RideRepository) onlinePresenceCutoff() pgtype.Timestamptz {
 
 func postgresTimestamp(value time.Time) pgtype.Timestamptz {
 	return pgtype.Timestamptz{Time: value, Valid: true}
-}
-
-type RideStore = RideRepository
-
-func NewRideStore(config RideStoreConfig) (*RideStore, error) {
-	return NewRideRepository(config)
 }
 
 func toPostgresWaitSeconds(duration time.Duration) (int32, error) {

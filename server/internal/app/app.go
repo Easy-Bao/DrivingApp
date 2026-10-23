@@ -84,7 +84,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	}
 
 	applicationLogger := logger.New(_serviceName, config.LogLevel)
-	authStore, err := authpostgres.NewUserStore(postgresPool)
+	authStore, err := authpostgres.NewUserRepository(postgresPool)
 	if err != nil {
 		return nil, fmt.Errorf("create auth user store: %w", err)
 	}
@@ -104,7 +104,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create MinIO private object store: %w", err)
 	}
-	profileStore, err := userpostgres.NewProfileStore(userpostgres.ProfileRepositoryDependencies{
+	profileStore, err := userpostgres.NewProfileRepository(userpostgres.ProfileRepositoryDependencies{
 		Pool:                       postgresPool,
 		AvatarStorage:              privateObjectStore,
 		AllowUnverifiedTestDrivers: config.AllowUnverifiedTestDrivers,
@@ -112,8 +112,8 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create profile store: %w", err)
 	}
-	rideStore, err := ridepostgres.NewRideStore(
-		ridepostgres.RideStoreConfig{
+	rideStore, err := ridepostgres.NewRideRepository(
+		ridepostgres.RideRepositoryConfig{
 			Pool:                       postgresPool,
 			Logger:                     applicationLogger,
 			PlatformCommissionBPS:      config.Pricing.PlatformCommissionBPS,

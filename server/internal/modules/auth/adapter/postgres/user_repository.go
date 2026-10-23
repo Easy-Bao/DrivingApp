@@ -38,12 +38,6 @@ func NewUserRepository(pool *pgxpool.Pool) (*UserRepository, error) {
 	}, nil
 }
 
-type UserStore = UserRepository
-
-func NewUserStore(pool *pgxpool.Pool) (*UserStore, error) {
-	return NewUserRepository(pool)
-}
-
 func (repository *UserRepository) Create(ctx context.Context, account domain.User) (domain.User, error) {
 	if err := repository.validate(); err != nil {
 		return domain.User{}, fmt.Errorf("validate user repository: %w", err)

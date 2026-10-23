@@ -55,12 +55,6 @@ func NewProfileRepository(dependencies ProfileRepositoryDependencies) (*ProfileR
 	}, nil
 }
 
-type ProfileStore = ProfileRepository
-
-func NewProfileStore(dependencies ProfileRepositoryDependencies) (*ProfileStore, error) {
-	return NewProfileRepository(dependencies)
-}
-
 func (repository *ProfileRepository) WithLogger(logger *slog.Logger) *ProfileRepository {
 	if repository != nil && logger != nil {
 		repository.logger = logger

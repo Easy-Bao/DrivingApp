@@ -503,7 +503,7 @@ WHERE ride_id = $1`, rideID).Scan(&paymentStatus, &cashOutcome); err != nil {
 
 type postgresRideFixture struct {
 	pool          *pgxpool.Pool
-	store         *ridepostgres.RideStore
+	store         *ridepostgres.RideRepository
 	dispatchStore *dispatchpostgres.Store
 }
 
@@ -576,7 +576,7 @@ func newPostgresRideFixture(t *testing.T) *postgresRideFixture {
 	if err := pool.Ping(ctx); err != nil {
 		t.Fatalf("ping isolated ride schema: %v", err)
 	}
-	store, err := ridepostgres.NewRideStore(ridepostgres.RideStoreConfig{
+	store, err := ridepostgres.NewRideRepository(ridepostgres.RideRepositoryConfig{
 		Pool:                  pool,
 		PlatformCommissionBPS: 1500,
 		OnlinePresenceMaxAge:  time.Minute,
