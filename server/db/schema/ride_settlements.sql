@@ -27,6 +27,23 @@ CREATE TABLE ride_settlements (
     CONSTRAINT ride_settlements_payment_status_check CHECK (
         payment_status IN ('unpaid', 'paid')
     ),
+    CONSTRAINT ride_settlements_commission_range_check CHECK (
+        commission_bps BETWEEN 0 AND 10000
+    ),
+    CONSTRAINT ride_settlements_payment_outcome_check CHECK (
+        (payment_status = 'paid') = (cash_outcome = 'paid')
+    ),
+    CONSTRAINT ride_settlements_cash_collection_check CHECK (
+        CASE cash_outcome
+            WHEN 'paid' THEN gross_fare > 0
+                AND cash_received_amount - cash_change_amount = gross_fare
+            WHEN 'partial' THEN cash_change_amount = 0
+                AND cash_received_amount > 0 AND cash_received_amount < gross_fare
+            WHEN 'unpaid' THEN cash_received_amount = cash_change_amount
+            WHEN 'refused' THEN cash_received_amount = cash_change_amount
+            ELSE true
+        END
+    ),
     CONSTRAINT ride_settlements_ride_fk
         FOREIGN KEY (ride_id) REFERENCES rides (id) ON DELETE RESTRICT
 );
