@@ -2,8 +2,8 @@ package database
 
 import "net/url"
 
-// NormalizePostgresURL makes local Compose connections explicit about TLS.
-// Production URLs keep their configured SSL mode unchanged.
+// NormalizePostgresURL supplies the local Compose TLS default only when the
+// connection URL does not specify its own policy.
 func NormalizePostgresURL(databaseURL string) string {
 	parsed, err := url.Parse(databaseURL)
 	if err != nil {
@@ -15,6 +15,9 @@ func NormalizePostgresURL(databaseURL string) string {
 		return databaseURL
 	}
 	query := parsed.Query()
+	if query.Has("sslmode") {
+		return databaseURL
+	}
 	query.Set("sslmode", "disable")
 	parsed.RawQuery = query.Encode()
 	return parsed.String()
