@@ -195,13 +195,14 @@ func (protocol *ConnectionProtocol) EncodeEnvelope(envelope events.Envelope) ([]
 	case events.ChatMessageCreated:
 		var payload struct {
 			SenderID  string `json:"sender_id"`
+			ImageKey  string `json:"image_key,omitempty"`
 			Text      string `json:"text"`
 			CreatedAt string `json:"created_at"`
 		}
 		if err := json.Unmarshal(envelope.Payload, &payload); err != nil {
 			return nil, fmt.Errorf("decode chat message event: %w", err)
 		}
-		if envelope.Scope.RoomID == "" || payload.SenderID == "" || payload.Text == "" {
+		if envelope.Scope.RoomID == "" || payload.SenderID == "" || (payload.Text == "" && payload.ImageKey == "") {
 			return nil, errors.New("chat message event is incomplete")
 		}
 		return json.Marshal(struct {
@@ -209,6 +210,7 @@ func (protocol *ConnectionProtocol) EncodeEnvelope(envelope events.Envelope) ([]
 			ID        string `json:"id"`
 			RoomID    string `json:"room_id"`
 			SenderID  string `json:"sender_id"`
+			ImageKey  string `json:"image_key,omitempty"`
 			Text      string `json:"text"`
 			CreatedAt string `json:"created_at"`
 		}{
@@ -216,9 +218,19 @@ func (protocol *ConnectionProtocol) EncodeEnvelope(envelope events.Envelope) ([]
 			ID:        envelope.ID,
 			RoomID:    envelope.Scope.RoomID,
 			SenderID:  payload.SenderID,
+			ImageKey:  payload.ImageKey,
 			Text:      payload.Text,
 			CreatedAt: payload.CreatedAt,
 		})
+	case events.ChatMessagesRead:
+		var payload struct {
+			SenderID    string `json:"sender_id"`
+			ReadThrough string `json:"read_through"`
+		}
+		if err := json.Unmarshal(envelope.Payload, &payload); err != nil {
+			return nil, err
+		}
+		return json.Marshal(map[string]any{"type": "read", "sender_id": payload.SenderID, "read_through": payload.ReadThrough})
 	case events.ChatTypingChanged:
 		var payload struct {
 			SenderID string `json:"sender_id"`

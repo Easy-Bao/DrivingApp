@@ -3,12 +3,14 @@ import 'package:equatable/equatable.dart';
 
 class const ChatMessageDto({
   this.id = '',
+  this.imageKey = '',
   required this.text,
   required this.senderId,
   required this.createdAt,
-  this.deliveryStatus = ChatMessageDeliveryStatus.delivered,
+  this.deliveryStatus = ChatMessageDeliveryStatus.sent,
 }) extends Equatable {
   final String id;
+  final String imageKey;
   final String text;
   final String senderId;
   final DateTime createdAt;
@@ -35,16 +37,20 @@ class const ChatMessageDto({
 
     return ChatMessageDto(
       id: id,
+      imageKey: _readString(json['image_key'], 'image_key'),
       text: text,
       senderId: senderId,
       createdAt: createdAt,
-      deliveryStatus: _deliveryStatus(rawDeliveryStatus),
+      deliveryStatus: json['seen'] == true
+          ? ChatMessageDeliveryStatus.seen
+          : _deliveryStatus(rawDeliveryStatus),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'image_key': imageKey,
       'text': text,
       'senderId': senderId,
       'createdAt': createdAt.toIso8601String(),
@@ -55,6 +61,7 @@ class const ChatMessageDto({
   ChatMessage toEntity({required String currentUserId}) {
     return ChatMessage(
       id: id,
+      imageKey: imageKey,
       text: text,
       senderId: senderId,
       isFromPeer: senderId != currentUserId,
@@ -64,7 +71,14 @@ class const ChatMessageDto({
   }
 
   @override
-  List<Object?> get props => [id, text, senderId, createdAt, deliveryStatus];
+  List<Object?> get props => [
+    id,
+    imageKey,
+    text,
+    senderId,
+    createdAt,
+    deliveryStatus,
+  ];
 }
 
 Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
@@ -106,7 +120,9 @@ ChatMessageDeliveryStatus _deliveryStatus(Object? value) {
   return switch (value?.toString().trim().toLowerCase()) {
     'sending' => ChatMessageDeliveryStatus.sending,
     'sent' => ChatMessageDeliveryStatus.sent,
+    'seen' => ChatMessageDeliveryStatus.seen,
+    'delivered' => ChatMessageDeliveryStatus.delivered,
     'failed' => ChatMessageDeliveryStatus.failed,
-    _ => ChatMessageDeliveryStatus.delivered,
+    _ => ChatMessageDeliveryStatus.sent,
   };
 }

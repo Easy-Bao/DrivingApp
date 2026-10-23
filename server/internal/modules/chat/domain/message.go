@@ -12,6 +12,9 @@ var (
 )
 
 type Message struct {
+	ID        string
+	ImageKey  string
+	Seen      bool
 	RoomID    string
 	SenderID  string
 	Body      string

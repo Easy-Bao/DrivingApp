@@ -3,6 +3,22 @@ import 'package:driver/src/features/chat/domain/entities/chat_message.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('server echo is sent and only an explicit receipt is seen', () {
+    final payload = <String, dynamic>{
+      'id': 'picture-1',
+      'text': '',
+      'sender_id': '7',
+      'created_at': '2026-10-23T00:00:00Z',
+      'image_key': 'private-picture',
+    };
+    final sent = ChatMessageDto.fromJson(payload).toEntity(currentUserId: '7');
+    expect(sent.deliveryStatus, ChatMessageDeliveryStatus.sent);
+    expect(sent.hasImage, isTrue);
+    final seen = ChatMessageDto.fromJson({...payload, 'seen': true})
+        .toEntity(currentUserId: '7');
+    expect(seen.deliveryStatus, ChatMessageDeliveryStatus.seen);
+  });
+
   test('destructures canonical and legacy chat fields', () {
     final message = ChatMessageDto.fromJson(const {
       'message_id': 303,

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:driver/src/features/chat/chat.dart';
 
 import 'dart:async';
@@ -20,19 +22,33 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
   String? _roomId;
   bool _everConnected = false;
   bool _historyRequested = false;
+  String? _lastReadId;
+  bool _markingRead = false;
+  DateTime? _peerReadThrough;
 
   this : super(const ChatState());
 
   Future<bool> initializeChatRoom({required String roomId}) async {
+    _roomId = roomId;
+    unawaited(_loadPeer(roomId));
     final result = await _chatRepository.initializeChatRoomResult(
       roomId: roomId,
     );
-    return result.fold((failure) {
-      if (!isClosed) {
-        _handleChatFailure(failure);
-      }
+    if (isClosed) return false;
+    final initialized = result.fold((failure) {
+      _handleChatFailure(failure);
       return false;
     }, (_) => true);
+    if (!initialized && state.isRoomLocked) {
+      await _loadHistory(roomId);
+    }
+    return initialized;
+  }
+
+  Future<void> _loadPeer(String roomId) async {
+    final result = await _chatRepository.fetchPeer(roomId);
+    if (isClosed) return;
+    result.fold((_) {}, (peer) => emit(state.copyWith(peer: peer)));
   }
 
   Future<void> connectToChatRoom({
@@ -53,12 +69,14 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
     emit(state.copyWith(isConnecting: true, errorMessage: null));
 
     try {
-      final connectionResult = await _chatRepository.establishChatConnectionResult(
-        roomId: roomId,
-        chatUri: chatUri,
-        token: token,
-      );
+      final connectionResult = await _chatRepository
+          .establishChatConnectionResult(
+            roomId: roomId,
+            chatUri: chatUri,
+            token: token,
+          );
 
+      if (isClosed) return;
       connectionResult.fold(_handleChatFailure, (_) {
         emit(state.copyWith(isConnecting: false, isConnected: true));
         _requestHistory(roomId);
@@ -76,8 +94,11 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
   }
 
   Future<void> _loadHistory(String roomId) async {
+    if (isClosed) return;
+    emit(state.copyWith(isLoadingHistory: true));
     final result = await _chatRepository.fetchRoomMessagesResult(roomId);
     if (isClosed) return;
+    emit(state.copyWith(isLoadingHistory: false));
     result.fold(
       _handleChatFailure,
       (messages) => emit(
@@ -125,6 +146,17 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
                   ),
                   isPeerTyping: false,
                   lastDeliveredMessage: chatEvent.message,
+                ),
+              );
+            } else if (chatEvent is ChatMessagesRead &&
+                chatEvent.senderId != currentUserId) {
+              if (_peerReadThrough == null ||
+                  chatEvent.through.isAfter(_peerReadThrough!)) {
+                _peerReadThrough = chatEvent.through;
+              }
+              emit(
+                state.copyWith(
+                  messages: _mergeMessages(state.messages, const []),
                 ),
               );
             } else if (chatEvent is ChatTypingChanged && chatEvent.isFromPeer) {
@@ -182,6 +214,58 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
       }
       return false;
     }, (_) => true);
+  }
+
+  Future<void> sendImage(Uint8List bytes) async {
+    final roomId = _roomId;
+    if (roomId == null ||
+        !state.isConnected ||
+        state.isRoomLocked ||
+        state.isSendingImage)
+      return;
+    emit(state.copyWith(isSendingImage: true, errorMessage: null));
+    final result = await _chatRepository.sendImage(roomId, bytes);
+    if (isClosed) return;
+    result.fold(
+      (failure) {
+        emit(state.copyWith(isSendingImage: false));
+        _handleChatFailure(failure);
+      },
+      (message) => emit(
+        state.copyWith(
+          isSendingImage: false,
+          messages: _mergeMessages(state.messages, [message]),
+        ),
+      ),
+    );
+  }
+
+  Future<Uint8List> loadImage(String messageId) async {
+    final roomId = _roomId;
+    if (roomId == null) throw StateError('Conversation unavailable');
+    final result = await _chatRepository.fetchImage(roomId, messageId);
+    return result.fold(
+      (failure) => throw StateError(ErrorHandler.getErrorMessage(failure)),
+      (bytes) => bytes,
+    );
+  }
+
+  Future<void> markVisibleMessagesRead() async {
+    final roomId = _roomId;
+    if (roomId == null || isClosed || _markingRead) return;
+    final peerMessages = state.messages.where(
+      (message) => message.isFromPeer && message.id.isNotEmpty,
+    );
+    if (peerMessages.isEmpty) return;
+    final id = peerMessages.last.id;
+    if (id == _lastReadId) return;
+    _markingRead = true;
+    try {
+      final result = await _chatRepository.markRead(roomId, id);
+      result.fold((_) {}, (_) => _lastReadId = id);
+    } finally {
+      _markingRead = false;
+    }
   }
 
   Future<void> updateTypingStatus(bool isTyping) async {
@@ -249,7 +333,16 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
   ) {
     final messagesByKey = <String, ChatMessage>{};
     for (final message in [...current, ...incoming]) {
-      messagesByKey[_messageKey(message)] = message;
+      final key = _messageKey(message);
+      final previous = messagesByKey[key];
+      final seen =
+          !message.isFromPeer &&
+          ((previous?.deliveryStatus == ChatMessageDeliveryStatus.seen) ||
+              (_peerReadThrough != null &&
+                  !message.createdAt.isAfter(_peerReadThrough!)));
+      messagesByKey[key] = seen
+          ? message.copyWith(deliveryStatus: ChatMessageDeliveryStatus.seen)
+          : message;
     }
     final messages = messagesByKey.values.toList();
     messages.sort((left, right) => left.createdAt.compareTo(right.createdAt));
@@ -264,7 +357,8 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
     final index = current.indexWhere(
       (message) =>
           !message.isFromPeer &&
-          message.deliveryStatus != ChatMessageDeliveryStatus.delivered &&
+          (message.deliveryStatus == ChatMessageDeliveryStatus.sending ||
+              message.deliveryStatus == ChatMessageDeliveryStatus.failed) &&
           message.text == delivered.text,
     );
     if (index < 0) return current;
@@ -311,6 +405,16 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
           isConnecting: false,
           isConnected: false,
           isRoomLocked: true,
+          messages: state.messages
+              .map(
+                (item) =>
+                    item.deliveryStatus == ChatMessageDeliveryStatus.sending
+                    ? item.copyWith(
+                        deliveryStatus: ChatMessageDeliveryStatus.failed,
+                      )
+                    : item,
+              )
+              .toList(),
           isPeerTyping: false,
           lockReasonMessage: message,
           errorMessage: null,

@@ -10,6 +10,72 @@ import 'package:foundation/foundation.dart';
 class MockChatRepository extends Mock implements ChatRepository {}
 
 void main() {
+  setUpAll(() => registerFallbackValue(Uri.parse('wss://example.test')));
+
+  test(
+    'two checks require a peer receipt and never regress on stale history',
+    () async {
+      final repository = MockChatRepository();
+      final events = StreamController<Result<ChatEvent, Failure>>();
+      when(() => repository.connectionStateStream)
+          .thenAnswer((_) => const Stream.empty());
+      when(() => repository.chatEventsStream).thenAnswer((_) => events.stream);
+      when(
+        () => repository.establishChatConnection(
+          roomId: 'ride-1',
+          chatUri: any(named: 'chatUri'),
+          token: any(named: 'token'),
+        ),
+      ).thenAnswer((_) async => const Ok(null));
+      final outgoing = ChatMessage(
+        id: 'sent',
+        text: 'Hello',
+        senderId: '7',
+        isFromPeer: false,
+        createdAt: DateTime.utc(2026),
+      );
+      when(() => repository.fetchRoomMessages('ride-1'))
+          .thenAnswer((_) async => Ok([outgoing]));
+      when(() => repository.terminateChatConnection())
+          .thenAnswer((_) async => const Ok(null));
+      when(() => repository.dispose()).thenAnswer((_) async {});
+      final cubit = ChatCubit(chatRepository: repository, currentUserId: '7');
+      await cubit.connectToChatRoom(
+        roomId: 'ride-1',
+        chatUri: Uri.parse('wss://example.test/chat'),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        cubit.state.messages.single.deliveryStatus,
+        ChatMessageDeliveryStatus.sent,
+      );
+      events.add(
+        Ok(ChatMessagesRead(senderId: '7', through: DateTime.utc(2026))),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        cubit.state.messages.single.deliveryStatus,
+        ChatMessageDeliveryStatus.sent,
+      );
+      events.add(
+        Ok(ChatMessagesRead(senderId: '8', through: DateTime.utc(2026))),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        cubit.state.messages.single.deliveryStatus,
+        ChatMessageDeliveryStatus.seen,
+      );
+      events.add(Ok(ChatHistoryReceived([outgoing])));
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        cubit.state.messages.single.deliveryStatus,
+        ChatMessageDeliveryStatus.seen,
+      );
+      await cubit.close();
+      await events.close();
+    },
+  );
+
   test('does not send a message while the connection is offline', () async {
     final repository = MockChatRepository();
     when(() => repository.sendChatMessage('I have arrived'))
@@ -65,13 +131,24 @@ void main() {
     await cubit.close();
   });
 
-  test('shows a closed state when room initialization is forbidden', () async {
+  test('loads previous messages when conversation has ended', () async {
     final repository = MockChatRepository();
     when(() => repository.connectionStateStream)
         .thenAnswer((_) => const Stream<ChatConnectionState>.empty());
     when(() => repository.terminateChatConnection())
         .thenAnswer((_) async => const Ok(null));
     when(() => repository.dispose()).thenAnswer((_) async {});
+    when(() => repository.fetchPeer('ride-1'))
+        .thenAnswer((_) async => const Err(ServerFailure('unavailable')));
+    final previousMessage = ChatMessage(
+      id: 'old-message',
+      text: 'Previous conversation',
+      senderId: '8',
+      isFromPeer: true,
+      createdAt: DateTime.utc(2026),
+    );
+    when(() => repository.fetchRoomMessages('ride-1'))
+        .thenAnswer((_) async => Ok([previousMessage]));
     when(() => repository.initializeChatRoom(roomId: 'ride-1'))
         .thenAnswer((_) async => const Err(ChatRoomLockedFailure()));
 
@@ -82,6 +159,7 @@ void main() {
     expect(initialized, isFalse);
     expect(cubit.state.isRoomLocked, isTrue);
     expect(cubit.state.isConnected, isFalse);
+    expect(cubit.state.messages, [previousMessage]);
     expect(cubit.state.lockReasonMessage, 'Chat is closed for this trip.');
     expect(cubit.state.errorMessage, isNull);
 

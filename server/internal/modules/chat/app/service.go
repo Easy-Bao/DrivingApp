@@ -1,10 +1,16 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"log/slog"
+	"net/http"
 	"slices"
 	"strings"
 	"time"
@@ -21,6 +27,7 @@ const (
 )
 
 type Service struct {
+	images      storage.ObjectStore
 	history     RoomStore
 	events      EventPublisher
 	assignments assignment.Lookup
@@ -29,10 +36,11 @@ type Service struct {
 
 type Dependencies struct {
 	History RoomStore
+	Images  storage.ObjectStore
 }
 
 func NewService(dependencies Dependencies) *Service {
-	return &Service{history: dependencies.History, logger: slog.Default()}
+	return &Service{history: dependencies.History, images: dependencies.Images, logger: slog.Default()}
 }
 
 func (service *Service) WithEventPublisher(publisher EventPublisher) *Service {
@@ -64,7 +72,7 @@ func (service *Service) log() *slog.Logger {
 func (service *Service) Relay(ctx context.Context, message domain.Message) error {
 	invalidRoomID := !validRoomID(message.RoomID)
 	invalidSenderID := !validParticipantID(message.SenderID)
-	invalidMessageLength := len(message.Body) == 0 || len(message.Body) > _maxMessageBytes
+	invalidMessageLength := (len(message.Body) == 0 && message.ImageKey == "") || len(message.Body) > _maxMessageBytes
 	if invalidRoomID || invalidSenderID || invalidMessageLength {
 		return domain.ErrInvalidMessage
 	}
@@ -87,6 +95,9 @@ func (service *Service) Relay(ctx context.Context, message domain.Message) error
 	}
 	if !member {
 		return domain.ErrForbidden
+	}
+	if message.ID == "" {
+		message.ID = event.NewID()
 	}
 	if err := service.history.Append(ctx, message); err != nil {
 		return fmt.Errorf("append chat message: %w", err)
@@ -143,11 +154,13 @@ func (service *Service) publishRealtimeMessage(ctx context.Context, message doma
 		occurredAt = time.Now().UTC()
 	}
 	envelope, err := event.New(
-		event.NewID(),
+		message.ID,
 		event.ChatMessageCreated,
 		occurredAt,
 		event.Scope{RoomID: message.RoomID, PassengerID: passengerID, DriverID: driverID},
 		map[string]any{
+			"id":         message.ID,
+			"image_key":  message.ImageKey,
 			"room_id":    message.RoomID,
 			"sender_id":  message.SenderID,
 			"text":       message.Body,
@@ -202,7 +215,7 @@ func (service *Service) OpenRideRoom(ctx context.Context, rideID, actorID string
 	return nil
 }
 
-func (service *Service) communicationAssignment(
+func (service *Service) participantAssignment(
 	ctx context.Context,
 	rideID string,
 	actorID string,
@@ -222,10 +235,43 @@ func (service *Service) communicationAssignment(
 	if actorIsNotParticipant {
 		return assignment.Assignment{}, domain.ErrForbidden
 	}
-	if !rideAssignment.AllowsCommunication() {
-		return assignment.Assignment{}, domain.ErrRoomLocked
-	}
 	return rideAssignment, nil
+}
+
+func (service *Service) communicationAssignment(ctx context.Context, roomID, userID string) (assignment.Assignment, error) {
+	value, err := service.participantAssignment(ctx, roomID, userID)
+	if err != nil {
+		return value, err
+	}
+	if !value.AllowsCommunication() {
+		return value, domain.ErrRoomLocked
+	}
+	return value, nil
+}
+
+// Read access survives closure and is checked against the authoritative ride.
+func (service *Service) CanReadRoom(ctx context.Context, roomID, userID string) (bool, error) {
+	if !validRoomID(roomID) || !validParticipantID(userID) {
+		return false, nil
+	}
+	if service.history == nil {
+		return false, domain.ErrRoomUnavailable
+	}
+	_, err := service.participantAssignment(ctx, roomID, userID)
+	if errors.Is(err, domain.ErrForbidden) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	passengerID, driverID, err := service.history.RoomParticipants(ctx, roomID)
+	if err != nil {
+		return false, fmt.Errorf("load chat participants: %w", err)
+	}
+	if passengerID == "" && driverID == "" {
+		return true, nil
+	}
+	return userID == passengerID || userID == driverID, nil
 }
 
 func (service *Service) Messages(ctx context.Context, roomID string) ([]domain.Message, error) {
@@ -288,7 +334,7 @@ func (service *Service) CanAccessRoom(ctx context.Context, roomID, userID string
 }
 
 func (service *Service) MessagesForUser(ctx context.Context, roomID, userID string) ([]domain.Message, error) {
-	allowed, err := service.CanAccessRoom(ctx, roomID, userID)
+	allowed, err := service.CanReadRoom(ctx, roomID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -315,4 +361,84 @@ func validRoomID(value string) bool {
 
 func validParticipantID(value string) bool {
 	return value != "" && len(value) <= _maxParticipantBytes && !strings.ContainsAny(value, "\r\n")
+}
+
+const MaxImageBytes = 5 << 20
+
+func (service *Service) SendImage(ctx context.Context, roomID, userID string, content []byte) (domain.Message, error) {
+	if _, err := service.communicationAssignment(ctx, roomID, userID); err != nil {
+		return domain.Message{}, err
+	}
+	if len(content) == 0 || len(content) > MaxImageBytes {
+		return domain.Message{}, domain.ErrInvalidMessage
+	}
+	config, format, err := image.DecodeConfig(bytes.NewReader(content))
+	if err != nil || (format != "jpeg" && format != "png") || config.Width <= 0 || config.Height <= 0 || int64(config.Width)*int64(config.Height) > 24000000 {
+		return domain.Message{}, domain.ErrInvalidMessage
+	}
+	if service.images == nil {
+		return domain.Message{}, domain.ErrRoomUnavailable
+	}
+	key, err := service.images.Store(ctx, content)
+	if err != nil {
+		return domain.Message{}, fmt.Errorf("store chat picture: %w", err)
+	}
+	message := domain.Message{ID: event.NewID(), RoomID: roomID, SenderID: userID, ImageKey: key, CreatedAt: time.Now().UTC().Format(time.RFC3339Nano)}
+	if err := service.Relay(ctx, message); err != nil {
+		cleanupContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		defer cancel()
+		if cleanupErr := service.images.Delete(cleanupContext, key); cleanupErr != nil {
+			service.log().WarnContext(ctx, "remove rejected chat picture failed", "error", cleanupErr)
+		}
+		return domain.Message{}, err
+	}
+	return message, nil
+}
+
+func (service *Service) Image(ctx context.Context, roomID, userID, messageID string) ([]byte, string, error) {
+	messages, err := service.MessagesForUser(ctx, roomID, userID)
+	if err != nil {
+		return nil, "", err
+	}
+	for _, message := range messages {
+		if message.ID == messageID && message.ImageKey != "" {
+			if service.images == nil {
+				return nil, "", domain.ErrRoomUnavailable
+			}
+			content, err := service.images.Read(ctx, message.ImageKey, MaxImageBytes)
+			return content, http.DetectContentType(content), err
+		}
+	}
+	return nil, "", domain.ErrForbidden
+}
+
+func (service *Service) MarkRead(ctx context.Context, roomID, userID, messageID string) error {
+	messages, err := service.MessagesForUser(ctx, roomID, userID)
+	if err != nil {
+		return err
+	}
+	for _, message := range messages {
+		if message.ID != messageID || message.SenderID == userID {
+			continue
+		}
+		created, err := time.Parse(time.RFC3339Nano, message.CreatedAt)
+		if err != nil {
+			return domain.ErrInvalidMessage
+		}
+		through := created.UTC().Format("2006-01-02T15:04:05.000000000Z")
+		if err := service.history.MarkRead(ctx, roomID, userID, through); err != nil {
+			return fmt.Errorf("save chat receipt: %w", err)
+		}
+		if service.events != nil {
+			envelope, err := event.New(event.NewID(), event.ChatMessagesRead, time.Now().UTC(), event.Scope{RoomID: roomID}, map[string]any{"sender_id": userID, "read_through": through})
+			if err != nil {
+				return err
+			}
+			if err := service.events.Publish(ctx, envelope); err != nil {
+				service.log().WarnContext(ctx, "publish chat receipt failed", "error", err)
+			}
+		}
+		return nil
+	}
+	return domain.ErrInvalidMessage
 }

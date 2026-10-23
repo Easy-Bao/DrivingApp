@@ -1,3 +1,7 @@
+import 'dart:typed_data';
+
+import 'package:passenger/src/features/chat/domain/entities/chat_peer.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -153,6 +157,83 @@ final class ChatRepositoryImpl({
   }
 
   @override
+  Future<Result<ChatMessage, Failure>> sendImage(
+    String roomId,
+    Uint8List bytes,
+  ) async {
+    if (bytes.isEmpty || bytes.length > 5 * 1024 * 1024) {
+      return const Err(
+        ValidationFailure('Choose a JPEG or PNG picture up to 5 MB.'),
+      );
+    }
+    try {
+      final response = await httpClient.post<Object?>(
+        '/api/v1/chat/rooms/${Uri.encodeComponent(roomId)}/images',
+        data: FormData.fromMap({
+          'photo': MultipartFile.fromBytes(bytes, filename: 'picture'),
+        }),
+      );
+      return Ok(
+        ChatMessageDto.fromJson(decodeObjectMap(response.data))
+            .toEntity(currentUserId: currentUserId),
+      );
+    } catch (error) {
+      return Err(_mapChatFailure(error, 'Unable to send picture.'));
+    }
+  }
+
+  @override
+  Future<Result<Uint8List, Failure>> fetchImage(
+    String roomId,
+    String messageId,
+  ) async {
+    try {
+      final response = await httpClient.get<List<int>>(
+        '/api/v1/chat/rooms/${Uri.encodeComponent(roomId)}/messages/${Uri.encodeComponent(messageId)}/image',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return Ok(Uint8List.fromList(response.data ?? const []));
+    } catch (error) {
+      return Err(_mapChatFailure(error, 'Unable to load picture.'));
+    }
+  }
+
+  @override
+  Future<Result<void, Failure>> markRead(
+    String roomId,
+    String messageId,
+  ) async {
+    try {
+      await httpClient.post<void>(
+        '/api/v1/chat/rooms/${Uri.encodeComponent(roomId)}/read',
+        data: {'message_id': messageId},
+      );
+      return const Ok(null);
+    } catch (error) {
+      return Err(_mapChatFailure(error, 'Unable to save read receipt.'));
+    }
+  }
+
+  @override
+  Future<Result<ChatPeer, Failure>> fetchPeer(String roomId) async {
+    try {
+      final response = await httpClient.get<Object?>(
+        '/api/v1/rides/${Uri.encodeComponent(roomId)}/counterparty',
+      );
+      final data = decodeObjectMap(response.data);
+      return Ok(
+        ChatPeer(
+          name: SafeParse.toStringValue(data['name']),
+          plate: SafeParse.toStringValue(data['plate_number']),
+          vehicle: SafeParse.toStringValue(data['vehicle_type']),
+        ),
+      );
+    } catch (error) {
+      return Err(_mapChatFailure(error, 'Unable to load trip contact.'));
+    }
+  }
+
+  @override
   Future<void> dispose() => remoteDataSource.dispose();
 
   @override
@@ -176,6 +257,15 @@ final class ChatRepositoryImpl({
             ),
           ),
           'typing' => _decodeTypingEvent(decoded),
+          'read'
+              when decoded['sender_id'] is String &&
+                  decoded['read_through'] is String =>
+            Ok(
+              ChatMessagesRead(
+                senderId: decoded['sender_id'] as String,
+                through: DateTime.parse(decoded['read_through'] as String),
+              ),
+            ),
           'room_locked' || 'locked' => Ok(
             ChatRoomLocked(_stringValueOr(decoded['reason'], 'Trip completed')),
           ),
@@ -246,5 +336,4 @@ Failure _mapChatFailure(Object error, String message) {
   );
 }
 
-bool _isClosedStatusCode(int? statusCode) =>
-    statusCode == 403 || statusCode == 423;
+bool _isClosedStatusCode(int? statusCode) => statusCode == 423;

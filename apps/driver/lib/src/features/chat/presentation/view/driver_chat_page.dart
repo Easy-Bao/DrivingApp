@@ -1,3 +1,4 @@
+import 'package:image_picker/image_picker.dart';
 import 'package:driver/src/features/chat/chat.dart';
 
 import 'dart:async';
@@ -29,7 +30,8 @@ class const ChatPage({
   State<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
+  bool _isPickingImage = false;
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   Timer? _typingStopTimer;
@@ -45,6 +47,8 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _scrollController.addListener(_markVisibleMessagesRead);
     final currentRoomId = widget.roomId;
     final currentUserId = widget.userId;
 
@@ -87,6 +91,8 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _scrollController.removeListener(_markVisibleMessagesRead);
     _typingStopTimer?.cancel();
     _isTyping = false;
     unawaited(_chatCubit.close());
@@ -132,15 +138,68 @@ class _ChatPageState extends State<ChatPage> {
     await _chatCubit.updateTypingStatus(false);
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _markVisibleMessagesRead();
+  }
+
+  void _markVisibleMessagesRead() {
+    if (!mounted ||
+        WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed ||
+        ModalRoute.of(context)?.isCurrent != true ||
+        !_scrollController.hasClients ||
+        _scrollController.position.extentAfter > 1)
+      return;
+    unawaited(_chatCubit.markVisibleMessagesRead());
+  }
+
+  Future<void> _pickImage() async {
+    if (_isPickingImage || _chatCubit.state.isSendingImage) return;
+    _isPickingImage = true;
+    try {
+      final picture = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 2048,
+        maxHeight: 2048,
+        imageQuality: 85,
+      );
+      if (picture == null || !mounted) return;
+      if (await picture.length() > 5 * 1024 * 1024) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Choose a picture up to 5 MB.')),
+        );
+        return;
+      }
+      final bytes = await picture.readAsBytes();
+      if (!mounted) return;
+      await _stopTyping();
+      await _chatCubit.sendImage(bytes);
+    } catch (_) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to select picture. Please try again.'),
+          ),
+        );
+    } finally {
+      _isPickingImage = false;
+    }
+  }
+
   void _scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
+      if (mounted &&
+          ModalRoute.of(context)?.isCurrent == true &&
+          _scrollController.hasClients) {
         unawaited(
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          ),
+          _scrollController
+              .animateTo(
+                _scrollController.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              )
+              .then((_) => _markVisibleMessagesRead()),
         );
       }
     });
@@ -179,15 +238,11 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 onPressed: () => context.pop(),
               ),
-              title: Text(
-                widget.peerName ?? 'Passenger',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: context.colorScheme.onSurface,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 17,
-                ),
+              title: ChatPeerHeader(
+                name: state.peer?.name.isNotEmpty == true
+                    ? state.peer!.name
+                    : widget.peerName ?? 'Passenger',
+                subtitle: state.peer?.vehicleLabel ?? '',
               ),
             ),
             body: Column(
@@ -287,6 +342,23 @@ class _ChatPageState extends State<ChatPage> {
                       ),
                       child: Row(
                         children: [
+                          IconButton(
+                            tooltip: 'Send picture',
+                            onPressed: canSendMessage && !state.isSendingImage
+                                ? _pickImage
+                                : null,
+                            icon: state.isSendingImage
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.add_photo_alternate_outlined,
+                                  ),
+                          ),
                           Expanded(
                             child: Container(
                               height: 48,
@@ -405,35 +477,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildEmptyState(ChatState state) {
-    if (state.isRoomLocked) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Chat is closed for this trip',
-                style: context.textStyles.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: context.colorScheme.onSurface,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Messages are available during active trips and up to 24 hours after completion.',
-                style: context.textStyles.bodyMedium?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-    if (state.isConnecting) {
+    if (state.isConnecting || state.isLoadingHistory) {
       return const Center(child: CircularProgressIndicator());
     }
     if (state.errorMessage != null &&
@@ -459,6 +503,34 @@ class _ChatPageState extends State<ChatPage> {
         ),
       );
     }
+    if (state.isRoomLocked) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Chat is closed for this trip',
+                style: context.textStyles.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: context.colorScheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'There are no saved messages for this trip.',
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return Center(
       child: Text(
         'No messages yet',
@@ -468,7 +540,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildChatStatusBanner(ChatState state) {
-    if (state.isRoomLocked) {
+    if (state.isRoomLocked && state.errorMessage == null) {
       return Container(
         width: double.infinity,
         margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -489,7 +561,7 @@ class _ChatPageState extends State<ChatPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Messages are available during active trips and up to 24 hours after completion.',
+              'This conversation has ended. Previous messages remain available to view.',
               style: context.textStyles.bodySmall?.copyWith(
                 color: context.colorScheme.onSurfaceVariant,
               ),
@@ -539,17 +611,19 @@ class _ChatPageState extends State<ChatPage> {
                   bottomRight: Radius.circular(isMe ? 4 : 20),
                 ),
               ),
-              child: Text(
-                msg.text,
-                style: TextStyle(
-                  color: isMe
-                      ? context.colorScheme.onPrimary
-                      : context.colorScheme.onSurface,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  height: 1.3,
-                ),
-              ),
+              child: msg.hasImage
+                  ? ChatPicture(load: () => _chatCubit.loadImage(msg.id))
+                  : Text(
+                      msg.text,
+                      style: TextStyle(
+                        color: isMe
+                            ? context.colorScheme.onPrimary
+                            : context.colorScheme.onSurface,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        height: 1.3,
+                      ),
+                    ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -572,8 +646,7 @@ class _ChatPageState extends State<ChatPage> {
                           msg.deliveryStatus ==
                           ChatMessageDeliveryStatus.sending,
                       isDelivered:
-                          msg.deliveryStatus ==
-                          ChatMessageDeliveryStatus.delivered,
+                          msg.deliveryStatus == ChatMessageDeliveryStatus.seen,
                       isFailed:
                           msg.deliveryStatus ==
                           ChatMessageDeliveryStatus.failed,

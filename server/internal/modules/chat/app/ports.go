@@ -8,8 +8,9 @@ import (
 )
 
 // RoomStore is the chat application's persistence port for room state and
-// bounded message history.
+// retained message history.
 type RoomStore interface {
+	MarkRead(ctx context.Context, roomID, userID, through string) error
 	CreateRoom(ctx context.Context, roomID, passengerID, driverID string) error
 	Append(ctx context.Context, message domain.Message) error
 	Messages(ctx context.Context, roomID string) ([]domain.Message, error)

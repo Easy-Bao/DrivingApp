@@ -3,6 +3,9 @@ package http
 import "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/domain"
 
 type MessageResponse struct {
+	ID              string `json:"id"`
+	ImageKey        string `json:"image_key,omitempty"`
+	Seen            bool   `json:"seen"`
 	Text            string `json:"text"`
 	Message         string `json:"message"`
 	SenderID        string `json:"sender_id"`
@@ -25,6 +28,7 @@ func NewMessageResponses(messages []domain.Message) []MessageResponse {
 
 func NewMessageResponse(message domain.Message) MessageResponse {
 	return MessageResponse{
+		ID: message.ID, ImageKey: message.ImageKey, Seen: message.Seen,
 		Text:            message.Body,
 		Message:         message.Body,
 		SenderID:        message.SenderID,

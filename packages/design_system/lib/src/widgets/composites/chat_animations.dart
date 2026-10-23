@@ -202,7 +202,7 @@ class const AppChatDeliveryIndicator({
     final (icon, label) = switch ((isSending, isDelivered, isFailed)) {
       (true, _, _) => (Icons.schedule, 'Sending'),
       (_, _, true) => (Icons.refresh, 'Not delivered'),
-      (_, true, _) => (Icons.done_all, 'Delivered'),
+      (_, true, _) => (Icons.done_all, 'Seen'),
       _ => (Icons.done, 'Sent'),
     };
 

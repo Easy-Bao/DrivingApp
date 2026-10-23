@@ -95,6 +95,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 110));
     expect(find.byIcon(Icons.done_all), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 110));
-    expect(find.bySemanticsLabel('Delivered'), findsOneWidget);
+    expect(find.bySemanticsLabel('Seen'), findsOneWidget);
   });
 }

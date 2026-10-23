@@ -149,3 +149,5 @@ func TestChatCreateRoomRejectsClientSuppliedParticipants(t *testing.T) {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusBadRequest)
 	}
 }
+
+func (*roomHistory) MarkRead(context.Context, string, string, string) error { return nil }

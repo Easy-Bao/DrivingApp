@@ -39,6 +39,7 @@ const (
 	DriverLocationUpdated    Type = "driver.location.updated"
 	PassengerLocationUpdated Type = "passenger.location.updated"
 	ChatMessageCreated       Type = "chat.message.created"
+	ChatMessagesRead         Type = "chat.messages.read"
 	ChatTypingChanged        Type = "chat.typing.changed"
 	PresenceUpdated          Type = "presence.updated"
 )
@@ -221,6 +222,7 @@ func (eventType Type) valid() bool {
 		PassengerLocationUpdated,
 		ChatMessageCreated,
 		ChatTypingChanged,
+		ChatMessagesRead,
 		PresenceUpdated:
 		return true
 	default:

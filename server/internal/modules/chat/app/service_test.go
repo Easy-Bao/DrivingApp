@@ -1,9 +1,12 @@
 package app_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"image"
+	"image/png"
 	"testing"
 
 	application "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/app"
@@ -318,5 +321,97 @@ func TestChatMessagesReturnsACopy(t *testing.T) {
 	messages[0].Body = "mutated"
 	if history.messages[0].Body != "original" {
 		t.Fatalf("history was mutated through returned messages: %#v", history.messages)
+	}
+}
+
+func (*chatHistory) MarkRead(context.Context, string, string, string) error { return nil }
+
+func TestClosedConversationRetainsParticipantHistory(t *testing.T) {
+	history := &chatHistory{passengerID: "7", driverID: "8", locked: true, messages: []domain.Message{{ID: "old", Body: "previous conversation"}}}
+	service := newChatService(history).WithRideAssignmentLookup(chatAssignmentLookup{assignment: assignment.Assignment{RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "completed"}, found: true})
+	for _, userID := range []string{"7", "8"} {
+		messages, err := service.MessagesForUser(context.Background(), "ride-1", userID)
+		if err != nil || len(messages) != 1 || messages[0].ID != "old" {
+			t.Fatalf("history for %s = %v, %v", userID, messages, err)
+		}
+		err = service.Relay(context.Background(), domain.Message{RoomID: "ride-1", SenderID: userID, Body: "new"})
+		if !errors.Is(err, domain.ErrRoomLocked) {
+			t.Fatalf("closed room accepted send: %v", err)
+		}
+	}
+	if _, err := service.MessagesForUser(context.Background(), "ride-1", "outsider"); !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("outsider history: %v", err)
+	}
+}
+
+func TestReadReceiptRequiresAPeerMessageAndPublishesItsTimestamp(t *testing.T) {
+	history := &chatHistory{passengerID: "7", driverID: "8", messages: []domain.Message{{ID: "peer", SenderID: "8", CreatedAt: "2026-10-23T02:00:00.123456789Z"}, {ID: "own", SenderID: "7", CreatedAt: "2026-10-23T02:01:00Z"}}}
+	publisher := &chatEventPublisher{}
+	service := newChatService(history).WithEventPublisher(publisher)
+	for _, id := range []string{"missing", "own"} {
+		if err := service.MarkRead(context.Background(), "ride-1", "7", id); !errors.Is(err, domain.ErrInvalidMessage) {
+			t.Fatalf("invalid receipt %s: %v", id, err)
+		}
+	}
+	if err := service.MarkRead(context.Background(), "ride-1", "outsider", "peer"); !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("outsider receipt: %v", err)
+	}
+	if err := service.MarkRead(context.Background(), "ride-1", "7", "peer"); err != nil {
+		t.Fatal(err)
+	}
+	if len(publisher.events) != 1 || publisher.events[0].Type != event.ChatMessagesRead {
+		t.Fatalf("receipt events = %v", publisher.events)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(publisher.events[0].Payload, &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload["sender_id"] != "7" || payload["read_through"] != "2026-10-23T02:00:00.123456789Z" {
+		t.Fatalf("receipt payload = %v", payload)
+	}
+}
+
+type pictureStore struct {
+	content []byte
+	deleted bool
+}
+
+func (store *pictureStore) Store(_ context.Context, content []byte) (string, error) {
+	store.content = bytes.Clone(content)
+	return "private-picture", nil
+}
+func (store *pictureStore) Read(context.Context, string, int64) ([]byte, error) {
+	return bytes.Clone(store.content), nil
+}
+func (store *pictureStore) Delete(context.Context, string) error { store.deleted = true; return nil }
+
+func TestPicturesUsePrivateStorageAndRoomAuthorization(t *testing.T) {
+	history := &chatHistory{passengerID: "7", driverID: "8"}
+	pictures := &pictureStore{}
+	service := application.NewService(application.Dependencies{History: history, Images: pictures}).WithRideAssignmentLookup(chatAssignmentLookup{assignment: assignment.Assignment{RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "assigned"}, found: true})
+	var picture bytes.Buffer
+	if err := png.Encode(&picture, image.NewRGBA(image.Rect(0, 0, 2, 2))); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.SendImage(context.Background(), "ride-1", "7", []byte("not an image")); !errors.Is(err, domain.ErrInvalidMessage) {
+		t.Fatalf("invalid image: %v", err)
+	}
+	if _, err := service.SendImage(context.Background(), "ride-1", "outsider", picture.Bytes()); !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("outsider image: %v", err)
+	}
+	message, err := service.SendImage(context.Background(), "ride-1", "7", picture.Bytes())
+	if err != nil || message.ID == "" || message.ImageKey == "" {
+		t.Fatalf("send picture = %#v, %v", message, err)
+	}
+	content, contentType, err := service.Image(context.Background(), "ride-1", "8", message.ID)
+	if err != nil || contentType != "image/png" || !bytes.Equal(content, picture.Bytes()) {
+		t.Fatalf("picture read = %s, %v", contentType, err)
+	}
+	if _, _, err := service.Image(context.Background(), "ride-1", "outsider", message.ID); !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("outsider picture read: %v", err)
+	}
+	history.locked = true
+	if _, err := service.SendImage(context.Background(), "ride-1", "7", picture.Bytes()); !errors.Is(err, domain.ErrRoomLocked) || !pictures.deleted {
+		t.Fatalf("closed picture upload: %v, cleanup %v", err, pictures.deleted)
 	}
 }

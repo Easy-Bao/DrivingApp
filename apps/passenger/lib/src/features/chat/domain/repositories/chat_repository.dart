@@ -1,3 +1,7 @@
+import 'dart:typed_data';
+
+import 'package:passenger/src/features/chat/domain/entities/chat_peer.dart';
+
 import 'dart:async';
 
 import 'package:foundation/foundation.dart';
@@ -17,6 +21,16 @@ abstract interface class ChatRepository {
   Future<Result<void, Failure>> initializeChatRoom({required String roomId});
 
   Future<Result<void, Failure>> sendChatMessage(String text);
+  Future<Result<ChatMessage, Failure>> sendImage(
+    String roomId,
+    Uint8List bytes,
+  );
+  Future<Result<Uint8List, Failure>> fetchImage(
+    String roomId,
+    String messageId,
+  );
+  Future<Result<void, Failure>> markRead(String roomId, String messageId);
+  Future<Result<ChatPeer, Failure>> fetchPeer(String roomId);
 
   Future<Result<void, Failure>> sendTypingStatus(bool isTyping);
 

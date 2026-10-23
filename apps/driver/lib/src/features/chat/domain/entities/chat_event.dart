@@ -21,3 +21,11 @@ final class const ChatTypingChanged({
 final class const ChatRoomLocked(this.reason) extends ChatEvent {
   final String reason;
 }
+
+final class const ChatMessagesRead({
+  required this.senderId,
+  required this.through,
+}) extends ChatEvent {
+  final String senderId;
+  final DateTime through;
+}

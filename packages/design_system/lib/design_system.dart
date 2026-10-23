@@ -34,3 +34,5 @@ export 'package:design_system/src/widgets/navigation/floating_tab_bar.dart';
 export 'package:design_system/src/widgets/navigation/swipe_tab_indicator.dart';
 export 'package:design_system/src/widgets/navigation/tab_branch_container.dart';
 export 'package:design_system/src/widgets/navigation/tab_coordinator.dart';
+
+export 'package:design_system/src/widgets/composites/chat_picture.dart';

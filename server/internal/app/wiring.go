@@ -342,7 +342,7 @@ func newHTTPRouter(
 	}).RegisterRoutes(router)
 
 	chatRoomStore := chatredis.NewHistoryStore(redisClient)
-	chatService := chatapplication.NewService(chatapplication.Dependencies{History: chatRoomStore}).
+	chatService := chatapplication.NewService(chatapplication.Dependencies{History: chatRoomStore, Images: privateObjectStore}).
 		WithEventPublisher(eventPublisher).
 		WithRideAssignmentLookup(rideAssignments).
 		WithLogger(applicationLogger)

@@ -1,8 +1,12 @@
+import 'package:driver/src/features/chat/domain/entities/chat_peer.dart';
 import 'package:driver/src/features/chat/chat.dart';
 import 'package:equatable/equatable.dart';
 
 class const ChatState({
   this.messages = const [],
+  this.peer,
+  this.isSendingImage = false,
+  this.isLoadingHistory = false,
   this.isConnecting = false,
   this.isConnected = false,
   this.isRoomLocked = false,
@@ -14,6 +18,9 @@ class const ChatState({
   static const Object _unset = Object();
 
   final List<ChatMessage> messages;
+  final ChatPeer? peer;
+  final bool isSendingImage;
+  final bool isLoadingHistory;
   final bool isConnecting;
   final bool isConnected;
   final bool isRoomLocked;
@@ -24,6 +31,9 @@ class const ChatState({
 
   ChatState copyWith({
     List<ChatMessage>? messages,
+    ChatPeer? peer,
+    bool? isSendingImage,
+    bool? isLoadingHistory,
     bool? isConnecting,
     bool? isConnected,
     bool? isRoomLocked,
@@ -34,6 +44,9 @@ class const ChatState({
   }) {
     return ChatState(
       messages: messages ?? this.messages,
+      peer: peer ?? this.peer,
+      isSendingImage: isSendingImage ?? this.isSendingImage,
+      isLoadingHistory: isLoadingHistory ?? this.isLoadingHistory,
       isConnecting: isConnecting ?? this.isConnecting,
       isConnected: isConnected ?? this.isConnected,
       isRoomLocked: isRoomLocked ?? this.isRoomLocked,
@@ -51,6 +64,9 @@ class const ChatState({
   @override
   List<Object?> get props => [
     messages,
+    peer,
+    isSendingImage,
+    isLoadingHistory,
     isConnecting,
     isConnected,
     isRoomLocked,

@@ -10,6 +10,7 @@ import (
 
 	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/admin/adapter/postgres"
 	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/adapter/postgres"
+	chatredis "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/adapter/redis"
 	dispatchpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/adapter/postgres"
 	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/adapter/postgres"
 	reviewpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/adapter/postgres"
@@ -74,6 +75,13 @@ func New(ctx context.Context, config Config) (*Application, error) {
 			}
 		}
 	}()
+
+	retentionContext, cancelRetention := context.WithTimeout(ctx, 30*time.Second)
+	retentionErr := chatredis.NewHistoryStore(redisClient).RetainExistingHistory(retentionContext)
+	cancelRetention()
+	if retentionErr != nil {
+		return nil, fmt.Errorf("retain existing chat conversations: %w", retentionErr)
+	}
 
 	applicationLogger := logger.New(_serviceName, config.LogLevel)
 	authStore, err := authpostgres.NewUserStore(postgresPool)

@@ -70,3 +70,5 @@ func TestEventHandlerKeepsServerIdentityAndTimestamp(t *testing.T) {
 		t.Fatalf("server timestamp = %q, error = %v", history.message.CreatedAt, err)
 	}
 }
+
+func (*roomRepositoryStub) MarkRead(context.Context, string, string, string) error { return nil }
