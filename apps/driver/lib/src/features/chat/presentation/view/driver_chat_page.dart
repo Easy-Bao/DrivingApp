@@ -253,6 +253,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                 if (chatHistoryMessages.isNotEmpty &&
                     (state.isRoomLocked ||
                         (state.errorMessage != null &&
+                            !state.isAccessDenied &&
                             !AppNetworkStatusScope.isUnavailableOf(context))))
                   _buildChatStatusBanner(state),
                 Expanded(
@@ -482,7 +483,8 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     if (state.isConnecting || state.isLoadingHistory) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.errorMessage != null &&
+    if (!state.isAccessDenied &&
+        state.errorMessage != null &&
         !AppNetworkStatusScope.isUnavailableOf(context)) {
       return Center(
         child: Padding(
@@ -505,37 +507,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         ),
       );
     }
-    if (state.isRoomLocked) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Chat is closed for this trip',
-                style: context.textStyles.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: context.colorScheme.onSurface,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'There are no saved messages for this trip.',
-                style: context.textStyles.bodyMedium?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      );
-    }
     return Center(
       child: Text(
-        'No messages yet',
+        'No message yet',
         style: TextStyle(color: context.colorScheme.onSurfaceVariant),
       ),
     );

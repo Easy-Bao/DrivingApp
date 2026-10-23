@@ -13,6 +13,7 @@ class const ChatState({
   this.isPeerTyping = false,
   this.lockReasonMessage = 'Chat is closed for this trip.',
   this.errorMessage,
+  this.isAccessDenied = false,
   this.lastDeliveredMessage,
 }) extends Equatable {
   static const Object _unset = Object();
@@ -27,6 +28,7 @@ class const ChatState({
   final bool isPeerTyping;
   final String lockReasonMessage;
   final String? errorMessage;
+  final bool isAccessDenied;
   final ChatMessage? lastDeliveredMessage;
 
   ChatState copyWith({
@@ -40,6 +42,7 @@ class const ChatState({
     bool? isPeerTyping,
     String? lockReasonMessage,
     Object? errorMessage = _unset,
+    bool? isAccessDenied,
     Object? lastDeliveredMessage = _unset,
   }) {
     return ChatState(
@@ -52,6 +55,7 @@ class const ChatState({
       isRoomLocked: isRoomLocked ?? this.isRoomLocked,
       isPeerTyping: isPeerTyping ?? this.isPeerTyping,
       lockReasonMessage: lockReasonMessage ?? this.lockReasonMessage,
+      isAccessDenied: isAccessDenied ?? this.isAccessDenied,
       errorMessage: identical(errorMessage, _unset)
           ? this.errorMessage
           : errorMessage as String?,
@@ -73,6 +77,7 @@ class const ChatState({
     isPeerTyping,
     lockReasonMessage,
     errorMessage,
+    isAccessDenied,
     lastDeliveredMessage,
   ];
 }

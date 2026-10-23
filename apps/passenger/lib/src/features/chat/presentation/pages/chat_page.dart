@@ -265,6 +265,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                 if (state.isRoomLocked && chatHistoryMessages.isNotEmpty)
                   _buildClosedBanner(),
                 if (state.errorMessage != null &&
+                    !state.isAccessDenied &&
                     !AppNetworkStatusScope.isUnavailableOf(context) &&
                     chatHistoryMessages.isNotEmpty)
                   _buildErrorBanner(state),
@@ -495,7 +496,8 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     if (state.isConnecting || state.isLoadingHistory) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.errorMessage != null &&
+    if (!state.isAccessDenied &&
+        state.errorMessage != null &&
         !AppNetworkStatusScope.isUnavailableOf(context)) {
       return Center(
         child: Padding(
@@ -518,12 +520,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         ),
       );
     }
-    if (state.isRoomLocked) {
-      return _buildClosedEmptyState();
-    }
     return Center(
       child: Text(
-        'No messages yet',
+        'No message yet',
         style: TextStyle(color: context.colorScheme.onSurfaceVariant),
       ),
     );
@@ -555,34 +554,6 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildClosedEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Chat is closed for this trip',
-              style: context.textStyles.titleMedium?.copyWith(
-                color: context.colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'There are no saved messages for this trip.',
-              textAlign: TextAlign.center,
-              style: context.textStyles.bodyMedium?.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

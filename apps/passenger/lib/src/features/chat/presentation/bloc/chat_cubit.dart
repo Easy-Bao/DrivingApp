@@ -69,7 +69,13 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
     await _chatSubscription?.cancel();
     _chatSubscription = null;
     _ensureChatSubscription();
-    emit(state.copyWith(isConnecting: true, errorMessage: null));
+    emit(
+      state.copyWith(
+        isConnecting: true,
+        errorMessage: null,
+        isAccessDenied: false,
+      ),
+    );
 
     try {
       final connectionResult = await _chatRepository
@@ -108,6 +114,7 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
         state.copyWith(
           messages: _mergeIncomingMessages(state.messages, messages),
           errorMessage: null,
+          isAccessDenied: false,
         ),
       ),
     );
@@ -311,6 +318,7 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
             isConnecting: false,
             isConnected: true,
             errorMessage: null,
+            isAccessDenied: false,
           ),
         );
         final roomId = _roomId;
@@ -422,11 +430,18 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
           isPeerTyping: false,
           lockReasonMessage: message,
           errorMessage: null,
+          isAccessDenied: false,
         ),
       );
       return;
     }
-    emit(state.copyWith(isConnecting: false, errorMessage: message));
+    emit(
+      state.copyWith(
+        isConnecting: false,
+        errorMessage: message,
+        isAccessDenied: failure is ServerFailure && failure.statusCode == 403,
+      ),
+    );
   }
 
   @override

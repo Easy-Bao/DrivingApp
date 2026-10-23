@@ -14,6 +14,70 @@ class MockRepository extends Mock implements ChatRepository {}
 class MockFactory extends Mock implements ChatRepositoryFactory {}
 
 void main() {
+  for (final accessDenied in [true, false]) {
+    testWidgets(
+      accessDenied
+          ? 'shows the centered empty conversation label without a retry button'
+          : 'keeps connection errors and retry available',
+      (tester) async {
+        final repository = MockRepository();
+        final factory = MockFactory();
+        when(() => factory.create(currentUserId: '7')).thenReturn(repository);
+        when(() => repository.fetchPeer('ride-1'))
+            .thenAnswer((_) async => const Err(NetworkFailure('Unavailable')));
+        when(() => repository.initializeChatRoom(roomId: 'ride-1')).thenAnswer(
+          (_) async => accessDenied
+              ? const Err(
+                  ServerFailure.withStatusCode(
+                    "You don't have permission to do that.",
+                    403,
+                  ),
+                )
+              : const Err(NetworkFailure('Unable to connect.')),
+        );
+        when(() => repository.terminateChatConnection())
+            .thenAnswer((_) async => const Ok(null));
+        when(() => repository.dispose()).thenAnswer((_) async {});
+        await tester.pumpWidget(
+          MaterialApp(
+            home: ChatPage(
+              roomId: 'ride-1',
+              userId: '7',
+              chatRepositoryFactory: factory,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.text("You don't have permission to do that."),
+          findsNothing,
+        );
+        expect(
+          find.text('Try again'),
+          accessDenied ? findsNothing : findsOneWidget,
+        );
+        expect(
+          find.text(
+            "Couldn't connect. Check your internet connection and try again.",
+          ),
+          accessDenied ? findsNothing : findsOneWidget,
+        );
+        final emptyLabel = find.text('No message yet');
+        expect(emptyLabel, accessDenied ? findsOneWidget : findsNothing);
+        if (accessDenied) {
+          final center = find
+              .ancestor(of: emptyLabel, matching: find.byType(Center))
+              .first;
+          expect(tester.getCenter(emptyLabel), tester.getCenter(center));
+        }
+        verifyNever(() => repository.fetchRoomMessages(any()));
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+        await tester.pumpAndSettle();
+      },
+    );
+  }
+
   testWidgets('closed history shows pictures, driver details, and ended flag', (
     tester,
   ) async {
@@ -69,6 +133,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Previous conversation'), findsOneWidget);
+    expect(find.text('No message yet'), findsNothing);
     expect(find.text('This conversation has ended'), findsOneWidget);
     expect(find.text('Alex Driver'), findsOneWidget);
     expect(find.text('ABC 123 | Motorcycle'), findsOneWidget);
