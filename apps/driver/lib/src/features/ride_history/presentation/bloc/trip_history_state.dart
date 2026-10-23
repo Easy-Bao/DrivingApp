@@ -5,6 +5,7 @@ class const TripHistoryState({
   this.isLoadingMore = false,
   this.hasMore = false,
   this.nextOffset,
+  this.nextCursor,
   this.errorMessage,
   this.loadMoreError,
   this.trips = const [],
@@ -13,6 +14,7 @@ class const TripHistoryState({
   final bool isLoadingMore;
   final bool hasMore;
   final int? nextOffset;
+  final String? nextCursor;
   final String? errorMessage;
   final String? loadMoreError;
   final List<Map<String, dynamic>> trips;
@@ -22,6 +24,8 @@ class const TripHistoryState({
     bool? isLoadingMore,
     bool? hasMore,
     int? nextOffset,
+    String? nextCursor,
+    bool clearNextCursor = false,
     bool clearNextOffset = false,
     String? errorMessage,
     bool clearError = false,
@@ -34,6 +38,7 @@ class const TripHistoryState({
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       hasMore: hasMore ?? this.hasMore,
       nextOffset: clearNextOffset ? null : nextOffset ?? this.nextOffset,
+      nextCursor: clearNextCursor ? null : nextCursor ?? this.nextCursor,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
       loadMoreError: clearLoadMoreError
           ? null
@@ -48,6 +53,7 @@ class const TripHistoryState({
     isLoadingMore,
     hasMore,
     nextOffset,
+    nextCursor,
     errorMessage,
     loadMoreError,
     trips,

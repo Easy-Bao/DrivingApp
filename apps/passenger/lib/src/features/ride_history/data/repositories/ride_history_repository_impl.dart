@@ -103,7 +103,7 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
       final pageFuture = _remoteDataSource.fetchRideHistory(
         passengerId,
         limit: limit,
-        offset: 0,
+        cursor: '',
       );
       final summaryFuture = _remoteDataSource.fetchSummary(passengerId);
       final rawPage = await pageFuture;
@@ -127,12 +127,14 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
     String passengerId, {
     int limit = 25,
     int offset = 0,
+    String? cursor,
   }) async {
     try {
       final rawPage = await _remoteDataSource.fetchRideHistory(
         passengerId,
         limit: limit,
         offset: offset,
+        cursor: cursor,
       );
       return Ok(_mapPage(rawPage));
     } catch (error) {
@@ -145,6 +147,7 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
       items: rawPage.items.map(_mapToModel).toList(growable: false),
       hasMore: rawPage.hasMore,
       nextOffset: rawPage.nextOffset,
+      nextCursor: rawPage.nextCursor,
     );
   }
 

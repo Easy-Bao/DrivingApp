@@ -192,7 +192,7 @@ class RideHistoryBloc({
     final current = state;
     if (current is! RideHistoryLoaded ||
         !current.hasMore ||
-        current.nextOffset == null ||
+        (current.nextOffset == null && current.nextCursor == null) ||
         current.isLoadingMore) {
       return;
     }
@@ -200,7 +200,8 @@ class RideHistoryBloc({
     final result = await _repository.fetchRideHistory(
       event.passengerId,
       limit: _pageSize,
-      offset: current.nextOffset!,
+      offset: current.nextOffset ?? 0,
+      cursor: current.nextCursor,
     );
     if (emit.isDone ||
         generation != _generation ||
@@ -251,6 +252,7 @@ class RideHistoryBloc({
       upcoming: upcoming,
       hasMore: page.hasMore,
       nextOffset: page.nextOffset,
+      nextCursor: page.nextCursor,
       weeklyFareAmount: weeklyFareAmount,
       weeklyRideCount: weeklyRideCount,
     );

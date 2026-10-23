@@ -291,7 +291,7 @@ func rideTimestamp(value pgtype.Timestamptz) *string {
 	if !value.Valid {
 		return nil
 	}
-	formatted := value.Time.UTC().Format(time.RFC3339)
+	formatted := value.Time.UTC().Format(time.RFC3339Nano)
 	return &formatted
 }
 

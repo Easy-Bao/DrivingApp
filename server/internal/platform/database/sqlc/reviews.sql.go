@@ -275,15 +275,19 @@ FROM reviews AS review
 LEFT JOIN users AS user_account ON user_account.id = review.passenger_id
 LEFT JOIN passenger_profiles AS passenger_profile ON passenger_profile.user_id = review.passenger_id
 WHERE review.driver_id = $1
+AND ($2::timestamptz IS NULL
+       OR (review.created_at, review.id) < ($2::timestamptz, $3::int))
 ORDER BY review.created_at DESC, review.id DESC
-OFFSET $2::int
-LIMIT $3::int
+OFFSET $4::int
+LIMIT $5::int
 `
 
 type ListDriverReviewsParams struct {
-	DriverID int32 `db:"driver_id"`
-	Offset   int32 `db:"offset"`
-	Limit    int32 `db:"limit"`
+	DriverID        int32              `db:"driver_id"`
+	BeforeCreatedAt pgtype.Timestamptz `db:"before_created_at"`
+	BeforeID        int32              `db:"before_id"`
+	Offset          int32              `db:"offset"`
+	Limit           int32              `db:"limit"`
 }
 
 type ListDriverReviewsRow struct {
@@ -298,7 +302,13 @@ type ListDriverReviewsRow struct {
 }
 
 func (q *Queries) ListDriverReviews(ctx context.Context, arg ListDriverReviewsParams) ([]ListDriverReviewsRow, error) {
-	rows, err := q.db.Query(ctx, listDriverReviews, arg.DriverID, arg.Offset, arg.Limit)
+	rows, err := q.db.Query(ctx, listDriverReviews,
+		arg.DriverID,
+		arg.BeforeCreatedAt,
+		arg.BeforeID,
+		arg.Offset,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -365,27 +365,20 @@ func (handler *Handler) PassengerRides(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 403, "forbidden")
 		return
 	}
-	page, err := sharedrequest.ParseOffsetPagination(r.URL.Query(), 25, 100)
+	scope := "passenger-rides:" + strconv.Itoa(targetID)
+	page, err := sharedrequest.ParseCursorPagination(r.URL.Query(), 25, 100, scope)
 	if err != nil {
 		response.Error(w, http.StatusBadRequest, "invalid pagination")
 		return
 	}
 	items, err := handler.service.PassengerRides(r.Context(), targetID, domain.TripHistoryQuery{
-		Limit: page.Limit, Offset: page.Offset,
+		Limit: page.Limit, Offset: page.Offset, BeforeCreatedAt: page.BeforeCreatedAt, BeforeID: page.BeforeID,
 	})
 	if err != nil {
 		response.Error(w, 500, "Your trip history is temporarily unavailable.")
 		return
 	}
-	response.JSON(
-		w,
-		200,
-		response.NewOffsetPage(
-			rideResponsesFromDomain(items),
-			page.Limit,
-			page.Offset,
-		),
-	)
+	writeRideHistoryPage(w, items, page, scope)
 }
 
 func (handler *Handler) PassengerActivitySummary(w http.ResponseWriter, r *http.Request) {
@@ -477,27 +470,20 @@ func (handler *Handler) DriverTrips(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "invalid trip scope")
 		return
 	}
-	page, err := sharedrequest.ParseOffsetPagination(r.URL.Query(), defaultLimit, maxLimit)
+	scope := "driver-trips:" + strconv.Itoa(driverID) + ":" + strconv.FormatBool(activeOnly)
+	page, err := sharedrequest.ParseCursorPagination(r.URL.Query(), defaultLimit, maxLimit, scope)
 	if err != nil {
 		response.Error(w, http.StatusBadRequest, "invalid pagination")
 		return
 	}
 	items, err := handler.service.DriverTrips(r.Context(), driverID, domain.TripHistoryQuery{
-		Limit: page.Limit, Offset: page.Offset, ActiveOnly: activeOnly,
+		Limit: page.Limit, Offset: page.Offset, BeforeCreatedAt: page.BeforeCreatedAt, BeforeID: page.BeforeID, ActiveOnly: activeOnly,
 	})
 	if err != nil {
 		response.Error(w, 500, "Driver trip history is temporarily unavailable.")
 		return
 	}
-	response.JSON(
-		w,
-		200,
-		response.NewOffsetPage(
-			rideResponsesFromDomain(items),
-			page.Limit,
-			page.Offset,
-		),
-	)
+	writeRideHistoryPage(w, items, page, scope)
 }
 
 func (handler *Handler) CreateSafetyReport(w http.ResponseWriter, r *http.Request) {

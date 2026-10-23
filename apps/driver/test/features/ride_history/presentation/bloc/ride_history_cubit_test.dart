@@ -26,18 +26,24 @@ void main() {
   blocTest<TripHistoryCubit, TripHistoryState>(
     'merges paginated history without duplicating a trip',
     build: () {
-      when(() => repository.fetchTripHistory('driver-1', limit: 25, offset: 0))
-          .thenAnswer(
-            (_) async => const Ok(
-              OffsetPage(
-                items: [
-                  {'id': 1, 'status': 'completed'},
-                ],
-                hasMore: true,
-                nextOffset: 25,
-              ),
-            ),
-          );
+      when(
+        () => repository.fetchTripHistory(
+          'driver-1',
+          limit: 25,
+          offset: 0,
+          cursor: '',
+        ),
+      ).thenAnswer(
+        (_) async => const Ok(
+          OffsetPage(
+            items: [
+              {'id': 1, 'status': 'completed'},
+            ],
+            hasMore: true,
+            nextOffset: 25,
+          ),
+        ),
+      );
       when(() => repository.fetchTripHistory('driver-1', limit: 25, offset: 25))
           .thenAnswer(
             (_) async => const Ok(
@@ -79,11 +85,17 @@ void main() {
   blocTest<TripHistoryCubit, TripHistoryState>(
     'keeps request failures separate from an empty history',
     build: () {
-      when(() => repository.fetchTripHistory('driver-1', limit: 25, offset: 0))
-          .thenAnswer(
-            (_) async =>
-                const Err(ServerFailure('pq: relation "rides" does not exist')),
-          );
+      when(
+        () => repository.fetchTripHistory(
+          'driver-1',
+          limit: 25,
+          offset: 0,
+          cursor: '',
+        ),
+      ).thenAnswer(
+        (_) async =>
+            const Err(ServerFailure('pq: relation "rides" does not exist')),
+      );
       return TripHistoryCubit(
         repository: repository,
         sessionService: sessionService,
@@ -106,22 +118,28 @@ void main() {
     'preserves loaded trips when a refresh fails',
     build: () {
       var requestCount = 0;
-      when(() => repository.fetchTripHistory('driver-1', limit: 25, offset: 0))
-          .thenAnswer((_) async {
-            requestCount++;
-            if (requestCount == 1) {
-              return const Ok(
-                OffsetPage(
-                  items: [
-                    {'id': 1, 'status': 'completed'},
-                  ],
-                  hasMore: true,
-                  nextOffset: 25,
-                ),
-              );
-            }
-            return const Err(ServerFailure('database connection refused'));
-          });
+      when(
+        () => repository.fetchTripHistory(
+          'driver-1',
+          limit: 25,
+          offset: 0,
+          cursor: '',
+        ),
+      ).thenAnswer((_) async {
+        requestCount++;
+        if (requestCount == 1) {
+          return const Ok(
+            OffsetPage(
+              items: [
+                {'id': 1, 'status': 'completed'},
+              ],
+              hasMore: true,
+              nextOffset: 25,
+            ),
+          );
+        }
+        return const Err(ServerFailure('database connection refused'));
+      });
       return TripHistoryCubit(
         repository: repository,
         sessionService: sessionService,

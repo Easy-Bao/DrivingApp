@@ -26,22 +26,36 @@ void main() {
           {'id': 1},
         ],
         hasMore: true,
-        nextOffset: 25,
+        nextOffset: null,
+        nextCursor: 'fresh-boundary',
       ),
       const OffsetPage<Map<String, dynamic>>(
         items: [
           {'id': 2},
         ],
         hasMore: true,
-        nextOffset: 25,
+        nextOffset: null,
+        nextCursor: 'refreshed-boundary',
       ),
     ];
     var firstPageCalls = 0;
-    when(() => repository.fetchTripHistory('driver-1', limit: 25, offset: 0))
-        .thenAnswer((_) async => Ok(firstPages[firstPageCalls++]));
+    when(
+      () => repository.fetchTripHistory(
+        'driver-1',
+        limit: 25,
+        offset: 0,
+        cursor: '',
+      ),
+    ).thenAnswer((_) async => Ok(firstPages[firstPageCalls++]));
     final stalePage = Completer<_Page>();
-    when(() => repository.fetchTripHistory('driver-1', limit: 25, offset: 25))
-        .thenAnswer((_) => stalePage.future);
+    when(
+      () => repository.fetchTripHistory(
+        'driver-1',
+        limit: 25,
+        offset: 0,
+        cursor: 'fresh-boundary',
+      ),
+    ).thenAnswer((_) => stalePage.future);
 
     final cubit = TripHistoryCubit(
       repository: repository,
@@ -67,7 +81,8 @@ void main() {
 
     expect(cubit.state.trips.map((trip) => trip['id']), [2]);
     expect(cubit.state.hasMore, isTrue);
-    expect(cubit.state.nextOffset, 25);
+    expect(cubit.state.nextOffset, isNull);
+    expect(cubit.state.nextCursor, 'refreshed-boundary');
     expect(cubit.state.isLoadingMore, isFalse);
 
     await cubit.close();

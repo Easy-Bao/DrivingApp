@@ -21,6 +21,8 @@ FROM reviews AS review
 LEFT JOIN users AS user_account ON user_account.id = review.passenger_id
 LEFT JOIN passenger_profiles AS passenger_profile ON passenger_profile.user_id = review.passenger_id
 WHERE review.driver_id = sqlc.arg('driver_id')
+AND (sqlc.narg('before_created_at')::timestamptz IS NULL
+       OR (review.created_at, review.id) < (sqlc.narg('before_created_at')::timestamptz, sqlc.arg('before_id')::int))
 ORDER BY review.created_at DESC, review.id DESC
 OFFSET sqlc.arg('offset')::int
 LIMIT sqlc.arg('limit')::int;

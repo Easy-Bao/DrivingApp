@@ -24,6 +24,7 @@ final class const RideHistoryLoaded({
   required this.upcoming,
   this.hasMore = false,
   this.nextOffset,
+  this.nextCursor,
   this.isLoadingMore = false,
   this.loadMoreError,
   this.weeklyFareAmount = 0,
@@ -33,6 +34,7 @@ final class const RideHistoryLoaded({
   final List<RideHistory> upcoming;
   final bool hasMore;
   final int? nextOffset;
+  final String? nextCursor;
   final bool isLoadingMore;
   final String? loadMoreError;
   final int weeklyFareAmount;
@@ -45,6 +47,7 @@ final class const RideHistoryLoaded({
     List<RideHistory>? upcoming,
     bool? hasMore,
     int? nextOffset,
+    String? nextCursor,
     bool? isLoadingMore,
     String? loadMoreError,
     bool clearLoadMoreError = false,
@@ -56,6 +59,7 @@ final class const RideHistoryLoaded({
       upcoming: upcoming ?? this.upcoming,
       hasMore: hasMore ?? this.hasMore,
       nextOffset: nextOffset ?? this.nextOffset,
+      nextCursor: nextCursor ?? this.nextCursor,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       loadMoreError: clearLoadMoreError
           ? null
@@ -71,6 +75,7 @@ final class const RideHistoryLoaded({
     upcoming,
     hasMore,
     nextOffset,
+    nextCursor,
     isLoadingMore,
     loadMoreError,
     weeklyFareAmount,

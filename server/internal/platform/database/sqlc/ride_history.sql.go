@@ -35,16 +35,20 @@ WHERE ride.driver_id = $1
       OR
       ($2::boolean = false AND ride.status IN ('completed', 'cancelled'))
   )
+AND ($3::timestamptz IS NULL
+       OR (ride.created_at, ride.id) < ($3::timestamptz, $4::int))
 ORDER BY ride.created_at DESC, ride.id DESC
-LIMIT $4::int
-OFFSET $3::int
+LIMIT $6::int
+OFFSET $5::int
 `
 
 type ListDriverRidesParams struct {
-	DriverID   pgtype.Int4 `db:"driver_id"`
-	ActiveOnly bool        `db:"active_only"`
-	Offset     int32       `db:"offset"`
-	Limit      int32       `db:"limit"`
+	DriverID        pgtype.Int4        `db:"driver_id"`
+	ActiveOnly      bool               `db:"active_only"`
+	BeforeCreatedAt pgtype.Timestamptz `db:"before_created_at"`
+	BeforeID        int32              `db:"before_id"`
+	Offset          int32              `db:"offset"`
+	Limit           int32              `db:"limit"`
 }
 
 type ListDriverRidesRow struct {
@@ -66,6 +70,8 @@ func (q *Queries) ListDriverRides(ctx context.Context, arg ListDriverRidesParams
 	rows, err := q.db.Query(ctx, listDriverRides,
 		arg.DriverID,
 		arg.ActiveOnly,
+		arg.BeforeCreatedAt,
+		arg.BeforeID,
 		arg.Offset,
 		arg.Limit,
 	)
@@ -143,15 +149,19 @@ FROM rides AS ride
 LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
 LEFT JOIN driver_profiles AS driver_profile ON driver_profile.user_id = ride.driver_id
 WHERE ride.passenger_id = $1
+AND ($2::timestamptz IS NULL
+       OR (ride.created_at, ride.id) < ($2::timestamptz, $3::int))
 ORDER BY ride.created_at DESC, ride.id DESC
-LIMIT $3::int
-OFFSET $2::int
+LIMIT $5::int
+OFFSET $4::int
 `
 
 type ListPassengerRidesParams struct {
-	PassengerID int32 `db:"passenger_id"`
-	Offset      int32 `db:"offset"`
-	Limit       int32 `db:"limit"`
+	PassengerID     int32              `db:"passenger_id"`
+	BeforeCreatedAt pgtype.Timestamptz `db:"before_created_at"`
+	BeforeID        int32              `db:"before_id"`
+	Offset          int32              `db:"offset"`
+	Limit           int32              `db:"limit"`
 }
 
 type ListPassengerRidesRow struct {
@@ -169,7 +179,13 @@ type ListPassengerRidesRow struct {
 }
 
 func (q *Queries) ListPassengerRides(ctx context.Context, arg ListPassengerRidesParams) ([]ListPassengerRidesRow, error) {
-	rows, err := q.db.Query(ctx, listPassengerRides, arg.PassengerID, arg.Offset, arg.Limit)
+	rows, err := q.db.Query(ctx, listPassengerRides,
+		arg.PassengerID,
+		arg.BeforeCreatedAt,
+		arg.BeforeID,
+		arg.Offset,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}

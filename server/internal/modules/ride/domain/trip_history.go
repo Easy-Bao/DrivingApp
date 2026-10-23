@@ -1,11 +1,16 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type TripHistoryQuery struct {
-	Limit      int
-	Offset     int
-	ActiveOnly bool
+	Limit           int
+	Offset          int
+	ActiveOnly      bool
+	BeforeCreatedAt time.Time
+	BeforeID        int
 }
 
 type RideHistoryReader interface {

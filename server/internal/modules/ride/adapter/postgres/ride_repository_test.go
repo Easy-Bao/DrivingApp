@@ -204,3 +204,11 @@ func TestRideRepositoryHasActivePassengerRideValidations(t *testing.T) {
 		t.Fatal("expected repository without pool/queries to return error")
 	}
 }
+
+func TestRideTimestampPreservesPaginationPrecision(t *testing.T) {
+	timestamp := time.Date(2026, time.January, 2, 3, 4, 5, 123456000, time.UTC)
+	got := rideTimestamp(pgtype.Timestamptz{Time: timestamp, Valid: true})
+	if got == nil || *got != "2026-01-02T03:04:05.123456Z" {
+		t.Fatalf("timestamp=%v", got)
+	}
+}

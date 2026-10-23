@@ -24,7 +24,7 @@ class TripHistoryCubit({
   Future<void> loadMore() async {
     final current = state;
     if (!current.hasMore ||
-        current.nextOffset == null ||
+        (current.nextOffset == null && current.nextCursor == null) ||
         current.isLoadingMore ||
         current.isLoading) {
       return;
@@ -38,7 +38,8 @@ class TripHistoryCubit({
     final current = state;
     if (loadMore ? current.isLoadingMore : current.isLoading) return;
     final offset = current.nextOffset;
-    if (loadMore && offset == null) return;
+    final cursor = current.nextCursor;
+    if (loadMore && offset == null && cursor == null) return;
     final generation = loadMore ? _generation : ++_generation;
 
     if (loadMore) {
@@ -52,6 +53,7 @@ class TripHistoryCubit({
           hasMore: hasExistingTrips ? current.hasMore : false,
           nextOffset: hasExistingTrips ? current.nextOffset : null,
           clearNextOffset: !hasExistingTrips,
+          clearNextCursor: !hasExistingTrips,
           clearError: true,
           clearLoadMoreError: true,
         ),
@@ -69,7 +71,8 @@ class TripHistoryCubit({
       final result = await _repository.fetchTripHistory(
         driverId,
         limit: pageSize,
-        offset: loadMore ? offset! : 0,
+        offset: loadMore ? offset ?? 0 : 0,
+        cursor: loadMore ? cursor : '',
       );
       if (isClosed || generation != _generation) return;
 
@@ -89,6 +92,8 @@ class TripHistoryCubit({
               hasMore: page.hasMore,
               nextOffset: page.nextOffset,
               clearNextOffset: page.nextOffset == null,
+              nextCursor: page.nextCursor,
+              clearNextCursor: page.nextCursor == null,
               clearError: true,
               clearLoadMoreError: true,
               trips: trips,
@@ -122,6 +127,7 @@ class TripHistoryCubit({
         isLoadingMore: false,
         hasMore: hasExistingTrips ? state.hasMore : false,
         clearNextOffset: !hasExistingTrips,
+        clearNextCursor: !hasExistingTrips,
         clearLoadMoreError: true,
         errorMessage: message,
       ),

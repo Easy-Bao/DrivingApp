@@ -18,7 +18,7 @@ func TestFromPostgresReviewMapsPassengerDetails(t *testing.T) {
 		Rating:        4.5,
 		Comment:       pgtype.Text{String: "Great ride", Valid: true},
 		CreatedAt: pgtype.Timestamptz{
-			Time:  time.Date(2026, time.January, 2, 3, 4, 5, 0, time.FixedZone("PHT", 8*60*60)),
+			Time:  time.Date(2026, time.January, 2, 3, 4, 5, 123456000, time.FixedZone("PHT", 8*60*60)),
 			Valid: true,
 		},
 	})
@@ -28,7 +28,7 @@ func TestFromPostgresReviewMapsPassengerDetails(t *testing.T) {
 	if review.ID != 19 || review.RideID != 23 || review.PassengerName != "Passenger" || review.Comment != "Great ride" {
 		t.Fatalf("mapped review = %+v", review)
 	}
-	if review.CreatedAt != "2026-01-01T19:04:05Z" {
+	if review.CreatedAt != "2026-01-01T19:04:05.123456Z" {
 		t.Fatalf("mapped review creation time = %q", review.CreatedAt)
 	}
 }

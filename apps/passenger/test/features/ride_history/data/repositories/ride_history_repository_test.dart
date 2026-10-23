@@ -30,6 +30,7 @@ void main() {
           'private-id',
           limit: any(named: 'limit'),
           offset: any(named: 'offset'),
+          cursor: any(named: 'cursor'),
         ),
       ).thenThrow(
         DioException(
@@ -58,6 +59,7 @@ void main() {
         'private-id',
         limit: any(named: 'limit'),
         offset: any(named: 'offset'),
+        cursor: any(named: 'cursor'),
       ),
     ).thenThrow(
       DioException(
@@ -86,6 +88,7 @@ void main() {
         'passenger-1',
         limit: any(named: 'limit'),
         offset: any(named: 'offset'),
+        cursor: any(named: 'cursor'),
       ),
     ).thenThrow(StateError('database-password-leak'));
 
@@ -109,6 +112,7 @@ void main() {
           'passenger-1',
           limit: any(named: 'limit'),
           offset: any(named: 'offset'),
+          cursor: any(named: 'cursor'),
         ),
       ).thenAnswer(
         (_) async => const OffsetPage<Map<String, dynamic>>(
@@ -151,6 +155,7 @@ void main() {
         'passenger-1',
         limit: 25,
         offset: 0,
+        cursor: '',
       ),
     ).thenAnswer(
       (_) async => const OffsetPage<Map<String, dynamic>>(

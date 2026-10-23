@@ -2,10 +2,12 @@ class const OffsetPage<T>({
   required this.items,
   required this.hasMore,
   required this.nextOffset,
+  this.nextCursor,
 }) {
   final List<T> items;
   final bool hasMore;
   final int? nextOffset;
+  final String? nextCursor;
 
   factory fromJson(
     Map<String, dynamic> json,
@@ -24,8 +26,18 @@ class const OffsetPage<T>({
       throw const FormatException('Page response has an invalid next offset.');
     }
     final nextOffset = rawNextOffset as int?;
-    if ((rawHasMore && nextOffset == null) ||
-        (!rawHasMore && nextOffset != null)) {
+    final rawNextCursor = json['next_cursor'];
+    final usesCursor = json.containsKey('next_cursor');
+    if (usesCursor && rawNextCursor is! String) {
+      throw const FormatException('Page response has an invalid next cursor.');
+    }
+    final nextCursor = rawNextCursor is String && rawNextCursor.isNotEmpty
+        ? rawNextCursor
+        : null;
+    final hasContinuation = usesCursor
+        ? nextCursor != null
+        : nextOffset != null;
+    if (rawHasMore != hasContinuation || (usesCursor && nextOffset != null)) {
       throw const FormatException(
         'Page response has inconsistent pagination metadata.',
       );
@@ -34,6 +46,7 @@ class const OffsetPage<T>({
       items: rawItems.map(decodeItem).toList(growable: false),
       hasMore: rawHasMore,
       nextOffset: nextOffset,
+      nextCursor: nextCursor,
     );
   }
 }

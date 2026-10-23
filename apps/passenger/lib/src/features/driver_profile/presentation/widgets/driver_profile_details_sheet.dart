@@ -42,6 +42,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
   bool _isLoadingMore = false;
   bool _hasMore = true;
   int _currentPage = 1;
+  String? _nextCursor;
   int? _completedTripsCount;
   List<DriverReview> _driverReviewsList = [];
 
@@ -68,6 +69,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
   Future<void> _loadDriverProfileStats() async {
     _currentPage = 1;
+    _nextCursor = null;
     _hasMore = true;
     final statsFuture = widget.repository.fetchStatsResult(widget.driverId);
     final reviewsFuture = widget.repository.fetchReviewsResult(
@@ -82,8 +84,9 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
       (stats) => completedTrips = stats.completedTrips,
     );
     (await reviewsFuture).fold((_) => _hasMore = false, (value) {
-      reviews = value;
-      _hasMore = value.length >= _reviewPageSize;
+      reviews = value.items;
+      _hasMore = value.hasMore;
+      _nextCursor = value.nextCursor;
     });
 
     if (mounted) {
@@ -107,10 +110,12 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     (await widget.repository.fetchReviewsResult(
       widget.driverId,
       page: nextPage,
+      cursor: _nextCursor,
       limit: _reviewPageSize,
     )).fold((_) => _hasMore = false, (value) {
-      nextReviews = value;
-      _hasMore = value.length >= _reviewPageSize;
+      nextReviews = value.items;
+      _hasMore = value.hasMore;
+      _nextCursor = value.nextCursor;
     });
 
     if (mounted) {

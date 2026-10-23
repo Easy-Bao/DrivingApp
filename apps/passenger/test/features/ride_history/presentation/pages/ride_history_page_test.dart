@@ -224,6 +224,7 @@ final class _EmptyRideHistoryRepository implements RideHistoryRepository {
     String passengerId, {
     int limit = 25,
     int offset = 0,
+    String? cursor,
   }) async {
     return const Ok(
       OffsetPage<RideHistory>(items: [], hasMore: false, nextOffset: null),
@@ -261,6 +262,7 @@ final class _PendingRideHistoryRepository implements RideHistoryRepository {
     String passengerId, {
     int limit = 25,
     int offset = 0,
+    String? cursor,
   }) async => const Ok(
     OffsetPage<RideHistory>(items: [], hasMore: false, nextOffset: null),
   );
@@ -298,6 +300,7 @@ final class _RecoveringRideHistoryRepository implements RideHistoryRepository {
     String passengerId, {
     int limit = 25,
     int offset = 0,
+    String? cursor,
   }) async => const Ok(
     OffsetPage<RideHistory>(items: [], hasMore: false, nextOffset: null),
   );

@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"math"
+	"time"
 )
 
 var (
@@ -50,4 +51,11 @@ func ValidateRating(rating float64) error {
 		return ErrInvalidRating
 	}
 	return nil
+}
+
+type ReviewQuery struct {
+	Limit           int
+	Offset          int
+	BeforeCreatedAt time.Time
+	BeforeID        int
 }

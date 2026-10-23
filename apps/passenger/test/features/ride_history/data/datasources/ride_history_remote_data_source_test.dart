@@ -6,6 +6,35 @@ import 'package:passenger/src/features/ride_history/data/datasources/ride_histor
 class MockDio extends Mock implements Dio {}
 
 void main() {
+  test('sends cursor boundaries without an offset', () async {
+    final dio = MockDio();
+    final dataSource = RideHistoryRemoteDataSourceImpl(dio);
+    when(
+      () => dio.get<Map<String, dynamic>>(
+        any(),
+        queryParameters: any<Map<String, dynamic>>(named: 'queryParameters'),
+      ),
+    ).thenAnswer(
+      (_) async => Response<Map<String, dynamic>>(
+        requestOptions: RequestOptions(path: '/api/v1/passengers/42/rides'),
+        data: const {
+          'items': <Object>[],
+          'has_more': false,
+          'next_offset': null,
+          'next_cursor': '',
+        },
+      ),
+    );
+    final page = await dataSource.fetchRideHistory('42', cursor: 'boundary');
+    expect(page.hasMore, isFalse);
+    verify(
+      () => dio.get<Map<String, dynamic>>(
+        '/api/v1/passengers/42/rides',
+        queryParameters: <String, dynamic>{'limit': 25, 'cursor': 'boundary'},
+      ),
+    ).called(1);
+  });
+
   test('decodes paginated ride history with explicit query bounds', () async {
     final dio = MockDio();
     final dataSource = RideHistoryRemoteDataSourceImpl(dio);

@@ -39,14 +39,32 @@ func (handler *Handler) DriverReviews(writer http.ResponseWriter, request *http.
 		response.Error(writer, http.StatusBadRequest, "invalid driver id")
 		return
 	}
-	page, err := sharedrequest.ParseOffsetPagination(request.URL.Query(), 20, 100)
+	scope := "driver-reviews:" + strconv.Itoa(driverID)
+	page, err := sharedrequest.ParseCursorPagination(request.URL.Query(), 20, 100, scope)
 	if err != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid pagination")
 		return
 	}
-	items, err := handler.service.DriverReviews(request.Context(), driverID, page.Limit, page.Offset)
+	limit := page.Limit
+	if page.Enabled {
+		limit++
+	}
+	items, err := handler.service.DriverReviews(request.Context(), driverID, domain.ReviewQuery{Limit: limit, Offset: page.Offset, BeforeCreatedAt: page.BeforeCreatedAt, BeforeID: page.BeforeID})
 	if err != nil {
 		response.Error(writer, http.StatusInternalServerError, "Driver reviews are temporarily unavailable.")
+		return
+	}
+	if page.Enabled {
+		next := ""
+		if len(items) > page.Limit {
+			last := items[page.Limit-1]
+			next, err = sharedrequest.EncodeListCursor(scope, last.CreatedAt, last.ID)
+			if err != nil {
+				response.Error(writer, 500, "Driver reviews are temporarily unavailable.")
+				return
+			}
+		}
+		response.JSON(writer, http.StatusOK, response.NewCursorPage(NewReviewResponses(items), page.Limit, next))
 		return
 	}
 	response.JSON(writer, http.StatusOK, NewReviewResponses(items))

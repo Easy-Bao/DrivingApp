@@ -25,7 +25,12 @@ void main() {
     when(() => sessionService.readDriverId())
         .thenAnswer((_) async => 'driver-1');
     when(
-      () => repository.fetchTripHistory('driver-1', limit: 25, offset: 0),
+      () => repository.fetchTripHistory(
+        'driver-1',
+        limit: 25,
+        offset: 0,
+        cursor: '',
+      ),
     ).thenAnswer(
       (_) async =>
           const Err(ServerFailure('backend query details must stay internal')),

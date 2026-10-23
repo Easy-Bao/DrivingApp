@@ -5,9 +5,10 @@ import 'package:passenger/src/features/driver_profile/domain/entities/driver_rev
 abstract interface class DriverProfileRepository {
   Future<Result<DriverProfileStats, Failure>> fetchStats(String driverId);
 
-  Future<Result<List<DriverReview>, Failure>> fetchReviews(
+  Future<Result<OffsetPage<DriverReview>, Failure>> fetchReviews(
     String driverId, {
     int page = 1,
+    String? cursor = '',
     int limit = 20,
   });
 
@@ -31,13 +32,14 @@ extension DriverProfileRepositoryResultApi on DriverProfileRepository {
     );
   }
 
-  Future<Result<List<DriverReview>, DomainFailure>> fetchReviewsResult(
+  Future<Result<OffsetPage<DriverReview>, DomainFailure>> fetchReviewsResult(
     String driverId, {
     int page = 1,
+    String? cursor = '',
     int limit = 20,
   }) {
     return _captureDriverProfileResult(
-      () => fetchReviews(driverId, page: page, limit: limit),
+      () => fetchReviews(driverId, page: page, limit: limit, cursor: cursor),
       message: 'Driver reviews are temporarily unavailable.',
     );
   }

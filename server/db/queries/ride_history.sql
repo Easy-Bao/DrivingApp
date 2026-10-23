@@ -22,6 +22,8 @@ WHERE ride.driver_id = sqlc.arg('driver_id')
       OR
       (sqlc.arg('active_only')::boolean = false AND ride.status IN ('completed', 'cancelled'))
   )
+AND (sqlc.narg('before_created_at')::timestamptz IS NULL
+       OR (ride.created_at, ride.id) < (sqlc.narg('before_created_at')::timestamptz, sqlc.arg('before_id')::int))
 ORDER BY ride.created_at DESC, ride.id DESC
 LIMIT sqlc.arg('limit')::int
 OFFSET sqlc.arg('offset')::int;
@@ -42,6 +44,8 @@ FROM rides AS ride
 LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
 LEFT JOIN driver_profiles AS driver_profile ON driver_profile.user_id = ride.driver_id
 WHERE ride.passenger_id = sqlc.arg('passenger_id')
+AND (sqlc.narg('before_created_at')::timestamptz IS NULL
+       OR (ride.created_at, ride.id) < (sqlc.narg('before_created_at')::timestamptz, sqlc.arg('before_id')::int))
 ORDER BY ride.created_at DESC, ride.id DESC
 LIMIT sqlc.arg('limit')::int
 OFFSET sqlc.arg('offset')::int;

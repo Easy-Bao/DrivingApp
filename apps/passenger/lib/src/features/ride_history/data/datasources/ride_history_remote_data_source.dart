@@ -6,6 +6,7 @@ abstract class RideHistoryRemoteDataSource {
     String passengerId, {
     int limit = 25,
     int offset = 0,
+    String? cursor,
   });
 
   Future<Map<String, dynamic>> fetchSummary(String passengerId);
@@ -20,10 +21,14 @@ class RideHistoryRemoteDataSourceImpl(this._dio)
     String passengerId, {
     int limit = 25,
     int offset = 0,
+    String? cursor,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/api/v1/passengers/${Uri.encodeComponent(passengerId)}/rides',
-      queryParameters: {'limit': limit, 'offset': offset},
+      queryParameters: {
+        'limit': limit,
+        if (cursor != null) 'cursor': cursor else 'offset': offset,
+      },
     );
     return OffsetPage<Map<String, dynamic>>.fromJson(
       response.data ?? const <String, dynamic>{},

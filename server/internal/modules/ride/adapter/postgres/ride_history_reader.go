@@ -37,10 +37,12 @@ func (repository *RideRepository) DriverTrips(
 		return nil, err
 	}
 	items, err := repository.queries.ListDriverRides(ctx, databasepostgres.ListDriverRidesParams{
-		DriverID:   pgtype.Int4{Int32: dbDriverID, Valid: true},
-		ActiveOnly: history.ActiveOnly,
-		Offset:     offset,
-		Limit:      limit,
+		DriverID:        pgtype.Int4{Int32: dbDriverID, Valid: true},
+		ActiveOnly:      history.ActiveOnly,
+		Offset:          offset,
+		Limit:           limit,
+		BeforeCreatedAt: pgtype.Timestamptz{Time: history.BeforeCreatedAt, Valid: !history.BeforeCreatedAt.IsZero()},
+		BeforeID:        int32(history.BeforeID),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list driver rides: %w", err)
@@ -78,9 +80,11 @@ func (repository *RideRepository) PassengerRides(
 		return nil, err
 	}
 	items, err := repository.queries.ListPassengerRides(ctx, databasepostgres.ListPassengerRidesParams{
-		PassengerID: dbPassengerID,
-		Offset:      offset,
-		Limit:       limit,
+		PassengerID:     dbPassengerID,
+		Offset:          offset,
+		Limit:           limit,
+		BeforeCreatedAt: pgtype.Timestamptz{Time: history.BeforeCreatedAt, Valid: !history.BeforeCreatedAt.IsZero()},
+		BeforeID:        int32(history.BeforeID),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list passenger rides: %w", err)

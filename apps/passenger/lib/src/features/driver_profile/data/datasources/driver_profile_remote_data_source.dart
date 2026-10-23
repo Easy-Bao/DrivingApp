@@ -1,11 +1,13 @@
 import 'package:dio/dio.dart';
+import 'package:foundation/foundation.dart';
 
 abstract class DriverProfileRemoteDataSource {
   Future<Map<String, dynamic>> fetchStats(String driverId);
 
-  Future<List<Map<String, dynamic>>> fetchReviews(
+  Future<OffsetPage<Map<String, dynamic>>> fetchReviews(
     String driverId, {
     int page = 1,
+    String? cursor = '',
     int limit = 20,
   });
 
@@ -32,22 +34,43 @@ class DriverProfileRemoteDataSourceImpl(this._dio)
   }
 
   @override
-  Future<List<Map<String, dynamic>>> fetchReviews(
+  Future<OffsetPage<Map<String, dynamic>>> fetchReviews(
     String driverId, {
     int page = 1,
+    String? cursor = '',
     int limit = 20,
   }) async {
     if (page < 1 || limit < 1 || limit > 100) {
       throw const FormatException('Driver review page is invalid.');
     }
-    final response = await _dio.get<List<dynamic>>(
+    final response = await _dio.get<Object?>(
       '/api/v1/drivers/${Uri.encodeComponent(driverId)}/reviews',
-      queryParameters: {'offset': (page - 1) * limit, 'limit': limit},
+      queryParameters: {
+        if (cursor != null) 'cursor': cursor else 'offset': (page - 1) * limit,
+        'limit': limit,
+      },
     );
-    return [
-      for (final item in response.data ?? const <dynamic>[])
-        if (item is Map) Map<String, dynamic>.from(item),
-    ];
+    final data = response.data;
+    if (data is Map) {
+      return OffsetPage<Map<String, dynamic>>.fromJson(
+        decodeObjectMap(data),
+        (value) => decodeObjectMap(value),
+      );
+    }
+    // Older servers ignore cursor and return an array. Continue their offset
+    // contract until server rollout is complete.
+    if (data is! List) {
+      throw const FormatException('Driver reviews are invalid.');
+    }
+    final hasMore = data.length >= limit;
+    return OffsetPage<Map<String, dynamic>>(
+      items: [
+        for (final item in data)
+          if (item is Map) decodeObjectMap(item),
+      ],
+      hasMore: hasMore,
+      nextOffset: hasMore ? page * limit : null,
+    );
   }
 
   @override

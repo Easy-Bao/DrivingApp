@@ -35,8 +35,7 @@ func (repository *reviewRepositoryStub) DriverReviewForRide(
 func (repository *reviewRepositoryStub) DriverReviews(
 	context.Context,
 	int,
-	int,
-	int,
+	domain.ReviewQuery,
 ) ([]domain.Review, error) {
 	return []domain.Review{repository.review}, nil
 }
@@ -115,7 +114,7 @@ func TestDriverReviewsReturnAnIndependentSlice(t *testing.T) {
 	repository := &reviewRepositoryStub{review: domain.Review{ID: 3}}
 	service := NewService(repository)
 
-	reviews, err := service.DriverReviews(context.Background(), 9, 20, 0)
+	reviews, err := service.DriverReviews(context.Background(), 9, domain.ReviewQuery{Limit: 20})
 	if err != nil {
 		t.Fatalf("DriverReviews() error = %v", err)
 	}

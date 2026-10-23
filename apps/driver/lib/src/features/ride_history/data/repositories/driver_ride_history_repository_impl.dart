@@ -11,6 +11,7 @@ final class RideHistoryRepositoryImpl({required this._dataSource})
     String driverId, {
     int limit = 25,
     int offset = 0,
+    String? cursor,
     bool activeOnly = false,
   }) async {
     try {
@@ -19,6 +20,7 @@ final class RideHistoryRepositoryImpl({required this._dataSource})
           driverId,
           limit: limit,
           offset: offset,
+          cursor: cursor,
           activeOnly: activeOnly,
         ),
       );

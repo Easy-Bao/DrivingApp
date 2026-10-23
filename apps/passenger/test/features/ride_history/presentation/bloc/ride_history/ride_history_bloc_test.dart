@@ -307,6 +307,7 @@ void main() {
             any(),
             limit: any(named: 'limit'),
             offset: any(named: 'offset'),
+            cursor: any(named: 'cursor'),
           ),
         ).thenAnswer(
           (_) async => const Ok(
@@ -323,7 +324,7 @@ void main() {
         past: [completedRide],
         upcoming: [],
         hasMore: true,
-        nextOffset: 25,
+        nextCursor: 'history-boundary',
       ),
       act: (bloc) =>
           bloc.add(const LoadMoreRideHistoryEvent(passengerId: 'pass-1')),
@@ -343,8 +344,14 @@ void main() {
             .having((state) => state.hasMore, 'has more', isFalse),
       ],
       verify: (_) {
-        verify(() => repo.fetchRideHistory('pass-1', limit: 25, offset: 25))
-            .called(1);
+        verify(
+          () => repo.fetchRideHistory(
+            'pass-1',
+            limit: 25,
+            offset: 0,
+            cursor: 'history-boundary',
+          ),
+        ).called(1);
       },
     );
   });

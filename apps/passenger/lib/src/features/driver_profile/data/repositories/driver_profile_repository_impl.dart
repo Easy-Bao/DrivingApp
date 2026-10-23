@@ -38,22 +38,29 @@ final class DriverProfileRepositoryImpl({required this._dataSource})
   }
 
   @override
-  Future<Result<List<DriverReview>, Failure>> fetchReviews(
+  Future<Result<OffsetPage<DriverReview>, Failure>> fetchReviews(
     String driverId, {
     int page = 1,
+    String? cursor = '',
     int limit = 20,
   }) async {
     try {
       final raw = await _dataSource.fetchReviews(
         driverId,
         page: page,
+        cursor: cursor,
         limit: limit,
       );
       return Ok(
-        raw
-            .map(DriverReview.fromJson)
-            .where((review) => review.rating > 0 && review.rating <= 5)
-            .toList(growable: false),
+        OffsetPage<DriverReview>(
+          items: raw.items
+              .map(DriverReview.fromJson)
+              .where((review) => review.rating > 0 && review.rating <= 5)
+              .toList(growable: false),
+          hasMore: raw.hasMore,
+          nextOffset: raw.nextOffset,
+          nextCursor: raw.nextCursor,
+        ),
       );
     } catch (error) {
       return Err(_mapFailure(error));

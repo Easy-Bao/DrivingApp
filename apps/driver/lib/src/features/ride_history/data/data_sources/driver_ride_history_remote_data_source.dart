@@ -6,6 +6,7 @@ abstract class RideHistoryRemoteDataSource {
     String driverId, {
     int limit = 25,
     int offset = 0,
+    String? cursor,
     bool activeOnly = false,
   });
 }
@@ -19,13 +20,14 @@ class RideHistoryRemoteDataSourceImpl(this._dio)
     String driverId, {
     int limit = 25,
     int offset = 0,
+    String? cursor,
     bool activeOnly = false,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/api/v1/drivers/${Uri.encodeComponent(driverId)}/trips',
       queryParameters: {
         'limit': limit,
-        'offset': offset,
+        if (cursor != null) 'cursor': cursor else 'offset': offset,
         if (activeOnly) 'scope': 'active',
       },
     );

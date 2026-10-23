@@ -21,12 +21,13 @@ func NewService(repository ReviewRepository) *Service {
 
 func (service *Service) DriverReviews(
 	ctx context.Context,
-	driverID, limit, offset int,
+	driverID int,
+	query domain.ReviewQuery,
 ) ([]domain.Review, error) {
 	if service == nil || service.repository == nil {
 		return nil, ErrPersistenceUnavailable
 	}
-	reviews, err := service.repository.DriverReviews(ctx, driverID, limit, offset)
+	reviews, err := service.repository.DriverReviews(ctx, driverID, query)
 	if err != nil {
 		return nil, fmt.Errorf("load driver reviews: %w", err)
 	}

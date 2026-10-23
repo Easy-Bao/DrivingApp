@@ -138,7 +138,7 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
       limit: 6,
     )).fold(
       (failure) => dev.log('Failed to process reviews: ${failure.message}'),
-      (values) => reviews = List<DriverReview>.unmodifiable(values),
+      (values) => reviews = List<DriverReview>.unmodifiable(values.items),
     );
     return reviews;
   }

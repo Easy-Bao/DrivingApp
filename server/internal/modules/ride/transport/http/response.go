@@ -1,6 +1,12 @@
 package http
 
-import "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+import (
+	"net/http"
+
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
+)
 
 type RideResponse struct {
 	ID               int    `json:"id"`
@@ -284,4 +290,26 @@ func newDriverStandingResponse(standing domain.DriverStanding) DriverStandingRes
 		CompletionRatePercent:              standing.CompletionRatePercent,
 		DriverFaultCancellationRatePercent: standing.DriverFaultCancellationRatePercent,
 	}
+}
+
+func writeRideHistoryPage(w http.ResponseWriter, items []domain.Ride, page sharedrequest.CursorPagination, scope string) {
+	if !page.Enabled {
+		response.JSON(w, http.StatusOK, response.NewOffsetPage(rideResponsesFromDomain(items), page.Limit, page.Offset))
+		return
+	}
+	next := ""
+	if len(items) > page.Limit {
+		last := items[page.Limit-1]
+		if last.CreatedAt == nil {
+			response.Error(w, 500, "Trip history is temporarily unavailable.")
+			return
+		}
+		var err error
+		next, err = sharedrequest.EncodeListCursor(scope, *last.CreatedAt, last.ID)
+		if err != nil {
+			response.Error(w, 500, "Trip history is temporarily unavailable.")
+			return
+		}
+	}
+	response.JSON(w, http.StatusOK, response.NewCursorPage(rideResponsesFromDomain(items), page.Limit, next))
 }

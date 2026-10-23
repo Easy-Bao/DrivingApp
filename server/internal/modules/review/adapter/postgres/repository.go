@@ -58,24 +58,27 @@ func (repository *ReviewRepository) ReviewableRide(
 
 func (repository *ReviewRepository) DriverReviews(
 	ctx context.Context,
-	driverID, limit, offset int,
+	driverID int,
+	query domain.ReviewQuery,
 ) ([]domain.Review, error) {
 	dbDriverID, err := toPostgresID(driverID, "driver id")
 	if err != nil {
 		return nil, err
 	}
-	dbLimit, err := toPostgresPaginationValue(limit, "limit")
+	dbLimit, err := toPostgresPaginationValue(query.Limit, "limit")
 	if err != nil {
 		return nil, err
 	}
-	dbOffset, err := toPostgresPaginationValue(offset, "offset")
+	dbOffset, err := toPostgresPaginationValue(query.Offset, "offset")
 	if err != nil {
 		return nil, err
 	}
 	items, err := repository.queries.ListDriverReviews(ctx, databasepostgres.ListDriverReviewsParams{
-		DriverID: dbDriverID,
-		Limit:    dbLimit,
-		Offset:   dbOffset,
+		DriverID:        dbDriverID,
+		Limit:           dbLimit,
+		Offset:          dbOffset,
+		BeforeCreatedAt: pgtype.Timestamptz{Time: query.BeforeCreatedAt, Valid: !query.BeforeCreatedAt.IsZero()},
+		BeforeID:        int32(query.BeforeID),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list driver reviews: %w", err)
@@ -255,7 +258,7 @@ func fromPostgresReview(item databasepostgres.ListDriverReviewsRow) (domain.Revi
 		PassengerName: item.PassengerName,
 		Rating:        item.Rating,
 		Comment:       textValue(item.Comment),
-		CreatedAt:     item.CreatedAt.Time.UTC().Format(time.RFC3339),
+		CreatedAt:     item.CreatedAt.Time.UTC().Format(time.RFC3339Nano),
 	}, nil
 }
 
@@ -271,7 +274,7 @@ func fromPostgresCreatedReview(item databasepostgres.Review) (domain.Review, err
 		PassengerName: textValue(item.PassengerName),
 		Rating:        item.Rating,
 		Comment:       textValue(item.Comment),
-		CreatedAt:     item.CreatedAt.Time.UTC().Format(time.RFC3339),
+		CreatedAt:     item.CreatedAt.Time.UTC().Format(time.RFC3339Nano),
 	}, nil
 }
 
@@ -286,7 +289,7 @@ func fromPostgresPassengerReview(item databasepostgres.PassengerReview) (domain.
 		PassengerID: int(item.PassengerID),
 		Rating:      item.Rating,
 		Comment:     textValue(item.Comment),
-		CreatedAt:   item.CreatedAt.Time.UTC().Format(time.RFC3339),
+		CreatedAt:   item.CreatedAt.Time.UTC().Format(time.RFC3339Nano),
 	}, nil
 }
 

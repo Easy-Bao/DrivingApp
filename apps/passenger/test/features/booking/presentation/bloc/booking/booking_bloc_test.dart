@@ -15,6 +15,7 @@ import 'package:passenger/src/features/booking/domain/repositories/booking_repos
 import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
+import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 
 class MockDriverRepo extends Mock implements DriverRepository {}
@@ -365,8 +366,15 @@ void main() {
         when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
           (_) async => const Ok(DriverProfileStats(completedTrips: 42)),
         );
-        when(() => driverProfileRepository.fetchReviews(any()))
-            .thenAnswer((_) async => const Ok([]));
+        when(() => driverProfileRepository.fetchReviews(any())).thenAnswer(
+          (_) async => const Ok(
+            OffsetPage<DriverReview>(
+              items: [],
+              hasMore: false,
+              nextOffset: null,
+            ),
+          ),
+        );
         final bloc = _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -413,8 +421,15 @@ void main() {
         when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
           (_) async => const Ok(DriverProfileStats(completedTrips: 42)),
         );
-        when(() => driverProfileRepository.fetchReviews(any()))
-            .thenAnswer((_) async => const Ok([]));
+        when(() => driverProfileRepository.fetchReviews(any())).thenAnswer(
+          (_) async => const Ok(
+            OffsetPage<DriverReview>(
+              items: [],
+              hasMore: false,
+              nextOffset: null,
+            ),
+          ),
+        );
         return _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -500,8 +515,15 @@ void main() {
         when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
           (_) async => const Ok(DriverProfileStats(completedTrips: 42)),
         );
-        when(() => driverProfileRepository.fetchReviews(any()))
-            .thenAnswer((_) async => const Ok([]));
+        when(() => driverProfileRepository.fetchReviews(any())).thenAnswer(
+          (_) async => const Ok(
+            OffsetPage<DriverReview>(
+              items: [],
+              hasMore: false,
+              nextOffset: null,
+            ),
+          ),
+        );
         return _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -584,8 +606,15 @@ void main() {
         when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
           (_) async => const Ok(DriverProfileStats(completedTrips: 1)),
         );
-        when(() => driverProfileRepository.fetchReviews(any()))
-            .thenAnswer((_) async => const Ok([]));
+        when(() => driverProfileRepository.fetchReviews(any())).thenAnswer(
+          (_) async => const Ok(
+            OffsetPage<DriverReview>(
+              items: [],
+              hasMore: false,
+              nextOffset: null,
+            ),
+          ),
+        );
         when(() => bookingRepository.createSession(any())).thenAnswer(
           (_) async => const Ok(
             BidSessionSnapshot(

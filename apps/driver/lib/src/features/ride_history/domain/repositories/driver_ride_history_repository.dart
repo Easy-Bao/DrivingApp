@@ -5,6 +5,7 @@ abstract interface class RideHistoryRepository {
     String driverId, {
     int limit = 25,
     int offset = 0,
+    String? cursor,
     bool activeOnly = false,
   });
 }

@@ -25,11 +25,14 @@ class _DriverProfileRepositoryStub implements DriverProfileRepository {
   ) async => const Ok(DriverProfileStats(completedTrips: 0));
 
   @override
-  Future<Result<List<DriverReview>, Failure>> fetchReviews(
+  Future<Result<OffsetPage<DriverReview>, Failure>> fetchReviews(
     String driverId, {
     int page = 1,
+    String? cursor = '',
     int limit = 20,
-  }) async => const Ok([]);
+  }) async => const Ok(
+    OffsetPage<DriverReview>(items: [], hasMore: false, nextOffset: null),
+  );
 
   @override
   Future<Result<DriverReview?, Failure>> fetchMyRideReview(

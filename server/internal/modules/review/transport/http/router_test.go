@@ -36,7 +36,7 @@ func (repository reviewRepositoryStub) DriverReviewForRide(
 	return repository.review, nil
 }
 
-func (reviewRepositoryStub) DriverReviews(context.Context, int, int, int) ([]domain.Review, error) {
+func (reviewRepositoryStub) DriverReviews(context.Context, int, domain.ReviewQuery) ([]domain.Review, error) {
 	return []domain.Review{{
 		ID: 21, RideID: 7, DriverID: 9, PassengerID: 4,
 		PassengerName: "Ada Passenger", Rating: 5,
@@ -138,6 +138,29 @@ func TestReviewRoutesKeepPathsRolesAndResponseShapes(t *testing.T) {
 	}
 	if len(reviews) != 1 || reviews[0]["id"] != float64(21) {
 		t.Fatalf("unexpected driver reviews response: %#v", reviews)
+	}
+
+	request = httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/9/reviews?cursor=", nil)
+	request.Header.Set("Authorization", "Bearer "+passengerToken)
+	response = httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+	var cursorPage struct {
+		Items      []map[string]any `json:"items"`
+		HasMore    bool             `json:"has_more"`
+		NextCursor *string          `json:"next_cursor"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &cursorPage); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != 200 || len(cursorPage.Items) != 1 || cursorPage.HasMore || cursorPage.NextCursor == nil || *cursorPage.NextCursor != "" {
+		t.Fatalf("cursor page=%+v code=%d", cursorPage, response.Code)
+	}
+	request = httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/9/reviews?cursor=invalid", nil)
+	request.Header.Set("Authorization", "Bearer "+passengerToken)
+	response = httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("invalid cursor status=%d", response.Code)
 	}
 
 	request = httptest.NewRequest(
