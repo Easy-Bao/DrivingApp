@@ -101,7 +101,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    String? selectedRideId;
+    RideHistory? selectedRide;
     final narrowRide = _ride(
       id: 'narrow-ride',
       destination:
@@ -115,7 +115,7 @@ void main() {
       tester,
       rides: [narrowRide],
       referenceTime: referenceTime,
-      onRideTap: (ride) => selectedRideId = ride.id,
+      onRideTap: (ride) => selectedRide = ride,
     );
 
     await tester.tap(
@@ -123,8 +123,9 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('701612345678901'), findsOneWidget);
-    expect(selectedRideId, 'narrow-ride');
+    expect(find.text(narrowRide.destination), findsOneWidget);
+    expect(selectedRide?.id, 'narrow-ride');
+    expect(selectedRide?.bookingReference, narrowRide.bookingReference);
     expect(tester.takeException(), isNull);
   });
 

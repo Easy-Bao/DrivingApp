@@ -1,5 +1,3 @@
-import 'package:image_picker/image_picker.dart';
-
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
@@ -7,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:passenger/src/core/config/env_config.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/presentation/bloc/chat_cubit.dart';
@@ -156,8 +155,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed ||
         ModalRoute.of(context)?.isCurrent != true ||
         !_scrollController.hasClients ||
-        _scrollController.position.extentAfter > 1)
+        _scrollController.position.extentAfter > 1) {
       return;
+    }
     unawaited(_chatCubit.markVisibleMessagesRead());
   }
 
@@ -184,12 +184,13 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       await _stopTyping();
       await _chatCubit.sendImage(bytes);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Unable to select picture. Please try again.'),
           ),
         );
+      }
     } finally {
       _isPickingImage = false;
     }

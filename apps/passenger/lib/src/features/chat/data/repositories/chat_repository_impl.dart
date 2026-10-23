@@ -1,9 +1,6 @@
-import 'dart:typed_data';
-
-import 'package:passenger/src/features/chat/domain/entities/chat_peer.dart';
-
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
@@ -12,6 +9,7 @@ import 'package:passenger/src/features/chat/data/dto/chat_message_dto.dart';
 import 'package:passenger/src/features/chat/domain/entities/chat_connection_state.dart';
 import 'package:passenger/src/features/chat/domain/entities/chat_event.dart';
 import 'package:passenger/src/features/chat/domain/entities/chat_message.dart';
+import 'package:passenger/src/features/chat/domain/entities/chat_peer.dart';
 import 'package:passenger/src/features/chat/domain/failures/chat_failure.dart';
 import 'package:passenger/src/features/chat/domain/repositories/chat_repository.dart';
 

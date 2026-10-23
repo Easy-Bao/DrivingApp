@@ -1,13 +1,11 @@
-import 'dart:typed_data';
-
-import 'package:passenger/src/features/chat/domain/entities/chat_peer.dart';
-
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/chat/domain/entities/chat_connection_state.dart';
 import 'package:passenger/src/features/chat/domain/entities/chat_event.dart';
 import 'package:passenger/src/features/chat/domain/entities/chat_message.dart';
+import 'package:passenger/src/features/chat/domain/entities/chat_peer.dart';
 
 abstract interface class ChatRepository {
   Future<Result<void, Failure>> establishChatConnection({

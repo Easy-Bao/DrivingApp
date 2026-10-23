@@ -148,8 +148,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed ||
         ModalRoute.of(context)?.isCurrent != true ||
         !_scrollController.hasClients ||
-        _scrollController.position.extentAfter > 1)
+        _scrollController.position.extentAfter > 1) {
       return;
+    }
     unawaited(_chatCubit.markVisibleMessagesRead());
   }
 
@@ -176,12 +177,13 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       await _stopTyping();
       await _chatCubit.sendImage(bytes);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Unable to select picture. Please try again.'),
           ),
         );
+      }
     } finally {
       _isPickingImage = false;
     }

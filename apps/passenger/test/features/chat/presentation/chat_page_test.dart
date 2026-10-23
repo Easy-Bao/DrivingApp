@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:passenger/src/features/chat/chat.dart';
-import 'package:passenger/src/features/chat/domain/entities/chat_peer.dart';
-import 'package:passenger/src/features/chat/presentation/pages/chat_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/features/chat/chat.dart';
+import 'package:passenger/src/features/chat/domain/entities/chat_peer.dart';
+import 'package:passenger/src/features/chat/presentation/pages/chat_page.dart';
 
 class MockRepository extends Mock implements ChatRepository {}
 

@@ -1,5 +1,5 @@
-import 'dart:typed_data';
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
@@ -224,8 +224,9 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
     if (roomId == null ||
         !state.isConnected ||
         state.isRoomLocked ||
-        state.isSendingImage)
+        state.isSendingImage) {
       return;
+    }
     emit(state.copyWith(isSendingImage: true, errorMessage: null));
     final result = await _chatRepository.sendImage(roomId, bytes);
     if (isClosed) return;

@@ -592,10 +592,20 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   }
 
   Future<void> _handleReportDriverPressed() async {
+    final state = BlocProvider.of<TrackDriverCubit>(context).state;
     final submitted = await showSafetyReportSheet(
       context,
       rideId: widget.ride.id,
       bookingReference: widget.ride.bookingReference,
+      driverName: state.activeDriverName.isNotEmpty
+          ? state.activeDriverName
+          : widget.ride.displayDriverName,
+      vehiclePlate: state.activeVehiclePlate.isNotEmpty
+          ? state.activeVehiclePlate
+          : widget.ride.plateNumber ?? '',
+      vehicleType: state.activeVehicleType.isNotEmpty
+          ? state.activeVehicleType
+          : widget.ride.vehicleType ?? '',
       trackRepository: widget.trackRepository,
     );
     if (!mounted || !submitted) return;

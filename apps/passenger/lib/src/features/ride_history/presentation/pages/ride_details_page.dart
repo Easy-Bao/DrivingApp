@@ -465,6 +465,15 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                     ),
                   ],
                   SafetyReportButton(
+                    driverName:
+                        _counterpartyData?.name ??
+                        ride?.displayDriverName ??
+                        snapshot?.displayDriverName ??
+                        '',
+                    vehiclePlate:
+                        ride?.vehiclePlate ?? snapshot?.plateNumber ?? '',
+                    vehicleType:
+                        ride?.vehicleType ?? snapshot?.vehicleType ?? '',
                     bookingReference:
                         snapshot?.bookingReference ??
                         widget.ride?.bookingReference ??

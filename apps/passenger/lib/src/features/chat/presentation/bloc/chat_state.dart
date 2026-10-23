@@ -1,6 +1,6 @@
-import 'package:passenger/src/features/chat/domain/entities/chat_peer.dart';
 import 'package:equatable/equatable.dart';
 import 'package:passenger/src/features/chat/chat.dart';
+import 'package:passenger/src/features/chat/domain/entities/chat_peer.dart';
 
 class const ChatState({
   this.messages = const [],
