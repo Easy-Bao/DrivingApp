@@ -25,6 +25,7 @@ type Identity struct {
 	Subject   string
 	Role      string
 	TokenType string
+	ExpiresAt time.Time
 }
 
 const MinimumTokenSecretBytes = 32
@@ -153,7 +154,7 @@ func (manager *TokenManager) verify(rawToken string) (Identity, error) {
 	if invalidClaimsJSON || missingSubject || expired {
 		return Identity{}, ErrInvalidToken
 	}
-	return Identity{Subject: claims.Subject, Role: claims.Role, TokenType: claims.TokenType}, nil
+	return Identity{Subject: claims.Subject, Role: claims.Role, TokenType: claims.TokenType, ExpiresAt: time.Unix(claims.Expires, 0).UTC()}, nil
 }
 
 func ValidateTokenSecret(secret string) error {

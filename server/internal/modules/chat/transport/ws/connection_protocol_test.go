@@ -20,7 +20,11 @@ import (
 type protocolAuthenticatorStub struct{ identity security.Identity }
 
 func (stub protocolAuthenticatorStub) VerifyIdentity(string) (security.Identity, error) {
-	return stub.identity, nil
+	identity := stub.identity
+	if identity.ExpiresAt.IsZero() {
+		identity.ExpiresAt = time.Now().Add(time.Hour)
+	}
+	return identity, nil
 }
 
 func TestConnectionProtocolReportsClosedRideChatToTheSender(t *testing.T) {

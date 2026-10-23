@@ -37,7 +37,7 @@ func TestTokenManagerCarriesRoleAndRejectsUnexpectedHeader(t *testing.T) {
 		t.Fatalf("IssueWithRole() returned error: %v", err)
 	}
 	identity, err := manager.VerifyIdentity(token)
-	if err != nil || identity.Subject != "user-7" || identity.Role != "driver" {
+	if err != nil || identity.Subject != "user-7" || identity.Role != "driver" || identity.ExpiresAt.IsZero() || time.Until(identity.ExpiresAt) > AccessTokenLifetime || time.Until(identity.ExpiresAt) < AccessTokenLifetime-time.Second*2 {
 		t.Fatalf("identity = %#v, %v", identity, err)
 	}
 

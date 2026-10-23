@@ -133,6 +133,11 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		response.Error(writer, http.StatusUnauthorized, "Your session has expired. Please sign in again to continue.")
 		return
 	}
+	// Connection ownership ends with the verified credential, even when pongs
+	// keep the transport healthy. Protocol I/O inherits the same cancellation.
+	connectionContext, cancelConnection := context.WithDeadline(request.Context(), identity.ExpiresAt)
+	defer cancelConnection()
+	request = request.WithContext(connectionContext)
 	var topics []string
 	var err error
 	if handler.protocol == nil {
@@ -151,6 +156,10 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
+	if connectionContext.Err() != nil {
+		response.Error(writer, http.StatusUnauthorized, "Your session has expired. Please sign in again to continue.")
+		return
+	}
 	subscription := handler.hub.Subscribe(topics...)
 	defer subscription.Close()
 	connection, err := handler.upgrader.Upgrade(writer, request, nil)
@@ -178,6 +187,7 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	writerDone := make(chan struct{})
 	serverMessages := make(chan []byte, 1)
 	go handler.writePump(
+		connectionContext,
 		connection,
 		subscription.Events(),
 		serverMessages,
@@ -192,6 +202,7 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		close(readDone)
 	}()
 	select {
+	case <-connectionContext.Done():
 	case <-readDone:
 	case <-writerDone:
 		// A failed write is the first signal for a half-open socket. Stop
@@ -220,7 +231,7 @@ func (handler *Handler) identity(request *http.Request) (security.Identity, bool
 		return security.Identity{}, false
 	}
 	identity, err := handler.authenticator.VerifyIdentity(token)
-	return identity, err == nil && identity.Subject != ""
+	return identity, err == nil && identity.Subject != "" && identity.ExpiresAt.After(time.Now())
 }
 
 func (handler *Handler) originAllowed(request *http.Request) bool {
@@ -240,15 +251,15 @@ func (handler *Handler) readPump(
 	writerDone <-chan struct{},
 ) {
 	connection.SetReadLimit(_maximumMessageSize)
-	if err := connection.SetReadDeadline(time.Now().Add(_pongWait)); err != nil {
+	if err := connection.SetReadDeadline(connectionDeadline(request.Context(), _pongWait)); err != nil {
 		return
 	}
 	connection.SetPongHandler(func(string) error {
-		return connection.SetReadDeadline(time.Now().Add(_pongWait))
+		return connection.SetReadDeadline(connectionDeadline(request.Context(), _pongWait))
 	})
 	for {
 		messageType, message, err := connection.ReadMessage()
-		if err != nil {
+		if err != nil || request.Context().Err() != nil {
 			return
 		}
 		if handler.protocol == nil {
@@ -278,6 +289,7 @@ func (handler *Handler) readPump(
 }
 
 func (handler *Handler) writePump(
+	ctx context.Context,
 	connection *websocket.Conn,
 	events <-chan event.Envelope,
 	serverMessages <-chan []byte,
@@ -292,7 +304,12 @@ func (handler *Handler) writePump(
 	ticker := time.NewTicker(_pingPeriod)
 	defer ticker.Stop()
 	for {
+		if ctx.Err() != nil {
+			return
+		}
 		select {
+		case <-ctx.Done():
+			return
 		case <-stop:
 			return
 		case envelope, ok := <-events:
@@ -313,7 +330,7 @@ func (handler *Handler) writePump(
 			if len(message) == 0 {
 				continue
 			}
-			if err := connection.SetWriteDeadline(time.Now().Add(_writeWait)); err != nil {
+			if err := connection.SetWriteDeadline(connectionDeadline(ctx, _writeWait)); err != nil {
 				return
 			}
 			if err := connection.WriteMessage(websocket.TextMessage, message); err != nil {
@@ -323,14 +340,14 @@ func (handler *Handler) writePump(
 				stats.eventsSent++
 			}
 		case message := <-serverMessages:
-			if err := connection.SetWriteDeadline(time.Now().Add(_writeWait)); err != nil {
+			if err := connection.SetWriteDeadline(connectionDeadline(ctx, _writeWait)); err != nil {
 				return
 			}
 			if err := connection.WriteMessage(websocket.TextMessage, message); err != nil {
 				return
 			}
 		case <-ticker.C:
-			if err := connection.SetWriteDeadline(time.Now().Add(_writeWait)); err != nil {
+			if err := connection.SetWriteDeadline(connectionDeadline(ctx, _writeWait)); err != nil {
 				return
 			}
 			if err := connection.WriteMessage(websocket.PingMessage, nil); err != nil {
@@ -363,4 +380,13 @@ func topicsForIdentity(identity security.Identity) ([]string, error) {
 	default:
 		return nil, errors.New("unsupported realtime role")
 	}
+}
+
+// Socket liveness cannot extend a connection beyond its authentication deadline.
+func connectionDeadline(ctx context.Context, timeout time.Duration) time.Time {
+	deadline := time.Now().Add(timeout)
+	if expires, ok := ctx.Deadline(); ok && expires.Before(deadline) {
+		return expires
+	}
+	return deadline
 }

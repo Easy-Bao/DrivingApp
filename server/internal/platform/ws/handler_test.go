@@ -50,7 +50,11 @@ func newIPv4TestServer(t *testing.T, handler http.Handler) *testHTTPServer {
 }
 
 func (stub authenticatorStub) VerifyIdentity(string) (security.Identity, error) {
-	return stub.identity, stub.err
+	identity := stub.identity
+	if identity.ExpiresAt.IsZero() {
+		identity.ExpiresAt = time.Now().Add(time.Hour)
+	}
+	return identity, stub.err
 }
 
 func newTestHandler(
@@ -276,4 +280,48 @@ func TestHandlerScavengesSubscriptionAfterAbruptSocketDisconnect(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	t.Fatalf("subscription remained after abrupt disconnect")
+}
+
+func TestHandlerClosesAtCredentialExpiryDespitePongs(t *testing.T) {
+	hub := NewHub()
+	defer hub.Close()
+	expires := time.Now().Add(150 * time.Millisecond)
+	handler := newTestHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver", ExpiresAt: expires}})
+	server := newIPv4TestServer(t, handler)
+	defer server.Close()
+	connection, _, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(server.URL, "http"), http.Header{"Authorization": []string{"Bearer valid"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer connection.Close()
+	done := make(chan struct{})
+	defer close(done)
+	go func() {
+		ticker := time.NewTicker(10 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				if connection.WriteControl(websocket.PongMessage, nil, time.Now().Add(100*time.Millisecond)) != nil {
+					return
+				}
+			}
+		}
+	}()
+	if err := connection.SetReadDeadline(expires.Add(time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	_, _, err = connection.ReadMessage()
+	if err == nil {
+		t.Fatal("expired connection remained readable")
+	}
+	var timeout net.Error
+	if errors.As(err, &timeout) && timeout.Timeout() {
+		t.Fatalf("server kept expired credentials alive despite pongs: %v", err)
+	}
+	if time.Now().Before(expires) {
+		t.Fatalf("connection closed before credential expiry: %v", err)
+	}
 }
