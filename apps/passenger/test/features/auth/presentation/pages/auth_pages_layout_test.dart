@@ -51,7 +51,7 @@ class _UnusedAuthRepository implements AuthRepository {
 }
 
 void main() {
-  testWidgets('sign-in and sign-up share the same centered form frame', (
+  testWidgets('sign-in and sign-up keep constrained centered form frames', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(800, 700));
@@ -75,8 +75,10 @@ void main() {
     await tester.pumpAndSettle();
     final signUpFieldRect = tester.getRect(find.byType(TextField).first);
 
-    expect(signUpFieldRect.left, signInFieldRect.left);
-    expect(signUpFieldRect.width, signInFieldRect.width);
+    expect(signInFieldRect.center.dx, 400);
+    expect(signUpFieldRect.center.dx, 400);
+    expect(signInFieldRect.width, lessThanOrEqualTo(440));
+    expect(signUpFieldRect.width, lessThanOrEqualTo(550));
     expect(signInFieldRect.left, greaterThan(24));
   });
 
@@ -116,7 +118,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final primaryButton = find.text('Sign In');
+    final primaryButton = find.text('Sign in');
     final footerText = find.text('Sign up');
     final tallGap =
         tester.getTopLeft(footerText).dy -
@@ -130,4 +132,37 @@ void main() {
         tester.getBottomRight(primaryButton).dy;
     expect(compactGap, closeTo(tallGap, 0.1));
   });
+  testWidgets(
+    'passenger sign-in supports autofill and large text with a keyboard',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 568));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: const TextScaler.linear(2),
+              viewInsets: const EdgeInsets.only(bottom: 240),
+            ),
+            child: child!,
+          ),
+          home: SigninPage(signInBloc: SignInBloc(_UnusedAuthRepository())),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(find.byType(TextField).first).autofillHints,
+        contains(AutofillHints.username),
+      );
+      expect(
+        tester.widget<TextField>(find.byType(TextField).last).autofillHints,
+        contains(AutofillHints.password),
+      );
+      expect(find.byTooltip('Show password'), findsOneWidget);
+      await tester.ensureVisible(find.text('Sign in'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

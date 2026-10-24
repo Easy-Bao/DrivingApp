@@ -79,8 +79,8 @@ void main() {
           await tester.tap(find.text('Remember me'));
           await tester.pump();
         }
-        await tester.ensureVisible(find.text('Sign In'));
-        await tester.tap(find.text('Sign In'));
+        await tester.ensureVisible(find.text('Sign in'));
+        await tester.tap(find.text('Sign in'));
         await tester.pump();
         final tile = tester.widget<Checkbox>(find.byType(Checkbox));
         expect(tile.value, rememberMe);

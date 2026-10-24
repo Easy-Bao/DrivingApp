@@ -1,9 +1,11 @@
-import 'package:design_system/design_system.dart';
+import 'package:design_system/src/theme/theme_context.dart';
+import 'package:design_system/src/tokens/radius.dart';
+import 'package:design_system/src/tokens/spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
-class DriverAuthLayout extends StatelessWidget {
-  const DriverAuthLayout({
+class AppAuthLayout extends StatelessWidget {
+  const AppAuthLayout({
     super.key,
     required this.title,
     required this.description,

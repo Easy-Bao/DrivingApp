@@ -1,6 +1,5 @@
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/auth/auth_routes.dart';
-import 'package:driver/src/features/auth/presentation/view/widgets/driver_auth_layout.dart';
 import 'package:driver/src/features/auth/presentation/bloc/reset_password/reset_password_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -74,7 +73,7 @@ class _ResetPasswordContentState extends State<_ResetPasswordContent> {
       },
       builder: (context, state) {
         final isLoading = state is ResetPasswordLoading;
-        return DriverAuthLayout(
+        return AppAuthLayout(
           onBack: () => context.pop(),
           title: 'Reset password',
           description:

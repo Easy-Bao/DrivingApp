@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/auth/auth_routes.dart';
-import 'package:driver/src/features/auth/presentation/view/widgets/driver_auth_layout.dart';
 import 'package:driver/src/features/settings/settings_routes.dart';
 import 'package:driver/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
@@ -94,7 +93,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
       },
       builder: (context, state) {
         final isLoading = state is SignInLoading;
-        return DriverAuthLayout(
+        return AppAuthLayout(
           title: 'Driver Portal',
           description: 'Sign in to manage your rides and earnings.',
           footer: TextButton(
