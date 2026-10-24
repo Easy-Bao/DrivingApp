@@ -152,7 +152,7 @@ void main() {
 
     expect(
       find.text(
-        'Selected photo exceeds 5MB limit. Please choose a smaller image.',
+        'Selected photo exceeds 5MB. Choose a smaller image.',
       ),
       findsOneWidget,
     );
