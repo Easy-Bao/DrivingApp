@@ -36,15 +36,17 @@ class const PerformancePage({super.key, this.onBack, this.onRefresh})
             children: [
               if (state.isLoading) const LinearProgressIndicator(),
               if (state.isLoading) const SizedBox(height: 18),
-              _PerformanceSummary(stats: state.stats),
-              const SizedBox(height: 20),
-              _PerformanceMetrics(stats: state.stats),
-              const SizedBox(height: 20),
-              _StandingSummary(stats: state.stats),
-              const SizedBox(height: 20),
-              _RatingDistribution(stats: state.stats),
+              if (state.stats != null) ...[
+                _PerformanceSummary(stats: state.stats),
+                const SizedBox(height: AppSpacing.lg),
+                _PerformanceMetrics(stats: state.stats),
+                const SizedBox(height: AppSpacing.lg),
+                _StandingSummary(stats: state.stats),
+                const SizedBox(height: AppSpacing.lg),
+                _RatingDistribution(stats: state.stats),
+              ],
               if (state.errorMessage != null) ...[
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.lg),
                 AppErrorBanner(
                   message: state.errorMessage!,
                   onRetry: () => unawaited(
@@ -72,63 +74,51 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
         : '—';
     final completionRate = stats?.standing.completionRatePercent.round() ?? 0;
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      decoration: BoxDecoration(
-        color: context.colorScheme.primary,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          BoxShadow(
-            color: context.colorScheme.primary.withValues(alpha: 0.16),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: context.semanticColors.rating.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              LucideIcons.star,
-              size: 28,
-              color: context.semanticColors.rating,
-            ),
-          ),
-          const SizedBox(height: 12),
           Text(
-            rating,
-            style: context.textStyles.displayMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: context.colorScheme.onPrimary,
-              letterSpacing: -1.0,
-              fontFeatures: const [FontFeature.tabularFigures()],
+            'Driver rating',
+            style: context.textStyles.bodySmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Driver Rating',
-            style: context.textStyles.bodyMedium?.copyWith(
-              color: context.colorScheme.onPrimary.withValues(alpha: 0.7),
-            ),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                rating,
+                style: context.textStyles.displayMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -1,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Icon(
+                Icons.star_rounded,
+                size: 24,
+                color: context.semanticColors.rating,
+              ),
+            ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.sm),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
             decoration: BoxDecoration(
-              color: context.colorScheme.onPrimary.withValues(alpha: 0.12),
+              color: context.colorScheme.primary,
               borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Text(
               '$completionRate% trip completion',
-              style: context.textStyles.labelMedium?.copyWith(
+              style: context.textStyles.labelSmall?.copyWith(
                 color: context.colorScheme.onPrimary,
-                fontWeight: FontWeight.w700,
-                fontFeatures: const [FontFeature.tabularFigures()],
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -144,24 +134,28 @@ class const _RatingDistribution({required this.stats}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final distribution = stats?.ratingDistribution;
-    if (distribution == null) return const SizedBox.shrink();
+    if (distribution == null || distribution.every((count) => count == 0)) {
+      return const SizedBox.shrink();
+    }
     final total = distribution.fold<int>(0, (sum, count) => sum + count);
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return AppSurfaceCard(
+      padding: EdgeInsets.zero,
+      child: ExpansionTile(
+        title: Text('Rating breakdown', style: context.textStyles.titleMedium),
+        tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        childrenPadding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          0,
+          AppSpacing.lg,
+          AppSpacing.sm,
+        ),
+        shape: const Border(),
+        collapsedShape: const Border(),
         children: [
-          Text('Rating breakdown', style: context.textStyles.titleMedium),
-          const SizedBox(height: 14),
           for (var index = distribution.length - 1; index >= 0; index--)
             Padding(
-              padding: const EdgeInsets.only(bottom: 9),
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: _RatingDistributionRow(
                 stars: index + 1,
                 count: distribution[index],
@@ -200,21 +194,26 @@ class const _StandingSummary({required this.stats}) extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _StandingValue(
-                  label: 'Completion',
-                  value: '${standing.completionRatePercent.round()}%',
-                ),
-              ),
-              Expanded(
-                child: _StandingValue(
-                  label: 'Driver-attributed cancellations',
-                  value: '${standing.driverFaultCancellations}',
-                ),
-              ),
-            ],
+          _StandingValue(
+            label: 'Completion',
+            value: '${standing.completionRatePercent.round()}%',
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Semantics(
+            label: 'Trip completion',
+            value: '${standing.completionRatePercent.round()}%',
+            child: LinearProgressIndicator(
+              value: (standing.completionRatePercent / 100).clamp(0, 1),
+              minHeight: 4,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              color: context.colorScheme.primary,
+              backgroundColor: context.colorScheme.surfaceContainerHighest,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          _StandingValue(
+            label: 'Driver-attributed cancellations',
+            value: '${standing.driverFaultCancellations}',
           ),
           const SizedBox(height: 14),
           Wrap(
@@ -232,10 +231,11 @@ class const _StandingSummary({required this.stats}) extends StatelessWidget {
                     standing.noFaultCancellations +
                     standing.systemFaultCancellations,
               ),
-              _StandingChip(
-                label: 'Pending review',
-                value: standing.pendingReviewCancellations,
-              ),
+              if (standing.pendingReviewCancellations > 0)
+                _StandingChip(
+                  label: 'Pending review',
+                  value: standing.pendingReviewCancellations,
+                ),
             ],
           ),
         ],
@@ -251,20 +251,22 @@ class const _StandingValue({required this.label, required this.value})
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          value,
-          style: context.textStyles.titleLarge?.copyWith(
-            fontFeatures: const [FontFeature.tabularFigures()],
+        Expanded(
+          child: Text(
+            label,
+            style: context.textStyles.bodySmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(width: AppSpacing.md),
         Text(
-          label,
-          style: context.textStyles.bodySmall?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
+          value,
+          style: context.textStyles.labelLarge?.copyWith(
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
       ],
@@ -347,7 +349,9 @@ class const _PerformanceMetrics({required this.stats}) extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final useSingleColumn = constraints.maxWidth < 340;
+        final useSingleColumn =
+            constraints.maxWidth < 260 ||
+            MediaQuery.textScalerOf(context).scale(14) > 20;
         final cardWidth = useSingleColumn
             ? constraints.maxWidth
             : (constraints.maxWidth - 12) / 2;
@@ -395,31 +399,69 @@ class const _PerformanceMetricCard({
   Widget build(BuildContext context) {
     return Container(
       width: width,
-      constraints: const BoxConstraints(minHeight: 124),
+      constraints: BoxConstraints(
+        minHeight: label == 'Lifetime earnings' ? 76 : 104,
+      ),
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 21, color: context.colorScheme.onSurfaceVariant),
-          const SizedBox(height: 16),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge
-                ?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall
-                ?.copyWith(color: context.colorScheme.onSurfaceVariant),
-          ),
-        ],
-      ),
+      child: label == 'Lifetime earnings'
+          ? Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        value,
+                        style: context.textStyles.titleLarge?.copyWith(
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Icon(
+                  icon,
+                  size: 20,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  icon,
+                  size: 21,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  value,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
     );
   }
 }
