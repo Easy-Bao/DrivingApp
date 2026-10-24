@@ -2,9 +2,12 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/auth/auth_routes.dart';
+import 'package:driver/src/features/auth/presentation/view/widgets/driver_auth_layout.dart';
+import 'package:driver/src/features/settings/settings_routes.dart';
 import 'package:driver/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -38,18 +41,24 @@ class _SigninPageContentState extends State<_SigninPageContent> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+
   bool _isPasswordVisible = false;
   String? _emailError;
   String? _passwordError;
 
   @override
   void dispose() {
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   void _submitSignIn(BuildContext context) {
+    if (BlocProvider.of<SignInBloc>(context).state is SignInLoading) return;
     FocusScope.of(context).unfocus();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -66,6 +75,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
     });
 
     if (_emailError != null || _passwordError != null) {
+      (_emailError != null ? _emailFocus : _passwordFocus).requestFocus();
       return;
     }
 
@@ -75,235 +85,145 @@ class _SigninPageContentState extends State<_SigninPageContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(centerTitle: true, title: const AppAuthBrand()),
-      body: SafeArea(
-        child: BlocConsumer<SignInBloc, SignInState>(
-          listener: (context, state) {
-            if (state is SignInSuccess) {
-              context.goNamed(DashboardRoutes.dashboard);
-            }
-          },
-          builder: (context, state) {
-            final isLoading = state is SignInLoading;
-            final errorMessage = AppNetworkStatusScope.isUnavailableOf(context)
-                ? null
-                : state is SignInFailure
-                ? state.errorMessage
-                : null;
-
-            return CustomScrollView(
-              slivers: [
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0,
-                      vertical: 16.0,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 12),
-                        Text(
-                          'Driver Portal',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: context.colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Sign in to manage your rides and earnings',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: context.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-                        if (errorMessage != null) ...[
-                          AppErrorBanner(
-                            message: errorMessage,
-                            onRetry: () => _submitSignIn(context),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-                        TextField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          onChanged: (_) {
-                            if (_emailError != null) {
-                              setState(() => _emailError = null);
-                            }
-                          },
-                          decoration: InputDecoration(
-                            hintText: 'Email',
-                            errorText: _emailError,
-                            prefixIcon: const Padding(
-                              padding: EdgeInsets.only(left: 10),
-                              child: Icon(LucideIcons.mail, size: 20),
-                            ),
-                            filled: false,
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                              borderSide: BorderSide(
-                                color: context.colorScheme.outline,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                              borderSide: BorderSide(
-                                color: context.colorScheme.onSurface,
-                                width: 1.5,
-                              ),
-                            ),
-                            errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                              borderSide: BorderSide(
-                                color: context.colorScheme.error,
-                                width: 1.0,
-                              ),
-                            ),
-                            focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                              borderSide: BorderSide(
-                                color: context.colorScheme.error,
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          obscureText: !_isPasswordVisible,
-                          controller: _passwordController,
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => _submitSignIn(context),
-                          onChanged: (_) {
-                            if (_passwordError != null) {
-                              setState(() => _passwordError = null);
-                            }
-                          },
-                          decoration: InputDecoration(
-                            hintText: 'Password',
-                            errorText: _passwordError,
-                            prefixIcon: const Padding(
-                              padding: EdgeInsets.only(left: 10),
-                              child: Icon(LucideIcons.lock, size: 20),
-                            ),
-                            suffixIcon: IconButton(
-                              constraints: const BoxConstraints(
-                                minWidth: AppSize.minimumTouchTarget,
-                                minHeight: AppSize.minimumTouchTarget,
-                              ),
-                              icon: Icon(
-                                _isPasswordVisible
-                                    ? LucideIcons.eye
-                                    : LucideIcons.eye_off,
-                                size: 20,
-                              ),
-                              onPressed: () => setState(
-                                () => _isPasswordVisible = !_isPasswordVisible,
-                              ),
-                            ),
-                            filled: false,
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                              borderSide: BorderSide(
-                                color: context.colorScheme.outline,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                              borderSide: BorderSide(
-                                color: context.colorScheme.onSurface,
-                                width: 1.5,
-                              ),
-                            ),
-                            errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                              borderSide: BorderSide(
-                                color: context.colorScheme.error,
-                                width: 1.0,
-                              ),
-                            ),
-                            focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                              borderSide: BorderSide(
-                                color: context.colorScheme.error,
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            style: TextButton.styleFrom(
-                              minimumSize: const Size(
-                                AppSize.minimumTouchTarget,
-                                AppSize.minimumTouchTarget,
-                              ),
-                            ),
-                            onPressed: () {
-                              unawaited(
-                                context.pushNamed(AuthRoutes.forgotPassword),
-                              );
-                            },
-                            child: Text(
-                              'Forgot password?',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: context.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: isLoading
-                              ? null
-                              : () => _submitSignIn(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: context.colorScheme.primary,
-                            foregroundColor: context.colorScheme.onPrimary,
-                            minimumSize: const Size.fromHeight(60),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: isLoading
-                              ? SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    color: context.colorScheme.onPrimary,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  'Sign In',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                        ),
-                        const Spacer(),
-                      ],
+    return BlocConsumer<SignInBloc, SignInState>(
+      listener: (context, state) {
+        if (state is SignInSuccess) {
+          TextInput.finishAutofillContext();
+          context.goNamed(DashboardRoutes.dashboard);
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state is SignInLoading;
+        return DriverAuthLayout(
+          title: 'Driver Portal',
+          description: 'Sign in to manage your rides and earnings.',
+          footer: TextButton(
+            onPressed: () => context.pushNamed(SettingsRoutes.terms),
+            child: Text.rich(
+              const TextSpan(
+                text: 'By signing in, you agree to the EasyRide ',
+                children: [
+                  TextSpan(
+                    text: 'Terms of Service.',
+                    style: TextStyle(decoration: TextDecoration.underline),
+                  ),
+                ],
+              ),
+              textAlign: TextAlign.center,
+              style: context.textStyles.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          children: [
+            if (state is SignInFailure) ...[
+              AppErrorBanner(
+                message: state.errorMessage,
+                onRetry: () => _submitSignIn(context),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+            ],
+            AutofillGroup(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('Email', style: context.textStyles.labelMedium),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    enabled: !isLoading,
+                    controller: _emailController,
+                    focusNode: _emailFocus,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [
+                      AutofillHints.username,
+                      AutofillHints.email,
+                    ],
+                    autocorrect: false,
+                    textCapitalization: TextCapitalization.none,
+                    onChanged: (_) {
+                      if (_emailError != null) {
+                        setState(() => _emailError = null);
+                      }
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'you@example.com',
+                      errorText: _emailError,
+                      prefixIcon: const Icon(LucideIcons.mail, size: 18),
                     ),
                   ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text('Password', style: context.textStyles.labelMedium),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    enabled: !isLoading,
+                    obscureText: !_isPasswordVisible,
+                    controller: _passwordController,
+                    focusNode: _passwordFocus,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.password],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    onSubmitted: (_) => _submitSignIn(context),
+                    onChanged: (_) {
+                      if (_passwordError != null) {
+                        setState(() => _passwordError = null);
+                      }
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Enter your password',
+                      errorText: _passwordError,
+                      prefixIcon: const Icon(LucideIcons.lock, size: 18),
+                      suffixIcon: IconButton(
+                        tooltip: _isPasswordVisible
+                            ? 'Hide password'
+                            : 'Show password',
+                        onPressed: isLoading
+                            ? null
+                            : () => setState(
+                                () => _isPasswordVisible = !_isPasswordVisible,
+                              ),
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? LucideIcons.eye
+                              : LucideIcons.eye_off,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: isLoading
+                    ? null
+                    : () => unawaited(
+                        context.pushNamed(AuthRoutes.forgotPassword),
+                      ),
+                child: const Text('Forgot password?'),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            FilledButton(
+              onPressed: isLoading ? null : () => _submitSignIn(context),
+              child: isLoading
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: context.colorScheme.onPrimary,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text('Sign in'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
