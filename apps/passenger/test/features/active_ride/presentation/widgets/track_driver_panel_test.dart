@@ -5,6 +5,59 @@ import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot
 import 'package:passenger/src/features/active_ride/presentation/widgets/track_driver_panel.dart';
 
 void main() {
+  testWidgets(
+    'shows live ETA and defers details on a compact large-text screen',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 480);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: TrackDriverPanel(
+                  ride: const RideSnapshot(
+                    id: 'ride-compact',
+                  bookingReference: 'reference-compact',
+                    pickupName: 'Mountain View',
+                    dropoffName: 'Charleston Park',
+                    status: 'accepted',
+                    fareAmount: 2788,
+                  ),
+                  statusTitle: 'Driver is on the way',
+                  statusSubtitle: 'Mountain View',
+                  etaText: '6 min',
+                  driverName: 'A driver with a long full name',
+                  vehicleSummary: 'Tricycle · ABC 1234',
+                  unreadChatMessagesCount: 2,
+                  onCallDriverPressed: () {},
+                  onChatDriverPressed: () {},
+                  onEmergencyPressed: () {},
+                  onReportDriverPressed: () {},
+                  onCancelTripPressed: () {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('6 min'), findsOneWidget);
+      expect(find.textContaining('Booking ID'), findsNothing);
+      expect(tester.takeException(), isNull);
+      await tester.ensureVisible(find.text('Trip details'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Trip details'));
+      await tester.pumpAndSettle();
+      expect(find.text('Cash · ₱27.88'), findsOneWidget);
+      expect(find.text('Booking ID - reference-compact'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('exposes an accessible emergency action for active rides', (
     tester,
   ) async {
@@ -55,6 +108,8 @@ void main() {
     await tester.tap(find.text('Emergency SOS'));
 
     expect(emergencyPressed, isTrue);
+    await tester.tap(find.text('Trip details'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Report Issue'));
 
     expect(reportPressed, isTrue);
