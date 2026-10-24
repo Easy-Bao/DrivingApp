@@ -76,7 +76,7 @@ void main() {
       ),
     );
 
-    expect(find.text('₱386'), findsOneWidget);
+    expect(find.text('₱385.50'), findsOneWidget);
     expect(find.text('7'), findsOneWidget);
     expect(find.text('Showing last loaded stats.'), findsOneWidget);
   });
@@ -142,7 +142,7 @@ void main() {
     );
 
     expect(find.text("Today's Net Earnings"), findsOneWidget);
-    expect(find.text('₱386'), findsOneWidget);
+    expect(find.text('₱385.50'), findsOneWidget);
     expect(find.text('7'), findsOneWidget);
     expect(
       find.byKey(const ValueKey<String>('driver-dashboard-stats-skeleton')),

@@ -17,12 +17,10 @@ import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashbo
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_pool_bid_card.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
-import 'package:driver/src/features/profile/profile_routes.dart';
 import 'package:driver/src/infrastructure/notifications/driver_incoming_request_alert.dart';
 import 'package:driver/src/presentation/formatters/driver_value_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -806,6 +804,7 @@ class _DashboardPageState extends State<DashboardPage>
         buildWhen: (previous, current) =>
             previous.isOnline != current.isOnline ||
             previous.isLoadingStats != current.isLoadingStats ||
+            previous.hasLoadedStats != current.hasLoadedStats ||
             previous.earnings != current.earnings ||
             previous.completedTrips != current.completedTrips ||
             previous.errorMessage != current.errorMessage ||
@@ -862,25 +861,6 @@ class _DashboardPageState extends State<DashboardPage>
                           Text('Driver', style: context.textStyles.labelMedium),
                         ],
                       ),
-                      actions: [
-                        Padding(
-                          padding: const EdgeInsets.only(right: 16),
-                          child: IconButton(
-                            constraints: const BoxConstraints(
-                              minWidth: AppSize.minimumTouchTarget,
-                              minHeight: AppSize.minimumTouchTarget,
-                            ),
-                            tooltip: 'Account',
-                            onPressed: () =>
-                                context.pushNamed(ProfileRoutes.account),
-                            icon: const Icon(LucideIcons.user_round),
-                            style: IconButton.styleFrom(
-                              backgroundColor: context.colorScheme.onSurface
-                                  .withValues(alpha: 0.1),
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                     body: SafeArea(
                       top: false,
@@ -889,77 +869,101 @@ class _DashboardPageState extends State<DashboardPage>
                           constraints: const BoxConstraints(
                             maxWidth: AppLayout.contentMaxWidth,
                           ),
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 8),
-                              _buildOnlineCardBanner(context, state),
-                              const SizedBox(height: 16),
-                              _buildStatsRow(context, state),
-                              const SizedBox(height: 16),
-                              if (showFeed)
-                                Expanded(
-                                  child: ListView(
+                          child: RefreshIndicator(
+                            onRefresh: () async {
+                              await Future.wait([
+                                BlocProvider.of<DashboardCubit>(context)
+                                    .loadStats(),
+                                _loadActiveTrips(),
+                              ]);
+                            },
+                            child: CustomScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              slivers: [
+                                SliverList.list(
+                                  children: [
+                                    const SizedBox(height: 8),
+                                    _buildOnlineCardBanner(context, state),
+                                    const SizedBox(height: 16),
+                                    _buildStatsRow(context, state),
+                                    const SizedBox(height: 24),
+                                  ],
+                                ),
+                                if (showFeed)
+                                  SliverPadding(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 20,
                                     ),
-                                    physics: const BouncingScrollPhysics(),
-                                    children: [
-                                      if (activeRide != null) ...[
-                                        const DashboardSectionLabel(
-                                          label: 'Current Active Trip',
-                                        ),
-                                        const SizedBox(height: 10),
-                                        ActiveTripCard(
-                                          key: ValueKey<String>(activeRide.id),
-                                          trip: activeRide,
-                                          onResume: () =>
-                                              _resumeTrip(activeRide),
-                                        ),
+                                    sliver: SliverList.list(
+                                      children: [
+                                        if (activeRide != null) ...[
+                                          const DashboardSectionLabel(
+                                            label: 'Current Active Trip',
+                                          ),
+                                          const SizedBox(height: 10),
+                                          ActiveTripCard(
+                                            key: ValueKey<String>(
+                                              activeRide.id,
+                                            ),
+                                            trip: activeRide,
+                                            onResume: () =>
+                                                _resumeTrip(activeRide),
+                                          ),
+                                          const SizedBox(height: 24),
+                                        ],
+                                        if (submittedOffers.isNotEmpty) ...[
+                                          const DashboardSectionLabel(
+                                            label: 'Your Submitted Offers',
+                                          ),
+                                          const SizedBox(height: 10),
+                                          ...submittedOffers.map(
+                                            (bid) => PoolBidCard(
+                                              bid: bid,
+                                              submittingBidId: null,
+                                              onDecline: null,
+                                              onSubmitOffer: null,
+                                            ),
+                                          ),
+                                        ],
+                                        if (activeBids.isNotEmpty) ...[
+                                          const DashboardSectionLabel(
+                                            label: 'Open Ride Offers',
+                                          ),
+                                          const SizedBox(height: 10),
+                                          ...activeBids.map(
+                                            (bid) => PoolBidCard(
+                                              bid: bid,
+                                              submittingBidId: _submittingBidId,
+                                              onDecline: () =>
+                                                  BlocProvider.of<
+                                                        DashboardCubit
+                                                      >(context)
+                                                      .removeActiveBid(
+                                                        valueAsString(
+                                                          bid['id'],
+                                                        ),
+                                                      ),
+                                              onSubmitOffer: () =>
+                                                  _submitBid(bid),
+                                            ),
+                                          ),
+                                        ],
                                         const SizedBox(height: 24),
                                       ],
-                                      if (submittedOffers.isNotEmpty) ...[
-                                        const DashboardSectionLabel(
-                                          label: 'Your Submitted Offers',
-                                        ),
-                                        const SizedBox(height: 10),
-                                        ...submittedOffers.map(
-                                          (bid) => PoolBidCard(
-                                            bid: bid,
-                                            submittingBidId: null,
-                                            onDecline: null,
-                                            onSubmitOffer: null,
-                                          ),
-                                        ),
-                                      ],
-                                      if (activeBids.isNotEmpty) ...[
-                                        const DashboardSectionLabel(
-                                          label: 'Open Ride Offers',
-                                        ),
-                                        const SizedBox(height: 10),
-                                        ...activeBids.map(
-                                          (bid) => PoolBidCard(
-                                            bid: bid,
-                                            submittingBidId: _submittingBidId,
-                                            onDecline: () =>
-                                                BlocProvider.of<DashboardCubit>(
-                                                  context,
-                                                ).removeActiveBid(
-                                                  valueAsString(bid['id']),
-                                                ),
-                                            onSubmitOffer: () =>
-                                                _submitBid(bid),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
+                                    ),
+                                  )
+                                else
+                                  SliverFillRemaining(
+                                    hasScrollBody: false,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: Center(
+                                        child: _buildStatusIndicator(state),
+                                      ),
+                                    ),
                                   ),
-                                )
-                              else ...[
-                                const Spacer(),
-                                _buildStatusIndicator(state),
-                                const Spacer(),
                               ],
-                            ],
+                            ),
                           ),
                         ),
                       ),
@@ -1003,108 +1007,21 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   Widget _buildStatusIndicator(DashboardState state) {
-    if (state.isOnline) {
-      return RepaintBoundary(
-        child: AnimatedBuilder(
-          animation: _pulseAnimationController,
-          builder: (_, _) {
-            final pulseOpacity = 0.3 + _pulseAnimationController.value * 0.7;
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      width: 88,
-                      height: 88,
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.primary.withValues(
-                          alpha: 0.08 * pulseOpacity,
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.primary.withValues(
-                          alpha: 0.15 * pulseOpacity,
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Icon(
-                          LucideIcons.radar,
-                          size: 20,
-                          color: context.colorScheme.onPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  'Looking for rides nearby...',
-                  style: context.textStyles.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: context.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Stay in high-demand areas to get trips faster',
-                  style: context.textStyles.bodySmall?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      );
-    }
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: context.colorScheme.surfaceContainerHighest,
-            shape: BoxShape.circle,
-            border: Border.all(color: context.colorScheme.outlineVariant),
-          ),
-          child: Center(
-            child: Icon(
-              LucideIcons.moon,
-              size: 24,
-              color: context.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
         Text(
-          "You're currently offline",
-          style: context.textStyles.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: context.colorScheme.onSurface,
-          ),
+          state.isOnline ? 'Ready for your next ride' : "You're offline",
+          textAlign: TextAlign.center,
+          style: context.textStyles.titleMedium,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         Text(
-          'Toggle the switch above to start receiving ride requests',
-          style: context.textStyles.bodySmall?.copyWith(
+          state.isOnline
+              ? 'New ride requests will appear here.'
+              : 'Switch online when you’re ready to drive.',
+          textAlign: TextAlign.center,
+          style: context.textStyles.bodyMedium?.copyWith(
             color: context.colorScheme.onSurfaceVariant,
           ),
         ),
