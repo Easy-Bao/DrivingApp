@@ -54,7 +54,12 @@ class EarningsSummary extends Equatable {
         total: today.total,
         tripsCount: today.tripsCount,
         days: [
-          EarnDayBucket(day: 'Today', amount: today.total, isCurrent: true),
+          EarnDayBucket(
+            day: 'Today',
+            amount: today.total,
+            tripsCount: today.tripsCount,
+            isCurrent: true,
+          ),
         ],
       ),
       weekly: EarningsPeriodSummary(
@@ -114,6 +119,8 @@ class EarningsSummary extends Equatable {
     );
     return EarnDayBucket(
       day: label(index, date),
+      startDate: date,
+      tripsCount: SafeParse.toInt(bucket['completed_trips']),
       amount: SafeParse.toDouble(bucket['earnings_amount']) / 100,
       isCurrent: currentIndex == index || (date != null && _sameDay(date, now)),
     );
@@ -154,12 +161,16 @@ class EarnDayBucket extends Equatable {
     required this.day,
     required this.amount,
     this.isCurrent = false,
+    this.startDate,
+    this.tripsCount = 0,
   });
 
   final String day;
   final double amount;
   final bool isCurrent;
+  final DateTime? startDate;
+  final int tripsCount;
 
   @override
-  List<Object?> get props => [day, amount, isCurrent];
+  List<Object?> get props => [day, amount, isCurrent, startDate, tripsCount];
 }

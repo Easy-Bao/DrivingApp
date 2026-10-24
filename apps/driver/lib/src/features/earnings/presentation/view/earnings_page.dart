@@ -14,73 +14,37 @@ class EarningsPage extends StatefulWidget {
   State<EarningsPage> createState() => _EarningsPageState();
 }
 
-class _EarningsPageState extends State<EarningsPage>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+class _EarningsPageState extends State<EarningsPage> {
   EarningsPeriod _selectedPeriod = EarningsPeriod.weekly;
+  bool _showAll = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(
-      length: EarningsPeriod.values.length,
-      initialIndex: _selectedPeriod.index,
-      vsync: this,
-    );
-  }
-
-  void _selectPeriod(int index) {
-    if (context.read<EarningsCubit>().state.isLoading) return;
-    final period = EarningsPeriod.values[index];
-    if (_selectedPeriod == period) return;
-    setState(() => _selectedPeriod = period);
-  }
-
-  String get _periodTitle {
-    switch (_selectedPeriod) {
-      case EarningsPeriod.daily:
-        return 'Today';
-      case EarningsPeriod.weekly:
-        return 'This Week';
-      case EarningsPeriod.monthly:
-        return 'This Month';
-    }
-  }
-
-  String get _breakdownTitle {
-    switch (_selectedPeriod) {
-      case EarningsPeriod.daily:
-        return 'Today';
-      case EarningsPeriod.weekly:
-        return 'Daily Breakdown';
-      case EarningsPeriod.monthly:
-        return 'Weekly Breakdown';
-    }
-  }
-
-  String get _breakdownDescription => switch (_selectedPeriod) {
-    EarningsPeriod.daily => 'Your earnings from completed rides today.',
-    EarningsPeriod.weekly => 'See how your total builds each day.',
-    EarningsPeriod.monthly => 'See how your total builds each week.',
+  String get _periodTitle => switch (_selectedPeriod) {
+    EarningsPeriod.daily => 'Today',
+    EarningsPeriod.weekly => 'This week',
+    EarningsPeriod.monthly => 'This month',
   };
 
-  String _averageFareLabel(EarningsPeriodSummary summary) =>
-      summary.tripsCount == 0
-      ? '—'
-      : formatPesoAmount(summary.total / summary.tripsCount);
+  String _dateLabel(DateTime date) =>
+      MaterialLocalizations.of(context).formatShortMonthDay(date);
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  String _periodCaption(EarningsPeriodSummary summary) {
+    final dates = summary.days.map((day) => day.startDate).nonNulls.toList();
+    if (dates.isEmpty || _selectedPeriod == EarningsPeriod.daily) {
+      return _periodTitle;
+    }
+    if (_selectedPeriod == EarningsPeriod.monthly) {
+      return '$_periodTitle · ${MaterialLocalizations.of(context).formatMonthYear(dates.first)}';
+    }
+    return '$_periodTitle · ${_dateLabel(dates.first)} – ${_dateLabel(dates.last)}';
   }
+
+  String _rideCount(int count) =>
+      '$count completed ${count == 1 ? 'ride' : 'rides'}';
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<EarningsCubit>().state;
     final summary = state.data?.summaryFor(_selectedPeriod);
-    final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
-
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -89,420 +53,376 @@ class _EarningsPageState extends State<EarningsPage>
       ),
       body: SafeArea(
         top: false,
-        child: summary == null
-            ? state.errorMessage != null && !isNetworkUnavailable
-                  ? _buildErrorState(context)
-                  : _buildLoadingState(context)
-            : LayoutBuilder(
-                builder: (context, constraints) {
-                  final horizontalPadding = constraints.maxWidth < 360
-                      ? 16.0
-                      : 24.0;
-                  return ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      horizontalPadding,
-                      12,
-                      horizontalPadding,
-                      16,
+        child: summary == null && state.errorMessage != null
+            ? _buildErrorState()
+            : RefreshIndicator(
+                onRefresh: context.read<EarningsCubit>().load,
+                child: LayoutBuilder(
+                  builder: (context, constraints) => ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: constraints.maxWidth < 360
+                          ? AppSpacing.md
+                          : AppSpacing.lg,
+                      vertical: AppSpacing.md,
                     ),
-                    physics: const BouncingScrollPhysics(),
                     children: [
-                      if (state.errorMessage != null && !isNetworkUnavailable)
-                        AppErrorBanner(
-                          message: state.errorMessage!,
-                          onRetry: () =>
-                              BlocProvider.of<EarningsCubit>(context).load(),
-                          onDismiss: () =>
-                              BlocProvider.of<EarningsCubit>(context)
-                                  .dismissError(),
-                        ),
-                      if (state.errorMessage != null && !isNetworkUnavailable)
-                        const SizedBox(height: 12),
                       Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 720),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _buildSummaryCard(summary),
-                                const SizedBox(height: 12),
-                                _buildBarChart(summary.days),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-      ),
-    );
-  }
-
-  Widget _buildLoadingState(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final horizontalPadding = constraints.maxWidth < 360 ? 16.0 : 24.0;
-        return ListView(
-          padding: EdgeInsets.fromLTRB(
-            horizontalPadding,
-            12,
-            horizontalPadding,
-            16,
-          ),
-          physics: const BouncingScrollPhysics(),
-          children: [
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 720),
-                child: Skeletonizer(
-                  key: const ValueKey<String>(
-                    'driver-earnings-loading-skeleton',
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildSummaryCard(
-                        const EarningsPeriodSummary(
-                          total: 0,
-                          tripsCount: 0,
-                          days: [],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: context.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                          border: Border.all(
-                            color: context.colorScheme.outlineVariant,
-                          ),
-                        ),
-                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Bone.text(width: 110, fontSize: 15),
-                            const SizedBox(height: 4),
-                            const Bone.text(width: 220, fontSize: 10),
-                            const SizedBox(height: 8),
-                            _buildPeriodTabs(enabled: false),
-                            const SizedBox(height: 10),
-                            const Center(
-                              child: Bone.square(
-                                size: 150,
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(AppRadius.md),
+                          child: summary == null
+                              ? _buildLoadingState()
+                              : Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    if (state.errorMessage != null)
+                                      AppErrorBanner(
+                                        message: state.errorMessage!,
+                                        onRetry: context
+                                            .read<EarningsCubit>()
+                                            .load,
+                                        onDismiss: context
+                                            .read<EarningsCubit>()
+                                            .dismissError,
+                                      ),
+                                    _buildSummary(summary),
+                                    const SizedBox(height: AppSpacing.lg),
+                                    _buildPeriodTabs(),
+                                    const SizedBox(height: AppSpacing.xl),
+                                    Semantics(
+                                      label:
+                                          'Earnings chart. ${summary.days.map((day) => '${day.day}: ${formatPesoAmount(day.amount)}').join('. ')}',
+                                      child: ExcludeSemantics(
+                                        child: SizedBox(
+                                          height: 190,
+                                          child: LayoutBuilder(
+                                            builder: (context, constraints) =>
+                                                BarChart(
+                                                  _barChartData(
+                                                    constraints.maxWidth,
+                                                    summary.days,
+                                                  ),
+                                                  duration:
+                                                      MediaQuery.disableAnimationsOf(
+                                                        context,
+                                                      )
+                                                      ? Duration.zero
+                                                      : const Duration(
+                                                          milliseconds: 200,
+                                                        ),
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: AppSpacing.lg),
+                                    _buildStats(summary),
+                                    const SizedBox(height: AppSpacing.lg),
+                                    _buildRecent(summary),
+                                  ],
                                 ),
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildErrorState(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.cloud_off_rounded,
-              size: 48,
-              color: context.colorScheme.onSurface.withValues(alpha: 0.35),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Earnings are unavailable',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                color: context.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'We could not load your earnings summary. Try again when you have a stable connection.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 20),
-            OutlinedButton(
-              onPressed: () => BlocProvider.of<EarningsCubit>(context).load(),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
       ),
     );
   }
 
-  Widget _buildSummaryCard(EarningsPeriodSummary summary) {
-    final isNegative = summary.total < 0;
-    final cardBgColor = isNegative
-        ? context.colorScheme.error
-        : context.colorScheme.primary;
-    final onCardColor = isNegative
-        ? context.colorScheme.onError
-        : context.colorScheme.onPrimary;
+  Widget _buildLoadingState() => const Skeletonizer(
+    key: ValueKey<String>('driver-earnings-loading-skeleton'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Bone.text(width: 160),
+        SizedBox(height: AppSpacing.md),
+        Bone.text(width: 220, fontSize: 48),
+        SizedBox(height: AppSpacing.lg),
+        Bone.square(size: 190),
+      ],
+    ),
+  );
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBgColor,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          BoxShadow(
-            color: cardBgColor.withValues(alpha: 0.16),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+  Widget _buildErrorState() => Center(
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Earnings are unavailable',
+            style: context.textStyles.titleMedium,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'We could not load your earnings. Please try again.',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          FilledButton(
+            onPressed: context.read<EarningsCubit>().load,
+            child: const Text('Retry'),
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.lg,
-        12,
+    ),
+  );
+
+  Widget _buildSummary(EarningsPeriodSummary summary) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        _periodCaption(summary),
+        style: context.textStyles.bodySmall?.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _periodTitle.toUpperCase(),
-                style: context.textStyles.labelSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: onCardColor.withValues(alpha: 0.7),
-                  letterSpacing: 1.2,
+      const SizedBox(height: AppSpacing.sm),
+      FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Text(
+          formatPesoAmount(summary.total),
+          style: context.textStyles.displayMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: -1.5,
+            color: summary.total < 0
+                ? context.colorScheme.error
+                : context.colorScheme.onSurface,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      Text(
+        'From ${_rideCount(summary.tripsCount)}',
+        style: context.textStyles.bodySmall?.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
+        ),
+      ),
+      if (summary.total < 0) ...[
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'Adjustment',
+          style: context.textStyles.labelMedium?.copyWith(
+            color: context.colorScheme.error,
+          ),
+        ),
+        const Text('Fee deductions or dispute adjustments applied'),
+      ],
+    ],
+  );
+
+  Widget _buildPeriodTabs() => Container(
+    padding: const EdgeInsets.all(AppSpacing.xs),
+    decoration: BoxDecoration(
+      color: context.colorScheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+    ),
+    child: Row(
+      children: [
+        for (final (index, label) in ['Day', 'Week', 'Month'].indexed)
+          Expanded(
+            child: Semantics(
+              selected: _selectedPeriod.index == index,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(48, 48),
+                  backgroundColor: _selectedPeriod.index == index
+                      ? context.colorScheme.surface
+                      : Colors.transparent,
+                  foregroundColor: _selectedPeriod.index == index
+                      ? context.colorScheme.onSurface
+                      : context.colorScheme.onSurfaceVariant,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
                 ),
+                onPressed: () => setState(() {
+                  _selectedPeriod = EarningsPeriod.values[index];
+                  _showAll = false;
+                }),
+                child: Text(label),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color:
-                      (isNegative
-                              ? context.colorScheme.onError
-                              : context.semanticColors.success)
-                          .withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+            ),
+          ),
+      ],
+    ),
+  );
+
+  Widget _buildStats(EarningsPeriodSummary summary) {
+    final active = summary.days.where((day) => day.tripsCount > 0).length;
+    final stats = [
+      ('Trips', '${summary.tripsCount}'),
+      (
+        'Avg per trip',
+        summary.tripsCount == 0
+            ? '—'
+            : formatPesoAmount(summary.total / summary.tripsCount),
+      ),
+      (
+        _selectedPeriod == EarningsPeriod.monthly
+            ? 'Active weeks'
+            : 'Active days',
+        '$active of ${summary.days.length}',
+      ),
+    ];
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      decoration: BoxDecoration(
+        border: Border.symmetric(
+          horizontal: BorderSide(color: context.colorScheme.outlineVariant),
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final stacked =
+              constraints.maxWidth < 300 ||
+              MediaQuery.textScalerOf(context).scale(14) > 20;
+          final children = [
+            for (final (label, value) in stats)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 5,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: isNegative
-                            ? context.colorScheme.onError
-                            : context.semanticColors.success,
-                        shape: BoxShape.circle,
+                    Text(
+                      label,
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(
-                      isNegative ? 'Adjustment' : 'Live',
-                      style: context.textStyles.labelSmall?.copyWith(
-                        color: isNegative
-                            ? context.colorScheme.onError
-                            : context.semanticColors.success,
+                      value,
+                      style: context.textStyles.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        fontSize: 10,
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 4),
+          ];
+          return stacked
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: children,
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final child in children) Expanded(child: child),
+                  ],
+                );
+        },
+      ),
+    );
+  }
+
+  Widget _buildRecent(EarningsPeriodSummary summary) {
+    final recent = summary.days
+        .where((day) => day.tripsCount > 0 || day.amount != 0)
+        .toList()
+        .reversed
+        .toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Recent',
+                style: context.textStyles.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            if (recent.length > 3)
+              TextButton(
+                onPressed: () => setState(() => _showAll = !_showAll),
+                child: Text(_showAll ? 'Show less' : 'See all'),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        if (recent.isEmpty)
           Text(
-            formatPesoAmount(summary.total),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: context.textStyles.headlineLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: onCardColor,
-              letterSpacing: -1.0,
-              fontFeatures: const [FontFeature.tabularFigures()],
+            'No completed rides this period.',
+            style: context.textStyles.bodyMedium?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            isNegative
-                ? 'Fee deductions or dispute adjustments applied'
-                : 'Earnings from your completed rides',
-            style: context.textStyles.bodySmall?.copyWith(
-              color: onCardColor.withValues(alpha: 0.7),
-              fontSize: 11,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            decoration: BoxDecoration(
-              color: onCardColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
+        for (final day in _showAll ? recent : recent.take(3))
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: _miniStat(
-                    '${summary.tripsCount}',
-                    'Completed trips',
-                    textColor: onCardColor,
+                CircleAvatar(
+                  backgroundColor: context.colorScheme.surfaceContainerHighest,
+                  foregroundColor: context.colorScheme.onSurface,
+                  child: ExcludeSemantics(
+                    child: Icon(
+                      day.amount < 0
+                          ? Icons.remove_rounded
+                          : Icons.check_rounded,
+                      size: 20,
+                    ),
                   ),
                 ),
-                _summaryDivider(color: onCardColor.withValues(alpha: 0.15)),
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
-                  child: _miniStat(
-                    _averageFareLabel(summary),
-                    'Average per trip',
-                    textColor: onCardColor,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final amount = Text(
+                        '${day.amount > 0 ? '+' : ''}${formatPesoAmount(day.amount)}',
+                        style: context.textStyles.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      );
+                      final details = Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            day.startDate == null
+                                ? day.day
+                                : '${_selectedPeriod == EarningsPeriod.monthly ? 'Week of ' : ''}${_dateLabel(day.startDate!)}',
+                            style: context.textStyles.titleSmall,
+                          ),
+                          if (day.tripsCount > 0)
+                            Text(
+                              _rideCount(day.tripsCount),
+                              style: context.textStyles.bodySmall?.copyWith(
+                                color: context.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
+                      );
+                      if (MediaQuery.textScalerOf(context).scale(14) > 20 ||
+                          constraints.maxWidth < 220) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [details, amount],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(child: details),
+                          const SizedBox(width: AppSpacing.sm),
+                          amount,
+                        ],
+                      );
+                    },
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _summaryDivider({Color? color}) {
-    return Container(
-      width: 1,
-      height: 24,
-      color: color ?? context.colorScheme.onPrimary.withValues(alpha: 0.15),
-      margin: const EdgeInsets.symmetric(horizontal: 10),
-    );
-  }
-
-  Widget _miniStat(String value, String label, {Color? textColor}) {
-    final effectiveColor = textColor ?? context.colorScheme.onPrimary;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.textStyles.titleSmall?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: effectiveColor,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
-        ),
-        const SizedBox(height: 1),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.textStyles.bodySmall?.copyWith(
-            fontSize: 10,
-            color: effectiveColor.withValues(alpha: 0.7),
-          ),
-        ),
       ],
-    );
-  }
-
-  Widget _buildPeriodTabs({bool enabled = true}) {
-    return SizedBox(
-      height: 44,
-      child: TabBar(
-        controller: _tabController,
-        onTap: enabled ? _selectPeriod : null,
-        indicator: BoxDecoration(
-          color: context.colorScheme.primary,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-        ),
-        labelColor: context.colorScheme.onPrimary,
-        unselectedLabelColor: context.colorScheme.onSurfaceVariant,
-        labelStyle: context.textStyles.labelSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
-        unselectedLabelStyle: context.textStyles.labelSmall?.copyWith(
-          fontWeight: FontWeight.w500,
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: Colors.transparent,
-        tabs: const [
-          Tab(text: 'Daily'),
-          Tab(text: 'Weekly'),
-          Tab(text: 'Monthly'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBarChart(List<EarnDayBucket> dailyData) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colorScheme.outlineVariant),
-      ),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final chartHeight = constraints.maxWidth < 360 ? 120.0 : 150.0;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _breakdownTitle,
-                style: context.textStyles.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: context.colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 1),
-              Text(
-                _breakdownDescription,
-                style: context.textStyles.bodySmall?.copyWith(
-                  fontSize: 10,
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 6),
-              _buildPeriodTabs(),
-              const SizedBox(height: 6),
-              SizedBox(
-                height: chartHeight,
-                child: LayoutBuilder(
-                  builder: (context, chartConstraints) {
-                    return BarChart(
-                      _barChartData(chartConstraints.maxWidth, dailyData),
-                      duration: const Duration(milliseconds: 600),
-                      curve: Curves.easeOutCubic,
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
-        },
-      ),
     );
   }
 
@@ -538,6 +458,7 @@ class _EarningsPageState extends State<EarningsPage>
         getDrawingHorizontalLine: (value) => FlLine(
           color: context.colorScheme.outlineVariant.withValues(alpha: 0.6),
           strokeWidth: 1,
+          dashArray: [3, 5],
         ),
       ),
       titlesData: FlTitlesData(
@@ -609,7 +530,9 @@ class _EarningsPageState extends State<EarningsPage>
               : context.colorScheme.error.withValues(alpha: 0.5))
         : (day.isCurrent
               ? context.colorScheme.primary
-              : context.colorScheme.primary.withValues(alpha: 0.2));
+              : (day.amount == 0
+                    ? context.colorScheme.outlineVariant
+                    : context.colorScheme.primary));
     final labelColor = isNegative
         ? context.colorScheme.error
         : (day.isCurrent
@@ -625,7 +548,7 @@ class _EarningsPageState extends State<EarningsPage>
           color: rodColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
           label: BarChartRodLabel(
-            show: true,
+            show: day.amount != 0,
             text: formatPesoAmount(day.amount),
             style: context.textStyles.labelSmall?.copyWith(
               color: labelColor,

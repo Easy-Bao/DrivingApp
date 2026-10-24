@@ -28,7 +28,11 @@ class _FakeEarningsRepository implements EarningsRepository {
         'this_week': {'earnings_amount': 2973, 'completed_trips': 1},
         'this_month': {'earnings_amount': 2973, 'completed_trips': 1},
         'weekdays': [
-          {'start_date': '2026-08-17', 'earnings_amount': 2973},
+          {
+            'start_date': '2026-08-17',
+            'earnings_amount': 2973,
+            'completed_trips': 1,
+          },
           {'start_date': '2026-08-18', 'earnings_amount': 0},
           {'start_date': '2026-08-19', 'earnings_amount': 0},
           {'start_date': '2026-08-20', 'earnings_amount': 0},
@@ -37,7 +41,11 @@ class _FakeEarningsRepository implements EarningsRepository {
           {'start_date': '2026-08-23', 'earnings_amount': 0},
         ],
         'month_weeks': [
-          {'start_date': '2026-08-01', 'earnings_amount': 2973},
+          {
+            'start_date': '2026-08-01',
+            'earnings_amount': 2973,
+            'completed_trips': 1,
+          },
           {'start_date': '2026-08-08', 'earnings_amount': 0},
           {'start_date': '2026-08-15', 'earnings_amount': 0},
           {'start_date': '2026-08-22', 'earnings_amount': 0},
@@ -110,16 +118,14 @@ void main() {
     expect(find.text('Completed rides reported by the server'), findsNothing);
     expect(find.text('Drive time'), findsNothing);
     expect(find.text('Driver rating'), findsNothing);
-    expect(find.text('Average per trip'), findsOneWidget);
+    expect(find.text('Avg per trip'), findsOneWidget);
     final verticalScrollables = find.byWidgetPredicate(
       (widget) => widget is Scrollable && widget.axis == Axis.vertical,
     );
     expect(verticalScrollables, findsOneWidget);
-    final scrollState = tester.state<ScrollableState>(verticalScrollables);
-    expect(scrollState.position.maxScrollExtent, 0);
     expect(tester.takeException(), isNull, reason: 'initial layout failed');
 
-    for (final period in ['Daily', 'Weekly', 'Monthly']) {
+    for (final period in ['Day', 'Week', 'Month']) {
       await tester.tap(find.text(period));
       await tester.pump(const Duration(milliseconds: 1));
       expect(
@@ -137,6 +143,71 @@ void main() {
       expect(find.byType(BarChart), findsOneWidget);
       expect(tester.takeException(), isNull, reason: '$period layout failed');
     }
+  });
+
+  testWidgets('shows dated recent earnings and switches period summaries', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        home: BlocProvider(
+          create: (_) => EarningsCubit(
+            repository: _FakeEarningsRepository(),
+            sessionService: sessionService,
+          )..load(),
+          child: const EarningsPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('This week · Aug 17 – Aug 23'), findsOneWidget);
+    expect(find.text('From 1 completed ride'), findsOneWidget);
+    expect(find.text('1 of 7'), findsOneWidget);
+    expect(find.text('+₱29.73'), findsOneWidget);
+    expect(find.text('See all'), findsNothing);
+    final chart = tester.widget<BarChart>(find.byType(BarChart));
+    expect(
+      chart.data.barGroups
+          .where((group) => group.barRods.first.label.show)
+          .length,
+      1,
+    );
+    await tester.tap(find.text('Month'));
+    await tester.pumpAndSettle();
+    expect(find.text('Active weeks'), findsOneWidget);
+    expect(find.text('1 of 5'), findsOneWidget);
+    await tester.tap(find.text('Day'));
+    await tester.pumpAndSettle();
+    expect(find.text('Active days'), findsOneWidget);
+    expect(find.text('1 of 1'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('supports large text on a narrow screen', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 568));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: BlocProvider(
+          create: (_) => EarningsCubit(
+            repository: _FakeEarningsRepository(),
+            sessionService: sessionService,
+          )..load(),
+          child: const EarningsPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('keeps loaded earnings visible while refreshing', (tester) async {
@@ -158,7 +229,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(BarChart), findsOneWidget);
-    expect(find.text('Average per trip'), findsOneWidget);
+    expect(find.text('Avg per trip'), findsOneWidget);
 
     final refresh = cubit.load();
     await tester.pump();
@@ -204,7 +275,11 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.text('Daily'), warnIfMissed: false);
+    expect(
+      find.byKey(const ValueKey<String>('driver-earnings-loading-skeleton')),
+      findsOneWidget,
+    );
+    expect(find.text('Day'), findsNothing);
     await tester.pump();
 
     repository.completer.complete(
@@ -219,7 +294,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('THIS WEEK'), findsOneWidget);
+    expect(find.text('This week'), findsOneWidget);
   });
 
   testWidgets(
