@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/design_system.dart';
 
-class const FloatingTabBar({
+class const DriverBottomNavigation({
   super.key,
   required this.selectedIndex,
   required this.onDestinationSelected,
@@ -25,13 +25,28 @@ class const FloatingTabBar({
 
   @override
   Widget build(BuildContext context) {
-    return AppFloatingTabBar(
-      selectedIndex: selectedIndex,
-      onDestinationSelected: onDestinationSelected,
-      pagePosition: pagePosition,
-      destinations: destinations,
-      itemKeyPrefix: 'driver-floating-tab-item',
-      indicatorKey: 'driver-floating-tab-indicator',
+    return Material(
+      color: context.colorScheme.surface,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: context.colorScheme.outlineVariant),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: AppFloatingTabBar(
+            bare: true,
+            showInteractionFeedback: false,
+            selectedIndex: selectedIndex,
+            onDestinationSelected: onDestinationSelected,
+            pagePosition: pagePosition,
+            destinations: destinations,
+            itemKeyPrefix: 'driver-tab-item',
+            indicatorKey: 'driver-tab-indicator',
+          ),
+        ),
+      ),
     );
   }
 }
@@ -47,7 +62,7 @@ class const ShellNavigationRail({
   @override
   Widget build(BuildContext context) {
     return AppNavigationRail(
-      destinations: FloatingTabBar.destinations,
+      destinations: DriverBottomNavigation.destinations,
       selectedIndex: selectedIndex,
       onDestinationSelected: onDestinationSelected,
     );

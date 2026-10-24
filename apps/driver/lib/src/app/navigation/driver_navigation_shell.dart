@@ -1,4 +1,4 @@
-import 'package:driver/src/app/navigation/driver_floating_tab_bar.dart';
+import 'package:driver/src/app/navigation/driver_bottom_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
@@ -74,7 +74,7 @@ class _ShellLayoutState extends State<ShellLayout> {
         widget.navigationShell.goBranch(previousIndex);
       },
       child: Scaffold(
-        extendBody: true,
+        extendBody: false,
         body: isWide
             ? Row(
                 children: [
@@ -89,21 +89,10 @@ class _ShellLayoutState extends State<ShellLayout> {
             : widget.navigationShell,
         bottomNavigationBar: isWide
             ? const SizedBox.shrink()
-            : Padding(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.paddingOf(context).bottom + 10,
-                ),
-                child: FractionallySizedBox(
-                  widthFactor: 0.94,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 520),
-                    child: FloatingTabBar(
-                      selectedIndex: selectedIndex,
-                      onDestinationSelected: _onItemTapped,
-                      pagePosition: widget.navigationCoordinator.pagePosition,
-                    ),
-                  ),
-                ),
+            : DriverBottomNavigation(
+                selectedIndex: selectedIndex,
+                onDestinationSelected: _onItemTapped,
+                pagePosition: widget.navigationCoordinator.pagePosition,
               ),
       ),
     );

@@ -165,7 +165,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
                   AppLayout.pagePadding,
                   4,
                   AppLayout.pagePadding,
-                  AppFloatingTabBar.height + AppSpacing.xxl,
+                  AppSpacing.xxl,
                 ),
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
@@ -215,7 +215,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
           AppLayout.pagePadding,
           12,
           AppLayout.pagePadding,
-          AppFloatingTabBar.height + AppSpacing.xxl,
+          AppSpacing.xxl,
         ),
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
