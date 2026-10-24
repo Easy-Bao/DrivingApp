@@ -52,11 +52,20 @@ class RideHistoryModule._() {
       child: (context, GoRouterState state) {
         final extra = state.extra;
         final ride = extra is RideHistory ? extra : null;
-        final initialRide = extra is RideSnapshot ? extra : null;
+        final (initialRide, showRatingAction) = switch (extra) {
+          final RideSnapshot snapshot => (snapshot, true),
+          (
+            ride: final RideSnapshot snapshot,
+            showRatingAction: final bool show,
+          ) =>
+            (snapshot, show),
+          _ => (null, true),
+        };
         return RideDetailsPage(
           ride: ride,
           rideId: ride?.id ?? initialRide?.id,
           initialRide: initialRide,
+          showRatingAction: showRatingAction,
           trackRepository: Modular.get<TrackRepository>(),
           sessionService: Modular.get<SessionStore>(),
           profileRepository: Modular.get<DriverProfileRepository>(),

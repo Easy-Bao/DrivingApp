@@ -7,13 +7,12 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
+import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
-import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_details_map.dart';
-import 'package:passenger/src/features/ride_history/presentation/widgets/ride_rating_prompt.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 class RideDetailsPage extends StatefulWidget {
@@ -26,7 +25,9 @@ class RideDetailsPage extends StatefulWidget {
     this.ride,
     this.rideId,
     this.initialRide,
+    this.showRatingAction = true,
   });
+  final bool showRatingAction;
   final RideHistory? ride;
   final String? rideId;
   final RideSnapshot? initialRide;
@@ -280,13 +281,26 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                 snapshot?.driverId?.trim().isNotEmpty == true &&
                 rideId?.isNotEmpty == true) ...[
               const SizedBox(height: 24),
-              RideRatingPrompt(
-                driverId: snapshot!.driverId!,
-                driverName: snapshot.displayDriverName,
-                rideId: rideId!,
-                cubit: _detailsCubit,
-                onDone: () => context.goNamed(HomeRoutes.home),
-              ),
+              if (_detailsCubit.state.submittedReview case final review?)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Ride rating'),
+                  trailing: Text('${review.rating.toStringAsFixed(0)} ★'),
+                )
+              else if (widget.showRatingAction &&
+                  !_detailsCubit.state.isLoadingReview)
+                TextButton(
+                  onPressed: () async {
+                    await context.pushNamed(
+                      ActiveRideRoutes.tripCompletion,
+                      extra: (ride: snapshot!, returnToReceipt: true),
+                    );
+                    if (mounted) {
+                      await _detailsCubit.loadMyReview(rideId!, refresh: true);
+                    }
+                  },
+                  child: const Text('Rate this ride'),
+                ),
             ],
             const SizedBox(height: 24),
             ExpansionTile(
@@ -360,13 +374,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                 ),
               ],
             ),
-            if (isCompleted) ...[
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () => context.goNamed(HomeRoutes.home),
-                child: const Text('Done'),
-              ),
-            ],
           ],
         ),
       ),

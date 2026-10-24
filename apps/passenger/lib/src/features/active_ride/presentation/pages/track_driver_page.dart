@@ -168,8 +168,9 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
             _hasHandledTerminalState = true;
             widget.onRideTerminated();
             context.pushReplacementNamed(
-              ActiveRideRoutes.passengerPayment,
+              ActiveRideRoutes.tripCompletion,
               extra: widget.ride.copyWith(
+                status: 'completed',
                 driverId: driverId,
                 driverName: driverName,
               ),

@@ -201,14 +201,14 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
     }
   }
 
-  Future<void> loadMyReview(String rideId) async {
+  Future<void> loadMyReview(String rideId, {bool refresh = false}) async {
     final normalizedRideId = rideId.trim();
     if (normalizedRideId.isEmpty ||
         isClosed ||
         state.rideId != normalizedRideId ||
         state.isLoadingReview ||
         state.submittedReview != null ||
-        _loadedReviewRideId == normalizedRideId) {
+        (!refresh && _loadedReviewRideId == normalizedRideId)) {
       return;
     }
 
