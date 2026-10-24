@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:bloc_test/bloc_test.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
@@ -11,8 +13,13 @@ import 'package:go_router/go_router.dart';
 import 'package:go_router_modular/testing.dart';
 import 'package:mapbox_maps_flutter_platform_interface/mapbox_maps_flutter_platform_interface_internal.dart';
 import 'package:maps/maps.dart' as maps;
+import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/presentation/pages/search_destination_page.dart';
+
+class _SessionBloc extends MockBloc<SessionEvent, SessionState>
+    implements SessionBloc {}
 
 class _FakeGeolocatorPlatform extends GeolocatorPlatform {
   @override
@@ -434,6 +441,9 @@ void main() {
   testWidgets('does not stack ride-selection routes from repeated results', (
     tester,
   ) async {
+    final session = _SessionBloc();
+    when(() => session.state).thenReturn(const GuestSession());
+    addTearDown(session.close);
     const destination = maps.Place(
       id: 'central-park',
       name: 'Central Park',
@@ -458,7 +468,10 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+      BlocProvider<SessionBloc>.value(
+        value: session,
+        child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+      ),
     );
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Central');
