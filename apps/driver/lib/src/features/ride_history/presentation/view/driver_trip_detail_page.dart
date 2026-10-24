@@ -137,8 +137,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final status = (valueAsString(widget.trip['status']) ?? 'completed')
-        .toLowerCase();
+    final status = (valueAsString(widget.trip['status']) ?? '').toLowerCase();
     final canContactPassenger = _canContactPassenger;
     final isCompleted = status == 'completed';
     final isCanceled = status == 'canceled' || status == 'cancelled';
@@ -194,7 +193,8 @@ class _TripDetailPageState extends State<TripDetailPage> {
                             label: 'Booking ID',
                           ),
                         ),
-                        if (widget.rideRepository case final repository?)
+                        if (widget.rideRepository case final repository?
+                            when isCompleted)
                           SafetyReportButton(
                             bookingReference:
                                 valueAsString(

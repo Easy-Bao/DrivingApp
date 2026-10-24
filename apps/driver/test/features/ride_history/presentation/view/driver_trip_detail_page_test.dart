@@ -1,10 +1,45 @@
+import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/ride_history/presentation/view/driver_trip_detail_page.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+class _RideRepository extends Mock implements RideRepository {}
+
 void main() {
+  testWidgets('shows driver reporting only for a completed trip', (
+    tester,
+  ) async {
+    final repository = _RideRepository();
+    for (final status in [
+      'accepted',
+      'arrived',
+      'in_transit',
+      'cancelled',
+      '',
+      'completed',
+    ]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: TripDetailPage(
+            key: ValueKey(status),
+            sessionService: SessionStore(),
+            rideRepository: repository,
+            trip: {'id': 42, 'status': status},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byTooltip('Report a safety issue'),
+        status == 'completed' ? findsOneWidget : findsNothing,
+      );
+    }
+  });
+
   testWidgets('renders the hydrated passenger trip detail card', (
     tester,
   ) async {

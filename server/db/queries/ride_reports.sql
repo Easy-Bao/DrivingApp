@@ -25,7 +25,9 @@ WHERE ride.id = sqlc.arg('ride_id')
   AND (
       (sqlc.arg('reporter_role')::text = 'passenger' AND ride.passenger_id = sqlc.arg('reporter_id'))
       OR
-      (sqlc.arg('reporter_role')::text = 'driver' AND ride.driver_id = sqlc.arg('reporter_id'))
+      (sqlc.arg('reporter_role')::text = 'driver'
+          AND ride.driver_id = sqlc.arg('reporter_id')
+          AND ride.status = 'completed')
   )
 RETURNING id, ride_id, reporter_id, reported_user_id, reporter_role,
     category, severity, description, status, created_at;

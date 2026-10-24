@@ -550,6 +550,7 @@ func newPostgresRideFixture(t *testing.T) *postgresRideFixture {
 		"bid_offers.sql",
 		"ride_settlements.sql",
 		"ride_events.sql",
+		"ride_reports.sql",
 		"driver_wallet_accounts.sql",
 		"wallet_ledgers.sql",
 		"audit_events.sql",

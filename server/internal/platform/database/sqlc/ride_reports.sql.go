@@ -36,7 +36,9 @@ WHERE ride.id = $6
   AND (
       ($2::text = 'passenger' AND ride.passenger_id = $1)
       OR
-      ($2::text = 'driver' AND ride.driver_id = $1)
+      ($2::text = 'driver'
+          AND ride.driver_id = $1
+          AND ride.status = 'completed')
   )
 RETURNING id, ride_id, reporter_id, reported_user_id, reporter_role,
     category, severity, description, status, created_at

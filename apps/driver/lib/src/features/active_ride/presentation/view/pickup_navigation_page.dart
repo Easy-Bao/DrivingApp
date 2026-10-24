@@ -11,7 +11,6 @@ import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_active_ride_header.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_ride_cancellation_sheet.dart';
-import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/pickup_navigation_panel.dart';
 import 'package:driver/src/features/chat/chat_routes.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
@@ -502,13 +501,6 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
     return ActiveRideHeader(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       backButton: _buildTripBackButton(context, () => context.pop()),
-      reportAction: SafetyReportButton(
-        bookingReference:
-            BlocProvider.of<RideFlowCubit>(context).activeBookingReference ??
-            '',
-        rideId: BlocProvider.of<RideFlowCubit>(context).activeRideId,
-        rideRepository: widget.rideRepository,
-      ),
     );
   }
 }

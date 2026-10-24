@@ -88,7 +88,7 @@ class ActiveRideModule._() {
             distance: data.distance,
             fare: data.fare,
             duration: data.duration,
-            rideRepository: Modular.get<RideRepository>(),
+
             lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
           ),
         );

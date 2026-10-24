@@ -4,12 +4,10 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/active_ride/active_ride_routes.dart';
-import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_active_ride_header.dart';
-import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_completion_slider.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_passenger_card.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +24,6 @@ class const InTransitPage({
   required this.distance,
   required this.fare,
   required this.duration,
-  required this.rideRepository,
   required this.lifecycleCoordinator,
   this.liveMapBloc,
 }) extends StatefulWidget {
@@ -35,7 +32,6 @@ class const InTransitPage({
   final String duration;
   final double distance;
   final double fare;
-  final RideRepository rideRepository;
   final AppLifecycleCoordinator lifecycleCoordinator;
   final LiveMapBloc? liveMapBloc;
 
@@ -305,15 +301,6 @@ class _InTransitPageState extends State<InTransitPage> {
                       backButton: _buildTripBackButton(
                         context,
                         () => context.pop(),
-                      ),
-                      reportAction: SafetyReportButton(
-                        bookingReference:
-                            BlocProvider.of<RideFlowCubit>(context)
-                                .activeBookingReference ??
-                            '',
-                        rideId: BlocProvider.of<RideFlowCubit>(context)
-                            .activeRideId,
-                        rideRepository: widget.rideRepository,
                       ),
                     ),
                   ),
