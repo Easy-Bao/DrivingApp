@@ -1,5 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/auth/auth_routes.dart';
+import 'package:driver/src/features/auth/presentation/view/widgets/driver_auth_layout.dart';
 import 'package:driver/src/features/auth/presentation/bloc/forgot_password/forgot_password_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,212 +33,97 @@ class _ForgotPasswordPageContentState
     extends State<_ForgotPasswordPageContent> {
   final TextEditingController _emailController = TextEditingController();
 
+  final _emailFocus = FocusNode();
+  String? _emailError;
+  String _submittedEmail = '';
+
   @override
   void dispose() {
+    _emailFocus.dispose();
     _emailController.dispose();
     super.dispose();
   }
 
   void _submitResetLink(BuildContext context) {
-    FocusScope.of(context).unfocus();
+    if (BlocProvider.of<ForgotPasswordBloc>(context).state
+        is ForgotPasswordLoading) {
+      return;
+    }
     final email = _emailController.text.trim();
-
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() => _emailError = 'Enter a valid email address.');
+      _emailFocus.requestFocus();
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    _submittedEmail = email;
     BlocProvider.of<ForgotPasswordBloc>(context)
         .add(ForgotPasswordSubmitted(email: email));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          constraints: const BoxConstraints(
-            minWidth: AppSize.minimumTouchTarget,
-            minHeight: AppSize.minimumTouchTarget,
+    return BlocConsumer<ForgotPasswordBloc, ForgotPasswordState>(
+      listener: (context, state) {
+        if (state is ForgotPasswordSuccess) {
+          context.pushReplacementNamed(
+            AuthRoutes.resetPassword,
+            extra: _submittedEmail,
+          );
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state is ForgotPasswordLoading;
+        return DriverAuthLayout(
+          onBack: () => context.pop(),
+          title: 'Forgot password?',
+          description: 'We’ll email you a verification code. Enter the email address linked to your account.',
+          footer: FilledButton(
+            onPressed: isLoading ? null : () => _submitResetLink(context),
+            child: isLoading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: context.colorScheme.onPrimary,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text('Send code'),
           ),
-          style: IconButton.styleFrom(shape: const CircleBorder()),
-          icon: Icon(
-            LucideIcons.arrow_left,
-            color: context.colorScheme.onSurface,
-          ),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: SafeArea(
-        child: BlocConsumer<ForgotPasswordBloc, ForgotPasswordState>(
-          listener: (context, state) {
-            if (state is ForgotPasswordSuccess) {
-              final email = _emailController.text.trim();
-              context.pushReplacementNamed(
-                AuthRoutes.resetPassword,
-                extra: email,
-              );
-            }
-          },
-          builder: (context, state) {
-            final isLoading = state is ForgotPasswordLoading;
-            final errorMessage = AppNetworkStatusScope.isUnavailableOf(context)
-                ? null
-                : state is ForgotPasswordFailure
-                ? state.errorMessage
-                : null;
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight:
-                      MediaQuery.of(context).size.height -
-                      kToolbarHeight -
-                      MediaQuery.of(context).padding.top,
-                ),
-                child: IntrinsicHeight(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          children: [
-                            Text(
-                              'Forgot Password?',
-                              style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: context.colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              "No worries, we'll email you a verification code. Please enter the email address linked to your account.",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: context.colorScheme.onSurfaceVariant,
-                                height: 1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 40),
-                            if (errorMessage != null) ...[
-                              AppErrorBanner(
-                                message: errorMessage,
-                                onRetry: () => _submitResetLink(context),
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'Email Address',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: context.colorScheme.onSurfaceVariant,
-                                  letterSpacing: 1.1,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextField(
-                              keyboardType: TextInputType.emailAddress,
-                              controller: _emailController,
-                              textInputAction: TextInputAction.done,
-                              onSubmitted: (_) => _submitResetLink(context),
-                              decoration: InputDecoration(
-                                hintText: 'Email',
-                                prefixIcon: const Padding(
-                                  padding: EdgeInsets.only(left: 10),
-                                  child: Icon(LucideIcons.mail, size: 20),
-                                ),
-                                filled: false,
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.outline,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.onSurface,
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Column(
-                        children: [
-                          ElevatedButton(
-                            onPressed: isLoading
-                                ? null
-                                : () => _submitResetLink(context),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: context.colorScheme.primary,
-                              foregroundColor: context.colorScheme.onPrimary,
-                              minimumSize: const Size.fromHeight(60),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.lg,
-                                ),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: isLoading
-                                ? SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      color: context.colorScheme.onPrimary,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Send Code',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                          ),
-                          const SizedBox(height: 10),
-                          TextButton(
-                            style: TextButton.styleFrom(
-                              minimumSize: const Size(
-                                AppSize.minimumTouchTarget,
-                                AppSize.minimumTouchTarget,
-                              ),
-                            ),
-                            onPressed: () => context.pop(),
-                            child: Text(
-                              'Back to sign in',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: context.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+          children: [
+            if (state is ForgotPasswordFailure) ...[
+              AppErrorBanner(
+                message: state.errorMessage,
+                onRetry: () => _submitResetLink(context),
               ),
-            );
-          },
-        ),
-      ),
+              const SizedBox(height: AppSpacing.lg),
+            ],
+            Text('Email address', style: context.textStyles.labelMedium),
+            const SizedBox(height: AppSpacing.sm),
+            TextField(
+              enabled: !isLoading,
+              focusNode: _emailFocus,
+              keyboardType: TextInputType.emailAddress,
+              controller: _emailController,
+              textInputAction: TextInputAction.done,
+              autofillHints: const [AutofillHints.email],
+              autocorrect: false,
+              onChanged: (_) {
+                if (_emailError != null) {
+                  setState(() => _emailError = null);
+                }
+              },
+              onSubmitted: (_) => _submitResetLink(context),
+              decoration: InputDecoration(
+                hintText: 'you@example.com',
+                errorText: _emailError,
+                prefixIcon: const Icon(LucideIcons.mail, size: 18),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

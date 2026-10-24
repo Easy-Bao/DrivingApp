@@ -1,7 +1,9 @@
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/auth/auth_routes.dart';
+import 'package:driver/src/features/auth/presentation/view/widgets/driver_auth_layout.dart';
 import 'package:driver/src/features/auth/presentation/bloc/reset_password/reset_password_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -47,6 +49,10 @@ class _ResetPasswordContentState extends State<_ResetPasswordContent> {
   }
 
   void _submit(BuildContext context) {
+    if (BlocProvider.of<ResetPasswordBloc>(context).state
+        is ResetPasswordLoading) {
+      return;
+    }
     FocusScope.of(context).unfocus();
     BlocProvider.of<ResetPasswordBloc>(context).add(
       ResetPasswordSubmitted(
@@ -59,130 +65,104 @@ class _ResetPasswordContentState extends State<_ResetPasswordContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          constraints: const BoxConstraints(
-            minWidth: AppSize.minimumTouchTarget,
-            minHeight: AppSize.minimumTouchTarget,
+    return BlocConsumer<ResetPasswordBloc, ResetPasswordState>(
+      listener: (context, state) {
+        if (state is ResetPasswordSuccess) {
+          TextInput.finishAutofillContext();
+          context.goNamed(AuthRoutes.signin);
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state is ResetPasswordLoading;
+        return DriverAuthLayout(
+          onBack: () => context.pop(),
+          title: 'Reset password',
+          description:
+              'Enter the code sent to ${widget.email} and choose a new password.',
+          footer: FilledButton(
+            onPressed: isLoading ? null : () => _submit(context),
+            child: isLoading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: context.colorScheme.onPrimary,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text('Reset password'),
           ),
-          style: IconButton.styleFrom(shape: const CircleBorder()),
-          icon: Icon(
-            LucideIcons.arrow_left,
-            color: context.colorScheme.onSurface,
-          ),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: SafeArea(
-        child: BlocConsumer<ResetPasswordBloc, ResetPasswordState>(
-          listener: (context, state) {
-            if (state is ResetPasswordSuccess) {
-              context.goNamed(AuthRoutes.signin);
-            }
-          },
-          builder: (context, state) {
-            final isLoading = state is ResetPasswordLoading;
-            final errorMessage = AppNetworkStatusScope.isUnavailableOf(context)
-                ? null
-                : state is ResetPasswordFailure
-                ? state.errorMessage
-                : null;
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+          children: [
+            if (state is ResetPasswordFailure) ...[
+              AppErrorBanner(
+                message: state.errorMessage,
+                onRetry: () => _submit(context),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+            ],
+            AutofillGroup(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Reset Password',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: context.colorScheme.onSurface,
-                    ),
+                    'Verification code',
+                    style: context.textStyles.labelMedium,
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Enter the verification code sent to ${widget.email} and choose a new password.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: context.colorScheme.onSurfaceVariant,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  if (errorMessage != null) ...[
-                    AppErrorBanner(
-                      message: errorMessage,
-                      onRetry: () => _submit(context),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                  const SizedBox(height: AppSpacing.sm),
                   TextField(
+                    enabled: !isLoading,
                     controller: _codeController,
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.oneTimeCode],
+                    autocorrect: false,
                     decoration: const InputDecoration(
-                      hintText: 'Verification code',
-                      prefixIcon: Icon(LucideIcons.shield_check, size: 20),
+                      hintText: 'Enter verification code',
+                      prefixIcon: Icon(LucideIcons.shield_check, size: 18),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text('New password', style: context.textStyles.labelMedium),
+                  const SizedBox(height: AppSpacing.sm),
                   TextField(
+                    enabled: !isLoading,
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     textInputAction: TextInputAction.done,
                     autofillHints: const [AutofillHints.newPassword],
+                    autocorrect: false,
+                    enableSuggestions: false,
                     onSubmitted: (_) => _submit(context),
                     decoration: InputDecoration(
-                      hintText: 'New password',
-                      prefixIcon: const Icon(LucideIcons.lock, size: 20),
+                      hintText: 'Enter a new password',
+                      helperText:
+                          'Use at least ${ResetPasswordBloc.minimumPasswordLength} characters.',
+                      helperMaxLines: 2,
+                      prefixIcon: const Icon(LucideIcons.lock, size: 18),
                       suffixIcon: IconButton(
                         tooltip: _obscurePassword
                             ? 'Show password'
                             : 'Hide password',
+                        onPressed: isLoading
+                            ? null
+                            : () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
                         icon: Icon(
                           _obscurePassword
-                              ? LucideIcons.eye
-                              : LucideIcons.eye_off,
-                          size: 20,
-                        ),
-                        onPressed: () => setState(
-                          () => _obscurePassword = !_obscurePassword,
+                              ? LucideIcons.eye_off
+                              : LucideIcons.eye,
+                          size: 18,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: isLoading ? null : () => _submit(context),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(60),
-                    ),
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text(
-                            'Reset Password',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
                 ],
               ),
-            );
-          },
-        ),
-      ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
