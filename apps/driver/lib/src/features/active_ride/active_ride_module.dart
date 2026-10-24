@@ -1,3 +1,4 @@
+import 'package:driver/src/features/active_ride/presentation/view/driver_trip_page.dart';
 import 'package:driver/src/features/chat/chat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,9 +10,6 @@ import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_
 import 'package:driver/src/features/active_ride/domain/services/ride_payment_completion_handler.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/view/fare_summary_page.dart';
-import 'package:driver/src/features/active_ride/presentation/view/in_transit_page.dart';
-import 'package:driver/src/features/active_ride/presentation/view/pickup_navigation_page.dart';
-import 'package:driver/src/features/active_ride/presentation/view/waiting_passenger_page.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:foundation/foundation.dart';
 
@@ -24,8 +22,8 @@ class ActiveRideModule._() {
 
   static List<ModularRoute> routes = [
     ChildRoute(
-      name: ActiveRideRoutes.pickupNavigation,
-      ActiveRideRoutes.pickupNavigationPath,
+      name: ActiveRideRoutes.trip,
+      ActiveRideRoutes.tripPath,
       child: (context, GoRouterState state) {
         final data = _TripRouteData.tryParse(
           RoutePayload.from(extra: state.extra),
@@ -33,62 +31,14 @@ class ActiveRideModule._() {
         if (data == null) return _tripDataUnavailable();
         return BlocProvider<LiveMapBloc>(
           create: (_) => Modular.get<LiveMapBloc>(),
-          child: PickupNavigationPage(
+          child: DriverTripPage(
             pickup: data.pickup,
             dropoff: data.dropoff,
             distance: data.distance,
             fare: data.fare,
             duration: data.duration,
-            rideRepository: Modular.get<RideRepository>(),
             chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
             sessionService: Modular.get<SessionStore>(),
-            lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
-          ),
-        );
-      },
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: ActiveRideRoutes.waitingPassenger,
-      ActiveRideRoutes.waitingPassengerPath,
-      child: (context, GoRouterState state) {
-        final data = _TripRouteData.tryParse(
-          RoutePayload.from(extra: state.extra),
-        );
-        if (data == null) return _tripDataUnavailable();
-        return WaitingPassengerPage(
-          pickup: data.pickup,
-          dropoff: data.dropoff,
-          distance: data.distance,
-          fare: data.fare,
-          duration: data.duration,
-          rideRepository: Modular.get<RideRepository>(),
-          chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
-          sessionService: Modular.get<SessionStore>(),
-          lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
-        );
-      },
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: ActiveRideRoutes.inTransit,
-      ActiveRideRoutes.inTransitPath,
-      child: (context, GoRouterState state) {
-        final data = _TripRouteData.tryParse(
-          RoutePayload.from(extra: state.extra),
-        );
-        if (data == null) return _tripDataUnavailable();
-        return BlocProvider<LiveMapBloc>(
-          create: (_) => Modular.get<LiveMapBloc>(),
-          child: InTransitPage(
-            pickup: data.pickup,
-            dropoff: data.dropoff,
-            distance: data.distance,
-            fare: data.fare,
-            duration: data.duration,
-
             lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
           ),
         );

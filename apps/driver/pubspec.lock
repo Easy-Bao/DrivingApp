@@ -584,7 +584,7 @@ packages:
     source: hosted
     version: "2.1.3"
   go_router:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: go_router
       sha256: "55973bf1b27790489f8710ea615fe939f911ddcc5986fe97305e4fc19fa29ee9"
@@ -805,7 +805,7 @@ packages:
     source: hosted
     version: "3.33.0"
   mapbox_maps_flutter_platform_interface:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: mapbox_maps_flutter_platform_interface
       sha256: f3b7d77c59c04dccfdadb084429aa83802a878b5280a378f5110b53973f54e36

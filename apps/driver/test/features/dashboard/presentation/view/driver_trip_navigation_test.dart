@@ -124,19 +124,9 @@ void main() {
                 ),
               ),
               GoRoute(
-                path: '/pickup',
-                name: ActiveRideRoutes.pickupNavigation,
-                builder: (_, _) => const Scaffold(body: Text('Pickup stage')),
-              ),
-              GoRoute(
-                path: '/waiting',
-                name: ActiveRideRoutes.waitingPassenger,
-                builder: (_, _) => const Scaffold(body: Text('Waiting stage')),
-              ),
-              GoRoute(
-                path: '/transit',
-                name: ActiveRideRoutes.inTransit,
-                builder: (_, _) => const Scaffold(body: Text('Transit stage')),
+                path: '/trip',
+                name: ActiveRideRoutes.trip,
+                builder: (_, _) => const Scaffold(body: Text('Active trip')),
               ),
             ],
           );
@@ -184,11 +174,7 @@ void main() {
             await tester.pumpAndSettle();
           }
           expect(
-            find.text(switch (status) {
-              'arrived' => 'Waiting stage',
-              'in_transit' => 'Transit stage',
-              _ => 'Pickup stage',
-            }),
+            find.text('Active trip'),
             scenario == 'closedDuringReview' ? findsNothing : findsOneWidget,
           );
           if (scenario == 'closedDuringReview') {

@@ -1,4 +1,3 @@
-import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_completion_slider.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/ride_confirmation_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -15,10 +14,15 @@ void main() {
           body: Padding(
             padding: const EdgeInsets.all(16),
             child: StatefulBuilder(
-              builder: (context, setState) => InTransitCompletionSlider(
+              builder: (context, setState) => RideConfirmationSlider(
+                label: 'Slide to complete trip',
+                releaseLabel: 'Release to complete',
+                processingLabel: 'Completing trip…',
+                hint: 'Swipe right to complete the trip.',
+                isProcessing: false,
                 progress: progress,
                 onProgressChanged: (value) => setState(() => progress = value),
-                onCompleteTripPressed: () => completionCount++,
+                onConfirmed: () => completionCount++,
               ),
             ),
           ),

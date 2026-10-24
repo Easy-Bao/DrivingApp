@@ -808,13 +808,6 @@ class _DashboardPageState extends State<DashboardPage>
     if (fare == null || distance == null || duration == null) {
       return false;
     }
-    final status = resolvedTrip.status;
-    String routeName = ActiveRideRoutes.pickupNavigation;
-    if (status == 'arrived') {
-      routeName = ActiveRideRoutes.waitingPassenger;
-    } else if (status == 'in_transit') {
-      routeName = ActiveRideRoutes.inTransit;
-    }
 
     final resumed = await rideFlowCubit.resumeRide(
       rideId: rideId,
@@ -833,7 +826,7 @@ class _DashboardPageState extends State<DashboardPage>
     if (!resumed || !mounted || !context.mounted) return false;
 
     context.pushNamed(
-      routeName,
+      ActiveRideRoutes.trip,
       extra: {
         'pickup': resolvedTrip.pickupName,
         'dropoff': resolvedTrip.dropoffName,
