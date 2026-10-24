@@ -6,14 +6,12 @@ import 'package:passenger/src/features/active_ride/domain/repositories/track_rep
 class const SafetyReportButton({
   super.key,
   required this.rideId,
-  this.bookingReference = '',
   this.driverName = '',
   this.vehiclePlate = '',
   this.vehicleType = '',
   required this.trackRepository,
 }) extends StatelessWidget {
   final String? rideId;
-  final String bookingReference;
   final String driverName;
   final String vehiclePlate;
   final String vehicleType;
@@ -30,7 +28,6 @@ class const SafetyReportButton({
                 await showSafetyReportSheet(
                   context,
                   rideId: rideId!,
-                  bookingReference: bookingReference,
                   driverName: driverName,
                   vehiclePlate: vehiclePlate,
                   vehicleType: vehicleType,
@@ -48,7 +45,6 @@ class const SafetyReportButton({
 Future<bool> showSafetyReportSheet(
   BuildContext context, {
   required String rideId,
-  String bookingReference = '',
   String driverName = '',
   String vehiclePlate = '',
   String vehicleType = '',
@@ -58,13 +54,11 @@ Future<bool> showSafetyReportSheet(
     context,
     title: 'Report a driver issue',
     reasons: _passengerSafetyReportOptions,
-    tripSummary:
-        driverName.trim().isNotEmpty || bookingReference.trim().isNotEmpty
+    tripSummary: driverName.trim().isNotEmpty
         ? _ReportTripSummary(
             name: driverName,
             plate: vehiclePlate,
             vehicle: vehicleType,
-            bookingReference: bookingReference,
           )
         : null,
     onSubmit: (category, description) async {
@@ -95,12 +89,10 @@ class const _ReportTripSummary({
   required this.name,
   required this.plate,
   required this.vehicle,
-  required this.bookingReference,
 }) extends StatelessWidget {
   final String name;
   final String plate;
   final String vehicle;
-  final String bookingReference;
 
   @override
   Widget build(BuildContext context) {
@@ -156,14 +148,7 @@ class const _ReportTripSummary({
                   ),
                 ],
               ),
-              if (bookingReference.trim().isNotEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(top: AppSpacing.md),
-                  child: Divider(height: 1),
-                ),
             ],
-            if (bookingReference.trim().isNotEmpty)
-              TripReference(id: bookingReference, compact: true),
           ],
         ),
       ),

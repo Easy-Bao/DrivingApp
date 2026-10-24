@@ -29,7 +29,6 @@ class const FareSummaryPage({
   required this.duration,
   required this.ridePaymentCompletionHandler,
   this.rideId,
-  this.bookingReference = '',
   this.rideRepository,
 }) extends StatefulWidget {
   final String pickup;
@@ -39,7 +38,6 @@ class const FareSummaryPage({
   final double fare;
   final RidePaymentCompletionHandler ridePaymentCompletionHandler;
   final String? rideId;
-  final String bookingReference;
   final RideRepository? rideRepository;
 
   @override
@@ -540,9 +538,6 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       tilePadding: EdgeInsets.zero,
       childrenPadding: const EdgeInsets.only(bottom: 16),
       children: [
-        if (widget.bookingReference.trim().isNotEmpty) ...[
-          const SizedBox(height: 16),
-        ],
         CompactRouteTimeline(pickup: widget.pickup, dropoff: widget.dropoff),
         const SizedBox(height: 16),
         Wrap(
@@ -557,15 +552,9 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
           ],
         ),
         if (widget.rideId?.isNotEmpty == true && widget.rideRepository != null)
-          Row(
-            children: [
-              const Expanded(child: Text('Report an issue')),
-              SafetyReportButton(
-                bookingReference: widget.bookingReference,
-                rideId: widget.rideId,
-                rideRepository: widget.rideRepository!,
-              ),
-            ],
+          SafetyReportButton(
+            rideId: widget.rideId,
+            rideRepository: widget.rideRepository!,
           ),
       ],
     );

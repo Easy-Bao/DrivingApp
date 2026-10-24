@@ -14,32 +14,31 @@ Future<bool> showTripSafetyReportForm(
   onSubmit,
   Widget? tripSummary,
 }) async {
-  final submitted =
-      await showModalBottomSheet<bool>(
-        context: context,
-        isScrollControlled: true,
-        showDragHandle: true,
-        useSafeArea: true,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.sheet),
-          ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        builder: (_) => TripSafetyReportForm(
-          title: title,
-          reasons: reasons,
-          tripSummary: tripSummary,
-          onSubmit: onSubmit,
-        ),
-      ) ??
-      false;
-  if (submitted && context.mounted) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Report submitted.')));
-  }
-  return submitted;
+  var reportSaved = false;
+  await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    useSafeArea: true,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(AppRadius.sheet),
+      ),
+    ),
+    clipBehavior: Clip.antiAlias,
+    builder: (_) => TripSafetyReportForm(
+      title: title,
+      reasons: reasons,
+      tripSummary: tripSummary,
+      onSubmit: (category, description) async {
+        final error = await onSubmit(category, description);
+        if (error == null) reportSaved = true;
+        return error;
+      },
+    ),
+  );
+  return reportSaved;
 }
 
 class TripSafetyReportForm extends StatefulWidget {
@@ -66,6 +65,7 @@ class _TripSafetyReportFormState extends State<TripSafetyReportForm> {
   String? _category;
   String? _errorMessage;
   bool _isSubmitting = false;
+  bool _isSubmitted = false;
 
   bool get _canSubmit =>
       !_isSubmitting &&
@@ -81,7 +81,7 @@ class _TripSafetyReportFormState extends State<TripSafetyReportForm> {
   Future<void> _submit() async {
     final category = _category;
     final description = _descriptionController.text.trim();
-    if (_isSubmitting) return;
+    if (_isSubmitting || _isSubmitted) return;
     if (category == null || description.isEmpty) {
       setState(
         () => _errorMessage = 'Choose a reason and describe what happened.',
@@ -107,12 +107,67 @@ class _TripSafetyReportFormState extends State<TripSafetyReportForm> {
       });
       return;
     }
-    Navigator.of(context).pop(true);
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _isSubmitting = false;
+      _isSubmitted = true;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
+    if (_isSubmitted) {
+      return SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.xxl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: AppSpacing.lg),
+              CircleAvatar(
+                radius: 32,
+                backgroundColor: colors.primaryContainer,
+                child: Icon(
+                  Icons.check_rounded,
+                  size: 32,
+                  color: colors.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xxl),
+              Semantics(
+                liveRegion: true,
+                header: true,
+                child: Text(
+                  'Report received',
+                  textAlign: TextAlign.center,
+                  style: context.textStyles.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'Thank you for letting us know. Your report has been saved.',
+                textAlign: TextAlign.center,
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xxl),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Done'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: ConstrainedBox(

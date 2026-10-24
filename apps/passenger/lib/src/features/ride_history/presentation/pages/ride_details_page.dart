@@ -376,7 +376,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
               driverName: driverName,
               vehiclePlate: ride?.vehiclePlate ?? snapshot?.plateNumber ?? '',
               vehicleType: ride?.vehicleType ?? snapshot?.vehicleType ?? '',
-              bookingReference: reference,
               rideId: rideId,
               trackRepository: widget.trackRepository,
             ),

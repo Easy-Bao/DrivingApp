@@ -30,7 +30,6 @@ void main() {
           duration: '5 min',
           distance: 2.5,
           fare: 29.69,
-          bookingReference: '701612345678901',
           ridePaymentCompletionHandler:
               const _NoOpRidePaymentCompletionHandler(),
         ),

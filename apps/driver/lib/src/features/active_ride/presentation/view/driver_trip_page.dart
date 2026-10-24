@@ -195,7 +195,6 @@ class _DriverTripPageState extends State<DriverTripPage> {
       ActiveRideRoutes.fareSummary,
       extra: {
         'rideId': _rideCubit.activeRideId,
-        'bookingReference': _rideCubit.activeBookingReference,
         'pickup': widget.pickup,
         'dropoff': widget.dropoff,
         'distance': widget.distance,

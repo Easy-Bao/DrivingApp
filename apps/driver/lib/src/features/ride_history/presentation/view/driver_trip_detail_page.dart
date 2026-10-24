@@ -269,11 +269,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
             if (widget.rideRepository case final repository?
                 when isCompleted && tripId.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.lg),
-              SafetyReportButton(
-                bookingReference: reference,
-                rideId: tripId,
-                rideRepository: repository,
-              ),
+              SafetyReportButton(rideId: tripId, rideRepository: repository),
             ],
           ],
         ),

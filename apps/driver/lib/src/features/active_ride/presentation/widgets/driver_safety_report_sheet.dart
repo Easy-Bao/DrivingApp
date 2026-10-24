@@ -6,11 +6,9 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 class const SafetyReportButton({
   super.key,
   required this.rideId,
-  this.bookingReference = '',
   required this.rideRepository,
 }) extends StatelessWidget {
   final String? rideId;
-  final String bookingReference;
   final RideRepository rideRepository;
 
   @override
@@ -24,7 +22,6 @@ class const SafetyReportButton({
                 await showSafetyReportSheet(
                   context,
                   rideId: rideId!,
-                  bookingReference: bookingReference,
                   rideRepository: rideRepository,
                 );
               }
@@ -39,16 +36,12 @@ class const SafetyReportButton({
 Future<bool> showSafetyReportSheet(
   BuildContext context, {
   required String rideId,
-  String bookingReference = '',
   required RideRepository rideRepository,
 }) async {
   return showTripSafetyReportForm(
     context,
     title: 'Report a passenger issue',
     reasons: _driverSafetyReportOptions,
-    tripSummary: bookingReference.trim().isNotEmpty
-        ? TripReference(id: bookingReference, compact: true)
-        : null,
     onSubmit: (category, description) async {
       final result = await rideRepository.createSafetyReportResult(
         rideId: rideId,

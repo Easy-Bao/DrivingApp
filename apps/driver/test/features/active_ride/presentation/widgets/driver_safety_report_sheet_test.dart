@@ -92,6 +92,10 @@ void main() {
       ),
     ).called(1);
     expect(find.text('Report a passenger issue'), findsNothing);
-    await tester.pump(const Duration(seconds: 3));
+    expect(find.text('Report received'), findsOneWidget);
+    expect(find.byType(BottomSheet), findsOneWidget);
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsNothing);
   });
 }

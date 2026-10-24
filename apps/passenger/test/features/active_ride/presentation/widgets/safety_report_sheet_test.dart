@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
@@ -28,7 +27,6 @@ Future<void> _openSheet(
       home: Scaffold(
         body: SafetyReportButton(
           rideId: 'ride-7',
-          bookingReference: ' 701601587502940 ',
           driverName: 'Alex Driver',
           vehiclePlate: 'ABC 2034',
           vehicleType: 'Tricycle',
@@ -98,28 +96,12 @@ void main() {
     );
   });
 
-  testWidgets('copies only the booking ID to the clipboard', (tester) async {
-    final repository = _MockTrackRepository();
-    String? copied;
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      SystemChannels.platform,
-      (call) async {
-        if (call.method == 'Clipboard.setData') {
-          copied = (call.arguments as Map)['text'] as String;
-        }
-        return null;
-      },
-    );
-    addTearDown(
-      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        SystemChannels.platform,
-        null,
-      ),
-    );
-    await _openSheet(tester, repository);
-    await tester.tap(find.byTooltip('Copy Booking ID'));
-    await tester.pump();
-    expect(copied, '701601587502940');
+  testWidgets('report form does not repeat the receipt reference', (
+    tester,
+  ) async {
+    await _openSheet(tester, _MockTrackRepository());
+    expect(find.textContaining('Booking ID'), findsNothing);
+    expect(find.byTooltip('Copy Booking ID'), findsNothing);
   });
 
   testWidgets(
@@ -153,7 +135,12 @@ void main() {
         ),
       ).called(1);
       expect(find.text('Report a driver issue'), findsNothing);
-      expect(find.text('Report submitted.'), findsOneWidget);
+      expect(find.text('Report received'), findsOneWidget);
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(find.text('Submit report'), findsNothing);
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsNothing);
       await tester.pump(const Duration(seconds: 4));
     },
   );
