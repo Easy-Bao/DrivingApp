@@ -511,25 +511,9 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
               );
             } else if (state is BookingDriverMatched) {
               unawaited(HapticFeedback.lightImpact());
-              final match = state.matchResult;
-              final navExtra = <String, dynamic>{
-                'destination': widget.destination,
-                'distance': widget.distance,
-                'duration': widget.duration,
-                'pickupAddress': widget.pickupAddress,
-                'driverId': match.driverId,
-                'driverName': match.driverName,
-                'driverRating': match.driverRating,
-                'vehicleType': match.vehicleType,
-                'plateNumber': match.plateNumber,
-                'fare': match.proposedFare,
-                'pickupLatitude': widget.pickupLatitude,
-                'pickupLongitude': widget.pickupLongitude,
-                'rideId': state.rideId,
-              };
               context.pushReplacementNamed(
-                ActiveRideRoutes.driverMatched,
-                extra: navExtra,
+                ActiveRideRoutes.trackDriver,
+                extra: state.rideId,
               );
             } else if (state is BookingFailure) {
               _acceptingOfferId = null;
