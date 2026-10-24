@@ -33,13 +33,13 @@ void main() {
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pump();
 
-    await tester.tap(find.text('Sign Up'));
+    await tester.tap(find.text('Sign up'));
     await tester.pumpAndSettle();
     expect(find.text('Sign up screen'), findsOneWidget);
 
     router.pop();
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Log In'));
+    await tester.tap(find.text('Log in'));
     await tester.pumpAndSettle();
     expect(find.text('Sign in screen'), findsOneWidget);
 
