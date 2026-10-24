@@ -115,14 +115,20 @@ void main() {
           cursor: any(named: 'cursor'),
         ),
       ).thenAnswer(
-        (_) async => const OffsetPage<Map<String, dynamic>>(
+        (_) async => OffsetPage<Map<String, dynamic>>(
           items: [
             <String, dynamic>{
               'id': 7,
               'pickup_name': 'Pickup, City',
               'dropoff_name': 'Destination, City',
               'created_at': '2026-08-18T08:00:00Z',
-              'completed_at': '2026-08-18T09:30:00Z',
+              'completed_at': DateTime(
+                2026,
+                8,
+                18,
+                17,
+                30,
+              ).toUtc().toIso8601String(),
               'fare_amount': 2817,
               'status': 'completed',
               'driver_id': 2,
