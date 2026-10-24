@@ -10,11 +10,8 @@ import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
-import 'package:driver/src/features/dashboard/presentation/widgets/driver_active_trip_card.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_availability_card.dart';
-import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard_section_label.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard_stats_row.dart';
-import 'package:driver/src/features/dashboard/presentation/widgets/driver_pool_bid_card.dart';
 import 'package:driver/src/features/dashboard/presentation/view/incoming_ride_request_page.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
@@ -69,6 +66,10 @@ class _DashboardPageState extends State<DashboardPage>
   bool _isRefreshingPresence = false;
   bool? _pendingOnline;
   bool _isShowingRequest = false;
+  bool _isOpeningTrip = false;
+  bool _tripNavigationScheduled = false;
+  String? _attemptedTripId;
+  String? _tripNavigationError;
   int _pollGeneration = 0;
   int _locationAccessFailures = 0;
   bool _isCheckingLocationAccess = false;
@@ -101,6 +102,7 @@ class _DashboardPageState extends State<DashboardPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final dashboardState = BlocProvider.of<DashboardCubit>(context).state;
+        _scheduleActiveTripNavigation();
         unawaited(_showIncomingRequest());
         _syncPulseAnimation(dashboardState.isOnline);
         _startLocationAccessMonitoring();
@@ -168,6 +170,7 @@ class _DashboardPageState extends State<DashboardPage>
     final isOnline = BlocProvider.of<DashboardCubit>(context).state.isOnline;
     _syncPulseAnimation(isOnline);
     _startRequestCountdownTimer();
+    _scheduleActiveTripNavigation();
     unawaited(_showIncomingRequest());
     unawaited(_resumeForegroundWork());
   }
@@ -683,10 +686,16 @@ class _DashboardPageState extends State<DashboardPage>
     }
     final cubit = BlocProvider.of<DashboardCubit>(context);
     final state = cubit.state;
-    if (!state.isOnline || state.hasActiveRide || state.activeBids.isEmpty) {
+    if (!state.isOnline ||
+        state.hasActiveRide ||
+        (state.activeBids.isEmpty && state.submittedOffers.isEmpty)) {
       return;
     }
-    final sessionId = valueAsString(state.activeBids.first['id']);
+    final sessionId = valueAsString(
+      (state.submittedOffers.isNotEmpty
+          ? state.submittedOffers.first
+          : state.activeBids.first)['id'],
+    );
     if (sessionId == null) return;
     _isShowingRequest = true;
     try {
@@ -701,30 +710,73 @@ class _DashboardPageState extends State<DashboardPage>
       _isShowingRequest = false;
     }
     if (mounted) {
+      _scheduleActiveTripNavigation();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) unawaited(_showIncomingRequest());
       });
     }
   }
 
-  Future<RideSnapshot> _authoritativeTrip(RideSnapshot trip) async {
-    final ride = await BlocProvider.of<DashboardCubit>(context)
-        .fetchAuthoritativeRide(trip.id);
-    return ride ?? trip;
+  void _scheduleActiveTripNavigation() {
+    if (_tripNavigationScheduled || !mounted) return;
+    _tripNavigationScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _tripNavigationScheduled = false;
+      if (mounted) unawaited(_openActiveTrip());
+    });
   }
 
-  Future<void> _resumeTrip(RideSnapshot trip) async {
+  Future<void> _openActiveTrip({bool retry = false}) async {
+    if (!mounted ||
+        !_isForeground ||
+        _isOpeningTrip ||
+        _isShowingRequest ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    final trip = BlocProvider.of<DashboardCubit>(context).state.activeRide;
+    if (trip == null ||
+        (_attemptedTripId == trip.id &&
+            _tripNavigationError != null &&
+            !retry)) {
+      return;
+    }
+    setState(() {
+      _isOpeningTrip = true;
+      _attemptedTripId = trip.id;
+      _tripNavigationError = null;
+    });
+    var opened = false;
+    try {
+      opened = await _resumeTrip(trip);
+    } catch (_) {
+      opened = false;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isOpeningTrip = false;
+          if (!opened) {
+            _tripNavigationError = 'Your trip could not be opened. Refresh its status and try again.';
+          }
+        });
+      }
+    }
+  }
+
+  Future<bool> _resumeTrip(RideSnapshot trip) async {
     final rideId = trip.id;
     final rideFlowCubit = BlocProvider.of<RideFlowCubit>(context);
-    final resolvedTrip = await _authoritativeTrip(trip);
-    if (!mounted || !context.mounted) return;
-    if (await _discardTerminalTrip(resolvedTrip, rideId)) return;
-    if (!mounted || !context.mounted) return;
+    final resolvedTrip = await BlocProvider.of<DashboardCubit>(context)
+        .fetchAuthoritativeRide(trip.id);
+    if (resolvedTrip == null) return false;
+    if (!mounted || !context.mounted) return false;
+    if (await _discardTerminalTrip(resolvedTrip, rideId)) return true;
+    if (!mounted || !context.mounted) return false;
     final fare = resolvedTrip.farePesos;
     final distance = resolvedTrip.distanceKm;
     final duration = resolvedTrip.durationMinutes;
     if (fare == null || distance == null || duration == null) {
-      return;
+      return false;
     }
     final status = resolvedTrip.status;
     String routeName = ActiveRideRoutes.pickupNavigation;
@@ -748,7 +800,7 @@ class _DashboardPageState extends State<DashboardPage>
       arrivedAt: resolvedTrip.arrivedAt,
       waitingUntil: resolvedTrip.waitingUntil,
     );
-    if (!resumed || !mounted || !context.mounted) return;
+    if (!resumed || !mounted || !context.mounted) return false;
 
     context.pushNamed(
       routeName,
@@ -760,6 +812,7 @@ class _DashboardPageState extends State<DashboardPage>
         'duration': '${duration.toStringAsFixed(0)} min',
       },
     );
+    return true;
   }
 
   Future<bool> _discardTerminalTrip(RideSnapshot trip, String rideId) async {
@@ -781,6 +834,7 @@ class _DashboardPageState extends State<DashboardPage>
         BlocListener<DashboardCubit, DashboardState>(
           listenWhen: (previous, current) =>
               previous.activeBids != current.activeBids ||
+              previous.submittedOffers != current.submittedOffers ||
               previous.isOnline != current.isOnline,
           listener: (_, _) => unawaited(_showIncomingRequest()),
         ),
@@ -835,16 +889,13 @@ class _DashboardPageState extends State<DashboardPage>
             previous.submittedOffers != current.submittedOffers,
         builder: (context, state) {
           final activeRide = state.activeRide;
-          final submittedOffers = state.hasActiveRide
-              ? const <Map<String, dynamic>>[]
-              : state.submittedOffers;
+          if (activeRide != null && ModalRoute.of(context)?.isCurrent == true) {
+            _scheduleActiveTripNavigation();
+          }
           final dashboardMessage = state.errorMessage;
           final showDashboardError =
               dashboardMessage != null &&
               !AppNetworkStatusScope.isUnavailableOf(context);
-          final showFeed =
-              state.hasActiveRide ||
-              (state.isOnline && submittedOffers.isNotEmpty);
           return Column(
             children: [
               if (showDashboardError)
@@ -906,44 +957,42 @@ class _DashboardPageState extends State<DashboardPage>
                                     const SizedBox(height: 24),
                                   ],
                                 ),
-                                if (showFeed)
-                                  SliverPadding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                    ),
-                                    sliver: SliverList.list(
-                                      children: [
-                                        if (activeRide != null) ...[
-                                          const DashboardSectionLabel(
-                                            label: 'Current Active Trip',
-                                          ),
-                                          const SizedBox(height: 10),
-                                          ActiveTripCard(
-                                            key: ValueKey<String>(
-                                              activeRide.id,
-                                            ),
-                                            trip: activeRide,
-                                            onResume: () =>
-                                                _resumeTrip(activeRide),
-                                          ),
-                                          const SizedBox(height: 24),
-                                        ],
-                                        if (submittedOffers.isNotEmpty) ...[
-                                          const DashboardSectionLabel(
-                                            label: 'Awaiting passenger confirmation',
-                                          ),
-                                          const SizedBox(height: 10),
-                                          ...submittedOffers.map(
-                                            (bid) => PoolBidCard(
-                                              bid: bid,
-                                              submittingBidId: null,
-                                              onDecline: null,
-                                              onSubmitOffer: null,
-                                            ),
-                                          ),
-                                        ],
-                                        const SizedBox(height: 24),
-                                      ],
+                                if (activeRide != null)
+                                  SliverFillRemaining(
+                                    hasScrollBody: false,
+                                    child: Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(
+                                          AppSpacing.lg,
+                                        ),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (_tripNavigationError ==
+                                                null) ...[
+                                              const CircularProgressIndicator(),
+                                              const SizedBox(
+                                                height: AppSpacing.md,
+                                              ),
+                                              const Text('Opening your trip…'),
+                                            ] else ...[
+                                              Text(
+                                                _tripNavigationError!,
+                                                textAlign: TextAlign.center,
+                                              ),
+                                              const SizedBox(
+                                                height: AppSpacing.md,
+                                              ),
+                                              FilledButton(
+                                                onPressed: () => unawaited(
+                                                  _openActiveTrip(retry: true),
+                                                ),
+                                                child: const Text('Try again'),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   )
                                 else

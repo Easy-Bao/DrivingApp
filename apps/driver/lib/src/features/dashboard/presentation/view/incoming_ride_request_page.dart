@@ -26,12 +26,13 @@ class IncomingRideRequestPage extends StatefulWidget {
 class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
   Timer? _timer;
   bool _submitting = false;
+  bool _accepted = false;
   bool _closing = false;
   String? _error;
 
   Map<String, dynamic>? _request(DashboardState state) {
     if (!state.isOnline || state.hasActiveRide) return null;
-    for (final bid in state.activeBids) {
+    for (final bid in [...state.activeBids, ...state.submittedOffers]) {
       if (valueAsString(bid['id']) == widget.sessionId) return bid;
     }
     return null;
@@ -68,7 +69,9 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
     Map<String, dynamic> bid, {
     required bool accept,
   }) async {
-    if (_submitting || _request(widget.cubit.state) == null) return;
+    if (_submitting || _accepted || _request(widget.cubit.state) == null) {
+      return;
+    }
     final expiry = DateTime.tryParse(valueAsString(bid['expires_at']) ?? '');
     if (expiry != null && !expiry.isAfter(DateTime.now())) {
       widget.cubit.removeExpiredRideOffers();
@@ -93,7 +96,12 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
       succeeded = true;
     }
     if (!mounted) return;
-    if (succeeded) {
+    if (succeeded && accept) {
+      setState(() {
+        _accepted = true;
+        _submitting = false;
+      });
+    } else if (succeeded) {
       _close();
     } else {
       setState(() {
@@ -120,6 +128,11 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
           .inSeconds
           .clamp(0, 3599);
       final fare = bid == null ? null : fareInPesos(bid);
+      final awaitingAssignment =
+          _accepted ||
+          state.submittedOffers.any(
+            (offer) => valueAsString(offer['id']) == widget.sessionId,
+          );
       return PopScope(
         canPop: _closing,
         child: Scaffold(
@@ -204,22 +217,35 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
                             ),
                             const SizedBox(height: AppSpacing.md),
                           ],
-                          FilledButton(
-                            onPressed:
-                                _submitting || bid == null || fare == null
-                                ? null
-                                : () => unawaited(_respond(bid, accept: true)),
-                            child: Text(
-                              _submitting ? 'Sending response…' : 'Accept ride',
+                          if (awaitingAssignment) ...[
+                            const LinearProgressIndicator(),
+                            const SizedBox(height: AppSpacing.md),
+                            const Text(
+                              'Confirming your trip…',
+                              textAlign: TextAlign.center,
                             ),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          OutlinedButton(
-                            onPressed: _submitting || bid == null
-                                ? null
-                                : () => unawaited(_respond(bid, accept: false)),
-                            child: const Text('Decline'),
-                          ),
+                          ] else ...[
+                            FilledButton(
+                              onPressed:
+                                  _submitting || bid == null || fare == null
+                                  ? null
+                                  : () =>
+                                        unawaited(_respond(bid, accept: true)),
+                              child: Text(
+                                _submitting
+                                    ? 'Sending response…'
+                                    : 'Accept ride',
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            OutlinedButton(
+                              onPressed: _submitting || bid == null
+                                  ? null
+                                  : () =>
+                                        unawaited(_respond(bid, accept: false)),
+                              child: const Text('Decline'),
+                            ),
+                          ],
                         ],
                       ),
                     ),

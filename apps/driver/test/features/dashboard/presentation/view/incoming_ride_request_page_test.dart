@@ -77,6 +77,10 @@ void main() {
     verify(() => cubit.submitRideOffer(sessionId: 'request', farePesos: 120))
         .called(1);
     response.complete(true);
+    await tester.pump();
+    expect(find.text('Confirming your trip…'), findsOneWidget);
+    expect(find.text('Accept ride'), findsNothing);
+    states.add(const DashboardState(isOnline: true));
     await tester.pumpAndSettle();
     expect(find.text('Open request'), findsOneWidget);
   });
