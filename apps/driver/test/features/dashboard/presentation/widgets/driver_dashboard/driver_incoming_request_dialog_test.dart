@@ -33,11 +33,11 @@ void main() {
       ),
     );
 
-    expect(find.text('Open Ride Offer'), findsOneWidget);
-    expect(find.text('Submit Offer'), findsOneWidget);
+    expect(find.text('Ride request'), findsOneWidget);
+    expect(find.text('Accept fare'), findsOneWidget);
     expect(find.text('Ayala Center Cebu'), findsOneWidget);
     expect(find.text('IT Park Tower 1'), findsOneWidget);
-    expect(find.text('₱250'), findsOneWidget);
+    expect(find.text('₱250.00'), findsOneWidget);
     expect(find.text('3.5 km away'), findsOneWidget);
     expect(find.text('Waiting near the main entrance'), findsOneWidget);
     expect(

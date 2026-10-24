@@ -250,7 +250,7 @@ class _IncomingRequestDialogState extends State<IncomingRequestDialog>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Open Ride Offer',
+                                  'Ride request',
                                   style: TextStyle(
                                     fontSize: 19,
                                     fontWeight: FontWeight.w800,
@@ -365,6 +365,10 @@ class _IncomingRequestDialogState extends State<IncomingRequestDialog>
                           ),
                         ),
                       ],
+                      Text(
+                        'The passenger confirms the driver before pickup.',
+                        style: context.textStyles.bodySmall,
+                      ),
                       const SizedBox(height: 16),
                       Divider(
                         height: 1,
@@ -481,7 +485,7 @@ class _IncomingRequestDialogState extends State<IncomingRequestDialog>
                                       ),
                                     )
                                   : Text(
-                                      'Submit Offer',
+                                      'Accept fare',
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w700,

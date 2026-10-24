@@ -93,7 +93,7 @@ class _BidCountdownHeaderState extends State<_BidCountdownHeader> {
     return Row(
       children: [
         Text(
-          widget.hasSubmittedOffer ? 'Offer Submitted' : 'Open Ride Offer',
+          widget.hasSubmittedOffer ? 'Awaiting confirmation' : 'Ride request',
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w800,
@@ -244,12 +244,19 @@ class PoolBidCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: const Text(
-                'Waiting for the passenger to accept your offer.',
+                'Waiting for the passenger to confirm you as their driver.',
                 key: ValueKey('submitted-offer-status'),
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ),
           ] else ...[
+            const SizedBox(height: 8),
+            Text(
+              'The passenger confirms the driver before pickup.',
+              style: context.textStyles.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -302,7 +309,7 @@ class PoolBidCard extends StatelessWidget {
                             ),
                           )
                         : Text(
-                            'Submit Offer',
+                            'Accept fare',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,

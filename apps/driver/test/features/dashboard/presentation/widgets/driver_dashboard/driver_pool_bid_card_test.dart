@@ -15,29 +15,32 @@ void main() {
         .toIso8601String(),
   };
 
-  testWidgets('labels the action as submitting an offer', (tester) async {
-    var submitted = false;
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.main,
-        home: Scaffold(
-          body: PoolBidCard(
-            bid: session,
-            submittingBidId: null,
-            onDecline: () {},
-            onSubmitOffer: () => submitted = true,
+  testWidgets(
+    'accepts the displayed fare and waits for passenger confirmation',
+    (tester) async {
+      var submitted = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: Scaffold(
+            body: PoolBidCard(
+              bid: session,
+              submittingBidId: null,
+              onDecline: () {},
+              onSubmitOffer: () => submitted = true,
+            ),
           ),
         ),
-      ),
-    );
+      );
 
-    expect(find.text('Open Ride Offer'), findsOneWidget);
-    expect(find.text('Submit Offer'), findsOneWidget);
-    expect(find.text('Accept'), findsNothing);
+      expect(find.text('Ride request'), findsOneWidget);
+      expect(find.text('Accept fare'), findsOneWidget);
+      expect(find.text('Accept'), findsNothing);
 
-    await tester.tap(find.text('Submit Offer'));
-    expect(submitted, isTrue);
-  });
+      await tester.tap(find.text('Accept fare'));
+      expect(submitted, isTrue);
+    },
+  );
 
   testWidgets('shows a pending offer without another submission action', (
     tester,
@@ -63,13 +66,13 @@ void main() {
       ),
     );
 
-    expect(find.text('Offer Submitted'), findsOneWidget);
+    expect(find.text('Awaiting confirmation'), findsOneWidget);
     expect(find.text('₱275.00'), findsOneWidget);
     expect(
-      find.text('Waiting for the passenger to accept your offer.'),
+      find.text('Waiting for the passenger to confirm you as their driver.'),
       findsOneWidget,
     );
-    expect(find.text('Submit Offer'), findsNothing);
+    expect(find.text('Accept fare'), findsNothing);
     expect(find.text('Decline'), findsNothing);
   });
 

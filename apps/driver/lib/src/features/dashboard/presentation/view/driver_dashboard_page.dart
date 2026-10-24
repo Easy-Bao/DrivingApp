@@ -913,7 +913,7 @@ class _DashboardPageState extends State<DashboardPage>
                                         ],
                                         if (submittedOffers.isNotEmpty) ...[
                                           const DashboardSectionLabel(
-                                            label: 'Your Submitted Offers',
+                                            label: 'Awaiting passenger confirmation',
                                           ),
                                           const SizedBox(height: 10),
                                           ...submittedOffers.map(
@@ -927,7 +927,7 @@ class _DashboardPageState extends State<DashboardPage>
                                         ],
                                         if (activeBids.isNotEmpty) ...[
                                           const DashboardSectionLabel(
-                                            label: 'Open Ride Offers',
+                                            label: 'Ride requests',
                                           ),
                                           const SizedBox(height: 10),
                                           ...activeBids.map(
