@@ -49,6 +49,29 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
     result.fold((_) {}, (peer) => emit(state.copyWith(peer: peer)));
   }
 
+  Future<Result<String, Failure>> resolveCallPhone() async {
+    final roomId = _roomId;
+    if (roomId == null || isClosed) {
+      return const Err(ValidationFailure('Trip contact is unavailable.'));
+    }
+    // Refresh permission at the moment of calling; a visible chat can outlive
+    // the server's contact window.
+    final result = await _chatRepository.fetchPeer(roomId);
+    if (isClosed) {
+      return const Err(ValidationFailure('Trip contact is unavailable.'));
+    }
+    return result.fold((failure) => Err(failure), (peer) {
+      emit(state.copyWith(peer: peer));
+      return peer.canCall
+          ? Ok(peer.phone.trim())
+          : const Err(
+              ValidationFailure(
+                'Calling is no longer available for this trip.',
+              ),
+            );
+    });
+  }
+
   Future<void> connectToChatRoom({
     required String roomId,
     Uri? chatUri,

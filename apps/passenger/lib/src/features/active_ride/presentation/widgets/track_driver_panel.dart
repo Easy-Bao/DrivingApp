@@ -18,7 +18,6 @@ class const TrackDriverPanel({
   this.showContactActions = true,
   this.isCancellingTrip = false,
   this.isInTransit,
-  required this.onCallDriverPressed,
   required this.onChatDriverPressed,
   required this.onReportDriverPressed,
   required this.onCancelTripPressed,
@@ -36,7 +35,6 @@ class const TrackDriverPanel({
   final bool showContactActions;
   final bool isCancellingTrip;
   final bool? isInTransit;
-  final VoidCallback onCallDriverPressed;
   final VoidCallback onChatDriverPressed;
   final VoidCallback onReportDriverPressed;
   final VoidCallback onCancelTripPressed;
@@ -145,32 +143,17 @@ class const TrackDriverPanel({
             ),
             if (showContactActions) ...[
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Badge(
-                      isLabelVisible: unreadChatMessagesCount > 0,
-                      label: Text('$unreadChatMessagesCount'),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: onChatDriverPressed,
-                          icon: const Icon(
-                            LucideIcons.message_circle,
-                            size: 20,
-                          ),
-                          label: const Text('Message driver'),
-                        ),
-                      ),
-                    ),
+              Badge(
+                isLabelVisible: unreadChatMessagesCount > 0,
+                label: Text('$unreadChatMessagesCount'),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: onChatDriverPressed,
+                    icon: const Icon(LucideIcons.message_circle, size: 20),
+                    label: const Text('Message driver'),
                   ),
-                  const SizedBox(width: 12),
-                  IconButton.filledTonal(
-                    tooltip: 'Call driver',
-                    onPressed: onCallDriverPressed,
-                    icon: const Icon(LucideIcons.phone, size: 20),
-                  ),
-                ],
+                ),
               ),
             ],
             const SizedBox(height: 16),
@@ -192,5 +175,4 @@ class const TrackDriverPanel({
       ),
     );
   }
-
 }

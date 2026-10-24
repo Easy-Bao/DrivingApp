@@ -22,7 +22,6 @@ import 'package:passenger/src/features/active_ride/presentation/widgets/trip_can
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
   return Tooltip(
@@ -308,7 +307,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                                 showContactActions: true,
                                 isCancellingTrip: _isCancellingTrip,
                                 isInTransit: isInTransit,
-                                onCallDriverPressed: _handleCallDriver,
                                 onChatDriverPressed: () async {
                                   final passengerId =
                                       await widget.sessionService
@@ -426,53 +424,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         pending.driverName,
       ),
     );
-  }
-
-  Future<void> _handleCallDriver() async {
-    try {
-      final rideId = widget.ride.id.trim();
-      if (rideId.isEmpty) return;
-
-      final result = await widget.trackRepository.fetchCounterpartyResult(
-        rideId,
-      );
-      final (canCall, phone) = result.fold(
-        (failure) {
-          if (mounted) {
-            final message = failure.message.isNotEmpty
-                ? failure.message
-                : 'Unable to reach driver at this time.';
-            setState(() => _errorMessage = message);
-          }
-          return (false, '');
-        },
-        (driver) {
-          if (!driver.contactAllowed || driver.phone.trim().isEmpty) {
-            if (mounted) {
-              const message = 'Driver contact is currently unavailable.';
-              setState(() => _errorMessage = message);
-            }
-            return (false, '');
-          }
-          return (true, driver.phone.trim());
-        },
-      );
-
-      if (canCall && phone.isNotEmpty) {
-        final uri = Uri.parse('tel:$phone');
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri);
-        } else if (mounted) {
-          const message = 'Unable to launch phone dialer.';
-          setState(() => _errorMessage = message);
-        }
-      }
-    } catch (_) {
-      if (mounted) {
-        const message = 'Unable to reach driver at this time.';
-        setState(() => _errorMessage = message);
-      }
-    }
   }
 
   Future<void> _handleBackNavigation() async {

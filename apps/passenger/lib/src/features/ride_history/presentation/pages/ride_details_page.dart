@@ -15,7 +15,6 @@ import 'package:passenger/src/features/ride_history/presentation/bloc/ride_detai
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_details_map.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_rating_prompt.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class RideDetailsPage extends StatefulWidget {
   const RideDetailsPage({
@@ -46,7 +45,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   RideSnapshot? _detailedRideData;
   RideCounterparty? _counterpartyData;
   bool _showLostFoundChat = false;
-  bool _canContactCounterparty = false;
   String _passengerId = '';
 
   String? get _rideId =>
@@ -94,7 +92,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     _passengerId = state.passengerId;
     _detailedRideData = state.ride;
     _counterpartyData = state.counterparty;
-    _canContactCounterparty = state.canContactCounterparty;
     _showLostFoundChat = state.canContactCounterparty;
   }
 
@@ -132,25 +129,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
             },
           ),
         );
-      }
-    } catch (_) {}
-  }
-
-  Future<void> _makeDriverCall() async {
-    final rideId = _rideId;
-    if (rideId == null) return;
-    try {
-      RideCounterparty? driverProfile = _counterpartyData;
-      driverProfile ??= await _detailsCubit.loadCounterpartyIfNeeded(rideId);
-      if (driverProfile == null ||
-          !driverProfile.contactAllowed ||
-          driverProfile.phone.trim().isEmpty) {
-        return;
-      }
-      final phone = driverProfile.phone.trim();
-      final uri = Uri.parse('tel:$phone');
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
       }
     } catch (_) {}
   }
@@ -362,12 +340,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                   runSpacing: 8,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    if (_canContactCounterparty)
-                      TextButton.icon(
-                        onPressed: _makeDriverCall,
-                        icon: const Icon(LucideIcons.phone, size: 20),
-                        label: const Text('Call driver'),
-                      ),
                     if (_showLostFoundChat)
                       TextButton.icon(
                         onPressed: _initiateLostFoundChat,

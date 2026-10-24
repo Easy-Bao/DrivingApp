@@ -34,7 +34,6 @@ void main() {
                   driverName: 'A driver with a long full name',
                   vehicleSummary: 'Tricycle · ABC 1234',
                   unreadChatMessagesCount: 2,
-                  onCallDriverPressed: () {},
                   onChatDriverPressed: () {},
 
                   onReportDriverPressed: () {},
@@ -82,7 +81,6 @@ void main() {
             statusSubtitle: 'Driver is heading to pickup',
             etaText: '5 min',
             unreadChatMessagesCount: 0,
-            onCallDriverPressed: () {},
             onChatDriverPressed: () {},
 
             onReportDriverPressed: () => reportPressed = true,
@@ -126,7 +124,6 @@ void main() {
             etaText: '8 min',
             unreadChatMessagesCount: 0,
             showContactActions: false,
-            onCallDriverPressed: () {},
             onChatDriverPressed: () {},
 
             onReportDriverPressed: () {},
@@ -160,7 +157,6 @@ void main() {
             statusSubtitle: 'Trip in progress',
             etaText: '8 min',
             unreadChatMessagesCount: 0,
-            onCallDriverPressed: () {},
             onChatDriverPressed: () {},
 
             onReportDriverPressed: () {},
@@ -192,7 +188,6 @@ void main() {
             statusSubtitle: 'Trip in progress',
             etaText: '8 min',
             unreadChatMessagesCount: 0,
-            onCallDriverPressed: () {},
             onChatDriverPressed: () {},
 
             onReportDriverPressed: () {},
@@ -227,7 +222,6 @@ void main() {
               etaText: '8 min',
               unreadChatMessagesCount: 0,
               isInTransit: true,
-              onCallDriverPressed: () {},
               onChatDriverPressed: () {},
 
               onReportDriverPressed: () {},

@@ -7,13 +7,11 @@ class const RidePassengerRow({
   required this.name,
   required this.subtitle,
   required this.unreadCount,
-  required this.onCall,
   required this.onChat,
 }) extends StatelessWidget {
   final String name;
   final String subtitle;
   final int unreadCount;
-  final VoidCallback onCall;
   final VoidCallback onChat;
 
   @override
@@ -40,12 +38,6 @@ class const RidePassengerRow({
             ],
           ),
         ),
-        IconButton.filledTonal(
-          tooltip: 'Call passenger',
-          onPressed: onCall,
-          icon: const Icon(LucideIcons.phone, size: 20),
-        ),
-        const SizedBox(width: 8),
         Badge(
           isLabelVisible: unreadCount > 0,
           label: Text('$unreadCount'),

@@ -48,6 +48,41 @@ class FakeChatRemoteDataSource implements ChatRemoteDataSource {
 }
 
 void main() {
+  for (final permission in [true, false, null, 'true']) {
+    test(
+      'maps counterparty calling permission strictly: $permission',
+      () async {
+        final dio = Dio(BaseOptions(baseUrl: 'http://localhost'))
+          ..httpClientAdapter = _StubHttpClientAdapter((options) {
+            expect(options.path, '/api/v1/rides/303/counterparty');
+            return ResponseBody.fromString(
+              jsonEncode({
+                'name': 'Alex',
+                'phone': '+639000000000',
+                'contact_allowed': ?permission,
+              }),
+              200,
+              headers: {
+                Headers.contentTypeHeader: [Headers.jsonContentType],
+              },
+            );
+          });
+        final repository = ChatRepositoryImpl(
+          remoteDataSource: FakeChatRemoteDataSource(),
+          currentUserId: '7',
+          httpClient: dio,
+        );
+        final result = await repository.fetchPeer('303');
+        result.fold((failure) => fail(failure.message), (peer) {
+          expect(peer.phone, '+639000000000');
+          expect(peer.canCall, permission == true);
+        });
+        await repository.dispose();
+        dio.close();
+      },
+    );
+  }
+
   for (final statusCode in [403, 423]) {
     test(
       'maps HTTP $statusCode room initialization to the correct access failure',

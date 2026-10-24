@@ -1,3 +1,4 @@
+import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:driver/src/features/chat/chat.dart';
 
@@ -32,6 +33,7 @@ class const ChatPage({
 
 class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   bool _isPickingImage = false;
+  bool _isCalling = false;
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   Timer? _typingStopTimer;
@@ -212,6 +214,33 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     return "$hourDisplay:${dateTime.minute.toString().padLeft(2, '0')} ${dateTime.hour >= 12 ? 'PM' : 'AM'}";
   }
 
+  Future<void> _callPeer() async {
+    if (_isCalling) return;
+    setState(() => _isCalling = true);
+    String? error;
+    try {
+      final result = await _chatCubit.resolveCallPhone();
+      if (!mounted) return;
+      final phone = result.fold((failure) {
+        error = failure.message;
+        return null;
+      }, (phone) => phone);
+      if (phone != null && !await launchUrl(Uri(scheme: 'tel', path: phone))) {
+        error = 'Unable to open the phone dialer. Please try again.';
+      }
+    } catch (_) {
+      error = 'Unable to start the call. Please try again.';
+    } finally {
+      if (mounted) {
+        setState(() => _isCalling = false);
+        if (error != null) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(error!)));
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
@@ -240,6 +269,14 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                 ),
                 onPressed: () => context.pop(),
               ),
+              actions: [
+                if (state.peer?.canCall == true && !state.isAccessDenied)
+                  IconButton(
+                    tooltip: 'Call passenger',
+                    onPressed: _isCalling ? null : _callPeer,
+                    icon: const Icon(LucideIcons.phone),
+                  ),
+              ],
               title: ChatPeerHeader(
                 name: state.peer?.name.isNotEmpty == true
                     ? state.peer!.name

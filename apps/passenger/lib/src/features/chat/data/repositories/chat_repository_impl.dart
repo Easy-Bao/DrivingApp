@@ -222,6 +222,8 @@ final class ChatRepositoryImpl({
       return Ok(
         ChatPeer(
           name: SafeParse.toStringValue(data['name']),
+          phone: SafeParse.toStringValue(data['phone']),
+          contactAllowed: data['contact_allowed'] == true,
           plate: SafeParse.toStringValue(data['plate_number']),
           vehicle: SafeParse.toStringValue(data['vehicle_type']),
         ),

@@ -19,7 +19,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 typedef _WaitingPassengerPresentation = ({
   String passengerName,
@@ -348,44 +347,6 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                                       unreadChatMessagesCount:
                                           _unreadChatMessagesCount,
                                       onStartTripPressed: _startTrip,
-                                      onCallPressed: () async {
-                                        try {
-                                          final rideId =
-                                              BlocProvider.of<RideFlowCubit>(
-                                                context,
-                                              ).activeRideId ??
-                                              '';
-                                          if (rideId.isNotEmpty) {
-                                            String? phone;
-                                            (await widget.rideRepository
-                                                    .fetchCounterpartyResult(
-                                                      rideId,
-                                                    ))
-                                                .fold(
-                                                  (_) {},
-                                                  (passenger) =>
-                                                      phone = passenger.phone,
-                                                );
-                                            final passengerPhone = phone;
-                                            if (passengerPhone != null &&
-                                                passengerPhone.isNotEmpty) {
-                                              final uri = Uri.parse(
-                                                'tel:$passengerPhone',
-                                              );
-                                              if (await canLaunchUrl(uri)) {
-                                                await launchUrl(uri);
-                                              }
-                                            }
-                                          }
-                                        } catch (error) {
-                                          dev.log(
-                                            'Unable to call passenger: $error',
-                                          );
-                                          _showError(
-                                            'Unable to contact the passenger.',
-                                          );
-                                        }
-                                      },
                                       onChatPressed: () async {
                                         final rideId =
                                             BlocProvider.of<RideFlowCubit>(

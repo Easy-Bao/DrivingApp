@@ -14,7 +14,6 @@ class const WaitingPassengerPanel({
   this.includeStartTripButton = true,
   required this.unreadChatMessagesCount,
   required this.onStartTripPressed,
-  required this.onCallPressed,
   required this.onChatPressed,
 }) extends StatelessWidget {
   final String pickup;
@@ -26,7 +25,6 @@ class const WaitingPassengerPanel({
   final bool includeStartTripButton;
   final int unreadChatMessagesCount;
   final VoidCallback onStartTripPressed;
-  final VoidCallback onCallPressed;
   final VoidCallback onChatPressed;
 
   @override
@@ -65,7 +63,6 @@ class const WaitingPassengerPanel({
           name: passengerName,
           subtitle: 'Meet at pickup',
           unreadCount: unreadChatMessagesCount,
-          onCall: onCallPressed,
           onChat: onChatPressed,
         ),
         if (includeStartTripButton) ...[

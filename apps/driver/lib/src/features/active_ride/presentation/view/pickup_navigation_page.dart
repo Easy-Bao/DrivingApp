@@ -19,7 +19,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class const PickupNavigationPage({
@@ -416,33 +415,6 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                                 onSliderCompleted: () =>
                                     _confirmArrival(context),
                                 onCancelPressed: _cancelRide,
-                                onCallPressed: () async {
-                                  try {
-                                    final rideCubit =
-                                        BlocProvider.of<RideFlowCubit>(context);
-                                    final rideId = rideCubit.activeRideId ?? '';
-                                    if (rideId.isNotEmpty) {
-                                      String? phone;
-                                      (await widget.rideRepository
-                                              .fetchCounterpartyResult(rideId))
-                                          .fold(
-                                            (_) {},
-                                            (passenger) =>
-                                                phone = passenger.phone,
-                                          );
-                                      final passengerPhone = phone;
-                                      if (passengerPhone != null &&
-                                          passengerPhone.isNotEmpty) {
-                                        final uri = Uri.parse(
-                                          'tel:$passengerPhone',
-                                        );
-                                        if (await canLaunchUrl(uri)) {
-                                          await launchUrl(uri);
-                                        }
-                                      }
-                                    }
-                                  } catch (_) {}
-                                },
                                 onChatPressed: () async {
                                   final rideId =
                                       BlocProvider.of<RideFlowCubit>(context)

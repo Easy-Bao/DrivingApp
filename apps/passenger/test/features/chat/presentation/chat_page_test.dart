@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
@@ -14,6 +14,108 @@ class MockRepository extends Mock implements ChatRepository {}
 class MockFactory extends Mock implements ChatRepositoryFactory {}
 
 void main() {
+  for (final scenario in [
+    'allowed',
+    'denied',
+    'missing phone',
+    'expired',
+    'dialer unavailable',
+    'lookup failed',
+  ]) {
+    testWidgets('chat call action: $scenario', (tester) async {
+      final repository = MockRepository();
+      final factory = MockFactory();
+      var lookups = 0;
+      var launches = 0;
+      String? launchedUrl;
+      const channel = MethodChannel('plugins.flutter.io/url_launcher');
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+        call,
+      ) async {
+        if (call.method == 'launch') {
+          launches++;
+          launchedUrl = (call.arguments as Map)['url'] as String;
+          return scenario != 'dialer unavailable';
+        }
+        return false;
+      });
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          channel,
+          null,
+        ),
+      );
+      when(() => factory.create(currentUserId: '7')).thenReturn(repository);
+      when(() => repository.fetchPeer('ride-1')).thenAnswer((_) async {
+        lookups++;
+        if (scenario == 'lookup failed' && lookups > 1) {
+          return const Err(NetworkFailure('Unable to load trip contact.'));
+        }
+        return Ok(
+          ChatPeer(
+            name: 'Alex',
+            phone: scenario == 'missing phone' ? '' : '+639000000000',
+            contactAllowed:
+                scenario != 'denied' && !(scenario == 'expired' && lookups > 1),
+          ),
+        );
+      });
+      when(() => repository.initializeChatRoom(roomId: 'ride-1')).thenAnswer(
+        (_) async => const Err(NetworkFailure('Unable to connect.')),
+      );
+      when(() => repository.terminateChatConnection())
+          .thenAnswer((_) async => const Ok(null));
+      when(() => repository.dispose()).thenAnswer((_) async {});
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ChatPage(
+            roomId: 'ride-1',
+            userId: '7',
+            chatRepositoryFactory: factory,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final action = find.byTooltip('Call driver');
+      if (scenario == 'denied' || scenario == 'missing phone') {
+        expect(action, findsNothing);
+        expect(lookups, 1);
+      } else {
+        expect(
+          find.ancestor(of: action, matching: find.byType(AppBar)),
+          findsOneWidget,
+        );
+        await tester.tap(action);
+        await tester.pumpAndSettle();
+        expect(lookups, 2);
+        expect(
+          launches,
+          scenario == 'expired' || scenario == 'lookup failed' ? 0 : 1,
+        );
+        if (launches > 0) expect(launchedUrl, 'tel:+639000000000');
+        if (scenario == 'expired') {
+          expect(action, findsNothing);
+          expect(
+            find.text('Calling is no longer available for this trip.'),
+            findsOneWidget,
+          );
+        }
+        if (scenario == 'lookup failed') {
+          expect(find.text('Unable to load trip contact.'), findsOneWidget);
+        }
+        if (scenario == 'dialer unavailable') {
+          expect(
+            find.text('Unable to open the phone dialer. Please try again.'),
+            findsOneWidget,
+          );
+        }
+      }
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+    });
+  }
+
   for (final accessDenied in [true, false]) {
     testWidgets(
       accessDenied

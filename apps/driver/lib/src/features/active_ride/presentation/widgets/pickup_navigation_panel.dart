@@ -19,7 +19,6 @@ class const PickupNavigationPanel({
   required this.onSliderChanged,
   required this.onSliderCompleted,
   required this.onCancelPressed,
-  required this.onCallPressed,
   required this.onChatPressed,
 }) extends StatelessWidget {
   final String pickup;
@@ -34,7 +33,6 @@ class const PickupNavigationPanel({
   final ValueChanged<double> onSliderChanged;
   final VoidCallback onSliderCompleted;
   final VoidCallback onCancelPressed;
-  final VoidCallback onCallPressed;
   final VoidCallback onChatPressed;
 
   @override
@@ -86,7 +84,6 @@ class const PickupNavigationPanel({
             name: passengerName,
             subtitle: '${DistanceFormatter.fromKilometers(distance)} to pickup',
             unreadCount: unreadChatMessagesCount,
-            onCall: onCallPressed,
             onChat: onChatPressed,
           ),
           const SizedBox(height: 12),

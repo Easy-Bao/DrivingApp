@@ -14,7 +14,6 @@ void main() {
           tester.view.devicePixelRatio = 1;
           addTearDown(tester.view.resetPhysicalSize);
           addTearDown(tester.view.resetDevicePixelRatio);
-          var calls = 0;
           var chats = 0;
           await tester.pumpWidget(
             MaterialApp(
@@ -41,7 +40,6 @@ void main() {
                       onSliderChanged: (_) {},
                       onSliderCompleted: () {},
                       onCancelPressed: () {},
-                      onCallPressed: () => calls++,
                       onChatPressed: () => chats++,
                     ),
                   ),
@@ -50,10 +48,9 @@ void main() {
             ),
           );
           expect(tester.takeException(), isNull);
-          await tester.ensureVisible(find.byTooltip('Call passenger'));
-          await tester.tap(find.byTooltip('Call passenger'));
+          expect(find.byTooltip('Call passenger'), findsNothing);
+          await tester.ensureVisible(find.byTooltip('Chat with passenger'));
           await tester.tap(find.byTooltip('Chat with passenger'));
-          expect(calls, 1);
           expect(chats, 1);
           await tester.ensureVisible(find.text('Cancel ride'));
           expect(tester.takeException(), isNull);
@@ -74,14 +71,13 @@ void main() {
             fare: 27.88,
             unreadChatMessagesCount: 0,
             onStartTripPressed: () {},
-            onCallPressed: () {},
             onChatPressed: () {},
           ),
         ),
       ),
     );
     expect(find.text('Start Trip'), findsOneWidget);
-    expect(find.byTooltip('Call passenger'), findsOneWidget);
+    expect(find.byTooltip('Call passenger'), findsNothing);
     expect(find.byTooltip('Chat with passenger'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
