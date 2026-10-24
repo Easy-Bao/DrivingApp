@@ -6,26 +6,28 @@ import 'package:passenger/src/features/booking/domain/entities/booking_offer.dar
 import 'package:passenger/src/features/booking/domain/entities/driver.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/nearby_drivers/nearby_drivers_cubit.dart';
 
-class const FindingDriverNearbyPanel({
-  super.key,
-  required this.availability,
-  required this.offers,
-  required this.fare,
-  required this.onRefresh,
-  required this.onSelectDriver,
-  this.isChoosingDriver = false,
-  required this.onAcceptOfferPressed,
-  required this.onCancelPressed,
-  this.acceptingOfferId,
-  this.isCanceling = false,
-  this.isSendingRequest = false,
-  this.refreshError,
-  this.notice,
-}) extends StatelessWidget {
+class FindingDriverNearbyPanel extends StatefulWidget {
+  const FindingDriverNearbyPanel({
+    super.key,
+    required this.availability,
+    required this.offers,
+    required this.fare,
+    required this.onRetry,
+    required this.onSelectDriver,
+    this.isChoosingDriver = false,
+    required this.onAcceptOfferPressed,
+    required this.onCancelPressed,
+    this.acceptingOfferId,
+    this.isCanceling = false,
+    this.isSendingRequest = false,
+    this.refreshError,
+    this.notice,
+    this.requestedDriver,
+  });
   final NearbyDriversState availability;
   final List<BookingOffer> offers;
   final double fare;
-  final VoidCallback onRefresh;
+  final VoidCallback onRetry;
   final ValueChanged<Driver> onSelectDriver;
   final bool isChoosingDriver;
   final ValueChanged<BookingOffer> onAcceptOfferPressed;
@@ -35,21 +37,57 @@ class const FindingDriverNearbyPanel({
   final bool isSendingRequest;
   final String? refreshError;
   final String? notice;
+  final Driver? requestedDriver;
+
+  @override
+  State<FindingDriverNearbyPanel> createState() =>
+      _FindingDriverNearbyPanelState();
+}
+
+class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
+  String? _selectedDriverId;
+  bool _requestSubmitted = false;
+
+  @override
+  void didUpdateWidget(covariant FindingDriverNearbyPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isChoosingDriver && widget.isChoosingDriver) {
+      _selectedDriverId = null;
+      _requestSubmitted = false;
+    }
+    if (oldWidget.isSendingRequest &&
+        !widget.isSendingRequest &&
+        widget.isChoosingDriver) {
+      _requestSubmitted = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final readyOffers = {
-      for (final offer in offers.where((offer) => offer.status == 'pending'))
+      for (final offer in widget.offers.where(
+        (offer) => offer.status == 'pending',
+      ))
         offer.driverId: offer,
     };
     final drivers = {
-      for (final driver in availability.drivers) driver.id: driver,
+      for (final driver in widget.availability.drivers)
+        if (widget.isChoosingDriver || readyOffers.containsKey(driver.id))
+          driver.id: driver,
+      if (!widget.isChoosingDriver && widget.requestedDriver != null)
+        widget.requestedDriver!.id: widget.requestedDriver!,
     };
     final driverIds = {
       ...readyOffers.keys,
       ...drivers.keys,
     }.toList(growable: false);
-    final error = availability.errorMessage ?? refreshError;
+    final selectedDriver = drivers[_selectedDriverId];
+    final busy =
+        widget.isCanceling ||
+        widget.isSendingRequest ||
+        (widget.isChoosingDriver && _requestSubmitted) ||
+        widget.acceptingOfferId != null;
+    final error = widget.availability.errorMessage ?? widget.refreshError;
 
     return Material(
       key: const ValueKey('finding-driver-nearby-panel'),
@@ -71,11 +109,11 @@ class const FindingDriverNearbyPanel({
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
                 sliver: SliverList.list(
                   children: [
-                    if (notice != null) ...[
+                    if (widget.notice != null) ...[
                       Semantics(
                         liveRegion: true,
                         child: Text(
-                          notice!,
+                          widget.notice!,
                           style: context.textStyles.bodyMedium,
                         ),
                       ),
@@ -89,14 +127,16 @@ class const FindingDriverNearbyPanel({
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Nearby drivers',
+                                widget.isChoosingDriver
+                                    ? 'Nearby drivers'
+                                    : 'Waiting for driver',
                                 style: context.textStyles.titleLarge?.copyWith(
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                formatPesoAmount(fare),
+                                formatPesoAmount(widget.fare),
                                 style: context.textStyles.titleMedium?.copyWith(
                                   color: context.colorScheme.primary,
                                   fontWeight: FontWeight.w700,
@@ -105,25 +145,21 @@ class const FindingDriverNearbyPanel({
                             ],
                           ),
                         ),
-                        IconButton(
-                          tooltip: 'Refresh nearby drivers',
-                          onPressed: availability.isLoading ? null : onRefresh,
-                          icon: const Icon(LucideIcons.refresh_cw, size: 20),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      isChoosingDriver
-                          ? 'Select a driver. They’ll confirm your ride.'
-                          : isSendingRequest
+                      widget.isChoosingDriver
+                          ? 'Select a driver, then send your request.'
+                          : widget.isSendingRequest
                           ? 'Sending your request…'
-                          : 'Choose a driver once they accept your fare.',
+                          : 'Your request was sent. Waiting for the driver to accept.',
                       style: context.textStyles.bodyMedium?.copyWith(
                         color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    if (!availability.hasLoaded &&
+                    if (widget.isChoosingDriver &&
+                        !widget.availability.hasLoaded &&
                         driverIds.isEmpty &&
                         error == null) ...[
                       const SizedBox(height: 24),
@@ -164,19 +200,20 @@ class const FindingDriverNearbyPanel({
                     if (error != null) ...[
                       const SizedBox(height: 12),
                       Text(
-                        availability.hasLoaded
+                        widget.availability.hasLoaded
                             ? 'Driver availability could not be refreshed. Showing the last result.'
-                            : isChoosingDriver
-                            ? 'Couldn’t load nearby drivers. Try refreshing.'
+                            : widget.isChoosingDriver
+                            ? 'Couldn’t load nearby drivers. We’ll keep trying.'
                             : 'Nearby drivers could not be loaded. Your ride request is still active.',
                         key: const ValueKey('nearby-drivers-error'),
                         style: context.textStyles.bodySmall,
                       ),
                       TextButton(
-                        onPressed: onRefresh,
+                        onPressed: widget.onRetry,
                         child: const Text('Try again'),
                       ),
-                    ] else if (availability.hasLoaded && driverIds.isEmpty) ...[
+                    ] else if (widget.availability.hasLoaded &&
+                        driverIds.isEmpty) ...[
                       const SizedBox(height: 16),
                       Text(
                         'No drivers available nearby right now. We’ll keep checking for you.',
@@ -197,15 +234,16 @@ class const FindingDriverNearbyPanel({
                       key: ValueKey('nearby-driver-$id'),
                       driver: drivers[id],
                       offer: readyOffers[id],
-                      isBusy:
-                          acceptingOfferId != null ||
-                          isCanceling ||
-                          isSendingRequest,
+                      isBusy: busy,
                       isAccepting:
-                          acceptingOfferId != null &&
-                          acceptingOfferId == readyOffers[id]?.offerId,
-                      onChoose: onAcceptOfferPressed,
-                      onSelectDriver: isChoosingDriver ? onSelectDriver : null,
+                          widget.acceptingOfferId != null &&
+                          widget.acceptingOfferId == readyOffers[id]?.offerId,
+                      onChoose: widget.onAcceptOfferPressed,
+                      onSelectDriver: widget.isChoosingDriver
+                          ? (driver) =>
+                                setState(() => _selectedDriverId = driver.id)
+                          : null,
+                      isSelected: id == _selectedDriverId,
                     );
                   },
                 ),
@@ -213,17 +251,38 @@ class const FindingDriverNearbyPanel({
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
                 sliver: SliverToBoxAdapter(
-                  child: TextButton(
-                    onPressed: isCanceling || acceptingOfferId != null
-                        ? null
-                        : onCancelPressed,
-                    child: Text(
-                      isCanceling
-                          ? 'Cancelling…'
-                          : isChoosingDriver
-                          ? 'Back to trip'
-                          : 'Cancel request',
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (widget.isChoosingDriver) ...[
+                        FilledButton(
+                          onPressed: busy || selectedDriver == null
+                              ? null
+                              : () {
+                                  setState(() => _requestSubmitted = true);
+                                  widget.onSelectDriver(selectedDriver);
+                                },
+                          child: Text(
+                            _requestSubmitted
+                                ? 'Sending request…'
+                                : 'Request driver',
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        TextButton(
+                          onPressed: busy ? null : widget.onCancelPressed,
+                          child: const Text('Back to trip'),
+                        ),
+                      ] else
+                        FilledButton(
+                          onPressed: busy ? null : widget.onCancelPressed,
+                          child: Text(
+                            widget.isCanceling
+                                ? 'Cancelling…'
+                                : 'Cancel request',
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -243,6 +302,7 @@ class const _DriverRow({
   required this.isAccepting,
   required this.onChoose,
   this.onSelectDriver,
+  this.isSelected = false,
 }) extends StatelessWidget {
   final Driver? driver;
   final BookingOffer? offer;
@@ -250,6 +310,7 @@ class const _DriverRow({
   final bool isAccepting;
   final ValueChanged<BookingOffer> onChoose;
   final ValueChanged<Driver>? onSelectDriver;
+  final bool isSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -305,7 +366,7 @@ class const _DriverRow({
             if (canSelect) ...[
               const SizedBox(width: 8),
               Icon(
-                LucideIcons.chevron_right,
+                isSelected ? LucideIcons.circle_check : LucideIcons.circle,
                 size: 20,
                 color: context.colorScheme.primary,
               ),
@@ -332,7 +393,7 @@ class const _DriverRow({
           )
         else if (!canSelect)
           Text(
-            'Available nearby · Awaiting response',
+            'Awaiting response',
             style: context.textStyles.bodySmall?.copyWith(
               color: context.colorScheme.onSurfaceVariant,
             ),
@@ -342,6 +403,7 @@ class const _DriverRow({
     if (!canSelect) return details;
     return Semantics(
       button: true,
+      selected: isSelected,
       enabled: !isBusy,
       label: 'Select ${driver!.displayName}',
       child: InkWell(

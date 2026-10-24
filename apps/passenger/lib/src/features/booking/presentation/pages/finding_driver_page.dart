@@ -333,6 +333,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     bool isChoosingDriver = false,
     String? notice,
     String? refreshError,
+    DriverModel? requestedDriver,
   }) {
     return BlocBuilder<NearbyDriversCubit, NearbyDriversState>(
       builder: (context, availability) => FindingDriverNearbyPanel(
@@ -344,7 +345,8 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
         onSelectDriver: _startDirectBooking,
         isSendingRequest: isSendingRequest,
         refreshError: refreshError,
-        onRefresh: () {
+        requestedDriver: requestedDriver,
+        onRetry: () {
           unawaited(BlocProvider.of<NearbyDriversCubit>(context).refresh());
           BlocProvider.of<BookingBloc>(context)
               .add(const RefreshBookingSessionEvent());
@@ -730,39 +732,16 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               isCanceling: _isLeaving,
                             );
                           } else if (state is BookingSearching) {
-                            if (!state.isDirect) {
-                              return _buildNearbyDriversPanel(
-                                fare: fare,
-                                isSendingRequest: state.sessionId == null,
-                                refreshError: state.refreshError,
-                              );
-                            }
-                            return FindingDriverSearchingPanel(
-                              message: state.statusMessage,
+                            return _buildNearbyDriversPanel(
                               fare: fare,
-                              baseFare: widget.baseFare,
-                              destination: destination,
-                              pickupAddress: pickupAddress,
-                              tipAmount: widget.tipAmount,
-                              distance: widget.distance,
-                              duration: widget.duration,
-                              bookingReference: state.publicBookingReference,
-                              expiresAt: state.expiresAt,
-                              selectedDriverName:
-                                  state.targetDriver?.displayName,
-                              requestCreated:
-                                  state.sessionId?.isNotEmpty == true,
+                              requestedDriver: state.targetDriver,
                               isSendingRequest: state.sessionId == null,
                               refreshError: state.refreshError,
-                              onRetryPressed: () =>
-                                  BlocProvider.of<BookingBloc>(context)
-                                      .add(const RefreshBookingSessionEvent()),
-                              onCancelPressed: _handleCancel,
-                              isCanceling: _isLeaving,
                             );
                           } else if (state is BookingOffersReceived) {
                             return _buildNearbyDriversPanel(
                               fare: fare,
+                              requestedDriver: state.targetDriver,
                               offers: state.offers,
                               refreshError: state.refreshError,
                             );

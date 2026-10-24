@@ -41,6 +41,7 @@ Future<void> _pump(
   bool isChoosingDriver = false,
   ValueChanged<Driver>? onSelectDriver,
   String? acceptingOfferId,
+  Driver? requestedDriver,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -55,9 +56,10 @@ Future<void> _pump(
           alignment: Alignment.bottomCenter,
           child: FindingDriverNearbyPanel(
             availability: availability,
+            requestedDriver: requestedDriver,
             offers: offers,
             fare: 27.88,
-            onRefresh: () {},
+            onRetry: () {},
             isChoosingDriver: isChoosingDriver,
             onSelectDriver: onSelectDriver ?? (_) {},
             onAcceptOfferPressed: onChoose ?? (_) {},
@@ -122,9 +124,59 @@ void main() {
       expect(find.text('Nearby drivers'), findsOneWidget);
       expect(find.text('Nearby driver'), findsOneWidget);
       await tester.tap(find.text('Nearby driver'));
+      expect(selected, isNull);
+      await tester.pump();
+      await tester.ensureVisible(find.text('Request driver'));
+      await tester.tap(find.text('Request driver'));
       expect(selected, same(_driver));
       expect(find.text('Choose driver'), findsNothing);
       expect(find.text('₱27.88'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'waiting names only the requested driver and uses a visible cancel action',
+    (tester) async {
+      await _pump(tester, requestedDriver: _driver);
+      expect(find.text('Waiting for driver'), findsOneWidget);
+      expect(
+        find.text('Your request was sent. Waiting for the driver to accept.'),
+        findsOneWidget,
+      );
+      expect(find.byTooltip('Refresh nearby drivers'), findsNothing);
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Cancel request'),
+      );
+      expect(button.onPressed, isNotNull);
+    },
+  );
+
+  testWidgets(
+    'driver selection needs an explicit request and prevents duplicate sends',
+    (tester) async {
+      var requests = 0;
+      await _pump(
+        tester,
+        isChoosingDriver: true,
+        onSelectDriver: (_) => requests++,
+      );
+      expect(find.byTooltip('Refresh nearby drivers'), findsNothing);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Request driver'),
+            )
+            .onPressed,
+        isNull,
+      );
+      await tester.tap(find.text('Nearby driver'));
+      await tester.pump();
+      expect(requests, 0);
+      await tester.ensureVisible(find.text('Request driver'));
+      await tester.tap(find.text('Request driver'));
+      await tester.pump();
+      await tester.tap(find.text('Sending request…'));
+      expect(requests, 1);
     },
   );
 
@@ -133,7 +185,7 @@ void main() {
   ) async {
     BookingOffer? chosen;
     await _pump(tester, offers: [_offer], onChoose: (offer) => chosen = offer);
-    expect(find.text('Nearby drivers'), findsOneWidget);
+    expect(find.text('Waiting for driver'), findsOneWidget);
     expect(find.text('Nearby driver'), findsOneWidget);
     expect(find.text('Accepted fare · ₱27.88'), findsOneWidget);
     await tester.tap(find.text('Choose driver'));
@@ -184,7 +236,9 @@ void main() {
     expect(selections, 0);
     expect(
       tester
-          .widget<TextButton>(find.widgetWithText(TextButton, 'Cancel request'))
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Cancel request'),
+          )
           .onPressed,
       isNull,
     );
