@@ -6,6 +6,7 @@ import 'package:design_system/src/tokens/palette.dart';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 abstract final class AppTheme {
   static final ThemeData main = _build();
@@ -27,6 +28,9 @@ abstract final class AppTheme {
       textTheme: textTheme,
       extensions: const <ThemeExtension<dynamic>>[AppSemanticColors.defaults],
       appBarTheme: AppBarTheme(
+        systemOverlayStyle: SystemUiOverlayStyle.dark.copyWith(
+          statusBarColor: Colors.transparent,
+        ),
         backgroundColor: Colors.transparent,
         foregroundColor: colors.onSurface,
         surfaceTintColor: Colors.transparent,
