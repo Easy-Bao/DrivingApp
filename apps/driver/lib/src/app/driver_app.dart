@@ -107,14 +107,11 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                     builder: (context, snapshot) {
                       final status =
                           snapshot.data ?? NetworkAvailabilityStatus.available;
-                      return AppNetworkStatusScope(
-                        isUnavailable: status.isConnectionUnavailable,
-                        child: _buildRouteWithLocationOverlay(
-                          context,
-                          child,
-                          locationState,
-                          status,
-                        ),
+                      return _buildRouteWithLocationOverlay(
+                        context,
+                        child,
+                        locationState,
+                        status,
                       );
                     },
                   ),
@@ -144,13 +141,16 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 status == NetworkAvailabilityStatus.serviceUnavailable,
           ),
         Expanded(
-          child: isUnavailable
-              ? MediaQuery.removePadding(
-                  context: context,
-                  removeTop: true,
-                  child: routeContent,
-                )
-              : routeContent,
+          child: AppNetworkStatusScope(
+            isUnavailable: isUnavailable,
+            child: isUnavailable
+                ? MediaQuery.removePadding(
+                    context: context,
+                    removeTop: true,
+                    child: routeContent,
+                  )
+                : routeContent,
+          ),
         ),
       ],
     );

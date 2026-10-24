@@ -221,9 +221,11 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    AppNetworkStatusBanner(
-                      isVisible: _isTransportRetrying,
-                      isActiveTracking: true,
+                    AppStatusBanner(
+                      isVisible: _isTransportRetrying && _errorMessage == null,
+                      message:
+                          'Reconnecting live updates. Trip tracking continues.',
+                      tone: AppStatusBannerTone.warning,
                     ),
                     if (_errorMessage != null)
                       AppStatusBanner(

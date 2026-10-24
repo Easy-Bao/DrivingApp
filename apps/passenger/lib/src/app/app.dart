@@ -62,41 +62,38 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                     builder: (context, snapshot) {
                       final status =
                           snapshot.data ?? NetworkAvailabilityStatus.available;
-                      return AppNetworkStatusScope(
-                        isUnavailable: status.isConnectionUnavailable,
-                        child: MultiBlocListener(
-                          listeners: [
-                            BlocListener<SessionBloc, SessionState>(
-                              listenWhen: (_, current) =>
-                                  current is GuestSession ||
-                                  current is SessionFailure,
-                              listener: (context, _) {
-                                BlocProvider.of<BookingDraftCubit>(context)
-                                    .clear();
-                                unawaited(
-                                  BlocProvider.of<TrackDriverCubit>(context)
-                                      .resetTracking(),
+                      return MultiBlocListener(
+                        listeners: [
+                          BlocListener<SessionBloc, SessionState>(
+                            listenWhen: (_, current) =>
+                                current is GuestSession ||
+                                current is SessionFailure,
+                            listener: (context, _) {
+                              BlocProvider.of<BookingDraftCubit>(context)
+                                  .clear();
+                              unawaited(
+                                BlocProvider.of<TrackDriverCubit>(context)
+                                    .resetTracking(),
+                              );
+                              try {
+                                Modular.get<BookingBloc>().add(
+                                  const CancelBookingEvent(),
                                 );
-                                try {
-                                  Modular.get<BookingBloc>().add(
-                                    const CancelBookingEvent(),
-                                  );
-                                } catch (_) {}
-                                try {
-                                  unawaited(
-                                    Modular.get<BackgroundTelemetry>()
-                                        .stopRideTelemetry(),
-                                  );
-                                } catch (_) {}
-                              },
-                            ),
-                          ],
-                          child: _buildRouteWithLocationOverlay(
-                            context,
-                            child,
-                            locationState,
-                            status,
+                              } catch (_) {}
+                              try {
+                                unawaited(
+                                  Modular.get<BackgroundTelemetry>()
+                                      .stopRideTelemetry(),
+                                );
+                              } catch (_) {}
+                            },
                           ),
+                        ],
+                        child: _buildRouteWithLocationOverlay(
+                          context,
+                          child,
+                          locationState,
+                          status,
                         ),
                       );
                     },
@@ -209,13 +206,16 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 status == NetworkAvailabilityStatus.serviceUnavailable,
           ),
         Expanded(
-          child: isUnavailable
-              ? MediaQuery.removePadding(
-                  context: context,
-                  removeTop: true,
-                  child: routeContent,
-                )
-              : routeContent,
+          child: AppNetworkStatusScope(
+            isUnavailable: isUnavailable,
+            child: isUnavailable
+                ? MediaQuery.removePadding(
+                    context: context,
+                    removeTop: true,
+                    child: routeContent,
+                  )
+                : routeContent,
+          ),
         ),
       ],
     );

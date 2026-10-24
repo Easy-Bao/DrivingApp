@@ -20,7 +20,7 @@ class const AppNetworkStatusBanner({
   @override
   Widget build(BuildContext context) {
     final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
-    final shouldShow = isNetworkUnavailable || (isVisible && isActiveTracking);
+    final shouldShow = !isNetworkUnavailable && isVisible && isActiveTracking;
 
     return AppStatusBanner(
       isVisible: shouldShow,
