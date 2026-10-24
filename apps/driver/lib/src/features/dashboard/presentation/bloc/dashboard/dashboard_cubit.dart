@@ -445,6 +445,23 @@ class DashboardCubit({
     return true;
   }
 
+  Future<bool> declineRideRequest(String sessionId) async {
+    final result = await _repository.declineRideRequestResult(sessionId);
+    if (isClosed) return false;
+    return result.fold(
+      (failure) {
+        emit(
+          state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
+        );
+        return false;
+      },
+      (_) {
+        removeActiveBid(sessionId);
+        return true;
+      },
+    );
+  }
+
   Future<bool> submitRideOffer({
     required String sessionId,
     required double farePesos,

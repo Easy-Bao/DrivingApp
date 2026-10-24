@@ -181,6 +181,7 @@ final class BookingFailure extends BookingState {
   const BookingFailure(
     this.message, {
     this.isNoDriverFound = false,
+    this.isDriverDeclined = false,
     this.isRequestExpired = false,
     this.sessionId,
     this.bookingReference = '',
@@ -188,6 +189,7 @@ final class BookingFailure extends BookingState {
 
   final String message;
   final bool isNoDriverFound;
+  final bool isDriverDeclined;
   final bool isRequestExpired;
   final String? sessionId;
   final String bookingReference;

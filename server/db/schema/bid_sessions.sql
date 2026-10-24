@@ -23,7 +23,7 @@ CREATE TABLE bid_sessions (
     CONSTRAINT bid_sessions_booking_reference_fkey
         FOREIGN KEY (booking_reference) REFERENCES booking_references (reference),
     CONSTRAINT bid_sessions_status_check
-        CHECK (status IN ('open', 'accepted', 'cancelled', 'expired')),
+        CHECK (status IN ('open', 'accepted', 'cancelled', 'expired', 'declined')),
     CONSTRAINT bid_sessions_offer_check CHECK (offered_fare >= 0),
     CONSTRAINT bid_sessions_route_metrics_check CHECK (distance_km >= 0 AND duration_minutes >= 0),
     CONSTRAINT bid_sessions_coordinates_check CHECK (

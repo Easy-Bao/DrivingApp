@@ -23,6 +23,45 @@ void main() {
     repo = MockDashboardRepo();
   });
 
+  group('DashboardCubit — decline selected request', () {
+    const request = <String, dynamic>{
+      'id': 'selected-request',
+      'target_driver_id': 42,
+    };
+    blocTest<DashboardCubit, DashboardState>(
+      'removes the request after a successful decline',
+      build: () {
+        when(() => repo.declineRideRequest('selected-request'))
+            .thenAnswer((_) async => const Ok(null));
+        return _makeCubit(repo);
+      },
+      seed: () => const DashboardState(activeBids: [request]),
+      act: (cubit) async =>
+          expect(await cubit.declineRideRequest('selected-request'), isTrue),
+      expect: () => [const DashboardState()],
+    );
+    blocTest<DashboardCubit, DashboardState>(
+      'retains the request when the decline fails',
+      build: () {
+        when(() => repo.declineRideRequest('selected-request'))
+            .thenAnswer((_) async => const Err(ServerFailure('unavailable')));
+        return _makeCubit(repo);
+      },
+      seed: () => const DashboardState(activeBids: [request]),
+      act: (cubit) async =>
+          expect(await cubit.declineRideRequest('selected-request'), isFalse),
+      expect: () => [
+        isA<DashboardState>()
+            .having((state) => state.activeBids, 'retained request', [request])
+            .having(
+              (state) => state.errorMessage,
+              'failure message',
+              isNotNull,
+            ),
+      ],
+    );
+  });
+
   group('DashboardCubit — initial state', () {
     test('starts with all defaults', () async {
       final cubit = _makeCubit(repo);

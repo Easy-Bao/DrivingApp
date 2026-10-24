@@ -16,6 +16,7 @@ type BiddingStore interface {
 	Offers(ctx context.Context, sessionID int) ([]domain.BidOffer, error)
 	PlaceOffer(ctx context.Context, offer domain.BidOffer) (domain.BidOffer, error)
 	AcceptOffer(ctx context.Context, sessionID, offerID, passengerID int) (OfferAcceptance, error)
+	DeclineSession(ctx context.Context, sessionID, driverID int) (domain.BidSession, error)
 	CancelSession(ctx context.Context, sessionID, passengerID int) (domain.BidSession, error)
 	CancelOffer(ctx context.Context, sessionID, driverID int) (domain.BidOffer, error)
 	Session(ctx context.Context, sessionID int) (domain.BidSession, error)

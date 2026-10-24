@@ -778,6 +778,68 @@ void main() {
       },
     );
 
+    test(
+      'a selected driver decline clears the request and allows another choice',
+      () async {
+        when(() => bookingRepository.createSession(any())).thenAnswer(
+          (_) async => const Ok(
+            BidSessionSnapshot(
+              id: 'selected-request',
+              status: 'open',
+              expiresAt: null,
+            ),
+          ),
+        );
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+        );
+        addTearDown(bloc.close);
+        Future<void> selectDriver() async {
+          final waiting = bloc.stream.firstWhere(
+            (state) => state is BookingOffersReceived,
+          );
+          bloc.add(
+            const StartDirectBookingEvent(
+              targetDriver: selectedDriver,
+              trip: pickupTrip,
+              pickupLat: 7.828,
+              pickupLng: 123.434,
+              distanceKm: 2,
+              durationMinutes: 5,
+            ),
+          );
+          await waiting.timeout(const Duration(seconds: 1));
+        }
+
+        await selectDriver();
+        final declined = bloc.stream.firstWhere(
+          (state) => state is BookingFailure && state.isDriverDeclined,
+        );
+        bloc.add(
+          const UpdateOffersEvent(
+            [],
+            session: BidSessionSnapshot(
+              id: 'selected-request',
+              status: 'declined',
+              expiresAt: null,
+            ),
+          ),
+        );
+        final result = await declined.timeout(
+          const Duration(seconds: 1),
+        ) as BookingFailure;
+        expect(result.message, contains('Selected Driver declined'));
+        expect(bloc.activeBidSessionId, isNull);
+        expect(pendingCreation, isNull);
+        verifyNever(() => bookingRepository.cancelSession(any()));
+        await selectDriver();
+        verify(() => bookingRepository.createSession(any())).called(2);
+      },
+    );
+
     test('cancels the persisted booking ID when dispatch expires', () async {
       when(() => bookingRepository.createSession(any())).thenAnswer(
         (_) async => const Ok(

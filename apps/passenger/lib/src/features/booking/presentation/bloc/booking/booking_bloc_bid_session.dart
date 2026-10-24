@@ -12,6 +12,10 @@ extension _BookingBlocBidSession on BookingBloc {
       if (event is! RideOfferUpdatedEvent || isClosed) {
         return;
       }
+      if (event.envelope.payload['session'] is Map) {
+        unawaited(_loadOfferSnapshot(sessionId, source: 'session_event'));
+        return;
+      }
       final offer = event.envelope.payload['offer'];
       if (offer is! Map) {
         return;
@@ -105,7 +109,8 @@ extension _BookingBlocBidSession on BookingBloc {
       );
       if (_activeBidSessionId != sessionId || isClosed) return;
       if (sessionSnapshot?.isAccepted == true ||
-          sessionSnapshot?.isCancelled == true) {
+          sessionSnapshot?.isCancelled == true ||
+          sessionSnapshot?.isDeclined == true) {
         add(UpdateOffersEvent(const [], session: sessionSnapshot));
         return;
       }
@@ -154,6 +159,24 @@ extension _BookingBlocBidSession on BookingBloc {
     final session = event.session;
     if (session?.isAccepted == true) {
       await _recoverAcceptedSession(session!, emit);
+      return;
+    }
+    if (session?.isDeclined == true) {
+      if (_activeBidSessionId != session!.id) return;
+      final selectedName = switch (state) {
+        BookingSearching(:final targetDriver) ||
+        BookingOffersReceived(
+          :final targetDriver,
+        ) => targetDriver?.displayName ?? 'The selected driver',
+        _ => 'The selected driver',
+      };
+      await _clearPendingBooking(session.id);
+      emit(
+        BookingFailure(
+          '$selectedName declined your request. Choose another nearby driver.',
+          isDriverDeclined: true,
+        ),
+      );
       return;
     }
     if (session?.isCancelled == true) {

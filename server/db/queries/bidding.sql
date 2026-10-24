@@ -246,3 +246,14 @@ WHERE session_id = $1
 RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
     proposed_fare, status, created_at;
 
+
+-- name: DeclineTargetedBidSession :one
+UPDATE bid_sessions
+SET status = 'declined'
+WHERE id = $1
+  AND target_driver_id = $2
+  AND (status = 'declined' OR (status = 'open' AND expires_at > clock_timestamp()))
+RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
+    pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
+    passenger_note, distance_km, duration_minutes, offered_fare,
+    status, target_driver_id, accepted_driver_id, expires_at, created_at;

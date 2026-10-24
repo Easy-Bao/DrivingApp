@@ -89,6 +89,17 @@ extension _BookingBlocSessionRecovery on BookingBloc {
         return;
       }
 
+      if (snapshot!.isDeclined) {
+        await _clearRecoveredRequest(sessionId);
+        emit(
+          const BookingFailure(
+            'The selected driver declined your request. Choose another nearby driver.',
+            isDriverDeclined: true,
+          ),
+        );
+        return;
+      }
+
       if (snapshot!.isCancelled) {
         await _clearRecoveredRequest(sessionId);
         emit(const BookingCanceled());

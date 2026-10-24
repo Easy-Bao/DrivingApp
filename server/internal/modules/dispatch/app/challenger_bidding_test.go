@@ -234,3 +234,7 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 		}
 	})
 }
+
+func (stub *challengerBiddingStoreStub) DeclineSession(context.Context, int, int) (dispatchdomain.BidSession, error) {
+	return dispatchdomain.BidSession{}, nil
+}

@@ -282,7 +282,9 @@ extension _BookingBlocSessionCreation on BookingBloc {
         await _recoverAcceptedSession(snapshot!, emit);
         return;
       }
-      if (snapshot?.isCancelled == true || snapshot?.isExpired == true) {
+      if (snapshot?.isCancelled == true ||
+          snapshot?.isExpired == true ||
+          snapshot?.isDeclined == true) {
         await _clearPendingBooking(sessionId);
         emit(terminalState);
         return;

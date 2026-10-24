@@ -46,6 +46,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	withAuthenticatedPolicy(middleware.RouteCommand, passengerOnly).Post(apiPrefix+"/bids/{sessionID}/cancel", router.handler.CancelSession)
 	withAuthenticatedPolicy(middleware.RouteRead, driverOnly).Get(apiPrefix+"/bids/active", router.handler.ActiveSessions)
 	withAuthenticatedPolicy(middleware.RouteRead, passengerOnly).Get(apiPrefix+"/drivers/online", router.handler.OnlineDrivers)
+	withAuthenticatedPolicy(middleware.RouteCommand, driverOnly).Post(apiPrefix+"/bids/{sessionID}/decline", router.handler.DeclineSession)
 	withAuthenticatedPolicy(middleware.RouteCommand, driverOnly).Post(apiPrefix+"/bids/{sessionID}/offer", router.handler.PlaceOffer)
 	withAuthenticatedPolicy(middleware.RouteCommand, driverOnly).Post(apiPrefix+"/bids/{sessionID}/cancel-offer", router.handler.CancelOffer)
 }

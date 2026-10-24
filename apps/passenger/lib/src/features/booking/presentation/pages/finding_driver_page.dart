@@ -331,6 +331,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     List<BookingOffer> offers = const [],
     bool isSendingRequest = false,
     bool isChoosingDriver = false,
+    String? notice,
     String? refreshError,
   }) {
     return BlocBuilder<NearbyDriversCubit, NearbyDriversState>(
@@ -339,6 +340,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
         offers: offers,
         fare: fare,
         isChoosingDriver: isChoosingDriver,
+        notice: notice,
         onSelectDriver: _startDirectBooking,
         isSendingRequest: isSendingRequest,
         refreshError: refreshError,
@@ -673,7 +675,14 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                           final pickupAddress =
                               activeTrip?.pickupAddress ?? widget.pickupAddress;
 
-                          if (state is BookingInitial) {
+                          if (state is BookingFailure &&
+                              state.isDriverDeclined) {
+                            return _buildNearbyDriversPanel(
+                              fare: fare,
+                              isChoosingDriver: true,
+                              notice: state.message,
+                            );
+                          } else if (state is BookingInitial) {
                             return _buildNearbyDriversPanel(
                               fare: fare,
                               isChoosingDriver: true,

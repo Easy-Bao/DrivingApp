@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 abstract class RideOfferRemoteDataSource {
   Future<List<Map<String, dynamic>>> fetchActiveBids();
 
+  Future<void> declineRequest(String sessionId);
+
   Future<bool> placeBid({
     required String sessionId,
     required double offerPrice,
@@ -23,6 +25,13 @@ class RideOfferRemoteDataSourceImpl(this._dio)
       for (final item in response.data ?? const <dynamic>[])
         if (item is Map) Map<String, dynamic>.from(item),
     ];
+  }
+
+  @override
+  Future<void> declineRequest(String sessionId) async {
+    await _dio.post<void>(
+      '/api/v1/bids/${Uri.encodeComponent(sessionId)}/decline',
+    );
   }
 
   @override

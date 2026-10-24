@@ -228,6 +228,50 @@ func (q *Queries) CreateBidSession(ctx context.Context, arg CreateBidSessionPara
 	return i, err
 }
 
+const declineTargetedBidSession = `-- name: DeclineTargetedBidSession :one
+UPDATE bid_sessions
+SET status = 'declined'
+WHERE id = $1
+  AND target_driver_id = $2
+  AND (status = 'declined' OR (status = 'open' AND expires_at > clock_timestamp()))
+RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
+    pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
+    passenger_note, distance_km, duration_minutes, offered_fare,
+    status, target_driver_id, accepted_driver_id, expires_at, created_at
+`
+
+type DeclineTargetedBidSessionParams struct {
+	ID             int32       `db:"id"`
+	TargetDriverID pgtype.Int4 `db:"target_driver_id"`
+}
+
+func (q *Queries) DeclineTargetedBidSession(ctx context.Context, arg DeclineTargetedBidSessionParams) (BidSession, error) {
+	row := q.db.QueryRow(ctx, declineTargetedBidSession, arg.ID, arg.TargetDriverID)
+	var i BidSession
+	err := row.Scan(
+		&i.ID,
+		&i.BookingReference,
+		&i.PassengerID,
+		&i.RideType,
+		&i.PickupLatitude,
+		&i.PickupLongitude,
+		&i.PickupName,
+		&i.DropoffLatitude,
+		&i.DropoffLongitude,
+		&i.DropoffName,
+		&i.PassengerNote,
+		&i.DistanceKm,
+		&i.DurationMinutes,
+		&i.OfferedFare,
+		&i.Status,
+		&i.TargetDriverID,
+		&i.AcceptedDriverID,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const expireBidSessions = `-- name: ExpireBidSessions :exec
 WITH expired AS (
     UPDATE bid_sessions

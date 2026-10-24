@@ -671,6 +671,23 @@ class _DashboardPageState extends State<DashboardPage>
     }
   }
 
+  Future<void> _declineBid(Map<String, dynamic> bid) async {
+    if (_submittingBidId != null) return;
+    final sessionId = valueAsString(bid['id']);
+    if (sessionId == null) return;
+    final cubit = BlocProvider.of<DashboardCubit>(context);
+    if (bid['target_driver_id'] == null) {
+      cubit.removeActiveBid(sessionId);
+      return;
+    }
+    setState(() => _submittingBidId = sessionId);
+    try {
+      await cubit.declineRideRequest(sessionId);
+    } finally {
+      if (mounted) setState(() => _submittingBidId = null);
+    }
+  }
+
   Future<void> _submitBid(Map<String, dynamic> bid) async {
     if (_submittingBidId != null) return;
     final cubit = BlocProvider.of<DashboardCubit>(context);
@@ -935,14 +952,7 @@ class _DashboardPageState extends State<DashboardPage>
                                               bid: bid,
                                               submittingBidId: _submittingBidId,
                                               onDecline: () =>
-                                                  BlocProvider.of<
-                                                        DashboardCubit
-                                                      >(context)
-                                                      .removeActiveBid(
-                                                        valueAsString(
-                                                          bid['id'],
-                                                        ),
-                                                      ),
+                                                  unawaited(_declineBid(bid)),
                                               onSubmitOffer: () =>
                                                   _submitBid(bid),
                                             ),

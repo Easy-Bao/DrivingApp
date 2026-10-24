@@ -286,6 +286,21 @@ func (service *Service) AcceptOffer(
 	return accepted.Session, accepted.Offer, accepted.Ride, nil
 }
 
+func (service *Service) DeclineSession(ctx context.Context, sessionID, driverID int) (dispatchdomain.BidSession, error) {
+	if service.store == nil {
+		return dispatchdomain.BidSession{}, ErrPersistenceUnavailable
+	}
+	if driverID <= 0 {
+		return dispatchdomain.BidSession{}, dispatchdomain.ErrUnauthorizedSession
+	}
+	session, err := service.store.DeclineSession(ctx, sessionID, driverID)
+	if err != nil {
+		return dispatchdomain.BidSession{}, fmt.Errorf("decline ride request: %w", err)
+	}
+	service.publishSessionEvent(ctx, event.RideOfferUpdated, session, map[string]any{"session": session})
+	return session, nil
+}
+
 func (service *Service) CancelSession(ctx context.Context, sessionID, passengerID int) (dispatchdomain.BidSession, error) {
 	if service.store == nil {
 		return dispatchdomain.BidSession{}, ErrPersistenceUnavailable

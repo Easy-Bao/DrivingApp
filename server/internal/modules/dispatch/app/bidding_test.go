@@ -29,6 +29,7 @@ type biddingStoreStub struct {
 	placeErr         error
 	cancelSessionErr error
 	cancelOfferErr   error
+	declineErr       error
 }
 
 func (stub *biddingStoreStub) CreateSession(_ context.Context, session dispatchdomain.BidSession) (dispatchdomain.BidSession, error) {
@@ -644,5 +645,47 @@ func TestCreateSessionRejectsIdenticalPickupAndDropoff(t *testing.T) {
 	})
 	if !errors.Is(err, ridedomain.ErrInvalidTrip) {
 		t.Fatalf("CreateSession error = %v, want %v", err, ridedomain.ErrInvalidTrip)
+	}
+}
+
+func (stub *biddingStoreStub) DeclineSession(context.Context, int, int) (dispatchdomain.BidSession, error) {
+	return stub.session, stub.declineErr
+}
+
+func TestDeclineSessionPublishesTargetedTerminalState(t *testing.T) {
+	driverID := 303
+	store := &biddingStoreStub{session: dispatchdomain.BidSession{ID: 55, PassengerID: 101, TargetDriverID: &driverID, Status: "declined"}}
+	publisher := &eventPublisherStub{}
+	service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store, EventPublisher: publisher})
+	for range 2 {
+		session, err := service.DeclineSession(t.Context(), 55, driverID)
+		if err != nil || session.Status != "declined" {
+			t.Fatalf("decline = %+v, %v", session, err)
+		}
+	}
+	if len(publisher.events) != 2 {
+		t.Fatalf("events = %d", len(publisher.events))
+	}
+	for _, published := range publisher.events {
+		if published.Type != event.RideOfferUpdated || published.Scope.PassengerID != "101" || published.Scope.DriverID != "303" || published.Scope.DriverPool {
+			t.Fatalf("event = %+v", published)
+		}
+		session, ok := published.Payload["session"].(dispatchdomain.BidSession)
+		if !ok || session.Status != "declined" {
+			t.Fatalf("payload = %+v", published.Payload)
+		}
+	}
+}
+
+func TestDeclineSessionDoesNotPublishFailedMutation(t *testing.T) {
+	for _, expected := range []error{dispatchdomain.ErrUnauthorizedSession, dispatchdomain.ErrSessionClosed, dispatchdomain.ErrSessionNotFound} {
+		t.Run(expected.Error(), func(t *testing.T) {
+			publisher := &eventPublisherStub{}
+			service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: &biddingStoreStub{declineErr: expected}, EventPublisher: publisher})
+			_, err := service.DeclineSession(t.Context(), 55, 303)
+			if !errors.Is(err, expected) || len(publisher.events) != 0 {
+				t.Fatalf("decline = %v, events %+v", err, publisher.events)
+			}
+		})
 	}
 }

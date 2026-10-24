@@ -20,6 +20,7 @@ class const FindingDriverNearbyPanel({
   this.isCanceling = false,
   this.isSendingRequest = false,
   this.refreshError,
+  this.notice,
 }) extends StatelessWidget {
   final NearbyDriversState availability;
   final List<BookingOffer> offers;
@@ -33,6 +34,7 @@ class const FindingDriverNearbyPanel({
   final bool isCanceling;
   final bool isSendingRequest;
   final String? refreshError;
+  final String? notice;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +71,16 @@ class const FindingDriverNearbyPanel({
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
                 sliver: SliverList.list(
                   children: [
+                    if (notice != null) ...[
+                      Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          notice!,
+                          style: context.textStyles.bodyMedium,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     Row(
                       children: [
                         Expanded(

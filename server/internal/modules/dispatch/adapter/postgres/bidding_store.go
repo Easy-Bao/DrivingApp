@@ -528,3 +528,43 @@ func (repository *Store) Session(ctx context.Context, sessionID int) (dispatchdo
 	}
 	return session, nil
 }
+
+func (repository *Store) DeclineSession(ctx context.Context, sessionID, driverID int) (dispatchdomain.BidSession, error) {
+	if err := repository.validate(); err != nil {
+		return dispatchdomain.BidSession{}, err
+	}
+	dbSessionID, err := toPostgresRideID(sessionID, "session id")
+	if err != nil {
+		return dispatchdomain.BidSession{}, err
+	}
+	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	if err != nil {
+		return dispatchdomain.BidSession{}, err
+	}
+	// Acceptance locks the same session row; the predicate prevents either
+	// terminal transition from overwriting the other after waiting.
+	item, err := repository.queries.DeclineTargetedBidSession(ctx, databasepostgres.DeclineTargetedBidSessionParams{
+		ID: dbSessionID, TargetDriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		existing, readErr := repository.queries.GetBidSessionByID(ctx, dbSessionID)
+		if errors.Is(readErr, pgx.ErrNoRows) {
+			return dispatchdomain.BidSession{}, dispatchdomain.ErrSessionNotFound
+		}
+		if readErr != nil {
+			return dispatchdomain.BidSession{}, fmt.Errorf("load declined ride request: %w", readErr)
+		}
+		if !existing.TargetDriverID.Valid || existing.TargetDriverID.Int32 != dbDriverID {
+			return dispatchdomain.BidSession{}, dispatchdomain.ErrUnauthorizedSession
+		}
+		return dispatchdomain.BidSession{}, dispatchdomain.ErrSessionClosed
+	}
+	if err != nil {
+		return dispatchdomain.BidSession{}, fmt.Errorf("decline targeted ride request: %w", err)
+	}
+	session, err := fromPostgresBidSession(item)
+	if err != nil {
+		return dispatchdomain.BidSession{}, fmt.Errorf("map declined ride request: %w", err)
+	}
+	return session, nil
+}

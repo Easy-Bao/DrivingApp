@@ -43,6 +43,7 @@ final class const BidSessionSnapshot({
   final String? acceptedDriverId;
   final String? rideId;
 
+  bool get isDeclined => status.trim().toLowerCase() == 'declined';
   bool get isExpired => status.trim().toLowerCase() == 'expired';
   bool get isOpen => status.trim().toLowerCase() == 'open';
   bool get isAccepted => status.trim().toLowerCase() == 'accepted';

@@ -378,6 +378,25 @@ final class DashboardRepositoryImpl({
   }
 
   @override
+  Future<Result<void, Failure>> declineRideRequest(String sessionId) async {
+    if (sessionId.trim().isEmpty) {
+      return const Err(ValidationFailure('The ride request is invalid.'));
+    }
+    try {
+      await _rideOfferDataSource.declineRequest(sessionId);
+      return const Ok(null);
+    } catch (error) {
+      return Err(
+        FailureMapper.fromException(
+          error,
+          serverMessage:
+              'Unable to decline this ride request. Please try again.',
+        ),
+      );
+    }
+  }
+
+  @override
   Future<Result<RideSnapshot, Failure>> fetchRide(String rideId) {
     return _rideRepository.fetchRide(rideId);
   }

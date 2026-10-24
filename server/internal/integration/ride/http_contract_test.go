@@ -526,3 +526,7 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 		})
 	}
 }
+
+func (stub *activeSessionsRepository) DeclineSession(context.Context, int, int) (dispatchdomain.BidSession, error) {
+	return dispatchdomain.BidSession{}, nil
+}

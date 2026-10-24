@@ -10,6 +10,7 @@ var (
 	ErrInvalidFareOffer    = errors.New("offer must not be lower than the calculated minimum fare")
 	ErrDriverUnavailable   = errors.New("driver is unavailable")
 	ErrDuplicateBid        = errors.New("driver already submitted a bid for this ride")
+	ErrSessionClosed       = errors.New("ride request is no longer open")
 	ErrSessionNotFound     = errors.New("bid session not found")
 	ErrOfferNotFound       = errors.New("offer not found")
 )

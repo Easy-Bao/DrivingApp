@@ -38,6 +38,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateWalletLedger(ctx context.Context, arg CreateWalletLedgerParams) (int64, error)
 	CreditDriverWalletAccount(ctx context.Context, arg CreditDriverWalletAccountParams) (DriverWalletAccount, error)
+	DeclineTargetedBidSession(ctx context.Context, arg DeclineTargetedBidSessionParams) (BidSession, error)
 	DeleteNotification(ctx context.Context, arg DeleteNotificationParams) (int64, error)
 	DeletePrivateObjectByStorageKey(ctx context.Context, storageKey string) error
 	ExpireBidSessions(ctx context.Context, arg ExpireBidSessionsParams) error

@@ -25,6 +25,8 @@ abstract interface class DashboardRepository {
   });
 
   Future<Result<RideSnapshot, Failure>> fetchRide(String rideId);
+
+  Future<Result<void, Failure>> declineRideRequest(String sessionId);
 }
 
 extension DashboardRepositoryResultApi on DashboardRepository {
@@ -72,6 +74,13 @@ extension DashboardRepositoryResultApi on DashboardRepository {
       message: 'Unable to submit this ride offer right now.',
     );
   }
+
+  Future<Result<void, DomainFailure>> declineRideRequestResult(
+    String sessionId,
+  ) => _captureDashboardResult(
+    () => declineRideRequest(sessionId),
+    message: 'Unable to decline this ride request. Please try again.',
+  );
 
   Future<Result<RideSnapshot, DomainFailure>> fetchRideResult(String rideId) {
     return _captureDashboardResult(

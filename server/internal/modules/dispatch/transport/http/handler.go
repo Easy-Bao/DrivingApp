@@ -205,6 +205,25 @@ func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (handler *Handler) DeclineSession(w http.ResponseWriter, r *http.Request) {
+	driverID, ok := handler.identity(r)
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
+	if err != nil || id <= 0 {
+		response.Error(w, http.StatusBadRequest, "invalid session id")
+		return
+	}
+	session, err := handler.service.DeclineSession(r.Context(), id, driverID)
+	if err != nil {
+		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
+		return
+	}
+	response.JSON(w, http.StatusOK, NewBidSessionResponse(session))
+}
+
 func (handler *Handler) CancelSession(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := handler.identity(r)
 	if !ok {
@@ -256,7 +275,8 @@ func dispatchErrorStatus(err error) int {
 		return http.StatusNotFound
 	case errors.Is(err, ridedomain.ErrInvalidTrip), errors.Is(err, dispatchdomain.ErrInvalidFareOffer):
 		return http.StatusBadRequest
-	case errors.Is(err, ridedomain.ErrActiveBooking),
+	case errors.Is(err, dispatchdomain.ErrSessionClosed),
+		errors.Is(err, ridedomain.ErrActiveBooking),
 		errors.Is(err, ridedomain.ErrDriverHasActiveRide),
 		errors.Is(err, ridedomain.ErrDriverSettlementOverdue),
 		errors.Is(err, dispatchdomain.ErrDriverUnavailable),
@@ -273,6 +293,8 @@ func dispatchErrorStatus(err error) int {
 
 func safeDispatchError(err error) string {
 	switch {
+	case errors.Is(err, dispatchdomain.ErrSessionClosed):
+		return "This ride request is no longer open."
 	case errors.Is(err, dispatchdomain.ErrSessionNotFound):
 		return "Bid session not found."
 	case errors.Is(err, dispatchdomain.ErrOfferNotFound):
