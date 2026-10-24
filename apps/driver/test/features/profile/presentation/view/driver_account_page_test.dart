@@ -88,17 +88,14 @@ void main() {
     expect(find.text('+639170000001'), findsOneWidget);
     expect(find.byType(AppBar), findsNothing);
     expect(find.text('Account'), findsOneWidget);
-    expect(find.text('Personal Details'), findsOneWidget);
-    expect(find.text('Driver Details'), findsOneWidget);
+    expect(find.text('Personal details'), findsOneWidget);
+    expect(find.text('Driver details'), findsOneWidget);
     expect(find.textContaining('Motorcycle'), findsOneWidget);
     expect(find.textContaining('XYZ-123'), findsOneWidget);
     expect(find.text('Ratings, trips, and earnings'), findsOneWidget);
     expect(find.text('Performance'), findsOneWidget);
     expect(find.text('Documents'), findsOneWidget);
-    expect(
-      find.text('Manage your driver verification documents'),
-      findsOneWidget,
-    );
+    expect(find.text('Manage your verification documents'), findsOneWidget);
     expect(find.text('App settings'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Location, support, and app details'), findsOneWidget);
@@ -108,7 +105,7 @@ void main() {
     expect(find.text('Account Settings'), findsNothing);
     expect(
       tester.getSize(find.byKey(const ValueKey('driver-profile-avatar'))),
-      const Size(76, 76),
+      const Size(56, 56),
     );
     expect(find.byTooltip('Refresh account'), findsNothing);
     expect(tester.takeException(), isNull);

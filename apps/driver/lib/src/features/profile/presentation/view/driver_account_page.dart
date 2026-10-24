@@ -46,13 +46,16 @@ class _AccountPageState extends State<AccountPage> {
                       horizontalPadding,
                       AppLayout.pagePadding,
                       horizontalPadding,
-                      MediaQuery.paddingOf(context).bottom + 98,
+                      AppSpacing.lg,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const AppPageHeader(title: 'Account'),
-                        const SizedBox(height: AppSpacing.xxl),
+                        const AppPageHeader(
+                          title: 'Account',
+                          useLargeTitle: false,
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
                         _buildProfileSummary(context, state.account),
                         if (state.isLoading) ...[
                           const SizedBox(height: 20),
@@ -70,55 +73,56 @@ class _AccountPageState extends State<AccountPage> {
                                     .dismissError(),
                           ),
                         ],
-                        const SizedBox(height: AppSpacing.xxl),
-                        _buildSectionTitle(context, 'Driver Details'),
-                        const SizedBox(height: 12),
-                        _buildMenuGroup(context, [
-                          _AccountMenuItem(
-                            icon: LucideIcons.car_front,
-                            title: 'Vehicle Information',
-                            subtitle: _vehicleSummary(state.account),
-                            onTap: () => unawaited(
-                              _openEditableDestination(
-                                context,
-                                ProfileRoutes.vehicleInformation,
+                        const SizedBox(height: AppSpacing.lg),
+                        AppSettingsSection(
+                          label: 'Driver details',
+                          children: [
+                            AppSettingsNavigationTile(
+                              icon: LucideIcons.car_front,
+                              title: 'Vehicle information',
+                              subtitle: _vehicleSummary(state.account),
+                              onTap: () => unawaited(
+                                _openEditableDestination(
+                                  context,
+                                  ProfileRoutes.vehicleInformation,
+                                ),
                               ),
                             ),
-                          ),
-                          _AccountMenuItem(
-                            icon: LucideIcons.file_text,
-                            title: 'Documents',
-                            subtitle:
-                                'Manage your driver verification documents',
-                            onTap: () => unawaited(
-                              _openEditableDestination(
-                                context,
-                                ProfileRoutes.documents,
+                            AppSettingsNavigationTile(
+                              icon: LucideIcons.file_text,
+                              title: 'Documents',
+                              subtitle: 'Manage your verification documents',
+                              onTap: () => unawaited(
+                                _openEditableDestination(
+                                  context,
+                                  ProfileRoutes.documents,
+                                ),
                               ),
                             ),
-                          ),
-                          _AccountMenuItem(
-                            icon: LucideIcons.wallet_cards,
-                            title: 'Performance',
-                            subtitle: 'Ratings, trips, and earnings',
-                            onTap: () => context.pushNamed(
-                              PerformanceRoutes.performance,
+                            AppSettingsNavigationTile(
+                              icon: LucideIcons.wallet_cards,
+                              title: 'Performance',
+                              subtitle: 'Ratings, trips, and earnings',
+                              onTap: () => context.pushNamed(
+                                PerformanceRoutes.performance,
+                              ),
                             ),
-                          ),
-                        ]),
-                        const SizedBox(height: 32),
-                        _buildSectionTitle(context, 'App settings'),
-                        const SizedBox(height: 12),
-                        _buildMenuGroup(context, [
-                          _AccountMenuItem(
-                            icon: LucideIcons.settings,
-                            title: 'Settings',
-                            subtitle: 'Location, support, and app details',
-                            onTap: () =>
-                                context.pushNamed(SettingsRoutes.settings),
-                          ),
-                        ]),
-                        const SizedBox(height: 32),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        AppSettingsSection(
+                          label: 'App settings',
+                          children: [
+                            AppSettingsNavigationTile(
+                              icon: LucideIcons.settings,
+                              title: 'Settings',
+                              subtitle: 'Location, support, and app details',
+                              onTap: () =>
+                                  context.pushNamed(SettingsRoutes.settings),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
                         _buildLogoutButton(context),
                       ],
                     ),
@@ -149,8 +153,8 @@ class _AccountPageState extends State<AccountPage> {
             children: [
               Container(
                 key: const ValueKey<String>('driver-profile-avatar'),
-                width: 76,
-                height: 76,
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
                   color: context.colorScheme.primary,
                   shape: BoxShape.circle,
@@ -173,13 +177,13 @@ class _AccountPageState extends State<AccountPage> {
                       displayName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: context.textStyles.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
+                      style: context.textStyles.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                         color: context.colorScheme.onSurface,
                       ),
                     ),
 
-                    const SizedBox(height: 7),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(
                       account.phone.isEmpty
                           ? 'Add your mobile number'
@@ -192,7 +196,7 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'Personal Details',
+                      'Personal details',
                       style: Theme.of(context).textTheme.bodySmall
                           ?.copyWith(color: context.colorScheme.primary),
                     ),
@@ -231,102 +235,10 @@ class _AccountPageState extends State<AccountPage> {
     return '$vehicle · Plate $plate';
   }
 
-  Widget _buildMenuGroup(BuildContext context, List<_AccountMenuItem> items) {
-    return AppSurfaceCard(
-      padding: EdgeInsets.zero,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (var index = 0; index < items.length; index++) ...[
-            _buildMenuTile(context, items[index]),
-            if (index != items.length - 1)
-              Divider(
-                height: 1,
-                indent: 2,
-                endIndent: 2,
-                color: context.colorScheme.outlineVariant.withValues(
-                  alpha: 0.65,
-                ),
-              ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(BuildContext context, String title) {
-    return Text(
-      title,
-      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-        color: context.colorScheme.onSurfaceVariant,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.5,
-      ),
-    );
-  }
-
-  Widget _buildMenuTile(BuildContext context, _AccountMenuItem item) {
-    return InkWell(
-      key: ValueKey<String>('driver-account-item-${item.title}'),
-      onTap: item.onTap,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 76),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: 12,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                alignment: Alignment.center,
-                child: Icon(
-                  item.icon,
-                  size: 18,
-                  color: context.colorScheme.primary,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.lg),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      item.title,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.sm / 2),
-                    Text(
-                      item.subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Icon(
-                LucideIcons.chevron_right,
-                color: context.colorScheme.onSurfaceVariant,
-                size: AppSize.navigationIcon,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildLogoutButton(BuildContext context) {
     return SizedBox(
       key: const ValueKey<String>('driver-account-logout'),
-      height: 58,
+      height: 48,
       width: double.infinity,
       child: OutlinedButton(
         onPressed: _isLoggingOut ? null : () => _handleLogout(context),
@@ -349,7 +261,7 @@ class _AccountPageState extends State<AccountPage> {
                   color: context.colorScheme.error,
                 ),
               )
-            : const Text('Log Out'),
+            : const Text('Log out'),
       ),
     );
   }
@@ -377,16 +289,4 @@ class _AccountPageState extends State<AccountPage> {
       setState(() => _isLoggingOut = false);
     }
   }
-}
-
-class const _AccountMenuItem({
-  required this.icon,
-  required this.title,
-  required this.subtitle,
-  required this.onTap,
-}) {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
 }
