@@ -9,7 +9,6 @@ class const FindingDriverNoDriverPanel({
   required this.destination,
   this.pickupAddress,
 
-  this.bookingReference,
   this.requestExpired = false,
   required this.onRetryPressed,
   required this.onCancelPressed,
@@ -19,7 +18,6 @@ class const FindingDriverNoDriverPanel({
   final Place destination;
   final String? pickupAddress;
 
-  final String? bookingReference;
   final bool requestExpired;
   final VoidCallback onRetryPressed;
   final VoidCallback onCancelPressed;
@@ -37,7 +35,6 @@ class const FindingDriverNoDriverPanel({
       destination: destination.name,
       pickupAddress: pickupAddress,
 
-      bookingReference: bookingReference,
       fare: fare,
       primaryAction: onRetryPressed,
       primaryActionLabel: 'Retry search',

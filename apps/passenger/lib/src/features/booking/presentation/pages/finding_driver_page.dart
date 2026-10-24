@@ -699,7 +699,6 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               pickupAddress: pickupAddress,
 
                               requestExpired: isExpired,
-                              bookingReference: state.publicBookingReference,
                               onRetryPressed: _retryFindingDriver,
                               onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
@@ -757,7 +756,6 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               tipAmount: widget.tipAmount,
                               distance: widget.distance,
                               duration: widget.duration,
-                              bookingReference: state.publicBookingReference,
                               requestCreated: requestCreated,
                               isSendingRequest: !requestCreated,
                               onCancelPressed: _handleCancel,
@@ -776,7 +774,6 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               tipAmount: widget.tipAmount,
                               distance: widget.distance,
                               duration: widget.duration,
-                              bookingReference: state.publicBookingReference,
                               requestCreated: requestCreated,
                               isSendingRequest: !requestCreated,
                               animate: false,

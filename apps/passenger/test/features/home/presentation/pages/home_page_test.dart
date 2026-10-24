@@ -41,7 +41,13 @@ class _MockCurrentLocationRepository extends Mock
 class _MockHomeRepository extends Mock implements HomeRepository {}
 
 class _MockBookingBloc extends MockBloc<BookingEvent, BookingState>
-    implements BookingBloc {}
+    implements BookingBloc {
+  _MockBookingBloc() {
+    when(() => state).thenReturn(const BookingInitial());
+    when(() => stream).thenAnswer((_) => const Stream.empty());
+    when(() => hasActiveDriverSearch).thenReturn(false);
+  }
+}
 
 class _MockLocationAccessCubit extends MockCubit<LocationAccessViewState>
     implements LocationAccessCubit {}
@@ -792,6 +798,10 @@ void main() {
     final sessionBloc = SessionBloc(
       sessionRepository: _MockSessionRepository(),
     );
+    sessionBloc.add(
+      const SessionAuthenticatedRequested(passengerId: 'passenger-1'),
+    );
+    await sessionBloc.stream.first;
     final locationAccessCubit = _MockLocationAccessCubit();
     final bookingBloc = _MockBookingBloc();
     final publicDriverSummaryCubit = _MockPublicDriverSummaryCubit();

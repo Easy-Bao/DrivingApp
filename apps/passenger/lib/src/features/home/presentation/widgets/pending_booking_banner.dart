@@ -58,9 +58,9 @@ class const PendingBookingBanner({
               ],
             ),
           ),
-          TextButton(
+          FilledButton(
             onPressed: onContinue,
-            style: TextButton.styleFrom(
+            style: FilledButton.styleFrom(
               minimumSize: const Size(48, AppSize.minimumTouchTarget),
               textStyle: const TextStyle(fontWeight: FontWeight.w700),
             ),

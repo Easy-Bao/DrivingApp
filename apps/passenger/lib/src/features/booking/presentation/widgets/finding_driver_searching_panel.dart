@@ -1,6 +1,5 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
@@ -18,7 +17,6 @@ class FindingDriverSearchingPanel extends StatelessWidget {
     this.tipAmount,
     this.distance,
     this.duration,
-    this.bookingReference = '',
     this.expiresAt,
     this.requestCreated = false,
     this.isSendingRequest = false,
@@ -38,7 +36,6 @@ class FindingDriverSearchingPanel extends StatelessWidget {
   final int? tipAmount;
   final String? distance;
   final String? duration;
-  final String bookingReference;
   final DateTime? expiresAt;
   final bool requestCreated;
   final bool isSendingRequest;
@@ -91,7 +88,6 @@ class FindingDriverSearchingPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final displayBookingId = bookingReference.trim();
     final pickupTitle = _resolvePickupTitle();
     final pickupSubtitle = _resolvePickupSubtitle();
     final destinationTitle = _resolveDestinationTitle();
@@ -161,54 +157,11 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                             ),
                           ),
                         const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                displayBookingId.isEmpty ||
-                                        selectedDriverName != null
-                                    ? message
-                                    : 'Booking ID - $displayBookingId',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: colorScheme.onSurfaceVariant,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                            if (displayBookingId.isNotEmpty) ...[
-                              const SizedBox(width: 8),
-                              Material(
-                                color: colorScheme.surfaceContainerHighest
-                                    .withValues(alpha: 0.6),
-                                borderRadius: BorderRadius.circular(8),
-                                child: Tooltip(
-                                  message: 'Copy Booking ID',
-                                  child: InkWell(
-                                    key: const ValueKey<String>(
-                                      'copy-booking-id-button',
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                    onTap: () async {
-                                      await Clipboard.setData(
-                                        ClipboardData(text: displayBookingId),
-                                      );
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12),
-                                      child: Icon(
-                                        LucideIcons.copy,
-                                        size: 18,
-                                        color: colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
+                        Text(
+                          message,
+                          style: context.textStyles.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),

@@ -408,7 +408,6 @@ class _HomePageState extends State<HomePage> {
               activeSearch?.trip.destination.name ?? 'Your saved trip request';
         }
 
-        final requestId = state.publicBookingReference;
         final String actionLabel;
         final VoidCallback? onPressed;
         if (state is BookingRideRecovered) {
@@ -421,7 +420,7 @@ class _HomePageState extends State<HomePage> {
           actionLabel = 'Checking';
           onPressed = null;
         } else {
-          actionLabel = 'Continue';
+          actionLabel = 'View request';
           onPressed = activeSearch == null
               ? null
               : () => unawaited(_canStartOrContinueBooking());
@@ -460,34 +459,11 @@ class _HomePageState extends State<HomePage> {
                           fontSize: 12,
                         ),
                       ),
-                      if (requestId.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        TripReference(
-                          id: requestId,
-                          label: 'Booking ID',
-                          compact: true,
-                        ),
-                      ],
                     ],
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                TextButton(
-                  onPressed: onPressed,
-                  style: TextButton.styleFrom(
-                    backgroundColor: colors.surfaceContainerHighest,
-                    foregroundColor: colors.onSurface,
-                    disabledBackgroundColor: colors.surfaceContainerHighest,
-                    disabledForegroundColor: colors.onSurfaceVariant,
-                    minimumSize: const Size(48, AppSize.minimumTouchTarget),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  child: Text(actionLabel),
-                ),
+                FilledButton(onPressed: onPressed, child: Text(actionLabel)),
               ],
             ),
           ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maps/maps.dart';
@@ -14,7 +13,7 @@ void main() {
     longitude: 123.44,
   );
 
-  testWidgets('renders searching header, booking ID, and copy button', (
+  testWidgets('renders searching status without repeating receipt references', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -24,7 +23,6 @@ void main() {
             message: 'Searching for a driver',
             fare: 27.57,
             destination: destination,
-            bookingReference: '701612345678901',
             requestCreated: true,
             onCancelPressed: () {},
           ),
@@ -33,11 +31,8 @@ void main() {
     );
 
     expect(find.text('Searching for a driver...'), findsOneWidget);
-    expect(find.text('Booking ID - 701612345678901'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('copy-booking-id-button')),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Booking ID'), findsNothing);
+    expect(find.byKey(const ValueKey('copy-booking-id-button')), findsNothing);
   });
 
   testWidgets(
@@ -53,7 +48,6 @@ void main() {
               pickupAddress: 'Mountain View, California',
               distance: '3.2 km',
               duration: '9 mins',
-              bookingReference: '701612345678901',
               requestCreated: true,
               onCancelPressed: () {},
             ),
@@ -177,38 +171,4 @@ void main() {
       );
     },
   );
-
-  testWidgets('copy button copies booking ID to clipboard', (tester) async {
-    String? copiedText;
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      SystemChannels.platform,
-      (methodCall) async {
-        if (methodCall.method == 'Clipboard.setData') {
-          copiedText =
-              (methodCall.arguments as Map<dynamic, dynamic>)['text']
-                  as String?;
-        }
-        return null;
-      },
-    );
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: FindingDriverSearchingPanel(
-            message: 'Searching for a driver',
-            fare: 27.57,
-            destination: destination,
-            bookingReference: '701612345678901',
-            onCancelPressed: () {},
-          ),
-        ),
-      ),
-    );
-
-    await tester.tap(find.byKey(const ValueKey('copy-booking-id-button')));
-    await tester.pump();
-
-    expect(copiedText, '701612345678901');
-  });
 }
