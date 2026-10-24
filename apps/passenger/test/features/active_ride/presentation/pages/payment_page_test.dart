@@ -20,6 +20,7 @@ class _MockDriverProfileRepository extends Mock
 void main() {
   const testRide = RideSnapshot(
     id: 'ride-123',
+    bookingReference: 'receipt-reference',
     pickupName: 'Ayala Center',
     dropoffName: 'IT Park',
     status: 'completed',
@@ -66,11 +67,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Trip receipt'), findsOneWidget);
-    expect(find.text('Booking ID - ride-123'), findsOneWidget);
+    expect(find.text('Booking ID - receipt-reference'), findsNothing);
     expect(find.text('Total fare'), findsOneWidget);
     expect(find.text('₱185.00'), findsOneWidget);
     expect(find.text('Cash · Awaiting driver confirmation.'), findsOneWidget);
     expect(find.text('How was your ride with Juan Dela Cruz?'), findsOneWidget);
+    expect(find.text('Comment (optional)'), findsNothing);
+    expect(find.text('Rate this ride'), findsOneWidget);
+    await tester.ensureVisible(find.text('Trip details'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Trip details'));
+    await tester.pumpAndSettle();
+    expect(find.text('Booking ID - receipt-reference'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -94,7 +102,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Trip receipt'), findsOneWidget);
-    expect(find.text('Booking ID - ride-123'), findsOneWidget);
+    expect(find.text('Booking ID - receipt-reference'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

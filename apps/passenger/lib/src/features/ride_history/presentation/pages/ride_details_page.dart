@@ -237,345 +237,160 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
         (ride == null
             ? null
             : double.tryParse(ride.price.replaceAll(RegExp(r'[^0-9.\-]'), '')));
-
+    final status = (snapshot?.status ?? ride?.status ?? 'unknown')
+        .toLowerCase();
+    final isCompleted = status == 'completed';
     final pickupLatitude = ride?.pickupLat ?? snapshot?.pickupLatitude;
     final pickupLongitude = ride?.pickupLng ?? snapshot?.pickupLongitude;
     final dropoffLatitude = ride?.destLat ?? snapshot?.dropoffLatitude;
     final dropoffLongitude = ride?.destLng ?? snapshot?.dropoffLongitude;
-    final status = (snapshot?.status ?? ride?.status ?? 'unknown')
-        .toLowerCase();
-    final isCompleted = status == 'completed';
-    final Color statusColor;
-    final String statusLabel;
-    final String statusSubtitle;
-
-    if (status == 'completed') {
-      statusColor = context.semanticColors.success;
-      statusLabel = 'Completed';
-      statusSubtitle = 'Trip finished';
-    } else if (status == 'canceled' || status == 'cancelled') {
-      statusColor = context.colorScheme.error;
-      statusLabel = 'Canceled';
-      statusSubtitle = 'Trip canceled';
-    } else {
-      statusColor = context.semanticColors.success;
-      statusLabel = 'In Progress';
-      statusSubtitle = 'Trip is in progress';
-    }
+    final reference =
+        snapshot?.bookingReference ?? ride?.bookingReference ?? '';
+    final driverName =
+        _counterpartyData?.name ??
+        ride?.displayDriverName ??
+        snapshot?.displayDriverName ??
+        'Driver';
 
     return AppSecondaryPage(
       title: isCompleted ? 'Trip receipt' : 'Ride details',
-      subtitle:
-          (snapshot?.bookingReference ?? ride?.bookingReference ?? '')
-              .trim()
-              .isEmpty
-          ? null
-          : 'Booking ID - ${snapshot?.bookingReference ?? ride?.bookingReference}',
       onBack: () => context.pop(),
       child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (_detailsCubit.state.errorMessage != null && rideId != null) ...[
+              AppErrorBanner(
+                message: _detailsCubit.state.errorMessage!,
+                onRetry: () => unawaited(_detailsCubit.load(rideId)),
+              ),
+              const SizedBox(height: 16),
+            ],
             if (isCompleted) ...[
               _buildReceiptSummary(context, snapshot, fare),
-              if (snapshot?.driverId?.trim().isNotEmpty == true &&
-                  rideId?.isNotEmpty == true) ...[
-                const SizedBox(height: 12),
-                RideRatingPrompt(
-                  driverId: snapshot!.driverId!,
-                  driverName: snapshot.displayDriverName,
-                  rideId: rideId!,
-                  cubit: _detailsCubit,
-                  onDone: () => context.goNamed(HomeRoutes.home),
-                  initiallyExpanded:
-                      widget.initialRide != null ||
-                      (widget.ride == null && widget.rideId != null),
-                ),
-              ],
-              const SizedBox(height: 12),
+              const SizedBox(height: 24),
             ],
-            if (pickupLatitude != null &&
-                pickupLongitude != null &&
-                dropoffLatitude != null &&
-                dropoffLongitude != null)
-              Container(
-                height: 200,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: context.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(
-                    color: context.colorScheme.outlineVariant,
-                    width: 1.0,
-                  ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x06000000),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: context.colorScheme.surfaceContainerHighest,
+                  foregroundColor: context.colorScheme.onSurface,
+                  child: Text(_driverInitials(driverName)),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.lg - 1),
-                  child: RideDetailsMap(
-                    key: ValueKey((
-                      pickupLatitude,
-                      pickupLongitude,
-                      dropoffLatitude,
-                      dropoffLongitude,
-                    )),
-                    pickupLatitude: pickupLatitude,
-                    pickupLongitude: pickupLongitude,
-                    dropoffLatitude: dropoffLatitude,
-                    dropoffLongitude: dropoffLongitude,
-                  ),
-                ),
-              ),
-
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(
-                  color: context.colorScheme.outlineVariant,
-                  width: 1.0,
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x06000000),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.surfaceContainerHighest,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      _driverInitials(
-                        ride?.displayDriverName ?? snapshot?.displayDriverName,
-                      ),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: context.colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          ride?.displayDriverName ??
-                              snapshot?.displayDriverName ??
-                              'Driver',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: context.colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          ride?.displayVehicleSummary ??
-                              snapshot?.displayVehicleSummary ??
-                              'Vehicle details unavailable',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: context.colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (_canContactCounterparty) ...[
-                    const SizedBox(width: 8),
-                    Material(
-                      color: context.colorScheme.surface,
-                      shape: CircleBorder(
-                        side: BorderSide(
-                          color: context.colorScheme.outlineVariant.withValues(
-                            alpha: 0.4,
-                          ),
-                          width: 1.0,
-                        ),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Semantics(
-                        button: true,
-                        label: 'Call driver',
-                        child: InkWell(
-                          onTap: _makeDriverCall,
-                          child: SizedBox(
-                            width: 48,
-                            height: 48,
-                            child: Icon(
-                              LucideIcons.phone,
-                              color: context.colorScheme.onSurface,
-                              size: 18,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                  if (status != 'completed' || _showLostFoundChat) ...[
-                    const SizedBox(width: 8),
-                    Material(
-                      color: context.colorScheme.surface,
-                      shape: CircleBorder(
-                        side: BorderSide(
-                          color: context.colorScheme.outlineVariant.withValues(
-                            alpha: 0.4,
-                          ),
-                          width: 1.0,
-                        ),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Semantics(
-                        button: true,
-                        label: 'Chat with driver',
-                        child: InkWell(
-                          onTap: _initiateLostFoundChat,
-                          child: SizedBox(
-                            width: 48,
-                            height: 48,
-                            child: Icon(
-                              LucideIcons.message_square,
-                              color: context.colorScheme.onSurface,
-                              size: 18,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                  SafetyReportButton(
-                    driverName:
-                        _counterpartyData?.name ??
-                        ride?.displayDriverName ??
-                        snapshot?.displayDriverName ??
-                        '',
-                    vehiclePlate:
-                        ride?.vehiclePlate ?? snapshot?.plateNumber ?? '',
-                    vehicleType:
-                        ride?.vehicleType ?? snapshot?.vehicleType ?? '',
-                    bookingReference:
-                        snapshot?.bookingReference ??
-                        widget.ride?.bookingReference ??
-                        '',
-                    rideId: rideId,
-                    trackRepository: widget.trackRepository,
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(
-                  color: context.colorScheme.outlineVariant,
-                  width: 1.0,
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x06000000),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.xs,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: statusColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        child: Text(
-                          statusLabel,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: statusColor,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 220),
-                        child: Text(
-                          statusSubtitle,
-                          textAlign: TextAlign.end,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: context.colorScheme.onSurfaceVariant,
-                          ),
+                      Text(driverName, style: context.textStyles.titleMedium),
+                      const SizedBox(height: 4),
+                      Text(
+                        ride?.displayVehicleSummary ??
+                            snapshot?.displayVehicleSummary ??
+                            'Vehicle details unavailable',
+                        style: context.textStyles.bodyMedium?.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: Divider(
-                      height: 1,
-                      color: context.colorScheme.outlineVariant,
+                ),
+              ],
+            ),
+            if (isCompleted &&
+                snapshot?.driverId?.trim().isNotEmpty == true &&
+                rideId?.isNotEmpty == true) ...[
+              const SizedBox(height: 24),
+              RideRatingPrompt(
+                driverId: snapshot!.driverId!,
+                driverName: snapshot.displayDriverName,
+                rideId: rideId!,
+                cubit: _detailsCubit,
+                onDone: () => context.goNamed(HomeRoutes.home),
+              ),
+            ],
+            const SizedBox(height: 24),
+            ExpansionTile(
+              key: const ValueKey('receipt-trip-details'),
+              title: const Text('Trip details'),
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(bottom: 20),
+              children: [
+                if (reference.trim().isNotEmpty) ...[
+                  TripReference(id: reference),
+                  const SizedBox(height: 20),
+                ],
+                CompactRouteTimeline(
+                  pickup:
+                      ride?.pickup ?? snapshot?.pickupName ?? 'Pickup location',
+                  dropoff:
+                      ride?.destination ??
+                      snapshot?.dropoffName ??
+                      'Destination location',
+                ),
+                const SizedBox(height: 16),
+                if (pickupLatitude != null &&
+                    pickupLongitude != null &&
+                    dropoffLatitude != null &&
+                    dropoffLongitude != null) ...[
+                  SizedBox(
+                    height: 180,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      child: RideDetailsMap(
+                        key: ValueKey((
+                          pickupLatitude,
+                          pickupLongitude,
+                          dropoffLatitude,
+                          dropoffLongitude,
+                        )),
+                        pickupLatitude: pickupLatitude,
+                        pickupLongitude: pickupLongitude,
+                        dropoffLatitude: dropoffLatitude,
+                        dropoffLongitude: dropoffLongitude,
+                      ),
                     ),
                   ),
-                  CompactRouteTimeline(
-                    pickup:
-                        ride?.pickup ??
-                        snapshot?.pickupName ??
-                        'Pickup Location',
-                    dropoff:
-                        ride?.destination ??
-                        snapshot?.dropoffName ??
-                        'Destination Location',
-                    pickupLabel: 'Pick up',
-                    dropoffLabel: 'Drop off',
-                  ),
+                  const SizedBox(height: 16),
                 ],
-              ),
-            ),
-
-            if (isCompleted) ...[
-              const SizedBox(height: AppSpacing.lg),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => context.goNamed(HomeRoutes.home),
-                  child: const Text('Done'),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 12,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (_canContactCounterparty)
+                      TextButton.icon(
+                        onPressed: _makeDriverCall,
+                        icon: const Icon(LucideIcons.phone, size: 20),
+                        label: const Text('Call driver'),
+                      ),
+                    if (_showLostFoundChat)
+                      TextButton.icon(
+                        onPressed: _initiateLostFoundChat,
+                        icon: const Icon(LucideIcons.message_circle, size: 20),
+                        label: const Text('Lost item?'),
+                      ),
+                    SafetyReportButton(
+                      driverName: driverName,
+                      vehiclePlate:
+                          ride?.vehiclePlate ?? snapshot?.plateNumber ?? '',
+                      vehicleType:
+                          ride?.vehicleType ?? snapshot?.vehicleType ?? '',
+                      bookingReference: reference,
+                      rideId: rideId,
+                      trackRepository: widget.trackRepository,
+                    ),
+                  ],
                 ),
+              ],
+            ),
+            if (isCompleted) ...[
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () => context.goNamed(HomeRoutes.home),
+                child: const Text('Done'),
               ),
             ],
           ],
