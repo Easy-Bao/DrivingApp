@@ -126,7 +126,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     LocationAccessViewState locationState,
     NetworkAvailabilityStatus status,
   ) {
-    final isUnavailable = status != NetworkAvailabilityStatus.available;
+    final isUnavailable = status.hasAvailabilityWarning;
     final overlay = _buildLocationOverlay(context, locationState);
     final routeContent = Stack(
       fit: StackFit.expand,

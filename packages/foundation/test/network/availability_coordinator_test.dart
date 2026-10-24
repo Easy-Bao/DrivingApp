@@ -3,6 +3,65 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 
 void main() {
+  test('an isolated failure does not claim the connection is unavailable', () {
+    final coordinator = NetworkAvailabilityCoordinator();
+    addTearDown(coordinator.dispose);
+    coordinator.recordFailure();
+    expect(coordinator.status, NetworkAvailabilityStatus.degraded);
+    expect(coordinator.status.hasAvailabilityWarning, isFalse);
+    expect(coordinator.status.isConnectionUnavailable, isFalse);
+    coordinator.recordFailure();
+    expect(coordinator.status.hasAvailabilityWarning, isTrue);
+    expect(coordinator.status.isConnectionUnavailable, isTrue);
+  });
+
+  test('fresh failures after a recovery still open the circuit', () {
+    final coordinator = NetworkAvailabilityCoordinator();
+    addTearDown(coordinator.dispose);
+    final generation = coordinator.successGeneration;
+    coordinator.recordSuccess();
+    coordinator.recordFailure(requestGeneration: generation);
+    expect(coordinator.status, NetworkAvailabilityStatus.available);
+    coordinator.recordFailure(requestGeneration: coordinator.successGeneration);
+    coordinator.recordFailure(requestGeneration: coordinator.successGeneration);
+    expect(coordinator.status, NetworkAvailabilityStatus.unavailable);
+    expect(coordinator.isCircuitOpen, isTrue);
+  });
+
+  test(
+    'late concurrent timeouts cannot override newer server reachability',
+    () {
+      final coordinator = NetworkAvailabilityCoordinator();
+      addTearDown(coordinator.dispose);
+      final interceptor = NetworkAvailabilityInterceptor(coordinator);
+      final oldRequests = [
+        RequestOptions(path: '/trips'),
+        RequestOptions(path: '/stats'),
+      ];
+      for (final request in oldRequests) {
+        interceptor.onRequest(request, RequestInterceptorHandler());
+      }
+      final recent = RequestOptions(path: '/presence');
+      interceptor.onRequest(recent, RequestInterceptorHandler());
+      interceptor.onResponse(
+        Response<dynamic>(requestOptions: recent, statusCode: 200),
+        ResponseInterceptorHandler(),
+      );
+      for (final request in oldRequests) {
+        interceptor.onError(
+          DioException(
+            requestOptions: request,
+            type: DioExceptionType.receiveTimeout,
+          ),
+          // ignore: invalid_use_of_protected_member
+          ErrorInterceptorHandler()..future.ignore(),
+        );
+      }
+      expect(coordinator.status, NetworkAvailabilityStatus.available);
+      expect(coordinator.isCircuitOpen, isFalse);
+    },
+  );
+
   test('emits one status event per availability transition', () async {
     final now = DateTime(2026, 8, 31);
     final coordinator = NetworkAvailabilityCoordinator(

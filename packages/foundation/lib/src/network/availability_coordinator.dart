@@ -10,7 +10,10 @@ enum NetworkAvailabilityStatus {
   unavailable,
   serviceUnavailable;
 
-  bool get isConnectionUnavailable => this == degraded || this == unavailable;
+  bool get isConnectionUnavailable => this == unavailable;
+
+  bool get hasAvailabilityWarning =>
+      isConnectionUnavailable || this == serviceUnavailable;
 }
 
 typedef NetworkNow = DateTime Function();
@@ -41,6 +44,9 @@ final class NetworkAvailabilityCoordinator({
   int _consecutiveFailures = 0;
   DateTime? _circuitOpenUntil;
   bool _probeInFlight = false;
+  int _successGeneration = 0;
+
+  int get successGeneration => _successGeneration;
 
   NetworkAvailabilityStatus get status => _status;
 
@@ -62,6 +68,7 @@ final class NetworkAvailabilityCoordinator({
   }
 
   void recordSuccess() {
+    _successGeneration++;
     _consecutiveFailures = 0;
     _circuitOpenUntil = null;
     _probeInFlight = false;
@@ -99,7 +106,12 @@ final class NetworkAvailabilityCoordinator({
     _probeInFlight = false;
   }
 
-  void recordFailure() {
+  void recordFailure({int? requestGeneration}) {
+    // An older request timing out cannot overturn a response that reached the
+    // server after that request began. Only fresh failures judge recovery.
+    if (requestGeneration != null && requestGeneration != _successGeneration) {
+      return;
+    }
     _probeInFlight = false;
     _consecutiveFailures++;
     if (_consecutiveFailures >= _failureThreshold) {
@@ -135,6 +147,7 @@ final class NetworkAvailabilityCoordinator({
 final class const NetworkAvailabilityInterceptor(this.coordinator)
     extends Interceptor {
   final NetworkAvailabilityCoordinator coordinator;
+  static const _generationKey = 'foundation.network.successGeneration';
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
@@ -148,6 +161,7 @@ final class const NetworkAvailabilityInterceptor(this.coordinator)
       );
       return;
     }
+    options.extra[_generationKey] = coordinator.successGeneration;
     handler.next(options);
   }
 
@@ -163,7 +177,9 @@ final class const NetworkAvailabilityInterceptor(this.coordinator)
   @override
   void onError(DioException error, ErrorInterceptorHandler handler) {
     if (NetworkAvailabilityCoordinator.isNetworkFailure(error)) {
-      coordinator.recordFailure();
+      coordinator.recordFailure(
+        requestGeneration: error.requestOptions.extra[_generationKey] as int?,
+      );
     } else if (error.response != null) {
       coordinator.recordResponse(error.response!);
     } else if (error.error is! NetworkCircuitOpenException) {
