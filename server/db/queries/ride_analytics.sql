@@ -77,7 +77,13 @@ SELECT
     )::bigint AS admin_override_cancellation_count
 FROM rating_stats
 LEFT JOIN rides AS r ON r.driver_id = sqlc.arg('driver_id')::int
-LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = r.id;
+LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = r.id
+GROUP BY rating_stats.average_rating,
+    rating_stats.one_star_count,
+    rating_stats.two_star_count,
+    rating_stats.three_star_count,
+    rating_stats.four_star_count,
+    rating_stats.five_star_count;
 
 -- name: ListDriverEarnings :many
 SELECT ride.created_at, ride.completed_at,

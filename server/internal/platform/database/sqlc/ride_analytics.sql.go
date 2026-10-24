@@ -91,6 +91,12 @@ SELECT
 FROM rating_stats
 LEFT JOIN rides AS r ON r.driver_id = $3::int
 LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = r.id
+GROUP BY rating_stats.average_rating,
+    rating_stats.one_star_count,
+    rating_stats.two_star_count,
+    rating_stats.three_star_count,
+    rating_stats.four_star_count,
+    rating_stats.five_star_count
 `
 
 type GetDriverStatsParams struct {

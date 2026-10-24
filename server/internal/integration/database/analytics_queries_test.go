@@ -138,38 +138,6 @@ INSERT INTO reviews (id, driver_id, rating) VALUES
 	}
 
 	queries := databasepostgres.New(connection)
-	onlineDrivers, err := queries.ListOnlineDrivers(ctx, databasepostgres.ListOnlineDriversParams{
-		OnlineCutoff: pgtype.Timestamptz{Time: onlineCutoff, Valid: true},
-		DriverIds:    []int32{11, 12, 13},
-		Limit:        2,
-	})
-	if err != nil {
-		t.Fatalf("list online drivers: %v", err)
-	}
-	if len(onlineDrivers) != 2 {
-		t.Fatalf("online driver count = %d, want 2", len(onlineDrivers))
-	}
-	if onlineDrivers[0].ID != 1 || onlineDrivers[0].UserID != 11 || onlineDrivers[0].Rating != 4.5 || onlineDrivers[0].OnboardPassengerCount != 2 {
-		t.Fatalf("first online driver = %+v, want profile 1 with review average 4.5 and 2 onboard rides", onlineDrivers[0])
-	}
-	if onlineDrivers[1].ID != 2 || onlineDrivers[1].UserID != 12 || onlineDrivers[1].Rating != 3.25 || onlineDrivers[1].OnboardPassengerCount != 1 {
-		t.Fatalf("second online driver = %+v, want profile 2 with fallback rating 3.25 and 1 onboard ride", onlineDrivers[1])
-	}
-
-	publicSummaries, err := queries.ListPublicDriverSummaries(ctx, databasepostgres.ListPublicDriverSummariesParams{
-		OnlineCutoff: pgtype.Timestamptz{Time: onlineCutoff, Valid: true},
-		Limit:        2,
-	})
-	if err != nil {
-		t.Fatalf("list public driver summaries: %v", err)
-	}
-	if len(publicSummaries) != 2 {
-		t.Fatalf("public driver summary count = %d, want 2", len(publicSummaries))
-	}
-	if publicSummaries[0].ID != 11 || publicSummaries[0].Rating != 4.5 || publicSummaries[1].ID != 12 || publicSummaries[1].Rating != 3.25 {
-		t.Fatalf("public driver summaries = %+v, want review average and stored-rating fallback in profile order", publicSummaries)
-	}
-
 	stats, err := queries.GetDriverStats(ctx, databasepostgres.GetDriverStatsParams{
 		DayStart: pgtype.Timestamptz{Time: dayStart, Valid: true},
 		DayEnd:   pgtype.Timestamptz{Time: dayEnd, Valid: true},
@@ -190,4 +158,68 @@ INSERT INTO reviews (id, driver_id, rating) VALUES
 	if stats.StandingSettledTrips != 2 || stats.DriverFaultCancellationCount != 1 {
 		t.Fatalf("standing statistics = settled %d, driver-fault cancellations %d; want 2, 1", stats.StandingSettledTrips, stats.DriverFaultCancellationCount)
 	}
+
+	if _, err := connection.Exec(ctx, "INSERT INTO reviews (id, driver_id, rating) VALUES (4, 15, 3)"); err != nil {
+		t.Fatalf("seed review without rides: %v", err)
+	}
+	for _, test := range []struct {
+		name     string
+		driverID int32
+		trips    int64
+		rating   float64
+	}{
+		{name: "no rides or reviews", driverID: 14},
+		{name: "rides without reviews", driverID: 12, trips: 2},
+		{name: "reviews without rides", driverID: 15, rating: 3},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			stats, err := queries.GetDriverStats(ctx, databasepostgres.GetDriverStatsParams{
+				DayStart: pgtype.Timestamptz{Time: dayStart, Valid: true},
+				DayEnd:   pgtype.Timestamptz{Time: dayEnd, Valid: true},
+				DriverID: test.driverID,
+			})
+			if err != nil {
+				t.Fatalf("get sparse driver statistics: %v", err)
+			}
+			if stats.TotalTrips != test.trips || stats.AverageRating != test.rating || stats.FiveStarCount != 0 {
+				t.Fatalf("sparse statistics = %+v, want trips %d, rating %v, five stars 0", stats, test.trips, test.rating)
+			}
+			if stats.CompletedTrips != 0 || stats.TodayCompletedTrips != 0 || stats.TodayEarningsAmount != 0 || stats.TotalEarningsAmount != 0 || stats.StandingSettledTrips != 0 {
+				t.Fatalf("unearned activity should remain zero: %+v", stats)
+			}
+		})
+	}
+
+	onlineDrivers, err := queries.ListOnlineDrivers(ctx, databasepostgres.ListOnlineDriversParams{
+		OnlineCutoff: pgtype.Timestamptz{Time: onlineCutoff, Valid: true},
+		DriverIds:    []int32{11, 12, 13},
+		Limit:        2,
+	})
+	if err != nil {
+		t.Fatalf("list online drivers: %v", err)
+	}
+	if len(onlineDrivers) != 2 {
+		t.Fatalf("online driver count = %d, want 2", len(onlineDrivers))
+	}
+	if onlineDrivers[0].ID != 1 || onlineDrivers[0].UserID != 11 || onlineDrivers[0].Rating != 4.5 || onlineDrivers[0].OnboardPassengerCount != 1 {
+		t.Fatalf("first online driver = %+v, want profile 1 with review average 4.5 and 1 onboard ride", onlineDrivers[0])
+	}
+	if onlineDrivers[1].ID != 2 || onlineDrivers[1].UserID != 12 || onlineDrivers[1].Rating != 3.25 || onlineDrivers[1].OnboardPassengerCount != 1 {
+		t.Fatalf("second online driver = %+v, want profile 2 with fallback rating 3.25 and 1 onboard ride", onlineDrivers[1])
+	}
+
+	publicSummaries, err := queries.ListPublicDriverSummaries(ctx, databasepostgres.ListPublicDriverSummariesParams{
+		OnlineCutoff: pgtype.Timestamptz{Time: onlineCutoff, Valid: true},
+		Limit:        2,
+	})
+	if err != nil {
+		t.Fatalf("list public driver summaries: %v", err)
+	}
+	if len(publicSummaries) != 2 {
+		t.Fatalf("public driver summary count = %d, want 2", len(publicSummaries))
+	}
+	if publicSummaries[0].ID != 11 || publicSummaries[0].Rating != 4.5 || publicSummaries[1].ID != 12 || publicSummaries[1].Rating != 3.25 {
+		t.Fatalf("public driver summaries = %+v, want review average and stored-rating fallback in profile order", publicSummaries)
+	}
+
 }
