@@ -71,6 +71,41 @@ Future<void> _pump(
 }
 
 void main() {
+  testWidgets('loading does not claim zero drivers or an active request', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      isChoosingDriver: true,
+      availability: const NearbyDriversState(isLoading: true),
+    );
+    expect(find.text('Nearby drivers (0)'), findsNothing);
+    expect(find.text('Looking nearby'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('nearby-drivers-loading')),
+      findsOneWidget,
+    );
+    expect(find.text('Back to trip'), findsOneWidget);
+    expect(find.text('Cancel request'), findsNothing);
+  });
+
+  testWidgets('empty discovery explains that availability will refresh', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      isChoosingDriver: true,
+      availability: const NearbyDriversState(hasLoaded: true),
+    );
+    expect(find.byKey(const ValueKey('nearby-drivers-loading')), findsNothing);
+    expect(
+      find.text(
+        'No drivers available nearby right now. We’ll keep checking for you.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
     'shows available drivers in one container before anyone accepts',
     (tester) async {
@@ -84,12 +119,12 @@ void main() {
         find.byKey(const ValueKey('finding-driver-nearby-panel')),
         findsOneWidget,
       );
-      expect(find.text('Nearby drivers (1)'), findsOneWidget);
+      expect(find.text('Nearby drivers'), findsOneWidget);
       expect(find.text('Nearby driver'), findsOneWidget);
-      await tester.tap(find.text('Select driver'));
+      await tester.tap(find.text('Nearby driver'));
       expect(selected, same(_driver));
       expect(find.text('Choose driver'), findsNothing);
-      expect(find.text('Your fare · ₱27.88'), findsOneWidget);
+      expect(find.text('₱27.88'), findsOneWidget);
     },
   );
 
@@ -98,7 +133,7 @@ void main() {
   ) async {
     BookingOffer? chosen;
     await _pump(tester, offers: [_offer], onChoose: (offer) => chosen = offer);
-    expect(find.text('Nearby drivers (1)'), findsOneWidget);
+    expect(find.text('Nearby drivers'), findsOneWidget);
     expect(find.text('Nearby driver'), findsOneWidget);
     expect(find.text('Accepted fare · ₱27.88'), findsOneWidget);
     await tester.tap(find.text('Choose driver'));

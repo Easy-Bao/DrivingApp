@@ -82,11 +82,27 @@ class const FindingDriverNearbyPanel({
                       const SizedBox(height: 16),
                     ],
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(
-                            'Nearby drivers (${driverIds.length})',
-                            style: context.textStyles.titleLarge,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Nearby drivers',
+                                style: context.textStyles.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                formatPesoAmount(fare),
+                                style: context.textStyles.titleMedium?.copyWith(
+                                  color: context.colorScheme.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         IconButton(
@@ -96,32 +112,62 @@ class const FindingDriverNearbyPanel({
                         ),
                       ],
                     ),
+                    const SizedBox(height: 12),
                     Text(
                       isChoosingDriver
-                          ? 'Choose a nearby driver to send them your request.'
+                          ? 'Select a driver. They’ll confirm your ride.'
                           : isSendingRequest
                           ? 'Sending your request…'
-                          : 'Request sent. Choose a driver once they accept your fare.',
+                          : 'Choose a driver once they accept your fare.',
                       style: context.textStyles.bodyMedium?.copyWith(
                         color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Your fare · ${formatPesoAmount(fare)}',
-                      style: context.textStyles.titleSmall,
-                    ),
-                    if (availability.isLoading && !availability.hasLoaded) ...[
-                      const SizedBox(height: 16),
-                      const LinearProgressIndicator(
-                        key: ValueKey('nearby-drivers-loading'),
+                    if (!availability.hasLoaded &&
+                        driverIds.isEmpty &&
+                        error == null) ...[
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: context.colorScheme.primary,
+                              key: const ValueKey('nearby-drivers-loading'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Looking nearby',
+                                  style: context.textStyles.titleSmall,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Available drivers will appear here.',
+                                  style: context.textStyles.bodySmall?.copyWith(
+                                    color: context.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 12),
                     ],
                     if (error != null) ...[
                       const SizedBox(height: 12),
                       Text(
                         availability.hasLoaded
                             ? 'Driver availability could not be refreshed. Showing the last result.'
+                            : isChoosingDriver
+                            ? 'Couldn’t load nearby drivers. Try refreshing.'
                             : 'Nearby drivers could not be loaded. Your ride request is still active.',
                         key: const ValueKey('nearby-drivers-error'),
                         style: context.textStyles.bodySmall,
@@ -133,7 +179,7 @@ class const FindingDriverNearbyPanel({
                     ] else if (availability.hasLoaded && driverIds.isEmpty) ...[
                       const SizedBox(height: 16),
                       Text(
-                        'No available drivers nearby yet. We’ll keep checking.',
+                        'No drivers available nearby right now. We’ll keep checking for you.',
                         style: context.textStyles.bodyMedium,
                       ),
                     ],
@@ -171,7 +217,13 @@ class const FindingDriverNearbyPanel({
                     onPressed: isCanceling || acceptingOfferId != null
                         ? null
                         : onCancelPressed,
-                    child: Text(isCanceling ? 'Cancelling…' : 'Cancel request'),
+                    child: Text(
+                      isCanceling
+                          ? 'Cancelling…'
+                          : isChoosingDriver
+                          ? 'Back to trip'
+                          : 'Cancel request',
+                    ),
                   ),
                 ),
               ),
@@ -202,7 +254,8 @@ class const _DriverRow({
   @override
   Widget build(BuildContext context) {
     final rating = offer?.driverRating ?? driver?.rating;
-    return Column(
+    final canSelect = onSelectDriver != null && driver != null;
+    final details = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
@@ -236,7 +289,7 @@ class const _DriverRow({
                     children: [
                       if (driver != null)
                         Text(
-                          '${DistanceFormatter.fromKilometers(driver!.distanceKm)} away',
+                          '${driver!.etaMinutes} min · ${DistanceFormatter.fromKilometers(driver!.distanceKm)}',
                           style: context.textStyles.bodySmall,
                         ),
                       if (rating != null && rating > 0)
@@ -249,15 +302,18 @@ class const _DriverRow({
                 ],
               ),
             ),
+            if (canSelect) ...[
+              const SizedBox(width: 8),
+              Icon(
+                LucideIcons.chevron_right,
+                size: 20,
+                color: context.colorScheme.primary,
+              ),
+            ],
           ],
         ),
-        const SizedBox(height: 8),
-        if (onSelectDriver != null && driver != null)
-          FilledButton(
-            onPressed: isBusy ? null : () => onSelectDriver!(driver!),
-            child: const Text('Select driver'),
-          )
-        else if (offer case final BookingOffer readyOffer)
+        if (!canSelect) const SizedBox(height: 8),
+        if (offer case final BookingOffer readyOffer when !canSelect)
           Wrap(
             alignment: WrapAlignment.spaceBetween,
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -274,7 +330,7 @@ class const _DriverRow({
               ),
             ],
           )
-        else
+        else if (!canSelect)
           Text(
             'Available nearby · Awaiting response',
             style: context.textStyles.bodySmall?.copyWith(
@@ -282,6 +338,20 @@ class const _DriverRow({
             ),
           ),
       ],
+    );
+    if (!canSelect) return details;
+    return Semantics(
+      button: true,
+      enabled: !isBusy,
+      label: 'Select ${driver!.displayName}',
+      child: InkWell(
+        onTap: isBusy ? null : () => onSelectDriver!(driver!),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: details,
+        ),
+      ),
     );
   }
 }
