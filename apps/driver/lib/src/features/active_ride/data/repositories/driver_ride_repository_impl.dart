@@ -419,7 +419,7 @@ Failure _mapFailure(Object error, {required String action}) {
     }
     if (action == 'complete this trip' && statusCode == 422) {
       return const ValidationFailure(
-        'The driver must be in the destination area before completing the trip.',
+        'You are not at the destination yet. Move closer, then complete the trip.',
       );
     }
     if (action == 'complete this trip' && statusCode == 503) {

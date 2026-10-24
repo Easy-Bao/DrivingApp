@@ -697,7 +697,7 @@ func safeRideError(err error) string {
 	case errors.Is(err, domain.ErrTripCompletionCommand):
 		return "Complete the trip from the destination action."
 	case errors.Is(err, domain.ErrCompletionLocation):
-		return "The driver must be in the destination area before completing the trip."
+		return "You are not at the destination yet. Move closer, then complete the trip."
 	case errors.Is(err, domain.ErrPassengerNoShowNotReady):
 		return "Keep waiting until the pickup timer finishes before marking a no-show."
 	case errors.Is(err, domain.ErrNoShowCommand):
