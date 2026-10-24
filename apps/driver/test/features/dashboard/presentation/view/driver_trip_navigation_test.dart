@@ -29,7 +29,16 @@ class _Location extends MockCubit<LocationAccessViewState>
 
 void main() {
   for (final status in ['accepted', 'arrived', 'in_transit']) {
-    for (final scenario in ['assignment', 'restored', 'retry']) {
+    for (final scenario in [
+      'assignment',
+      'restored',
+      'retry',
+      'review',
+      'closedDuringReview',
+    ]) {
+      if (scenario == 'closedDuringReview' && status != 'accepted') continue;
+      final reviewing =
+          scenario == 'review' || scenario == 'closedDuringReview';
       testWidgets(
         'opens the $status trip stage after $scenario without a dashboard card',
         (tester) async {
@@ -45,6 +54,9 @@ void main() {
           final trip = RideSnapshot(
             id: 'trip',
             status: status,
+            createdAt: reviewing
+                ? DateTime.now().subtract(const Duration(days: 1))
+                : null,
             pickupName: 'Pickup',
             dropoffName: 'Destination',
             distanceKm: 2,
@@ -69,10 +81,21 @@ void main() {
             ),
           ).thenAnswer((_) async => true);
           when(() => dashboard.removeExpiredRideOffers()).thenReturn(false);
+          when(() => dashboard.removeActiveRide('trip')).thenAnswer((_) {
+            states.add(const DashboardState());
+          });
           var fetchCount = 0;
           when(() => dashboard.fetchAuthoritativeRide('trip'))
               .thenAnswer((_) async {
                 fetchCount++;
+                if (scenario == 'closedDuringReview' && fetchCount > 1) {
+                  return const RideSnapshot(
+                    id: 'trip',
+                    status: 'cancelled',
+                    pickupName: 'Pickup',
+                    dropoffName: 'Destination',
+                  );
+                }
                 return scenario == 'retry' && fetchCount == 1 ? null : trip;
               });
           when(
@@ -134,7 +157,22 @@ void main() {
           if (scenario != 'restored') {
             states.add(DashboardState(activeRide: trip));
           }
-          await tester.pumpAndSettle();
+          if (reviewing) {
+            for (
+              var frame = 0;
+              frame < 8 && find.text('Review this trip').evaluate().isEmpty;
+              frame++
+            ) {
+              await tester.pump(const Duration(milliseconds: 100));
+            }
+          } else {
+            await tester.pumpAndSettle();
+          }
+          if (reviewing) {
+            expect(find.text('Review this trip'), findsOneWidget);
+            await tester.tap(find.text('Open trip'));
+            await tester.pumpAndSettle();
+          }
           if (scenario == 'retry') {
             expect(
               find.text(
@@ -151,10 +189,13 @@ void main() {
               'in_transit' => 'Transit stage',
               _ => 'Pickup stage',
             }),
-            findsOneWidget,
+            scenario == 'closedDuringReview' ? findsNothing : findsOneWidget,
           );
+          if (scenario == 'closedDuringReview') {
+            verify(() => dashboard.removeActiveRide('trip')).called(1);
+          }
           verify(() => dashboard.fetchAuthoritativeRide('trip'))
-              .called(scenario == 'retry' ? 2 : 1);
+              .called(scenario == 'retry' || reviewing ? 2 : 1);
           expect(find.text('Continue Navigation'), findsNothing);
           expect(find.textContaining('Booking ID'), findsNothing);
           await tester.pumpWidget(const SizedBox());

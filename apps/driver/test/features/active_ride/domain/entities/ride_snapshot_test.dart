@@ -2,6 +2,62 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.dart';
 
 void main() {
+  test('flags long-open active trips without changing their status', () {
+    final now = DateTime.utc(2026, 10, 24, 12);
+    RideSnapshot trip(String status, {int age = 16, double duration = 5}) =>
+        RideSnapshot(
+          id: 'trip',
+          status: status,
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+          createdAt: now.subtract(Duration(minutes: age)),
+          durationMinutes: duration,
+        );
+    expect(trip('accepted', age: 14).needsRecoveryReview(now), isFalse);
+    expect(trip('accepted').needsRecoveryReview(now), isTrue);
+    expect(trip('completed', age: 500).needsRecoveryReview(now), isFalse);
+    expect(trip('cancelled', age: 500).needsRecoveryReview(now), isFalse);
+    expect(trip('in_transit', age: 59).needsRecoveryReview(now), isFalse);
+    final active = trip('in_transit', age: 61);
+    expect(active.needsRecoveryReview(now), isTrue);
+    expect(active.status, 'in_transit');
+    expect(
+      trip('in_transit', age: 120, duration: 120).needsRecoveryReview(now),
+      isFalse,
+    );
+    expect(
+      trip('in_transit', age: 151, duration: 120).needsRecoveryReview(now),
+      isTrue,
+    );
+    expect(trip('accepted', age: -10).needsRecoveryReview(now), isFalse);
+  });
+
+  test('uses authoritative creation and expired waiting timestamps', () {
+    final now = DateTime.utc(2026, 10, 24, 12);
+    final snapshot = RideSnapshot.fromJson({
+      'id': 1,
+      'status': 'accepted',
+      'created_at': '2026-10-24T19:00:00+08:00',
+    });
+    expect(snapshot.createdAt, DateTime.utc(2026, 10, 24, 11));
+    expect(snapshot.needsRecoveryReview(now), isTrue);
+    final waiting = RideSnapshot(
+      id: 'waiting',
+      status: 'arrived',
+      pickupName: 'Pickup',
+      dropoffName: 'Dropoff',
+      waitingUntil: now,
+    );
+    expect(waiting.needsRecoveryReview(now), isTrue);
+    const missing = RideSnapshot(
+      id: 'missing',
+      status: 'in_transit',
+      pickupName: 'Pickup',
+      dropoffName: 'Dropoff',
+    );
+    expect(missing.needsRecoveryReview(now), isFalse);
+  });
+
   test('destructures canonical and legacy snapshot fields', () {
     final snapshot = RideSnapshot.fromJson(const {
       'id': 303,

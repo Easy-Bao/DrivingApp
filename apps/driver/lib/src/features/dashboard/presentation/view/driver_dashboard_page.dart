@@ -70,6 +70,7 @@ class _DashboardPageState extends State<DashboardPage>
   bool _tripNavigationScheduled = false;
   String? _attemptedTripId;
   String? _tripNavigationError;
+  final _reviewedTripIds = <String>{};
   int _pollGeneration = 0;
   int _locationAccessFailures = 0;
   bool _isCheckingLocationAccess = false;
@@ -766,12 +767,41 @@ class _DashboardPageState extends State<DashboardPage>
   Future<bool> _resumeTrip(RideSnapshot trip) async {
     final rideId = trip.id;
     final rideFlowCubit = BlocProvider.of<RideFlowCubit>(context);
-    final resolvedTrip = await BlocProvider.of<DashboardCubit>(context)
+    var resolvedTrip = await BlocProvider.of<DashboardCubit>(context)
         .fetchAuthoritativeRide(trip.id);
     if (resolvedTrip == null) return false;
     if (!mounted || !context.mounted) return false;
     if (await _discardTerminalTrip(resolvedTrip, rideId)) return true;
     if (!mounted || !context.mounted) return false;
+    if (!_reviewedTripIds.contains(rideId) &&
+        resolvedTrip.needsRecoveryReview(DateTime.now())) {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Review this trip'),
+          content: Text(
+            resolvedTrip!.status == 'in_transit'
+                ? 'This trip has been open longer than expected. Confirm the trip status with your passenger before continuing.'
+                : 'This pickup has been waiting longer than expected. Check with the passenger, then continue or use the cancellation action on the trip screen.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Open trip'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted || !context.mounted) return false;
+      _reviewedTripIds.add(rideId);
+      // The passenger may cancel while the review is open.
+      resolvedTrip = await BlocProvider.of<DashboardCubit>(context)
+          .fetchAuthoritativeRide(rideId);
+      if (!mounted || !context.mounted || resolvedTrip == null) return false;
+      if (await _discardTerminalTrip(resolvedTrip, rideId)) return true;
+      if (!mounted || !context.mounted) return false;
+    }
     final fare = resolvedTrip.farePesos;
     final distance = resolvedTrip.distanceKm;
     final duration = resolvedTrip.durationMinutes;

@@ -23,6 +23,7 @@ final class const RideSnapshot({
   final double? distanceKm,
   final double? durationMinutes,
   final int? fareAmount,
+  final DateTime? createdAt,
   final DateTime? arrivedAt,
   final DateTime? waitingUntil,
   final String? paymentStatus,
@@ -79,6 +80,7 @@ final class const RideSnapshot({
       distanceKm: SafeParse.toNullableDouble(rawDistanceKm),
       durationMinutes: SafeParse.toNullableDouble(rawDurationMinutes),
       fareAmount: _fareAmount(rawFareAmount, rawFare),
+      createdAt: _nullableDateTime(json['created_at'] ?? json['createdAt']),
       arrivedAt: _nullableDateTime(rawArrivedAt),
       waitingUntil: _nullableDateTime(rawWaitingUntil),
       paymentStatus: _nullableString(rawPaymentStatus)?.toLowerCase(),
@@ -107,6 +109,27 @@ final class const RideSnapshot({
 
   bool get isTerminal => RideStatus.fromString(status).isTerminal;
 
+  /// Age is a recovery prompt, never evidence that a ride can be cancelled.
+  bool needsRecoveryReview(DateTime now) {
+    if (isTerminal) return false;
+    final current = now.toUtc();
+    if (status == 'arrived' && waitingUntil != null) {
+      return !current.isBefore(waitingUntil!);
+    }
+    final started = createdAt;
+    if (started == null || current.isBefore(started)) return false;
+    if (status == 'accepted' || status == 'assigned' || status == 'arrived') {
+      return current.difference(started) >= const Duration(minutes: 15);
+    }
+    if (status != 'in_transit') return false;
+    final estimate = durationMinutes;
+    final minutes = estimate != null && estimate.isFinite && estimate > 0
+        ? estimate.ceil() + 30
+        : 60;
+    return current.difference(started) >=
+        Duration(minutes: minutes < 60 ? 60 : minutes);
+  }
+
   bool get hasCashSettlement =>
       cashReceivedAt != null ||
       (paymentStatus == 'paid' && cashOutcome == 'paid');
@@ -131,6 +154,7 @@ final class const RideSnapshot({
     distanceKm,
     durationMinutes,
     fareAmount,
+    createdAt,
     arrivedAt,
     waitingUntil,
     paymentStatus,
