@@ -201,6 +201,8 @@ void main() {
         rideId: 'test-ride-id',
         status: 'accepted',
         passengerName: 'Juan Dela Cruz',
+        pickupLatitude: 7.82,
+        pickupLongitude: 123.43,
       );
       await cubit.arriveAtPickup(
         'Juan Dela Cruz',
@@ -209,10 +211,40 @@ void main() {
         observedAt: observedAt,
       );
 
-      expect(cubit.state, const RideFlowError(message));
+      expect(cubit.state, isA<RideFlowNavigatingToPickup>());
+      expect(cubit.state.pickupLatitude, 7.82);
+      expect(cubit.state.pickupLongitude, 123.43);
+      expect(cubit.lastActionFailureMessage, message);
       await cubit.close();
     });
   });
+
+  test(
+    'keeps destination and retry state after a rejected completion',
+    () async {
+      when(() => mockRideRepository.fetchRide('test-ride-id')).thenAnswer(
+        (_) async => const Err(NetworkFailure('Connection interrupted')),
+      );
+      final cubit = _makeCubit(mockRideRepository, mockSessionService);
+      await cubit.resumeRide(
+        rideId: 'test-ride-id',
+        status: 'in_transit',
+        passengerName: 'Passenger',
+        destinationLatitude: 7.82,
+        destinationLongitude: 123.43,
+      );
+      final snapshot = cubit.state;
+      final fare = await cubit.completeRide(
+        driverLatitude: 7.81,
+        driverLongitude: 123.42,
+      );
+      expect(fare, isNull);
+      expect(cubit.state, snapshot);
+      expect(cubit.lastActionFailureMessage, isNotEmpty);
+      expect(cubit.activeRideId, 'test-ride-id');
+      await cubit.close();
+    },
+  );
 
   group('RideFlowCubit — startRide()', () {
     final observedAt = DateTime.utc(2026, 10, 11, 10);
@@ -291,7 +323,7 @@ void main() {
       );
 
       expect(started, isFalse);
-      expect(cubit.lastStartFailureMessage, message);
+      expect(cubit.lastActionFailureMessage, message);
       // The ride is still arrived on the server, so the wait must be retryable.
       expect(cubit.state.isWaitingAtPickup, isTrue);
       expect(cubit.state, isA<RideFlowWaitingPassenger>());

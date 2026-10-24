@@ -187,7 +187,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
 
       if (mounted && !started) {
         _showError(
-          rideCubit.lastStartFailureMessage ??
+          rideCubit.lastActionFailureMessage ??
               rideCubit.state.failureMessage ??
               ErrorHandler.getErrorMessage(const ServerFailure()),
         );

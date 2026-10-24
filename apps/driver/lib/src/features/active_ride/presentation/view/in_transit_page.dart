@@ -204,6 +204,11 @@ class _InTransitPageState extends State<InTransitPage> {
     }
   }
 
+  void _showActionError(String message) {
+    if (!mounted || AppNetworkStatusScope.isUnavailableOf(context)) return;
+    AppSnackBar.show(context, message, isError: true);
+  }
+
   Future<void> _completeTrip(BuildContext context) async {
     if (_isCompletingTrip) return;
     final rideCubit = BlocProvider.of<RideFlowCubit>(context);
@@ -212,6 +217,9 @@ class _InTransitPageState extends State<InTransitPage> {
       final position = await LocationService.getCurrentPosition();
       if (!mounted) return;
       if (position == null) {
+        _showActionError(
+          'Your location is unavailable. Enable location and try again.',
+        );
         return;
       }
       final finalFare = await rideCubit.completeRide(
@@ -219,6 +227,11 @@ class _InTransitPageState extends State<InTransitPage> {
         driverLongitude: position.longitude,
       );
       if (finalFare == null) {
+        _showActionError(
+          rideCubit.lastActionFailureMessage ??
+              rideCubit.state.failureMessage ??
+              'The trip could not be completed. Please try again.',
+        );
         return;
       }
       if (!mounted) return;
@@ -234,6 +247,8 @@ class _InTransitPageState extends State<InTransitPage> {
           'duration': widget.duration,
         },
       );
+    } catch (error) {
+      _showActionError(ErrorHandler.getErrorMessage(error));
     } finally {
       if (mounted) {
         setState(() {

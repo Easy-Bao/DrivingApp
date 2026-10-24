@@ -250,13 +250,23 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
     }
   }
 
+  void _showActionError(String message) {
+    if (!mounted || AppNetworkStatusScope.isUnavailableOf(context)) return;
+    AppSnackBar.show(context, message, isError: true);
+  }
+
   Future<void> _confirmArrival(BuildContext context) async {
     if (_isConfirmingArrival) return;
     final state = BlocProvider.of<RideFlowCubit>(context).state;
     final passengerName = state.passengerNameOr('Passenger');
     final pickupLatitude = state.pickupLatitude ?? _pickupLatitude;
     final pickupLongitude = state.pickupLongitude ?? _pickupLongitude;
-    if (pickupLatitude == null || pickupLongitude == null) return;
+    if (pickupLatitude == null || pickupLongitude == null) {
+      _showActionError(
+        'Pickup location is unavailable. Reopen the trip and try again.',
+      );
+      return;
+    }
 
     setState(() => _isConfirmingArrival = true);
     final rideCubit = BlocProvider.of<RideFlowCubit>(context);
@@ -264,6 +274,9 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       final position = await LocationService.getCurrentPosition();
       if (!mounted) return;
       if (position == null) {
+        _showActionError(
+          'Your location is unavailable. Enable location and try again.',
+        );
         return;
       }
       await rideCubit.arriveAtPickup(
@@ -278,6 +291,11 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       );
       if (!mounted) return;
       if (!rideCubit.state.isWaitingAtPickup) {
+        _showActionError(
+          rideCubit.lastActionFailureMessage ??
+              rideCubit.state.failureMessage ??
+              'Arrival could not be confirmed. Please try again.',
+        );
         return;
       }
       this.context.pushReplacementNamed(
@@ -291,7 +309,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
         },
       );
     } catch (error) {
-      debugPrint('Unable to confirm driver arrival: $error');
+      _showActionError(ErrorHandler.getErrorMessage(error));
     } finally {
       if (mounted) {
         setState(() {
@@ -314,6 +332,11 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       if (!mounted) return;
       if (canceled) {
         context.pop();
+      } else {
+        _showActionError(
+          BlocProvider.of<RideFlowCubit>(context).state.failureMessage ??
+              'The ride could not be cancelled. Please try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isCancellingRide = false);

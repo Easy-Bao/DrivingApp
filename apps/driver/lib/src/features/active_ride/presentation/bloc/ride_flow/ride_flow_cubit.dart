@@ -29,7 +29,7 @@ class RideFlowCubit({
   DateTime? _waitingUntil;
   DateTime? _waitStartedAt;
   bool _isActionInFlight = false;
-  String? _lastStartFailureMessage;
+  String? _lastActionFailureMessage;
   int _actionGeneration = 0;
   Future<void>? _passengerLocationRefresh;
   Future<void>? _rideStatusSync;
@@ -41,9 +41,9 @@ class RideFlowCubit({
 
   this : super(const RideFlowInitial());
 
-  /// Message from the most recent rejected [startRide], kept because the
-  /// waiting snapshot is restored right after the error state is emitted.
-  String? get lastStartFailureMessage => _lastStartFailureMessage;
+  /// Retains rejected action feedback while the active snapshot is restored
+  /// so map coordinates and retry controls survive a recoverable failure.
+  String? get lastActionFailureMessage => _lastActionFailureMessage;
 
   String? get activeRideId => _activeRideId;
   String? get activeBookingReference => _activeBookingReference;
@@ -392,6 +392,8 @@ class RideFlowCubit({
       emit(const RideFlowError('This trip is no longer active.'));
       return;
     }
+    final tripBeforeAction = state;
+    _lastActionFailureMessage = null;
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
     _waitTimer?.cancel();
@@ -410,6 +412,7 @@ class RideFlowCubit({
         (failure) => arrivalFailure = failure,
         (value) => arrivedRide = value,
       );
+      if (!_isCurrentAction(actionGeneration)) return;
       if (arrivalFailure != null || arrivedRide == null) {
         emit(
           RideFlowError(
@@ -435,7 +438,15 @@ class RideFlowCubit({
       dev.log('Error confirming arrival: $error');
       emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
     } finally {
-      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
+      if (_isCurrentAction(actionGeneration)) {
+        _isActionInFlight = false;
+        if (state is RideFlowError &&
+            (tripBeforeAction is DriverEnRoute ||
+                tripBeforeAction is TripInProgress)) {
+          _lastActionFailureMessage = state.failureMessage;
+          emit(tripBeforeAction);
+        }
+      }
     }
   }
 
@@ -607,6 +618,7 @@ class RideFlowCubit({
     double? passengerLongitude,
   }) async {
     if (_isActionInFlight) return false;
+    _lastActionFailureMessage = null;
     final activeRideId = _activeRideId;
     if (activeRideId == null || activeRideId.isEmpty) {
       emit(const RideFlowError('This trip is no longer active.'));
@@ -618,7 +630,6 @@ class RideFlowCubit({
       );
       return false;
     }
-    _lastStartFailureMessage = null;
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
     final waitingBeforeStart = state;
@@ -663,7 +674,7 @@ class RideFlowCubit({
         final message = ErrorHandler.getErrorMessage(
           const RouteCalculationFailure(),
         );
-        _lastStartFailureMessage = message;
+        _lastActionFailureMessage = message;
         emit(RideFlowError(message));
         restoreWaitingAfterFailure();
         return false;
@@ -685,7 +696,7 @@ class RideFlowCubit({
         final message =
             startFailure?.message ??
             ErrorHandler.getErrorMessage(const ServerFailure());
-        _lastStartFailureMessage = message;
+        _lastActionFailureMessage = message;
         emit(RideFlowError(message));
         restoreWaitingAfterFailure();
         return false;
@@ -707,7 +718,7 @@ class RideFlowCubit({
       if (!_isCurrentAction(actionGeneration)) return false;
       dev.log('Error updating status to in_transit: $error');
       final message = ErrorHandler.getErrorMessage(const ServerFailure());
-      _lastStartFailureMessage = message;
+      _lastActionFailureMessage = message;
       emit(RideFlowError(message));
       restoreWaitingAfterFailure();
       return false;
@@ -820,6 +831,8 @@ class RideFlowCubit({
     required double driverLongitude,
   }) async {
     if (_isActionInFlight) return null;
+    final tripBeforeAction = state;
+    _lastActionFailureMessage = null;
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
     _waitTimer?.cancel();
@@ -843,7 +856,15 @@ class RideFlowCubit({
       _rideStatusSyncTimer = null;
       return fareAmount / 100;
     } finally {
-      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
+      if (_isCurrentAction(actionGeneration)) {
+        _isActionInFlight = false;
+        if (state is RideFlowError &&
+            (tripBeforeAction is DriverEnRoute ||
+                tripBeforeAction is TripInProgress)) {
+          _lastActionFailureMessage = state.failureMessage;
+          emit(tripBeforeAction);
+        }
+      }
     }
   }
 
@@ -992,6 +1013,7 @@ class RideFlowCubit({
     _activePassengerId = null;
     _activePassengerName = null;
     _waitingUntil = null;
+    _lastActionFailureMessage = null;
     _waitStartedAt = null;
     _elapsedWaitTime = 0;
     _isRideCompletionPending = false;
