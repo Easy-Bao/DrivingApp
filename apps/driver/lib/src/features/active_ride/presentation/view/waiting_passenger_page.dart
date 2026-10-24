@@ -9,12 +9,10 @@ import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_active_ride_header.dart';
-import 'package:driver/src/features/active_ride/presentation/widgets/driver_emergency_button.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_ride_cancellation_sheet.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/waiting_passenger_panel.dart';
 import 'package:driver/src/features/chat/chat_routes.dart';
-import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -271,22 +269,6 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
     }
   }
 
-  Future<bool> _emergencyStop(String reason, String details) async {
-    if (!mounted) return false;
-    final stopped = await BlocProvider.of<RideFlowCubit>(context)
-        .emergencyStop(reason: reason, details: details);
-    if (!stopped && mounted) {
-      final failureMessage = BlocProvider.of<RideFlowCubit>(context)
-          .state
-          .failureMessage;
-      _showError(
-        failureMessage ??
-            'The ride could not be ended for safety. Please try again.',
-      );
-    }
-    return stopped;
-  }
-
   void _showError(String message) {
     if (!mounted) return;
     setState(() => _errorMessage = message);
@@ -335,32 +317,19 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                       children: [
                         const SizedBox(height: 12),
                         ActiveRideHeader(
-                          bookingReference: BlocProvider.of<RideFlowCubit>(
-                            context,
-                          ).activeBookingReference,
                           backButton: _buildTripBackButton(
                             context,
                             () => context.pop(),
                           ),
-                          actions: [
-                            EmergencyButton(
-                              onEmergencyStop: _emergencyStop,
-                              onEmergencyStopCompleted: () {
-                                if (mounted) {
-                                  context.goNamed(DashboardRoutes.dashboard);
-                                }
-                              },
-                            ),
-                            SafetyReportButton(
-                              bookingReference:
-                                  BlocProvider.of<RideFlowCubit>(context)
-                                      .activeBookingReference ??
-                                  '',
-                              rideId: BlocProvider.of<RideFlowCubit>(context)
-                                  .activeRideId,
-                              rideRepository: widget.rideRepository,
-                            ),
-                          ],
+                          reportAction: SafetyReportButton(
+                            bookingReference:
+                                BlocProvider.of<RideFlowCubit>(context)
+                                    .activeBookingReference ??
+                                '',
+                            rideId: BlocProvider.of<RideFlowCubit>(context)
+                                .activeRideId,
+                            rideRepository: widget.rideRepository,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         if (_errorMessage != null &&

@@ -9,11 +9,9 @@ import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_active_ride_header.dart';
-import 'package:driver/src/features/active_ride/presentation/widgets/driver_emergency_button.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_completion_slider.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_passenger_card.dart';
-import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -259,13 +257,6 @@ class _InTransitPageState extends State<InTransitPage> {
     }
   }
 
-  Future<bool> _emergencyStop(String reason, String details) async {
-    if (!mounted) return false;
-    final stopped = await BlocProvider.of<RideFlowCubit>(context)
-        .emergencyStop(reason: reason, details: details);
-    return stopped;
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocProvider<LiveMapBloc>.value(
@@ -310,32 +301,20 @@ class _InTransitPageState extends State<InTransitPage> {
                   ),
                   SafeArea(
                     child: ActiveRideHeader(
-                      bookingReference: BlocProvider.of<RideFlowCubit>(context)
-                          .activeBookingReference,
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                       backButton: _buildTripBackButton(
                         context,
                         () => context.pop(),
                       ),
-                      actions: [
-                        EmergencyButton(
-                          onEmergencyStop: _emergencyStop,
-                          onEmergencyStopCompleted: () {
-                            if (mounted) {
-                              context.goNamed(DashboardRoutes.dashboard);
-                            }
-                          },
-                        ),
-                        SafetyReportButton(
-                          bookingReference:
-                              BlocProvider.of<RideFlowCubit>(context)
-                                  .activeBookingReference ??
-                              '',
-                          rideId: BlocProvider.of<RideFlowCubit>(context)
-                              .activeRideId,
-                          rideRepository: widget.rideRepository,
-                        ),
-                      ],
+                      reportAction: SafetyReportButton(
+                        bookingReference:
+                            BlocProvider.of<RideFlowCubit>(context)
+                                .activeBookingReference ??
+                            '',
+                        rideId: BlocProvider.of<RideFlowCubit>(context)
+                            .activeRideId,
+                        rideRepository: widget.rideRepository,
+                      ),
                     ),
                   ),
                   Align(

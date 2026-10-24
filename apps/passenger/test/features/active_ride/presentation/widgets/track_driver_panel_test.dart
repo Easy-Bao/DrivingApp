@@ -36,7 +36,7 @@ void main() {
                   unreadChatMessagesCount: 2,
                   onCallDriverPressed: () {},
                   onChatDriverPressed: () {},
-                  onEmergencyPressed: () {},
+
                   onReportDriverPressed: () {},
                   onCancelTripPressed: () {},
                 ),
@@ -48,20 +48,15 @@ void main() {
       expect(find.text('6 min'), findsOneWidget);
       expect(find.textContaining('Booking ID'), findsNothing);
       expect(tester.takeException(), isNull);
-      await tester.ensureVisible(find.text('Trip details'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Trip details'));
-      await tester.pumpAndSettle();
-      expect(find.text('Cash · ₱27.88'), findsOneWidget);
-      expect(find.text('Booking ID - reference-compact'), findsOneWidget);
+      expect(find.text('Trip details'), findsNothing);
+      expect(find.textContaining('Booking ID'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
 
-  testWidgets('exposes an accessible emergency action for active rides', (
+  testWidgets('keeps reporting accessible without duplicate trip details', (
     tester,
   ) async {
-    var emergencyPressed = false;
     var reportPressed = false;
 
     await tester.pumpWidget(
@@ -89,7 +84,7 @@ void main() {
             unreadChatMessagesCount: 0,
             onCallDriverPressed: () {},
             onChatDriverPressed: () {},
-            onEmergencyPressed: () => emergencyPressed = true,
+
             onReportDriverPressed: () => reportPressed = true,
             onCancelTripPressed: () {},
           ),
@@ -97,25 +92,14 @@ void main() {
       ),
     );
 
-    expect(find.text('Emergency SOS'), findsOneWidget);
-    expect(
-      tester
-          .getSize(find.widgetWithText(OutlinedButton, 'Emergency SOS'))
-          .height,
-      48,
-    );
-
-    await tester.tap(find.text('Emergency SOS'));
-
-    expect(emergencyPressed, isTrue);
-    await tester.tap(find.text('Trip details'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Report Issue'));
+    expect(find.text('Emergency SOS'), findsNothing);
+    expect(find.text('Trip details'), findsNothing);
+    await tester.tap(find.text('Report issue'));
 
     expect(reportPressed, isTrue);
   });
 
-  testWidgets('keeps emergency access during an in-progress trip', (
+  testWidgets('keeps reporting accessible during an in-progress trip', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -144,7 +128,7 @@ void main() {
             showContactActions: false,
             onCallDriverPressed: () {},
             onChatDriverPressed: () {},
-            onEmergencyPressed: () {},
+
             onReportDriverPressed: () {},
             onCancelTripPressed: () {},
           ),
@@ -152,7 +136,8 @@ void main() {
       ),
     );
 
-    expect(find.text('Emergency SOS'), findsOneWidget);
+    expect(find.text('Emergency SOS'), findsNothing);
+    expect(find.text('Report issue'), findsOneWidget);
     expect(find.text('Cancel ride'), findsNothing);
   });
 
@@ -177,7 +162,7 @@ void main() {
             unreadChatMessagesCount: 0,
             onCallDriverPressed: () {},
             onChatDriverPressed: () {},
-            onEmergencyPressed: () {},
+
             onReportDriverPressed: () {},
             onCancelTripPressed: () {},
           ),
@@ -209,7 +194,7 @@ void main() {
             unreadChatMessagesCount: 0,
             onCallDriverPressed: () {},
             onChatDriverPressed: () {},
-            onEmergencyPressed: () {},
+
             onReportDriverPressed: () {},
             onCancelTripPressed: () {},
           ),
@@ -244,7 +229,7 @@ void main() {
               isInTransit: true,
               onCallDriverPressed: () {},
               onChatDriverPressed: () {},
-              onEmergencyPressed: () {},
+
               onReportDriverPressed: () {},
               onCancelTripPressed: () {},
             ),

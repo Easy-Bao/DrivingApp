@@ -541,7 +541,6 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       childrenPadding: const EdgeInsets.only(bottom: 16),
       children: [
         if (widget.bookingReference.trim().isNotEmpty) ...[
-          TripReference(id: widget.bookingReference),
           const SizedBox(height: 16),
         ],
         CompactRouteTimeline(pickup: widget.pickup, dropoff: widget.dropoff),

@@ -17,7 +17,6 @@ import 'package:passenger/src/features/active_ride/domain/repositories/track_rep
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_cubit.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_state.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/active_trip_exit_dialog.dart';
-import 'package:passenger/src/features/active_ride/presentation/widgets/emergency_button.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/track_driver_panel.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/trip_cancellation_dialog.dart';
 import 'package:passenger/src/features/chat/chat.dart';
@@ -116,7 +115,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   ChatRepository? _chatRepository;
   String _passengerIdentifier = '';
   bool _isCancellingTrip = false;
-  bool _isEmergencyStopping = false;
   bool _isPollingChat = false;
   String? _errorMessage;
   StreamSubscription<RealtimeConnectionState>? _realtimeStateSubscription;
@@ -335,8 +333,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                                     await _updateUnreadMessagesCount();
                                   }
                                 },
-                                onEmergencyPressed: () =>
-                                    unawaited(_handleEmergencyPressed()),
                                 onReportDriverPressed: () =>
                                     unawaited(_handleReportDriverPressed()),
                                 onCancelTripPressed: _handleCancelTrip,
@@ -413,33 +409,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       }
     } finally {
       if (mounted) setState(() => _isCancellingTrip = false);
-    }
-  }
-
-  Future<bool> _emergencyStop(String reason, String details) async {
-    if (!mounted || _isEmergencyStopping) return false;
-
-    setState(() => _isEmergencyStopping = true);
-    try {
-      final stopped = await BlocProvider.of<TrackDriverCubit>(context)
-          .emergencyStopRequest(reason: reason, details: details);
-      if (mounted && !stopped) {
-        setState(
-          () => _errorMessage =
-              'The ride could not be ended for safety. Please try again.',
-        );
-      }
-      return stopped;
-    } catch (_) {
-      if (mounted) {
-        setState(
-          () => _errorMessage =
-              'The ride could not be ended for safety. Please try again.',
-        );
-      }
-      return false;
-    } finally {
-      if (mounted) setState(() => _isEmergencyStopping = false);
     }
   }
 
@@ -543,10 +512,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     if (reason == null || !mounted) return;
 
     await _cancelTripRequest(reason: reason);
-  }
-
-  Future<void> _handleEmergencyPressed() async {
-    await showEmergencyActionSheet(context, onEmergencyStop: _emergencyStop);
   }
 
   Future<void> _handleReportDriverPressed() async {

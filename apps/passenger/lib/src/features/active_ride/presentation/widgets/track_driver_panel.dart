@@ -1,7 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 
 class const TrackDriverPanel({
@@ -21,7 +20,6 @@ class const TrackDriverPanel({
   this.isInTransit,
   required this.onCallDriverPressed,
   required this.onChatDriverPressed,
-  required this.onEmergencyPressed,
   required this.onReportDriverPressed,
   required this.onCancelTripPressed,
 }) extends StatelessWidget {
@@ -40,7 +38,6 @@ class const TrackDriverPanel({
   final bool? isInTransit;
   final VoidCallback onCallDriverPressed;
   final VoidCallback onChatDriverPressed;
-  final VoidCallback onEmergencyPressed;
   final VoidCallback onReportDriverPressed;
   final VoidCallback onCancelTripPressed;
 
@@ -177,25 +174,13 @@ class const TrackDriverPanel({
               ),
             ],
             const SizedBox(height: 16),
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: onEmergencyPressed,
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(48, 48),
-                    foregroundColor: context.colorScheme.error,
-                  ),
-                  icon: const Icon(LucideIcons.shield_alert, size: 18),
-                  label: const Text('Emergency SOS'),
-                ),
-                TextButton(
-                  onPressed: () => _showDetails(context),
-                  child: const Text('Trip details'),
-                ),
-              ],
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: onReportDriverPressed,
+                icon: const Icon(LucideIcons.flag, size: 18),
+                label: const Text('Report issue'),
+              ),
             ),
             if (!onTrip)
               TextButton(
@@ -208,45 +193,4 @@ class const TrackDriverPanel({
     );
   }
 
-  void _showDetails(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (sheetContext) => SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Trip details', style: context.textStyles.titleLarge),
-            const SizedBox(height: 20),
-            CompactRouteTimeline(
-              pickup: ride.pickupName,
-              dropoff: ride.dropoffName,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              ride.farePesos == null
-                  ? 'Cash · Fare unavailable'
-                  : 'Cash · ${formatPesoAmount(ride.farePesos!)}',
-              style: context.textStyles.titleMedium,
-            ),
-            const SizedBox(height: 16),
-            TripReference(id: ride.bookingReference),
-            const SizedBox(height: 16),
-            TextButton.icon(
-              onPressed: () {
-                Navigator.of(sheetContext).pop();
-                onReportDriverPressed();
-              },
-              icon: const Icon(LucideIcons.flag, size: 20),
-              label: const Text('Report Issue'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
