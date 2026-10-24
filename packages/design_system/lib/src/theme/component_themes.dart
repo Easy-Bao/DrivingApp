@@ -27,7 +27,7 @@ abstract final class AppComponentThemes {
           AppSize.controlHeight,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         textStyle: textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w700,
@@ -59,7 +59,7 @@ abstract final class AppComponentThemes {
           AppSize.controlHeight,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         textStyle: textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w700,
@@ -75,7 +75,9 @@ abstract final class AppComponentThemes {
   ) {
     return OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: colors.onSurface,
+        backgroundColor: colors.primaryContainer,
+        foregroundColor: colors.onPrimaryContainer,
+        disabledBackgroundColor: colors.surfaceContainerHighest,
         disabledForegroundColor: colors.onSurfaceVariant.withValues(
           alpha: 0.38,
         ),
@@ -89,7 +91,7 @@ abstract final class AppComponentThemes {
           AppSize.controlHeight,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         textStyle: textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w700,
@@ -105,7 +107,7 @@ abstract final class AppComponentThemes {
   ) {
     return TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: colors.onSurfaceVariant,
+        foregroundColor: colors.primary,
         disabledForegroundColor: colors.onSurfaceVariant.withValues(
           alpha: 0.38,
         ),
