@@ -313,6 +313,8 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
             const SizedBox(height: 24),
             ExpansionTile(
               key: const ValueKey('receipt-trip-details'),
+              // Clipping a native map through a height animation stalls raster work.
+              expansionAnimationStyle: AnimationStyle.noAnimation,
               title: const Text('Trip details'),
               tilePadding: EdgeInsets.zero,
               childrenPadding: const EdgeInsets.only(bottom: 20),
