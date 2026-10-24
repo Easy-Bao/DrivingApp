@@ -12,6 +12,7 @@ import 'package:passenger/src/features/auth/presentation/bloc/session/session_bl
 import 'package:passenger/src/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/validation/auth_form_validator.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
+import 'package:passenger/src/features/settings/settings_routes.dart';
 
 class const SignupPage({super.key, required this.signUpBloc})
     extends StatelessWidget {
@@ -41,6 +42,11 @@ class _SignupPageContentState extends State<_SignupPageContent> {
   final TextEditingController _passengerPasswordController =
       TextEditingController();
 
+  final _nameFocus = FocusNode();
+  final _phoneFocus = FocusNode();
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+
   bool _isPasswordInputVisible = false;
 
   String? _nameError;
@@ -51,6 +57,10 @@ class _SignupPageContentState extends State<_SignupPageContent> {
 
   @override
   void dispose() {
+    _nameFocus.dispose();
+    _phoneFocus.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
     _passengerNameController.dispose();
     _passengerPhoneController.dispose();
     _passengerEmailController.dispose();
@@ -59,6 +69,9 @@ class _SignupPageContentState extends State<_SignupPageContent> {
   }
 
   void _submitRegistration(BuildContext context) {
+    if (BlocProvider.of<SignUpBloc>(context).state is SignUpLoading) {
+      return;
+    }
     FocusScope.of(context).unfocus();
     final name = _passengerNameController.text.trim();
     final rawPhone = _passengerPhoneController.text.trim();
@@ -77,6 +90,14 @@ class _SignupPageContentState extends State<_SignupPageContent> {
         _phoneError != null ||
         _emailError != null ||
         _passwordError != null) {
+      (_nameError != null
+              ? _nameFocus
+              : _phoneError != null
+              ? _phoneFocus
+              : _emailError != null
+              ? _emailFocus
+              : _passwordFocus)
+          .requestFocus();
       return;
     }
 
@@ -93,534 +114,209 @@ class _SignupPageContentState extends State<_SignupPageContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: Center(
-          child: IconButton(
-            onPressed: () => context.pop(),
-            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-            padding: EdgeInsets.zero,
-            style: IconButton.styleFrom(shape: const CircleBorder()),
-            icon: Icon(
-              LucideIcons.arrow_left,
-              color: context.colorScheme.onSurface,
-              size: 20,
+    return BlocConsumer<SignUpBloc, SignUpState>(
+      listener: (context, state) {
+        if (state is SignUpSuccess) {
+          TextInput.finishAutofillContext();
+          BlocProvider.of<SessionBloc>(context).add(
+            SessionAuthenticatedRequested(
+              passengerId: state.credentials.passengerId,
+              passengerName: state.credentials.passengerName,
+            ),
+          );
+          context.goNamed(HomeRoutes.home);
+        } else if (state is SignUpNeedsVerification) {
+          unawaited(
+            context.pushNamed(
+              AuthRoutes.verifyOtp,
+              extra: {'email': state.email},
+            ),
+          );
+        } else if (state is SignUpFailure) {
+          setState(() => _submissionError = state.errorMessage);
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state is SignUpLoading;
+        return AppAuthLayout(
+          onBack: () => context.pop(),
+          title: 'Create an account',
+          description: 'Sign up to book and manage your rides.',
+          footer: TextButton(
+            onPressed: () => context.pushNamed(SettingsRoutes.terms),
+            child: Text.rich(
+              const TextSpan(
+                text: 'By creating an account, you agree to the EasyRide ',
+                children: [
+                  TextSpan(
+                    text: 'Terms of Service.',
+                    style: TextStyle(decoration: TextDecoration.underline),
+                  ),
+                ],
+              ),
+              textAlign: TextAlign.center,
+              style: context.textStyles.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
-        ),
-        centerTitle: true,
-        title: const AppAuthBrand(),
-      ),
-      body: SafeArea(
-        child: BlocConsumer<SignUpBloc, SignUpState>(
-          listener: (context, state) {
-            if (state is SignUpSuccess) {
-              BlocProvider.of<SessionBloc>(context).add(
-                SessionAuthenticatedRequested(
-                  passengerId: state.credentials.passengerId,
-                  passengerName: state.credentials.passengerName,
-                ),
-              );
-              context.goNamed(HomeRoutes.home);
-            } else if (state is SignUpNeedsVerification) {
-              unawaited(
-                context.pushNamed(
-                  AuthRoutes.verifyOtp,
-                  extra: {'email': state.email},
-                ),
-              );
-            } else if (state is SignUpFailure) {
-              setState(() => _submissionError = state.errorMessage);
-            }
-          },
-          builder: (context, state) {
-            final isLoading = state is SignUpLoading;
-            final errorMessage = AppNetworkStatusScope.isUnavailableOf(context)
-                ? null
-                : _submissionError;
-
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 550),
-                child: CustomScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  slivers: [
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 20),
-                            Center(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Create Account',
-                                    style: TextStyle(
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.bold,
-                                      color: context.colorScheme.onSurface,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Enter your details to create your account',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color:
-                                          context.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
+          children: [
+            if (_submissionError != null) ...[
+              AppErrorBanner(
+                message: _submissionError!,
+                onRetry: () => _submitRegistration(context),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+            ],
+            AutofillGroup(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('Full name', style: context.textStyles.labelMedium),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: _passengerNameController,
+                    focusNode: _nameFocus,
+                    enabled: !isLoading,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.name],
+                    onChanged: (_) => setState(() {
+                      _nameError = null;
+                      _submissionError = null;
+                    }),
+                    decoration: InputDecoration(
+                      hintText: 'Enter your full name',
+                      errorText: _nameError,
+                      prefixIcon: const Icon(LucideIcons.user, size: 18),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text('Mobile number', style: context.textStyles.labelMedium),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    key: const ValueKey<String>('passenger-signup-phone'),
+                    controller: _passengerPhoneController,
+                    focusNode: _phoneFocus,
+                    enabled: !isLoading,
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [
+                      AutofillHints.telephoneNumberNational,
+                    ],
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (_) => setState(() {
+                      _phoneError = null;
+                      _submissionError = null;
+                    }),
+                    decoration: InputDecoration(
+                      hintText: '09171234567',
+                      errorText: _phoneError,
+                      prefixIcon: const Icon(LucideIcons.phone, size: 18),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text('Email', style: context.textStyles.labelMedium),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: _passengerEmailController,
+                    focusNode: _emailFocus,
+                    enabled: !isLoading,
+                    keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.email],
+                    onChanged: (_) => setState(() {
+                      _emailError = null;
+                      _submissionError = null;
+                    }),
+                    decoration: InputDecoration(
+                      hintText: 'you@example.com',
+                      errorText: _emailError,
+                      prefixIcon: const Icon(LucideIcons.mail, size: 18),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text('Password', style: context.textStyles.labelMedium),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: _passengerPasswordController,
+                    focusNode: _passwordFocus,
+                    enabled: !isLoading,
+                    obscureText: !_isPasswordInputVisible,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.newPassword],
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    onSubmitted: (_) => _submitRegistration(context),
+                    onChanged: (_) => setState(() {
+                      _passwordError = null;
+                      _submissionError = null;
+                    }),
+                    decoration: InputDecoration(
+                      hintText: 'Create a password',
+                      errorText: _passwordError,
+                      helperText: 'Use at least 8 characters.',
+                      helperMaxLines: 2,
+                      prefixIcon: const Icon(LucideIcons.lock, size: 18),
+                      suffixIcon: IconButton(
+                        tooltip: _isPasswordInputVisible
+                            ? 'Hide password'
+                            : 'Show password',
+                        onPressed: isLoading
+                            ? null
+                            : () => setState(
+                                () => _isPasswordInputVisible =
+                                    !_isPasswordInputVisible,
                               ),
-                            ),
-                            const SizedBox(height: 32),
-                            if (errorMessage != null) ...[
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: context.colorScheme.error.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: context.colorScheme.error.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                  ),
-                                ),
-                                child: Text(
-                                  errorMessage,
-                                  style: TextStyle(
-                                    color: context.colorScheme.error,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'Full Name',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: context.colorScheme.onSurfaceVariant,
-                                  letterSpacing: 1.1,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextField(
-                              style: TextStyle(
-                                color: context.colorScheme.onSurface,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              controller: _passengerNameController,
-                              textInputAction: TextInputAction.next,
-                              onChanged: (_) {
-                                setState(() {
-                                  _nameError = null;
-                                  _submissionError = null;
-                                });
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'Full Name',
-                                errorText: _nameError,
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.only(left: 10),
-                                  child: Icon(
-                                    LucideIcons.user,
-                                    size: 20,
-                                    color: context.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                filled: true,
-                                fillColor: context.colorScheme.surface,
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.outlineVariant,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.onSurface,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                  ),
-                                ),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'Phone Number',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: context.colorScheme.onSurfaceVariant,
-                                  letterSpacing: 1.1,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextField(
-                              key: const ValueKey<String>(
-                                'passenger-signup-phone',
-                              ),
-                              style: TextStyle(
-                                color: context.colorScheme.onSurface,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              controller: _passengerPhoneController,
-                              keyboardType: TextInputType.phone,
-                              textInputAction: TextInputAction.next,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              onChanged: (_) {
-                                setState(() {
-                                  _phoneError = null;
-                                  _submissionError = null;
-                                });
-                              },
-                              decoration: InputDecoration(
-                                hintText: '09171234567',
-                                errorText: _phoneError,
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.only(left: 10),
-                                  child: Icon(
-                                    LucideIcons.phone,
-                                    size: 20,
-                                    color: context.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                filled: true,
-                                fillColor: context.colorScheme.surface,
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.outlineVariant,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.onSurface,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                  ),
-                                ),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'Email Address',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: context.colorScheme.onSurfaceVariant,
-                                  letterSpacing: 1.1,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Material(
-                              type: MaterialType.transparency,
-                              child: TextField(
-                                style: TextStyle(
-                                  color: context.colorScheme.onSurface,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                controller: _passengerEmailController,
-                                keyboardType: TextInputType.emailAddress,
-                                textInputAction: TextInputAction.next,
-                                onChanged: (_) {
-                                  setState(() {
-                                    _emailError = null;
-                                    _submissionError = null;
-                                  });
-                                },
-                                decoration: InputDecoration(
-                                  hintText: 'Email',
-                                  errorText: _emailError,
-                                  prefixIcon: Padding(
-                                    padding: const EdgeInsets.only(left: 10),
-                                    child: Icon(
-                                      LucideIcons.mail,
-                                      size: 20,
-                                      color:
-                                          context.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                  filled: true,
-                                  fillColor: context.colorScheme.surface,
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.lg,
-                                    ),
-                                    borderSide: BorderSide(
-                                      color: context.colorScheme.outlineVariant,
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.lg,
-                                    ),
-                                    borderSide: BorderSide(
-                                      color: context.colorScheme.onSurface,
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  errorBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.lg,
-                                    ),
-                                    borderSide: BorderSide(
-                                      color: context.colorScheme.error,
-                                    ),
-                                  ),
-                                  focusedErrorBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.lg,
-                                    ),
-                                    borderSide: BorderSide(
-                                      color: context.colorScheme.error,
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'Password',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: context.colorScheme.onSurfaceVariant,
-                                  letterSpacing: 1.1,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Material(
-                              type: MaterialType.transparency,
-                              child: TextField(
-                                style: TextStyle(
-                                  color: context.colorScheme.onSurface,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                obscureText: !_isPasswordInputVisible,
-                                controller: _passengerPasswordController,
-                                textInputAction: TextInputAction.done,
-                                onChanged: (_) {
-                                  setState(() {
-                                    _passwordError = null;
-                                    _submissionError = null;
-                                  });
-                                },
-                                onSubmitted: (_) =>
-                                    _submitRegistration(context),
-                                decoration: InputDecoration(
-                                  hintText: 'Password',
-                                  errorText: _passwordError,
-                                  prefixIcon: Padding(
-                                    padding: const EdgeInsets.only(left: 10),
-                                    child: Icon(
-                                      LucideIcons.lock,
-                                      size: 20,
-                                      color:
-                                          context.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _isPasswordInputVisible
-                                          ? LucideIcons.eye
-                                          : LucideIcons.eye_off,
-                                      size: 20,
-                                      color:
-                                          context.colorScheme.onSurfaceVariant,
-                                    ),
-                                    onPressed: () => setState(
-                                      () => _isPasswordInputVisible =
-                                          !_isPasswordInputVisible,
-                                    ),
-                                  ),
-                                  filled: true,
-                                  fillColor: context.colorScheme.surface,
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.lg,
-                                    ),
-                                    borderSide: BorderSide(
-                                      color: context.colorScheme.outlineVariant,
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.lg,
-                                    ),
-                                    borderSide: BorderSide(
-                                      color: context.colorScheme.onSurface,
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  errorBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.lg,
-                                    ),
-                                    borderSide: BorderSide(
-                                      color: context.colorScheme.error,
-                                    ),
-                                  ),
-                                  focusedErrorBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.lg,
-                                    ),
-                                    borderSide: BorderSide(
-                                      color: context.colorScheme.error,
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Material(
-                              type: MaterialType.transparency,
-                              child: ElevatedButton(
-                                onPressed: isLoading
-                                    ? null
-                                    : () => _submitRegistration(context),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      context.colorScheme.onSurface,
-                                  foregroundColor:
-                                      context.colorScheme.onPrimary,
-                                  minimumSize: const Size.fromHeight(56),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.lg,
-                                    ),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                child: isLoading
-                                    ? SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          color: context.colorScheme.surface,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Continue',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 24),
-                            Center(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Already have an account?',
-                                    style: TextStyle(
-                                      color:
-                                          context.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      unawaited(
-                                        context.pushNamed(AuthRoutes.signin),
-                                      );
-                                    },
-                                    child: Text(
-                                      'Sign in',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: context.colorScheme.onSurface,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                        icon: Icon(
+                          _isPasswordInputVisible
+                              ? LucideIcons.eye
+                              : LucideIcons.eye_off,
+                          size: 18,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
-      ),
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+            FilledButton(
+              onPressed: isLoading ? null : () => _submitRegistration(context),
+              child: isLoading
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: context.colorScheme.onPrimary,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text('Create account'),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  'Already have an account?',
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                TextButton(
+                  onPressed: isLoading
+                      ? null
+                      : () => context.pushNamed(AuthRoutes.signin),
+                  child: const Text('Sign in'),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 }
