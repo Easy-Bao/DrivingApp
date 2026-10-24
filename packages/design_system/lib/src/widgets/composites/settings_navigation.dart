@@ -37,7 +37,7 @@ class const AppSettingsScaffold({
           const SizedBox(height: 6),
           Text(
             description,
-            style: Theme.of(context).textTheme.bodyMedium
+            style: Theme.of(context).textTheme.bodySmall
                 ?.copyWith(color: context.colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: AppSpacing.xxl),
@@ -63,7 +63,7 @@ class const AppSettingsSection({
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.titleSmall
+          style: Theme.of(context).textTheme.labelMedium
               ?.copyWith(color: context.colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 10),
@@ -78,7 +78,8 @@ class const AppSettingsSection({
             children: [
               for (var index = 0; index < children.length; index++) ...[
                 children[index],
-                if (index != children.length - 1) const Divider(),
+                if (index != children.length - 1)
+                  const Divider(height: 1, indent: 64),
               ],
             ],
           ),
@@ -106,14 +107,14 @@ class const AppSettingsNavigationTile({
       key: ValueKey<String>('settings-destination-$title'),
       onTap: onTap,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 76),
+        constraints: const BoxConstraints(minHeight: 68),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
               Container(
-                width: 42,
-                height: 42,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: context.colorScheme.secondaryContainer,
                   shape: BoxShape.circle,
@@ -121,17 +122,21 @@ class const AppSettingsNavigationTile({
                 alignment: Alignment.center,
                 child: Icon(
                   icon,
-                  size: 19,
+                  size: 18,
                   color: context.colorScheme.onSecondaryContainer,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(title, style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
                     const SizedBox(height: 3),
                     Text(
                       subtitle,

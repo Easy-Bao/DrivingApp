@@ -43,7 +43,7 @@ class const SettingsPage({
             ),
           ],
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: AppSpacing.xxl),
         AppSettingsSection(
           label: 'Support',
           children: [
@@ -57,7 +57,7 @@ class const SettingsPage({
             ),
           ],
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: AppSpacing.xxl),
         AppSettingsSection(
           label: 'Legal and app information',
           children: [

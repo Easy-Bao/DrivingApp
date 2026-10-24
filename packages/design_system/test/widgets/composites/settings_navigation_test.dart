@@ -32,7 +32,7 @@ void main() {
     final destination = find.byKey(
       const ValueKey<String>('settings-destination-Location access'),
     );
-    expect(tester.getSize(destination).height, greaterThanOrEqualTo(76));
+    expect(tester.getSize(destination).height, greaterThanOrEqualTo(48));
 
     await tester.tap(destination);
     expect(tapped, isTrue);
