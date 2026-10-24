@@ -98,8 +98,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(SingleChildScrollView), findsOneWidget);
-      expect(find.text('Reset Password'), findsOneWidget);
+      expect(find.byType(CustomScrollView), findsOneWidget);
+      expect(find.text('Send code'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
