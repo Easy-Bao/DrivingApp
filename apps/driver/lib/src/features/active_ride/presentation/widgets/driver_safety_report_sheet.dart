@@ -2,7 +2,6 @@ import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:foundation/foundation.dart';
 
 class const SafetyReportButton({
   super.key,
@@ -45,223 +44,35 @@ Future<bool> showSafetyReportSheet(
   String bookingReference = '',
   required RideRepository rideRepository,
 }) async {
-  return await showModalBottomSheet<bool>(
-        context: context,
-        isScrollControlled: true,
-        useSafeArea: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => _SafetyReportSheet(
-          rideId: rideId,
-          bookingReference: bookingReference,
-          rideRepository: rideRepository,
-        ),
-      ) ??
-      false;
+  return showTripSafetyReportForm(
+    context,
+    title: 'Report a passenger issue',
+    reasons: _driverSafetyReportOptions,
+    tripSummary: bookingReference.trim().isNotEmpty
+        ? TripReference(id: bookingReference, compact: true)
+        : null,
+    onSubmit: (category, description) async {
+      final result = await rideRepository.createSafetyReportResult(
+        rideId: rideId,
+        category: category,
+        description: description,
+      );
+      return result.fold((failure) => failure.message, (_) => null);
+    },
+  );
 }
 
-class const _SafetyReportOption({required this.value, required this.label}) {
-  final String value;
-  final String label;
-}
-
-const _driverSafetyReportOptions = <_SafetyReportOption>[
-  _SafetyReportOption(value: 'harassment', label: 'Passenger harassment'),
-  _SafetyReportOption(value: 'threat_or_violence', label: 'Threat or violence'),
-  _SafetyReportOption(value: 'non_payment', label: 'Cash not paid'),
-  _SafetyReportOption(value: 'property_damage', label: 'Property damage'),
-  _SafetyReportOption(
+const _driverSafetyReportOptions = <SafetyReportReason>[
+  SafetyReportReason(value: 'harassment', label: 'Passenger harassment'),
+  SafetyReportReason(value: 'threat_or_violence', label: 'Threat or violence'),
+  SafetyReportReason(value: 'non_payment', label: 'Cash not paid'),
+  SafetyReportReason(value: 'property_damage', label: 'Property damage'),
+  SafetyReportReason(
     value: 'prohibited_cargo',
     label: 'Prohibited or unsafe cargo',
   ),
-  _SafetyReportOption(value: 'fraud', label: 'Fraud or fake booking'),
-  _SafetyReportOption(value: 'no_show', label: 'Passenger no-show'),
-  _SafetyReportOption(value: 'accident', label: 'Accident or injury'),
-  _SafetyReportOption(value: 'other', label: 'Other serious concern'),
+  SafetyReportReason(value: 'fraud', label: 'Fraud or fake booking'),
+  SafetyReportReason(value: 'no_show', label: 'Passenger no-show'),
+  SafetyReportReason(value: 'accident', label: 'Accident or injury'),
+  SafetyReportReason(value: 'other', label: 'Other serious concern'),
 ];
-
-class const _SafetyReportSheet({
-  required this.rideId,
-  this.bookingReference = '',
-  required this.rideRepository,
-}) extends StatefulWidget {
-  final String rideId;
-  final String bookingReference;
-  final RideRepository rideRepository;
-
-  @override
-  State<_SafetyReportSheet> createState() => _SafetyReportSheetState();
-}
-
-class _SafetyReportSheetState extends State<_SafetyReportSheet> {
-  final _descriptionController = TextEditingController();
-  String? _category;
-  String? _errorMessage;
-  bool _isSubmitting = false;
-
-  @override
-  void dispose() {
-    _descriptionController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    final category = _category;
-    final description = _descriptionController.text.trim();
-    if (_isSubmitting || category == null || description.isEmpty) {
-      setState(
-        () => _errorMessage = 'Choose a reason and describe what happened.',
-      );
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-      _errorMessage = null;
-    });
-    final result = await widget.rideRepository.createSafetyReportResult(
-      rideId: widget.rideId,
-      category: category,
-      description: description,
-    );
-    if (!mounted) return;
-    DomainFailure? failure;
-    result.fold((value) => failure = value, (_) {});
-    if (failure != null) {
-      setState(() {
-        _isSubmitting = false;
-        _errorMessage = failure!.message;
-      });
-      return;
-    }
-    Navigator.of(context).pop(true);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: Material(
-        color: context.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.sheet),
-        ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 680),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.md,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      LucideIcons.flag_triangle_right,
-                      color: context.colorScheme.error,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        'Report a passenger issue',
-                        style: context.textStyles.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: _isSubmitting
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      tooltip: MaterialLocalizations.of(context)
-                          .closeButtonTooltip,
-                      icon: const Icon(LucideIcons.x),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Use this for safety or serious trip problems. The report is linked to the ride timeline.',
-                  style: context.textStyles.bodyMedium?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TripReference(
-                    id: widget.bookingReference,
-                    label: 'Booking ID',
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppSelectField<String>(
-                  key: const ValueKey('driver-safety-report-category'),
-                  value: _category,
-                  menuTitle: 'What happened?',
-                  decoration: const InputDecoration(
-                    labelText: 'What happened?',
-                    border: OutlineInputBorder(),
-                  ),
-                  options: [
-                    for (final option in _driverSafetyReportOptions)
-                      AppSelectOption<String>(
-                        value: option.value,
-                        label: option.label,
-                      ),
-                  ],
-                  onChanged: _isSubmitting
-                      ? null
-                      : (value) => setState(() => _category = value),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                TextField(
-                  controller: _descriptionController,
-                  minLines: 4,
-                  maxLines: 7,
-                  maxLength: 2000,
-                  enabled: !_isSubmitting,
-                  textInputAction: TextInputAction.newline,
-                  decoration: const InputDecoration(
-                    labelText: 'Describe what happened',
-                    hintText: 'Include useful details such as where and when it happened.',
-                    alignLabelWithHint: true,
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    _errorMessage!,
-                    style: TextStyle(color: context.colorScheme.error),
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.md),
-                SizedBox(
-                  height: AppSize.controlHeight,
-                  child: FilledButton.icon(
-                    onPressed: _isSubmitting ? null : _submit,
-                    icon: _isSubmitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(LucideIcons.send),
-                    label: Text(
-                      _isSubmitting ? 'Submitting…' : 'Submit report',
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

@@ -36,3 +36,4 @@ export 'package:design_system/src/widgets/navigation/tab_branch_container.dart';
 export 'package:design_system/src/widgets/navigation/tab_coordinator.dart';
 
 export 'package:design_system/src/widgets/composites/chat_picture.dart';
+export 'package:design_system/src/widgets/composites/trip_safety_report_form.dart';

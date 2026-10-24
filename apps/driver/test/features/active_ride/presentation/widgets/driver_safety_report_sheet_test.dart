@@ -29,11 +29,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Report a passenger issue'), findsOneWidget);
-    await tester.tap(find.text('Submit report'));
-    await tester.pump();
     expect(
-      find.text('Choose a reason and describe what happened.'),
-      findsOneWidget,
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNull,
+    );
+    expect(find.byType(ChoiceChip), findsNWidgets(9));
+    expect(
+      tester.widget<BottomSheet>(find.byType(BottomSheet)).showDragHandle,
+      isTrue,
     );
     verifyNever(
       () => repository.createSafetyReport(
@@ -68,16 +71,15 @@ void main() {
 
     await tester.tap(find.byTooltip('Report a safety issue'));
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.byKey(const ValueKey('driver-safety-report-category')),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Cash not paid').last);
+    final reason = find.byKey(const ValueKey('report-reason-non_payment'));
+    await tester.ensureVisible(reason);
+    await tester.tap(reason);
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byType(TextField),
       'Passenger did not pay the agreed cash fare.',
     );
+    await tester.pump();
     await tester.ensureVisible(find.text('Submit report'));
     await tester.tap(find.text('Submit report'));
     await tester.pumpAndSettle();
