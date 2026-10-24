@@ -20,40 +20,37 @@ class _SessionStore extends Mock implements SessionStore {}
 class _ProfileRepository extends Mock implements DriverProfileRepository {}
 
 void main() {
-  testWidgets('receipt details finish opening and closing in one frame', (
-    tester,
-  ) async {
-    final cubit = _DetailsCubit();
-    when(() => cubit.state).thenReturn(const RideDetailsState());
-    when(() => cubit.load('receipt')).thenAnswer((_) async {});
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.main,
-        home: RideDetailsPage(
-          trackRepository: _TrackRepository(),
-          sessionService: _SessionStore(),
-          profileRepository: _ProfileRepository(),
-          detailsCubit: cubit,
-          initialRide: const RideSnapshot(
-            id: 'receipt',
-            status: 'completed',
-            pickupName: 'Receipt pickup',
-            dropoffName: 'Receipt destination',
-            fareAmount: 2860,
+  testWidgets(
+    'receipt shows route and fare directly without redundant completion controls',
+    (tester) async {
+      final cubit = _DetailsCubit();
+      when(() => cubit.state).thenReturn(const RideDetailsState());
+      when(() => cubit.load('receipt')).thenAnswer((_) async {});
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: RideDetailsPage(
+            trackRepository: _TrackRepository(),
+            sessionService: _SessionStore(),
+            profileRepository: _ProfileRepository(),
+            detailsCubit: cubit,
+            initialRide: const RideSnapshot(
+              id: 'receipt',
+              status: 'completed',
+              pickupName: 'Receipt pickup',
+              dropoffName: 'Receipt destination',
+              fareAmount: 2860,
+            ),
           ),
         ),
-      ),
-    );
-    expect(find.text('Receipt pickup'), findsNothing);
-    await tester.tap(find.text('Trip details'));
-    await tester.pump();
-    expect(find.text('Receipt pickup'), findsOneWidget);
-    expect(find.text('Receipt destination'), findsOneWidget);
-    await tester.tap(find.text('Trip details'));
-    await tester.pump();
-    expect(find.text('Receipt pickup'), findsNothing);
-    expect(find.text('Receipt destination'), findsNothing);
-    expect(find.text('₱28.60'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      );
+      expect(find.text('Receipt pickup'), findsOneWidget);
+      expect(find.text('Receipt destination'), findsOneWidget);
+      expect(find.text('₱28.60'), findsOneWidget);
+      expect(find.byType(ExpansionTile), findsNothing);
+      expect(find.text('Done'), findsNothing);
+      expect(find.text('Report an issue'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

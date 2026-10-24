@@ -22,26 +22,24 @@ class const SafetyReportButton({
   @override
   Widget build(BuildContext context) {
     final canReport = rideId != null && rideId!.isNotEmpty;
-    return IconButton(
-      onPressed: canReport
-          ? () async {
-              await showSafetyReportSheet(
-                context,
-                rideId: rideId!,
-                bookingReference: bookingReference,
-                driverName: driverName,
-                vehiclePlate: vehiclePlate,
-                vehicleType: vehicleType,
-                trackRepository: trackRepository,
-              );
-            }
-          : null,
-      tooltip: 'Report a safety issue',
-      icon: const Icon(LucideIcons.flag_triangle_right),
-      color: context.colorScheme.error,
-      constraints: const BoxConstraints(
-        minWidth: AppSize.minimumTouchTarget,
-        minHeight: AppSize.minimumTouchTarget,
+    return Tooltip(
+      message: 'Report a safety issue',
+      child: TextButton.icon(
+        onPressed: canReport
+            ? () async {
+                await showSafetyReportSheet(
+                  context,
+                  rideId: rideId!,
+                  bookingReference: bookingReference,
+                  driverName: driverName,
+                  vehiclePlate: vehiclePlate,
+                  vehicleType: vehicleType,
+                  trackRepository: trackRepository,
+                );
+              }
+            : null,
+        icon: const Icon(LucideIcons.flag_triangle_right),
+        label: const Text('Report an issue'),
       ),
     );
   }

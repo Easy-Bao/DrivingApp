@@ -76,33 +76,20 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Trip route'), findsOneWidget);
-    expect(find.text('Passenger profile'), findsOneWidget);
-    expect(find.text('Contact Passenger'), findsOneWidget);
+    expect(find.text('Mountain View'), findsOneWidget);
+    expect(find.text('Aikido of Mountain View'), findsOneWidget);
+    expect(find.byTooltip('Message passenger'), findsOneWidget);
     expect(
       tester
-          .widget<FilledButton>(
+          .widget<IconButton>(
             find.byKey(const ValueKey('driver-trip-contact-passenger')),
           )
           .onPressed,
       isNotNull,
     );
-    expect(
-      find.byKey(const ValueKey('driver-trip-route-dashes')),
-      findsOneWidget,
-    );
-    expect(
-      tester
-          .renderObject<RenderBox>(
-            find.byKey(const ValueKey('driver-trip-route-dashes')),
-          )
-          .size
-          .height,
-      24,
-    );
     expect(find.text('Ana Maria'), findsOneWidget);
-    expect(find.text('+63 917 555 0101'), findsOneWidget);
-    expect(find.text('4.8 rating'), findsOneWidget);
+    expect(find.text('+63 917 555 0101'), findsNothing);
+    expect(find.text('4.8'), findsOneWidget);
     expect(
       find.text('Friendly passenger and ready at pickup.'),
       findsOneWidget,
@@ -145,14 +132,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Contact window closed'), findsOneWidget);
+      expect(find.byTooltip('Message passenger'), findsNothing);
       expect(
-        tester
-            .widget<FilledButton>(
-              find.byKey(const ValueKey('driver-trip-contact-passenger')),
-            )
-            .onPressed,
-        isNull,
+        find.byKey(const ValueKey('driver-trip-contact-passenger')),
+        findsNothing,
       );
     }
 

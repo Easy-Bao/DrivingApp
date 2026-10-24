@@ -235,7 +235,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
       title: isCompleted ? 'Trip receipt' : 'Ride details',
       onBack: () => context.pop(),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -244,94 +244,49 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                 message: _detailsCubit.state.errorMessage!,
                 onRetry: () => unawaited(_detailsCubit.load(rideId)),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
             ],
-            if (isCompleted) ...[
-              _buildReceiptSummary(context, snapshot, fare),
-              const SizedBox(height: 24),
-            ],
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: context.colorScheme.surfaceContainerHighest,
-                  foregroundColor: context.colorScheme.onSurface,
-                  child: Text(_driverInitials(driverName)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(driverName, style: context.textStyles.titleMedium),
-                      const SizedBox(height: 4),
-                      Text(
-                        ride?.displayVehicleSummary ??
-                            snapshot?.displayVehicleSummary ??
-                            'Vehicle details unavailable',
-                        style: context.textStyles.bodyMedium?.copyWith(
-                          color: context.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+            AppSurfaceCard(
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor:
+                        context.colorScheme.surfaceContainerHighest,
+                    foregroundColor: context.colorScheme.onSurface,
+                    child: Text(_driverInitials(driverName)),
                   ),
-                ),
-              ],
-            ),
-            if (isCompleted &&
-                snapshot?.driverId?.trim().isNotEmpty == true &&
-                rideId?.isNotEmpty == true) ...[
-              const SizedBox(height: 24),
-              if (_detailsCubit.state.submittedReview case final review?)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Ride rating'),
-                  trailing: Text('${review.rating.toStringAsFixed(0)} ★'),
-                )
-              else if (widget.showRatingAction &&
-                  !_detailsCubit.state.isLoadingReview)
-                TextButton(
-                  onPressed: () async {
-                    await context.pushNamed(
-                      ActiveRideRoutes.tripCompletion,
-                      extra: (ride: snapshot!, returnToReceipt: true),
-                    );
-                    if (mounted) {
-                      await _detailsCubit.loadMyReview(rideId!, refresh: true);
-                    }
-                  },
-                  child: const Text('Rate this ride'),
-                ),
-            ],
-            const SizedBox(height: 24),
-            ExpansionTile(
-              key: const ValueKey('receipt-trip-details'),
-              // Clipping a native map through a height animation stalls raster work.
-              expansionAnimationStyle: AnimationStyle.noAnimation,
-              title: const Text('Trip details'),
-              tilePadding: EdgeInsets.zero,
-              childrenPadding: const EdgeInsets.only(bottom: 20),
-              children: [
-                if (reference.trim().isNotEmpty) ...[
-                  TripReference(id: reference),
-                  const SizedBox(height: 20),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(driverName, style: context.textStyles.titleMedium),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          ride?.displayVehicleSummary ??
+                              snapshot?.displayVehicleSummary ??
+                              'Vehicle details unavailable',
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
-                CompactRouteTimeline(
-                  pickup:
-                      ride?.pickup ?? snapshot?.pickupName ?? 'Pickup location',
-                  dropoff:
-                      ride?.destination ??
-                      snapshot?.dropoffName ??
-                      'Destination location',
-                ),
-                const SizedBox(height: 16),
-                if (pickupLatitude != null &&
-                    pickupLongitude != null &&
-                    dropoffLatitude != null &&
-                    dropoffLongitude != null) ...[
-                  SizedBox(
-                    height: 180,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AppSurfaceCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  if (pickupLatitude != null &&
+                      pickupLongitude != null &&
+                      dropoffLatitude != null &&
+                      dropoffLongitude != null)
+                    SizedBox(
+                      height: 180,
                       child: RideDetailsMap(
                         key: ValueKey((
                           pickupLatitude,
@@ -345,34 +300,85 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                         dropoffLongitude: dropoffLongitude,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 12,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    if (_showLostFoundChat)
-                      TextButton.icon(
-                        onPressed: _initiateLostFoundChat,
-                        icon: const Icon(LucideIcons.message_circle, size: 20),
-                        label: const Text('Lost item?'),
-                      ),
-                    SafetyReportButton(
-                      driverName: driverName,
-                      vehiclePlate:
-                          ride?.vehiclePlate ?? snapshot?.plateNumber ?? '',
-                      vehicleType:
-                          ride?.vehicleType ?? snapshot?.vehicleType ?? '',
-                      bookingReference: reference,
-                      rideId: rideId,
-                      trackRepository: widget.trackRepository,
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    child: CompactRouteTimeline(
+                      pickup:
+                          ride?.pickup ??
+                          snapshot?.pickupName ??
+                          'Pickup location',
+                      dropoff:
+                          ride?.destination ??
+                          snapshot?.dropoffName ??
+                          'Destination location',
                     ),
-                  ],
+                  ),
+                ],
+              ),
+            ),
+            if (isCompleted &&
+                snapshot?.driverId?.isNotEmpty == true &&
+                rideId != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              if (_detailsCubit.state.submittedReview case final review?)
+                AppSurfaceCard(
+                  child: Row(
+                    children: [
+                      const Expanded(child: Text('Ride rating')),
+                      Text(review.rating.toStringAsFixed(0)),
+                      const SizedBox(width: AppSpacing.xs),
+                      Icon(
+                        Icons.star_rounded,
+                        size: 20,
+                        color: context.semanticColors.rating,
+                      ),
+                    ],
+                  ),
+                )
+              else if (widget.showRatingAction &&
+                  !_detailsCubit.state.isLoadingReview)
+                TextButton(
+                  onPressed: () async {
+                    await context.pushNamed(
+                      ActiveRideRoutes.tripCompletion,
+                      extra: (ride: snapshot!, returnToReceipt: true),
+                    );
+                    if (mounted) {
+                      await _detailsCubit.loadMyReview(rideId, refresh: true);
+                    }
+                  },
+                  child: const Text('Rate this ride'),
                 ),
-              ],
+            ],
+            if (isCompleted) ...[
+              const SizedBox(height: AppSpacing.xxl),
+              Text(
+                'Fare details',
+                style: context.textStyles.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _buildReceiptSummary(context, snapshot, fare),
+            ],
+            if (reference.trim().isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.lg),
+              TripReference(id: reference, compact: true),
+            ],
+            const SizedBox(height: AppSpacing.lg),
+            if (_showLostFoundChat)
+              TextButton.icon(
+                onPressed: _initiateLostFoundChat,
+                icon: const Icon(LucideIcons.message_circle, size: 20),
+                label: const Text('Lost item?'),
+              ),
+            SafetyReportButton(
+              driverName: driverName,
+              vehiclePlate: ride?.vehiclePlate ?? snapshot?.plateNumber ?? '',
+              vehicleType: ride?.vehicleType ?? snapshot?.vehicleType ?? '',
+              bookingReference: reference,
+              rideId: rideId,
+              trackRepository: widget.trackRepository,
             ),
           ],
         ),
