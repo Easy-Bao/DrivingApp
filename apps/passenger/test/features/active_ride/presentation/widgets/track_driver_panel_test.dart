@@ -45,6 +45,10 @@ void main() {
         ),
       );
       expect(find.text('6 min'), findsOneWidget);
+      expect(find.text('Agreed fare'), findsOneWidget);
+      expect(find.text('₱27.88'), findsOneWidget);
+      expect(find.byTooltip('Message driver'), findsOneWidget);
+      expect(find.byTooltip('Call driver'), findsNothing);
       expect(find.textContaining('Booking ID'), findsNothing);
       expect(tester.takeException(), isNull);
       expect(find.text('Trip details'), findsNothing);

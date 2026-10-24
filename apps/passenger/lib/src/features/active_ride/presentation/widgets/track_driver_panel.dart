@@ -1,6 +1,7 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 
 class const TrackDriverPanel({
@@ -9,7 +10,6 @@ class const TrackDriverPanel({
   required this.statusTitle,
   required this.statusSubtitle,
   required this.etaText,
-  this.statusBadgeText,
   this.driverName,
   this.vehicleSummary,
   this.driverRating,
@@ -26,7 +26,6 @@ class const TrackDriverPanel({
   final String statusTitle;
   final String statusSubtitle;
   final String etaText;
-  final String? statusBadgeText;
   final String? driverName;
   final String? vehicleSummary;
   final String? driverRating;
@@ -50,9 +49,7 @@ class const TrackDriverPanel({
     final rating = driverRating?.trim().isNotEmpty == true
         ? driverRating!.trim()
         : ride.displayDriverRating;
-    final onTrip =
-        isInTransit ??
-        (ride.status == 'in_transit' || statusBadgeText == 'ON TRIP');
+    final onTrip = isInTransit ?? ride.status == 'in_transit';
 
     return Material(
       color: context.colorScheme.surface,
@@ -82,7 +79,12 @@ class const TrackDriverPanel({
               spacing: 16,
               runSpacing: 8,
               children: [
-                Text(statusTitle, style: context.textStyles.titleLarge),
+                Text(
+                  statusTitle,
+                  style: context.textStyles.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 if (etaText.trim().isNotEmpty)
                   Text(
                     etaText,
@@ -98,7 +100,28 @@ class const TrackDriverPanel({
                 color: context.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 24),
+            if (ride.farePesos case final fare?) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Agreed fare',
+                      style: context.textStyles.bodyMedium?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    formatPesoAmount(fare),
+                    style: context.textStyles.titleMedium,
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: AppSpacing.lg),
+            const Divider(height: 1),
+            const SizedBox(height: AppSpacing.lg),
             Row(
               children: [
                 AppNetworkImage(
@@ -139,23 +162,20 @@ class const TrackDriverPanel({
                     ],
                   ),
                 ),
+                if (showContactActions) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  Badge(
+                    isLabelVisible: unreadChatMessagesCount > 0,
+                    label: Text('$unreadChatMessagesCount'),
+                    child: IconButton.filled(
+                      tooltip: 'Message driver',
+                      onPressed: onChatDriverPressed,
+                      icon: const Icon(LucideIcons.message_circle, size: 20),
+                    ),
+                  ),
+                ],
               ],
             ),
-            if (showContactActions) ...[
-              const SizedBox(height: 16),
-              Badge(
-                isLabelVisible: unreadChatMessagesCount > 0,
-                label: Text('$unreadChatMessagesCount'),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: onChatDriverPressed,
-                    icon: const Icon(LucideIcons.message_circle, size: 20),
-                    label: const Text('Message driver'),
-                  ),
-                ),
-              ),
-            ],
             const SizedBox(height: 16),
             Align(
               alignment: Alignment.centerLeft,
