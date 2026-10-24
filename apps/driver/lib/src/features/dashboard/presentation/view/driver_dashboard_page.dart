@@ -15,6 +15,7 @@ import 'package:driver/src/features/dashboard/presentation/widgets/driver_availa
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard_section_label.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard_stats_row.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_pool_bid_card.dart';
+import 'package:driver/src/features/dashboard/presentation/view/incoming_ride_request_page.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver/src/infrastructure/notifications/driver_incoming_request_alert.dart';
@@ -67,7 +68,7 @@ class _DashboardPageState extends State<DashboardPage>
   bool _isResumingOnline = false;
   bool _isRefreshingPresence = false;
   bool? _pendingOnline;
-  String? _submittingBidId;
+  bool _isShowingRequest = false;
   int _pollGeneration = 0;
   int _locationAccessFailures = 0;
   bool _isCheckingLocationAccess = false;
@@ -100,6 +101,7 @@ class _DashboardPageState extends State<DashboardPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final dashboardState = BlocProvider.of<DashboardCubit>(context).state;
+        unawaited(_showIncomingRequest());
         _syncPulseAnimation(dashboardState.isOnline);
         _startLocationAccessMonitoring();
         unawaited(_loadActiveTrips());
@@ -166,6 +168,7 @@ class _DashboardPageState extends State<DashboardPage>
     final isOnline = BlocProvider.of<DashboardCubit>(context).state.isOnline;
     _syncPulseAnimation(isOnline);
     _startRequestCountdownTimer();
+    unawaited(_showIncomingRequest());
     unawaited(_resumeForegroundWork());
   }
 
@@ -671,41 +674,36 @@ class _DashboardPageState extends State<DashboardPage>
     }
   }
 
-  Future<void> _declineBid(Map<String, dynamic> bid) async {
-    if (_submittingBidId != null) return;
-    final sessionId = valueAsString(bid['id']);
+  Future<void> _showIncomingRequest() async {
+    if (!mounted ||
+        _isShowingRequest ||
+        !_isForeground ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    final cubit = BlocProvider.of<DashboardCubit>(context);
+    final state = cubit.state;
+    if (!state.isOnline || state.hasActiveRide || state.activeBids.isEmpty) {
+      return;
+    }
+    final sessionId = valueAsString(state.activeBids.first['id']);
     if (sessionId == null) return;
-    final cubit = BlocProvider.of<DashboardCubit>(context);
-    if (bid['target_driver_id'] == null) {
-      cubit.removeActiveBid(sessionId);
-      return;
-    }
-    setState(() => _submittingBidId = sessionId);
+    _isShowingRequest = true;
     try {
-      await cubit.declineRideRequest(sessionId);
+      await Navigator.of(context, rootNavigator: true).push<void>(
+        MaterialPageRoute<void>(
+          fullscreenDialog: true,
+          builder: (_) =>
+              IncomingRideRequestPage(cubit: cubit, sessionId: sessionId),
+        ),
+      );
     } finally {
-      if (mounted) setState(() => _submittingBidId = null);
+      _isShowingRequest = false;
     }
-  }
-
-  Future<void> _submitBid(Map<String, dynamic> bid) async {
-    if (_submittingBidId != null) return;
-    final cubit = BlocProvider.of<DashboardCubit>(context);
-    if (cubit.state.hasActiveRide) {
-      return;
-    }
-
-    final sessionId = valueAsString(bid['id']);
-    final fare = fareInPesos(bid);
-    if (sessionId == null || fare == null) return;
-
-    if (mounted) setState(() => _submittingBidId = sessionId);
-    try {
-      await cubit.submitRideOffer(sessionId: sessionId, farePesos: fare);
-    } catch (error) {
-      debugPrint('Unable to submit driver offer: $error');
-    } finally {
-      if (mounted) setState(() => _submittingBidId = null);
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_showIncomingRequest());
+      });
     }
   }
 
@@ -780,6 +778,12 @@ class _DashboardPageState extends State<DashboardPage>
   Widget build(BuildContext context) {
     return MultiBlocListener(
       listeners: [
+        BlocListener<DashboardCubit, DashboardState>(
+          listenWhen: (previous, current) =>
+              previous.activeBids != current.activeBids ||
+              previous.isOnline != current.isOnline,
+          listener: (_, _) => unawaited(_showIncomingRequest()),
+        ),
         BlocListener<RideFlowCubit, RideFlowState>(
           listenWhen: (_, current) => current is RideFlowTerminal,
           listener: (context, state) {
@@ -831,9 +835,6 @@ class _DashboardPageState extends State<DashboardPage>
             previous.submittedOffers != current.submittedOffers,
         builder: (context, state) {
           final activeRide = state.activeRide;
-          final activeBids = state.hasActiveRide
-              ? const <Map<String, dynamic>>[]
-              : state.activeBids;
           final submittedOffers = state.hasActiveRide
               ? const <Map<String, dynamic>>[]
               : state.submittedOffers;
@@ -843,8 +844,7 @@ class _DashboardPageState extends State<DashboardPage>
               !AppNetworkStatusScope.isUnavailableOf(context);
           final showFeed =
               state.hasActiveRide ||
-              (state.isOnline &&
-                  (activeBids.isNotEmpty || submittedOffers.isNotEmpty));
+              (state.isOnline && submittedOffers.isNotEmpty);
           return Column(
             children: [
               if (showDashboardError)
@@ -939,22 +939,6 @@ class _DashboardPageState extends State<DashboardPage>
                                               submittingBidId: null,
                                               onDecline: null,
                                               onSubmitOffer: null,
-                                            ),
-                                          ),
-                                        ],
-                                        if (activeBids.isNotEmpty) ...[
-                                          const DashboardSectionLabel(
-                                            label: 'Ride requests',
-                                          ),
-                                          const SizedBox(height: 10),
-                                          ...activeBids.map(
-                                            (bid) => PoolBidCard(
-                                              bid: bid,
-                                              submittingBidId: _submittingBidId,
-                                              onDecline: () =>
-                                                  unawaited(_declineBid(bid)),
-                                              onSubmitOffer: () =>
-                                                  _submitBid(bid),
                                             ),
                                           ),
                                         ],
