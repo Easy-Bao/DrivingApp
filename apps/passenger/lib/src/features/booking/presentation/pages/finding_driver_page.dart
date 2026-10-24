@@ -12,10 +12,13 @@ import 'package:passenger/src/core/location/live_map_bloc.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
+import 'package:passenger/src/features/booking/domain/entities/booking_offer.dart';
+import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/nearby_drivers/nearby_drivers_cubit.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/driver_dropdown_card.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_availability_error_panel.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_bids_panel.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_nearby_panel.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_nearest_panel.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_no_driver_panel.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_searching_panel.dart';
@@ -51,6 +54,8 @@ class FindingDriverPage extends StatelessWidget {
     this.pickupLongitude,
     this.passengerNote = '',
     required this.profileRepository,
+    required this.driverRepository,
+    required this.lifecycleCoordinator,
     required this.bookingBloc,
     required this.liveMapBloc,
   });
@@ -68,6 +73,8 @@ class FindingDriverPage extends StatelessWidget {
   final double? pickupLongitude;
   final String passengerNote;
   final DriverProfileRepository profileRepository;
+  final DriverRepository driverRepository;
+  final AppLifecycleCoordinator lifecycleCoordinator;
   final BookingBloc bookingBloc;
   final LiveMapBloc liveMapBloc;
 
@@ -76,6 +83,15 @@ class FindingDriverPage extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<BookingBloc>.value(value: bookingBloc),
+        if (pickupLatitude != null && pickupLongitude != null)
+          BlocProvider<NearbyDriversCubit>(
+            create: (_) => NearbyDriversCubit(
+              repository: driverRepository,
+              lifecycleCoordinator: lifecycleCoordinator,
+              latitude: pickupLatitude!,
+              longitude: pickupLongitude!,
+            )..start(),
+          ),
         BlocProvider<LiveMapBloc>(create: (_) => liveMapBloc),
       ],
       child: FindingDriverPageContent(
@@ -182,7 +198,8 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
         bookingBloc.state is BookingFailure &&
         (bookingBloc.state as BookingFailure).isRequestExpired;
     if (!bookingBloc.hasActiveDriverSearch && !isExpiredRequest) {
-      _startOpenBooking();
+      BlocProvider.of<NearbyDriversCubit>(context);
+      bookingBloc.add(const ResetBookingEvent());
     }
   }
 
@@ -309,38 +326,54 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     );
   }
 
-  void _startOpenBooking() {
-    final pickup = _pickupCoordinate;
-    if (pickup == null) return;
-    final pickupLat = pickup.latitude;
-    final pickupLng = pickup.longitude;
-
-    final distanceNum =
-        widget.distanceKm ??
-        double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), ''));
-    final durationNum =
-        widget.durationMinutes ??
-        double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), ''));
-    if (distanceNum == null || durationNum == null) return;
-
-    final tripMetadata = BidSessionTrip(
-      fare: widget.fare,
-      destination: widget.destination,
-      distance: widget.distance,
-      duration: widget.duration,
-      pickupAddress: widget.pickupAddress,
-      passengerNote: widget.passengerNote,
-    );
-
-    BlocProvider.of<BookingBloc>(context).add(
-      StartOpenBookingEvent(
-        trip: tripMetadata,
-        pickupLat: pickupLat,
-        pickupLng: pickupLng,
-        distanceKm: distanceNum,
-        durationMinutes: durationNum,
+  Widget _buildNearbyDriversPanel({
+    required double fare,
+    List<BookingOffer> offers = const [],
+    bool isSendingRequest = false,
+    bool isChoosingDriver = false,
+    String? refreshError,
+  }) {
+    return BlocBuilder<NearbyDriversCubit, NearbyDriversState>(
+      builder: (context, availability) => FindingDriverNearbyPanel(
+        availability: availability,
+        offers: offers,
+        fare: fare,
+        isChoosingDriver: isChoosingDriver,
+        onSelectDriver: _startDirectBooking,
+        isSendingRequest: isSendingRequest,
+        refreshError: refreshError,
+        onRefresh: () {
+          unawaited(BlocProvider.of<NearbyDriversCubit>(context).refresh());
+          BlocProvider.of<BookingBloc>(context)
+              .add(const RefreshBookingSessionEvent());
+        },
+        onAcceptOfferPressed: (offer) {
+          if (_isLeaving || _acceptingOfferId != null) return;
+          setState(() => _acceptingOfferId = offer.offerId);
+          BlocProvider.of<BookingBloc>(context).add(
+            AcceptBidOfferEvent(
+              offerId: offer.offerId,
+              driverId: offer.driverId,
+              driverName: offer.displayDriverName,
+              vehicleType: offer.displayVehicleType,
+              plateNumber: offer.displayPlateNumber,
+              proposedFare: offer.proposedFare,
+              driverRating: offer.ratingLabel,
+            ),
+          );
+        },
+        onCancelPressed: _handleCancel,
+        acceptingOfferId: _acceptingOfferId,
+        isCanceling: _isLeaving,
       ),
     );
+  }
+
+  void _showNearbyDrivers() {
+    final booking = BlocProvider.of<BookingBloc>(context);
+    if (booking.hasActiveBooking) return;
+    booking.add(const ResetBookingEvent());
+    unawaited(BlocProvider.of<NearbyDriversCubit>(context).refresh());
   }
 
   void _handleCancel() {
@@ -383,7 +416,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
       _driverSearchError = null;
       _isLeaving = false;
     });
-    _startOpenBooking();
+    _showNearbyDrivers();
   }
 
   @override
@@ -640,7 +673,12 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                           final pickupAddress =
                               activeTrip?.pickupAddress ?? widget.pickupAddress;
 
-                          if (state is FindingNearestDriver) {
+                          if (state is BookingInitial) {
+                            return _buildNearbyDriversPanel(
+                              fare: fare,
+                              isChoosingDriver: true,
+                            );
+                          } else if (state is FindingNearestDriver) {
                             return FindingDriverSearchingPanel(
                               message: state.statusMessage,
                               fare: fare,
@@ -694,11 +732,18 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                                   _showDriverProfile(state.driver),
                               onBookDirectPressed: () =>
                                   _startDirectBooking(state.driver),
-                              onSearchAllDriversPressed: _startOpenBooking,
+                              onSearchAllDriversPressed: _showNearbyDrivers,
                               onCancelRidePressed: _handleCancel,
                               isCanceling: _isLeaving,
                             );
                           } else if (state is BookingSearching) {
+                            if (!state.isDirect) {
+                              return _buildNearbyDriversPanel(
+                                fare: fare,
+                                isSendingRequest: state.sessionId == null,
+                                refreshError: state.refreshError,
+                              );
+                            }
                             return FindingDriverSearchingPanel(
                               message: state.statusMessage,
                               fare: fare,
@@ -710,6 +755,8 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               duration: widget.duration,
                               bookingReference: state.publicBookingReference,
                               expiresAt: state.expiresAt,
+                              selectedDriverName:
+                                  state.targetDriver?.displayName,
                               requestCreated:
                                   state.sessionId?.isNotEmpty == true,
                               isSendingRequest: state.sessionId == null,
@@ -721,53 +768,10 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               isCanceling: _isLeaving,
                             );
                           } else if (state is BookingOffersReceived) {
-                            if (state.offers.isEmpty) {
-                              return FindingDriverSearchingPanel(
-                                message: state.statusMessage,
-                                fare: fare,
-                                baseFare: widget.baseFare,
-                                destination: destination,
-                                pickupAddress: pickupAddress,
-                                tipAmount: widget.tipAmount,
-                                distance: widget.distance,
-                                duration: widget.duration,
-                                bookingReference: state.publicBookingReference,
-                                expiresAt: state.expiresAt,
-                                requestCreated: true,
-                                refreshError: state.refreshError,
-                                onRetryPressed: () =>
-                                    BlocProvider.of<BookingBloc>(
-                                      context,
-                                    ).add(const RefreshBookingSessionEvent()),
-                                onCancelPressed: _handleCancel,
-                                isCanceling: _isLeaving,
-                              );
-                            }
-                            return FindingDriverBidsPanel(
+                            return _buildNearbyDriversPanel(
+                              fare: fare,
                               offers: state.offers,
-                              bookingReference: state.publicBookingReference,
-                              onAcceptOfferPressed: (offer) {
-                                if (_isLeaving || _acceptingOfferId != null) {
-                                  return;
-                                }
-                                setState(
-                                  () => _acceptingOfferId = offer.offerId,
-                                );
-                                BlocProvider.of<BookingBloc>(context).add(
-                                  AcceptBidOfferEvent(
-                                    offerId: offer.offerId,
-                                    driverId: offer.driverId,
-                                    driverName: offer.displayDriverName,
-                                    vehicleType: offer.displayVehicleType,
-                                    plateNumber: offer.displayPlateNumber,
-                                    proposedFare: offer.proposedFare,
-                                    driverRating: offer.ratingLabel,
-                                  ),
-                                );
-                              },
-                              onCancelPressed: _handleCancel,
-                              acceptingOfferId: _acceptingOfferId,
-                              isCanceling: _isLeaving,
+                              refreshError: state.refreshError,
                             );
                           } else if (state
                               is BookingSessionRecoveryInProgress) {

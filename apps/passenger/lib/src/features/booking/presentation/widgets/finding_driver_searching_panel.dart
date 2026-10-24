@@ -10,6 +10,7 @@ class FindingDriverSearchingPanel extends StatelessWidget {
   const FindingDriverSearchingPanel({
     super.key,
     required this.message,
+    this.selectedDriverName,
     required this.fare,
     this.baseFare,
     required this.destination,
@@ -29,6 +30,7 @@ class FindingDriverSearchingPanel extends StatelessWidget {
   });
 
   final String message;
+  final String? selectedDriverName;
   final double fare;
   final double? baseFare;
   final Place destination;
@@ -143,21 +145,28 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _SearchingDriverTitle(
-                          animate: animate,
-                          style: TextStyle(
-                            color: colorScheme.onSurface,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.3,
+                        if (selectedDriverName != null)
+                          Text(
+                            'Waiting for $selectedDriverName',
+                            style: context.textStyles.titleLarge,
+                          )
+                        else
+                          _SearchingDriverTitle(
+                            animate: animate,
+                            style: TextStyle(
+                              color: colorScheme.onSurface,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.3,
+                            ),
                           ),
-                        ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
                             Expanded(
                               child: Text(
-                                displayBookingId.isEmpty
+                                displayBookingId.isEmpty ||
+                                        selectedDriverName != null
                                     ? message
                                     : 'Booking ID - $displayBookingId',
                                 maxLines: 1,

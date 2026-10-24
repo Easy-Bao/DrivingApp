@@ -172,7 +172,7 @@ void main() {
         AppTheme.main.colorScheme.onSurface,
       );
     }
-    expect(find.text('Book directly'), findsOneWidget);
+    expect(find.text('Choose driver'), findsOneWidget);
     expect(find.text('Solo Ride'), findsNothing);
     expect(find.text('4.2 km'), findsNothing);
     expect(find.text('12 min'), findsNothing);
@@ -385,7 +385,7 @@ void main() {
     await tester.pumpWidget(buildPanel());
 
     expect(find.byKey(const ValueKey('book-directly-button')), findsOneWidget);
-    expect(find.text('Book directly'), findsOneWidget);
+    expect(find.text('Choose driver'), findsOneWidget);
     expect(find.byKey(const ValueKey('trip-summary-card')), findsOneWidget);
     expect(find.byKey(const ValueKey('total-fare-amount')), findsOneWidget);
   });

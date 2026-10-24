@@ -899,7 +899,7 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                   ? widget.isLoadingFare
                         ? 'Calculating fare…'
                         : 'Fare unavailable'
-                  : 'Book directly',
+                  : 'Choose driver',
             ),
           ),
         ),

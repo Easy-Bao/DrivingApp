@@ -191,6 +191,8 @@ class BookingModule._() {
           pickupAddress: data.string('pickupAddress'),
           passengerNote: data.string('passengerNote') ?? '',
           profileRepository: Modular.get<DriverProfileRepository>(),
+          driverRepository: Modular.get<DriverRepository>(),
+          lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
           bookingBloc: Modular.get<BookingBloc>(),
           liveMapBloc: Modular.get<LiveMapBloc>(),
         );

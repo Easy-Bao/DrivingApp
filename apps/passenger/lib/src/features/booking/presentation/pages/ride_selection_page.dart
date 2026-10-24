@@ -12,7 +12,6 @@ import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
-import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_draft.dart';
 import 'package:passenger/src/features/booking/domain/repositories/fare_repository.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
@@ -379,22 +378,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     _isStartingBooking = true;
     BlocProvider.of<BookingDraftCubit>(context).clear();
     unawaited(HapticFeedback.lightImpact());
-    bookingBloc.add(
-      StartOpenBookingEvent(
-        trip: BidSessionTrip(
-          fare: totalFare,
-          destination: widget.destination,
-          distance: _distanceLabel,
-          duration: _durationLabel,
-          pickupAddress: _pickupLabel,
-          passengerNote: passengerNote,
-        ),
-        pickupLat: pickup.lat,
-        pickupLng: pickup.lng,
-        distanceKm: distanceKm,
-        durationMinutes: durationMinutes,
-      ),
-    );
     try {
       await context.pushNamed(
         BookingRoutes.findingDriver,
