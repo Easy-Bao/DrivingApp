@@ -230,9 +230,6 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final rideId = widget.rideId?.trim().isNotEmpty == true
-        ? widget.rideId
-        : null;
     return PopScope<void>(
       canPop: _canLeavePage,
       onPopInvokedWithResult: (didPop, _) {
@@ -240,88 +237,50 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       },
       child: Scaffold(
         body: SafeArea(
+          bottom: false,
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 600),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppLayout.pagePadding,
-                  12,
-                  AppLayout.pagePadding,
-                  AppLayout.pagePadding,
-                ),
-                child: Column(
-                  children: [
-                    _buildHeader(context),
-                    if (rideId?.isNotEmpty == true) ...[
-                      const SizedBox(height: AppSpacing.xs),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TripReference(
-                              id: widget.bookingReference,
-                              label: 'Booking ID',
-                              compact: true,
-                            ),
-                          ),
-                          if (widget.rideRepository != null)
-                            SafetyReportButton(
-                              bookingReference: widget.bookingReference,
-                              rideId: rideId,
-                              rideRepository: widget.rideRepository!,
-                            ),
-                        ],
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            _buildAmountCard(),
-                            const SizedBox(height: 12),
-                            _buildCashCollectionForm(),
-                            const SizedBox(height: 12),
-                            _buildTripCard(),
-                            if (_error != null) ...[
-                              const SizedBox(height: 12),
-                              _buildError(),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
+              child: ListView(
+                padding: const EdgeInsets.all(AppLayout.pagePadding),
+                children: [
+                  _buildHeader(context),
+                  const SizedBox(height: 24),
+                  _buildAmountCard(),
+                  const SizedBox(height: 24),
+                  _buildCashCollectionForm(),
+                  const SizedBox(height: 16),
+                  _buildTripCard(),
+                  if (_error != null) ...[
                     const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton.icon(
-                        onPressed: _isSubmitting ? null : _confirmCashPayment,
-                        icon: _isSubmitting
-                            ? SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: context.semanticColors.onSuccess,
-                                ),
-                              )
-                            : const Icon(LucideIcons.check, size: 18),
-                        label: Text(
-                          _isSubmitting
-                              ? 'Recording cash outcome…'
-                              : _cashButtonLabel,
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: context.semanticColors.success,
-                          foregroundColor: context.semanticColors.onSuccess,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
-                          ),
-                        ),
-                      ),
-                    ),
+                    _buildError(),
                   ],
+                ],
+              ),
+            ),
+          ),
+        ),
+        bottomNavigationBar: SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _isSubmitting ? null : _confirmCashPayment,
+                  child: _isSubmitting
+                      ? const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : Text(_cashButtonLabel, textAlign: TextAlign.center),
                 ),
               ),
             ),
@@ -364,7 +323,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
               ),
               SizedBox(height: 1),
               Text(
-                'Record the cash outcome after collection or refusal',
+                'Record what the passenger paid.',
                 style: TextStyle(
                   fontSize: 12,
                   color: context.colorScheme.onSurfaceVariant,
@@ -435,7 +394,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Choose what happened in person. Digital payment is not used.',
+            'Choose the outcome, then check the amount received.',
             style: TextStyle(
               fontSize: 12,
               color: context.colorScheme.onSurfaceVariant,
@@ -548,66 +507,26 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
 
   Widget _buildAmountCard() {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: context.colorScheme.primary,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: context.colorScheme.onPrimary.withValues(alpha: 0.14),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              LucideIcons.banknote,
+          Text(
+            'Cash to collect',
+            style: context.textStyles.bodyMedium?.copyWith(
               color: context.colorScheme.onPrimary,
-              size: 20,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Collect from passenger',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: context.colorScheme.onPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  formatPesoAmount(widget.fare),
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w800,
-                    color: context.colorScheme.onPrimary,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-            decoration: BoxDecoration(
-              color: context.colorScheme.onPrimary.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(99),
-            ),
-            child: Text(
-              'Cash',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: context.colorScheme.onPrimary,
-              ),
+          const SizedBox(height: 8),
+          Text(
+            formatPesoAmount(widget.fare),
+            style: context.textStyles.headlineLarge?.copyWith(
+              color: context.colorScheme.onPrimary,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -616,103 +535,39 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
   }
 
   Widget _buildTripCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Trip details',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: context.colorScheme.onSurface,
+    return ExpansionTile(
+      title: const Text('Trip details'),
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: const EdgeInsets.only(bottom: 16),
+      children: [
+        if (widget.bookingReference.trim().isNotEmpty) ...[
+          TripReference(id: widget.bookingReference),
+          const SizedBox(height: 16),
+        ],
+        CompactRouteTimeline(pickup: widget.pickup, dropoff: widget.dropoff),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 16,
+          runSpacing: 8,
+          children: [
+            _buildMetric(
+              icon: LucideIcons.route,
+              value: DistanceFormatter.fromKilometers(widget.distance),
             ),
-          ),
-          const SizedBox(height: 12),
-          _buildPlace(
-            icon: LucideIcons.circle_dot,
-            label: 'Pickup',
-            address: widget.pickup,
-            color: context.semanticColors.success,
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: 6, top: 5, bottom: 5),
-            child: SizedBox(
-              height: 12,
-              width: 1,
-              child: ColoredBox(color: context.colorScheme.outlineVariant),
-            ),
-          ),
-          _buildPlace(
-            icon: LucideIcons.map_pin,
-            label: 'Drop Off',
-            address: widget.dropoff,
-            color: context.colorScheme.primary,
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Divider(height: 1),
-          ),
+            _buildMetric(icon: LucideIcons.clock, value: widget.duration),
+          ],
+        ),
+        if (widget.rideId?.isNotEmpty == true && widget.rideRepository != null)
           Row(
             children: [
-              _buildMetric(
-                icon: LucideIcons.route,
-                value: DistanceFormatter.fromKilometers(widget.distance),
-              ),
-              const SizedBox(width: 8),
-              _buildMetric(icon: LucideIcons.clock, value: widget.duration),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPlace({
-    required IconData icon,
-    required String label,
-    required String address,
-    required Color color,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 15, color: color),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: context.colorScheme.onSurfaceVariant,
-                  letterSpacing: 0.7,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                address,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: context.colorScheme.onSurface,
-                ),
+              const Expanded(child: Text('Report an issue')),
+              SafetyReportButton(
+                bookingReference: widget.bookingReference,
+                rideId: widget.rideId,
+                rideRepository: widget.rideRepository!,
               ),
             ],
           ),
-        ),
       ],
     );
   }

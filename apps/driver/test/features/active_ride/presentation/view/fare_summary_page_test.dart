@@ -10,6 +10,47 @@ final class const _NoOpRidePaymentCompletionHandler()
 }
 
 void main() {
+  testWidgets('keeps cash controls reachable with keyboard and large text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 480);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: FareSummaryPage(
+          pickup: 'Mountain View',
+          dropoff: 'Charleston Park',
+          duration: '5 min',
+          distance: 2.5,
+          fare: 29.69,
+          bookingReference: '701612345678901',
+          ridePaymentCompletionHandler:
+              const _NoOpRidePaymentCompletionHandler(),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text('Booking ID - 701612345678901'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('cash-received-field')),
+      150,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('cash-received-field')));
+    tester.view.viewInsets = const FakeViewPadding(bottom: 180);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Confirm cash collected'), findsOneWidget);
+    tester.view.resetViewInsets();
+  });
+
   testWidgets('displays trip fares with currency formatting', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
