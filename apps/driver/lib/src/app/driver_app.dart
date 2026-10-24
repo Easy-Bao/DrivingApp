@@ -22,7 +22,6 @@ class const App({super.key}) extends StatefulWidget {
 class _AppState extends State<App> with WidgetsBindingObserver {
   late final LocationAccessCubit _locationAccessCubit;
   late final AppLifecycleCoordinator _lifecycleCoordinator;
-  late final NetworkAvailabilityCoordinator _networkAvailabilityCoordinator;
   bool _locationMonitoringRequested = false;
 
   @override
@@ -30,8 +29,6 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     super.initState();
     _locationAccessCubit = Modular.get<LocationAccessCubit>();
     _lifecycleCoordinator = Modular.get<AppLifecycleCoordinator>();
-    _networkAvailabilityCoordinator =
-        Modular.get<NetworkAvailabilityCoordinator>();
     WidgetsBinding.instance.addObserver(this);
     Modular.routerConfig.routerDelegate.addListener(_onRouteChanged);
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
@@ -101,20 +98,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         builder: (context, child) =>
             BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
               builder: (context, locationState) =>
-                  StreamBuilder<NetworkAvailabilityStatus>(
-                    stream: _networkAvailabilityCoordinator.changes,
-                    initialData: _networkAvailabilityCoordinator.status,
-                    builder: (context, snapshot) {
-                      final status =
-                          snapshot.data ?? NetworkAvailabilityStatus.available;
-                      return _buildRouteWithLocationOverlay(
-                        context,
-                        child,
-                        locationState,
-                        status,
-                      );
-                    },
-                  ),
+                  _buildRouteWithLocationOverlay(context, child, locationState),
             ),
       ),
     );
@@ -124,35 +108,11 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     BuildContext context,
     Widget? child,
     LocationAccessViewState locationState,
-    NetworkAvailabilityStatus status,
   ) {
-    final isUnavailable = status.hasAvailabilityWarning;
     final overlay = _buildLocationOverlay(context, locationState);
-    final routeContent = Stack(
+    return Stack(
       fit: StackFit.expand,
       children: [child ?? const SizedBox.shrink(), ?overlay],
-    );
-
-    return Column(
-      children: [
-        if (isUnavailable)
-          AppNetworkStatusBanner(
-            isServiceUnavailable:
-                status == NetworkAvailabilityStatus.serviceUnavailable,
-          ),
-        Expanded(
-          child: AppNetworkStatusScope(
-            isUnavailable: isUnavailable,
-            child: isUnavailable
-                ? MediaQuery.removePadding(
-                    context: context,
-                    removeTop: true,
-                    child: routeContent,
-                  )
-                : routeContent,
-          ),
-        ),
-      ],
     );
   }
 

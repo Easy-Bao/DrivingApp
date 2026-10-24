@@ -27,7 +27,6 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   late final SessionBloc _sessionBloc;
   late final LocationAccessCubit _locationAccessCubit;
   late final AppLifecycleCoordinator _lifecycleCoordinator;
-  late final NetworkAvailabilityCoordinator _networkAvailabilityCoordinator;
 
   @override
   Widget build(BuildContext context) {
@@ -55,49 +54,37 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         title: 'EasyRide Passenger',
         builder: (context, child) =>
             BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
-              builder: (context, locationState) =>
-                  StreamBuilder<NetworkAvailabilityStatus>(
-                    stream: _networkAvailabilityCoordinator.changes,
-                    initialData: _networkAvailabilityCoordinator.status,
-                    builder: (context, snapshot) {
-                      final status =
-                          snapshot.data ?? NetworkAvailabilityStatus.available;
-                      return MultiBlocListener(
-                        listeners: [
-                          BlocListener<SessionBloc, SessionState>(
-                            listenWhen: (_, current) =>
-                                current is GuestSession ||
-                                current is SessionFailure,
-                            listener: (context, _) {
-                              BlocProvider.of<BookingDraftCubit>(context)
-                                  .clear();
-                              unawaited(
-                                BlocProvider.of<TrackDriverCubit>(context)
-                                    .resetTracking(),
-                              );
-                              try {
-                                Modular.get<BookingBloc>().add(
-                                  const CancelBookingEvent(),
-                                );
-                              } catch (_) {}
-                              try {
-                                unawaited(
-                                  Modular.get<BackgroundTelemetry>()
-                                      .stopRideTelemetry(),
-                                );
-                              } catch (_) {}
-                            },
-                          ),
-                        ],
-                        child: _buildRouteWithLocationOverlay(
-                          context,
-                          child,
-                          locationState,
-                          status,
-                        ),
+              builder: (context, locationState) => MultiBlocListener(
+                listeners: [
+                  BlocListener<SessionBloc, SessionState>(
+                    listenWhen: (_, current) =>
+                        current is GuestSession || current is SessionFailure,
+                    listener: (context, _) {
+                      BlocProvider.of<BookingDraftCubit>(context).clear();
+                      unawaited(
+                        BlocProvider.of<TrackDriverCubit>(context)
+                            .resetTracking(),
                       );
+                      try {
+                        Modular.get<BookingBloc>().add(
+                          const CancelBookingEvent(),
+                        );
+                      } catch (_) {}
+                      try {
+                        unawaited(
+                          Modular.get<BackgroundTelemetry>()
+                              .stopRideTelemetry(),
+                        );
+                      } catch (_) {}
                     },
                   ),
+                ],
+                child: _buildRouteWithLocationOverlay(
+                  context,
+                  child,
+                  locationState,
+                ),
+              ),
             ),
       ),
     );
@@ -126,8 +113,6 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     _sessionBloc = Modular.get<SessionBloc>()..add(const SessionStarted());
     _locationAccessCubit = Modular.get<LocationAccessCubit>();
     _lifecycleCoordinator = Modular.get<AppLifecycleCoordinator>();
-    _networkAvailabilityCoordinator =
-        Modular.get<NetworkAvailabilityCoordinator>();
     WidgetsBinding.instance.addObserver(this);
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
     if (lifecycleState != null) {
@@ -189,35 +174,11 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     BuildContext context,
     Widget? child,
     LocationAccessViewState locationState,
-    NetworkAvailabilityStatus status,
   ) {
-    final isUnavailable = status.hasAvailabilityWarning;
     final overlay = _buildLocationOverlay(context, locationState);
-    final routeContent = Stack(
+    return Stack(
       fit: StackFit.expand,
       children: [child ?? const SizedBox.shrink(), ?overlay],
-    );
-
-    return Column(
-      children: [
-        if (isUnavailable)
-          AppNetworkStatusBanner(
-            isServiceUnavailable:
-                status == NetworkAvailabilityStatus.serviceUnavailable,
-          ),
-        Expanded(
-          child: AppNetworkStatusScope(
-            isUnavailable: isUnavailable,
-            child: isUnavailable
-                ? MediaQuery.removePadding(
-                    context: context,
-                    removeTop: true,
-                    child: routeContent,
-                  )
-                : routeContent,
-          ),
-        ),
-      ],
     );
   }
 }
