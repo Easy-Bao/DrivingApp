@@ -159,7 +159,6 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                       ),
                     ),
                     if (widget.isChoosingDriver &&
-                        !widget.availability.hasLoaded &&
                         driverIds.isEmpty &&
                         error == null) ...[
                       const SizedBox(height: 24),
@@ -185,7 +184,9 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Available drivers will appear here.',
+                                  widget.availability.hasLoaded
+                                      ? 'No drivers available yet. We’ll keep checking nearby.'
+                                      : 'Available drivers will appear here.',
                                   style: context.textStyles.bodySmall?.copyWith(
                                     color: context.colorScheme.onSurfaceVariant,
                                   ),
@@ -211,13 +212,6 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                       TextButton(
                         onPressed: widget.onRetry,
                         child: const Text('Try again'),
-                      ),
-                    ] else if (widget.availability.hasLoaded &&
-                        driverIds.isEmpty) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        'No drivers available nearby right now. We’ll keep checking for you.',
-                        style: context.textStyles.bodyMedium,
                       ),
                     ],
                   ],
@@ -254,7 +248,7 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (widget.isChoosingDriver) ...[
+                      if (widget.isChoosingDriver && driverIds.isNotEmpty) ...[
                         FilledButton(
                           onPressed: busy || selectedDriver == null
                               ? null
@@ -279,6 +273,8 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                           child: Text(
                             widget.isCanceling
                                 ? 'Cancelling…'
+                                : widget.isChoosingDriver
+                                ? 'Back to trip'
                                 : 'Cancel request',
                           ),
                         ),

@@ -91,22 +91,49 @@ void main() {
     expect(find.text('Cancel request'), findsNothing);
   });
 
-  testWidgets('empty discovery explains that availability will refresh', (
-    tester,
-  ) async {
-    await _pump(
-      tester,
-      isChoosingDriver: true,
-      availability: const NearbyDriversState(hasLoaded: true),
-    );
-    expect(find.byKey(const ValueKey('nearby-drivers-loading')), findsNothing);
-    expect(
-      find.text(
-        'No drivers available nearby right now. We’ll keep checking for you.',
-      ),
-      findsOneWidget,
-    );
-  });
+  testWidgets(
+    'empty discovery keeps searching and hides unavailable request actions',
+    (tester) async {
+      await _pump(
+        tester,
+        isChoosingDriver: true,
+        availability: const NearbyDriversState(hasLoaded: true),
+      );
+      expect(
+        find.byKey(const ValueKey('nearby-drivers-loading')),
+        findsOneWidget,
+      );
+      expect(find.text('Looking nearby'), findsOneWidget);
+      expect(find.text('Request driver'), findsNothing);
+      expect(
+        find.text('No drivers available yet. We’ll keep checking nearby.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'driver choices replace the ongoing empty search when availability changes',
+    (tester) async {
+      await _pump(
+        tester,
+        isChoosingDriver: true,
+        availability: const NearbyDriversState(hasLoaded: true),
+      );
+      expect(
+        find.byKey(const ValueKey('nearby-drivers-loading')),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(FilledButton, 'Back to trip'), findsOneWidget);
+      await _pump(tester, isChoosingDriver: true);
+      expect(
+        find.byKey(const ValueKey('nearby-drivers-loading')),
+        findsNothing,
+      );
+      expect(find.text('Nearby driver'), findsOneWidget);
+      expect(find.text('Request driver'), findsOneWidget);
+    },
+  );
 
   testWidgets(
     'shows available drivers in one container before anyone accepts',

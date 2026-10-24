@@ -101,6 +101,28 @@ void main() {
     },
   );
 
+  testWidgets(
+    'keeps polling after an empty result and discovers a driver later',
+    (tester) async {
+      var requests = 0;
+      when(() => repository.getNearbyDrivers(lat: 14.6, lng: 120.9))
+          .thenAnswer((_) async {
+            requests++;
+            return requests < 3 ? const Ok(<Driver>[]) : const Ok([_near]);
+          });
+      cubit.start();
+      await tester.pump();
+      expect(requests, 1);
+      expect(cubit.state.drivers, isEmpty);
+      await tester.pump(const Duration(seconds: 10));
+      expect(requests, 2);
+      await tester.pump(const Duration(seconds: 10));
+      expect(requests, 3);
+      expect(cubit.state.drivers, [_near]);
+      await tester.runAsync(cubit.close);
+    },
+  );
+
   test('refreshes only while the search screen is in the foreground', () async {
     cubit.start();
     await Future<void>.delayed(Duration.zero);
