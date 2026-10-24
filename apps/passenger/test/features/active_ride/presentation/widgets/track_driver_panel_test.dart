@@ -22,7 +22,7 @@ void main() {
                 child: TrackDriverPanel(
                   ride: const RideSnapshot(
                     id: 'ride-compact',
-                  bookingReference: 'reference-compact',
+                    bookingReference: 'reference-compact',
                     pickupName: 'Mountain View',
                     dropoffName: 'Charleston Park',
                     status: 'accepted',
