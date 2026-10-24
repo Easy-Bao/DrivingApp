@@ -50,7 +50,7 @@ class const InTransitPassengerCard({super.key}) extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Passenger Onboard',
+                  'Passenger onboard',
                   style: TextStyle(
                     fontSize: 11,
                     color: context.colorScheme.onSurfaceVariant,
@@ -58,11 +58,6 @@ class const InTransitPassengerCard({super.key}) extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          Icon(
-            LucideIcons.user_round,
-            size: 16,
-            color: context.colorScheme.onSurfaceVariant,
           ),
         ],
       ),

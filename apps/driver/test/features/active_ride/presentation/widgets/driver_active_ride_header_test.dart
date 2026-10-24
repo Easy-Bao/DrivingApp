@@ -43,7 +43,8 @@ void main() {
       ),
     );
 
-    expect(find.text('Booking ID - 701612345678901'), findsOneWidget);
+    expect(find.text('Booking ID - 701612345678901'), findsNothing);
+    expect(find.byKey(const ValueKey<String>('safety-action')), findsNothing);
     final headerBounds = tester.getRect(find.byKey(headerBoundsKey));
     final backBounds = tester.getRect(
       find.byKey(const ValueKey<String>('back-control')),
@@ -51,13 +52,13 @@ void main() {
     final emergencyBounds = tester.getRect(
       find.byKey(const ValueKey<String>('emergency-action')),
     );
-    final safetyBounds = tester.getRect(
-      find.byKey(const ValueKey<String>('safety-action')),
-    );
-
     expect(backBounds.left, closeTo(headerBounds.left + 16, 0.5));
     expect(backBounds.center.dx, lessThan(headerBounds.center.dx));
-    expect(emergencyBounds.center.dx, lessThan(safetyBounds.center.dx));
-    expect(safetyBounds.right, closeTo(headerBounds.right - 16, 0.5));
+    expect(emergencyBounds.right, closeTo(headerBounds.right - 16, 0.5));
+
+    await tester.tap(find.text('Trip details'));
+    await tester.pumpAndSettle();
+    expect(find.text('Booking ID - 701612345678901'), findsOneWidget);
+    expect(find.byKey(const ValueKey<String>('safety-action')), findsOneWidget);
   });
 }

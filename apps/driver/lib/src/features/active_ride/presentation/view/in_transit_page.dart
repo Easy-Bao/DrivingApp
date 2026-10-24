@@ -327,54 +327,65 @@ class _InTransitPageState extends State<InTransitPage> {
                     alignment: Alignment.bottomCenter,
                     child: SafeArea(
                       top: false,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: context.colorScheme.surface,
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(AppRadius.sheet),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) => ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: constraints.maxHeight * 0.65,
+                            maxWidth: 600,
                           ),
-                        ),
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.lg,
-                          10,
-                          AppSpacing.lg,
-                          AppSpacing.lg,
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 32,
-                              height: 4,
+                          child: SingleChildScrollView(
+                            child: Container(
                               decoration: BoxDecoration(
-                                color: context.colorScheme.outlineVariant,
-                                borderRadius: BorderRadius.circular(99),
+                                color: context.colorScheme.surface,
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(AppRadius.sheet),
+                                ),
+                              ),
+                              padding: const EdgeInsets.fromLTRB(
+                                AppSpacing.lg,
+                                10,
+                                AppSpacing.lg,
+                                AppSpacing.lg,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 32,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: context.colorScheme.outlineVariant,
+                                      borderRadius: BorderRadius.circular(99),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  CompactRouteTimeline(
+                                    pickup: widget.pickup,
+                                    dropoff: widget.dropoff,
+                                    pickupLabel: 'Pickup',
+                                    dropoffLabel: 'Drop Off',
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const InTransitPassengerCard(),
+                                  const SizedBox(height: 12),
+                                  InTransitCompletionSlider(
+                                    progress: _completionSliderProgress,
+                                    onProgressChanged: (progress) {
+                                      if (mounted) {
+                                        setState(
+                                          () => _completionSliderProgress =
+                                              progress,
+                                        );
+                                      }
+                                    },
+                                    isCompletingTrip: _isCompletingTrip,
+                                    onCompleteTripPressed: () =>
+                                        _completeTrip(context),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 10),
-                            CompactRouteTimeline(
-                              pickup: widget.pickup,
-                              dropoff: widget.dropoff,
-                              pickupLabel: 'Pickup',
-                              dropoffLabel: 'Drop Off',
-                            ),
-                            const SizedBox(height: 8),
-                            const InTransitPassengerCard(),
-                            const SizedBox(height: 12),
-                            InTransitCompletionSlider(
-                              progress: _completionSliderProgress,
-                              onProgressChanged: (progress) {
-                                if (mounted) {
-                                  setState(
-                                    () => _completionSliderProgress = progress,
-                                  );
-                                }
-                              },
-                              isCompletingTrip: _isCompletingTrip,
-                              onCompleteTripPressed: () =>
-                                  _completeTrip(context),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ),

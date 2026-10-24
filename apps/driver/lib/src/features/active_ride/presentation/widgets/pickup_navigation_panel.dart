@@ -1,3 +1,4 @@
+import 'package:driver/src/features/active_ride/presentation/widgets/ride_passenger_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
@@ -65,8 +66,8 @@ class const PickupNavigationPanel({
           const SizedBox(height: 10),
           Row(
             children: [
-              _statusPill(context),
-              const Spacer(),
+              Expanded(child: _statusPill(context)),
+              const SizedBox(width: 8),
               Text(
                 formatPesoAmount(fare),
                 style: TextStyle(
@@ -81,65 +82,21 @@ class const PickupNavigationPanel({
           const SizedBox(height: 10),
           CompactRouteTimeline(pickup: pickup, dropoff: dropoff),
           const SizedBox(height: 10),
-          _passengerRow(context),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _actionButton(
-                  context,
-                  icon: LucideIcons.phone,
-                  label: 'Call Passenger',
-                  filled: true,
-                  onPressed: onCallPressed,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Semantics(
-                button: true,
-                label: 'Chat with passenger',
-                child: Badge(
-                  isLabelVisible: unreadChatMessagesCount > 0,
-                  label: Text('$unreadChatMessagesCount'),
-                  backgroundColor: context.colorScheme.error,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.surface,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: context.colorScheme.outlineVariant,
-                      ),
-                    ),
-                    child: IconButton(
-                      tooltip: 'Chat with passenger',
-                      onPressed: onChatPressed,
-                      constraints: const BoxConstraints(
-                        minWidth: AppSize.minimumTouchTarget,
-                        minHeight: AppSize.minimumTouchTarget,
-                      ),
-                      icon: const Icon(LucideIcons.message_circle),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          RidePassengerRow(
+            name: passengerName,
+            subtitle: '${DistanceFormatter.fromKilometers(distance)} to pickup',
+            unreadCount: unreadChatMessagesCount,
+            onCall: onCallPressed,
+            onChat: onChatPressed,
           ),
           const SizedBox(height: 12),
           _arrivalSlider(),
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            height: AppSize.minimumTouchTarget,
-            child: OutlinedButton.icon(
+            child: TextButton(
               onPressed: isCancelling ? null : onCancelPressed,
-              icon: isCancelling
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(LucideIcons.circle_x),
-              label: Text(isCancelling ? 'Cancelling…' : 'Cancel ride'),
+              child: Text(isCancelling ? 'Cancelling…' : 'Cancel ride'),
             ),
           ),
         ],
@@ -163,111 +120,17 @@ class const PickupNavigationPanel({
             color: context.semanticColors.success,
           ),
           SizedBox(width: 6),
-          Text(
-            'Heading To Passenger',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: context.semanticColors.success,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _passengerRow(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colorScheme.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: context.colorScheme.primaryContainer,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              LucideIcons.user_round,
-              size: 17,
-              color: context.colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
+          Flexible(
             child: Text(
-              passengerName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              'Heading to pickup',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w800,
-                color: context.colorScheme.onSurface,
+                color: context.semanticColors.success,
               ),
-            ),
-          ),
-          Text(
-            DistanceFormatter.fromKilometers(distance),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: context.colorScheme.onSurfaceVariant,
-              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _actionButton(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-    bool filled = false,
-  }) {
-    final background = filled
-        ? context.colorScheme.primary
-        : context.colorScheme.surface;
-    final foreground = filled
-        ? context.colorScheme.onPrimary
-        : context.colorScheme.onSurface;
-    return Material(
-      color: background,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Container(
-          height: AppSize.minimumTouchTarget,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: filled
-                ? null
-                : Border.all(color: context.colorScheme.outlineVariant),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 16, color: foreground),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: context.textStyles.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: foreground,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

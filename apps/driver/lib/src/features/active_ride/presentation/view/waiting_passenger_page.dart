@@ -373,153 +373,160 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.only(bottom: 12),
-                            child: AppSurfaceCard(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  WaitingPassengerPanel(
-                                    pickup: widget.pickup,
-                                    dropoff: widget.dropoff,
-                                    passengerName: presentation.passengerName,
-                                    waitFormatted: presentation.waitFormatted,
-                                    fare: widget.fare,
-                                    includeStartTripButton: false,
-                                    unreadChatMessagesCount:
-                                        _unreadChatMessagesCount,
-                                    onStartTripPressed: _startTrip,
-                                    onCallPressed: () async {
-                                      try {
+                            child: SingleChildScrollView(
+                              child: AppSurfaceCard(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    WaitingPassengerPanel(
+                                      pickup: widget.pickup,
+                                      dropoff: widget.dropoff,
+                                      passengerName: presentation.passengerName,
+                                      waitFormatted: presentation.waitFormatted,
+                                      fare: widget.fare,
+                                      includeStartTripButton: false,
+                                      unreadChatMessagesCount:
+                                          _unreadChatMessagesCount,
+                                      onStartTripPressed: _startTrip,
+                                      onCallPressed: () async {
+                                        try {
+                                          final rideId =
+                                              BlocProvider.of<RideFlowCubit>(
+                                                context,
+                                              ).activeRideId ??
+                                              '';
+                                          if (rideId.isNotEmpty) {
+                                            String? phone;
+                                            (await widget.rideRepository
+                                                    .fetchCounterpartyResult(
+                                                      rideId,
+                                                    ))
+                                                .fold(
+                                                  (_) {},
+                                                  (passenger) =>
+                                                      phone = passenger.phone,
+                                                );
+                                            final passengerPhone = phone;
+                                            if (passengerPhone != null &&
+                                                passengerPhone.isNotEmpty) {
+                                              final uri = Uri.parse(
+                                                'tel:$passengerPhone',
+                                              );
+                                              if (await canLaunchUrl(uri)) {
+                                                await launchUrl(uri);
+                                              }
+                                            }
+                                          }
+                                        } catch (error) {
+                                          dev.log(
+                                            'Unable to call passenger: $error',
+                                          );
+                                          _showError(
+                                            'Unable to contact the passenger.',
+                                          );
+                                        }
+                                      },
+                                      onChatPressed: () async {
                                         final rideId =
                                             BlocProvider.of<RideFlowCubit>(
                                               context,
                                             ).activeRideId ??
                                             '';
-                                        if (rideId.isNotEmpty) {
-                                          String? phone;
-                                          (await widget.rideRepository
-                                                  .fetchCounterpartyResult(
-                                                    rideId,
-                                                  ))
-                                              .fold(
-                                                (_) {},
-                                                (passenger) =>
-                                                    phone = passenger.phone,
-                                              );
-                                          final passengerPhone = phone;
-                                          if (passengerPhone != null &&
-                                              passengerPhone.isNotEmpty) {
-                                            final uri = Uri.parse(
-                                              'tel:$passengerPhone',
+                                        final rState =
+                                            BlocProvider.of<RideFlowCubit>(
+                                              context,
+                                            ).state;
+                                        final pName = rState.passengerNameOr(
+                                          '—',
+                                        );
+                                        final cubit =
+                                            BlocProvider.of<RideFlowCubit>(
+                                              context,
                                             );
-                                            if (await canLaunchUrl(uri)) {
-                                              await launchUrl(uri);
-                                            }
-                                          }
-                                        }
-                                      } catch (error) {
-                                        dev.log(
-                                          'Unable to call passenger: $error',
+                                        final driverId =
+                                            await widget.sessionService
+                                                .readDriverId() ??
+                                            '';
+                                        if (!context.mounted) return;
+                                        setState(() {
+                                          _viewedPassengerMessagesCount +=
+                                              _unreadChatMessagesCount;
+                                          _unreadChatMessagesCount = 0;
+                                          _isInitialChatMessagesCountFetched =
+                                              true;
+                                        });
+                                        await context.pushNamed(
+                                          ChatRoutes.chat,
+                                          extra: {
+                                            'roomId': rideId,
+                                            'userId': driverId,
+                                            'peerId': cubit.activePassengerId,
+                                            'peerName': pName,
+                                          },
                                         );
-                                        _showError(
-                                          'Unable to contact the passenger.',
-                                        );
-                                      }
-                                    },
-                                    onChatPressed: () async {
-                                      final rideId =
-                                          BlocProvider.of<RideFlowCubit>(
-                                            context,
-                                          ).activeRideId ??
-                                          '';
-                                      final rState =
-                                          BlocProvider.of<RideFlowCubit>(
-                                            context,
-                                          ).state;
-                                      final pName = rState.passengerNameOr('—');
-                                      final cubit =
-                                          BlocProvider.of<RideFlowCubit>(
-                                            context,
-                                          );
-                                      final driverId =
-                                          await widget.sessionService
-                                              .readDriverId() ??
-                                          '';
-                                      if (!context.mounted) return;
-                                      setState(() {
-                                        _viewedPassengerMessagesCount +=
-                                            _unreadChatMessagesCount;
-                                        _unreadChatMessagesCount = 0;
-                                        _isInitialChatMessagesCountFetched =
-                                            true;
-                                      });
-                                      await context.pushNamed(
-                                        ChatRoutes.chat,
-                                        extra: {
-                                          'roomId': rideId,
-                                          'userId': driverId,
-                                          'peerId': cubit.activePassengerId,
-                                          'peerName': pName,
-                                        },
-                                      );
-                                      if (!mounted) return;
-                                      await _updateUnreadMessagesCount(cubit);
-                                    },
-                                  ),
-                                  const Spacer(),
-                                  WaitingPassengerStartTripButton(
-                                    isStartingTrip:
-                                        _isStartingTrip ||
-                                        _isMarkingNoShow ||
-                                        _isCancellingRide,
-                                    onPressed: _startTrip,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 48,
-                                    child: OutlinedButton.icon(
-                                      onPressed:
-                                          presentation.canMarkNoShow &&
-                                              !_isMarkingNoShow
-                                          ? _markPassengerNoShow
-                                          : null,
-                                      icon: _isMarkingNoShow
-                                          ? const SizedBox(
-                                              width: 18,
-                                              height: 18,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                              ),
-                                            )
-                                          : const Icon(LucideIcons.user_x),
-                                      label: Text(noShowLabel),
+                                        if (!mounted) return;
+                                        await _updateUnreadMessagesCount(cubit);
+                                      },
                                     ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 48,
-                                    child: OutlinedButton.icon(
-                                      onPressed: _isCancellingRide
-                                          ? null
-                                          : _cancelRide,
-                                      icon: _isCancellingRide
-                                          ? const SizedBox(
-                                              width: 18,
-                                              height: 18,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                              ),
-                                            )
-                                          : const Icon(LucideIcons.circle_x),
-                                      label: Text(
-                                        _isCancellingRide
-                                            ? 'Cancelling…'
-                                            : 'Cancel ride',
+                                    const SizedBox(height: 24),
+                                    WaitingPassengerStartTripButton(
+                                      isStartingTrip:
+                                          _isStartingTrip ||
+                                          _isMarkingNoShow ||
+                                          _isCancellingRide,
+                                      onPressed: _startTrip,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      height: 48,
+                                      child: OutlinedButton.icon(
+                                        onPressed:
+                                            presentation.canMarkNoShow &&
+                                                !_isMarkingNoShow
+                                            ? _markPassengerNoShow
+                                            : null,
+                                        icon: _isMarkingNoShow
+                                            ? const SizedBox(
+                                                width: 18,
+                                                height: 18,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
+                                              )
+                                            : const Icon(LucideIcons.user_x),
+                                        label: Text(noShowLabel),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 10),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      height: 48,
+                                      child: OutlinedButton.icon(
+                                        onPressed: _isCancellingRide
+                                            ? null
+                                            : _cancelRide,
+                                        icon: _isCancellingRide
+                                            ? const SizedBox(
+                                                width: 18,
+                                                height: 18,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
+                                              )
+                                            : const Icon(LucideIcons.circle_x),
+                                        label: Text(
+                                          _isCancellingRide
+                                              ? 'Cancelling…'
+                                              : 'Cancel ride',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

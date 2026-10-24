@@ -47,13 +47,13 @@ class _RideConfirmationSliderState extends State<RideConfirmationSlider> {
                   .clamp(0.0, double.infinity)
                   .toDouble();
           final canInteract = !widget.isProcessing && travel > 0;
-          final colors = context.semanticColors;
+          final colors = context.colorScheme;
 
           return Container(
             key: const ValueKey<String>('ride-confirmation-slider'),
             height: RideConfirmationSlider.thumbSize,
             decoration: BoxDecoration(
-              color: colors.success.withValues(alpha: 0.12),
+              color: colors.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: Stack(
@@ -70,7 +70,7 @@ class _RideConfirmationSliderState extends State<RideConfirmationSlider> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: colors.success,
+                        color: colors.primary,
                       ),
                     ),
                   ),
@@ -147,7 +147,7 @@ class _RideConfirmationSliderState extends State<RideConfirmationSlider> {
                         width: RideConfirmationSlider.thumbSize,
                         height: RideConfirmationSlider.thumbSize,
                         decoration: BoxDecoration(
-                          color: colors.success,
+                          color: colors.primary,
                           shape: BoxShape.circle,
                         ),
                         child: Center(
@@ -157,12 +157,12 @@ class _RideConfirmationSliderState extends State<RideConfirmationSlider> {
                                   height: 18,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: colors.onSuccess,
+                                    color: colors.onPrimary,
                                   ),
                                 )
                               : Icon(
                                   LucideIcons.chevron_right,
-                                  color: colors.onSuccess,
+                                  color: colors.onPrimary,
                                   size: 22,
                                 ),
                         ),

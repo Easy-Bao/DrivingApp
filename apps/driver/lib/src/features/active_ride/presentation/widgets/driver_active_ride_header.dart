@@ -18,17 +18,51 @@ class const ActiveRideHeader({
     return Padding(
       padding: padding,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           backButton,
-          if (bookingReference?.trim().isNotEmpty == true) ...[
-            const SizedBox(width: 8),
-            Flexible(
-              child: TripReference(id: bookingReference!, compact: true),
+          const Spacer(),
+          TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: context.colorScheme.surfaceContainerHighest,
+              foregroundColor: context.colorScheme.onSurface,
             ),
-            const SizedBox(width: 8),
-          ],
-          Row(mainAxisSize: MainAxisSize.min, children: actions),
+            onPressed: () => showModalBottomSheet<void>(
+              context: context,
+              useSafeArea: true,
+              showDragHandle: true,
+              isScrollControlled: true,
+              builder: (context) => SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Trip details', style: context.textStyles.titleLarge),
+                    const SizedBox(height: 16),
+                    if (bookingReference?.trim().isNotEmpty == true)
+                      TripReference(id: bookingReference!),
+                    if (actions.length > 1) ...[
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Report an issue',
+                              style: context.textStyles.titleSmall,
+                            ),
+                          ),
+                          ...actions.skip(1),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            child: const Text('Trip details'),
+          ),
+          const SizedBox(width: 8),
+          if (actions.isNotEmpty) actions.first,
         ],
       ),
     );

@@ -1,5 +1,5 @@
+import 'package:driver/src/features/active_ride/presentation/widgets/ride_passenger_row.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
@@ -36,34 +36,13 @@ class const WaitingPassengerPanel({
       children: [
         Row(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: context.semanticColors.success.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(99),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    LucideIcons.clock,
-                    size: 13,
-                    color: context.semanticColors.success,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Waiting For Passenger $waitFormatted',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: context.semanticColors.success,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                ],
+            Expanded(
+              child: Text(
+                'Waiting at pickup · $waitFormatted',
+                style: context.textStyles.titleSmall,
               ),
             ),
-            const Spacer(),
+            const SizedBox(width: 12),
             Text(
               formatPesoAmount(fare),
               style: TextStyle(
@@ -82,48 +61,12 @@ class const WaitingPassengerPanel({
         const SizedBox(height: 14),
         Divider(height: 1, color: context.colorScheme.outlineVariant),
         const SizedBox(height: 12),
-        _passengerSummary(context),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: _secondaryAction(
-                context,
-                icon: LucideIcons.phone,
-                label: 'Call Passenger',
-                filled: true,
-                onPressed: onCallPressed,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Semantics(
-              button: true,
-              label: 'Chat with passenger',
-              child: Badge(
-                isLabelVisible: unreadChatMessagesCount > 0,
-                label: Text('$unreadChatMessagesCount'),
-                backgroundColor: context.colorScheme.error,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: context.colorScheme.surface,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: context.colorScheme.outlineVariant,
-                    ),
-                  ),
-                  child: IconButton(
-                    tooltip: 'Chat with passenger',
-                    onPressed: onChatPressed,
-                    constraints: const BoxConstraints(
-                      minWidth: AppSize.minimumTouchTarget,
-                      minHeight: AppSize.minimumTouchTarget,
-                    ),
-                    icon: const Icon(LucideIcons.message_circle),
-                  ),
-                ),
-              ),
-            ),
-          ],
+        RidePassengerRow(
+          name: passengerName,
+          subtitle: 'Meet at pickup',
+          unreadCount: unreadChatMessagesCount,
+          onCall: onCallPressed,
+          onChat: onChatPressed,
         ),
         if (includeStartTripButton) ...[
           const SizedBox(height: 12),
@@ -133,101 +76,6 @@ class const WaitingPassengerPanel({
           ),
         ],
       ],
-    );
-  }
-
-  Widget _passengerSummary(BuildContext context) {
-    final meetingCopy = passengerName.trim().isEmpty || passengerName == '—'
-        ? 'Meet The Passenger At Pickup'
-        : 'Meet $passengerName At Pickup';
-    return Row(
-      children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: context.colorScheme.primaryContainer,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            LucideIcons.user_round,
-            size: 17,
-            color: context.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                passengerName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: context.colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 1),
-              Text(
-                meetingCopy,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _secondaryAction(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-    bool filled = false,
-  }) {
-    final background = filled
-        ? context.colorScheme.primary
-        : context.colorScheme.surface;
-    final foreground = filled
-        ? context.colorScheme.onPrimary
-        : context.colorScheme.onSurface;
-    return Material(
-      color: background,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Container(
-          height: AppSize.minimumTouchTarget,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: filled
-                ? null
-                : Border.all(color: context.colorScheme.outlineVariant),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: foreground, size: 16),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: context.textStyles.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: foreground,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
