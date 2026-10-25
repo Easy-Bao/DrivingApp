@@ -1,4 +1,4 @@
-import 'package:maps/maps.dart';
+import 'package:maps/src/domain/entities/location_access_state.dart';
 
 abstract interface class LocationAccessRepository {
   Stream<LocationAccessState> get accessStateChanges;

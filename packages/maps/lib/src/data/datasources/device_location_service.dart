@@ -4,9 +4,10 @@ import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
+import 'package:maps/src/domain/entities/location_access_state.dart';
 import 'package:maps/src/presentation/native_service.dart';
 
-enum LocationAccessState { ready, serviceDisabled, denied, deniedForever }
+export 'package:maps/src/domain/entities/location_access_state.dart';
 
 class LocationService._() {
   static Position? _lastPosition;

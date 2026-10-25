@@ -6,8 +6,6 @@ import 'package:passenger/src/app/navigation/app_routes.dart';
 import 'package:passenger/src/app/router.dart';
 import 'package:passenger/src/core/config/env_config.dart';
 import 'package:passenger/src/core/location/location_access_cubit.dart';
-import 'package:passenger/src/core/location/location_access_repository.dart';
-import 'package:passenger/src/core/location/location_access_repository_impl.dart';
 import 'package:passenger/src/core/network/api_client.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/core/telemetry/background_telemetry.dart';
@@ -70,7 +68,7 @@ class AppDependencies extends Module {
         (i) => SessionBloc(sessionRepository: i.get<SessionRepository>()),
       )
       ..addLazySingleton<LocationAccessRepository>(
-        (_) => LocationAccessRepositoryImpl(),
+        (_) => DeviceLocationAccessRepository(),
       )
       ..addLazySingleton<LocationAccessCubit>(
         (i) =>

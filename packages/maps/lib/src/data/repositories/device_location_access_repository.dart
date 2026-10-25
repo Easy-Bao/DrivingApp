@@ -1,7 +1,8 @@
-import 'package:maps/maps.dart';
-import 'package:passenger/src/core/location/location_access_repository.dart';
+import 'package:maps/src/data/datasources/device_location_service.dart';
+import 'package:maps/src/data/services/access_state_monitor.dart';
+import 'package:maps/src/domain/repositories/location_access_repository.dart';
 
-final class LocationAccessRepositoryImpl implements LocationAccessRepository {
+final class DeviceLocationAccessRepository implements LocationAccessRepository {
   final _monitor = AccessStateMonitor<LocationAccessState>(
     stateChanges: () => LocationService.accessStateChanges,
     readState: LocationService.getAccessState,

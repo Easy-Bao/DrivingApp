@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:maps/maps.dart';
-import 'package:passenger/src/core/location/location_access_repository.dart';
 import 'package:passenger/src/core/location/location_access_state.dart';
 
 class LocationAccessCubit({required this._repository})

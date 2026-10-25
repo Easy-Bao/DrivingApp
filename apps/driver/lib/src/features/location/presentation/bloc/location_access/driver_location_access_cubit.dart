@@ -1,9 +1,8 @@
 import 'dart:async';
 
-import 'package:maps/maps.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
-import 'package:driver/src/features/location/domain/repositories/driver_location_access_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:maps/maps.dart';
 
 class LocationAccessCubit({required this._repository})
     extends Cubit<LocationAccessViewState> {
