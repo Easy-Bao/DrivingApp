@@ -48,6 +48,19 @@ void main() {
       expect(find.text('Agreed fare'), findsOneWidget);
       expect(find.text('₱27.88'), findsOneWidget);
       expect(find.byTooltip('Message driver'), findsOneWidget);
+      final buttonSurface = tester.widget<Material>(
+        find
+            .descendant(
+              of: find.byWidgetPredicate(
+                (widget) =>
+                    widget is IconButton && widget.tooltip == 'Message driver',
+              ),
+              matching: find.byType(Material),
+            )
+            .last,
+      );
+      expect(buttonSurface.color, AppTheme.main.colorScheme.secondaryContainer);
+
       expect(find.byTooltip('Call driver'), findsNothing);
       expect(find.textContaining('Booking ID'), findsNothing);
       expect(tester.takeException(), isNull);

@@ -6,8 +6,8 @@ import 'package:driver/src/features/chat/domain/entities/chat_peer.dart';
 import 'package:driver/src/features/chat/presentation/view/driver_chat_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -54,8 +54,9 @@ void main() {
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
       call,
     ) async {
-      if (call.method == 'pickImage')
+      if (call.method == 'pickImage') {
         sources.add((call.arguments as Map)['source'] as int);
+      }
       return null;
     });
     addTearDown(
@@ -313,6 +314,17 @@ void main() {
     expect(find.text('ABC 123 | Motorcycle'), findsOneWidget);
     expect(find.byType(CircleAvatar), findsOneWidget);
     expect(find.byType(Image), findsOneWidget);
+    final pictureFrame = tester.widget<Container>(
+      find
+          .ancestor(
+            of: find.byType(ChatPicture),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    expect(pictureFrame.padding, EdgeInsets.zero);
+    expect(pictureFrame.decoration, isNull);
+
     expect(find.byType(TextField), findsNothing);
     expect(find.byTooltip('Take photo'), findsNothing);
     expect(find.byTooltip('Attach photo file'), findsNothing);

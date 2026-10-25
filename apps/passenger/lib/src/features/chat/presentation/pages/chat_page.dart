@@ -649,23 +649,32 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
           children: [
             Container(
               margin: const EdgeInsets.symmetric(vertical: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: message.hasImage
+                  ? EdgeInsets.zero
+                  : const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.sizeOf(context).width * 0.75,
               ),
-              decoration: BoxDecoration(
-                color: isMe
-                    ? context.colorScheme.onSurface
-                    : context.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(AppRadius.lg),
-                  topRight: const Radius.circular(AppRadius.lg),
-                  bottomLeft: Radius.circular(isMe ? 20 : 4),
-                  bottomRight: Radius.circular(isMe ? 4 : 20),
-                ),
-              ),
+              decoration: message.hasImage
+                  ? null
+                  : BoxDecoration(
+                      color: isMe
+                          ? context.colorScheme.onSurface
+                          : context.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(AppRadius.lg),
+                        topRight: const Radius.circular(AppRadius.lg),
+                        bottomLeft: Radius.circular(isMe ? 20 : 4),
+                        bottomRight: Radius.circular(isMe ? 4 : 20),
+                      ),
+                    ),
               child: message.hasImage
-                  ? ChatPicture(load: () => _chatCubit.loadImage(message.id))
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      child: ChatPicture(
+                        load: () => _chatCubit.loadImage(message.id),
+                      ),
+                    )
                   : Text(
                       message.text,
                       style: TextStyle(

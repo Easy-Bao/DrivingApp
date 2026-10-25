@@ -167,7 +167,7 @@ class const TrackDriverPanel({
                   Badge(
                     isLabelVisible: unreadChatMessagesCount > 0,
                     label: Text('$unreadChatMessagesCount'),
-                    child: IconButton.filled(
+                    child: IconButton.filledTonal(
                       tooltip: 'Message driver',
                       onPressed: onChatDriverPressed,
                       icon: const Icon(LucideIcons.message_circle, size: 20),
