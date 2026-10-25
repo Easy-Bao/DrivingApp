@@ -7,16 +7,12 @@ import 'package:maps/maps.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/home/data/datasources/current_location_remote_data_source.dart';
 import 'package:passenger/src/features/home/data/datasources/home_remote_data_source.dart';
-import 'package:passenger/src/features/home/data/datasources/public_driver_remote_data_source.dart';
 import 'package:passenger/src/features/home/data/repositories/current_location_repository_impl.dart';
 import 'package:passenger/src/features/home/data/repositories/home_repository_impl.dart';
-import 'package:passenger/src/features/home/data/repositories/public_driver_summary_repository_impl.dart';
 import 'package:passenger/src/features/home/domain/repositories/current_location_repository.dart';
 import 'package:passenger/src/features/home/domain/repositories/home_repository.dart';
-import 'package:passenger/src/features/home/domain/repositories/public_driver_summary_repository.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
-import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger/src/features/home/presentation/pages/home_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
@@ -31,9 +27,6 @@ class HomeModule._() {
       ..addLazySingleton<CurrentLocationDataSource>(
         (_) => DeviceCurrentLocationDataSource(),
       )
-      ..addLazySingleton<PublicDriverRemoteDataSource>(
-        (i) => PublicDriverRemoteDataSourceImpl(i.get<Dio>()),
-      )
       ..addLazySingleton<HomeRepository>(
         (i) => HomeRepositoryImpl(
           homeRemoteDataSource: i.get<HomeRemoteDataSource>(),
@@ -44,20 +37,10 @@ class HomeModule._() {
           dataSource: i.get<CurrentLocationDataSource>(),
         ),
       )
-      ..addLazySingleton<PublicDriverSummaryRepository>(
-        (i) => PublicDriverSummaryRepositoryImpl(
-          remoteDataSource: i.get<PublicDriverRemoteDataSource>(),
-        ),
-      )
       ..addFactory<HomeCubit>(
         (i) => HomeCubit(
           repository: i.get<HomeRepository>(),
           currentLocationRepository: i.get<CurrentLocationRepository>(),
-        ),
-      )
-      ..addLazySingleton<PublicDriverSummaryCubit>(
-        (i) => PublicDriverSummaryCubit(
-          repository: i.get<PublicDriverSummaryRepository>(),
         ),
       );
   }

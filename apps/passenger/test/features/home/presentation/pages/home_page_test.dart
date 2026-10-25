@@ -25,8 +25,6 @@ import 'package:passenger/src/features/home/domain/repositories/current_location
 import 'package:passenger/src/features/home/domain/repositories/home_repository.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
-import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
-import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
 import 'package:passenger/src/features/home/presentation/pages/home_page.dart';
 import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_preview.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
@@ -51,9 +49,6 @@ class _MockBookingBloc extends MockBloc<BookingEvent, BookingState>
 
 class _MockLocationAccessCubit extends MockCubit<LocationAccessViewState>
     implements LocationAccessCubit {}
-
-class _MockPublicDriverSummaryCubit extends MockCubit<PublicDriverSummaryState>
-    implements PublicDriverSummaryCubit {}
 
 class _MockRideHistoryBloc extends MockBloc<RideHistoryEvent, RideHistoryState>
     implements RideHistoryBloc {}
@@ -82,7 +77,6 @@ void main() {
       );
       final locationAccess = _MockLocationAccessCubit();
       final bookingBloc = _MockBookingBloc();
-      final publicDrivers = _MockPublicDriverSummaryCubit();
       final history = _MockRideHistoryBloc();
       final savedPlaces = _MockSavedPlacesCubit();
       final draft = BookingDraftCubit();
@@ -104,8 +98,6 @@ void main() {
       );
       when(() => locationAccess.state).thenReturn(const LocationAccessReady());
       when(() => bookingBloc.activeDriverSearch).thenReturn(null);
-      when(() => publicDrivers.state)
-          .thenReturn(const PublicDriverSummaryState());
       when(() => history.state).thenReturn(const RideHistoryInitial());
       when(() => savedPlaces.state).thenReturn(const SavedPlacesState());
       when(savedPlaces.loadPlaces).thenAnswer((_) async {});
@@ -172,7 +164,6 @@ void main() {
             BlocProvider<LocationAccessCubit>.value(value: locationAccess),
             BlocProvider<HomeCubit>.value(value: homeCubit),
             BlocProvider<BookingDraftCubit>.value(value: draft),
-            BlocProvider<PublicDriverSummaryCubit>.value(value: publicDrivers),
             BlocProvider<RideHistoryBloc>.value(value: history),
             BlocProvider<SavedPlacesCubit>.value(value: savedPlaces),
           ],
@@ -217,7 +208,6 @@ void main() {
     );
     final locationAccessCubit = _MockLocationAccessCubit();
     final bookingBloc = _MockBookingBloc();
-    final publicDriverSummaryCubit = _MockPublicDriverSummaryCubit();
     final rideHistoryBloc = _MockRideHistoryBloc();
     final savedPlacesCubit = _MockSavedPlacesCubit();
     final bookingDraftCubit = BookingDraftCubit();
@@ -247,8 +237,6 @@ void main() {
     when(() => locationAccessCubit.state)
         .thenReturn(const LocationAccessReady());
     when(() => bookingBloc.activeDriverSearch).thenReturn(null);
-    when(() => publicDriverSummaryCubit.state)
-        .thenReturn(const PublicDriverSummaryState());
     when(() => rideHistoryBloc.state).thenReturn(const RideHistoryInitial());
     when(() => savedPlacesCubit.state).thenReturn(const SavedPlacesState());
     when(savedPlacesCubit.loadPlaces).thenAnswer((_) async {});
@@ -269,9 +257,6 @@ void main() {
             BlocProvider<LocationAccessCubit>.value(value: locationAccessCubit),
             BlocProvider<HomeCubit>.value(value: homeCubit),
             BlocProvider<BookingDraftCubit>.value(value: bookingDraftCubit),
-            BlocProvider<PublicDriverSummaryCubit>.value(
-              value: publicDriverSummaryCubit,
-            ),
             BlocProvider<RideHistoryBloc>.value(value: rideHistoryBloc),
             BlocProvider<SavedPlacesCubit>.value(value: savedPlacesCubit),
           ],
@@ -310,7 +295,6 @@ void main() {
     );
     final locationAccessCubit = _MockLocationAccessCubit();
     final bookingBloc = _MockBookingBloc();
-    final publicDriverSummaryCubit = _MockPublicDriverSummaryCubit();
     final rideHistoryBloc = _MockRideHistoryBloc();
     final savedPlacesCubit = _MockSavedPlacesCubit();
     final bookingDraftCubit = BookingDraftCubit();
@@ -333,8 +317,6 @@ void main() {
     when(() => locationAccessCubit.state)
         .thenReturn(const LocationAccessReady());
     when(() => bookingBloc.activeDriverSearch).thenReturn(null);
-    when(() => publicDriverSummaryCubit.state)
-        .thenReturn(const PublicDriverSummaryState());
     when(() => rideHistoryBloc.state).thenReturn(
       const RideHistoryLoaded(
         past: [],
@@ -377,9 +359,6 @@ void main() {
             BlocProvider<LocationAccessCubit>.value(value: locationAccessCubit),
             BlocProvider<HomeCubit>.value(value: homeCubit),
             BlocProvider<BookingDraftCubit>.value(value: bookingDraftCubit),
-            BlocProvider<PublicDriverSummaryCubit>.value(
-              value: publicDriverSummaryCubit,
-            ),
             BlocProvider<RideHistoryBloc>.value(value: rideHistoryBloc),
             BlocProvider<SavedPlacesCubit>.value(value: savedPlacesCubit),
           ],
@@ -415,7 +394,6 @@ void main() {
       );
       final locationAccessCubit = _MockLocationAccessCubit();
       final bookingBloc = _MockBookingBloc();
-      final publicDriverSummaryCubit = _MockPublicDriverSummaryCubit();
       final rideHistoryBloc = _MockRideHistoryBloc();
       final savedPlacesCubit = _MockSavedPlacesCubit();
       final bookingDraftCubit = BookingDraftCubit();
@@ -442,8 +420,6 @@ void main() {
       when(() => locationAccessCubit.state)
           .thenReturn(const LocationAccessReady());
       when(() => bookingBloc.activeDriverSearch).thenReturn(null);
-      when(() => publicDriverSummaryCubit.state)
-          .thenReturn(const PublicDriverSummaryState());
       when(() => rideHistoryBloc.state).thenReturn(const RideHistoryInitial());
       when(() => savedPlacesCubit.state).thenReturn(const SavedPlacesState());
       when(savedPlacesCubit.loadPlaces).thenAnswer((_) async {});
@@ -478,9 +454,6 @@ void main() {
               ),
               BlocProvider<HomeCubit>.value(value: homeCubit),
               BlocProvider<BookingDraftCubit>.value(value: bookingDraftCubit),
-              BlocProvider<PublicDriverSummaryCubit>.value(
-                value: publicDriverSummaryCubit,
-              ),
               BlocProvider<RideHistoryBloc>.value(value: rideHistoryBloc),
               BlocProvider<SavedPlacesCubit>.value(value: savedPlacesCubit),
             ],
@@ -518,7 +491,6 @@ void main() {
       await sessionBloc.stream.first;
       final locationAccessCubit = _MockLocationAccessCubit();
       final bookingBloc = _MockBookingBloc();
-      final publicDriverSummaryCubit = _MockPublicDriverSummaryCubit();
       final rideHistoryBloc = _MockRideHistoryBloc();
       final savedPlacesCubit = _MockSavedPlacesCubit();
       final bookingDraftCubit = BookingDraftCubit();
@@ -550,10 +522,6 @@ void main() {
       when(() => bookingBloc.stream).thenAnswer((_) => const Stream.empty());
       when(() => bookingBloc.hasActiveDriverSearch).thenReturn(false);
       when(() => bookingBloc.activeDriverSearch).thenReturn(null);
-      when(() => publicDriverSummaryCubit.state)
-          .thenReturn(const PublicDriverSummaryState());
-      when(() => publicDriverSummaryCubit.stream)
-          .thenAnswer((_) => const Stream.empty());
       when(() => savedPlacesCubit.state).thenReturn(const SavedPlacesState());
       when(() => savedPlacesCubit.stream)
           .thenAnswer((_) => const Stream.empty());
@@ -635,9 +603,6 @@ void main() {
               ),
               BlocProvider<HomeCubit>.value(value: homeCubit),
               BlocProvider<BookingDraftCubit>.value(value: bookingDraftCubit),
-              BlocProvider<PublicDriverSummaryCubit>.value(
-                value: publicDriverSummaryCubit,
-              ),
               BlocProvider<RideHistoryBloc>.value(value: rideHistoryBloc),
               BlocProvider<SavedPlacesCubit>.value(value: savedPlacesCubit),
             ],
@@ -674,7 +639,6 @@ void main() {
       final homeRepository = _MockHomeRepository();
       final bookingBloc = _MockBookingBloc();
       final locationAccessCubit = _MockLocationAccessCubit();
-      final publicDriverSummaryCubit = _MockPublicDriverSummaryCubit();
       final rideHistoryBloc = _MockRideHistoryBloc();
       final savedPlacesCubit = _MockSavedPlacesCubit();
       final sessionRepository = _MockSessionRepository();
@@ -714,10 +678,6 @@ void main() {
           .thenReturn(const LocationAccessReady());
       when(() => locationAccessCubit.stream)
           .thenAnswer((_) => const Stream.empty());
-      when(() => publicDriverSummaryCubit.state)
-          .thenReturn(const PublicDriverSummaryState());
-      when(() => publicDriverSummaryCubit.stream)
-          .thenAnswer((_) => const Stream.empty());
       when(() => rideHistoryBloc.state)
           .thenReturn(const RideHistoryLoaded(past: [], upcoming: []));
       when(() => rideHistoryBloc.stream)
@@ -747,9 +707,6 @@ void main() {
               ),
               BlocProvider<HomeCubit>.value(value: homeCubit),
               BlocProvider<BookingDraftCubit>.value(value: bookingDraftCubit),
-              BlocProvider<PublicDriverSummaryCubit>.value(
-                value: publicDriverSummaryCubit,
-              ),
               BlocProvider<RideHistoryBloc>.value(value: rideHistoryBloc),
               BlocProvider<SavedPlacesCubit>.value(value: savedPlacesCubit),
             ],
@@ -804,7 +761,6 @@ void main() {
     await sessionBloc.stream.first;
     final locationAccessCubit = _MockLocationAccessCubit();
     final bookingBloc = _MockBookingBloc();
-    final publicDriverSummaryCubit = _MockPublicDriverSummaryCubit();
     final rideHistoryBloc = _MockRideHistoryBloc();
     final savedPlacesCubit = _MockSavedPlacesCubit();
     final bookingDraftCubit = BookingDraftCubit();
@@ -827,8 +783,6 @@ void main() {
     when(() => locationAccessCubit.state)
         .thenReturn(const LocationAccessReady());
     when(() => bookingBloc.activeDriverSearch).thenReturn(null);
-    when(() => publicDriverSummaryCubit.state)
-        .thenReturn(const PublicDriverSummaryState());
     when(() => rideHistoryBloc.state).thenReturn(
       const RideHistoryLoaded(
         past: [],
@@ -884,9 +838,6 @@ void main() {
             BlocProvider<LocationAccessCubit>.value(value: locationAccessCubit),
             BlocProvider<HomeCubit>.value(value: homeCubit),
             BlocProvider<BookingDraftCubit>.value(value: bookingDraftCubit),
-            BlocProvider<PublicDriverSummaryCubit>.value(
-              value: publicDriverSummaryCubit,
-            ),
             BlocProvider<RideHistoryBloc>.value(value: rideHistoryBloc),
             BlocProvider<SavedPlacesCubit>.value(value: savedPlacesCubit),
           ],
