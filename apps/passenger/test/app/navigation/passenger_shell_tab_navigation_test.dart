@@ -397,6 +397,11 @@ class _SessionRepositoryStub implements SessionRepository {
 
 class _InboxRepositoryStub implements InboxRepository {
   @override
+  Future<Result<void, Failure>> markAllPassengerNotificationsAsRead(
+    String passengerId,
+  ) async => const Ok(null);
+
+  @override
   Future<Result<List<InboxNotification>, Failure>> fetchPassengerNotifications(
     String passengerId,
   ) async {

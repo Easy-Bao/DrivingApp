@@ -2,6 +2,10 @@ import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 
 abstract interface class InboxRepository {
+  Future<Result<void, Failure>> markAllPassengerNotificationsAsRead(
+    String passengerId,
+  );
+
   Future<Result<List<InboxNotification>, Failure>> fetchPassengerNotifications(
     String passengerId,
   );

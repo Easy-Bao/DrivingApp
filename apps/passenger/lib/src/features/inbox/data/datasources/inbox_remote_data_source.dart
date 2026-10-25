@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 
 abstract class InboxRemoteDataSource {
+  Future<void> markAllNotificationsAsRead(String passengerId);
+
   Future<OffsetPage<Map<String, dynamic>>> fetchNotifications(
     String passengerId, {
     int limit = 50,
@@ -28,6 +30,13 @@ class InboxRemoteDataSourceImpl(this._dio) implements InboxRemoteDataSource {
       response.data ?? const <String, dynamic>{},
       (value) =>
           decodeObjectMap(value, message: 'Notification item is invalid.'),
+    );
+  }
+
+  @override
+  Future<void> markAllNotificationsAsRead(String passengerId) async {
+    await _dio.post<void>(
+      '/api/v1/passengers/${Uri.encodeComponent(passengerId)}/notifications/read-all',
     );
   }
 

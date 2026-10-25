@@ -128,3 +128,8 @@ LIMIT $2 OFFSET $3;
 -- name: DeleteNotification :execrows
 DELETE FROM notifications
 WHERE id = $1 AND user_id = $2;
+
+-- name: MarkAllNotificationsRead :exec
+UPDATE notifications
+SET is_read = true
+WHERE user_id = $1 AND is_read = false;

@@ -16,12 +16,16 @@ final class const InboxLoadedState(
   this.nextOffset,
   this.isLoadingMore = false,
   this.loadMoreError,
+  this.isMarkingAllRead = false,
+  this.markAllReadError,
 }) extends InboxState {
   final List<InboxNotification> notifications;
   final bool hasMore;
   final int? nextOffset;
   final bool isLoadingMore;
   final String? loadMoreError;
+  final bool isMarkingAllRead;
+  final String? markAllReadError;
 
   InboxLoadedState copyWith({
     List<InboxNotification>? notifications,
@@ -30,12 +34,19 @@ final class const InboxLoadedState(
     bool? isLoadingMore,
     String? loadMoreError,
     bool clearLoadMoreError = false,
+    bool? isMarkingAllRead,
+    String? markAllReadError,
+    bool clearMarkAllReadError = false,
   }) {
     return InboxLoadedState(
       notifications ?? this.notifications,
       hasMore: hasMore ?? this.hasMore,
       nextOffset: nextOffset ?? this.nextOffset,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      isMarkingAllRead: isMarkingAllRead ?? this.isMarkingAllRead,
+      markAllReadError: clearMarkAllReadError
+          ? null
+          : markAllReadError ?? this.markAllReadError,
       loadMoreError: clearLoadMoreError
           ? null
           : loadMoreError ?? this.loadMoreError,
@@ -49,6 +60,8 @@ final class const InboxLoadedState(
     nextOffset,
     isLoadingMore,
     loadMoreError,
+    isMarkingAllRead,
+    markAllReadError,
   ];
 }
 

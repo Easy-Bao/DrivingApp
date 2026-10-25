@@ -24,8 +24,9 @@ type AvatarStore interface {
 	GetAvatar(ctx context.Context, userID int) (domain.Avatar, error)
 }
 
-// NotificationStore provides the bounded notification read and delete boundary.
+// NotificationStore provides the notification read and mutation boundary.
 type NotificationStore interface {
+	MarkAllNotificationsRead(ctx context.Context, userID int) error
 	Notifications(ctx context.Context, userID, limit, offset int) ([]domain.Notification, error)
 	DeleteNotification(ctx context.Context, userID, notificationID int) error
 }

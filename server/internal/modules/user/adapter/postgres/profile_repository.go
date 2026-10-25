@@ -430,6 +430,20 @@ func (repository *ProfileRepository) Notifications(
 	return result, nil
 }
 
+func (repository *ProfileRepository) MarkAllNotificationsRead(ctx context.Context, userID int) error {
+	if err := repository.validate(); err != nil {
+		return fmt.Errorf("validate profile repository: %w", err)
+	}
+	dbUserID, err := toPostgresProfileID(userID, "user id")
+	if err != nil {
+		return fmt.Errorf("convert notification user id: %w", err)
+	}
+	if err := repository.queries.MarkAllNotificationsRead(ctx, dbUserID); err != nil {
+		return fmt.Errorf("mark all notifications read: %w", err)
+	}
+	return nil
+}
+
 func (repository *ProfileRepository) DeleteNotification(
 	ctx context.Context,
 	userID int,

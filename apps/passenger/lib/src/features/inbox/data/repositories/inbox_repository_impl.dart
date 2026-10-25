@@ -62,6 +62,23 @@ final class InboxRepositoryImpl({required this.remoteDataSource})
   }
 
   @override
+  Future<Result<void, Failure>> markAllPassengerNotificationsAsRead(
+    String passengerId,
+  ) async {
+    try {
+      await remoteDataSource.markAllNotificationsAsRead(passengerId);
+      return const Ok(null);
+    } catch (error) {
+      return Err(
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Notifications could not be marked as read.',
+        ),
+      );
+    }
+  }
+
+  @override
   Future<Result<void, Failure>> deletePassengerNotification(
     String passengerId,
     String notificationId,

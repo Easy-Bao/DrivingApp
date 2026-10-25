@@ -301,6 +301,28 @@ func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, 200, response.NewOffsetPage(NewNotificationResponses(items), page.Limit, page.Offset))
 }
 
+func (handler *Handler) MarkAllNotificationsRead(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := handler.identity(r)
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || targetID <= 0 {
+		response.Error(w, http.StatusBadRequest, "invalid passenger id")
+		return
+	}
+	if targetID != actorID {
+		response.Error(w, http.StatusForbidden, "forbidden")
+		return
+	}
+	if err := handler.service.MarkAllNotificationsRead(r.Context(), targetID); err != nil {
+		response.Error(w, http.StatusInternalServerError, "Notifications could not be marked as read.")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (handler *Handler) DeleteNotification(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {

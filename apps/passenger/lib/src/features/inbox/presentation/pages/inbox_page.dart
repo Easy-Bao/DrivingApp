@@ -197,6 +197,34 @@ class _InboxPageState extends State<InboxPage> {
                 title: 'Inbox',
                 subtitle: 'Messages and receipts',
               ),
+              if (!isGuest && loadedState != null && notifications.isNotEmpty)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed:
+                        loadedState.isMarkingAllRead ||
+                            !notifications.any((item) => !item.isRead)
+                        ? null
+                        : () => unawaited(
+                            _inboxCubit.markAllNotificationsAsRead(),
+                          ),
+                    child: Text(
+                      loadedState.isMarkingAllRead
+                          ? 'Marking…'
+                          : 'Mark all as read',
+                    ),
+                  ),
+                ),
+              if (loadedState?.markAllReadError != null)
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    loadedState!.markAllReadError!,
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: context.colorScheme.error,
+                    ),
+                  ),
+                ),
               const SizedBox(height: AppSpacing.sm * 2),
             ]),
           ),

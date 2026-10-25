@@ -174,3 +174,17 @@ func (service *ProfileService) DeleteNotification(
 	}
 	return nil
 }
+
+func (service *ProfileService) MarkAllNotificationsRead(ctx context.Context, userID int) error {
+	repository, ok := service.repository.(NotificationStore)
+	if !ok {
+		return ErrNotificationUnavailable
+	}
+	if userID <= 0 {
+		return errors.New("notification user id is invalid")
+	}
+	if err := repository.MarkAllNotificationsRead(ctx, userID); err != nil {
+		return fmt.Errorf("mark all notifications read: %w", err)
+	}
+	return nil
+}

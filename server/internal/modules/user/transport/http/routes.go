@@ -38,6 +38,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		withPolicy(middleware.RouteRead, passengerOnly).Get("/passengers/{id}/avatar", router.handler.Avatar)
 		withPolicy(middleware.RouteCommand, passengerOnly).Post("/passengers/{id}/avatar", router.handler.AvatarUpload)
 		withPolicy(middleware.RouteRead, passengerOnly).Get("/passengers/{id}/notifications", router.handler.Notifications)
+		withPolicy(middleware.RouteCommand, passengerOnly).Post("/passengers/{id}/notifications/read-all", router.handler.MarkAllNotificationsRead)
 		withPolicy(middleware.RouteCommand, passengerOnly).Delete(
 			"/passengers/{id}/notifications/{notificationID}",
 			router.handler.DeleteNotification,

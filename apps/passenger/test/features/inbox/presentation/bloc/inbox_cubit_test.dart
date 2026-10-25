@@ -29,6 +29,92 @@ void main() {
     isRead: false,
   );
 
+  test(
+    'bulk read preserves arrivals and prevents duplicate requests',
+    () async {
+      final repository = MockInboxRepository();
+      final response = Completer<Result<void, Failure>>();
+      when(() => repository.fetchPassengerNotifications('p'))
+          .thenAnswer((_) async => Ok([notification]));
+      when(() => repository.markAllPassengerNotificationsAsRead('p'))
+          .thenAnswer((_) => response.future);
+      final cubit = InboxCubit(inboxRepository: repository);
+      addTearDown(cubit.close);
+      await cubit.loadNotifications('p');
+      final pending = cubit.markAllNotificationsAsRead();
+      expect((cubit.state as InboxLoadedState).isMarkingAllRead, isTrue);
+      await cubit.markAllNotificationsAsRead();
+      cubit.addLocalNotification(notification.copyWith(id: 'new'));
+      response.complete(const Ok(null));
+      await pending;
+      final state = cubit.state as InboxLoadedState;
+      expect(state.isMarkingAllRead, isFalse);
+      expect(
+        state.notifications.singleWhere((n) => n.id == notification.id).isRead,
+        isTrue,
+      );
+      expect(
+        state.notifications.singleWhere((n) => n.id == 'new').isRead,
+        isFalse,
+      );
+      verify(() => repository.markAllPassengerNotificationsAsRead('p'))
+          .called(1);
+      await cubit.loadNotifications('p');
+      expect(
+        (cubit.state as InboxLoadedState).notifications
+            .singleWhere((n) => n.id == notification.id)
+            .isRead,
+        isTrue,
+      );
+    },
+  );
+
+  test('bulk read failure keeps unread items and permits retry', () async {
+    final repository = MockInboxRepository();
+    when(() => repository.fetchPassengerNotifications('p'))
+        .thenAnswer((_) async => Ok([notification]));
+    when(() => repository.markAllPassengerNotificationsAsRead('p'))
+        .thenAnswer((_) async => const Err(NetworkFailure('Offline')));
+    final cubit = InboxCubit(inboxRepository: repository);
+    addTearDown(cubit.close);
+    await cubit.loadNotifications('p');
+    await cubit.markAllNotificationsAsRead();
+    final failed = cubit.state as InboxLoadedState;
+    expect(failed.notifications.single.isRead, isFalse);
+    expect(failed.markAllReadError, isNotNull);
+    expect(failed.isMarkingAllRead, isFalse);
+    when(() => repository.markAllPassengerNotificationsAsRead('p'))
+        .thenAnswer((_) async => const Ok(null));
+    await cubit.markAllNotificationsAsRead();
+    expect(
+      (cubit.state as InboxLoadedState).notifications.single.isRead,
+      isTrue,
+    );
+    expect((cubit.state as InboxLoadedState).markAllReadError, isNull);
+  });
+
+  test('bulk read result cannot cross an account change', () async {
+    final repository = MockInboxRepository();
+    final response = Completer<Result<void, Failure>>();
+    when(() => repository.fetchPassengerNotifications(any()))
+        .thenAnswer((_) async => Ok([notification]));
+    when(() => repository.markAllPassengerNotificationsAsRead('first'))
+        .thenAnswer((_) => response.future);
+    final cubit = InboxCubit(inboxRepository: repository);
+    addTearDown(cubit.close);
+    await cubit.loadNotifications('first');
+    final pending = cubit.markAllNotificationsAsRead();
+    cubit.clearSessionData();
+    await cubit.loadNotifications('second');
+    response.complete(const Ok(null));
+    await pending;
+    expect(
+      (cubit.state as InboxLoadedState).notifications.single.isRead,
+      isFalse,
+    );
+    expect((cubit.state as InboxLoadedState).isMarkingAllRead, isFalse);
+  });
+
   test('clears passenger-scoped notifications when the session ends', () async {
     final cubit = InboxCubit(inboxRepository: MockInboxRepository());
     cubit.addLocalNotification(notification);

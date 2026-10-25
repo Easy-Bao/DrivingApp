@@ -231,6 +231,17 @@ func (q *Queries) LockPassengerProfileByUserID(ctx context.Context, userID int32
 	return i, err
 }
 
+const markAllNotificationsRead = `-- name: MarkAllNotificationsRead :exec
+UPDATE notifications
+SET is_read = true
+WHERE user_id = $1 AND is_read = false
+`
+
+func (q *Queries) MarkAllNotificationsRead(ctx context.Context, userID int32) error {
+	_, err := q.db.Exec(ctx, markAllNotificationsRead, userID)
+	return err
+}
+
 const updateDriverOnlineStatus = `-- name: UpdateDriverOnlineStatus :one
 UPDATE driver_profiles
 SET is_online = $1,

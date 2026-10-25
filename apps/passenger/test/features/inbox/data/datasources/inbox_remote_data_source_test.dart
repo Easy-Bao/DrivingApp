@@ -7,6 +7,26 @@ class MockDio extends Mock implements Dio {}
 
 void main() {
   test(
+    'marks all notifications through the passenger-scoped endpoint',
+    () async {
+      final dio = MockDio();
+      final source = InboxRemoteDataSourceImpl(dio);
+      when(() => dio.post<void>(any())).thenAnswer(
+        (_) async => Response<void>(
+          requestOptions: RequestOptions(
+            path: '/api/v1/passengers/42/notifications/read-all',
+          ),
+          statusCode: 204,
+        ),
+      );
+      await source.markAllNotificationsAsRead('42');
+      verify(
+        () => dio.post<void>('/api/v1/passengers/42/notifications/read-all'),
+      ).called(1);
+    },
+  );
+
+  test(
     'deletes a notification through the passenger-scoped endpoint',
     () async {
       final dio = MockDio();

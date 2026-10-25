@@ -10,6 +10,23 @@ import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.
 class MockInboxRemoteDataSource extends Mock implements InboxRemoteDataSource {}
 
 void main() {
+  test('bulk read maps success and network failures', () async {
+    final source = MockInboxRemoteDataSource();
+    final repository = InboxRepositoryImpl(remoteDataSource: source);
+    when(() => source.markAllNotificationsAsRead('p')).thenAnswer((_) async {});
+    expect(
+      (await repository.markAllPassengerNotificationsAsRead('p')).isOk,
+      isTrue,
+    );
+    when(() => source.markAllNotificationsAsRead('p'))
+        .thenThrow(const SocketException('offline'));
+    final result = await repository.markAllPassengerNotificationsAsRead('p');
+    result.fold(
+      (failure) => expect(failure, isA<NetworkFailure>()),
+      (_) => fail('expected failure'),
+    );
+  });
+
   test(
     'fetchPassengerNotificationsPage preserves chat deep-link fields',
     () async {
