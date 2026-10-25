@@ -45,7 +45,7 @@ func (lookup *RideLookup) ForRide(
 }
 
 func isRideNotFound(err error) bool {
-	return errors.Is(err, pgx.ErrNoRows)
+	return errors.Is(err, ridedomain.ErrRideNotFound) || errors.Is(err, pgx.ErrNoRows)
 }
 
 func (lookup *RideLookup) ForDriver(
