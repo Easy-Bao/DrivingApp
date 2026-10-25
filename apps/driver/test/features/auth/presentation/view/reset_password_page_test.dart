@@ -30,23 +30,25 @@ void main() {
           ),
         ),
       );
-      expect(find.text('Verification code'), findsOneWidget);
-      expect(find.text('New password'), findsOneWidget);
-      expect(find.text('Use at least 8 characters.'), findsOneWidget);
+      expect(find.text('Check your email'), findsOneWidget);
+      expect(find.text('New password'), findsNothing);
       expect(
-        tester.widget<TextField>(find.byType(TextField).first).autofillHints,
+        tester.widget<TextField>(find.byType(TextField)).autofillHints,
         contains(AutofillHints.oneTimeCode),
       );
-      expect(
-        tester.widget<TextField>(find.byType(TextField).last).autofillHints,
-        contains(AutofillHints.newPassword),
-      );
-      await tester.enterText(find.byType(TextField).first, '123456');
+      await tester.enterText(find.byType(TextField), '123456');
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      expect(find.text('Create new password'), findsOneWidget);
+      expect(find.text('At least 8 characters'), findsOneWidget);
+      await tester.enterText(find.byType(TextField).first, 'new-password');
       await tester.enterText(find.byType(TextField).last, 'new-password');
+      await tester.pump();
       await tester.tap(find.byTooltip('Show password'));
       await tester.pump();
       expect(
-        tester.widget<TextField>(find.byType(TextField).last).obscureText,
+        tester.widget<TextField>(find.byType(TextField).first).obscureText,
         isFalse,
       );
       await tester.tap(find.widgetWithText(FilledButton, 'Reset password'));
@@ -58,7 +60,7 @@ void main() {
           newPassword: 'new-password',
         ),
       ).called(1);
-      expect(find.byType(AppErrorBanner), findsOneWidget);
+      expect(find.text('Something went wrong. Try again.'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
@@ -85,6 +87,12 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '123456');
+    await tester.pump();
+    await tester.ensureVisible(find.text('Continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(
       find.widgetWithText(FilledButton, 'Reset password'),

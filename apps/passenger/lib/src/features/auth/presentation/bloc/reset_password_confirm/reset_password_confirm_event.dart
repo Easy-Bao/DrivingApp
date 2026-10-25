@@ -17,3 +17,9 @@ final class const ResetPasswordConfirmSubmitted({
   @override
   List<Object?> get props => [email, code, newPassword];
 }
+
+final class const ResetPasswordCodeRequested(final String email)
+    extends ResetPasswordConfirmEvent {
+  @override
+  List<Object?> get props => [email];
+}

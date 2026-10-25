@@ -13,9 +13,29 @@ class ResetPasswordConfirmBloc(this._authRepository)
   final AuthRepository _authRepository;
 
   this : super(const ResetPasswordConfirmInitial()) {
+    on<ResetPasswordCodeRequested>(_onCodeRequested, transformer: droppable());
     on<ResetPasswordConfirmSubmitted>(
       _onResetPasswordConfirmSubmitted,
       transformer: droppable(),
+    );
+  }
+
+  Future<void> _onCodeRequested(
+    ResetPasswordCodeRequested event,
+    Emitter<ResetPasswordConfirmState> emit,
+  ) async {
+    if (state is ResetPasswordConfirmLoading ||
+        state is ResetPasswordCodeResending) {
+      return;
+    }
+    emit(const ResetPasswordCodeResending());
+    final result = await _authRepository.resetPassword(
+      email: event.email.trim().toLowerCase(),
+    );
+    result.fold(
+      (failure) =>
+          emit(ResetPasswordConfirmFailure(safeAuthFailureMessage(failure))),
+      (_) => emit(const ResetPasswordCodeSent()),
     );
   }
 
@@ -23,6 +43,10 @@ class ResetPasswordConfirmBloc(this._authRepository)
     ResetPasswordConfirmSubmitted event,
     Emitter<ResetPasswordConfirmState> emit,
   ) async {
+    if (state is ResetPasswordConfirmLoading ||
+        state is ResetPasswordCodeResending) {
+      return;
+    }
     final trimmedPassword = event.newPassword;
     final normalizedEmail = event.email.trim().toLowerCase();
     final validationError = authFormValidator.password(trimmedPassword);

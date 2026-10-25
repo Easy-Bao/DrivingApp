@@ -15,9 +15,28 @@ class ResetPasswordBloc(this._authRepository)
   final AuthRepository _authRepository;
 
   this : super(const ResetPasswordInitial()) {
+    on<ResetPasswordCodeRequested>(_onCodeRequested, transformer: droppable());
     on<ResetPasswordSubmitted>(
       _onResetPasswordSubmitted,
       transformer: droppable(),
+    );
+  }
+
+  Future<void> _onCodeRequested(
+    ResetPasswordCodeRequested event,
+    Emitter<ResetPasswordState> emit,
+  ) async {
+    if (state is ResetPasswordLoading || state is ResetPasswordResending) {
+      return;
+    }
+    emit(const ResetPasswordResending());
+    final result = await _authRepository.resetPassword(
+      email: event.email.trim().toLowerCase(),
+    );
+    result.fold(
+      (failure) =>
+          emit(ResetPasswordFailure(ErrorHandler.getErrorMessage(failure))),
+      (_) => emit(const ResetPasswordCodeSent()),
     );
   }
 
@@ -25,6 +44,9 @@ class ResetPasswordBloc(this._authRepository)
     ResetPasswordSubmitted event,
     Emitter<ResetPasswordState> emit,
   ) async {
+    if (state is ResetPasswordLoading || state is ResetPasswordResending) {
+      return;
+    }
     final email = event.email.trim().toLowerCase();
     final code = event.code.trim();
     if (email.isEmpty || code.isEmpty) {

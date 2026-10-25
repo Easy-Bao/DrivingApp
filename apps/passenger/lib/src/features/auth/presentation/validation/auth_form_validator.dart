@@ -1,6 +1,8 @@
 import 'package:passenger/src/features/auth/domain/validators/phone_number_validator.dart';
 
 final class const AuthFormValidator() {
+  static const minimumPasswordLength = 8;
+
   static final RegExp _emailPattern = RegExp(
     r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
   );
@@ -28,7 +30,7 @@ final class const AuthFormValidator() {
     return null;
   }
 
-  String? password(String value, {int minimumLength = 8}) {
+  String? password(String value, {int minimumLength = minimumPasswordLength}) {
     if (value.isEmpty) return 'Enter your password.';
     if (value.length < minimumLength) {
       return 'Use at least $minimumLength characters.';

@@ -11,7 +11,7 @@ void main() {
 
   setUp(() => repository = _MockAuthRepository());
 
-  Future<List<ResetPasswordState>> run(ResetPasswordSubmitted event) async {
+  Future<List<ResetPasswordState>> run(ResetPasswordEvent event) async {
     final bloc = ResetPasswordBloc(repository);
     final states = <ResetPasswordState>[];
     final subscription = bloc.stream.listen(states.add);
@@ -81,5 +81,13 @@ void main() {
 
     expect(states.first, const ResetPasswordLoading());
     expect(states.last, isA<ResetPasswordFailure>());
+  });
+  test('resends the password reset code through the repository', () async {
+    when(() => repository.resetPassword(email: 'driver@example.com'))
+        .thenAnswer((_) async => const Ok(null));
+    final states = await run(
+      const ResetPasswordCodeRequested(' Driver@Example.com '),
+    );
+    expect(states, const [ResetPasswordResending(), ResetPasswordCodeSent()]);
   });
 }

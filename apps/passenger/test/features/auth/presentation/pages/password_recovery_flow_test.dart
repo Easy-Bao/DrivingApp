@@ -82,17 +82,22 @@ void main() {
       pending.complete(const Ok(null));
       await tester.pumpAndSettle();
       expect(
-        find.textContaining('code sent to passenger@example.com'),
+        find.textContaining('verification code to passenger@example.com'),
         findsOneWidget,
       );
-      expect(find.text('Verification code'), findsOneWidget);
-      await tester.tap(find.widgetWithText(FilledButton, 'Reset password'));
+      expect(find.text('Check your email'), findsOneWidget);
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNull,
+      );
+      await tester.enterText(find.byType(TextField), '123456');
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
-      expect(find.text('Enter the verification code.'), findsOneWidget);
-      await tester.enterText(find.byType(TextField).at(0), '123456');
-      await tester.enterText(find.byType(TextField).at(1), 'new-password');
+      expect(find.text('Create new password'), findsOneWidget);
+      await tester.enterText(find.byType(TextField).at(0), 'new-password');
       await tester.enterText(
-        find.byType(TextField).at(2),
+        find.byType(TextField).at(1),
         'different-password',
       );
       await tester.ensureVisible(
@@ -108,7 +113,7 @@ void main() {
           newPassword: any(named: 'newPassword'),
         ),
       );
-      await tester.enterText(find.byType(TextField).at(2), 'new-password');
+      await tester.enterText(find.byType(TextField).at(1), 'new-password');
       await tester.ensureVisible(
         find.widgetWithText(FilledButton, 'Reset password'),
       );
