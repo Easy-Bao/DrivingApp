@@ -21,7 +21,7 @@ class const FloatingTabBar({
     AppTabDestination(icon: LucideIcons.house, label: 'Home'),
     AppTabDestination(icon: LucideIcons.history, label: 'Activity'),
     AppTabDestination(icon: LucideIcons.mail, label: 'Inbox'),
-    AppTabDestination(icon: LucideIcons.user, label: 'Profile'),
+    AppTabDestination(icon: LucideIcons.user, label: 'Me'),
   ];
 
   final int selectedIndex;

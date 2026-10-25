@@ -154,7 +154,7 @@ void main() {
     expectStaticDestination(0, 'Home');
     expectStaticDestination(1, 'Activity');
     expectStaticDestination(2, 'Inbox');
-    expectStaticDestination(3, 'Profile');
+    expectStaticDestination(3, 'Me');
     expect(tester.takeException(), isNull);
     final indicator = find.byKey(
       const ValueKey<String>('passenger-floating-tab-indicator'),
