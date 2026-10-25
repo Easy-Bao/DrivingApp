@@ -21,10 +21,8 @@ export 'package:design_system/src/widgets/composites/trip_history_filter_sheet.d
 export 'package:design_system/src/widgets/composites/trip_reference.dart';
 export 'package:design_system/src/widgets/feedback/error_banner.dart';
 export 'package:design_system/src/widgets/feedback/error_view.dart';
-export 'package:design_system/src/widgets/feedback/network_status_banner.dart';
 export 'package:design_system/src/widgets/feedback/network_status_scope.dart';
 export 'package:design_system/src/widgets/feedback/snack_bar.dart';
-export 'package:design_system/src/widgets/feedback/status_banner.dart';
 export 'package:design_system/src/widgets/inputs/select_field.dart';
 export 'package:design_system/src/widgets/layout/app_layout.dart'
     show AppPageHeader, AppPageFrame, AppSurfaceCard, AppNavigationRail;

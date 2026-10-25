@@ -5,7 +5,7 @@ import 'dart:developer' as dev;
 import 'dart:typed_data';
 
 import 'package:bloc_concurrency/bloc_concurrency.dart';
-import 'package:flutter/material.dart' show Color;
+import 'package:flutter/material.dart' show Color, EdgeInsets;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -232,6 +232,7 @@ class LiveMapBloc({required this._rideRepository})
             LatLng(event.driverLatitude, event.driverLongitude),
             LatLng(targetLatitude, targetLongitude),
           ],
+          viewportPadding: event.viewportPadding,
           padding: 72.0,
           maxZoom: 15.0,
         );

@@ -82,6 +82,55 @@ void main() {
     );
   });
 
+  for (final action in ['cancel', 'no-show', 'emergency-stop']) {
+    test('rejected $action preserves waiting state and its timer', () async {
+      when(
+        () => mockRideRepository.cancelRide(
+          rideId: any(named: 'rideId'),
+          reason: any(named: 'reason'),
+          details: any(named: 'details'),
+        ),
+      ).thenAnswer(
+        (_) async => const Err(NetworkFailure('Connection unavailable.')),
+      );
+      when(() => mockRideRepository.markPassengerNoShow('test-ride-id'))
+          .thenAnswer(
+            (_) async => const Err(NetworkFailure('Connection unavailable.')),
+          );
+      when(
+        () => mockRideRepository.emergencyStop(
+          rideId: any(named: 'rideId'),
+          reason: any(named: 'reason'),
+          details: any(named: 'details'),
+        ),
+      ).thenAnswer(
+        (_) async => const Err(NetworkFailure('Connection unavailable.')),
+      );
+      final cubit = _makeCubit(mockRideRepository, mockSessionService);
+      addTearDown(cubit.close);
+      await cubit.resumeRide(
+        rideId: 'test-ride-id',
+        status: 'arrived',
+        passengerName: 'Alex',
+        pickupLatitude: 7.82,
+        pickupLongitude: 123.43,
+        arrivedAt: DateTime.now().toUtc().subtract(const Duration(seconds: 30)),
+      );
+      final succeeded = await switch (action) {
+        'cancel' => cubit.cancelRide(reason: 'vehicle_problem'),
+        'no-show' => cubit.markPassengerNoShow(),
+        _ => cubit.emergencyStop(reason: 'medical_emergency'),
+      };
+      expect(succeeded, isFalse);
+      expect(cubit.state.isWaitingAtPickup, isTrue);
+      expect(cubit.lastActionFailureMessage, isNotEmpty);
+      final elapsed = cubit.state.waitTimeSecondsOr(0);
+      await Future<void>.delayed(const Duration(milliseconds: 1100));
+      expect(cubit.state.waitTimeSecondsOr(0), greaterThan(elapsed));
+      expect(cubit.activeRideId, 'test-ride-id');
+    });
+  }
+
   group('RideFlowCubit — initial state', () {
     test('starts in initial state', () async {
       final cubit = _makeCubit(mockRideRepository, mockSessionService);

@@ -73,6 +73,10 @@
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>EasyRide Driver needs location services to navigate and track driver movement in real time.</string>
 
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>EasyRide uses your photo library to share photos in trip chat.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>EasyRide uses your camera to share a photo in your trip chat.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

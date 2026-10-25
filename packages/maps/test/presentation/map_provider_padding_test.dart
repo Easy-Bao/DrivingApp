@@ -7,6 +7,24 @@ import 'package:mapbox_maps_flutter_platform_interface/mapbox_maps_flutter_platf
 import 'package:maps/maps.dart';
 
 void main() {
+  testWidgets('loading rebuild does not request a new camera transition', (
+    tester,
+  ) async {
+    final platform = _TestMapPlatform();
+    MapboxMapsFlutterPlatform.instance = platform;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MapProvider.buildMapView(latitude: 14.5, longitude: 120.9),
+        ),
+      ),
+    );
+    final initial = platform.viewport;
+    platform.onMapEvent!(_loadedEvent());
+    await tester.pump();
+    expect(platform.viewport, equals(initial));
+  });
+
   testWidgets('covers the native map until its first loaded event', (
     tester,
   ) async {

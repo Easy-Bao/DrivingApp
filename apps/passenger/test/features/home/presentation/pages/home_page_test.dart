@@ -633,7 +633,7 @@ void main() {
   );
 
   testWidgets(
-    'displays AppStatusBanner across the top safe area on error and dismisses on tap',
+    'reports saved-place errors with a snackbar without changing the top safe area',
     (tester) async {
       final currentLocationRepository = _MockCurrentLocationRepository();
       final homeRepository = _MockHomeRepository();
@@ -721,7 +721,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(AppStatusBanner), findsNothing);
+      expect(find.byType(SnackBar), findsNothing);
 
       savedPlacesController.add(
         const SavedPlacesState(
@@ -732,14 +732,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(AppStatusBanner), findsOneWidget);
+      expect(find.byType(SnackBar), findsOneWidget);
       expect(find.text('Could not load saved places.'), findsOneWidget);
-      expect(find.text('Dismiss'), findsOneWidget);
+      expect(find.text('Dismiss'), findsNothing);
 
-      await tester.tap(find.text('Dismiss'));
+      ScaffoldMessenger.of(tester.element(find.byType(SnackBar)))
+          .hideCurrentSnackBar();
       await tester.pumpAndSettle();
 
-      expect(find.byType(AppStatusBanner), findsNothing);
+      expect(find.byType(SnackBar), findsNothing);
     },
   );
 

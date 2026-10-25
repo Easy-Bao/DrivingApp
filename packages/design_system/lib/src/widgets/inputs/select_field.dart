@@ -12,15 +12,28 @@ class const AppSelectOption<T>({required this.value, required this.label}) {
   final String label;
 }
 
-class const AppSelectField<T>({
-  super.key,
-  required this.options,
-  required this.onChanged,
-  this.value,
-  this.decoration = const InputDecoration(),
-  this.menuTitle,
-  this.style,
-}) extends StatefulWidget {
+class AppSelectField<T> extends StatefulWidget {
+  const AppSelectField({
+    super.key,
+    required this.options,
+    required this.onChanged,
+    this.value,
+    this.decoration = const InputDecoration(),
+    this.menuTitle,
+    this.style,
+  }) : _anchored = false;
+
+  const AppSelectField.anchored({
+    super.key,
+    required this.options,
+    required this.onChanged,
+    this.value,
+    this.decoration = const InputDecoration(),
+    this.menuTitle,
+    this.style,
+  }) : _anchored = true;
+
+  final bool _anchored;
   final T? value;
   final List<AppSelectOption<T>> options;
   final ValueChanged<T?>? onChanged;
@@ -46,28 +59,64 @@ class _AppSelectFieldState<T> extends State<AppSelectField<T>> {
     if (widget.onChanged == null || _isMenuOpen) return;
 
     setState(() => _isMenuOpen = true);
-    final selectedValue = await showModalBottomSheet<T>(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: true,
-      enableDrag: true,
-      showDragHandle: false,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _AppSelectMenu<T>(
-        title:
-            widget.menuTitle ??
-            widget.decoration.labelText ??
-            widget.decoration.hintText ??
-            'Select an option',
-        options: widget.options,
-        selectedValue: widget.value,
-      ),
-    );
+    final selectedValue = widget._anchored
+        ? await _showAnchoredMenu()
+        : await showModalBottomSheet<T>(
+            context: context,
+            isScrollControlled: true,
+            isDismissible: true,
+            enableDrag: true,
+            showDragHandle: false,
+            useSafeArea: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => _AppSelectMenu<T>(
+              title:
+                  widget.menuTitle ??
+                  widget.decoration.labelText ??
+                  widget.decoration.hintText ??
+                  'Select an option',
+              options: widget.options,
+              selectedValue: widget.value,
+            ),
+          );
     if (!mounted) return;
 
     setState(() => _isMenuOpen = false);
     if (selectedValue != null) widget.onChanged?.call(selectedValue);
+  }
+
+  Future<T?> _showAnchoredMenu() {
+    final box = context.findRenderObject()! as RenderBox;
+    final overlay =
+        Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
+    final origin = box.localToGlobal(
+      Offset(0, box.size.height + 4),
+      ancestor: overlay,
+    );
+    return showMenu<T>(
+      context: context,
+      position: RelativeRect.fromRect(
+        origin & Size(box.size.width, 0),
+        Offset.zero & overlay.size,
+      ),
+      constraints: BoxConstraints(
+        minWidth: box.size.width,
+        maxWidth: box.size.width,
+        maxHeight: 300,
+      ),
+      color: Theme.of(context).colorScheme.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      items: [
+        for (final option in widget.options)
+          PopupMenuItem<T>(
+            value: option.value,
+            child: Text(option.label, style: widget.style),
+          ),
+      ],
+    );
   }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
@@ -87,7 +136,8 @@ class _AppSelectFieldState<T> extends State<AppSelectField<T>> {
     final decoration = widget.decoration.copyWith(
       enabled: enabled,
       suffixIcon:
-          widget.decoration.suffixIcon ?? const Icon(LucideIcons.chevron_down),
+          widget.decoration.suffixIcon ??
+          Icon(_isMenuOpen ? LucideIcons.chevron_up : LucideIcons.chevron_down),
     );
     final borderRadius = decoration.border is OutlineInputBorder
         ? (decoration.border! as OutlineInputBorder).borderRadius

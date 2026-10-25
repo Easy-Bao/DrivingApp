@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/core/location/live_map_bloc.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/active_ride/data/datasources/ride_remote_data_source.dart';
@@ -51,7 +50,6 @@ class ActiveRideModule._() {
             chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
             sessionService: Modular.get<SessionStore>(),
             lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
-            liveMapBloc: Modular.get<LiveMapBloc>(),
             onRideTerminated: onRideTerminated,
             realtimeClient: Modular.get<RealtimeWebSocketClient>(),
           );
@@ -62,7 +60,6 @@ class ActiveRideModule._() {
           chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
           sessionService: Modular.get<SessionStore>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
-          liveMapBloc: Modular.get<LiveMapBloc>(),
           onRideTerminated: onRideTerminated,
           realtimeClient: Modular.get<RealtimeWebSocketClient>(),
         );

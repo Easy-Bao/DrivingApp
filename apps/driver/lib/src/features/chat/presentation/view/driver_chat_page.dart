@@ -156,12 +156,12 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     unawaited(_chatCubit.markVisibleMessagesRead());
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(ImageSource source) async {
     if (_isPickingImage || _chatCubit.state.isSendingImage) return;
     _isPickingImage = true;
     try {
       final picture = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
+        source: source,
         maxWidth: 2048,
         maxHeight: 2048,
         imageQuality: 85,
@@ -177,6 +177,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       final bytes = await picture.readAsBytes();
       if (!mounted) return;
       await _stopTyping();
+      if (!mounted) return;
       await _chatCubit.sendImage(bytes);
     } catch (_) {
       if (mounted) {
@@ -383,9 +384,16 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                       child: Row(
                         children: [
                           IconButton(
-                            tooltip: 'Send picture',
+                            tooltip: 'Take photo',
                             onPressed: canSendMessage && !state.isSendingImage
-                                ? _pickImage
+                                ? () => _pickImage(ImageSource.camera)
+                                : null,
+                            icon: const Icon(Icons.camera_alt_outlined),
+                          ),
+                          IconButton(
+                            tooltip: 'Attach photo file',
+                            onPressed: canSendMessage && !state.isSendingImage
+                                ? () => _pickImage(ImageSource.gallery)
                                 : null,
                             icon: state.isSendingImage
                                 ? const SizedBox(
@@ -395,9 +403,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Icon(
-                                    Icons.add_photo_alternate_outlined,
-                                  ),
+                                : const Icon(Icons.attach_file),
                           ),
                           Expanded(
                             child: Container(

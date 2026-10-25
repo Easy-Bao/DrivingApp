@@ -856,6 +856,13 @@ class _DashboardPageState extends State<DashboardPage>
       listeners: [
         BlocListener<DashboardCubit, DashboardState>(
           listenWhen: (previous, current) =>
+              previous.errorMessage != current.errorMessage &&
+              current.errorMessage != null,
+          listener: (context, state) =>
+              AppSnackBar.show(context, state.errorMessage!, isError: true),
+        ),
+        BlocListener<DashboardCubit, DashboardState>(
+          listenWhen: (previous, current) =>
               previous.activeBids != current.activeBids ||
               previous.submittedOffers != current.submittedOffers ||
               previous.isOnline != current.isOnline,
@@ -915,25 +922,12 @@ class _DashboardPageState extends State<DashboardPage>
           if (activeRide != null && ModalRoute.of(context)?.isCurrent == true) {
             _scheduleActiveTripNavigation();
           }
-          final dashboardMessage = state.errorMessage;
-          final showDashboardError =
-              dashboardMessage != null &&
-              !AppNetworkStatusScope.isUnavailableOf(context);
           return Column(
             children: [
-              if (showDashboardError)
-                AppStatusBanner(
-                  isVisible: true,
-                  message: dashboardMessage,
-                  tone: AppStatusBannerTone.error,
-                  actionLabel: 'Dismiss',
-                  onAction: () =>
-                      BlocProvider.of<DashboardCubit>(context).dismissError(),
-                ),
               Expanded(
                 child: MediaQuery.removePadding(
                   context: context,
-                  removeTop: showDashboardError,
+                  removeTop: false,
                   child: Scaffold(
                     appBar: AppBar(
                       automaticallyImplyLeading: false,

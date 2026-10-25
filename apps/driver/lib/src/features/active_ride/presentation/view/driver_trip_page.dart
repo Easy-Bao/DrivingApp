@@ -50,7 +50,9 @@ class _DriverTripPageState extends State<DriverTripPage> {
   double? _pickupLongitude;
   double? _destinationLatitude;
   double? _destinationLongitude;
+  final _panelKey = GlobalKey();
   Widget? _map;
+  AppMapController? _mapController;
   double _progress = 0;
   bool _isActing = false;
   bool _isRefreshing = false;
@@ -153,6 +155,14 @@ class _DriverTripPageState extends State<DriverTripPage> {
       UpdateLocationsAndDrawRouteEvent(
         driverLatitude: latitude,
         driverLongitude: longitude,
+        viewportPadding: EdgeInsets.fromLTRB(
+          40,
+          MediaQuery.paddingOf(context).top + 72,
+          40,
+          (_panelKey.currentContext?.size?.height ?? 360) +
+              MediaQuery.paddingOf(context).bottom +
+              32,
+        ),
         passengerLatitude: inTransit ? state.passengerLatitude : targetLat,
         passengerLongitude: inTransit ? state.passengerLongitude : targetLng,
         routeTargetLatitude: inTransit ? targetLat : null,
@@ -303,7 +313,8 @@ class _DriverTripPageState extends State<DriverTripPage> {
         return;
       }
       _showError(
-        _rideCubit.state.failureMessage ??
+        _rideCubit.lastActionFailureMessage ??
+            _rideCubit.state.failureMessage ??
             'Unable to record the passenger no-show. Please try again.',
       );
     } catch (error) {
@@ -381,7 +392,8 @@ class _DriverTripPageState extends State<DriverTripPage> {
         context.pop();
       } else {
         _showError(
-          BlocProvider.of<RideFlowCubit>(context).state.failureMessage ??
+          _rideCubit.lastActionFailureMessage ??
+              _rideCubit.state.failureMessage ??
               'The ride could not be cancelled. Please try again.',
         );
       }
@@ -425,8 +437,13 @@ class _DriverTripPageState extends State<DriverTripPage> {
             latitude: latitude,
             longitude: longitude,
             zoom: 15,
-            onMapCreated: (controller) =>
-                _onMapCreated(controller, latitude, longitude),
+            onMapCreated: (controller) => _mapController = controller,
+            onMapLoaded: () {
+              final controller = _mapController;
+              if (mounted && controller != null) {
+                _onMapCreated(controller, latitude, longitude);
+              }
+            },
           );
         }
         return PopScope(
@@ -460,6 +477,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
                           maxHeight: constraints.maxHeight * 0.72,
                         ),
                         child: SingleChildScrollView(
+                          key: _panelKey,
                           child: DriverTripPanel(
                             state: state,
                             pickup: widget.pickup,

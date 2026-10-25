@@ -24,6 +24,7 @@ final class UpdateLocationsAndDrawRouteEvent extends LiveMapEvent {
     required this.driverLongitude,
     required this.passengerLatitude,
     required this.passengerLongitude,
+    this.viewportPadding,
     this.routeTargetLatitude,
     this.routeTargetLongitude,
   });
@@ -32,6 +33,7 @@ final class UpdateLocationsAndDrawRouteEvent extends LiveMapEvent {
   final double driverLongitude;
   final double? passengerLatitude;
   final double? passengerLongitude;
+  final EdgeInsets? viewportPadding;
   final double? routeTargetLatitude;
   final double? routeTargetLongitude;
 }

@@ -491,6 +491,7 @@ class _AppMapViewState extends State<_AppMapView> {
   AppMapController? _mapController;
   bool _mapLoaded = false;
   bool _mapLoadFailed = false;
+  (String, int)? _preparingMap;
   int _mapGeneration = 0;
 
   @override
@@ -503,6 +504,43 @@ class _AppMapViewState extends State<_AppMapView> {
     }
   }
 
+  Future<void> _finishLoading((String, int) identity) async {
+    if (!mounted ||
+        _mapLoaded ||
+        _preparingMap == identity ||
+        identity != (widget.styleUri, _mapGeneration))
+      return;
+    _preparingMap = identity;
+    try {
+      final controller = _mapController;
+      if (controller != null) {
+        await Future.wait([
+          controller.native.logo.updateSettings(
+            mapbox.LogoSettings(enabled: false),
+          ),
+          controller.native.attribution.updateSettings(
+            mapbox.AttributionSettings(enabled: false),
+          ),
+          controller.native.scaleBar.updateSettings(
+            mapbox.ScaleBarSettings(enabled: false),
+          ),
+        ]);
+      }
+      if (!mounted || identity != (widget.styleUri, _mapGeneration)) return;
+      setState(() {
+        _mapLoaded = true;
+        _mapLoadFailed = false;
+      });
+      widget.onMapLoaded?.call();
+    } catch (_) {
+      if (mounted && identity == (widget.styleUri, _mapGeneration)) {
+        setState(() => _mapLoadFailed = true);
+      }
+    } finally {
+      if (_preparingMap == identity) _preparingMap = null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final mapIdentity = (widget.styleUri, _mapGeneration);
@@ -510,6 +548,7 @@ class _AppMapViewState extends State<_AppMapView> {
       key: ValueKey(mapIdentity),
       // ignore: experimental_member_use
       androidHostingMode: mapbox.AndroidPlatformViewHostingMode.TLHC_HC,
+      textureView: true,
       styleUri: widget.styleUri,
       viewport: mapbox.CameraViewportState(
         center: mapbox.Point(
@@ -518,17 +557,7 @@ class _AppMapViewState extends State<_AppMapView> {
         zoom: widget.zoom,
         padding: widget.padding,
       ),
-      onMapLoadedListener: (_) {
-        if (!mounted ||
-            _mapLoaded ||
-            mapIdentity != (widget.styleUri, _mapGeneration))
-          return;
-        setState(() {
-          _mapLoaded = true;
-          _mapLoadFailed = false;
-        });
-        widget.onMapLoaded?.call();
-      },
+      onMapLoadedListener: (_) => unawaited(_finishLoading(mapIdentity)),
       onMapLoadErrorListener: (_) {
         if (!mounted ||
             _mapLoaded ||
@@ -552,19 +581,6 @@ class _AppMapViewState extends State<_AppMapView> {
       onMapCreated: (controller) {
         if (!mounted || mapIdentity != (widget.styleUri, _mapGeneration))
           return;
-        unawaited(
-          controller.logo.updateSettings(mapbox.LogoSettings(enabled: false)),
-        );
-        unawaited(
-          controller.attribution.updateSettings(
-            mapbox.AttributionSettings(enabled: false),
-          ),
-        );
-        unawaited(
-          controller.scaleBar.updateSettings(
-            mapbox.ScaleBarSettings(enabled: false),
-          ),
-        );
 
         if (!widget.interactive) {
           unawaited(

@@ -61,12 +61,13 @@ class _RideCancellationSheetState extends State<RideCancellationSheet> {
               ),
             ),
             const SizedBox(height: 16),
-            AppSelectField<String>(
+            AppSelectField<String>.anchored(
               key: const ValueKey('driver-cancellation-reason-dropdown'),
               value: _selectedReason,
               menuTitle: 'Reason for cancellation',
               decoration: const InputDecoration(
                 labelText: 'Reason for cancellation',
+                hintText: 'Select a reason',
               ),
               options: [
                 for (final entry
@@ -109,7 +110,7 @@ class _RideCancellationSheetState extends State<RideCancellationSheet> {
         ),
       ),
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Keep ride'),
         ),

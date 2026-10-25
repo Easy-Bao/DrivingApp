@@ -66,7 +66,6 @@ class _HomePageState extends State<HomePage> {
   late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
   bool _isSavedPlaceFlowOpen = false;
   bool _isNavigationInFlight = false;
-  String? _serverErrorMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +79,7 @@ class _HomePageState extends State<HomePage> {
               previous.errorMessage != current.errorMessage &&
               current.errorMessage != null,
           listener: (context, state) {
-            setState(() => _serverErrorMessage = state.errorMessage);
+            AppSnackBar.show(context, state.errorMessage!, isError: true);
           },
         ),
         BlocListener<SessionBloc, SessionState>(
@@ -127,17 +126,9 @@ class _HomePageState extends State<HomePage> {
       child: Scaffold(
         body: Column(
           children: [
-            if (_serverErrorMessage != null)
-              AppStatusBanner(
-                isVisible: true,
-                message: _serverErrorMessage!,
-                tone: AppStatusBannerTone.error,
-                actionLabel: 'Dismiss',
-                onAction: () => setState(() => _serverErrorMessage = null),
-              ),
             Expanded(
               child: SafeArea(
-                top: _serverErrorMessage == null,
+                top: true,
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(

@@ -49,7 +49,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   bool _isDirty = false;
   bool _isSaving = false;
   String? _nameError;
-  String? _submissionError;
 
   @override
   void initState() {
@@ -139,10 +138,11 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     setState(() => _isSaving = false);
     if (!didUpdate) {
       final state = BlocProvider.of<ProfileCubit>(context).state;
-      setState(() {
-        _submissionError =
-            state.errorMessage ?? "Couldn't update your profile. Try again.";
-      });
+      AppSnackBar.show(
+        context,
+        state.errorMessage ?? "Couldn't update your profile. Try again.",
+        isError: true,
+      );
       return;
     }
 
@@ -152,7 +152,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
   void _clearErrors() {
     _nameError = null;
-    _submissionError = null;
   }
 
   Future<void> _pickPhoto() async {
@@ -178,9 +177,10 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
         }
         if (fileSize != null && fileSize > 5 * 1024 * 1024) {
           if (!mounted) return;
-          setState(
-            () => _submissionError =
-                'Selected photo exceeds 5MB. Choose a smaller image.',
+          AppSnackBar.show(
+            context,
+            'Selected photo exceeds 5MB. Choose a smaller image.',
+            isError: true,
           );
           return;
         }
@@ -198,7 +198,11 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
         stackTrace: stackTrace,
       );
       if (!mounted) return;
-      setState(() => _submissionError = 'Unable to choose a photo. Try again.');
+      AppSnackBar.show(
+        context,
+        'Unable to choose a photo. Try again.',
+        isError: true,
+      );
     }
   }
 
@@ -266,14 +270,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          if (_submissionError != null) ...[
-                            AppStatusBanner(
-                              isVisible: true,
-                              message: _submissionError!,
-                              tone: AppStatusBannerTone.error,
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                          ],
                           _buildProfileHeader(),
                           const SizedBox(height: AppSpacing.xxl * 1.5),
                           _buildDetailsSection(),

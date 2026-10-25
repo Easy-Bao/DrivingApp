@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/core/location/live_map_bloc.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
@@ -19,7 +18,6 @@ class TrackDriverPageLoader extends StatefulWidget {
     required this.chatRepositoryFactory,
     required this.sessionService,
     required this.lifecycleCoordinator,
-    required this.liveMapBloc,
     required this.onRideTerminated,
     this.rideId,
     this.realtimeClient,
@@ -29,7 +27,6 @@ class TrackDriverPageLoader extends StatefulWidget {
   final ChatRepositoryFactory chatRepositoryFactory;
   final SessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
-  final LiveMapBloc liveMapBloc;
   final VoidCallback onRideTerminated;
   final String? rideId;
   final RealtimeWebSocketClient? realtimeClient;
@@ -130,7 +127,6 @@ class _TrackDriverPageLoaderState extends State<TrackDriverPageLoader> {
       chatRepositoryFactory: widget.chatRepositoryFactory,
       sessionService: widget.sessionService,
       lifecycleCoordinator: widget.lifecycleCoordinator,
-      liveMapBloc: widget.liveMapBloc,
       onRideTerminated: widget.onRideTerminated,
       realtimeClient: widget.realtimeClient,
     );

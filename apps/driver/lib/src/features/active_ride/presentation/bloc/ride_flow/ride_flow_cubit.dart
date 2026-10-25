@@ -440,18 +440,15 @@ class RideFlowCubit({
     } finally {
       if (_isCurrentAction(actionGeneration)) {
         _isActionInFlight = false;
-        if (state is RideFlowError &&
-            (tripBeforeAction is DriverEnRoute ||
-                tripBeforeAction is TripInProgress)) {
-          _lastActionFailureMessage = state.failureMessage;
-          emit(tripBeforeAction);
-        }
+        _restoreTripAfterFailedAction(tripBeforeAction, actionGeneration);
       }
     }
   }
 
   Future<bool> markPassengerNoShow() async {
     if (_isActionInFlight || _activeRideId == null) return false;
+    final tripBeforeAction = state;
+    _lastActionFailureMessage = null;
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
     try {
@@ -472,6 +469,7 @@ class RideFlowCubit({
       _waitStartedAt = null;
       _elapsedWaitTime = 0;
       await _clearActiveRideSession();
+      if (!_isCurrentAction(actionGeneration)) return false;
       emit(const RideFlowInitial());
       return true;
     } catch (error) {
@@ -480,12 +478,17 @@ class RideFlowCubit({
       }
       return false;
     } finally {
-      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
+      if (_isCurrentAction(actionGeneration)) {
+        _isActionInFlight = false;
+        _restoreTripAfterFailedAction(tripBeforeAction, actionGeneration);
+      }
     }
   }
 
   Future<bool> cancelRide({required String reason, String details = ''}) async {
     if (_isActionInFlight || _activeRideId == null) return false;
+    final tripBeforeAction = state;
+    _lastActionFailureMessage = null;
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
     try {
@@ -518,7 +521,10 @@ class RideFlowCubit({
       }
       return false;
     } finally {
-      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
+      if (_isCurrentAction(actionGeneration)) {
+        _isActionInFlight = false;
+        _restoreTripAfterFailedAction(tripBeforeAction, actionGeneration);
+      }
     }
   }
 
@@ -527,6 +533,8 @@ class RideFlowCubit({
     String details = '',
   }) async {
     if (_isActionInFlight || _activeRideId == null) return false;
+    final tripBeforeAction = state;
+    _lastActionFailureMessage = null;
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
     try {
@@ -561,7 +569,29 @@ class RideFlowCubit({
       }
       return false;
     } finally {
-      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
+      if (_isCurrentAction(actionGeneration)) {
+        _isActionInFlight = false;
+        _restoreTripAfterFailedAction(tripBeforeAction, actionGeneration);
+      }
+    }
+  }
+
+  void _restoreTripAfterFailedAction(RideState previous, int generation) {
+    if (state is! RideFlowError ||
+        (previous is! DriverEnRoute && previous is! TripInProgress))
+      return;
+    _lastActionFailureMessage = state.failureMessage;
+    if (previous is DriverEnRoute && previous.isWaitingAtPickup) {
+      _startWaitTimer(
+        actionGeneration: generation,
+        passengerName: previous.passengerName,
+        pickupLatitude: previous.pickupLatitude,
+        pickupLongitude: previous.pickupLongitude,
+        destinationLatitude: previous.destinationLatitude,
+        destinationLongitude: previous.destinationLongitude,
+      );
+    } else {
+      emit(previous);
     }
   }
 
@@ -858,12 +888,7 @@ class RideFlowCubit({
     } finally {
       if (_isCurrentAction(actionGeneration)) {
         _isActionInFlight = false;
-        if (state is RideFlowError &&
-            (tripBeforeAction is DriverEnRoute ||
-                tripBeforeAction is TripInProgress)) {
-          _lastActionFailureMessage = state.failureMessage;
-          emit(tripBeforeAction);
-        }
+        _restoreTripAfterFailedAction(tripBeforeAction, actionGeneration);
       }
     }
   }

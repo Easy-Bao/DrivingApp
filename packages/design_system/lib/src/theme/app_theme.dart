@@ -40,15 +40,11 @@ abstract final class AppTheme {
         titleTextStyle: textTheme.titleLarge,
       ),
       inputDecorationTheme: AppComponentThemes.input(colors, textTheme),
-      iconTheme: IconThemeData(color: colors.onSurface, size: 20),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
+          iconSize: 20,
           minimumSize: const Size.square(AppSize.minimumTouchTarget),
           tapTargetSize: MaterialTapTargetSize.padded,
-          foregroundColor: colors.onSurface,
-          disabledForegroundColor: colors.onSurfaceVariant.withValues(
-            alpha: 0.38,
-          ),
         ),
       ),
       cardTheme: AppComponentThemes.card(colors),

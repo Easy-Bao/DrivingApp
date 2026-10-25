@@ -225,8 +225,6 @@ class _ShellLayoutState extends State<ShellLayout> {
     );
   }
 
-  String? _sessionErrorMessage;
-
   @override
   Widget build(BuildContext context) {
     final selectedIndex = widget.navigationCoordinator.selectedIndex;
@@ -242,9 +240,6 @@ class _ShellLayoutState extends State<ShellLayout> {
       listener: (_, state) {
         switch (state) {
           case AuthenticatedSession():
-            if (_sessionErrorMessage != null) {
-              setState(() => _sessionErrorMessage = null);
-            }
             unawaited(_loadInboxNotifications());
           case SessionFailure(:final message):
             _forceHomeForGuest();
@@ -254,7 +249,7 @@ class _ShellLayoutState extends State<ShellLayout> {
             if (!widget.inboxCubit.isClosed) {
               widget.inboxCubit.clearSessionData();
             }
-            setState(() => _sessionErrorMessage = message);
+            AppSnackBar.show(context, message, isError: true);
           case GuestSession():
             _forceHomeForGuest();
             _loadedInboxPassengerId = null;
@@ -277,20 +272,10 @@ class _ShellLayoutState extends State<ShellLayout> {
         },
         child: Column(
           children: [
-            if (_sessionErrorMessage != null)
-              AppStatusBanner(
-                isVisible: true,
-                message: _sessionErrorMessage!,
-                tone: AppStatusBannerTone.error,
-                actionLabel: 'Dismiss',
-                onAction: () => setState(() => _sessionErrorMessage = null),
-              ),
             Expanded(
               child: MediaQuery.removePadding(
                 context: context,
-                removeTop:
-                    _sessionErrorMessage != null &&
-                    !AppNetworkStatusScope.isUnavailableOf(context),
+                removeTop: false,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [

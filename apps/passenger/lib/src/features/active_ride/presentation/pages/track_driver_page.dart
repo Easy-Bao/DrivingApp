@@ -9,7 +9,6 @@ import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
-import 'package:passenger/src/core/location/live_map_bloc.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
@@ -61,7 +60,6 @@ class const TrackDriverPage({
   required this.chatRepositoryFactory,
   required this.sessionService,
   required this.lifecycleCoordinator,
-  required this.liveMapBloc,
   required this.onRideTerminated,
   this.realtimeClient,
 }) extends StatefulWidget {
@@ -70,7 +68,6 @@ class const TrackDriverPage({
   final ChatRepositoryFactory chatRepositoryFactory;
   final SessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
-  final LiveMapBloc liveMapBloc;
   final VoidCallback onRideTerminated;
   final RealtimeWebSocketClient? realtimeClient;
 
@@ -95,8 +92,10 @@ class _MapUpdateRequest {
 }
 
 class _TrackDriverPageState extends State<TrackDriverPage> {
+  final _panelKey = GlobalKey();
   AppMapController? _mapController;
   bool _initialized = false;
+  bool _isMapReady = false;
   bool _hasFittedInitialMap = false;
   bool _isUpdatingMap = false;
   _MapUpdateRequest? _pendingMapUpdate;
@@ -106,7 +105,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   MapPointAnnotationManager? _driverMarkerManager;
   MapPolylineAnnotationManager? _routeLineManager;
   StreamSubscription<Position>? _locationSubscription;
-  LiveMapBloc? _liveMapBloc;
 
   int _unreadChatMessagesCount = 0;
   DateTime? _chatReadAt;
@@ -115,18 +113,11 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   String _passengerIdentifier = '';
   bool _isCancellingTrip = false;
   bool _isPollingChat = false;
-  String? _errorMessage;
-  StreamSubscription<RealtimeConnectionState>? _realtimeStateSubscription;
-  bool _isTransportRetrying = false;
 
   @override
   Widget build(BuildContext context) {
     final passengerLat = widget.ride.pickupLatitude ?? 0.0;
     final passengerLng = widget.ride.pickupLongitude ?? 0.0;
-    final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
-    final hasTopBanner =
-        (_isTransportRetrying || _errorMessage != null) &&
-        !isNetworkUnavailable;
 
     return BlocListener<TrackDriverCubit, TrackDriverState>(
       listener: (context, state) {
@@ -206,6 +197,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                       zoom: 14.5,
                       interactive: true,
                       onMapCreated: _onMapCreated,
+                      onMapLoaded: _onMapReady,
                     ),
                   ),
                 ),
@@ -219,22 +211,8 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    AppStatusBanner(
-                      isVisible: _isTransportRetrying && _errorMessage == null,
-                      message:
-                          'Reconnecting live updates. Trip tracking continues.',
-                      tone: AppStatusBannerTone.warning,
-                    ),
-                    if (_errorMessage != null)
-                      AppStatusBanner(
-                        isVisible: true,
-                        message: _errorMessage!,
-                        tone: AppStatusBannerTone.error,
-                        actionLabel: 'Dismiss',
-                        onAction: () => setState(() => _errorMessage = null),
-                      ),
                     SafeArea(
-                      top: !hasTopBanner,
+                      top: true,
                       bottom: false,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -295,6 +273,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                               maxHeight: constraints.maxHeight * 0.65,
                             ),
                             child: SingleChildScrollView(
+                              key: _panelKey,
                               child: TrackDriverPanel(
                                 ride: widget.ride,
                                 statusTitle: statusTitle,
@@ -354,11 +333,9 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   @override
   void dispose() {
     widget.realtimeClient?.setActiveTripResyncHandler(null);
-    unawaited(_realtimeStateSubscription?.cancel());
     unawaited(_locationSubscription?.cancel());
     unawaited(_chatMessagesPollingTask.dispose());
     unawaited(_chatRepository?.dispose());
-    unawaited(_liveMapBloc?.close());
     for (final manager in <MapBaseAnnotationManager?>[
       _routeLineManager,
       _passengerMarkerManager,
@@ -366,22 +343,15 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     ]) {
       unawaited(MapProvider.clearAnnotations(manager));
     }
+    _mapController = null;
+    _pendingMapUpdate = null;
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    _liveMapBloc = widget.liveMapBloc;
     widget.realtimeClient?.setActiveTripResyncHandler(_resyncActiveTrip);
-    _realtimeStateSubscription = widget.realtimeClient?.states.listen((state) {
-      if (!mounted) return;
-      final retrying =
-          state is RealtimeDisconnected || state is RealtimeConnecting;
-      if (_isTransportRetrying != retrying) {
-        setState(() => _isTransportRetrying = retrying);
-      }
-    });
     _chatMessagesPollingTask = AppLifecyclePeriodicTask(
       lifecycleCoordinator: widget.lifecycleCoordinator,
       interval: const Duration(seconds: 4),
@@ -400,11 +370,19 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       final canceled = await BlocProvider.of<TrackDriverCubit>(context)
           .cancelTripRequest(reason: reason);
       if (mounted && !canceled) {
-        setState(() => _errorMessage = "Couldn't cancel the ride. Try again.");
+        AppSnackBar.show(
+          context,
+          "Couldn't cancel the ride. Try again.",
+          isError: true,
+        );
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _errorMessage = "Couldn't cancel the ride. Try again.");
+        AppSnackBar.show(
+          context,
+          "Couldn't cancel the ride. Try again.",
+          isError: true,
+        );
       }
     } finally {
       if (mounted) setState(() => _isCancellingTrip = false);
@@ -490,6 +468,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     if (!mounted || passengerIdentifier.isEmpty) return;
     _passengerIdentifier = passengerIdentifier;
     _chatReadAt = await widget.sessionService.readChatReadAt(widget.ride.id);
+    if (!mounted) return;
     _chatRepository = widget.chatRepositoryFactory.create(
       currentUserId: passengerIdentifier,
     );
@@ -509,6 +488,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         if (createdAt.isAfter(readAt)) readAt = createdAt;
       }
     });
+    if (!mounted) return;
     _chatReadAt = readAt;
     await widget.sessionService.saveChatReadAt(widget.ride.id, readAt);
     if (!mounted) return;
@@ -517,7 +497,29 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
 
   void _onMapCreated(AppMapController controller) {
     _mapController = controller;
+    _isMapReady = false;
+    _hasFittedInitialMap = false;
+    _lastCameraFitAt = null;
+    for (final manager in <MapBaseAnnotationManager?>[
+      _routeLineManager,
+      _passengerMarkerManager,
+      _driverMarkerManager,
+    ]) {
+      unawaited(MapProvider.clearAnnotations(manager));
+    }
+    _routeLineManager = null;
+    _passengerMarkerManager = null;
+    _driverMarkerManager = null;
+    _startTracking();
+  }
+
+  void _onMapReady() {
+    if (!mounted || _mapController == null) return;
+    _isMapReady = true;
     _flushPendingMapUpdate();
+  }
+
+  void _startTracking() {
     if (!_initialized) {
       _initialized = true;
       final passengerLat = widget.ride.pickupLatitude ?? 0.0;
@@ -577,7 +579,8 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       status: status,
       driverName: driverName,
     );
-    if (mapController == null || _isUpdatingMap) {
+    if (!mounted || !identical(_mapController, mapController)) return;
+    if (mapController == null || !_isMapReady || _isUpdatingMap) {
       _pendingMapUpdate = request;
       return;
     }
@@ -603,6 +606,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         await MapProvider.clearAnnotations(_routeLineManager);
         _routeLineManager = null;
       }
+      if (!mounted || !identical(_mapController, mapController)) return;
       final destinationLatitude = isInTransit
           ? targetLatitude
           : passengerLatitude;
@@ -620,6 +624,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
             : TripMapMarkerStyle.ownLocation,
         animate: false,
       );
+      if (!mounted || !identical(_mapController, mapController)) return;
       _driverMarkerManager = await _upsertMarker(
         _driverMarkerManager,
         mapController,
@@ -629,6 +634,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         color: TripMapMarkerStyle.tripLocation,
         animate: true,
       );
+      if (!mounted || !identical(_mapController, mapController)) return;
       final now = DateTime.now();
       if (!_hasFittedInitialMap ||
           _lastCameraFitAt == null ||
@@ -639,7 +645,14 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
             LatLng(targetLatitude, targetLongitude),
             LatLng(driverLatitude, driverLongitude),
           ],
-          padding: 72.0,
+          viewportPadding: EdgeInsets.fromLTRB(
+            40,
+            MediaQuery.paddingOf(context).top + 72,
+            40,
+            (_panelKey.currentContext?.size?.height ?? 320) +
+                MediaQuery.paddingOf(context).bottom +
+                32,
+          ),
           maxZoom: 15.0,
         );
         _hasFittedInitialMap = true;
@@ -697,7 +710,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     bool animate = false,
   }) async {
     if (annotationManager == null) {
-      return MapProvider.addMarker(
+      final manager = await MapProvider.addMarker(
         mapController,
         lat,
         lng,
@@ -705,6 +718,11 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         color: color,
         label: label,
       );
+      if (!mounted || !identical(_mapController, mapController)) {
+        await MapProvider.clearAnnotations(manager);
+        throw StateError('Trip map was disposed during marker creation.');
+      }
+      return manager;
     }
     await MapProvider.replaceMarker(
       annotationManager,
@@ -726,12 +744,17 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     if (!mounted) return annotationManager;
     final color = context.colorScheme.onSurface;
     if (annotationManager == null) {
-      return MapProvider.addPolylineBuffer(
+      final manager = await MapProvider.addPolylineBuffer(
         mapController,
         routeCoordinates,
         color: color,
         width: 4.0,
       );
+      if (!mounted || !identical(_mapController, mapController)) {
+        await MapProvider.clearAnnotations(manager);
+        return null;
+      }
+      return manager;
     }
     await MapProvider.replacePolylineBuffer(
       annotationManager,

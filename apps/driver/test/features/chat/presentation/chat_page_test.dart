@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/chat/chat.dart';
 import 'package:driver/src/features/chat/domain/entities/chat_peer.dart';
 import 'package:driver/src/features/chat/presentation/view/driver_chat_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -14,6 +16,76 @@ class MockRepository extends Mock implements ChatRepository {}
 class MockFactory extends Mock implements ChatRepositoryFactory {}
 
 void main() {
+  testWidgets('camera and photo file actions open the matching image source', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    dotenv.loadFromString(envString: 'API_BASE_URL=http://localhost:8080');
+    addTearDown(dotenv.clean);
+    registerFallbackValue(Uint8List(0));
+    final repository = MockRepository();
+    final factory = MockFactory();
+    when(() => factory.create(currentUserId: '7')).thenReturn(repository);
+    when(() => repository.fetchPeer('ride-1'))
+        .thenAnswer((_) async => const Err(NetworkFailure('Unavailable')));
+    when(() => repository.initializeChatRoom(roomId: 'ride-1'))
+        .thenAnswer((_) async => const Ok(null));
+    when(() => repository.connectionStateStream)
+        .thenAnswer((_) => const Stream.empty());
+    when(() => repository.chatEventsStream)
+        .thenAnswer((_) => const Stream.empty());
+    when(
+      () => repository.establishChatConnection(
+        roomId: 'ride-1',
+        chatUri: Uri.parse('ws://localhost:8080/api/v1/chat/ws?roomId=ride-1'),
+        token: null,
+      ),
+    ).thenAnswer((_) async => const Ok(null));
+    when(() => repository.fetchRoomMessages('ride-1'))
+        .thenAnswer((_) async => const Ok([]));
+    when(() => repository.terminateChatConnection())
+        .thenAnswer((_) async => const Ok(null));
+    when(() => repository.dispose()).thenAnswer((_) async {});
+    final sources = <int>[];
+    const channel = MethodChannel('plugins.flutter.io/image_picker');
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+      call,
+    ) async {
+      if (call.method == 'pickImage')
+        sources.add((call.arguments as Map)['source'] as int);
+      return null;
+    });
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        null,
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        home: ChatPage(
+          roomId: 'ride-1',
+          userId: '7',
+          chatRepositoryFactory: factory,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Take photo'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Attach photo file'));
+    await tester.pumpAndSettle();
+    expect(sources, [0, 1]);
+    verifyNever(() => repository.sendImage(any(), any()));
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
+
   for (final scenario in [
     'allowed',
     'denied',
@@ -242,7 +314,8 @@ void main() {
     expect(find.byType(CircleAvatar), findsOneWidget);
     expect(find.byType(Image), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
-    expect(find.byTooltip('Send picture'), findsNothing);
+    expect(find.byTooltip('Take photo'), findsNothing);
+    expect(find.byTooltip('Attach photo file'), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
