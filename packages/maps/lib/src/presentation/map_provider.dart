@@ -613,10 +613,11 @@ class _AppMapViewState extends State<_AppMapView> {
                     children: [
                       if (_mapLoadFailed) ...[
                         const Text(
-                          'Unable to load the map. Check your connection.',
+                          'The map couldn’t load. Please try again.',
+                          textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 12),
-                        OutlinedButton(
+                        FilledButton(
                           onPressed: () => setState(() {
                             _mapController = null;
                             _mapLoadFailed = false;

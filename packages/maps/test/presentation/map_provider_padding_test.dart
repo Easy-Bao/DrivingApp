@@ -73,6 +73,11 @@ void main() {
     );
     await tester.pump();
     expect(find.text('Retry'), findsOneWidget);
+    expect(
+      find.text('The map couldn’t load. Please try again.'),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(FilledButton, 'Retry'), findsOneWidget);
     await tester.tap(find.text('Retry'));
     await tester.pump();
     expect(tester.widget<MapWidget>(find.byType(MapWidget)).key, isNot(oldKey));
