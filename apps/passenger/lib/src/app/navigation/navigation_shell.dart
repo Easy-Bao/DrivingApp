@@ -146,8 +146,15 @@ class _ShellLayoutState extends State<ShellLayout> {
 
   bool _onActivityScroll(ScrollNotification notification) {
     if (widget.navigationCoordinator.selectedIndex != 1 ||
-        notification.metrics.axis != Axis.vertical ||
         MediaQuery.accessibleNavigationOf(context)) {
+      return false;
+    }
+    if (notification.metrics.axis == Axis.horizontal) {
+      if (notification is ScrollStartNotification &&
+          notification.dragDetails != null &&
+          !_activityTabBarVisible) {
+        setState(() => _activityTabBarVisible = true);
+      }
       return false;
     }
     bool? visible;
@@ -377,7 +384,10 @@ class _ShellLayoutState extends State<ShellLayout> {
                                         ? Offset.zero
                                         : const Offset(0, 1),
                                     duration:
-                                        MediaQuery.disableAnimationsOf(context)
+                                        visible ||
+                                            MediaQuery.disableAnimationsOf(
+                                              context,
+                                            )
                                         ? Duration.zero
                                         : const Duration(milliseconds: 180),
                                     curve: Curves.easeOutCubic,

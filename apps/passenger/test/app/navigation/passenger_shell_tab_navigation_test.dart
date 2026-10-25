@@ -347,7 +347,28 @@ void main() {
       await tester.drag(list, const Offset(0, -300));
       await tester.pumpAndSettle();
       expect(offset(), const Offset(0, 1));
+      final tabSwipe = await tester.startGesture(tester.getCenter(list));
+      await tabSwipe.moveBy(const Offset(100, 0));
+      await tester.pump();
+      expect(
+        find.text('Inbox').hitTestable(),
+        findsOneWidget,
+        reason: 'navigation is visible while the tab swipe is still underway',
+      );
+      await tabSwipe.moveBy(const Offset(-100, 0));
+      await tabSwipe.up();
+      await tester.pumpAndSettle();
+      await tester.drag(list, const Offset(0, -100));
+      await tester.pumpAndSettle();
+      expect(offset(), const Offset(0, 1));
       router.goNamed(HomeRoutes.home);
+      await tester.pump();
+      await tester.pump();
+      expect(
+        find.text('Inbox').hitTestable(),
+        findsOneWidget,
+        reason: 'route changes reveal navigation without a slide delay',
+      );
       await tester.pumpAndSettle();
       expect(offset(), Offset.zero);
       await tester.drag(
