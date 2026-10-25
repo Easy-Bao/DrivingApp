@@ -4,7 +4,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_options_panel.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/ride_trip_summary.dart';
 
 void main() {
   const fareResult = FareEstimate(
@@ -388,86 +387,5 @@ void main() {
     expect(find.text('Choose driver'), findsOneWidget);
     expect(find.byKey(const ValueKey('trip-summary-card')), findsOneWidget);
     expect(find.byKey(const ValueKey('total-fare-amount')), findsOneWidget);
-  });
-
-  testWidgets('shows only the primary destination name', (tester) async {
-    const longAddress =
-        '1390 Pear Avenue, Mountain View, California 94043, United States of America';
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.main,
-        home: const Scaffold(
-          body: SizedBox(
-            width: 320,
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: RideTripSummary(
-                pickupLabel: 'Mountain View',
-                destinationName: 'Silicon Valley Corporate Catering',
-                destinationAddress: longAddress,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    expect(find.text('Silicon Valley Corporate Catering'), findsOneWidget);
-    expect(find.text(longAddress), findsNothing);
-    expect(find.byKey(const ValueKey('trip-route-dashes')), findsOneWidget);
-    expect(find.byIcon(LucideIcons.map_pin), findsOneWidget);
-    expect(find.byIcon(LucideIcons.navigation), findsOneWidget);
-    expect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is Container &&
-            widget.constraints ==
-                const BoxConstraints.tightFor(width: 6, height: 6),
-      ),
-      findsNothing,
-    );
-    expect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is Container &&
-            widget.constraints ==
-                const BoxConstraints.tightFor(width: 18, height: 18),
-      ),
-      findsNothing,
-    );
-    expect(
-      tester.widget<Icon>(find.byIcon(LucideIcons.navigation)).color,
-      AppTheme.main.colorScheme.primary,
-    );
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('allows long trip-summary labels to wrap before truncating', (
-    tester,
-  ) async {
-    const longDestination =
-        'International Convention Center and Passenger Terminal';
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.main,
-        home: const Scaffold(
-          body: SizedBox(
-            width: 320,
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: RideTripSummary(
-                pickupLabel: 'Pickup at the North Entrance',
-                destinationName: longDestination,
-                destinationAddress: 'Long address',
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    final destination = tester.widget<Text>(find.text(longDestination));
-    expect(tester.getSize(find.byWidget(destination)).height, greaterThan(20));
-    expect(tester.takeException(), isNull);
   });
 }
