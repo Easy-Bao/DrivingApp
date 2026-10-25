@@ -63,6 +63,11 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(
+      tester.getTopLeft(find.text('Mark all as read')).dy,
+      lessThan(tester.getBottomLeft(find.text('Inbox')).dy),
+      reason: 'bulk action belongs beside the heading',
+    );
     await tester.tap(find.text('Mark all as read'));
     await tester.pump();
     expect(find.text('Marking…'), findsOneWidget);
@@ -74,6 +79,82 @@ void main() {
     expect(button.onPressed, isNull);
     verify(() => repository.markAllPassengerNotificationsAsRead('p')).called(1);
   });
+
+  testWidgets(
+    'bulk read failure stays contextual and retry works at narrow large text',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final session = MockSessionBloc();
+      when(() => session.state)
+          .thenReturn(const AuthenticatedSession(passengerId: 'p'));
+      final repository = MockInboxRepository();
+      when(() => repository.fetchPassengerNotifications('p')).thenAnswer(
+        (_) async => Ok([
+          InboxNotification(
+            id: '1',
+            title: 'Ride completed',
+            message: 'Receipt ready',
+            timestamp: DateTime(2026),
+            type: 'ride',
+            isRead: false,
+          ),
+        ]),
+      );
+      when(
+        () => repository.markAllPassengerNotificationsAsRead('p'),
+      ).thenAnswer(
+        (_) async =>
+            const Err(ServerFailure.withStatusCode('Method not allowed', 405)),
+      );
+      final cubit = InboxCubit(inboxRepository: repository);
+      addTearDown(cubit.close);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(1.8)),
+            child: child!,
+          ),
+          home: BlocProvider<SessionBloc>.value(
+            value: session,
+            child: InboxPage(
+              inboxCubit: cubit,
+              sessionService: MockSessionStore(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.getTopLeft(find.text('Mark all as read')).dy,
+        greaterThan(
+          tester.getBottomLeft(find.text('Messages and receipts')).dy,
+        ),
+      );
+      await tester.tap(find.text('Mark all as read'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Couldn’t mark notifications as read. Try again.'),
+        findsOneWidget,
+      );
+      expect(
+        (cubit.state as InboxLoadedState).notifications.single.isRead,
+        isFalse,
+      );
+      when(() => repository.markAllPassengerNotificationsAsRead('p'))
+          .thenAnswer((_) async => const Ok(null));
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AppErrorBanner), findsNothing);
+      expect(
+        (cubit.state as InboxLoadedState).notifications.single.isRead,
+        isTrue,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('shows notification skeleton while session is pending', (
     tester,

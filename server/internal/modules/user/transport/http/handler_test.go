@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/app"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/domain"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
@@ -158,5 +159,30 @@ func TestMarkAllNotificationsRead(t *testing.T) {
 				t.Fatalf("marked user = %d, want %d", store.markedUser, tt.markedUser)
 			}
 		})
+	}
+}
+
+func TestRegisteredMarkAllReadRoute(t *testing.T) {
+	manager := security.NewTokenManager("user-handler-test-secret")
+	store := &notificationStore{}
+	routeSecurity := middleware.NewRouteSecurity(middleware.RouteSecurityDependencies{
+		Idempotency: middleware.NewIdempotency(middleware.IdempotencyDependencies{Store: middleware.NewMemoryIdempotencyStore()}),
+	})
+	router := chi.NewRouter()
+	NewRouter(Dependencies{Service: app.NewProfileService(app.ProfileServiceDependencies{Repository: store}), Verifier: manager, RouteSecurity: routeSecurity}).RegisterRoutes(router)
+	token, err := manager.IssueWithRole("9", "passenger")
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/passengers/9/notifications/read-all", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Idempotency-Key", "notification-read-test")
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+	if recorder.Code != http.StatusNoContent {
+		t.Fatalf("status=%d body=%s", recorder.Code, recorder.Body.String())
+	}
+	if store.markedUser != 9 {
+		t.Fatalf("marked user=%d", store.markedUser)
 	}
 }

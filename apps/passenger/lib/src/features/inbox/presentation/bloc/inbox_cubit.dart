@@ -168,7 +168,11 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
         if (latest is InboxLoadedState) {
           _emitLoaded(
             latest.copyWith(
-              markAllReadError: ErrorHandler.getErrorMessage(failure),
+              markAllReadError: switch (ErrorHandler.getAppFailure(failure)) {
+                AppFailure(type: ErrorType.server || ErrorType.unknown) =>
+                  'Couldn’t mark notifications as read. Try again.',
+                final appFailure => appFailure.userMessage,
+              },
             ),
           );
         }

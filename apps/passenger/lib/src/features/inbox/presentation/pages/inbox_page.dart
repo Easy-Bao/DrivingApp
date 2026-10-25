@@ -193,38 +193,53 @@ class _InboxPageState extends State<InboxPage> {
           ),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              const AppPageHeader(
-                title: 'Inbox',
-                subtitle: 'Messages and receipts',
-              ),
-              if (!isGuest && loadedState != null && notifications.isNotEmpty)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed:
-                        loadedState.isMarkingAllRead ||
-                            !notifications.any((item) => !item.isRead)
-                        ? null
-                        : () => unawaited(
-                            _inboxCubit.markAllNotificationsAsRead(),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final action =
+                      !isGuest &&
+                          loadedState != null &&
+                          notifications.isNotEmpty
+                      ? TextButton(
+                          onPressed:
+                              loadedState.isMarkingAllRead ||
+                                  !notifications.any((item) => !item.isRead)
+                              ? null
+                              : () => unawaited(
+                                  _inboxCubit.markAllNotificationsAsRead(),
+                                ),
+                          child: Text(
+                            loadedState.isMarkingAllRead
+                                ? 'Marking…'
+                                : 'Mark all as read',
                           ),
-                    child: Text(
-                      loadedState.isMarkingAllRead
-                          ? 'Marking…'
-                          : 'Mark all as read',
-                    ),
-                  ),
-                ),
-              if (loadedState?.markAllReadError != null)
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    loadedState!.markAllReadError!,
-                    style: context.textStyles.bodySmall?.copyWith(
-                      color: context.colorScheme.error,
-                    ),
-                  ),
-                ),
+                        )
+                      : null;
+                  final inlineAction =
+                      constraints.maxWidth >= 360 &&
+                      MediaQuery.textScalerOf(context).scale(14) <= 18;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppPageHeader(
+                        title: 'Inbox',
+                        subtitle: 'Messages and receipts',
+                        trailing: inlineAction ? action : null,
+                      ),
+                      if (!inlineAction && action != null) action,
+                      if (loadedState?.markAllReadError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: AppSpacing.sm),
+                          child: AppErrorBanner(
+                            message: loadedState!.markAllReadError!,
+                            onRetry: () => unawaited(
+                              _inboxCubit.markAllNotificationsAsRead(),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
               const SizedBox(height: AppSpacing.sm * 2),
             ]),
           ),
