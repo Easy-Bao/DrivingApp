@@ -338,15 +338,15 @@ final class DashboardRepositoryImpl({
       final tripResult = await tripsFuture;
       final offers = await offersFuture;
       return await tripResult.fold(Err.new, (page) {
-        if (page.items.length > 1) {
-          return const Err(
-            ServerFailure('The server returned multiple active trips.'),
-          );
-        }
-        final activeRide = page.items.isEmpty
-            ? null
-            : RideSnapshot.fromJson(page.items.single);
-        return Ok(DispatchSnapshot(activeRide: activeRide, rideOffers: offers));
+        final activeRides = page.items
+            .map(RideSnapshot.fromJson)
+            .toList(growable: false);
+        return Ok(
+          DispatchSnapshot(
+            activeRides: List.unmodifiable(activeRides),
+            rideOffers: offers,
+          ),
+        );
       });
     } catch (error) {
       return Err(_mapExceptionToFailure(error));

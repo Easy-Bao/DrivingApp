@@ -31,7 +31,7 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
   String? _error;
 
   Map<String, dynamic>? _request(DashboardState state) {
-    if (!state.isOnline || state.hasActiveRide) return null;
+    if (!state.isOnline || state.isAtBookingCapacity) return null;
     for (final bid in [...state.activeBids, ...state.submittedOffers]) {
       if (valueAsString(bid['id']) == widget.sessionId) return bid;
     }

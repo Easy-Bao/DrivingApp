@@ -16,7 +16,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 // ignore: depend_on_referenced_packages
-import 'package:go_router/go_router.dart' show GoRouter;
+import 'package:go_router/go_router.dart' show GoRouter, ShellRoute;
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -27,10 +27,19 @@ class _RideFlow extends MockCubit<RideFlowState> implements RideFlowCubit {}
 class _Location extends MockCubit<LocationAccessViewState>
     implements LocationAccessCubit {}
 
+class _TripObserver extends NavigatorObserver {
+  int pushes = 0;
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (route.settings.name == ActiveRideRoutes.trip) pushes++;
+  }
+}
+
 void main() {
   for (final status in ['accepted', 'arrived', 'in_transit']) {
     for (final scenario in [
       'assignment',
+      'nestedNavigator',
       'restored',
       'retry',
       'review',
@@ -40,7 +49,7 @@ void main() {
       final reviewing =
           scenario == 'review' || scenario == 'closedDuringReview';
       testWidgets(
-        'opens the $status trip stage after $scenario without a dashboard card',
+        'opens the $status trip stage after $scenario once and keeps bookings accessible after Back',
         (tester) async {
           final dashboard = _Dashboard();
           final flow = _RideFlow();
@@ -67,7 +76,7 @@ void main() {
             dashboard,
             states.stream,
             initialState: scenario == 'restored'
-                ? DashboardState(activeRide: trip)
+                ? DashboardState(activeRides: [trip])
                 : const DashboardState(),
           );
           when(() => flow.state).thenReturn(const Idle());
@@ -114,15 +123,31 @@ void main() {
               waitingUntil: any(named: 'waitingUntil'),
             ),
           ).thenAnswer((_) async => true);
+          final observer = _TripObserver();
           final router = GoRouter(
+            observers: [observer],
             routes: [
-              GoRoute(
-                path: '/',
-                builder: (_, _) => DashboardPage(
-                  lifecycleCoordinator: lifecycle,
-                  realtimeClient: realtime,
+              if (scenario == 'nestedNavigator')
+                ShellRoute(
+                  builder: (_, _, child) => child,
+                  routes: [
+                    GoRoute(
+                      path: '/',
+                      builder: (_, _) => DashboardPage(
+                        lifecycleCoordinator: lifecycle,
+                        realtimeClient: realtime,
+                      ),
+                    ),
+                  ],
+                )
+              else
+                GoRoute(
+                  path: '/',
+                  builder: (_, _) => DashboardPage(
+                    lifecycleCoordinator: lifecycle,
+                    realtimeClient: realtime,
+                  ),
                 ),
-              ),
               GoRoute(
                 path: '/trip',
                 name: ActiveRideRoutes.trip,
@@ -145,7 +170,7 @@ void main() {
           );
           await tester.pump();
           if (scenario != 'restored') {
-            states.add(DashboardState(activeRide: trip));
+            states.add(DashboardState(activeRides: [trip]));
           }
           if (reviewing) {
             for (
@@ -155,6 +180,12 @@ void main() {
             ) {
               await tester.pump(const Duration(milliseconds: 100));
             }
+          } else if (scenario == 'nestedNavigator') {
+            for (var frame = 0; frame < 12; frame++) {
+              await tester.pump(const Duration(milliseconds: 100));
+            }
+            expect(observer.pushes, 1);
+            expect(find.text('Active trip'), findsOneWidget);
           } else {
             await tester.pumpAndSettle();
           }
@@ -182,6 +213,29 @@ void main() {
           }
           verify(() => dashboard.fetchAuthoritativeRide('trip'))
               .called(scenario == 'retry' || reviewing ? 2 : 1);
+          if (scenario == 'nestedNavigator') {
+            states.add(DashboardState(activeRides: [trip], earnings: 1));
+            await tester.pumpAndSettle();
+            expect(find.text('Active trip'), findsOneWidget);
+            router.pop();
+            await tester.pumpAndSettle();
+            expect(router.routeInformationProvider.value.uri.path, '/');
+            expect(find.text('1 / 5 active bookings'), findsOneWidget);
+            expect(observer.pushes, 1);
+            states.add(DashboardState(activeRides: [trip], earnings: 2));
+            await tester.pumpAndSettle();
+            expect(router.routeInformationProvider.value.uri.path, '/');
+            expect(find.text('1 / 5 active bookings'), findsOneWidget);
+            expect(observer.pushes, 1);
+            states.add(
+              DashboardState(
+                activeRides: [trip],
+                errorMessage: "Couldn't connect. Check your internet connection and try again.",
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(find.byType(SnackBar), findsNothing);
+          }
           expect(find.text('Continue Navigation'), findsNothing);
           expect(find.textContaining('Booking ID'), findsNothing);
           await tester.pumpWidget(const SizedBox());

@@ -277,7 +277,7 @@ func dispatchErrorStatus(err error) int {
 		return http.StatusBadRequest
 	case errors.Is(err, dispatchdomain.ErrSessionClosed),
 		errors.Is(err, ridedomain.ErrActiveBooking),
-		errors.Is(err, ridedomain.ErrDriverHasActiveRide),
+		errors.Is(err, ridedomain.ErrDriverCapacityReached),
 		errors.Is(err, ridedomain.ErrDriverSettlementOverdue),
 		errors.Is(err, dispatchdomain.ErrDriverUnavailable),
 		errors.Is(err, dispatchdomain.ErrDuplicateBid):
@@ -307,8 +307,8 @@ func safeDispatchError(err error) string {
 		return "The route service is temporarily unavailable."
 	case errors.Is(err, ridedomain.ErrActiveBooking):
 		return "You already have an active ride."
-	case errors.Is(err, ridedomain.ErrDriverHasActiveRide):
-		return "This driver is already handling another ride."
+	case errors.Is(err, ridedomain.ErrDriverCapacityReached):
+		return "This driver already has five active bookings."
 	case errors.Is(err, ridedomain.ErrDriverSettlementOverdue):
 		return "Settle the overdue cash ride before accepting another request."
 	case errors.Is(err, dispatchdomain.ErrUnauthorizedSession):

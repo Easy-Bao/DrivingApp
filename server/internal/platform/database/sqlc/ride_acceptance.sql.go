@@ -145,7 +145,7 @@ const countActiveRidesForAcceptance = `-- name: CountActiveRidesForAcceptance :o
 SELECT count(*)
 FROM rides
 WHERE driver_id = $1
-  AND status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit')
+  AND status IN ('assigned', 'accepted', 'arrived', 'in_transit')
 `
 
 func (q *Queries) CountActiveRidesForAcceptance(ctx context.Context, driverID pgtype.Int4) (int64, error) {

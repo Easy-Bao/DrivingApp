@@ -20,6 +20,7 @@ class const DriverTripPanel({
   required this.onCancel,
   required this.onNoShow,
   this.noShowRemaining,
+  this.actionError,
 }) extends StatelessWidget {
   final RideState state;
   final String pickup;
@@ -34,6 +35,7 @@ class const DriverTripPanel({
   final VoidCallback onCancel;
   final VoidCallback? onNoShow;
   final Duration? noShowRemaining;
+  final String? actionError;
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +113,16 @@ class const DriverTripPanel({
               onChat: onChat,
             ),
             const SizedBox(height: AppSpacing.lg),
+            if (actionError != null) ...[
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  actionError!,
+                  style: TextStyle(color: context.colorScheme.error),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
             if (waiting)
               FilledButton(
                 onPressed: isBusy ? null : onAdvance,

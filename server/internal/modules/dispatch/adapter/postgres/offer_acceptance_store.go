@@ -136,8 +136,8 @@ func (repository *Store) AcceptOffer(
 	if err != nil {
 		return dispatchapp.OfferAcceptance{}, fmt.Errorf("count active driver rides: %w", err)
 	}
-	if activeDriverRides > 0 {
-		return dispatchapp.OfferAcceptance{}, domain.ErrDriverHasActiveRide
+	if activeDriverRides >= domain.MaxActiveRidesPerDriver {
+		return dispatchapp.OfferAcceptance{}, domain.ErrDriverCapacityReached
 	}
 	activePassengerRide, err := transactionQueries.HasActivePassengerRide(ctx, session.PassengerID)
 	if err != nil {
@@ -165,19 +165,19 @@ func (repository *Store) AcceptOffer(
 		}
 		rejectedOffers = append(rejectedOffers, rejectedOffer)
 	}
-	withdrawnRows, err := transactionQueries.RejectDriverPendingBidOffers(
-		ctx,
-		databasepostgres.RejectDriverPendingBidOffersParams{
-			DriverID: offer.DriverID,
-			ID:       offer.ID,
-		},
-	)
-	if err != nil {
-		return dispatchapp.OfferAcceptance{}, fmt.Errorf("reject driver's outstanding offers: %w", err)
-	}
-	withdrawnOffers, err := mapBidOfferWithdrawals(withdrawnRows)
-	if err != nil {
-		return dispatchapp.OfferAcceptance{}, err
+	var withdrawnOffers []dispatchdomain.BidOfferWithdrawal
+	if activeDriverRides+1 >= domain.MaxActiveRidesPerDriver {
+		withdrawnRows, err := transactionQueries.RejectDriverPendingBidOffers(
+			ctx,
+			databasepostgres.RejectDriverPendingBidOffersParams{DriverID: offer.DriverID, ID: offer.ID},
+		)
+		if err != nil {
+			return dispatchapp.OfferAcceptance{}, fmt.Errorf("reject driver's outstanding offers: %w", err)
+		}
+		withdrawnOffers, err = mapBidOfferWithdrawals(withdrawnRows)
+		if err != nil {
+			return dispatchapp.OfferAcceptance{}, err
+		}
 	}
 	updatedSession, err := transactionQueries.MarkBidSessionAccepted(ctx, databasepostgres.MarkBidSessionAcceptedParams{
 		ID:               session.ID,

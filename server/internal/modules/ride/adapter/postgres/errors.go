@@ -21,7 +21,7 @@ func driverActiveRideConflictError(operation string, err error) error {
 	if errors.As(err, &databaseError) &&
 		databaseError.Code == "23505" &&
 		databaseError.ConstraintName == "rides_one_active_ride_per_driver_idx" {
-		return domain.ErrDriverHasActiveRide
+		return domain.ErrDriverCapacityReached
 	}
 	return fmt.Errorf("%s: %w", operation, err)
 }
@@ -44,7 +44,7 @@ func acceptedRideConflictError(operation string, err error) error {
 		case "ride_passenger_id", "rides_one_active_ride_per_passenger_idx":
 			return domain.ErrActiveBooking
 		case "rides_one_active_ride_per_driver_idx":
-			return domain.ErrDriverHasActiveRide
+			return domain.ErrDriverCapacityReached
 		}
 	}
 	return fmt.Errorf("%s: %w", operation, err)

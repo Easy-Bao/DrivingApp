@@ -271,12 +271,14 @@ void main() {
             }
             return const Ok(
               DispatchSnapshot(
-                activeRide: RideSnapshot(
-                  id: 'trip-1',
-                  status: 'in_transit',
-                  pickupName: 'Pickup',
-                  dropoffName: 'Dropoff',
-                ),
+                activeRides: [
+                  RideSnapshot(
+                    id: 'trip-1',
+                    status: 'in_transit',
+                    pickupName: 'Pickup',
+                    dropoffName: 'Dropoff',
+                  ),
+                ],
                 rideOffers: [],
               ),
             );
@@ -315,17 +317,19 @@ void main() {
     );
 
     blocTest<DashboardCubit, DashboardState>(
-      'keeps one active ride and clears offers returned with that ride',
+      'keeps active bookings and offers while below capacity',
       build: () {
         when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
           (_) async => const Ok(
             DispatchSnapshot(
-              activeRide: RideSnapshot(
-                id: 'transit-trip',
-                status: 'in_transit',
-                pickupName: 'Pickup',
-                dropoffName: 'Dropoff',
-              ),
+              activeRides: [
+                RideSnapshot(
+                  id: 'transit-trip',
+                  status: 'in_transit',
+                  pickupName: 'Pickup',
+                  dropoffName: 'Dropoff',
+                ),
+              ],
               rideOffers: [
                 {'id': 'offer-1', 'expires_at': '2099-01-01T00:00:00Z'},
               ],
@@ -338,87 +342,119 @@ void main() {
       expect: () => [
         const DashboardState(isLoadingDispatch: true),
         const DashboardState(
-          activeRide: RideSnapshot(
-            id: 'transit-trip',
-            status: 'in_transit',
-            pickupName: 'Pickup',
-            dropoffName: 'Dropoff',
-          ),
+          activeRides: [
+            RideSnapshot(
+              id: 'transit-trip',
+              status: 'in_transit',
+              pickupName: 'Pickup',
+              dropoffName: 'Dropoff',
+            ),
+          ],
+          activeBids: [
+            {'id': 'offer-1', 'expires_at': '2099-01-01T00:00:00Z'},
+          ],
         ),
       ],
     );
 
-    test(
-      'realtime active ride clears offers and replaces the current ride',
-      () async {
-        when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
-          (_) async => const Ok(
-            DispatchSnapshot(
-              rideOffers: [
-                {'id': 'offer-1', 'expires_at': '2099-01-01T00:00:00Z'},
-              ],
-            ),
+    test('realtime assignments preserve other bookings and offers', () async {
+      when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
+        (_) async => const Ok(
+          DispatchSnapshot(
+            rideOffers: [
+              {'id': 'offer-1', 'expires_at': '2099-01-01T00:00:00Z'},
+            ],
           ),
-        );
-        final cubit = _makeCubit(repo);
-        await cubit.loadDispatchSnapshot();
+        ),
+      );
+      final cubit = _makeCubit(repo);
+      await cubit.loadDispatchSnapshot();
 
-        cubit.mergeActiveRide(
-          const RideSnapshot(
-            id: 'trip-1',
-            status: 'accepted',
-            pickupName: 'Pickup',
-            dropoffName: 'Dropoff',
-          ),
-        );
-        cubit.mergeActiveRide(
-          const RideSnapshot(
-            id: 'trip-2',
-            status: 'arrived',
-            pickupName: 'Pickup 2',
-            dropoffName: 'Dropoff 2',
-          ),
-        );
+      cubit.mergeActiveRide(
+        const RideSnapshot(
+          id: 'trip-1',
+          status: 'accepted',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+        ),
+      );
+      cubit.mergeActiveRide(
+        const RideSnapshot(
+          id: 'trip-2',
+          status: 'arrived',
+          pickupName: 'Pickup 2',
+          dropoffName: 'Dropoff 2',
+        ),
+      );
 
-        expect(cubit.state.activeRide?.id, 'trip-2');
-        expect(cubit.state.activeBids, isEmpty);
-        await cubit.close();
-      },
-    );
+      expect(cubit.state.activeRides.map((ride) => ride.id), [
+        'trip-1',
+        'trip-2',
+      ]);
+      expect(cubit.state.activeBids, hasLength(1));
+      await cubit.close();
+    });
 
-    test(
-      'does not fetch incoming offers while an active ride exists',
-      () async {
-        when(() => repo.getDispatchSnapshot(includeOffers: false)).thenAnswer(
-          (_) async => const Ok(
-            DispatchSnapshot(
-              activeRide: RideSnapshot(
+    test('continues fetching offers while below capacity', () async {
+      when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
+        (_) async => const Ok(
+          DispatchSnapshot(
+            activeRides: [
+              RideSnapshot(
                 id: 'trip-1',
                 status: 'in_transit',
                 pickupName: 'Pickup',
                 dropoffName: 'Dropoff',
               ),
-              rideOffers: [
-                {'id': 'offer-1', 'expires_at': '2099-01-01T00:00:00Z'},
-              ],
-            ),
+            ],
+            rideOffers: [
+              {'id': 'offer-1', 'expires_at': '2099-01-01T00:00:00Z'},
+            ],
           ),
-        );
+        ),
+      );
+      final cubit = _makeCubit(repo);
+      cubit.mergeActiveRide(
+        const RideSnapshot(
+          id: 'trip-1',
+          status: 'accepted',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+        ),
+      );
+
+      await cubit.loadDispatchSnapshot();
+
+      verify(() => repo.getDispatchSnapshot(includeOffers: true)).called(1);
+      verifyNever(() => repo.getDispatchSnapshot(includeOffers: false));
+      expect(cubit.state.activeBids, hasLength(1));
+      await cubit.close();
+    });
+
+    test(
+      'fifth booking clears offers and completing one frees capacity',
+      () async {
         final cubit = _makeCubit(repo);
-        cubit.mergeActiveRide(
-          const RideSnapshot(
-            id: 'trip-1',
-            status: 'accepted',
-            pickupName: 'Pickup',
-            dropoffName: 'Dropoff',
-          ),
-        );
-
-        await cubit.loadDispatchSnapshot();
-
-        verify(() => repo.getDispatchSnapshot(includeOffers: false)).called(1);
-        verifyNever(() => repo.getDispatchSnapshot(includeOffers: true));
+        for (var i = 0; i < 5; i++) {
+          cubit.mergeActiveRide(
+            RideSnapshot(
+              id: 'trip-$i',
+              status: i == 0 ? 'in_transit' : 'accepted',
+              pickupName: 'Pickup',
+              dropoffName: 'Dropoff',
+            ),
+          );
+        }
+        expect(cubit.state.activeRides, hasLength(5));
+        expect(cubit.state.isAtBookingCapacity, isTrue);
         expect(cubit.state.activeBids, isEmpty);
+        cubit.removeActiveRide('trip-0');
+        expect(cubit.state.activeRides, hasLength(4));
+        expect(cubit.state.isAtBookingCapacity, isFalse);
+        expect(
+          cubit.state.activeRides.any((ride) => ride.id == 'trip-4'),
+          isTrue,
+        );
         await cubit.close();
       },
     );
@@ -471,7 +507,7 @@ void main() {
 
         cubit.removeActiveRide(activeRide.id);
         response.complete(
-          const Ok(DispatchSnapshot(activeRide: activeRide, rideOffers: [])),
+          const Ok(DispatchSnapshot(activeRides: [activeRide], rideOffers: [])),
         );
         await pendingSnapshot;
 
@@ -492,7 +528,7 @@ void main() {
         );
         when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
           (_) async => const Ok(
-            DispatchSnapshot(activeRide: finishedRide, rideOffers: []),
+            DispatchSnapshot(activeRides: [finishedRide], rideOffers: []),
           ),
         );
         final cubit = _makeCubit(repo);
@@ -762,13 +798,7 @@ void main() {
       },
       seed: () => const DashboardState(isOnline: true),
       act: (cubit) => cubit.refreshOnlinePresence(lat: lat, lng: lng),
-      expect: () => [
-        const DashboardState(
-          isOnline: true,
-          errorMessage:
-              "Couldn't connect. Check your internet connection and try again.",
-        ),
-      ],
+      expect: () => <DashboardState>[],
     );
 
     blocTest<DashboardCubit, DashboardState>(

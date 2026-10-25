@@ -143,7 +143,7 @@ class DashboardCubit({
     final submittedOfferRevision = _submittedOfferRevision;
 
     try {
-      final shouldIncludeOffers = includeOffers && !state.hasActiveRide;
+      final shouldIncludeOffers = includeOffers && !state.isAtBookingCapacity;
       final result = await _repository.getDispatchSnapshotResult(
         includeOffers: shouldIncludeOffers,
       );
@@ -172,25 +172,27 @@ class DashboardCubit({
             emit(state.copyWith(isLoadingDispatch: false, errorMessage: null));
             return true;
           }
-          final snapshotRide = snapshot.activeRide;
-          final currentRideId = state.activeRide?.id;
-          if (currentRideId != null &&
-              currentRideId.isNotEmpty &&
-              currentRideId != snapshotRide?.id) {
-            _terminalRideIds.add(currentRideId);
+          final snapshotIds = snapshot.activeRides
+              .map((ride) => ride.id)
+              .toSet();
+          for (final current in state.activeRides) {
+            if (!snapshotIds.contains(current.id))
+              _terminalRideIds.add(current.id);
           }
-          if (snapshotRide != null &&
-              snapshotRide.id.isNotEmpty &&
-              snapshotRide.isTerminal) {
-            _terminalRideIds.add(snapshotRide.id);
+          for (final ride in snapshot.activeRides.where(
+            (ride) => ride.isTerminal,
+          )) {
+            _terminalRideIds.add(ride.id);
           }
-          final activeRide =
-              snapshotRide != null &&
-                  snapshotRide.id.isNotEmpty &&
-                  !snapshotRide.isTerminal &&
-                  !_terminalRideIds.contains(snapshotRide.id)
-              ? snapshotRide
-              : null;
+          final activeRides = List<RideSnapshot>.unmodifiable(
+            snapshot.activeRides.where(
+              (ride) =>
+                  ride.id.isNotEmpty &&
+                  !ride.isTerminal &&
+                  !_terminalRideIds.contains(ride.id),
+            ),
+          );
+          final isFull = activeRides.length >= DashboardState.maxActiveBookings;
           _silentDispatchRetryAfter = null;
           final offeredSessions = <Map<String, dynamic>>[];
           final submittedOffers = <Map<String, dynamic>>[];
@@ -233,13 +235,13 @@ class DashboardCubit({
           emit(
             state.copyWith(
               isLoadingDispatch: false,
-              activeRide: activeRide,
-              activeBids: activeRide != null
+              activeRides: activeRides,
+              activeBids: isFull
                   ? const <Map<String, dynamic>>[]
                   : shouldIncludeOffers
                   ? _immutableMaps(offeredSessions)
                   : null,
-              submittedOffers: activeRide != null
+              submittedOffers: isFull
                   ? const <Map<String, dynamic>>[]
                   : shouldIncludeOffers
                   ? _immutableMaps(submittedOffers)
@@ -299,27 +301,35 @@ class DashboardCubit({
     }
     if (_terminalRideIds.contains(ride.id)) return;
     _activeRideRevision++;
+    final rides = List<RideSnapshot>.unmodifiable([
+      for (final current in state.activeRides)
+        if (current.id == ride.id) ride else current,
+      if (!state.activeRides.any((current) => current.id == ride.id)) ride,
+    ]);
+    final isFull = rides.length >= DashboardState.maxActiveBookings;
     emit(
       state.copyWith(
-        activeRide: ride,
-        activeBids: const <Map<String, dynamic>>[],
-        submittedOffers: const <Map<String, dynamic>>[],
+        activeRides: rides,
+        activeBids: isFull ? const [] : null,
+        submittedOffers: isFull ? const [] : null,
       ),
     );
   }
 
   void removeActiveRide(String? rideId) {
     if (rideId == null || rideId.isEmpty) return;
-    final removesCurrentRide = state.activeRide?.id == rideId;
+    final removesCurrentRide = state.activeRides.any(
+      (ride) => ride.id == rideId,
+    );
     final addedTombstone = _terminalRideIds.add(rideId);
     if (!addedTombstone && !removesCurrentRide) return;
     _activeRideRevision++;
     if (!removesCurrentRide) return;
     emit(
       state.copyWith(
-        activeRide: null,
-        activeBids: const <Map<String, dynamic>>[],
-        submittedOffers: const <Map<String, dynamic>>[],
+        activeRides: List.unmodifiable(
+          state.activeRides.where((ride) => ride.id != rideId),
+        ),
       ),
     );
   }
@@ -381,7 +391,7 @@ class DashboardCubit({
   }
 
   void markOfferSubmitted(String? sessionId) {
-    if (sessionId == null || state.hasActiveRide) return;
+    if (sessionId == null || state.isAtBookingCapacity) return;
     if (_isResolvedOfferSession(sessionId)) {
       removeActiveBid(sessionId);
       return;
@@ -616,7 +626,8 @@ class DashboardCubit({
         );
         return false;
       }
-      emit(state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)));
+      // Presence is background work; transient failures must not interrupt the UI.
+      dev.log('Unable to refresh driver presence: ${failure.runtimeType}');
       return false;
     }, (_) => true);
   }

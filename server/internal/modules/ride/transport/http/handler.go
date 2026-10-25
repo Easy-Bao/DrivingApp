@@ -637,7 +637,7 @@ func rideErrorStatus(err error) int {
 	case errors.Is(err, domain.ErrUnauthorizedRide):
 		return 403
 	case errors.Is(err, domain.ErrActiveBooking),
-		errors.Is(err, domain.ErrDriverHasActiveRide),
+		errors.Is(err, domain.ErrDriverCapacityReached),
 		errors.Is(err, domain.ErrDriverSettlementOverdue),
 		errors.Is(err, domain.ErrDriverUnavailable),
 		errors.Is(err, domain.ErrInvalidStatusTransition),
@@ -666,8 +666,8 @@ func safeRideError(err error) string {
 		return "The route service is temporarily unavailable."
 	case errors.Is(err, domain.ErrActiveBooking):
 		return "You already have an active ride."
-	case errors.Is(err, domain.ErrDriverHasActiveRide):
-		return "This driver is already handling another ride."
+	case errors.Is(err, domain.ErrDriverCapacityReached):
+		return "This driver already has five active bookings."
 	case errors.Is(err, domain.ErrDriverSettlementOverdue):
 		return "Settle the overdue cash ride before accepting another request."
 	case errors.Is(err, domain.ErrUnauthorizedRide):

@@ -251,7 +251,7 @@ func acceptedRideConflictError(operation string, err error) error {
 		case "ride_passenger_id", "rides_one_active_ride_per_passenger_idx":
 			return ridedomain.ErrActiveBooking
 		case "rides_one_active_ride_per_driver_idx":
-			return ridedomain.ErrDriverHasActiveRide
+			return ridedomain.ErrDriverCapacityReached
 		}
 	}
 	return fmt.Errorf("%s: %w", operation, err)

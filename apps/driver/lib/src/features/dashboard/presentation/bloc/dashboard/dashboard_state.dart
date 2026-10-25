@@ -10,16 +10,12 @@ class DashboardState extends Equatable {
     this.completedTrips = 0,
     this.errorMessage,
     this.statsErrorMessage,
-    this.activeRide,
-    List<Map<String, dynamic>> activeBids = const <Map<String, dynamic>>[],
-    List<Map<String, dynamic>> submittedOffers = const <Map<String, dynamic>>[],
+    this.activeRides = const [],
+    this.activeBids = const <Map<String, dynamic>>[],
+    this.submittedOffers = const <Map<String, dynamic>>[],
     this.isLoadingDispatch = false,
-  }) : activeBids = activeRide == null
-           ? activeBids
-           : const <Map<String, dynamic>>[],
-       submittedOffers = activeRide == null
-           ? submittedOffers
-           : const <Map<String, dynamic>>[];
+  });
+  static const maxActiveBookings = 5;
   static const _unset = Object();
 
   final bool isOnline;
@@ -29,7 +25,9 @@ class DashboardState extends Equatable {
   final int completedTrips;
   final String? errorMessage;
   final String? statsErrorMessage;
-  final RideSnapshot? activeRide;
+  final List<RideSnapshot> activeRides;
+  RideSnapshot? get activeRide => activeRides.firstOrNull;
+  bool get isAtBookingCapacity => activeRides.length >= maxActiveBookings;
   final List<Map<String, dynamic>> activeBids;
   final List<Map<String, dynamic>> submittedOffers;
   final bool isLoadingDispatch;
@@ -44,7 +42,7 @@ class DashboardState extends Equatable {
     int? completedTrips,
     Object? errorMessage = _unset,
     Object? statsErrorMessage = _unset,
-    Object? activeRide = _unset,
+    List<RideSnapshot>? activeRides,
     List<Map<String, dynamic>>? activeBids,
     List<Map<String, dynamic>>? submittedOffers,
     bool? isLoadingDispatch,
@@ -61,9 +59,7 @@ class DashboardState extends Equatable {
       statsErrorMessage: identical(statsErrorMessage, _unset)
           ? this.statsErrorMessage
           : statsErrorMessage as String?,
-      activeRide: identical(activeRide, _unset)
-          ? this.activeRide
-          : activeRide as RideSnapshot?,
+      activeRides: activeRides ?? this.activeRides,
       activeBids: activeBids ?? this.activeBids,
       submittedOffers: submittedOffers ?? this.submittedOffers,
       isLoadingDispatch: isLoadingDispatch ?? this.isLoadingDispatch,
@@ -79,7 +75,7 @@ class DashboardState extends Equatable {
     completedTrips,
     errorMessage,
     statsErrorMessage,
-    activeRide,
+    activeRides,
     activeBids,
     submittedOffers,
     isLoadingDispatch,

@@ -169,51 +169,48 @@ void main() {
     ).called(1);
   });
 
-  test(
-    'rejects multiple active rides instead of dropping an extra ride',
-    () async {
-      final availabilityDataSource = MockAvailabilityRemoteDataSource();
-      final sessionService = MockSecureSessionService();
+  test('retains all active bookings in the dispatch snapshot', () async {
+    final availabilityDataSource = MockAvailabilityRemoteDataSource();
+    final sessionService = MockSecureSessionService();
 
-      when(() => sessionService.readDriverId())
-          .thenAnswer((_) async => 'driver-42');
-      when(
-        () => _rideHistoryRepository.fetchTripHistory(
-          'driver-42',
-          limit: 10,
-          activeOnly: true,
+    when(() => sessionService.readDriverId())
+        .thenAnswer((_) async => 'driver-42');
+    when(
+      () => _rideHistoryRepository.fetchTripHistory(
+        'driver-42',
+        limit: 10,
+        activeOnly: true,
+      ),
+    ).thenAnswer(
+      (_) async => const Ok(
+        OffsetPage(
+          items: [
+            {'id': 'ride-1', 'status': 'accepted'},
+            {'id': 'ride-2', 'status': 'in_transit'},
+          ],
+          hasMore: false,
+          nextOffset: null,
         ),
-      ).thenAnswer(
-        (_) async => const Ok(
-          OffsetPage(
-            items: [
-              {'id': 'ride-1', 'status': 'accepted'},
-              {'id': 'ride-2', 'status': 'in_transit'},
-            ],
-            hasMore: false,
-            nextOffset: null,
-          ),
-        ),
-      );
-      when(() => _rideOfferDataSource.fetchActiveBids())
-          .thenAnswer((_) async => const []);
+      ),
+    );
+    when(() => _rideOfferDataSource.fetchActiveBids())
+        .thenAnswer((_) async => const []);
 
-      final repository = _buildRepository(
-        availabilityDataSource: availabilityDataSource,
-        sessionService: sessionService,
-      );
+    final repository = _buildRepository(
+      availabilityDataSource: availabilityDataSource,
+      sessionService: sessionService,
+    );
 
-      final result = await repository.getDispatchSnapshot();
+    final result = await repository.getDispatchSnapshot();
 
-      expect(
-        result.fold(
-          (failure) => failure.message,
-          (snapshot) => snapshot.activeRide?.id,
-        ),
-        'The server returned multiple active trips.',
-      );
-    },
-  );
+    expect(
+      result.fold(
+        (failure) => failure.message,
+        (snapshot) => snapshot.activeRides.map((ride) => ride.id).toList(),
+      ),
+      ['ride-1', 'ride-2'],
+    );
+  });
 
   test(
     'reports an incomplete local session as an authentication failure',

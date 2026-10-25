@@ -135,53 +135,83 @@ func TestBookingReferenceSurvivesOfferAcceptance(t *testing.T) {
 	}
 }
 
-func TestConcurrentOfferAcceptanceAssignsDriverToOneSession(t *testing.T) {
+func TestConcurrentOfferAcceptanceStopsAtFiveActiveBookings(t *testing.T) {
 	fixture := newPostgresRideFixture(t)
 	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
 	defer cancel()
-
-	const firstPassengerID = 105
-	const secondPassengerID = 106
 	const driverID = 207
-	fixture.seedPassenger(t, ctx, firstPassengerID)
-	fixture.seedPassenger(t, ctx, secondPassengerID)
 	fixture.seedDriver(t, ctx, driverID)
-	firstSessionID := fixture.createBidSession(t, ctx, firstPassengerID)
-	secondSessionID := fixture.createBidSession(t, ctx, secondPassengerID)
-	firstOfferID := fixture.createBidOffer(t, ctx, firstSessionID, driverID)
-	secondOfferID := fixture.createBidOffer(t, ctx, secondSessionID, driverID)
-
+	type attempt struct{ sessionID, offerID, passengerID int }
+	attempts := make([]attempt, 0, 6)
+	for i := range 6 {
+		passengerID := 105 + i
+		fixture.seedPassenger(t, ctx, passengerID)
+		sessionID := fixture.createBidSession(t, ctx, passengerID)
+		offerID := fixture.createBidOffer(t, ctx, sessionID, driverID)
+		attempts = append(attempts, attempt{sessionID, offerID, passengerID})
+	}
 	start := make(chan struct{})
-	results := make(chan error, 2)
-	for _, offer := range []struct{ sessionID, offerID, passengerID int }{
-		{firstSessionID, firstOfferID, firstPassengerID},
-		{secondSessionID, secondOfferID, secondPassengerID},
-	} {
-		go func(sessionID, offerID, passengerID int) {
+	results := make(chan error, len(attempts))
+	for _, a := range attempts {
+		go func() {
 			<-start
-			_, err := fixture.dispatchStore.AcceptOffer(ctx, sessionID, offerID, passengerID)
+			_, err := fixture.dispatchStore.AcceptOffer(ctx, a.sessionID, a.offerID, a.passengerID)
 			results <- err
-		}(offer.sessionID, offer.offerID, offer.passengerID)
+		}()
 	}
 	close(start)
-	firstErr := <-results
-	secondErr := <-results
-	if (firstErr == nil) == (secondErr == nil) {
-		t.Fatalf("driver assignment attempts returned (%v, %v), want exactly one success", firstErr, secondErr)
+	successes := 0
+	for range attempts {
+		if err := <-results; err == nil {
+			successes++
+		}
 	}
-	assertRowCount(t, ctx, fixture.pool, `
-SELECT count(*)
-FROM rides
-WHERE driver_id = $1 AND status IN ('assigned', 'accepted', 'arrived', 'in_transit')`, driverID, 1)
-	assertRowCount(t, ctx, fixture.pool, `
-SELECT count(*)
-FROM bid_offers
-WHERE driver_id = $1 AND status = 'accepted'`, driverID, 1)
-	assertRowCount(t, ctx, fixture.pool, `
-SELECT count(*)
-FROM ride_settlements AS settlement
-JOIN rides ON rides.id = settlement.ride_id
-WHERE rides.driver_id = $1`, driverID, 1)
+	if successes != 5 {
+		t.Fatalf("successful acceptances = %d, want 5", successes)
+	}
+	assertRowCount(t, ctx, fixture.pool, `SELECT count(*) FROM rides WHERE driver_id = $1 AND status IN ('assigned', 'accepted', 'arrived', 'in_transit')`, driverID, 5)
+	assertRowCount(t, ctx, fixture.pool, `SELECT count(*) FROM bid_offers WHERE driver_id = $1 AND status = 'accepted'`, driverID, 5)
+	assertRowCount(t, ctx, fixture.pool, `SELECT count(*) FROM ride_settlements AS settlement JOIN rides ON rides.id = settlement.ride_id WHERE rides.driver_id = $1`, driverID, 5)
+}
+
+func TestConcurrentDirectAndBidAcceptanceShareDriverCapacity(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+	defer cancel()
+	const driverID = 207
+	fixture.seedDriver(t, ctx, driverID)
+	for i, status := range []string{"assigned", "accepted", "arrived", "in_transit"} {
+		passengerID := 105 + i
+		fixture.seedPassenger(t, ctx, passengerID)
+		fixture.createRide(t, ctx, passengerID, driverID, status, 2000)
+	}
+	fixture.seedPassenger(t, ctx, 109)
+	fixture.seedPassenger(t, ctx, 110)
+	rideID := fixture.createRide(t, ctx, 109, 0, "requested", 2000)
+	sessionID := fixture.createBidSession(t, ctx, 110)
+	offerID := fixture.createBidOffer(t, ctx, sessionID, driverID)
+	service := ridelifecycle.NewLifecycleService(ridelifecycle.LifecycleDependencies{Store: fixture.store})
+	start := make(chan struct{})
+	results := make(chan error, 2)
+	go func() { <-start; _, err := service.AcceptRide(ctx, rideID, driverID); results <- err }()
+	go func() {
+		<-start
+		_, err := fixture.dispatchStore.AcceptOffer(ctx, sessionID, offerID, 110)
+		results <- err
+	}()
+	close(start)
+	first, second := <-results, <-results
+	if (first == nil) == (second == nil) {
+		t.Fatalf("mixed acceptances = (%v, %v), want exactly one success", first, second)
+	}
+	failure := first
+	if failure == nil {
+		failure = second
+	}
+	if !errors.Is(failure, domain.ErrDriverCapacityReached) {
+		t.Fatalf("failed acceptance = %v, want capacity error", failure)
+	}
+	assertRowCount(t, ctx, fixture.pool, `SELECT count(*) FROM rides WHERE driver_id = $1 AND status IN ('assigned', 'accepted', 'arrived', 'in_transit')`, driverID, 5)
 }
 
 func TestSessionCancellationRacingOfferAcceptanceHasOneCommittedOutcome(t *testing.T) {
@@ -905,5 +935,43 @@ func TestAcceptedRideCapturesDriverRatingSnapshot(t *testing.T) {
 	}
 	if storedRating != 3.5 {
 		t.Fatalf("stored direct ride driver_rating = %f, want 3.5", storedRating)
+	}
+}
+
+func TestDriverCapacityMigrationPreservesBookingsAndGuardsRollback(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	ctx := t.Context()
+	migrate := func(direction string) error {
+		sql, err := os.ReadFile("../../../db/migrations/2026102501_driver_booking_capacity." + direction + ".sql")
+		if err != nil {
+			return err
+		}
+		_, err = fixture.pool.Exec(ctx, string(sql))
+		return err
+	}
+	fixture.seedDriver(t, ctx, 601)
+	fixture.seedPassenger(t, ctx, 501)
+	fixture.seedPassenger(t, ctx, 502)
+	first := fixture.createRide(t, ctx, 501, 601, "accepted", 2000)
+	if err := migrate("down"); err != nil {
+		t.Fatal(err)
+	}
+	if err := migrate("up"); err != nil {
+		t.Fatal(err)
+	}
+	second := fixture.createRide(t, ctx, 502, 601, "in_transit", 2000)
+	if err := migrate("down"); err == nil {
+		t.Fatal("rollback must refuse multiple active bookings")
+	}
+	assertRowCount(t, ctx, fixture.pool, `SELECT count(*) FROM rides WHERE driver_id = $1`, 601, 2)
+	if _, err := fixture.pool.Exec(ctx, `UPDATE rides SET status = 'completed' WHERE id = $1`, second); err != nil {
+		t.Fatal(err)
+	}
+	if err := migrate("down"); err != nil {
+		t.Fatal(err)
+	}
+	assertRowCount(t, ctx, fixture.pool, `SELECT count(*) FROM rides WHERE id = $1 AND status = 'accepted'`, first, 1)
+	if err := migrate("up"); err != nil {
+		t.Fatal(err)
 	}
 }

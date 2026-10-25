@@ -13,12 +13,12 @@ func TestDriverActiveRideConflictError(t *testing.T) {
 		Code:           "23505",
 		ConstraintName: "rides_one_active_ride_per_driver_idx",
 	}
-	if !errors.Is(driverActiveRideConflictError("assign ride", err), domain.ErrDriverHasActiveRide) {
+	if !errors.Is(driverActiveRideConflictError("assign ride", err), domain.ErrDriverCapacityReached) {
 		t.Fatal("expected active ride conflict to map to the domain error")
 	}
 
 	other := &pgconn.PgError{Code: "23505", ConstraintName: "another_unique_index"}
-	if errors.Is(driverActiveRideConflictError("assign ride", other), domain.ErrDriverHasActiveRide) {
+	if errors.Is(driverActiveRideConflictError("assign ride", other), domain.ErrDriverCapacityReached) {
 		t.Fatal("unexpectedly mapped another unique violation to the active ride error")
 	}
 }
@@ -82,7 +82,7 @@ func TestAcceptedRideConflictError(t *testing.T) {
 		{
 			name:           "active driver uniqueness constraint maps to driver active ride",
 			constraintName: "rides_one_active_ride_per_driver_idx",
-			wantErr:        domain.ErrDriverHasActiveRide,
+			wantErr:        domain.ErrDriverCapacityReached,
 		},
 		{
 			name:           "unrelated uniqueness constraint",
@@ -103,7 +103,7 @@ func TestAcceptedRideConflictError(t *testing.T) {
 					t.Fatalf("acceptedRideConflictError() = %v, want %v", mappedErr, tt.wantErr)
 				}
 			} else {
-				if errors.Is(mappedErr, domain.ErrActiveBooking) || errors.Is(mappedErr, domain.ErrDriverHasActiveRide) {
+				if errors.Is(mappedErr, domain.ErrActiveBooking) || errors.Is(mappedErr, domain.ErrDriverCapacityReached) {
 					t.Fatalf("unexpectedly mapped unrelated error to domain conflict: %v", mappedErr)
 				}
 			}

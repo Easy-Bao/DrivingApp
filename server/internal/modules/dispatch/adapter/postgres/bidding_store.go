@@ -208,7 +208,7 @@ func (repository *Store) ActiveSessions(ctx context.Context, driverID *int) ([]d
 		if countErr != nil {
 			return nil, fmt.Errorf("count active driver rides: %w", countErr)
 		}
-		if activeRides > 0 {
+		if activeRides >= domain.MaxActiveRidesPerDriver {
 			outcome = "active_ride_gate"
 			return []dispatchdomain.BidSession{}, nil
 		}
@@ -379,8 +379,8 @@ func (repository *Store) PlaceOffer(ctx context.Context, value dispatchdomain.Bi
 	if err != nil {
 		return dispatchdomain.BidOffer{}, fmt.Errorf("count active driver rides: %w", err)
 	}
-	if activeRides > 0 {
-		return dispatchdomain.BidOffer{}, domain.ErrDriverHasActiveRide
+	if activeRides >= domain.MaxActiveRidesPerDriver {
+		return dispatchdomain.BidOffer{}, domain.ErrDriverCapacityReached
 	}
 	overdueSettlement, err := transactionQueries.HasOverdueCashSettlementForDriver(
 		ctx,

@@ -11,6 +11,8 @@ import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_availability_card.dart';
+import 'package:driver/src/features/dashboard/presentation/widgets/active_bookings_list.dart';
+import 'package:driver/src/features/dashboard/presentation/widgets/trip_ended_dialog.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard_stats_row.dart';
 import 'package:driver/src/features/dashboard/presentation/view/incoming_ride_request_page.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
@@ -70,6 +72,7 @@ class _DashboardPageState extends State<DashboardPage>
   bool _tripNavigationScheduled = false;
   String? _attemptedTripId;
   String? _tripNavigationError;
+  String? _availabilityError;
   final _reviewedTripIds = <String>{};
   int _pollGeneration = 0;
   int _locationAccessFailures = 0;
@@ -489,7 +492,10 @@ class _DashboardPageState extends State<DashboardPage>
         valueAsString(event.envelope.payload['status']);
     if (status == null) return;
     final terminalStatus = RideStatus.fromString(status);
-    if (!terminalStatus.isTerminal) return;
+    if (!terminalStatus.isTerminal) {
+      unawaited(BlocProvider.of<DashboardCubit>(context).resyncActiveTrip());
+      return;
+    }
 
     final rideId = event.envelope.scope.rideId ?? valueAsString(ride?['id']);
     if (rideId == null) return;
@@ -537,22 +543,14 @@ class _DashboardPageState extends State<DashboardPage>
         ),
         _ => (
           'Trip canceled',
-          'This trip was canceled. You have been returned to the dispatch queue.',
+          'This trip was canceled. Return to dispatch to view your other bookings and ride requests.',
         ),
       };
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Back to dispatch'),
-            ),
-          ],
-        ),
+        builder: (dialogContext) =>
+            TripEndedDialog(title: title, message: message),
       );
       if (mounted) context.goNamed(DashboardRoutes.dashboard);
     } finally {
@@ -626,6 +624,7 @@ class _DashboardPageState extends State<DashboardPage>
     if (_isTogglingOnline) return;
     setState(() {
       _isTogglingOnline = true;
+      _availabilityError = null;
       _pendingOnline = requestedOnline;
     });
 
@@ -646,6 +645,14 @@ class _DashboardPageState extends State<DashboardPage>
         lat: position?.latitude ?? 0,
         lng: position?.longitude ?? 0,
       );
+      if (mounted) {
+        setState(
+          () =>
+              _availabilityError = BlocProvider.of<DashboardCubit>(context)
+                  .state
+                  .errorMessage,
+        );
+      }
     } finally {
       if (mounted && context.mounted) {
         final resolvedOnline = BlocProvider.of<DashboardCubit>(context)
@@ -681,14 +688,16 @@ class _DashboardPageState extends State<DashboardPage>
   Future<void> _showIncomingRequest() async {
     if (!mounted ||
         _isShowingRequest ||
+        _isOpeningTrip ||
         !_isForeground ||
-        ModalRoute.of(context)?.isCurrent != true) {
+        ModalRoute.of(context)?.isCurrent != true ||
+        Navigator.of(context, rootNavigator: true).canPop()) {
       return;
     }
     final cubit = BlocProvider.of<DashboardCubit>(context);
     final state = cubit.state;
     if (!state.isOnline ||
-        state.hasActiveRide ||
+        state.isAtBookingCapacity ||
         (state.activeBids.isEmpty && state.submittedOffers.isEmpty)) {
       return;
     }
@@ -698,6 +707,7 @@ class _DashboardPageState extends State<DashboardPage>
           : state.activeBids.first)['id'],
     );
     if (sessionId == null) return;
+    final previousRideIds = state.activeRides.map((ride) => ride.id).toSet();
     _isShowingRequest = true;
     try {
       await Navigator.of(context, rootNavigator: true).push<void>(
@@ -711,31 +721,38 @@ class _DashboardPageState extends State<DashboardPage>
       _isShowingRequest = false;
     }
     if (mounted) {
-      _scheduleActiveTripNavigation();
+      final assigned = cubit.state.activeRides
+          .where((ride) => !previousRideIds.contains(ride.id))
+          .firstOrNull;
+      if (assigned != null) _scheduleActiveTripNavigation(rideId: assigned.id);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) unawaited(_showIncomingRequest());
       });
     }
   }
 
-  void _scheduleActiveTripNavigation() {
+  void _scheduleActiveTripNavigation({String? rideId}) {
     if (_tripNavigationScheduled || !mounted) return;
     _tripNavigationScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _tripNavigationScheduled = false;
-      if (mounted) unawaited(_openActiveTrip());
+      if (mounted) unawaited(_openActiveTrip(rideId: rideId));
     });
   }
 
-  Future<void> _openActiveTrip({bool retry = false}) async {
+  Future<void> _openActiveTrip({String? rideId, bool retry = false}) async {
     if (!mounted ||
         !_isForeground ||
         _isOpeningTrip ||
         _isShowingRequest ||
-        ModalRoute.of(context)?.isCurrent != true) {
+        ModalRoute.of(context)?.isCurrent != true ||
+        Navigator.of(context, rootNavigator: true).canPop()) {
       return;
     }
-    final trip = BlocProvider.of<DashboardCubit>(context).state.activeRide;
+    final rides = BlocProvider.of<DashboardCubit>(context).state.activeRides;
+    final trip = rideId == null
+        ? rides.firstOrNull
+        : rides.where((ride) => ride.id == rideId).firstOrNull;
     if (trip == null ||
         (_attemptedTripId == trip.id &&
             _tripNavigationError != null &&
@@ -825,7 +842,7 @@ class _DashboardPageState extends State<DashboardPage>
     );
     if (!resumed || !mounted || !context.mounted) return false;
 
-    context.pushNamed(
+    await context.pushNamed(
       ActiveRideRoutes.trip,
       extra: {
         'pickup': resolvedTrip.pickupName,
@@ -855,11 +872,11 @@ class _DashboardPageState extends State<DashboardPage>
     return MultiBlocListener(
       listeners: [
         BlocListener<DashboardCubit, DashboardState>(
-          listenWhen: (previous, current) =>
-              previous.errorMessage != current.errorMessage &&
-              current.errorMessage != null,
-          listener: (context, state) =>
-              AppSnackBar.show(context, state.errorMessage!, isError: true),
+          listenWhen: (previous, current) => current.activeRides.any(
+            (ride) => !previous.activeRides.any((old) => old.id == ride.id),
+          ),
+          listener: (_, state) =>
+              _scheduleActiveTripNavigation(rideId: state.activeRides.last.id),
         ),
         BlocListener<DashboardCubit, DashboardState>(
           listenWhen: (previous, current) =>
@@ -914,14 +931,10 @@ class _DashboardPageState extends State<DashboardPage>
             previous.completedTrips != current.completedTrips ||
             previous.errorMessage != current.errorMessage ||
             previous.statsErrorMessage != current.statsErrorMessage ||
-            previous.activeRide != current.activeRide ||
+            previous.activeRides != current.activeRides ||
             previous.activeBids != current.activeBids ||
             previous.submittedOffers != current.submittedOffers,
         builder: (context, state) {
-          final activeRide = state.activeRide;
-          if (activeRide != null && ModalRoute.of(context)?.isCurrent == true) {
-            _scheduleActiveTripNavigation();
-          }
           return Column(
             children: [
               Expanded(
@@ -969,45 +982,44 @@ class _DashboardPageState extends State<DashboardPage>
                                   children: [
                                     const SizedBox(height: 8),
                                     _buildOnlineCardBanner(context, state),
+                                    if (_availabilityError != null)
+                                      Padding(
+                                        padding: const EdgeInsets.all(
+                                          AppSpacing.lg,
+                                        ),
+                                        child: Semantics(
+                                          liveRegion: true,
+                                          child: Text(
+                                            _availabilityError!,
+                                            style: TextStyle(
+                                              color: context.colorScheme.error,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     const SizedBox(height: 16),
                                     _buildStatsRow(context, state),
                                     const SizedBox(height: 24),
                                   ],
                                 ),
-                                if (activeRide != null)
-                                  SliverFillRemaining(
-                                    hasScrollBody: false,
-                                    child: Center(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(
-                                          AppSpacing.lg,
+                                if (state.activeRides.isNotEmpty)
+                                  SliverToBoxAdapter(
+                                    child: ActiveBookingsList(
+                                      rides: state.activeRides,
+                                      openingRideId: _isOpeningTrip
+                                          ? _attemptedTripId
+                                          : null,
+                                      errorMessage: _tripNavigationError,
+                                      onRetry: () => unawaited(
+                                        _openActiveTrip(
+                                          rideId: _attemptedTripId,
+                                          retry: true,
                                         ),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            if (_tripNavigationError ==
-                                                null) ...[
-                                              const CircularProgressIndicator(),
-                                              const SizedBox(
-                                                height: AppSpacing.md,
-                                              ),
-                                              const Text('Opening your trip…'),
-                                            ] else ...[
-                                              Text(
-                                                _tripNavigationError!,
-                                                textAlign: TextAlign.center,
-                                              ),
-                                              const SizedBox(
-                                                height: AppSpacing.md,
-                                              ),
-                                              FilledButton(
-                                                onPressed: () => unawaited(
-                                                  _openActiveTrip(retry: true),
-                                                ),
-                                                child: const Text('Try again'),
-                                              ),
-                                            ],
-                                          ],
+                                      ),
+                                      onOpen: (id) => unawaited(
+                                        _openActiveTrip(
+                                          rideId: id,
+                                          retry: true,
                                         ),
                                       ),
                                     ),

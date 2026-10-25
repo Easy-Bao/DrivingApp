@@ -68,8 +68,8 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("count active driver rides: %w", err)
 	}
-	if activeRides > 0 {
-		return domain.Ride{}, domain.ErrDriverHasActiveRide
+	if activeRides >= domain.MaxActiveRidesPerDriver {
+		return domain.Ride{}, domain.ErrDriverCapacityReached
 	}
 	overdueSettlement, err := transactionQueries.HasOverdueCashSettlementForDriver(
 		ctx,

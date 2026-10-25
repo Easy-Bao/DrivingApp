@@ -2,12 +2,14 @@ package domain
 
 import "errors"
 
+const MaxActiveRidesPerDriver = 5
+
 var (
 	ErrInvalidTrip               = errors.New("invalid trip details")
 	ErrInvalidDriverStanding     = errors.New("invalid driver standing")
 	ErrRouteUnavailable          = errors.New("route calculation is unavailable")
 	ErrActiveBooking             = errors.New("passenger already has an active booking")
-	ErrDriverHasActiveRide       = errors.New("driver already has an active ride")
+	ErrDriverCapacityReached     = errors.New("driver has reached the five active booking limit")
 	ErrDriverSettlementOverdue   = errors.New("driver has an overdue cash settlement")
 	ErrUnauthorizedRide          = errors.New("you are not a participant in this ride")
 	ErrCounterpartyUnavailable   = errors.New("ride counterparty is unavailable")

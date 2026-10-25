@@ -55,6 +55,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
   AppMapController? _mapController;
   double _progress = 0;
   bool _isActing = false;
+  String? _actionError;
   bool _isRefreshing = false;
   bool _paymentOpened = false;
   int _unreadChatMessagesCount = 0;
@@ -215,12 +216,15 @@ class _DriverTripPageState extends State<DriverTripPage> {
   }
 
   void _showError(String message) {
-    if (mounted) AppSnackBar.show(context, message, isError: true);
+    if (mounted) setState(() => _actionError = message);
   }
 
   Future<void> _advance() async {
     if (_isActing) return;
-    setState(() => _isActing = true);
+    setState(() {
+      _isActing = true;
+      _actionError = null;
+    });
     try {
       final state = _rideCubit.state;
       final position = await LocationService.getCurrentPosition();
@@ -304,7 +308,10 @@ class _DriverTripPageState extends State<DriverTripPage> {
         !_rideCubit.canMarkPassengerNoShow) {
       return;
     }
-    setState(() => _isActing = true);
+    setState(() {
+      _isActing = true;
+      _actionError = null;
+    });
     try {
       final marked = await _rideCubit.markPassengerNoShow();
       if (!mounted) return;
@@ -383,7 +390,10 @@ class _DriverTripPageState extends State<DriverTripPage> {
     final choice = await showRideCancellationSheet(context);
     if (!mounted || choice == null) return;
 
-    setState(() => _isActing = true);
+    setState(() {
+      _isActing = true;
+      _actionError = null;
+    });
     try {
       final canceled = await BlocProvider.of<RideFlowCubit>(context)
           .cancelRide(reason: choice.reason, details: choice.details);
@@ -447,7 +457,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
           );
         }
         return PopScope(
-          canPop: false,
+          canPop: !_isActing,
           child: Scaffold(
             body: Stack(
               children: [
@@ -461,7 +471,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     child: IconButton.filledTonal(
                       tooltip: 'Back to dashboard',
-                      onPressed: () => context.pop(),
+                      onPressed: _isActing ? null : () => context.pop(),
                       icon: const Icon(Icons.arrow_back),
                     ),
                   ),
@@ -485,6 +495,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
                             fare: widget.fare,
                             progress: _progress,
                             isBusy: _isActing,
+                            actionError: _actionError,
                             unreadCount: _unreadChatMessagesCount,
                             onProgressChanged: (value) =>
                                 setState(() => _progress = value),

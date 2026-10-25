@@ -16,7 +16,7 @@ FOR UPDATE;
 SELECT count(*)
 FROM rides
 WHERE driver_id = $1
-  AND status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit');
+  AND status IN ('assigned', 'accepted', 'arrived', 'in_transit');
 
 -- name: LockPendingBidOfferForAcceptance :one
 SELECT id, session_id, driver_id, driver_name, plate_number, vehicle_type,
