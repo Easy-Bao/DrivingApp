@@ -56,32 +56,45 @@ class const GuestActionBar({
                     Expanded(child: signIn),
                   ],
                 ),
-              TextButton(
-                onPressed: onHelp,
-                style: TextButton.styleFrom(
-                  foregroundColor: context.colorScheme.onSurface,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                  ),
-                  minimumSize: const Size(48, 48),
-                ),
-                child: Text.rich(
-                  TextSpan(
-                    text: 'Need help? ',
-                    children: [
-                      TextSpan(
-                        text: 'Visit our Help Centre',
-                        style: TextStyle(
-                          color: context.colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                          decoration: TextDecoration.underline,
+              Align(
+                alignment: Alignment.center,
+                child: TextButton(
+                  onPressed: onHelp,
+                  style:
+                      TextButton.styleFrom(
+                        foregroundColor: context.colorScheme.onSurface,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                        ),
+                        minimumSize: const Size(48, 48),
+                        splashFactory: NoSplash.splashFactory,
+                      ).copyWith(
+                        overlayColor: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.focused)
+                              ? context.colorScheme.primary.withValues(
+                                  alpha: 0.12,
+                                )
+                              : Colors.transparent,
                         ),
                       ),
-                    ],
-                  ),
-                  textAlign: TextAlign.center,
-                  style: context.textStyles.bodySmall?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
+                  child: Text.rich(
+                    TextSpan(
+                      text: 'Need help? ',
+                      children: [
+                        TextSpan(
+                          text: 'Visit our Help Centre',
+                          style: TextStyle(
+                            color: context.colorScheme.onSurface,
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),

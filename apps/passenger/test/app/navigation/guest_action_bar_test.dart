@@ -34,6 +34,20 @@ void main() {
     );
     expect(find.text('Sign up'), findsOneWidget);
     expect(find.text('Log in'), findsOneWidget);
+    final helpButton = find.byType(TextButton);
+    expect(tester.getSize(helpButton).width, lessThan(600));
+    final ink = tester.widget<InkWell>(
+      find.descendant(of: helpButton, matching: find.byType(InkWell)),
+    );
+    expect(ink.splashFactory, NoSplash.splashFactory);
+    expect(
+      ink.overlayColor!.resolve({WidgetState.pressed}),
+      Colors.transparent,
+    );
+    expect(
+      ink.overlayColor!.resolve({WidgetState.focused}),
+      isNot(Colors.transparent),
+    );
 
     await tester.tap(find.text('Sign up'));
     await tester.tap(find.text('Log in'));
