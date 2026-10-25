@@ -146,7 +146,7 @@ func TestCreateSessionUsesServerOwnedStatusAndExpiration(t *testing.T) {
 			return dispatchapplication.RouteMetrics{DistanceKm: 4, DurationMinutes: 12}, nil
 		},
 		CalculateFare: func(float64, float64) int64 { return 3500 },
-		Config:        dispatchapplication.Config{SessionDuration: 90 * time.Second},
+		Config:        dispatchapplication.DefaultConfig(),
 		Now:           func() time.Time { return now },
 	})
 
@@ -165,7 +165,7 @@ func TestCreateSessionUsesServerOwnedStatusAndExpiration(t *testing.T) {
 	if created.Status != "open" {
 		t.Fatalf("status = %q, want open", created.Status)
 	}
-	if want := now.Add(90 * time.Second); !created.ExpiresAt.Equal(want) {
+	if want := now.Add(30 * time.Second); !created.ExpiresAt.Equal(want) {
 		t.Fatalf("expiration = %v, want %v", created.ExpiresAt, want)
 	}
 }
