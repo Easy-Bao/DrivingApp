@@ -16,6 +16,7 @@ class LiveMapBloc() extends Bloc<LiveMapEvent, LiveMapState> {
   MapPolylineAnnotationManager? _routePolylineManager;
   final List<MapPointAnnotationManager> _markerManagers = [];
   final List<AddMapMarkerEvent> _pendingMarkers = [];
+  ReplaceMapMarkersEvent? _pendingMarkerSnapshot;
   DrawDriverToRiderRouteEvent? _pendingRoute;
   FitMapToCoordinatesEvent? _pendingCameraFit;
   Color _routeColor = TripMapMarkerStyle.ownLocation;
@@ -30,6 +31,7 @@ class LiveMapBloc() extends Bloc<LiveMapEvent, LiveMapState> {
     );
     on<AddMapMarkerEvent>(_onAddMapMarker);
     on<ClearMapAnnotationsEvent>(_onClearMapAnnotations);
+    on<ReplaceMapMarkersEvent>(_onReplaceMapMarkers, transformer: sequential());
     on<FitMapToCoordinatesEvent>(_onFitMapToCoordinates);
   }
 
@@ -55,6 +57,9 @@ class LiveMapBloc() extends Bloc<LiveMapEvent, LiveMapState> {
     for (final marker in pendingMarkers) {
       add(marker);
     }
+    final pendingSnapshot = _pendingMarkerSnapshot;
+    _pendingMarkerSnapshot = null;
+    if (pendingSnapshot != null) add(pendingSnapshot);
     final pendingRoute = _pendingRoute;
     _pendingRoute = null;
     if (pendingRoute != null) add(pendingRoute);
@@ -222,12 +227,31 @@ class LiveMapBloc() extends Bloc<LiveMapEvent, LiveMapState> {
     _markerManagers.add(manager);
   }
 
+  Future<void> _onReplaceMapMarkers(
+    ReplaceMapMarkersEvent event,
+    Emitter<LiveMapState> emit,
+  ) async {
+    final controller = _mapController;
+    if (controller == null) {
+      _pendingMarkerSnapshot = event;
+      return;
+    }
+    _invalidateMapOperations();
+    final generation = _mapViewGeneration;
+    await _clearAllMarkers();
+    for (final marker in event.markers) {
+      if (!_isCurrentMapView(generation, controller)) return;
+      await _onAddMapMarker(marker, emit);
+    }
+  }
+
   Future<void> _onClearMapAnnotations(
     ClearMapAnnotationsEvent event,
     Emitter<LiveMapState> emit,
   ) async {
     _invalidateMapOperations();
     _pendingMarkers.clear();
+    _pendingMarkerSnapshot = null;
     _pendingRoute = null;
     await _clearAllMarkers();
   }

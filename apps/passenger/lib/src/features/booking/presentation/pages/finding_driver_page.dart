@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -235,13 +236,33 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
         routeColor: context.colorScheme.onSurface,
       ),
     );
+    _syncNearbyDriverPins(
+      BlocProvider.of<NearbyDriversCubit>(context).state.drivers,
+    );
+    _schedulePickupFocus();
+  }
+
+  void _syncNearbyDriverPins(List<DriverModel> drivers) {
+    final pickup = _pickupCoordinate;
+    if (pickup == null) return;
     BlocProvider.of<LiveMapBloc>(context).add(
-      AddMapMarkerEvent(
-        lat: pickup.latitude,
-        lng: pickup.longitude,
-        isOrigin: true,
+      ReplaceMapMarkersEvent(
+        markers: [
+          AddMapMarkerEvent(
+            lat: pickup.latitude,
+            lng: pickup.longitude,
+            isOrigin: true,
+          ),
+          for (final driver in drivers)
+            AddMapMarkerEvent(
+              lat: driver.lat,
+              lng: driver.lng,
+              label: driver.displayName,
+            ),
+        ],
       ),
     );
+    _lastViewportPadding = null;
     _schedulePickupFocus();
   }
 
@@ -273,14 +294,29 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     if (_lastViewportPadding == insets) return;
     _lastViewportPadding = insets;
     try {
-      await MapProvider.moveCamera(
-        controller,
-        pickup.latitude,
-        pickup.longitude,
-        zoom: 14.5,
-        viewportPadding: insets,
-        animate: false,
-      );
+      final drivers = BlocProvider.of<NearbyDriversCubit>(context)
+          .state
+          .drivers;
+      if (drivers.isEmpty) {
+        await MapProvider.moveCamera(
+          controller,
+          pickup.latitude,
+          pickup.longitude,
+          zoom: 14.5,
+          viewportPadding: insets,
+          animate: false,
+        );
+      } else {
+        await MapProvider.fitBounds(
+          controller,
+          [
+            LatLng(pickup.latitude, pickup.longitude),
+            for (final driver in drivers) LatLng(driver.lat, driver.lng),
+          ],
+          viewportPadding: insets,
+          maxZoom: 14.5,
+        );
+      }
     } catch (_) {
       if (mounted && controller == _mapController) _lastViewportPadding = null;
     }
@@ -447,97 +483,111 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
       },
       child: Scaffold(
         backgroundColor: context.colorScheme.surface,
-        body: BlocListener<BookingBloc, BookingState>(
-          listener: (context, state) {
-            if (state is NearestDriverFound) {
-              final nearbyDrivers = _uniqueNearbyDrivers(state);
-              setState(() {
-                _nearbyDrivers = nearbyDrivers;
-                _selectedDriver =
-                    _selectedDriver != null &&
-                        nearbyDrivers.any(
-                          (driver) => driver.id == _selectedDriver!.id,
-                        )
-                    ? _selectedDriver
-                    : null;
-              });
-              final liveMapBloc = BlocProvider.of<LiveMapBloc>(context);
-              liveMapBloc.add(const ClearMapAnnotationsEvent());
-              liveMapBloc.add(
-                AddMapMarkerEvent(
-                  lat: state.pickupLat,
-                  lng: state.pickupLng,
-                  isOrigin: true,
-                ),
-              );
-              liveMapBloc.add(
-                AddMapMarkerEvent(
-                  lat: state.driver.lat,
-                  lng: state.driver.lng,
-                  onTap: () {
-                    if (!mounted) return;
-                    setState(() {
-                      _selectedDriver = state.driver;
-                      _isViewingDriverProfile = false;
-                    });
-                  },
-                ),
-              );
-              for (final nearby in nearbyDrivers.take(10)) {
-                if (nearby.id != state.driver.id) {
+        body: MultiBlocListener(
+          listeners: [
+            BlocListener<NearbyDriversCubit, NearbyDriversState>(
+              listenWhen: (previous, current) =>
+                  !listEquals(previous.drivers, current.drivers),
+              listener: (context, state) {
+                if (BlocProvider.of<BookingBloc>(context).state
+                    is! NearestDriverFound) {
+                  _syncNearbyDriverPins(state.drivers);
+                }
+              },
+            ),
+            BlocListener<BookingBloc, BookingState>(
+              listener: (context, state) {
+                if (state is NearestDriverFound) {
+                  final nearbyDrivers = _uniqueNearbyDrivers(state);
+                  setState(() {
+                    _nearbyDrivers = nearbyDrivers;
+                    _selectedDriver =
+                        _selectedDriver != null &&
+                            nearbyDrivers.any(
+                              (driver) => driver.id == _selectedDriver!.id,
+                            )
+                        ? _selectedDriver
+                        : null;
+                  });
+                  final liveMapBloc = BlocProvider.of<LiveMapBloc>(context);
+                  liveMapBloc.add(const ClearMapAnnotationsEvent());
                   liveMapBloc.add(
                     AddMapMarkerEvent(
-                      lat: nearby.lat,
-                      lng: nearby.lng,
+                      lat: state.pickupLat,
+                      lng: state.pickupLng,
+                      isOrigin: true,
+                    ),
+                  );
+                  liveMapBloc.add(
+                    AddMapMarkerEvent(
+                      lat: state.driver.lat,
+                      lng: state.driver.lng,
                       onTap: () {
                         if (!mounted) return;
                         setState(() {
-                          _selectedDriver = nearby;
+                          _selectedDriver = state.driver;
                           _isViewingDriverProfile = false;
                         });
                       },
                     ),
                   );
+                  for (final nearby in nearbyDrivers.take(10)) {
+                    if (nearby.id != state.driver.id) {
+                      liveMapBloc.add(
+                        AddMapMarkerEvent(
+                          lat: nearby.lat,
+                          lng: nearby.lng,
+                          onTap: () {
+                            if (!mounted) return;
+                            setState(() {
+                              _selectedDriver = nearby;
+                              _isViewingDriverProfile = false;
+                            });
+                          },
+                        ),
+                      );
+                    }
+                  }
+                  liveMapBloc.add(
+                    FitMapToCoordinatesEvent(
+                      coordinates: [
+                        LatLng(state.pickupLat, state.pickupLng),
+                        ...nearbyDrivers
+                            .take(10)
+                            .map((driver) => LatLng(driver.lat, driver.lng)),
+                      ],
+                      maxZoom: 14.5,
+                    ),
+                  );
+                } else if (state is BookingDriverMatched) {
+                  unawaited(HapticFeedback.lightImpact());
+                  context.pushReplacementNamed(
+                    ActiveRideRoutes.trackDriver,
+                    extra: state.rideId,
+                  );
+                } else if (state is BookingFailure) {
+                  _acceptingOfferId = null;
+                  if (state.isNoDriverFound) {
+                    _handleNoDriverFound();
+                  } else {
+                    setState(() {
+                      _driverSearchError = state.message;
+                      _isNoDriverFound = false;
+                      _isLeaving = false;
+                    });
+                  }
+                } else if (state is BookingSessionRecoveryFailure) {
+                  setState(() {
+                    _acceptingOfferId = null;
+                    _isLeaving = false;
+                  });
+                } else if (state is BookingCanceled) {
+                  _acceptingOfferId = null;
+                  _returnHome();
                 }
-              }
-              liveMapBloc.add(
-                FitMapToCoordinatesEvent(
-                  coordinates: [
-                    LatLng(state.pickupLat, state.pickupLng),
-                    ...nearbyDrivers
-                        .take(10)
-                        .map((driver) => LatLng(driver.lat, driver.lng)),
-                  ],
-                  maxZoom: 14.5,
-                ),
-              );
-            } else if (state is BookingDriverMatched) {
-              unawaited(HapticFeedback.lightImpact());
-              context.pushReplacementNamed(
-                ActiveRideRoutes.trackDriver,
-                extra: state.rideId,
-              );
-            } else if (state is BookingFailure) {
-              _acceptingOfferId = null;
-              if (state.isNoDriverFound) {
-                _handleNoDriverFound();
-              } else {
-                setState(() {
-                  _driverSearchError = state.message;
-                  _isNoDriverFound = false;
-                  _isLeaving = false;
-                });
-              }
-            } else if (state is BookingSessionRecoveryFailure) {
-              setState(() {
-                _acceptingOfferId = null;
-                _isLeaving = false;
-              });
-            } else if (state is BookingCanceled) {
-              _acceptingOfferId = null;
-              _returnHome();
-            }
-          },
+              },
+            ),
+          ],
           child: LayoutBuilder(
             builder: (context, constraints) {
               final isWideScreen = constraints.maxWidth > 600.0;

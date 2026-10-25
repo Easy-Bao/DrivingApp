@@ -26,6 +26,10 @@ final class const AddMapMarkerEvent({
 
 final class const ClearMapAnnotationsEvent() extends LiveMapEvent;
 
+final class const ReplaceMapMarkersEvent({
+  required final List<AddMapMarkerEvent> markers,
+}) extends LiveMapEvent;
+
 final class const FitMapToCoordinatesEvent({
   required final List<LatLng> coordinates,
   final double? maxZoom,
