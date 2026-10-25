@@ -72,55 +72,9 @@ class _EarningsPageState extends State<EarningsPage> {
                           constraints: const BoxConstraints(maxWidth: 720),
                           child: summary == null
                               ? _buildLoadingState()
-                              : Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    if (state.errorMessage != null)
-                                      AppErrorBanner(
-                                        message: state.errorMessage!,
-                                        onRetry: context
-                                            .read<EarningsCubit>()
-                                            .load,
-                                        onDismiss: context
-                                            .read<EarningsCubit>()
-                                            .dismissError,
-                                      ),
-                                    _buildSummary(summary),
-                                    const SizedBox(height: AppSpacing.lg),
-                                    _buildPeriodTabs(),
-                                    const SizedBox(height: AppSpacing.xl),
-                                    Semantics(
-                                      label:
-                                          'Earnings chart. ${summary.days.map((day) => '${day.day}: ${formatPesoAmount(day.amount)}').join('. ')}',
-                                      child: ExcludeSemantics(
-                                        child: SizedBox(
-                                          height: 190,
-                                          child: LayoutBuilder(
-                                            builder: (context, constraints) =>
-                                                BarChart(
-                                                  _barChartData(
-                                                    constraints.maxWidth,
-                                                    summary.days,
-                                                  ),
-                                                  duration:
-                                                      MediaQuery.disableAnimationsOf(
-                                                        context,
-                                                      )
-                                                      ? Duration.zero
-                                                      : const Duration(
-                                                          milliseconds: 200,
-                                                        ),
-                                                ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: AppSpacing.lg),
-                                    _buildStats(summary),
-                                    const SizedBox(height: AppSpacing.lg),
-                                    _buildRecent(summary),
-                                  ],
+                              : _buildContent(
+                                  summary,
+                                  errorMessage: state.errorMessage,
                                 ),
                         ),
                       ),
@@ -132,18 +86,68 @@ class _EarningsPageState extends State<EarningsPage> {
     );
   }
 
-  Widget _buildLoadingState() => const Skeletonizer(
-    key: ValueKey<String>('driver-earnings-loading-skeleton'),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Bone.text(width: 160),
-        SizedBox(height: AppSpacing.md),
-        Bone.text(width: 220, fontSize: 48),
-        SizedBox(height: AppSpacing.lg),
-        Bone.square(size: 190),
-      ],
+  static const _loadingSummary = EarningsPeriodSummary(
+    total: 88.88,
+    tripsCount: 3,
+    days: [
+      EarnDayBucket(day: 'Mon', amount: 30, tripsCount: 1),
+      EarnDayBucket(day: 'Tue', amount: 20, tripsCount: 1),
+      EarnDayBucket(day: 'Wed', amount: 38.88, tripsCount: 1),
+      EarnDayBucket(day: 'Thu', amount: 0),
+      EarnDayBucket(day: 'Fri', amount: 0),
+      EarnDayBucket(day: 'Sat', amount: 0),
+      EarnDayBucket(day: 'Sun', amount: 0),
+    ],
+  );
+
+  Widget _buildLoadingState() => ExcludeSemantics(
+    child: Skeletonizer(
+      key: const ValueKey<String>('driver-earnings-loading-skeleton'),
+      child: _buildContent(_loadingSummary, isLoading: true),
     ),
+  );
+
+  Widget _buildContent(
+    EarningsPeriodSummary summary, {
+    String? errorMessage,
+    bool isLoading = false,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (errorMessage != null)
+        AppErrorBanner(
+          message: errorMessage,
+          onRetry: context.read<EarningsCubit>().load,
+          onDismiss: context.read<EarningsCubit>().dismissError,
+        ),
+      _buildSummary(summary),
+      const SizedBox(height: AppSpacing.lg),
+      _buildPeriodTabs(),
+      const SizedBox(height: AppSpacing.xl),
+      Semantics(
+        label:
+            'Earnings chart. ${summary.days.map((day) => '${day.day}: ${formatPesoAmount(day.amount)}').join('. ')}',
+        child: ExcludeSemantics(
+          child: SizedBox(
+            height: 190,
+            child: LayoutBuilder(
+              builder: (context, constraints) => Skeleton.shade(
+                child: BarChart(
+                  _barChartData(constraints.maxWidth, summary.days),
+                  duration: isLoading || MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : const Duration(milliseconds: 200),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: AppSpacing.lg),
+      _buildStats(summary),
+      const SizedBox(height: AppSpacing.lg),
+      _buildRecent(summary),
+    ],
   );
 
   Widget _buildErrorState() => Center(

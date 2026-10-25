@@ -258,44 +258,80 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('ignores tab selection while loading', (tester) async {
-    final repository = _PendingEarningsRepository();
+  for (final (width, scale) in [(800.0, 1.0), (320.0, 1.0), (320.0, 2.0)]) {
+    testWidgets(
+      'loading layout matches content at width $width and scale $scale',
+      (tester) async {
+        tester.view.physicalSize = Size(width, 1200);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final repository = _PendingEarningsRepository();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.main,
-        home: BlocProvider(
-          create: (_) => EarningsCubit(
-            repository: repository,
-            sessionService: sessionService,
-          )..load(),
-          child: const EarningsPage(),
-        ),
-      ),
-    );
-    await tester.pump();
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.main,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(scale)),
+              child: child!,
+            ),
+            home: BlocProvider(
+              create: (_) => EarningsCubit(
+                repository: repository,
+                sessionService: sessionService,
+              )..load(),
+              child: const EarningsPage(),
+            ),
+          ),
+        );
+        await tester.pump();
 
-    expect(
-      find.byKey(const ValueKey<String>('driver-earnings-loading-skeleton')),
-      findsOneWidget,
-    );
-    expect(find.text('Day'), findsNothing);
-    await tester.pump();
+        expect(
+          find.byKey(
+            const ValueKey<String>('driver-earnings-loading-skeleton'),
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Day'), findsOneWidget);
+        expect(find.text('Avg per trip'), findsOneWidget);
+        expect(find.text('Recent'), findsOneWidget);
+        final loadingChart = tester.getRect(find.byType(BarChart));
+        final loadingTabs = tester.getRect(find.text('Week'));
+        final loadingStats = tester.getRect(find.text('Trips'));
+        expect(loadingChart.width, greaterThan(190));
+        expect(loadingChart.height, closeTo(190, 0.01));
+        await tester.tap(find.text('Day'), warnIfMissed: false);
+        await tester.pump();
 
-    repository.completer.complete(
-      Ok(
-        EarningsSummary.fromJson(const {
-          'today': {'earnings_amount': 2973, 'completed_trips': 1},
-          'this_week': {'earnings_amount': 2973, 'completed_trips': 1},
-          'this_month': {'earnings_amount': 2973, 'completed_trips': 1},
-          'weekdays': <Map<String, Object>>[],
-          'month_weeks': <Map<String, Object>>[],
-        }),
-      ),
+        repository.completer.complete(
+          Ok(
+            EarningsSummary.fromJson(const {
+              'today': {'earnings_amount': 2973, 'completed_trips': 1},
+              'this_week': {'earnings_amount': 2973, 'completed_trips': 1},
+              'this_month': {'earnings_amount': 2973, 'completed_trips': 1},
+              'weekdays': <Map<String, Object>>[],
+              'month_weeks': <Map<String, Object>>[],
+            }),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('This week'), findsOneWidget);
+        for (final (finder, bounds) in [
+          (find.byType(BarChart), loadingChart),
+          (find.text('Week'), loadingTabs),
+          (find.text('Trips'), loadingStats),
+        ]) {
+          final loaded = tester.getRect(finder);
+          expect(loaded.left, closeTo(bounds.left, 0.01));
+          expect(loaded.top, closeTo(bounds.top, 0.01));
+          expect(loaded.width, closeTo(bounds.width, 0.01));
+          expect(loaded.height, closeTo(bounds.height, 0.01));
+        }
+        expect(tester.takeException(), isNull);
+      },
     );
-    await tester.pumpAndSettle();
-    expect(find.text('This week'), findsOneWidget);
-  });
+  }
 
   testWidgets(
     'formats negative adjustments and fee deductions with distinct cues',
