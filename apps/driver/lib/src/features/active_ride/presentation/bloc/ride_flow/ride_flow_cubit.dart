@@ -993,18 +993,6 @@ class RideFlowCubit({
     return ride;
   }
 
-  Future<double?> endRide({
-    required double driverLatitude,
-    required double driverLongitude,
-  }) async {
-    final completedFare = await completeRide(
-      driverLatitude: driverLatitude,
-      driverLongitude: driverLongitude,
-    );
-    if (completedFare == null) return null;
-    return confirmCashPayment();
-  }
-
   Future<void> reset() async {
     final actionGeneration = ++_actionGeneration;
     _waitTimer?.cancel();

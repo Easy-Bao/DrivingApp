@@ -70,10 +70,6 @@ class SessionStore({FlutterSecureStorage? storage}) {
     return _readValue(key: StorageKeys.refreshToken);
   }
 
-  Future<void> deleteRefreshToken() async {
-    await _deleteKeys(const [StorageKeys.refreshToken]);
-  }
-
   Future<void> savePassengerId(String passengerId) async {
     await _writeValue(key: StorageKeys.passengerId, value: passengerId);
   }
@@ -82,20 +78,12 @@ class SessionStore({FlutterSecureStorage? storage}) {
     return _readValue(key: StorageKeys.passengerId);
   }
 
-  Future<void> deletePassengerId() async {
-    await _deleteKeys(const [StorageKeys.passengerId]);
-  }
-
   Future<void> saveActiveRideId(String rideId) async {
     await _writeValue(key: StorageKeys.activeRideId, value: rideId);
   }
 
   Future<String?> readActiveRideId() async {
     return _readValue(key: StorageKeys.activeRideId);
-  }
-
-  Future<void> deleteActiveRideId() async {
-    await _deleteKeys(const [StorageKeys.activeRideId]);
   }
 
   Future<void> saveActiveBidSessionId(String sessionId) async {

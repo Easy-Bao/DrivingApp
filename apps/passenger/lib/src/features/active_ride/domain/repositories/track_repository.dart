@@ -130,27 +130,6 @@ extension TrackRepositoryResultAdapters on TrackRepository {
     }
   }
 
-  Future<Result<void, DomainFailure>> updateRideStatusResult(
-    String rideId,
-    RideStatus status,
-  ) async {
-    try {
-      final result = await updateRideStatus(rideId, status);
-      return await result.fold(
-        (failure) => Err<void, DomainFailure>(failure),
-        (_) => const Ok<void, DomainFailure>(null),
-      );
-    } catch (error) {
-      return Err<void, DomainFailure>(
-        FailureMapper.fromException(
-          error,
-          serverMessage:
-              'The ride status could not be updated. Please try again.',
-        ),
-      );
-    }
-  }
-
   Future<Result<void, DomainFailure>> cancelRideResult({
     required String rideId,
     required String reason,

@@ -41,8 +41,6 @@ class SavedPlaceModel extends SavedPlace {
   }
 }
 
-typedef SavedPlaceDto = SavedPlaceModel;
-
 bool _parseBoolean(Object? value) {
   return switch (value) {
     final bool booleanValue => booleanValue,

@@ -101,7 +101,6 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
   final SessionStore _sessionService;
   final DriverProfileRepository _profileRepository;
   Future<void>? _loadRequest;
-  Future<RideCounterparty?>? _counterpartyRequest;
   Future<void>? _reviewRequest;
   String? _loadedReviewRideId;
 
@@ -163,41 +162,6 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
           ),
         );
       }
-    }
-  }
-
-  Future<RideCounterparty?> loadCounterpartyIfNeeded(String rideId) async {
-    final normalizedRideId = rideId.trim();
-    if (normalizedRideId.isEmpty || isClosed) return null;
-
-    final current = state.counterparty;
-    if (current != null) return current;
-
-    final currentRequest = _counterpartyRequest;
-    if (currentRequest != null) return currentRequest;
-
-    final request = _fetchCounterparty(normalizedRideId);
-    _counterpartyRequest = request;
-    try {
-      return await request;
-    } finally {
-      if (identical(_counterpartyRequest, request)) {
-        _counterpartyRequest = null;
-      }
-    }
-  }
-
-  Future<RideCounterparty?> _fetchCounterparty(String rideId) async {
-    try {
-      RideCounterparty? counterparty;
-      (await _repository.fetchCounterpartyResult(rideId))
-          .fold((_) {}, (value) => counterparty = value);
-      if (counterparty != null && !isClosed && state.rideId == rideId) {
-        emit(state.copyWith(counterparty: counterparty));
-      }
-      return counterparty;
-    } catch (_) {
-      return null;
     }
   }
 
