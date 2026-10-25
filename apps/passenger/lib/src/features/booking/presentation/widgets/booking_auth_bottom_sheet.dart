@@ -9,7 +9,7 @@ enum BookingAuthAction() {
 
 Future<BookingAuthAction?> showBookingAuthBottomSheet(
   BuildContext context, {
-  String title = 'Create an account to book',
+  String title = 'Sign in to book a ride',
   String message = 'Sign in or create an account to see your route and fare, then book your ride.',
 }) {
   return showModalBottomSheet<BookingAuthAction>(
@@ -28,7 +28,7 @@ Future<BookingAuthAction?> showBookingAuthBottomSheet(
 
 class const BookingAuthBottomSheet({
   super.key,
-  this.title = 'Create an account to book',
+  this.title = 'Sign in to book a ride',
   this.message = 'Sign in or create an account to see your route and fare, then book your ride.',
 }) extends StatelessWidget {
   final String title;
@@ -72,17 +72,17 @@ class const BookingAuthBottomSheet({
               width: double.infinity,
               child: FilledButton(
                 onPressed: () =>
-                    Navigator.of(context).pop(BookingAuthAction.signUp),
-                child: const Text('Create account'),
+                    Navigator.of(context).pop(BookingAuthAction.signIn),
+                child: const Text('Sign in'),
               ),
             ),
             const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton(
+              child: FilledButton.tonal(
                 onPressed: () =>
-                    Navigator.of(context).pop(BookingAuthAction.signIn),
-                child: const Text('Log in'),
+                    Navigator.of(context).pop(BookingAuthAction.signUp),
+                child: const Text('Create account'),
               ),
             ),
           ],

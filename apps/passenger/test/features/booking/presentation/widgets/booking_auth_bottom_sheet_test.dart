@@ -23,17 +23,23 @@ void main() {
     final actionFuture = showBookingAuthBottomSheet(pageContext);
     await tester.pumpAndSettle();
 
-    expect(find.text('Create an account to book'), findsOneWidget);
+    expect(find.text('Sign in to book a ride'), findsOneWidget);
     expect(find.text('Continue exploring'), findsNothing);
     expect(
       tester.widget<BottomSheet>(find.byType(BottomSheet)).showDragHandle,
       isFalse,
     );
-    await tester.tap(find.text('Log in'));
+    await tester.tap(find.text('Sign in'));
     await tester.pumpAndSettle();
 
     expect(await actionFuture, BookingAuthAction.signIn);
-    expect(find.text('Create an account to book'), findsNothing);
+    expect(find.text('Sign in to book a ride'), findsNothing);
+
+    final signUpFuture = showBookingAuthBottomSheet(pageContext);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create account'));
+    await tester.pumpAndSettle();
+    expect(await signUpFuture, BookingAuthAction.signUp);
   });
 
   testWidgets('closes when the modal barrier is tapped', (tester) async {
@@ -56,7 +62,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(await actionFuture, isNull);
-    expect(find.text('Create an account to book'), findsNothing);
+    expect(find.text('Sign in to book a ride'), findsNothing);
   });
 
   testWidgets('closes when dragged downward', (tester) async {
@@ -79,6 +85,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(await actionFuture, isNull);
-    expect(find.text('Create an account to book'), findsNothing);
+    expect(find.text('Sign in to book a ride'), findsNothing);
   });
 }

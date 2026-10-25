@@ -14,7 +14,8 @@ class const RecentRideHistoryEmptyState({required this.isGuest, super.key})
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              isGuest ? 'Guest mode' : 'No recent trips yet',
+              isGuest ? 'Your trips, in one place' : 'No recent trips yet',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
@@ -24,7 +25,7 @@ class const RecentRideHistoryEmptyState({required this.isGuest, super.key})
             const SizedBox(height: 6),
             Text(
               isGuest
-                  ? 'Sign in to view your recent trips.'
+                  ? 'Sign in or create an account to book rides and keep your trip history here.'
                   : 'Your recent ride history will appear here.',
               textAlign: TextAlign.center,
               style: TextStyle(

@@ -13,8 +13,7 @@ Future<bool> ensureSavedPlaceAuthentication(BuildContext context) async {
   final action = await showBookingAuthBottomSheet(
     context,
     title: 'Sign in to save places',
-    message:
-        'Log in or create an account to save and pin your favourite places.',
+    message: 'Sign in or create an account to save home, work, and favourite places for your next ride.',
   );
   if (!context.mounted || action == null) return false;
   final route = switch (action) {

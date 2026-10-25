@@ -15,6 +15,44 @@ import 'package:passenger/src/features/ride_history/presentation/pages/ride_hist
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 void main() {
+  testWidgets('guest activity explains trips without loading private history', (
+    tester,
+  ) async {
+    final session = SessionBloc(
+      sessionRepository: _AuthenticatedSessionRepository(),
+    );
+    session.add(const SessionGuestRequested());
+    await tester.pump();
+    final repository = _RecoveringRideHistoryRepository();
+    addTearDown(session.close);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider<SessionBloc>.value(value: session),
+            BlocProvider<RideHistoryBloc>(
+              create: (_) => RideHistoryBloc(repository: repository),
+            ),
+          ],
+          child: const RideHistoryPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Your trips, in one place'), findsOneWidget);
+    expect(
+      find.text(
+        'Sign in or create an account to view your trips and receipts.',
+      ),
+      findsOneWidget,
+    );
+    expect(repository.overviewCalls, 0);
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, 350));
+    await tester.pumpAndSettle();
+    expect(repository.overviewCalls, 0);
+  });
+
   testWidgets(
     'shows a friendly activity fallback and refreshes automatically',
     (tester) async {

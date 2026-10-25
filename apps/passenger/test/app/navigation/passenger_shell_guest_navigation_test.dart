@@ -39,7 +39,7 @@ void main() {
 
     router.pop();
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Log in'));
+    await tester.tap(find.text('Sign in'));
     await tester.pumpAndSettle();
     expect(find.text('Sign in screen'), findsOneWidget);
 

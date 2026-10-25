@@ -14,7 +14,7 @@ class const GuestActionBar({
   @override
   Widget build(BuildContext context) {
     final signUp = _authButton(context, 'Sign up', onSignUp, primary: false);
-    final signIn = _authButton(context, 'Log in', onSignIn, primary: true);
+    final signIn = _authButton(context, 'Sign in', onSignIn, primary: true);
     final stackActions =
         MediaQuery.sizeOf(context).width < 300 ||
         MediaQuery.textScalerOf(context).scale(14) > 21;

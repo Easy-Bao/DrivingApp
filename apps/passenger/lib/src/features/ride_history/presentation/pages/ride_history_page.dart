@@ -78,9 +78,9 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                     GuestSession() ||
                     SessionFailure() => _RideHistoryMessageView(
                       headerTitle: widget.title,
-                      subtitle: 'Sign in to view your ride history',
-                      title: 'Guest mode',
-                      message: 'Sign in to see your recent trips.',
+                      subtitle: 'Your trips and receipts',
+                      title: 'Your trips, in one place',
+                      message: 'Sign in or create an account to view your trips and receipts.',
                       showBackButton: widget.showBackButton,
                       showSubtitle: widget.showHeaderSubtitle,
                     ),

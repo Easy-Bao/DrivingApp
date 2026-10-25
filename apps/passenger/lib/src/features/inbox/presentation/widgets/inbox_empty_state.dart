@@ -15,7 +15,8 @@ class InboxEmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              isGuest ? 'Guest mode' : 'No notifications yet',
+              isGuest ? 'Stay up to date' : 'No notifications yet',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
@@ -25,7 +26,7 @@ class InboxEmptyState extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               isGuest
-                  ? 'Sign in to see ride updates and receipts.'
+                  ? 'Sign in or create an account to receive ride updates and account notifications.'
                   : "We'll notify you about rides and account activity.",
               textAlign: TextAlign.center,
               style: TextStyle(

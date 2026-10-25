@@ -33,7 +33,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Sign up'), findsOneWidget);
-    expect(find.text('Log in'), findsOneWidget);
+    expect(find.text('Sign in'), findsOneWidget);
     final helpButton = find.byType(TextButton);
     expect(tester.getSize(helpButton).width, lessThan(600));
     final ink = tester.widget<InkWell>(
@@ -50,7 +50,7 @@ void main() {
     );
 
     await tester.tap(find.text('Sign up'));
-    await tester.tap(find.text('Log in'));
+    await tester.tap(find.text('Sign in'));
     await tester.tap(find.byType(TextButton));
 
     expect(signUpPressed, isTrue);
@@ -83,7 +83,7 @@ void main() {
         find.widgetWithText(FilledButton, 'Sign up'),
       );
       final signIn = tester.getRect(
-        find.widgetWithText(FilledButton, 'Log in'),
+        find.widgetWithText(FilledButton, 'Sign in'),
       );
       final help = tester.getRect(find.byType(TextButton));
       expect(signUp.left, 20);
@@ -121,7 +121,7 @@ void main() {
       ),
     );
     final signUp = tester.getRect(find.widgetWithText(FilledButton, 'Sign up'));
-    final signIn = tester.getRect(find.widgetWithText(FilledButton, 'Log in'));
+    final signIn = tester.getRect(find.widgetWithText(FilledButton, 'Sign in'));
     expect(signUp.width, signIn.width);
     expect(signIn.top, greaterThan(signUp.bottom));
     expect(tester.takeException(), isNull);

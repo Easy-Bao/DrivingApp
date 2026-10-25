@@ -26,6 +26,46 @@ class MockSessionStore extends Mock implements SessionStore {}
 class MockInboxCubit extends MockCubit<InboxState> implements InboxCubit {}
 
 void main() {
+  testWidgets('guest guidance fits large text without account actions', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final session = MockSessionBloc();
+    when(() => session.state).thenReturn(const GuestSession());
+    final repository = MockInboxRepository();
+    final cubit = InboxCubit(inboxRepository: repository);
+    addTearDown(cubit.close);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: BlocProvider<SessionBloc>.value(
+          value: session,
+          child: InboxPage(
+            inboxCubit: cubit,
+            sessionService: MockSessionStore(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Stay up to date'), findsOneWidget);
+    expect(
+      find.text(
+        'Sign in or create an account to receive ride updates and account notifications.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Mark all as read'), findsNothing);
+    verifyNever(() => repository.fetchPassengerNotifications(any()));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('bulk read action shows progress and disables after success', (
     tester,
   ) async {

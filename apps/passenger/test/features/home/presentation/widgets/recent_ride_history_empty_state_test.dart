@@ -12,8 +12,13 @@ void main() {
       ),
     );
 
-    expect(find.text('Guest mode'), findsOneWidget);
-    expect(find.text('Sign in to view your recent trips.'), findsOneWidget);
+    expect(find.text('Your trips, in one place'), findsOneWidget);
+    expect(
+      find.text(
+        'Sign in or create an account to book rides and keep your trip history here.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('No recent trips yet'), findsNothing);
   });
 
@@ -31,6 +36,6 @@ void main() {
       find.text('Your recent ride history will appear here.'),
       findsOneWidget,
     );
-    expect(find.text('Guest mode'), findsNothing);
+    expect(find.text('Your trips, in one place'), findsNothing);
   });
 }
