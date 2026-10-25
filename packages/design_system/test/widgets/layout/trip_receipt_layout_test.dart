@@ -26,7 +26,8 @@ void main() {
             ),
           ),
         );
-        final toolbar = tester.getRect(find.byType(AppBar));
+      final toolbar = tester.getRect(find.byType(AppBar));
+      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
         final title = tester.getRect(find.text(date));
         expect(title.center.dx, closeTo(toolbar.center.dx, 0.5));
         expect(title.center.dy, closeTo(toolbar.center.dy, 0.5));

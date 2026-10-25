@@ -41,7 +41,7 @@ class TripReceiptLayout extends StatelessWidget {
           leading: IconButton(
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             onPressed: onBack,
-            icon: const Icon(Icons.arrow_back_ios_new, size: 16),
+            icon: const Icon(Icons.arrow_back, size: 20),
           ),
           centerTitle: true,
           actions: const [SizedBox(width: kToolbarHeight)],
