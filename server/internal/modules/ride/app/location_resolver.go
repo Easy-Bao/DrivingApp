@@ -57,17 +57,5 @@ func formatAddress(place *locationdomain.Place) string {
 	if name := strings.TrimSpace(place.Name); name != "" {
 		return name
 	}
-	return shortenPlaceAddress(place.Address)
-}
-
-func shortenPlaceAddress(address string) string {
-	address = strings.TrimSpace(address)
-	parts := strings.Split(address, ",")
-	for index := range parts {
-		parts[index] = strings.TrimSpace(parts[index])
-	}
-	if len(parts) >= 2 {
-		return parts[len(parts)-2] + ", " + parts[len(parts)-1]
-	}
-	return address
+	return shortenAddress(place.Address)
 }
