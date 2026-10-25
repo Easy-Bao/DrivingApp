@@ -8,11 +8,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
-const (
-	_rideCreatedEvent       = event.RideOfferCreated
-	_rideStatusChangedEvent = event.RideStatusChanged
-)
-
 func (service *Service) publishRide(
 	ctx context.Context,
 	eventType event.Type,

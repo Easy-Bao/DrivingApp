@@ -54,16 +54,6 @@ func (service *AuthenticateService) Execute(ctx context.Context, email, password
 	return account, tokens.AccessToken, err
 }
 
-func (service *AuthenticateService) ExecuteAs(
-	ctx context.Context,
-	email string,
-	password string,
-	role domain.Role,
-) (domain.User, string, error) {
-	account, tokens, err := service.execute(ctx, email, password, role)
-	return account, tokens.AccessToken, err
-}
-
 func (service *AuthenticateService) ExecuteSession(
 	ctx context.Context,
 	email string,

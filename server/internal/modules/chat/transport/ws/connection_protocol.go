@@ -51,12 +51,6 @@ func WithTypingRateLimit(limit int, window, cooldown time.Duration) ConnectionPr
 	}
 }
 
-func withLimiterClock(now func() time.Time) ConnectionProtocolOption {
-	return func(p *ConnectionProtocol) {
-		p.limiter.now = now
-	}
-}
-
 var _ websockethub.ConnectionProtocol = (*ConnectionProtocol)(nil)
 
 func NewConnectionProtocol(sink EventSink, rooms RoomAuthorizer, opts ...ConnectionProtocolOption) *ConnectionProtocol {
