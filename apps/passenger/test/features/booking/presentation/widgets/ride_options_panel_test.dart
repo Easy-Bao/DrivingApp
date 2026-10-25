@@ -160,16 +160,18 @@ void main() {
       );
     }
     final routeCard = find.byKey(const ValueKey('trip-summary-card'));
-    for (final icon in [LucideIcons.map_pin, LucideIcons.navigation]) {
+    for (final isPickup in [true, false]) {
       final marker = find.descendant(
-        of: routeCard,
-        matching: find.byIcon(icon),
+        of: find.descendant(
+          of: routeCard,
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is RouteStopMarker && widget.isPickup == isPickup,
+          ),
+        ),
+        matching: find.byType(CustomPaint),
       );
       expect(marker, findsOneWidget);
-      expect(
-        tester.widget<Icon>(marker).color,
-        AppTheme.main.colorScheme.onSurface,
-      );
     }
     expect(find.text('Choose driver'), findsOneWidget);
     expect(find.text('Solo Ride'), findsNothing);

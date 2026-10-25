@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart' hide Route;
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/core/session/session_store.dart';
@@ -14,6 +13,7 @@ import 'package:passenger/src/features/driver_profile/domain/repositories/driver
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_details_map.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RideDetailsPage extends StatefulWidget {
   const RideDetailsPage({
@@ -47,6 +47,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   RideCounterparty? _counterpartyData;
   bool _showLostFoundChat = false;
   String _passengerId = '';
+  String? _contactError;
 
   String? get _rideId =>
       widget.ride?.id ?? widget.initialRide?.id ?? widget.rideId;
@@ -140,46 +141,28 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     double? fare,
   ) {
     final colors = context.colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: colors.outlineVariant),
-      ),
+    return AppSurfaceCard(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Total fare', style: context.textStyles.labelLarge),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            fare == null ? 'Fare unavailable' : formatPesoAmount(fare),
-            key: const ValueKey('receipt-total-fare'),
-            style: context.textStyles.headlineMedium?.copyWith(
-              color: colors.onSurface,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.payments_outlined,
-                size: 20,
-                color: colors.onSurfaceVariant,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  'Cash · ${_cashPaymentStatus(snapshot)}',
-                  style: context.textStyles.bodyMedium?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
+              const Expanded(child: Text('Total fare')),
+              Text(
+                fare == null ? 'Fare unavailable' : formatPesoAmount(fare),
+                key: const ValueKey('receipt-total-fare'),
+                style: context.textStyles.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            'Cash · ${_cashPaymentStatus(snapshot)}',
+            style: context.textStyles.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
           ),
           if (snapshot?.cashSettled == true &&
               (snapshot?.cashReceivedAmount ?? 0) > 0) ...[
@@ -187,14 +170,54 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
             Text(
               'Cash received ${formatPesoAmount(snapshot!.cashReceivedAmount! / 100)}'
               '${(snapshot.cashChangeAmount ?? 0) > 0 ? ' · Change ${formatPesoAmount(snapshot.cashChangeAmount! / 100)}' : ''}',
-              style: context.textStyles.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
+              style: context.textStyles.bodySmall,
             ),
           ],
         ],
       ),
     );
+  }
+
+  Future<void> _callDriver() async {
+    final counterparty = _counterpartyData;
+    if (!_showLostFoundChat ||
+        counterparty == null ||
+        !counterparty.contactAllowed ||
+        counterparty.phone.trim().isEmpty) {
+      return;
+    }
+    try {
+      final opened = await launchUrl(
+        Uri(scheme: 'tel', path: counterparty.phone.trim()),
+      );
+      if (!opened && mounted) {
+        setState(
+          () => _contactError =
+              'Unable to open the phone app. Try messaging your driver.',
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _contactError =
+              'Unable to open the phone app. Try messaging your driver.',
+        );
+      }
+    }
+  }
+
+  String? _receiptDate(
+    BuildContext context,
+    RideSnapshot? snapshot,
+    RideHistory? ride,
+  ) {
+    final date = snapshot?.completedAt ?? DateTime.tryParse(ride?.date ?? '');
+    if (date == null) {
+      return ride?.date.trim().isNotEmpty == true ? ride!.date : null;
+    }
+    final local = date.toLocal();
+    final labels = MaterialLocalizations.of(context);
+    return '${labels.formatMediumDate(local)} · ${labels.formatTimeOfDay(TimeOfDay.fromDateTime(local))}';
   }
 
   String _driverInitials(String? name) {
@@ -231,12 +254,11 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
         snapshot?.displayDriverName ??
         'Driver';
 
-    return AppSecondaryPage(
-      title: isCompleted ? 'Trip receipt' : 'Ride details',
+    return TripReceiptLayout(
+      dateLabel: _receiptDate(context, snapshot, ride),
       onBack: () => context.pop(),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
+      child: Builder(
+        builder: (context) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (_detailsCubit.state.errorMessage != null && rideId != null) ...[
@@ -246,10 +268,17 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
               ),
               const SizedBox(height: AppSpacing.lg),
             ],
+            if (reference.trim().isNotEmpty) ...[
+              TripReference(id: reference, expanded: true, compact: true),
+              const SizedBox(height: AppSpacing.lg),
+            ],
+            Text('Driver', style: context.textStyles.labelSmall),
+            const SizedBox(height: AppSpacing.sm),
             AppSurfaceCard(
               child: Row(
                 children: [
                   CircleAvatar(
+                    radius: 24,
                     backgroundColor:
                         context.colorScheme.surfaceContainerHighest,
                     foregroundColor: context.colorScheme.onSurface,
@@ -273,10 +302,66 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                       ],
                     ),
                   ),
+                  if (_showLostFoundChat)
+                    IconButton.outlined(
+                      tooltip: 'Message driver',
+                      onPressed: _initiateLostFoundChat,
+                      icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                    ),
+                  if (_showLostFoundChat &&
+                      _counterpartyData?.phone.trim().isNotEmpty == true)
+                    IconButton.outlined(
+                      tooltip: 'Call driver',
+                      onPressed: _callDriver,
+                      icon: const Icon(Icons.phone_outlined, size: 20),
+                    ),
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            if (_contactError != null)
+              Text(
+                _contactError!,
+                style: TextStyle(color: context.colorScheme.error),
+              ),
+            const SizedBox(height: AppSpacing.xl),
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Route', style: context.textStyles.labelSmall),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        (isCompleted
+                                ? context.semanticColors.success
+                                : context.colorScheme.onSurfaceVariant)
+                            .withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    switch (status) {
+                      'completed' => 'Completed',
+                      'cancelled' || 'canceled' => 'Canceled',
+                      'assigned' || 'accepted' => 'Awaiting pickup',
+                      'arrived' => 'At pickup',
+                      'in_transit' => 'In progress',
+                      'requested' => 'Requested',
+                      _ => 'Unknown',
+                    },
+                    style: context.textStyles.labelSmall?.copyWith(
+                      color: isCompleted
+                          ? context.semanticColors.success
+                          : context.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
             AppSurfaceCard(
               padding: EdgeInsets.zero,
               child: Column(
@@ -300,8 +385,32 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                         dropoffLongitude: dropoffLongitude,
                       ),
                     ),
+                  if (snapshot?.distanceKm != null ||
+                      snapshot?.durationMinutes != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.sm,
+                        AppSpacing.lg,
+                        0,
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          [
+                            if (snapshot?.distanceKm case final distance?)
+                              distance < 1
+                                  ? '${(distance * 1000).round()} m'
+                                  : '${distance.toStringAsFixed(1)} km',
+                            if (snapshot?.durationMinutes case final duration?)
+                              '${duration.round()} min',
+                          ].join(' · '),
+                          style: context.textStyles.labelSmall,
+                        ),
+                      ),
+                    ),
                   Padding(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    padding: const EdgeInsets.all(AppSpacing.xxl),
                     child: CompactRouteTimeline(
                       pickup:
                           ride?.pickup ??
@@ -353,31 +462,29 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
             if (isCompleted) ...[
               const SizedBox(height: AppSpacing.xxl),
               Text(
-                'Fare details',
-                style: context.textStyles.titleMedium?.copyWith(
+                'Fare breakdown',
+                style: context.textStyles.labelSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
               _buildReceiptSummary(context, snapshot, fare),
             ],
-            if (reference.trim().isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.lg),
-              TripReference(id: reference, compact: true),
-            ],
             const SizedBox(height: AppSpacing.lg),
-            if (_showLostFoundChat)
-              TextButton.icon(
-                onPressed: _initiateLostFoundChat,
-                icon: const Icon(LucideIcons.message_circle, size: 20),
-                label: const Text('Lost item?'),
-              ),
-            SafetyReportButton(
-              driverName: driverName,
-              vehiclePlate: ride?.vehiclePlate ?? snapshot?.plateNumber ?? '',
-              vehicleType: ride?.vehicleType ?? snapshot?.vehicleType ?? '',
-              rideId: rideId,
-              trackRepository: widget.trackRepository,
+            TextButton(
+              onPressed: rideId == null || rideId.isEmpty
+                  ? null
+                  : () => showSafetyReportSheet(
+                      context,
+                      rideId: rideId,
+                      driverName: driverName,
+                      vehiclePlate:
+                          ride?.vehiclePlate ?? snapshot?.plateNumber ?? '',
+                      vehicleType:
+                          ride?.vehicleType ?? snapshot?.vehicleType ?? '',
+                      trackRepository: widget.trackRepository,
+                    ),
+              child: const Text('Report an issue'),
             ),
           ],
         ),

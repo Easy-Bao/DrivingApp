@@ -1,6 +1,5 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -17,19 +16,21 @@ void main() {
       ),
     );
 
-    expect(find.byIcon(LucideIcons.map_pin), findsOneWidget);
-    expect(find.byIcon(LucideIcons.navigation), findsOneWidget);
-    expect(find.byIcon(LucideIcons.navigation_2), findsNothing);
-
-    final pickupIcon = tester.getCenter(find.byIcon(LucideIcons.map_pin));
-    final pickupLabel = tester.getCenter(find.text('Pickup'));
-    final destinationIcon = tester.getCenter(
-      find.byIcon(LucideIcons.navigation),
+    final pins = find.byType(RouteStopMarker);
+    expect(pins, findsNWidgets(2));
+    expect(tester.widget<RouteStopMarker>(pins.first).isPickup, isTrue);
+    expect(tester.widget<RouteStopMarker>(pins.last).isPickup, isFalse);
+    expect(
+      find.descendant(of: pins, matching: find.byType(CustomPaint)),
+      findsNWidgets(2),
     );
-    final destinationLabel = tester.getCenter(find.text('Drop Off'));
 
-    expect((pickupIcon.dy - pickupLabel.dy).abs(), lessThan(8));
-    expect((destinationIcon.dy - destinationLabel.dy).abs(), lessThan(8));
+    final pickupCenter = tester.getCenter(pins.first);
+    final destinationCenter = tester.getCenter(pins.last);
+    expect(pickupCenter.dx, destinationCenter.dx);
+    expect(destinationCenter.dy, greaterThan(pickupCenter.dy));
+    expect(find.text('Pickup'), findsOneWidget);
+    expect(find.text('Drop Off'), findsOneWidget);
   });
 
   testWidgets('grows to fit scaled route labels and values', (tester) async {

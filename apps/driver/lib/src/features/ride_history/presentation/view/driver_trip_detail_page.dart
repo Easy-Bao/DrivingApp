@@ -140,7 +140,9 @@ class _TripDetailPageState extends State<TripDetailPage> {
     final isCanceled = status == 'canceled' || status == 'cancelled';
     final statusColor = isCompleted
         ? context.semanticColors.success
-        : context.colorScheme.error;
+        : isCanceled
+        ? context.colorScheme.error
+        : context.colorScheme.onSurfaceVariant;
     final statusLabel = isCompleted
         ? 'Completed'
         : isCanceled
@@ -157,25 +159,24 @@ class _TripDetailPageState extends State<TripDetailPage> {
         '';
 
     final reference = valueAsString(widget.trip['booking_reference']) ?? '';
-    return AppSecondaryPage(
-      title: isCompleted ? 'Trip receipt' : 'Trip details',
+    return TripReceiptLayout(
+      dateLabel: _formatDate(dateValue),
       onBack: () => context.pop(),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
+      child: Builder(
+        builder: (context) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              _formatDate(dateValue),
-              style: context.textStyles.bodySmall?.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
+            if (reference.isNotEmpty) ...[
+              TripReference(id: reference, expanded: true, compact: true),
+              const SizedBox(height: AppSpacing.lg),
+            ],
+            Text('Passenger', style: context.textStyles.labelSmall),
+            const SizedBox(height: AppSpacing.sm),
             AppSurfaceCard(
               child: Row(
                 children: [
                   CircleAvatar(
+                    radius: 24,
                     backgroundColor:
                         context.colorScheme.surfaceContainerHighest,
                     foregroundColor: context.colorScheme.onSurface,
@@ -189,7 +190,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
                     ),
                   ),
                   if (canContactPassenger)
-                    IconButton(
+                    IconButton.outlined(
                       key: const ValueKey('driver-trip-contact-passenger'),
                       tooltip: 'Message passenger',
                       onPressed: _isContactingPassenger
@@ -210,15 +211,32 @@ class _TripDetailPageState extends State<TripDetailPage> {
               ),
             ],
             const SizedBox(height: AppSpacing.lg),
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Route', style: context.textStyles.labelSmall),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    statusLabel,
+                    style: context.textStyles.labelSmall?.copyWith(
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
             AppSurfaceCard(
               child: CompactRouteTimeline(pickup: fromName, dropoff: toName),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              statusLabel,
-              style: context.textStyles.bodyMedium?.copyWith(
-                color: statusColor,
-              ),
             ),
             if (_passengerRating case final rating?) ...[
               const SizedBox(height: AppSpacing.lg),
@@ -262,10 +280,6 @@ class _TripDetailPageState extends State<TripDetailPage> {
                 ],
               ),
             ),
-            if (reference.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.lg),
-              TripReference(id: reference, compact: true),
-            ],
             if (widget.rideRepository case final repository?
                 when isCompleted && tripId.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.lg),

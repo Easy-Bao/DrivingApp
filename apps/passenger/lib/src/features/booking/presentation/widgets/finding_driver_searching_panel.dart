@@ -1,6 +1,5 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_route_connector.dart';
@@ -197,12 +196,11 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                         children: [
                           Column(
                             children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 2),
-                                child: Icon(
-                                  LucideIcons.map_pin,
+                              const Padding(
+                                padding: EdgeInsets.only(top: 2),
+                                child: RouteStopMarker(
+                                  isPickup: true,
                                   size: 20,
-                                  color: colorScheme.onSurface,
                                 ),
                               ),
                               Expanded(
@@ -216,12 +214,11 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 2),
-                                child: Icon(
-                                  LucideIcons.navigation,
+                              const Padding(
+                                padding: EdgeInsets.only(bottom: 2),
+                                child: RouteStopMarker(
+                                  isPickup: false,
                                   size: 20,
-                                  color: colorScheme.onSurface,
                                 ),
                               ),
                             ],

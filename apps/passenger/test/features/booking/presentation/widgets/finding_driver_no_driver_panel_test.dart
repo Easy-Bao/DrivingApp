@@ -1,6 +1,5 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_no_driver_panel.dart';
@@ -46,7 +45,7 @@ void main() {
     expect(retryCount, 1);
   });
   testWidgets(
-    'keeps text actions reachable and route icons neutral on a small screen',
+    'keeps text actions reachable and route pins consistent on a small screen',
     (tester) async {
       tester.view.physicalSize = const Size(320, 560);
       tester.view.devicePixelRatio = 1;
@@ -68,12 +67,18 @@ void main() {
         ),
       );
       final card = find.byKey(const ValueKey('finding-driver-trip-context'));
-      for (final icon in [LucideIcons.map_pin, LucideIcons.navigation]) {
-        final marker = find.descendant(of: card, matching: find.byIcon(icon));
-        expect(
-          tester.widget<Icon>(marker).color,
-          AppTheme.main.colorScheme.onSurface,
+      for (final isPickup in [true, false]) {
+        final marker = find.descendant(
+          of: find.descendant(
+            of: card,
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is RouteStopMarker && widget.isPickup == isPickup,
+            ),
+          ),
+          matching: find.byType(CustomPaint),
         );
+        expect(marker, findsOneWidget);
       }
       for (final type in [FilledButton, TextButton]) {
         expect(

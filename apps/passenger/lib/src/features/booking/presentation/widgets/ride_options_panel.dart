@@ -658,22 +658,14 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
             children: [
               Column(
                 children: [
-                  Icon(
-                    LucideIcons.map_pin,
-                    size: 18,
-                    color: context.colorScheme.onSurface,
-                  ),
+                  const RouteStopMarker(isPickup: true, size: 18),
                   CustomPaint(
                     size: const Size(2, 22),
                     painter: _DottedLinePainter(
                       color: context.colorScheme.outlineVariant,
                     ),
                   ),
-                  Icon(
-                    LucideIcons.navigation,
-                    size: 18,
-                    color: context.colorScheme.onSurface,
-                  ),
+                  const RouteStopMarker(isPickup: false, size: 18),
                 ],
               ),
               const SizedBox(width: 14),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:design_system/src/theme/theme_context.dart';
 
 class const CompactRouteTimeline({
   super.key,
@@ -24,8 +24,8 @@ class const CompactRouteTimeline({
         children: [
           Positioned(
             left: 9.5,
-            top: 20 * layoutScale,
-            bottom: 20 * layoutScale,
+            top: 20.5 * layoutScale + 10,
+            bottom: 20.5 * layoutScale + 10,
             child: CustomPaint(
               size: Size(1, 42 * layoutScale),
               painter: _DashedLinePainter(color: colors.outlineVariant),
@@ -35,8 +35,7 @@ class const CompactRouteTimeline({
             children: [
               Expanded(
                 child: _RouteStopRow(
-                  icon: LucideIcons.map_pin,
-                  color: colors.onSurface,
+                  isPickup: true,
                   label: pickupLabel,
                   value: pickup,
                   layoutScale: layoutScale,
@@ -44,8 +43,7 @@ class const CompactRouteTimeline({
               ),
               Expanded(
                 child: _RouteStopRow(
-                  icon: LucideIcons.navigation,
-                  color: colors.onSurface,
+                  isPickup: false,
                   label: dropoffLabel,
                   value: dropoff,
                   layoutScale: layoutScale,
@@ -60,14 +58,12 @@ class const CompactRouteTimeline({
 }
 
 class const _RouteStopRow({
-  required this.icon,
-  required this.color,
+  required this.isPickup,
   required this.label,
   required this.value,
   required this.layoutScale,
 }) extends StatelessWidget {
-  final IconData icon;
-  final Color color;
+  final bool isPickup;
   final String label;
   final String value;
   final double layoutScale;
@@ -79,17 +75,7 @@ class const _RouteStopRow({
       children: [
         SizedBox(
           width: 20,
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: EdgeInsets.only(top: 2 * layoutScale),
-              child: _StopIcon(
-                icon: icon,
-                color: color,
-                size: 18 * layoutScale,
-              ),
-            ),
-          ),
+          child: Center(child: RouteStopMarker(isPickup: isPickup, size: 20)),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -100,19 +86,53 @@ class const _RouteStopRow({
   }
 }
 
-class const _StopIcon({
-  required this.icon,
-  required this.color,
-  required this.size,
-}) extends StatelessWidget {
-  final IconData icon;
-  final Color color;
+/// Filled route pins shared by booking and receipt summaries.
+class const RouteStopMarker({super.key, required this.isPickup, this.size = 20})
+    extends StatelessWidget {
+  final bool isPickup;
   final double size;
 
   @override
-  Widget build(BuildContext context) {
-    return Icon(icon, size: size, color: color);
+  Widget build(BuildContext context) => SizedBox.square(
+    dimension: size,
+    child: CustomPaint(
+      painter: _RoutePinPainter(
+        color: isPickup
+            ? context.colorScheme.onSurface
+            : context.semanticColors.success,
+        centerColor: context.colorScheme.surface,
+      ),
+    ),
+  );
+}
+
+class _RoutePinPainter extends CustomPainter {
+  const _RoutePinPainter({required this.color, required this.centerColor});
+  final Color color;
+  final Color centerColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.width / 20;
+    canvas.save();
+    canvas.scale(scale);
+    final paint = Paint()..color = color;
+    canvas.drawCircle(const Offset(10, 8), 7, paint);
+    canvas.drawPath(
+      Path()
+        ..moveTo(7, 13)
+        ..lineTo(10, 19)
+        ..lineTo(13, 13)
+        ..close(),
+      paint,
+    );
+    canvas.drawCircle(const Offset(10, 8), 3, Paint()..color = centerColor);
+    canvas.restore();
   }
+
+  @override
+  bool shouldRepaint(covariant _RoutePinPainter oldDelegate) =>
+      color != oldDelegate.color || centerColor != oldDelegate.centerColor;
 }
 
 class const _RouteStopText({required this.label, required this.value})

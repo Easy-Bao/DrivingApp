@@ -41,3 +41,5 @@ export 'package:design_system/src/widgets/layout/auth_layout.dart';
 export 'package:design_system/src/widgets/inputs/verification_code_field.dart';
 
 export 'package:design_system/src/widgets/composites/password_reset_flow.dart';
+
+export 'package:design_system/src/widgets/layout/trip_receipt_layout.dart';

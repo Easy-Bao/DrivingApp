@@ -1,6 +1,5 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_route_connector.dart';
 
@@ -28,7 +27,7 @@ class FindingDriverTripCard extends StatelessWidget {
 
   Widget _stop(
     BuildContext context, {
-    required IconData icon,
+    required bool isPickup,
     required String label,
     required String value,
     String? details,
@@ -40,7 +39,7 @@ class FindingDriverTripCard extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 2),
-          child: Icon(icon, size: 18, color: colors.onSurface),
+          child: RouteStopMarker(isPickup: isPickup, size: 18),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -112,7 +111,7 @@ class FindingDriverTripCard extends StatelessWidget {
         children: [
           _stop(
             context,
-            icon: LucideIcons.map_pin,
+            isPickup: true,
             label: 'Pick up',
             value: pickup,
             details: pickupDetails,
@@ -120,7 +119,7 @@ class FindingDriverTripCard extends StatelessWidget {
           ),
           _stop(
             context,
-            icon: LucideIcons.navigation,
+            isPickup: false,
             label: 'Drop off',
             value: destination,
             details: destinationDetails,

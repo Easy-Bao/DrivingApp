@@ -1,3 +1,4 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -68,7 +69,7 @@ void main() {
         findsOneWidget,
       );
 
-      expect(find.byIcon(LucideIcons.map_pin), findsOneWidget);
+      expect(find.byType(RouteStopMarker), findsNWidgets(2));
     },
   );
 
@@ -98,11 +99,15 @@ void main() {
       final totalPosition = tester.getTopLeft(find.text('Total: ₱27.57'));
       expect(totalPosition.dy, greaterThan(breakdownPosition.dy));
       expect(totalPosition.dx, breakdownPosition.dx);
-      for (final icon in [LucideIcons.map_pin, LucideIcons.navigation]) {
-        expect(
-          tester.widget<Icon>(find.byIcon(icon)).color,
-          Theme.of(tester.element(find.byIcon(icon))).colorScheme.onSurface,
+      for (final isPickup in [true, false]) {
+        final marker = find.descendant(
+          of: find.byWidgetPredicate(
+            (widget) =>
+                widget is RouteStopMarker && widget.isPickup == isPickup,
+          ),
+          matching: find.byType(CustomPaint),
         );
+        expect(marker, findsOneWidget);
       }
 
       expect(find.textContaining('Solo'), findsNothing);
