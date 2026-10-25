@@ -95,31 +95,31 @@ native-server:
     @just infra-up
     @port="{{ api-port }}"; \
     port_in_use() { \
-        if command -v lsof >/dev/null 2>&1 && lsof -nP -t -iTCP:"$$1" -sTCP:LISTEN >/dev/null 2>&1; then return 0; fi; \
-        if command -v fuser >/dev/null 2>&1 && fuser -n tcp "$$1" >/dev/null 2>&1; then return 0; fi; \
+        if command -v lsof >/dev/null 2>&1 && lsof -nP -t -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; then return 0; fi; \
+        if command -v fuser >/dev/null 2>&1 && fuser -n tcp "$1" >/dev/null 2>&1; then return 0; fi; \
         return 1; \
     }; \
     stop_port() { \
         if command -v lsof >/dev/null 2>&1; then \
-            pids="$$(lsof -nP -t -iTCP:"$$1" -sTCP:LISTEN 2>/dev/null || true)"; \
-            if [ -n "$$pids" ]; then \
-                for pid in $$pids; do kill -TERM "$$pid" 2>/dev/null || true; done; \
+            pids="$(lsof -nP -t -iTCP:"$1" -sTCP:LISTEN 2>/dev/null || true)"; \
+            if [ -n "$pids" ]; then \
+                for pid in $pids; do kill -TERM "$pid" 2>/dev/null || true; done; \
                 return; \
             fi; \
         fi; \
-        if command -v fuser >/dev/null 2>&1; then fuser -k -TERM -n tcp "$$1" >/dev/null 2>&1 || true; fi; \
+        if command -v fuser >/dev/null 2>&1; then fuser -k -TERM -n tcp "$1" >/dev/null 2>&1 || true; fi; \
     }; \
-    if port_in_use "$$port"; then \
-        echo "Stopping the existing process on TCP port $$port"; \
-        stop_port "$$port"; \
+    if port_in_use "$port"; then \
+        echo "Stopping the existing process on TCP port $port"; \
+        stop_port "$port"; \
         for attempt in 1 2 3 4 5; do \
-            if ! port_in_use "$$port"; then \
+            if ! port_in_use "$port"; then \
                 break; \
             fi; \
             sleep 1; \
         done; \
-        if port_in_use "$$port"; then \
-            echo "TCP port $$port is still in use; refusing to start the API."; \
+        if port_in_use "$port"; then \
+            echo "TCP port $port is still in use; refusing to start the API."; \
             exit 1; \
         fi; \
     fi
