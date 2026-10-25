@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"bufio"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"runtime/debug"
 
@@ -22,6 +24,18 @@ func (responseWriter *recoveryResponseWriter) WriteHeader(code int) {
 func (responseWriter *recoveryResponseWriter) Write(payload []byte) (int, error) {
 	responseWriter.wroteHeader = true
 	return responseWriter.ResponseWriter.Write(payload)
+}
+
+func (responseWriter *recoveryResponseWriter) Unwrap() http.ResponseWriter {
+	return responseWriter.ResponseWriter
+}
+
+func (responseWriter *recoveryResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	connection, buffered, err := http.NewResponseController(responseWriter.ResponseWriter).Hijack()
+	if err == nil {
+		responseWriter.wroteHeader = true
+	}
+	return connection, buffered, err
 }
 
 // Recovery catches unhandled panics in downstream HTTP handlers, logs the stack trace

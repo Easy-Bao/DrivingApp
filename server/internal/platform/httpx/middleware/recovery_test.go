@@ -2,10 +2,12 @@ package middleware_test
 
 import (
 	"encoding/json"
+	"github.com/gorilla/websocket"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
@@ -80,5 +82,34 @@ func TestRecoveryDoesNotDuplicateWriteWhenHeadersAlreadySent(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+}
+
+func TestRecoveryAndLoggingPreserveWebSocketUpgrade(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	handler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		upgrader := websocket.Upgrader{}
+		connection, err := upgrader.Upgrade(writer, request, nil)
+		if err != nil {
+			return
+		}
+		defer connection.Close()
+		if err := connection.WriteMessage(websocket.TextMessage, []byte("ready")); err != nil {
+			t.Errorf("write ready: %v", err)
+		}
+	})
+	server := httptest.NewServer(middleware.Recovery(logger)(middleware.Logging(logger)(handler)))
+	defer server.Close()
+	connection, response, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(server.URL, "http"), nil)
+	if err != nil {
+		if response != nil {
+			t.Fatalf("upgrade status=%d: %v", response.StatusCode, err)
+		}
+		t.Fatal(err)
+	}
+	defer connection.Close()
+	_, message, err := connection.ReadMessage()
+	if err != nil || string(message) != "ready" {
+		t.Fatalf("message=%q err=%v", message, err)
 	}
 }
