@@ -31,7 +31,7 @@ abstract interface class DashboardRepository {
 
 extension DashboardRepositoryResultApi on DashboardRepository {
   Future<Result<bool, DomainFailure>> getPersistedOnlineStatusResult() {
-    return _captureDashboardResult(
+    return captureResult(
       getPersistedOnlineStatus,
       message: 'Unable to restore driver availability right now.',
     );
@@ -42,14 +42,14 @@ extension DashboardRepositoryResultApi on DashboardRepository {
     required double lat,
     required double lng,
   }) {
-    return _captureDashboardResult(
+    return captureResult(
       () => updateOnlineStatus(isOnline: isOnline, lat: lat, lng: lng),
       message: 'Unable to update driver availability right now.',
     );
   }
 
   Future<Result<DashboardStats, DomainFailure>> getDashboardStatsResult() {
-    return _captureDashboardResult(
+    return captureResult(
       getDashboardStats,
       message: 'Unable to load driver dashboard statistics right now.',
     );
@@ -59,7 +59,7 @@ extension DashboardRepositoryResultApi on DashboardRepository {
     bool includeOffers = true,
     int limit = 10,
   }) {
-    return _captureDashboardResult(
+    return captureResult(
       () => getDispatchSnapshot(includeOffers: includeOffers, limit: limit),
       message: 'Unable to load driver dispatch data right now.',
     );
@@ -69,7 +69,7 @@ extension DashboardRepositoryResultApi on DashboardRepository {
     required String sessionId,
     required double farePesos,
   }) {
-    return _captureDashboardResult(
+    return captureResult(
       () => submitRideOffer(sessionId: sessionId, farePesos: farePesos),
       message: 'Unable to submit this ride offer right now.',
     );
@@ -77,34 +77,15 @@ extension DashboardRepositoryResultApi on DashboardRepository {
 
   Future<Result<void, DomainFailure>> declineRideRequestResult(
     String sessionId,
-  ) => _captureDashboardResult(
+  ) => captureResult(
     () => declineRideRequest(sessionId),
     message: 'Unable to decline this ride request. Please try again.',
   );
 
   Future<Result<RideSnapshot, DomainFailure>> fetchRideResult(String rideId) {
-    return _captureDashboardResult(
+    return captureResult(
       () => fetchRide(rideId),
       message: 'Unable to load this ride right now.',
-    );
-  }
-}
-
-Future<Result<T, DomainFailure>> _captureDashboardResult<T>(
-  Future<Result<T, Failure>> Function() operation, {
-  required String message,
-}) async {
-  try {
-    final result = await operation();
-    final Result<T, DomainFailure> converted = result
-        .fold<Result<T, DomainFailure>>(
-          (failure) => Err<T, DomainFailure>(failure),
-          (value) => Ok<T, DomainFailure>(value),
-        );
-    return converted;
-  } catch (error) {
-    return Err<T, DomainFailure>(
-      FailureMapper.fromException(error, serverMessage: message),
     );
   }
 }

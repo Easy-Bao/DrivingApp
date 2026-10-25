@@ -26,7 +26,7 @@ extension DriverProfileRepositoryResultApi on DriverProfileRepository {
   Future<Result<DriverProfileStats, DomainFailure>> fetchStatsResult(
     String driverId,
   ) {
-    return _captureDriverProfileResult(
+    return captureResult(
       () => fetchStats(driverId),
       message: 'Driver statistics are temporarily unavailable.',
     );
@@ -38,7 +38,7 @@ extension DriverProfileRepositoryResultApi on DriverProfileRepository {
     String? cursor = '',
     int limit = 20,
   }) {
-    return _captureDriverProfileResult(
+    return captureResult(
       () => fetchReviews(driverId, page: page, limit: limit, cursor: cursor),
       message: 'Driver reviews are temporarily unavailable.',
     );
@@ -47,7 +47,7 @@ extension DriverProfileRepositoryResultApi on DriverProfileRepository {
   Future<Result<DriverReview?, DomainFailure>> fetchMyRideReviewResult(
     String rideId,
   ) {
-    return _captureDriverProfileResult(
+    return captureResult(
       () => fetchMyRideReview(rideId),
       message: 'Your ride rating is temporarily unavailable.',
     );
@@ -59,7 +59,7 @@ extension DriverProfileRepositoryResultApi on DriverProfileRepository {
     required double rating,
     required String comment,
   }) {
-    return _captureDriverProfileResult(
+    return captureResult(
       () => submitReview(
         driverId: driverId,
         rideId: rideId,
@@ -67,25 +67,6 @@ extension DriverProfileRepositoryResultApi on DriverProfileRepository {
         comment: comment,
       ),
       message: 'Unable to submit your driver review right now.',
-    );
-  }
-}
-
-Future<Result<T, DomainFailure>> _captureDriverProfileResult<T>(
-  Future<Result<T, Failure>> Function() operation, {
-  required String message,
-}) async {
-  try {
-    final result = await operation();
-    final Result<T, DomainFailure> converted = result
-        .fold<Result<T, DomainFailure>>(
-          (failure) => Err<T, DomainFailure>(failure),
-          (value) => Ok<T, DomainFailure>(value),
-        );
-    return converted;
-  } catch (error) {
-    return Err<T, DomainFailure>(
-      FailureMapper.fromException(error, serverMessage: message),
     );
   }
 }

@@ -50,186 +50,72 @@ abstract interface class TrackRepository {
 extension TrackRepositoryResultAdapters on TrackRepository {
   Future<Result<RideUpdate, DomainFailure>> getRideStatusResult(
     String rideId,
-  ) async {
-    try {
-      final result = await getRideStatusUpdate(rideId);
-      return await result.fold(
-        (failure) => Err<RideUpdate, DomainFailure>(failure),
-        (value) => Ok<RideUpdate, DomainFailure>(value),
-      );
-    } catch (error) {
-      return Err<RideUpdate, DomainFailure>(
-        FailureMapper.fromException(
-          error,
-          serverMessage:
-              'Ride status is temporarily unavailable. Please try again.',
-        ),
-      );
-    }
-  }
+  ) => captureResult(
+    () => getRideStatusUpdate(rideId),
+    message: 'Ride status is temporarily unavailable. Please try again.',
+  );
 
-  Future<Result<RideSnapshot, DomainFailure>> fetchRideResult(
-    String rideId,
-  ) async {
-    try {
-      final result = await fetchRide(rideId);
-      final Result<RideSnapshot, DomainFailure> converted = result
-          .fold<Result<RideSnapshot, DomainFailure>>(
-            (failure) => Err<RideSnapshot, DomainFailure>(failure),
-            (value) => Ok<RideSnapshot, DomainFailure>(value),
-          );
-      return converted;
-    } catch (error) {
-      return Err<RideSnapshot, DomainFailure>(
-        FailureMapper.fromException(
-          error,
-          serverMessage: 'Ride details are temporarily unavailable.',
-        ),
+  Future<Result<RideSnapshot, DomainFailure>> fetchRideResult(String rideId) =>
+      captureResult(
+        () => fetchRide(rideId),
+        message: 'Ride details are temporarily unavailable.',
       );
-    }
-  }
 
   Future<Result<RideCounterparty, DomainFailure>> fetchCounterpartyResult(
     String rideId,
-  ) async {
-    try {
-      final result = await fetchCounterparty(rideId);
-      final Result<RideCounterparty, DomainFailure> converted = result
-          .fold<Result<RideCounterparty, DomainFailure>>(
-            (failure) => Err<RideCounterparty, DomainFailure>(failure),
-            (value) => Ok<RideCounterparty, DomainFailure>(value),
-          );
-      return converted;
-    } catch (error) {
-      return Err<RideCounterparty, DomainFailure>(
-        FailureMapper.fromException(
-          error,
-          serverMessage: 'Driver contact details are temporarily unavailable.',
-        ),
-      );
-    }
-  }
+  ) => captureResult(
+    () => fetchCounterparty(rideId),
+    message: 'Driver contact details are temporarily unavailable.',
+  );
 
   Future<Result<DriverLocation, DomainFailure>> fetchDriverLocationResult(
     String rideId,
-  ) async {
-    try {
-      final result = await fetchDriverLocation(rideId);
-      return await result.fold(
-        (failure) => Err<DriverLocation, DomainFailure>(failure),
-        (value) => Ok<DriverLocation, DomainFailure>(value),
-      );
-    } catch (error) {
-      return Err<DriverLocation, DomainFailure>(
-        FailureMapper.fromException(
-          error,
-          serverMessage:
-              'Driver location is temporarily unavailable. Please try again.',
-        ),
-      );
-    }
-  }
+  ) => captureResult(
+    () => fetchDriverLocation(rideId),
+    message: 'Driver location is temporarily unavailable. Please try again.',
+  );
 
   Future<Result<void, DomainFailure>> cancelRideResult({
     required String rideId,
     required String reason,
     String details = '',
-  }) async {
-    try {
-      final result = await cancelRide(
-        rideId: rideId,
-        reason: reason,
-        details: details,
-      );
-      return await result.fold(
-        (failure) => Err<void, DomainFailure>(failure),
-        (_) => const Ok<void, DomainFailure>(null),
-      );
-    } catch (error) {
-      return Err<void, DomainFailure>(
-        FailureMapper.fromException(
-          error,
-          serverMessage: 'The ride could not be cancelled. Please try again.',
-        ),
-      );
-    }
-  }
+  }) => captureResult(
+    () => cancelRide(rideId: rideId, reason: reason, details: details),
+    message: 'The ride could not be cancelled. Please try again.',
+  );
 
   Future<Result<void, DomainFailure>> emergencyStopResult({
     required String rideId,
     required String reason,
     String details = '',
-  }) async {
-    try {
-      final result = await emergencyStop(
-        rideId: rideId,
-        reason: reason,
-        details: details,
-      );
-      return await result.fold(
-        (failure) => Err<void, DomainFailure>(failure),
-        (_) => const Ok<void, DomainFailure>(null),
-      );
-    } catch (error) {
-      return Err<void, DomainFailure>(
-        FailureMapper.fromException(
-          error,
-          serverMessage:
-              'The ride could not be ended for safety. Please try again.',
-        ),
-      );
-    }
-  }
+  }) => captureResult(
+    () => emergencyStop(rideId: rideId, reason: reason, details: details),
+    message: 'The ride could not be ended for safety. Please try again.',
+  );
 
   Future<Result<void, DomainFailure>> publishPassengerLocationResult({
     required String rideId,
     required double latitude,
     required double longitude,
-  }) async {
-    try {
-      final result = await publishPassengerLocation(
-        rideId: rideId,
-        latitude: latitude,
-        longitude: longitude,
-      );
-      final Result<void, DomainFailure> converted = result
-          .fold<Result<void, DomainFailure>>(
-            (failure) => Err<void, DomainFailure>(failure),
-            (_) => const Ok<void, DomainFailure>(null),
-          );
-      return converted;
-    } catch (error) {
-      return Err<void, DomainFailure>(
-        FailureMapper.fromException(
-          error,
-          serverMessage: 'Unable to share your current trip location.',
-        ),
-      );
-    }
-  }
+  }) => captureResult(
+    () => publishPassengerLocation(
+      rideId: rideId,
+      latitude: latitude,
+      longitude: longitude,
+    ),
+    message: 'Unable to share your current trip location.',
+  );
 
   Future<Result<void, DomainFailure>> createSafetyReportResult({
     required String rideId,
     required String category,
     required String description,
-  }) async {
-    try {
-      final result = await createSafetyReport(
-        rideId: rideId,
-        category: category,
-        description: description,
-      );
-      return await result.fold(
-        (failure) => Err<void, DomainFailure>(failure),
-        (_) => const Ok<void, DomainFailure>(null),
-      );
-    } catch (error) {
-      return Err<void, DomainFailure>(
-        FailureMapper.fromException(
-          error,
-          serverMessage: 'Unable to submit the safety report right now.',
-        ),
-      );
-    }
-  }
+  }) => captureResult(
+    () => createSafetyReport(
+      rideId: rideId,
+      category: category,
+      description: description,
+    ),
+    message: 'Unable to submit the safety report right now.',
+  );
 }

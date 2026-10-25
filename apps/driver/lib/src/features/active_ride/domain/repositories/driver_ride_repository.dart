@@ -76,7 +76,7 @@ extension RideRepositoryResultAdapters on RideRepository {
     required String rideId,
     required String driverId,
   }) {
-    return _captureResult(
+    return captureResult(
       () => acceptRide(rideId: rideId, driverId: driverId),
       message: 'Unable to accept this ride right now.',
     );
@@ -88,7 +88,7 @@ extension RideRepositoryResultAdapters on RideRepository {
     required double longitude,
     required DateTime observedAt,
   }) {
-    return _captureResult(
+    return captureResult(
       () => markArrived(
         rideId: rideId,
         latitude: latitude,
@@ -102,7 +102,7 @@ extension RideRepositoryResultAdapters on RideRepository {
   Future<Result<RideSnapshot, DomainFailure>> markPassengerNoShowResult(
     String rideId,
   ) {
-    return _captureResult(
+    return captureResult(
       () => markPassengerNoShow(rideId),
       message: 'Unable to record the passenger no-show.',
     );
@@ -113,7 +113,7 @@ extension RideRepositoryResultAdapters on RideRepository {
     required String category,
     required String description,
   }) {
-    return _captureResult(
+    return captureResult(
       () => createSafetyReport(
         rideId: rideId,
         category: category,
@@ -128,7 +128,7 @@ extension RideRepositoryResultAdapters on RideRepository {
     required String reason,
     String details = '',
   }) {
-    return _captureResult(
+    return captureResult(
       () => cancelRide(rideId: rideId, reason: reason, details: details),
       message: 'Unable to cancel this ride right now.',
     );
@@ -139,7 +139,7 @@ extension RideRepositoryResultAdapters on RideRepository {
     required String reason,
     String details = '',
   }) {
-    return _captureResult(
+    return captureResult(
       () => emergencyStop(rideId: rideId, reason: reason, details: details),
       message: 'Unable to end this ride for safety right now.',
     );
@@ -151,7 +151,7 @@ extension RideRepositoryResultAdapters on RideRepository {
     required double longitude,
     required DateTime observedAt,
   }) {
-    return _captureResult(
+    return captureResult(
       () => startRide(
         rideId: rideId,
         latitude: latitude,
@@ -167,7 +167,7 @@ extension RideRepositoryResultAdapters on RideRepository {
     required double latitude,
     required double longitude,
   }) {
-    return _captureResult(
+    return captureResult(
       () => completeRide(
         rideId: rideId,
         latitude: latitude,
@@ -178,7 +178,7 @@ extension RideRepositoryResultAdapters on RideRepository {
   }
 
   Future<Result<RideSnapshot, DomainFailure>> fetchRideResult(String rideId) {
-    return _captureResult(
+    return captureResult(
       () => fetchRide(rideId),
       message: 'Unable to load this ride right now.',
     );
@@ -190,7 +190,7 @@ extension RideRepositoryResultAdapters on RideRepository {
     required int cashChangeAmount,
     required String cashOutcome,
   }) {
-    return _captureResult(
+    return captureResult(
       () => settleCash(
         rideId: rideId,
         cashReceivedAmount: cashReceivedAmount,
@@ -204,7 +204,7 @@ extension RideRepositoryResultAdapters on RideRepository {
   Future<Result<RideCounterparty, DomainFailure>> fetchCounterpartyResult(
     String rideId,
   ) {
-    return _captureResult(
+    return captureResult(
       () => fetchCounterparty(rideId),
       message: 'Unable to load passenger contact details right now.',
     );
@@ -212,7 +212,7 @@ extension RideRepositoryResultAdapters on RideRepository {
 
   Future<Result<(double latitude, double longitude)?, DomainFailure>>
   fetchPassengerLocationResult(String rideId) {
-    return _captureResult(
+    return captureResult(
       () => fetchPassengerLocation(rideId),
       message: 'Unable to load passenger location right now.',
     );
@@ -224,7 +224,7 @@ extension RideRepositoryResultAdapters on RideRepository {
     double? heading,
     double? speed,
   }) {
-    return _captureResult(
+    return captureResult(
       () => publishDriverLocation(
         latitude: latitude,
         longitude: longitude,
@@ -236,26 +236,9 @@ extension RideRepositoryResultAdapters on RideRepository {
   }
 
   Future<Result<void, DomainFailure>> clearDriverLocationResult() {
-    return _captureResult(
+    return captureResult(
       clearDriverLocation,
       message: 'Unable to remove driver location right now.',
-    );
-  }
-}
-
-Future<Result<T, DomainFailure>> _captureResult<T>(
-  Future<Result<T, Failure>> Function() operation, {
-  required String message,
-}) async {
-  try {
-    final result = await operation();
-    return await result.fold(
-      (failure) => Err<T, DomainFailure>(failure),
-      (value) => Ok<T, DomainFailure>(value),
-    );
-  } catch (error) {
-    return Err<T, DomainFailure>(
-      FailureMapper.fromException(error, serverMessage: message),
     );
   }
 }

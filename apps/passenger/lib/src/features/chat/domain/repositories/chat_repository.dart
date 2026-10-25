@@ -49,7 +49,7 @@ extension ChatRepositoryResultApi on ChatRepository {
     required Uri chatUri,
     String? token,
   }) {
-    return _captureChatResult(
+    return captureResult(
       () => establishChatConnection(
         roomId: roomId,
         chatUri: chatUri,
@@ -60,7 +60,7 @@ extension ChatRepositoryResultApi on ChatRepository {
   }
 
   Future<Result<void, DomainFailure>> terminateChatConnectionResult() {
-    return _captureChatResult(
+    return captureResult(
       terminateChatConnection,
       message: 'Unable to disconnect chat right now.',
     );
@@ -69,21 +69,21 @@ extension ChatRepositoryResultApi on ChatRepository {
   Future<Result<void, DomainFailure>> initializeChatRoomResult({
     required String roomId,
   }) {
-    return _captureChatResult(
+    return captureResult(
       () => initializeChatRoom(roomId: roomId),
       message: 'Unable to initialize chat right now.',
     );
   }
 
   Future<Result<void, DomainFailure>> sendChatMessageResult(String text) {
-    return _captureChatResult(
+    return captureResult(
       () => sendChatMessage(text),
       message: 'Unable to send chat message right now.',
     );
   }
 
   Future<Result<void, DomainFailure>> sendTypingStatusResult(bool isTyping) {
-    return _captureChatResult(
+    return captureResult(
       () => sendTypingStatus(isTyping),
       message: 'Unable to update chat status right now.',
     );
@@ -92,7 +92,7 @@ extension ChatRepositoryResultApi on ChatRepository {
   Future<Result<List<ChatMessage>, DomainFailure>> fetchRoomMessagesResult(
     String roomId,
   ) {
-    return _captureChatResult(
+    return captureResult(
       () => fetchRoomMessages(roomId),
       message: 'Unable to load chat history right now.',
     );
@@ -104,7 +104,7 @@ extension ChatRepositoryResultApi on ChatRepository {
         Result<ChatEvent, Failure>,
         Result<ChatEvent, DomainFailure>
       >.fromHandlers(
-        handleData: (event, sink) => sink.add(_toChatResult(event)),
+        handleData: (event, sink) => sink.add(event),
         handleError: (error, stackTrace, sink) => sink.add(
           Err<ChatEvent, DomainFailure>(
             FailureMapper.fromException(
@@ -116,24 +116,4 @@ extension ChatRepositoryResultApi on ChatRepository {
       ),
     );
   }
-}
-
-Future<Result<T, DomainFailure>> _captureChatResult<T>(
-  Future<Result<T, Failure>> Function() operation, {
-  required String message,
-}) async {
-  try {
-    return _toChatResult(await operation());
-  } catch (error) {
-    return Err<T, DomainFailure>(
-      FailureMapper.fromException(error, serverMessage: message),
-    );
-  }
-}
-
-Result<T, DomainFailure> _toChatResult<T>(Result<T, Failure> result) {
-  return result.fold<Result<T, DomainFailure>>(
-    (failure) => Err<T, DomainFailure>(failure),
-    (value) => Ok<T, DomainFailure>(value),
-  );
 }

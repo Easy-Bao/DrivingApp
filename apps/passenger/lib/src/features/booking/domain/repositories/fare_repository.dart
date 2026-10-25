@@ -20,7 +20,7 @@ extension FareRepositoryResultApi on FareRepository {
     required double originLongitude,
     required double destinationLatitude,
     required double destinationLongitude,
-  }) => _captureFareResult(
+  }) => captureResult(
     () => estimateFare(
       distanceKm: distanceKm,
       durationMinutes: durationMinutes,
@@ -29,26 +29,6 @@ extension FareRepositoryResultApi on FareRepository {
       destinationLatitude: destinationLatitude,
       destinationLongitude: destinationLongitude,
     ),
+    message: 'Fare calculation is temporarily unavailable.',
   );
-}
-
-Future<Result<T, DomainFailure>> _captureFareResult<T>(
-  Future<Result<T, Failure>> Function() operation,
-) async {
-  try {
-    final result = await operation();
-    final Result<T, DomainFailure> converted = result
-        .fold<Result<T, DomainFailure>>(
-          (failure) => Err<T, DomainFailure>(failure),
-          (value) => Ok<T, DomainFailure>(value),
-        );
-    return converted;
-  } catch (error) {
-    return Err<T, DomainFailure>(
-      FailureMapper.fromException(
-        error,
-        serverMessage: 'Fare calculation is temporarily unavailable.',
-      ),
-    );
-  }
 }

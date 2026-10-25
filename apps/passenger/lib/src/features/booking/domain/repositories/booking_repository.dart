@@ -24,44 +24,36 @@ abstract interface class BookingRepository() {
 extension BookingRepositoryResultApi on BookingRepository {
   Future<Result<BidSessionSnapshot, DomainFailure>> createSessionResult(
     BookingSessionRequest request,
-  ) => _captureBookingResult(() => createSession(request));
+  ) => captureResult(
+    () => createSession(request),
+    message: 'Booking services are temporarily unavailable.',
+  );
 
   Future<Result<List<BookingOffer>, DomainFailure>> fetchOffersResult(
     String sessionId,
-  ) => _captureBookingResult(() => fetchOffers(sessionId));
+  ) => captureResult(
+    () => fetchOffers(sessionId),
+    message: 'Booking services are temporarily unavailable.',
+  );
 
   Future<Result<BidSessionSnapshot, DomainFailure>> fetchSessionResult(
     String sessionId,
-  ) => _captureBookingResult(() => fetchSession(sessionId));
+  ) => captureResult(
+    () => fetchSession(sessionId),
+    message: 'Booking services are temporarily unavailable.',
+  );
 
   Future<Result<AcceptedBooking, DomainFailure>> acceptOfferResult({
     required String sessionId,
     required String offerId,
-  }) => _captureBookingResult(
+  }) => captureResult(
     () => acceptOffer(sessionId: sessionId, offerId: offerId),
+    message: 'Booking services are temporarily unavailable.',
   );
 
   Future<Result<void, DomainFailure>> cancelSessionResult(String sessionId) =>
-      _captureBookingResult(() => cancelSession(sessionId));
-}
-
-Future<Result<T, DomainFailure>> _captureBookingResult<T>(
-  Future<Result<T, Failure>> Function() operation,
-) async {
-  try {
-    final result = await operation();
-    final Result<T, DomainFailure> converted = result
-        .fold<Result<T, DomainFailure>>(
-          (failure) => Err<T, DomainFailure>(failure),
-          (value) => Ok<T, DomainFailure>(value),
-        );
-    return converted;
-  } catch (error) {
-    return Err<T, DomainFailure>(
-      FailureMapper.fromException(
-        error,
-        serverMessage: 'Booking services are temporarily unavailable.',
-      ),
-    );
-  }
+      captureResult(
+        () => cancelSession(sessionId),
+        message: 'Booking services are temporarily unavailable.',
+      );
 }
