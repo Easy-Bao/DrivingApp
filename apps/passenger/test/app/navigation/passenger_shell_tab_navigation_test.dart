@@ -320,6 +320,20 @@ void main() {
             find.byKey(const ValueKey('passenger-tab-bar-visibility')),
           )
           .offset;
+      double revealPosition() => tester
+          .widget<SlideTransition>(
+            find
+                .descendant(
+                  of: find.byKey(
+                    const ValueKey('passenger-tab-bar-visibility'),
+                  ),
+                  matching: find.byType(SlideTransition),
+                )
+                .first,
+          )
+          .position
+          .value
+          .dy;
       final list = find.byKey(const ValueKey('scrolling-activity'));
       expect(offset(), Offset.zero);
       await tester.drag(list, const Offset(0, -300));
@@ -350,6 +364,12 @@ void main() {
       final tabSwipe = await tester.startGesture(tester.getCenter(list));
       await tabSwipe.moveBy(const Offset(100, 0));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+      expect(
+        revealPosition(),
+        allOf(greaterThan(0), lessThan(1)),
+        reason: 'navigation reveals smoothly before the tab swipe settles',
+      );
       expect(
         find.text('Inbox').hitTestable(),
         findsOneWidget,
@@ -364,10 +384,16 @@ void main() {
       router.goNamed(HomeRoutes.home);
       await tester.pump();
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+      expect(
+        revealPosition(),
+        allOf(greaterThan(0), lessThan(1)),
+        reason: 'route changes animate the reveal instead of popping in',
+      );
       expect(
         find.text('Inbox').hitTestable(),
         findsOneWidget,
-        reason: 'route changes reveal navigation without a slide delay',
+        reason: 'route changes start revealing navigation without waiting for the page',
       );
       await tester.pumpAndSettle();
       expect(offset(), Offset.zero);

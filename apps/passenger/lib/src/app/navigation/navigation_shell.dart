@@ -384,12 +384,11 @@ class _ShellLayoutState extends State<ShellLayout> {
                                         ? Offset.zero
                                         : const Offset(0, 1),
                                     duration:
-                                        visible ||
-                                            MediaQuery.disableAnimationsOf(
-                                              context,
-                                            )
+                                        MediaQuery.disableAnimationsOf(context)
                                         ? Duration.zero
-                                        : const Duration(milliseconds: 180),
+                                        : Duration(
+                                            milliseconds: visible ? 120 : 180,
+                                          ),
                                     curve: Curves.easeOutCubic,
                                     child: Padding(
                                       padding: EdgeInsets.only(
