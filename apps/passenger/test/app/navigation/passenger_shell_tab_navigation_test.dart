@@ -244,6 +244,161 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'Activity hides navigation down, reveals up and resets across tabs',
+    (tester) async {
+      final sessionBloc = SessionBloc(
+        sessionRepository: _SessionRepositoryStub(),
+      )..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
+      final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
+      final realtimeClient = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://localhost/realtime'),
+        tokenProvider: () async => 'test-token',
+        connector: _RealtimeSocketConnectorStub(),
+      );
+      final navigation = TabNavigationCoordinator();
+      final lifecycle = AppLifecycleCoordinator();
+      final controller = ScrollController();
+      final itemCount = ValueNotifier(100);
+      final accessible = ValueNotifier(false);
+      final router = _createRouter(
+        inboxCubit,
+        realtimeClient,
+        navigation,
+        lifecycle,
+        initialLocation: RideHistoryRoutes.fullRideHistoryPath,
+        homePage: ListView.builder(
+          key: const ValueKey('scrolling-home'),
+          itemCount: 100,
+          itemBuilder: (_, index) =>
+              SizedBox(height: 70, child: Text('Home $index')),
+        ),
+        activityPage: ValueListenableBuilder<int>(
+          valueListenable: itemCount,
+          builder: (_, count, _) => ListView.builder(
+            key: const ValueKey('scrolling-activity'),
+            controller: controller,
+            itemCount: count,
+            itemBuilder: (_, index) =>
+                SizedBox(height: 70, child: Text('Ride $index')),
+          ),
+        ),
+      );
+      addTearDown(() async {
+        router.dispose();
+        controller.dispose();
+        itemCount.dispose();
+        accessible.dispose();
+        await sessionBloc.close();
+        await inboxCubit.close();
+        await realtimeClient.dispose();
+        navigation.dispose();
+        await lifecycle.dispose();
+      });
+      await tester.pumpWidget(
+        BlocProvider<SessionBloc>.value(
+          value: sessionBloc,
+          child: MaterialApp.router(
+            theme: AppTheme.main,
+            routerConfig: router,
+            builder: (context, child) => ValueListenableBuilder<bool>(
+              valueListenable: accessible,
+              builder: (_, enabled, _) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  accessibleNavigation: enabled,
+                  disableAnimations: enabled,
+                ),
+                child: child!,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      Offset offset() => tester
+          .widget<AnimatedSlide>(
+            find.byKey(const ValueKey('passenger-tab-bar-visibility')),
+          )
+          .offset;
+      final list = find.byKey(const ValueKey('scrolling-activity'));
+      expect(offset(), Offset.zero);
+      await tester.drag(list, const Offset(0, -300));
+      await tester.pumpAndSettle();
+      expect(offset(), const Offset(0, 1));
+      expect(find.text('Inbox').hitTestable(), findsNothing);
+      itemCount.value = 150;
+      await tester.pumpAndSettle();
+      expect(
+        offset(),
+        const Offset(0, 1),
+        reason: 'appending another page keeps the current visibility',
+      );
+      final gesture = await tester.startGesture(tester.getCenter(list));
+      await gesture.moveBy(const Offset(0, 25));
+      await gesture.moveBy(const Offset(0, 5));
+      await tester.pump();
+      expect(
+        offset(),
+        Offset.zero,
+        reason: 'a small upward reversal restores navigation immediately',
+      );
+      await gesture.up();
+      await tester.pumpAndSettle();
+      await tester.drag(list, const Offset(0, -300));
+      await tester.pumpAndSettle();
+      expect(offset(), const Offset(0, 1));
+      router.goNamed(HomeRoutes.home);
+      await tester.pumpAndSettle();
+      expect(offset(), Offset.zero);
+      await tester.drag(
+        find.byKey(const ValueKey('scrolling-home')),
+        const Offset(0, -300),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        offset(),
+        Offset.zero,
+        reason: 'other tabs keep navigation visible',
+      );
+      await tester.tap(find.text('Activity'));
+      await tester.pumpAndSettle();
+      expect(offset(), Offset.zero);
+      expect(
+        controller.offset,
+        greaterThan(0),
+        reason: 'returning to Activity preserves list position',
+      );
+      await tester.drag(list, const Offset(0, -100));
+      await tester.pumpAndSettle();
+      expect(offset(), const Offset(0, 1));
+      controller.jumpTo(0);
+      await tester.pumpAndSettle();
+      expect(
+        offset(),
+        Offset.zero,
+        reason: 'returning to the top restores navigation',
+      );
+      accessible.value = true;
+      await tester.pumpAndSettle();
+      await tester.drag(list, const Offset(0, -200));
+      await tester.pumpAndSettle();
+      expect(
+        offset(),
+        Offset.zero,
+        reason: 'accessible navigation stays available',
+      );
+      expect(
+        tester
+            .widget<AnimatedSlide>(
+              find.byKey(const ValueKey('passenger-tab-bar-visibility')),
+            )
+            .duration,
+        Duration.zero,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('guest sessions stay on Home and cannot swipe to another tab', (
     tester,
   ) async {
@@ -305,6 +460,8 @@ GoRouter _createRouter(
   TabNavigationCoordinator navigationCoordinator,
   AppLifecycleCoordinator lifecycleCoordinator, {
   String initialLocation = HomeRoutes.fullHomePath,
+  Widget? activityPage,
+  Widget? homePage,
 }) {
   return GoRouter(
     initialLocation: initialLocation,
@@ -334,10 +491,12 @@ GoRouter _createRouter(
               GoRoute(
                 name: HomeRoutes.home,
                 path: HomeRoutes.fullHomePath,
-                builder: (_, _) => const ColoredBox(
-                  key: ValueKey<String>('home-page'),
-                  color: Colors.white,
-                ),
+                builder: (_, _) =>
+                    homePage ??
+                    const ColoredBox(
+                      key: ValueKey<String>('home-page'),
+                      color: Colors.white,
+                    ),
               ),
             ],
           ),
@@ -346,10 +505,12 @@ GoRouter _createRouter(
               GoRoute(
                 name: RideHistoryRoutes.rideHistory,
                 path: RideHistoryRoutes.fullRideHistoryPath,
-                builder: (_, _) => const ColoredBox(
-                  key: ValueKey<String>('activity-page'),
-                  color: Colors.white,
-                ),
+                builder: (_, _) =>
+                    activityPage ??
+                    const ColoredBox(
+                      key: ValueKey<String>('activity-page'),
+                      color: Colors.white,
+                    ),
               ),
             ],
           ),

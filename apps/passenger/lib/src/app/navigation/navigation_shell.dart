@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -79,6 +80,7 @@ class _ShellLayoutState extends State<ShellLayout> {
   late final StreamSubscription<BookingState> _bookingSubscription;
   late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
   bool _isForeground = true;
+  bool _activityTabBarVisible = true;
 
   @override
   void initState() {
@@ -136,10 +138,38 @@ class _ShellLayoutState extends State<ShellLayout> {
 
   void _onNavigationChanged() {
     if (!mounted) return;
-    setState(() {});
+    setState(() => _activityTabBarVisible = true);
     if (widget.navigationCoordinator.selectedIndex == 2) {
       unawaited(_loadInboxNotifications(refresh: true));
     }
+  }
+
+  bool _onActivityScroll(ScrollNotification notification) {
+    if (widget.navigationCoordinator.selectedIndex != 1 ||
+        notification.metrics.axis != Axis.vertical ||
+        MediaQuery.accessibleNavigationOf(context)) {
+      return false;
+    }
+    bool? visible;
+    if (notification.metrics.extentBefore <= 0) {
+      visible = true;
+    } else if (notification is ScrollUpdateNotification &&
+        notification.dragDetails != null &&
+        notification.scrollDelta != null &&
+        notification.scrollDelta != 0) {
+      visible = notification.scrollDelta! < 0;
+    } else if (notification is UserScrollNotification) {
+      visible = switch (notification.direction) {
+        ScrollDirection.forward => true,
+        ScrollDirection.reverse when notification.metrics.maxScrollExtent > 0 =>
+          false,
+        _ => null,
+      };
+    }
+    if (visible != null && visible != _activityTabBarVisible) {
+      setState(() => _activityTabBarVisible = visible!);
+    }
+    return false;
   }
 
   Future<void> _loadInboxNotifications({bool refresh = false}) async {
@@ -259,19 +289,22 @@ class _ShellLayoutState extends State<ShellLayout> {
                   children: [
                     Scaffold(
                       extendBody: true,
-                      body: isWide && isAuthenticated
-                          ? Row(
-                              children: [
-                                ShellNavigationRail(
-                                  selectedIndex: selectedIndex,
-                                  onDestinationSelected: _onItemTapped,
-                                  inboxCubit: widget.inboxCubit,
-                                ),
-                                const VerticalDivider(width: 1),
-                                Expanded(child: widget.navigationShell),
-                              ],
-                            )
-                          : widget.navigationShell,
+                      body: NotificationListener<ScrollNotification>(
+                        onNotification: _onActivityScroll,
+                        child: isWide && isAuthenticated
+                            ? Row(
+                                children: [
+                                  ShellNavigationRail(
+                                    selectedIndex: selectedIndex,
+                                    onDestinationSelected: _onItemTapped,
+                                    inboxCubit: widget.inboxCubit,
+                                  ),
+                                  const VerticalDivider(width: 1),
+                                  Expanded(child: widget.navigationShell),
+                                ],
+                              )
+                            : widget.navigationShell,
+                      ),
                       bottomNavigationBar:
                           BlocSelector<SessionBloc, SessionState, bool>(
                             selector: (state) => state.isAuthenticated,
@@ -328,17 +361,40 @@ class _ShellLayoutState extends State<ShellLayout> {
                                     );
                               }
 
-                              return Padding(
-                                padding: EdgeInsets.only(
-                                  bottom: bottomPadding + 10,
-                                ),
-                                child: FractionallySizedBox(
-                                  widthFactor: 0.86,
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      maxWidth: 440,
+                              final visible =
+                                  selectedIndex != 1 ||
+                                  _activityTabBarVisible ||
+                                  MediaQuery.accessibleNavigationOf(context);
+                              return ExcludeSemantics(
+                                excluding: !visible,
+                                child: IgnorePointer(
+                                  ignoring: !visible,
+                                  child: AnimatedSlide(
+                                    key: const ValueKey(
+                                      'passenger-tab-bar-visibility',
                                     ),
-                                    child: floatingTabBar,
+                                    offset: visible
+                                        ? Offset.zero
+                                        : const Offset(0, 1),
+                                    duration:
+                                        MediaQuery.disableAnimationsOf(context)
+                                        ? Duration.zero
+                                        : const Duration(milliseconds: 180),
+                                    curve: Curves.easeOutCubic,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                        bottom: bottomPadding + 10,
+                                      ),
+                                      child: FractionallySizedBox(
+                                        widthFactor: 0.86,
+                                        child: ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                            maxWidth: 440,
+                                          ),
+                                          child: floatingTabBar,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               );
