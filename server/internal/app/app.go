@@ -88,7 +88,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create auth user store: %w", err)
 	}
-	sessionStore, err := authpostgres.NewSessionStore(postgresPool)
+	sessionStore, err := authpostgres.NewRefreshSessionRepository(postgresPool)
 	if err != nil {
 		return nil, fmt.Errorf("create auth session store: %w", err)
 	}

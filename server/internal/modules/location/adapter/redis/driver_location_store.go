@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"time"
 
+	locationapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
 	redis "github.com/redis/go-redis/v9"
 )
@@ -81,7 +82,7 @@ type DriverLocationStore struct {
 	logger *slog.Logger
 }
 
-var _ LocationStore = (*DriverLocationStore)(nil)
+var _ locationapp.LocationStore = (*DriverLocationStore)(nil)
 
 func NewDriverLocationStore(client *redis.Client) *DriverLocationStore {
 	return &DriverLocationStore{client: client, logger: slog.Default()}

@@ -12,25 +12,17 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type RideRepository = RideAuthority
-
-type RideRepositoryLookup struct {
+type RideLookup struct {
 	repository RideAuthority
 }
 
-var _ Lookup = (*RideRepositoryLookup)(nil)
-
-func NewRideRepositoryLookup(repository RideRepository) *RideRepositoryLookup {
-	return &RideRepositoryLookup{repository: repository}
-}
-
-type RideLookup = RideRepositoryLookup
+var _ Lookup = (*RideLookup)(nil)
 
 func NewRideLookup(source RideAuthority) *RideLookup {
-	return NewRideRepositoryLookup(source)
+	return &RideLookup{repository: source}
 }
 
-func (lookup *RideRepositoryLookup) ForRide(
+func (lookup *RideLookup) ForRide(
 	ctx context.Context,
 	rideID string,
 ) (Assignment, bool, error) {
@@ -56,7 +48,7 @@ func isRideNotFound(err error) bool {
 	return errors.Is(err, pgx.ErrNoRows)
 }
 
-func (lookup *RideRepositoryLookup) ForDriver(
+func (lookup *RideLookup) ForDriver(
 	ctx context.Context,
 	driverID string,
 ) ([]Assignment, error) {

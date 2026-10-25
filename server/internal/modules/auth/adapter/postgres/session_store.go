@@ -34,12 +34,6 @@ func NewRefreshSessionRepository(pool *pgxpool.Pool) (*RefreshSessionRepository,
 	}, nil
 }
 
-type SessionStore = RefreshSessionRepository
-
-func NewSessionStore(pool *pgxpool.Pool) (*SessionStore, error) {
-	return NewRefreshSessionRepository(pool)
-}
-
 func (repository *RefreshSessionRepository) Create(ctx context.Context, session domain.RefreshSession) error {
 	if err := repository.validate(); err != nil {
 		return fmt.Errorf("validate refresh session repository: %w", err)

@@ -13,14 +13,11 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 )
 
-type RouteCalculator = RouteProvider
-type RouteCalculatorFunc = RouteProviderFunc
-
 var errRidePersistenceUnavailable = errors.New("ride persistence is unavailable")
 
 type Option func(*Service)
 
-func WithRouteCalculator(calculator RouteCalculator) Option {
+func WithRouteCalculator(calculator RouteProvider) Option {
 	return func(service *Service) {
 		service.routeCalculator = calculator
 	}
@@ -28,7 +25,7 @@ func WithRouteCalculator(calculator RouteCalculator) Option {
 
 type Service struct {
 	repository        RideStore
-	routeCalculator   RouteCalculator
+	routeCalculator   RouteProvider
 	pricingConfig     PricingConfig
 	eventPublisher    EventPublisher
 	bookingService    *BookingService

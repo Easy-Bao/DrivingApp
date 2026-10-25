@@ -165,7 +165,7 @@ func newHTTPRouter(
 	})
 
 	routingProvider := mapbox.NewRoutingProvider(config.MapboxAccessToken)
-	routeCalculator := rideapplication.RouteCalculatorFunc(
+	routeCalculator := rideapplication.RouteProviderFunc(
 		func(
 			ctx context.Context,
 			originLatitude float64,
