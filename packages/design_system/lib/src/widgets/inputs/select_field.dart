@@ -43,7 +43,7 @@ class _AppSelectFieldState<T> extends State<AppSelectField<T>> {
   }
 
   Future<void> _openMenu() async {
-    if (widget.onChanged == null) return;
+    if (widget.onChanged == null || _isMenuOpen) return;
 
     setState(() => _isMenuOpen = true);
     final selectedValue = await showModalBottomSheet<T>(
@@ -67,7 +67,7 @@ class _AppSelectFieldState<T> extends State<AppSelectField<T>> {
     if (!mounted) return;
 
     setState(() => _isMenuOpen = false);
-    if (selectedValue != null) widget.onChanged!(selectedValue);
+    if (selectedValue != null) widget.onChanged?.call(selectedValue);
   }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
