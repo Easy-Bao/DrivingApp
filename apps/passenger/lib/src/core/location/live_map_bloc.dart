@@ -215,9 +215,8 @@ class LiveMapBloc() extends Bloc<LiveMapEvent, LiveMapState> {
       event.lng,
       isOrigin: event.isOrigin,
       label: event.label,
-      color: event.isOrigin
-          ? TripMapMarkerStyle.ownLocation
-          : TripMapMarkerStyle.tripLocation,
+      color:
+          event.color ?? TripMapMarkerStyle.colorFor(isOrigin: event.isOrigin),
       onTap: event.onTap,
     );
     if (!_isCurrentMapView(viewGeneration, mapController)) {

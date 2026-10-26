@@ -120,7 +120,9 @@ void main() {
       expect(snapshots.last.markers, hasLength(2));
       expect(snapshots.last.markers.first.isOrigin, isTrue);
       expect(snapshots.last.markers.last.lat, 14.61);
-      expect(snapshots.last.markers.last.label, 'Online driver');
+      expect(snapshots.last.markers.last.label, isNull);
+      expect(snapshots.last.markers.last.color, AppPalette.obsidian);
+      expect(snapshots.last.markers.last.isOrigin, isFalse);
       updates.add(
         NearbyDriversState(drivers: [driverAt(14.62)], hasLoaded: true),
       );

@@ -257,7 +257,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
             AddMapMarkerEvent(
               lat: driver.lat,
               lng: driver.lng,
-              label: driver.displayName,
+              color: AppPalette.obsidian,
             ),
         ],
       ),
@@ -522,6 +522,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                     AddMapMarkerEvent(
                       lat: state.driver.lat,
                       lng: state.driver.lng,
+                      color: AppPalette.obsidian,
                       onTap: () {
                         if (!mounted) return;
                         setState(() {
@@ -537,6 +538,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                         AddMapMarkerEvent(
                           lat: nearby.lat,
                           lng: nearby.lng,
+                          color: AppPalette.obsidian,
                           onTap: () {
                             if (!mounted) return;
                             setState(() {
