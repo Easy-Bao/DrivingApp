@@ -89,17 +89,6 @@ class _AccountPageState extends State<AccountPage> {
                               ),
                             ),
                             AppSettingsNavigationTile(
-                              icon: LucideIcons.file_text,
-                              title: 'Documents',
-                              subtitle: 'Manage your verification documents',
-                              onTap: () => unawaited(
-                                _openEditableDestination(
-                                  context,
-                                  ProfileRoutes.documents,
-                                ),
-                              ),
-                            ),
-                            AppSettingsNavigationTile(
                               icon: LucideIcons.wallet_cards,
                               title: 'Performance',
                               subtitle: 'Ratings, trips, and earnings',

@@ -44,64 +44,62 @@ class _FakeProfileRepository(this.account) implements ProfileRepository {
 }
 
 void main() {
-  testWidgets('updates personal details without exposing vehicle fields', (
-    tester,
-  ) async {
-    final repository = _FakeProfileRepository(
-      const AccountSnapshot(
-        name: 'Bao Driver',
-        phone: '+639170000001',
-        email: 'bao@example.com',
-        vehicleType: 'Sedan',
-        plateNumber: 'ABC-1234',
-      ),
-    );
-    final cubit = AccountCubit(repository: repository)
-      ..emit(AccountState(account: repository.account));
-    addTearDown(cubit.close);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.main,
-        home: BlocProvider<AccountCubit>.value(
-          value: cubit,
-          child: PersonalDetailsPage(onBack: () {}),
+  testWidgets(
+    'shows read-only contact details and updates from account state',
+    (tester) async {
+      final repository = _FakeProfileRepository(
+        const AccountSnapshot(
+          name: 'Bao Driver',
+          phone: '+639170000001',
+          email: 'bao@example.com',
+          vehicleType: 'Sedan',
+          plateNumber: 'ABC-1234',
         ),
-      ),
-    );
+      );
+      final cubit = AccountCubit(repository: repository)
+        ..emit(AccountState(account: repository.account));
+      addTearDown(cubit.close);
 
-    expect(find.text('Personal Details'), findsOneWidget);
-    expect(find.text('Vehicle Type'), findsNothing);
-    expect(
-      tester
-          .widget<TextField>(
-            find.byKey(const ValueKey<String>('driver-personal-phone-number')),
-          )
-          .readOnly,
-      isTrue,
-    );
-    expect(
-      tester
-          .widget<TextField>(
-            find.byKey(const ValueKey<String>('driver-account-field-Email')),
-          )
-          .readOnly,
-      isTrue,
-    );
-    expect(
-      tester
-          .widget<TextField>(
-            find.byKey(
-              const ValueKey<String>('driver-account-field-Full Name'),
-            ),
-          )
-          .readOnly,
-      isFalse,
-    );
-    expect(
-      find.byKey(const ValueKey<String>('driver-account-details-save')),
-      findsOneWidget,
-    );
-    expect(tester.takeException(), isNull);
-  });
+      var wentBack = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: BlocProvider<AccountCubit>.value(
+            value: cubit,
+            child: PersonalDetailsPage(onBack: () => wentBack = true),
+          ),
+        ),
+      );
+
+      expect(find.text('Personal details'), findsOneWidget);
+      expect(find.text('BD'), findsOneWidget);
+      expect(find.text('Your contact details'), findsOneWidget);
+      expect(find.text('Full name'), findsOneWidget);
+      expect(find.text('Bao Driver'), findsOneWidget);
+      expect(find.text('Mobile number'), findsOneWidget);
+      expect(find.text('+639170000001'), findsOneWidget);
+      expect(find.text('Email'), findsOneWidget);
+      expect(find.text('bao@example.com'), findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
+      expect(find.byType(AppSurfaceCard), findsNothing);
+      expect(find.text('Save Changes'), findsNothing);
+      expect(find.text('Vehicle Type'), findsNothing);
+      expect(
+        find.text(
+          'Phone number and email are verified account identifiers and can’t be edited here.',
+        ),
+        findsOneWidget,
+      );
+      cubit.emit(
+        const AccountState(account: AccountSnapshot(name: 'Updated Driver')),
+      );
+      await tester.pump();
+      expect(find.text('Updated Driver'), findsOneWidget);
+      expect(find.text('UD'), findsOneWidget);
+      expect(find.text('Not provided'), findsNWidgets(2));
+      await tester.tap(find.byTooltip('Back'));
+      expect(wentBack, isTrue);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

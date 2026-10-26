@@ -19,11 +19,6 @@ class const AccountDetailsForm({super.key, required this.section, this.onBack})
 }
 
 class _AccountDetailsFormState extends State<AccountDetailsForm> {
-  static const _phonePrefix = '+63';
-
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
   final _vehicleTypeController = TextEditingController();
   final _plateNumberController = TextEditingController();
 
@@ -34,9 +29,6 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
   }
 
   List<TextEditingController> get _controllers => [
-    _nameController,
-    _phoneController,
-    _emailController,
     _vehicleTypeController,
     _plateNumberController,
   ];
@@ -50,41 +42,22 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
   }
 
   void _applyAccount(AccountSnapshot account) {
-    _nameController.text = account.name;
-    _phoneController.text = _localPhoneNumber(account.phone);
-    _emailController.text = account.email;
     _vehicleTypeController.text = account.vehicleType;
     _plateNumberController.text = account.plateNumber;
   }
 
-  String _localPhoneNumber(String value) {
-    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.startsWith('63')) return digits.substring(2);
-    if (digits.startsWith('0')) return digits.substring(1);
-    return digits;
-  }
-
   String get _pageTitle => switch (widget.section) {
-    AccountDetailsSection.personal => 'Personal Details',
+    AccountDetailsSection.personal => 'Personal details',
     AccountDetailsSection.vehicle => 'Vehicle Information',
   };
 
   Future<void> _submitSave() async {
     final cubit = BlocProvider.of<AccountCubit>(context);
     final currentAccount = cubit.state.account;
-    final isPersonal = widget.section == AccountDetailsSection.personal;
-    final name = isPersonal ? _nameController.text.trim() : currentAccount.name;
-    final vehicleType = isPersonal
-        ? currentAccount.vehicleType
-        : _vehicleTypeController.text.trim();
-    final plateNumber = isPersonal
-        ? currentAccount.plateNumber
-        : _plateNumberController.text.trim();
-
     final success = await cubit.updateAccount(
-      name: name,
-      vehicleType: vehicleType,
-      plateNumber: plateNumber,
+      name: currentAccount.name,
+      vehicleType: _vehicleTypeController.text.trim(),
+      plateNumber: _plateNumberController.text.trim(),
     );
     if (!mounted || !context.mounted) return;
     if (success) {
@@ -104,6 +77,7 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
         _applyAccount(state.account);
       },
       builder: (context, state) {
+        final isPersonal = widget.section == AccountDetailsSection.personal;
         return Scaffold(
           appBar: AppBar(
             leading: IconButton(
@@ -120,23 +94,28 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(
-                  AppLayout.pagePaddingWide,
+                padding: EdgeInsets.fromLTRB(
+                  isPersonal
+                      ? AppLayout.pagePadding
+                      : AppLayout.pagePaddingWide,
                   AppLayout.pagePadding,
-                  AppLayout.pagePaddingWide,
+                  isPersonal
+                      ? AppLayout.pagePadding
+                      : AppLayout.pagePaddingWide,
                   AppSpacing.xxl * 2,
                 ),
                 children: [
-                  _buildHeader(),
+                  _buildHeader(state.account),
                   const SizedBox(height: AppSpacing.xxl),
-                  AppSurfaceCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: widget.section == AccountDetailsSection.personal
-                          ? _buildPersonalFields(state)
-                          : _buildVehicleFields(state),
+                  if (isPersonal)
+                    ..._buildPersonalFields(state)
+                  else
+                    AppSurfaceCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: _buildVehicleFields(state),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -146,9 +125,9 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(AccountSnapshot account) {
     final isPersonal = widget.section == AccountDetailsSection.personal;
-    final displayName = _nameController.text.trim();
+    final displayName = account.name.trim();
     return Column(
       children: [
         Container(
@@ -185,56 +164,78 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
   }
 
   List<Widget> _buildPersonalFields(AccountState state) {
+    final account = state.account;
     return [
-      _ProfileTextField(
-        label: 'Full Name',
-        controller: _nameController,
-        readOnly: state.isSaving,
-        textInputAction: TextInputAction.next,
-      ),
-      const SizedBox(height: 22),
-      _buildPhoneField(),
-      const SizedBox(height: 22),
-      _ProfileTextField(
-        label: 'Email',
-        controller: _emailController,
-        readOnly: true,
-        keyboardType: TextInputType.emailAddress,
-        textInputAction: TextInputAction.done,
-        textCapitalization: TextCapitalization.none,
-      ),
-      const SizedBox(height: 10),
-      Text(
-        'Phone number and email are verified account identifiers.',
-        style: Theme.of(context).textTheme.bodySmall
-            ?.copyWith(color: context.colorScheme.onSurfaceVariant),
-      ),
+      if (state.isLoading) const LinearProgressIndicator(),
       if (state.errorMessage != null) ...[
-        const SizedBox(height: 12),
-        Text(
-          state.errorMessage!,
-          style: TextStyle(color: context.colorScheme.error, fontSize: 13),
+        AppErrorBanner(
+          message: state.errorMessage!,
+          onRetry: () => BlocProvider.of<AccountCubit>(context).load(),
+          onDismiss: () =>
+              BlocProvider.of<AccountCubit>(context).dismissError(),
         ),
+        const SizedBox(height: AppSpacing.lg),
       ],
-      const SizedBox(height: 24),
-      ElevatedButton(
-        key: const ValueKey<String>('driver-account-details-save'),
-        onPressed: state.isSaving ? null : _submitSave,
-        style: ElevatedButton.styleFrom(
-          minimumSize: const Size(double.infinity, AppSize.minimumTouchTarget),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
+      const Divider(height: 1),
+      _buildContactDetail('Full name', account.name),
+      const Divider(height: 1),
+      _buildContactDetail('Mobile number', account.phone),
+      const Divider(height: 1),
+      _buildContactDetail('Email', account.email),
+      const SizedBox(height: AppSpacing.lg),
+      Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: context.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
-        child: state.isSaving
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Text('Save Changes'),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ExcludeSemantics(
+              child: Icon(
+                LucideIcons.lock_keyhole,
+                size: 16,
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                'Phone number and email are verified account identifiers and can’t be edited here.',
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     ];
+  }
+
+  Widget _buildContactDetail(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: context.textStyles.bodySmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            value.trim().isEmpty ? 'Not provided' : value,
+            style: context.textStyles.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   List<Widget> _buildVehicleFields(AccountState state) {
@@ -287,52 +288,6 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
     ];
   }
 
-  Widget _buildPhoneField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _ProfileFieldLabel('Mobile Number'),
-        const SizedBox(height: 9),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 60,
-              width: 88,
-              decoration: BoxDecoration(
-                color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(color: context.colorScheme.outlineVariant),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                _phonePrefix,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextField(
-                key: const ValueKey<String>('driver-personal-phone-number'),
-                controller: _phoneController,
-                readOnly: true,
-                showCursor: false,
-                keyboardType: TextInputType.phone,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-                textInputAction: TextInputAction.next,
-                decoration: _fieldDecoration(context, hintText: '917 000 0001'),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   String _initials(String name) {
     if (name.isEmpty) return 'D';
     final parts = name.split(RegExp(r'\s+'));
@@ -344,14 +299,12 @@ class const _ProfileTextField({
   required this.label,
   required this.controller,
   this.readOnly = false,
-  this.keyboardType,
   this.textInputAction,
   this.textCapitalization = TextCapitalization.words,
 }) extends StatelessWidget {
   final String label;
   final TextEditingController controller;
   final bool readOnly;
-  final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final TextCapitalization textCapitalization;
 
@@ -367,7 +320,6 @@ class const _ProfileTextField({
           controller: controller,
           readOnly: readOnly,
           showCursor: !readOnly,
-          keyboardType: keyboardType,
           textInputAction: textInputAction,
           textCapitalization: textCapitalization,
           decoration: _fieldDecoration(context),

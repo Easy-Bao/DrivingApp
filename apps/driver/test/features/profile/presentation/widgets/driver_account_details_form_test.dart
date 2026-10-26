@@ -17,70 +17,60 @@ class _MockProfileDataSource extends Mock implements ProfileRemoteDataSource {}
 class _MockSessionService extends Mock implements SessionStore {}
 
 void main() {
-  testWidgets('displays personal details with editable name and save action', (
-    tester,
-  ) async {
-    SharedPreferences.setMockInitialValues({});
-    final preferences = await SharedPreferences.getInstance();
-    final profileDataSource = _MockProfileDataSource();
+  testWidgets(
+    'contact details remain readable on a small screen with large text',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final profileDataSource = _MockProfileDataSource();
 
-    final repository = ProfileRepositoryImpl(
-      profileDataSource: profileDataSource,
-      sessionService: _MockSessionService(),
-      preferences: preferences,
-    );
-    final cubit = AccountCubit(repository: repository)
-      ..emit(
-        const AccountState(
-          account: AccountSnapshot(
-            name: 'Driver Name',
-            phone: '+639170000001',
-            email: 'driver@example.com',
+      final repository = ProfileRepositoryImpl(
+        profileDataSource: profileDataSource,
+        sessionService: _MockSessionService(),
+        preferences: preferences,
+      );
+      final cubit = AccountCubit(repository: repository)
+        ..emit(
+          const AccountState(
+            account: AccountSnapshot(
+              name: 'Driver Name',
+              phone: '+639170000001',
+              email: 'driver@example.com',
+            ),
+          ),
+        );
+      addTearDown(cubit.close);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: TextScaler.linear(2)),
+            child: child!,
+          ),
+          home: BlocProvider<AccountCubit>.value(
+            value: cubit,
+            child: PersonalDetailsPage(onBack: () {}),
           ),
         ),
       );
-    addTearDown(cubit.close);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.main,
-        home: BlocProvider<AccountCubit>.value(
-          value: cubit,
-          child: PersonalDetailsPage(onBack: () {}),
+      expect(find.text('Driver Name'), findsOneWidget);
+      expect(find.text('+639170000001'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('driver@example.com'), 150);
+      expect(find.text('driver@example.com'), findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
+      expect(find.text('Save Changes'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.text(
+          'Phone number and email are verified account identifiers and can’t be edited here.',
         ),
-      ),
-    );
-
-    expect(
-      tester
-          .widget<TextField>(
-            find.byKey(
-              const ValueKey<String>('driver-account-field-Full Name'),
-            ),
-          )
-          .readOnly,
-      isFalse,
-    );
-    expect(
-      tester
-          .widget<TextField>(
-            find.byKey(const ValueKey<String>('driver-personal-phone-number')),
-          )
-          .readOnly,
-      isTrue,
-    );
-    expect(
-      tester
-          .widget<TextField>(
-            find.byKey(const ValueKey<String>('driver-account-field-Email')),
-          )
-          .readOnly,
-      isTrue,
-    );
-    expect(
-      find.byKey(const ValueKey<String>('driver-account-details-save')),
-      findsOneWidget,
-    );
-    expect(tester.takeException(), isNull);
-  });
+        200,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
