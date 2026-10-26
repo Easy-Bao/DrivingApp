@@ -71,6 +71,9 @@ class MapAnnotationService._() {
   static final Expando<mapbox.MapboxMap> _annotationManagerOwners = Expando(
     'MapAnnotationService.annotationManagerOwners',
   );
+  static final Expando<Future<void>> _annotationManagerCleanup = Expando(
+    'MapAnnotationService.annotationManagerCleanup',
+  );
   static final Map<String, int> _animationGenerationByManagerKey = {};
 
   static Future<mapbox.PointAnnotationManager> addMarker(
@@ -602,17 +605,21 @@ class MapAnnotationService._() {
     mapbox.BaseAnnotationManager? manager,
   ) async {
     if (manager == null) return;
+    return _annotationManagerCleanup[manager] ??= _clearAnnotations(manager);
+  }
+
+  static Future<void> _clearAnnotations(
+    mapbox.BaseAnnotationManager manager,
+  ) async {
     _animationGenerationByManagerKey.remove(manager.id);
+    final owner = _annotationManagerOwners[manager];
+    _annotationManagerOwners[manager] = null;
     try {
-      final owner = _annotationManagerOwners[manager];
       if (owner != null) {
-        try {
-          await owner.annotations.removeAnnotationManager(manager);
-          _annotationManagerOwners[manager] = null;
-          return;
-        } catch (error) {
-          debugPrint('Error removing annotation manager: $error');
-        }
+        // A disposed map may reject removal. Never fall back to deleteAll:
+        // Android can crash if the native manager no longer exists.
+        await owner.annotations.removeAnnotationManager(manager);
+        return;
       }
 
       switch (manager) {
