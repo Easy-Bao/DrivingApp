@@ -348,6 +348,16 @@ final class DashboardRepositoryImpl({
           ),
         );
       });
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 409) {
+        return const Err(
+          ServerFailure.withStatusCode(
+            'Settle your overdue cash ride to receive new ride requests.',
+            409,
+          ),
+        );
+      }
+      return Err(_mapExceptionToFailure(error));
     } catch (error) {
       return Err(_mapExceptionToFailure(error));
     }

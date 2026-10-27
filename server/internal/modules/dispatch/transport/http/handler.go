@@ -82,6 +82,11 @@ func (handler *Handler) ActiveSessions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sessions, err := handler.service.ActiveSessions(r.Context(), &driverID)
+	if errors.Is(err, ridedomain.ErrDriverSettlementOverdue) {
+		// Surface the block so the driver app can explain why no requests arrive.
+		response.Error(w, http.StatusConflict, safeDispatchError(err))
+		return
+	}
 	if err != nil {
 		response.Error(w, 500, "Incoming ride requests are temporarily unavailable.")
 		return

@@ -82,6 +82,24 @@ func (repository *Store) CreateSession(
 		return dispatchdomain.BidSession{}, domain.ErrActiveBooking
 	}
 
+	if targetDriverID.Valid {
+		// A driver blocked by an unsettled cash ride can never see or accept the
+		// request, so reject it now instead of letting it expire silently.
+		overdueSettlement, overdueErr := transactionQueries.HasOverdueCashSettlementForDriver(
+			ctx,
+			databasepostgres.HasOverdueCashSettlementForDriverParams{
+				DriverID:    targetDriverID,
+				CompletedAt: bidTimestamp(time.Now().UTC().Add(-15 * time.Minute)),
+			},
+		)
+		if overdueErr != nil {
+			return dispatchdomain.BidSession{}, fmt.Errorf("check target driver cash settlement: %w", overdueErr)
+		}
+		if overdueSettlement {
+			return dispatchdomain.BidSession{}, domain.ErrDriverSettlementOverdue
+		}
+	}
+
 	created, err := transactionQueries.CreateBidSession(ctx, databasepostgres.CreateBidSessionParams{
 		PassengerID: passengerID,
 
@@ -227,7 +245,7 @@ func (repository *Store) ActiveSessions(ctx context.Context, driverID *int) ([]d
 		}
 		if overdueSettlement {
 			outcome = "settlement_gate"
-			return []dispatchdomain.BidSession{}, nil
+			return nil, domain.ErrDriverSettlementOverdue
 		}
 
 		sessionListStartedAt := startTiming()

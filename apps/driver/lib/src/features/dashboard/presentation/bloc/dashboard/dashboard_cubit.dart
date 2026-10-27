@@ -155,7 +155,11 @@ class DashboardCubit({
               _silentDispatchFailureCooldown,
             );
           }
-          if (!silent) {
+          // A settlement block is persistent and explains why no requests
+          // arrive, so it is surfaced even for silent background polls.
+          final isSettlementBlock =
+              failure is ServerFailure && failure.statusCode == 409;
+          if (!silent || isSettlementBlock) {
             if (isClosed) return false;
             emit(
               state.copyWith(

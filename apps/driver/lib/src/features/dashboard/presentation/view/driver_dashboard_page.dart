@@ -997,6 +997,23 @@ class _DashboardPageState extends State<DashboardPage>
                                           ),
                                         ),
                                       ),
+                                    if (state.isOnline &&
+                                        state.errorMessage != null &&
+                                        _availabilityError == null)
+                                      Padding(
+                                        padding: const EdgeInsets.all(
+                                          AppSpacing.lg,
+                                        ),
+                                        child: Semantics(
+                                          liveRegion: true,
+                                          child: Text(
+                                            state.errorMessage!,
+                                            style: TextStyle(
+                                              color: context.colorScheme.error,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     const SizedBox(height: 16),
                                     _buildStatsRow(context, state),
                                     const SizedBox(height: 24),
