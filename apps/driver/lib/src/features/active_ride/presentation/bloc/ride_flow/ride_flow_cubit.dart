@@ -836,6 +836,12 @@ class RideFlowCubit({
         );
         if (!_isCurrentAction(actionGeneration)) return null;
         if (completionFailure != null || completedRide == null) {
+          final recheck = await _rideRepository.fetchRideResult(rideId);
+          RideSnapshot? authoritative;
+          recheck.fold((_) {}, (r) => authoritative = r);
+          if (authoritative != null && authoritative!.status == 'completed') {
+            return authoritative;
+          }
           emit(
             RideFlowError(
               completionFailure?.message ??
@@ -874,16 +880,10 @@ class RideFlowCubit({
       if (!_isCurrentAction(actionGeneration) || ride == null) return null;
 
       final fareAmount = ride.fareAmount;
-      if (fareAmount == null || fareAmount <= 0) {
-        emit(
-          RideFlowError(ErrorHandler.getErrorMessage(const ServerFailure())),
-        );
-        return null;
-      }
       _isRideCompletionPending = true;
       _rideStatusSyncTimer?.cancel();
       _rideStatusSyncTimer = null;
-      return fareAmount / 100;
+      return ((fareAmount != null && fareAmount > 0) ? fareAmount : 0) / 100;
     } finally {
       if (_isCurrentAction(actionGeneration)) {
         _isActionInFlight = false;

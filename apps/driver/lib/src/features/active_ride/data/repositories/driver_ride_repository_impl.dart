@@ -211,19 +211,12 @@ final class RideRepositoryImpl({
     required double longitude,
   }) async {
     try {
-      final locationSent = await _telemetryDataSource.sendLocationUpdate(
+      await _telemetryDataSource.sendLocationUpdate(
         lat: latitude,
         lng: longitude,
       );
-      if (!locationSent) {
-        return const Err(
-          NetworkFailure(
-            'Your live location could not be updated. Keep location sharing on and try again.',
-          ),
-        );
-      }
-    } catch (error) {
-      return Err(_mapFailure(error, action: 'share driver location'));
+    } catch (_) {
+      // Ephemeral telemetry failure does not block completing the trip.
     }
 
     try {

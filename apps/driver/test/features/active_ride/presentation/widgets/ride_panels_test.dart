@@ -46,7 +46,6 @@ void main() {
                         fare: 27.88,
                         progress: 0,
                         isBusy: false,
-                        actionError: 'Could not confirm arrival. Try again.',
                         unreadCount: 3,
                         onProgressChanged: (_) {},
                         onAdvance: () {},
@@ -61,10 +60,6 @@ void main() {
               ),
             );
             expect(tester.takeException(), isNull);
-            expect(
-              find.text('Could not confirm arrival. Try again.'),
-              findsOneWidget,
-            );
             expect(find.byType(SnackBar), findsNothing);
             expect(find.byTooltip('Call passenger'), findsNothing);
             expect(find.textContaining('Booking ID'), findsNothing);

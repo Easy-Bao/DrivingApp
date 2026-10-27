@@ -40,7 +40,7 @@ class ActiveBookingsList extends StatelessWidget {
           if (errorMessage != null) ...[
             Text(
               errorMessage!,
-              style: TextStyle(color: theme.colorScheme.error),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
             const SizedBox(height: AppSpacing.md),

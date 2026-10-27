@@ -60,7 +60,6 @@ class _DriverTripPageState extends State<DriverTripPage> {
   AppMapController? _mapController;
   double _progress = 0;
   bool _isActing = false;
-  String? _actionError;
   bool _isRefreshing = false;
   bool _tripFinished = false;
   int _unreadChatMessagesCount = 0;
@@ -194,6 +193,14 @@ class _DriverTripPageState extends State<DriverTripPage> {
   }
 
   void _onRideChanged(BuildContext context, RideState state) {
+    if (state is RideFlowTerminal) {
+      if (state.status == 'completed') {
+        unawaited(_finishTrip());
+      } else {
+        if (mounted) context.pop();
+      }
+      return;
+    }
     final position = LocationService.lastPosition;
     if (position != null && state is! RideFailed) {
       _drawRoute(position.latitude, position.longitude);
@@ -213,15 +220,21 @@ class _DriverTripPageState extends State<DriverTripPage> {
   }
 
   void _showError(String message) {
-    if (mounted) setState(() => _actionError = message);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
   }
 
   Future<void> _advance() async {
     if (_isActing) return;
-    setState(() {
-      _isActing = true;
-      _actionError = null;
-    });
+    if (_rideCubit.state is RideFlowTerminal) {
+      await _finishTrip();
+      return;
+    }
+    setState(() => _isActing = true);
     try {
       final state = _rideCubit.state;
       final position = await LocationService.getCurrentPosition();
@@ -238,7 +251,9 @@ class _DriverTripPageState extends State<DriverTripPage> {
           driverLongitude: position.longitude,
         );
         if (!mounted) return;
-        if (fare != null) {
+        if (fare != null ||
+            _rideCubit.state is RideFlowTerminal ||
+            _rideCubit.activeRideId == null) {
           await _finishTrip();
           return;
         }
@@ -282,10 +297,17 @@ class _DriverTripPageState extends State<DriverTripPage> {
       } else {
         return;
       }
+      final failureMsg =
+          _rideCubit.lastActionFailureMessage ??
+          _rideCubit.state.failureMessage;
+      if (failureMsg != null &&
+          (failureMsg.toLowerCase().contains('completed') ||
+              failureMsg.toLowerCase().contains('no longer active'))) {
+        await _finishTrip();
+        return;
+      }
       _showError(
-        _rideCubit.lastActionFailureMessage ??
-            _rideCubit.state.failureMessage ??
-            'The trip could not be updated. Please try again.',
+        failureMsg ?? 'The trip could not be updated. Please try again.',
       );
     } catch (error) {
       _showError(ErrorHandler.getErrorMessage(error));
@@ -305,10 +327,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
         !_rideCubit.canMarkPassengerNoShow) {
       return;
     }
-    setState(() {
-      _isActing = true;
-      _actionError = null;
-    });
+    setState(() => _isActing = true);
     try {
       final marked = await _rideCubit.markPassengerNoShow();
       if (!mounted) return;
@@ -387,10 +406,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
     final choice = await showRideCancellationSheet(context);
     if (!mounted || choice == null) return;
 
-    setState(() {
-      _isActing = true;
-      _actionError = null;
-    });
+    setState(() => _isActing = true);
     try {
       final canceled = await BlocProvider.of<RideFlowCubit>(context)
           .cancelRide(reason: choice.reason, details: choice.details);
@@ -492,7 +508,6 @@ class _DriverTripPageState extends State<DriverTripPage> {
                             fare: widget.fare,
                             progress: _progress,
                             isBusy: _isActing,
-                            actionError: _actionError,
                             unreadCount: _unreadChatMessagesCount,
                             onProgressChanged: (value) =>
                                 setState(() => _progress = value),

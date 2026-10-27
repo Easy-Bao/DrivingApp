@@ -72,7 +72,6 @@ class _DashboardPageState extends State<DashboardPage>
   bool _tripNavigationScheduled = false;
   String? _attemptedTripId;
   String? _tripNavigationError;
-  String? _availabilityError;
   final _reviewedTripIds = <String>{};
   int _pollGeneration = 0;
   int _locationAccessFailures = 0;
@@ -489,6 +488,9 @@ class _DashboardPageState extends State<DashboardPage>
   void _handleRideFlowTerminal(RideFlowTerminal terminal) {
     BlocProvider.of<DashboardCubit>(context).removeActiveRide(terminal.rideId);
     if (_isHandlingRideTerminal) return;
+    if (terminal.status == 'completed') {
+      return;
+    }
     _isHandlingRideTerminal = true;
     unawaited(_showRideTerminalDialog(terminal));
   }
@@ -588,7 +590,6 @@ class _DashboardPageState extends State<DashboardPage>
     if (_isTogglingOnline) return;
     setState(() {
       _isTogglingOnline = true;
-      _availabilityError = null;
       _pendingOnline = requestedOnline;
     });
 
@@ -604,18 +605,23 @@ class _DashboardPageState extends State<DashboardPage>
 
       if (!context.mounted) return;
 
-      await BlocProvider.of<DashboardCubit>(context).toggleOnline(
+      final dashboardCubit = BlocProvider.of<DashboardCubit>(context);
+      final messenger = ScaffoldMessenger.of(context);
+
+      await dashboardCubit.toggleOnline(
         requestedOnline: requestedOnline,
         lat: position?.latitude ?? 0,
         lng: position?.longitude ?? 0,
       );
       if (mounted) {
-        setState(
-          () =>
-              _availabilityError = BlocProvider.of<DashboardCubit>(context)
-                  .state
-                  .errorMessage,
-        );
+        final err = dashboardCubit.state.errorMessage;
+        if (err != null && err.isNotEmpty) {
+          messenger
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(content: Text(err), behavior: SnackBarBehavior.floating),
+            );
+        }
       }
     } finally {
       if (mounted && context.mounted) {
@@ -966,21 +972,6 @@ class _DashboardPageState extends State<DashboardPage>
                                   children: [
                                     const SizedBox(height: 8),
                                     _buildOnlineCardBanner(context, state),
-                                    if (_availabilityError != null)
-                                      Padding(
-                                        padding: const EdgeInsets.all(
-                                          AppSpacing.lg,
-                                        ),
-                                        child: Semantics(
-                                          liveRegion: true,
-                                          child: Text(
-                                            _availabilityError!,
-                                            style: TextStyle(
-                                              color: context.colorScheme.error,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
                                     const SizedBox(height: 16),
                                     _buildStatsRow(context, state),
                                     const SizedBox(height: 24),

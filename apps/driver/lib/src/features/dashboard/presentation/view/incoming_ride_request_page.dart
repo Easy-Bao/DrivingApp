@@ -28,7 +28,6 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
   bool _submitting = false;
   bool _accepted = false;
   bool _closing = false;
-  String? _error;
 
   Map<String, dynamic>? _request(DashboardState state) {
     if (!state.isOnline || state.isAtBookingCapacity) return null;
@@ -81,7 +80,6 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
     if (accept && fare == null) return;
     setState(() {
       _submitting = true;
-      _error = null;
     });
     bool succeeded;
     if (accept) {
@@ -104,12 +102,22 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
     } else if (succeeded) {
       _close();
     } else {
-      setState(() {
-        _submitting = false;
-        _error =
+      if (mounted) {
+        final message =
             widget.cubit.state.errorMessage ??
             'Unable to respond. Please try again.';
-      });
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(message),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        setState(() {
+          _submitting = false;
+        });
+      }
     }
   }
 
@@ -207,16 +215,6 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          if (_error != null) ...[
-                            Semantics(
-                              liveRegion: true,
-                              child: Text(
-                                _error!,
-                                style: TextStyle(color: colors.error),
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                          ],
                           if (awaitingAssignment) ...[
                             const LinearProgressIndicator(),
                             const SizedBox(height: AppSpacing.md),
