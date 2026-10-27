@@ -161,19 +161,6 @@ func (service *LifecycleService) CompleteTrip(
 	if status != domain.RideInTransit {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
-	driverLatitude, driverLongitude, err := service.authoritativeDriverLocation(ctx, driverID)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	if err := domain.ValidateCompletionLocation(
-		current.DropoffLatitude,
-		current.DropoffLongitude,
-		driverLatitude,
-		driverLongitude,
-		service.config.completionRadiusMeters(),
-	); err != nil {
-		return domain.Ride{}, err
-	}
 	updated, err := service.store.CompleteTrip(ctx, rideID, driverID)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("complete ride: %w", err)

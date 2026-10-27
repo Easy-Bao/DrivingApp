@@ -417,11 +417,6 @@ Failure _mapFailure(Object error, {required String action}) {
         409,
       );
     }
-    if (action == 'complete this trip' && statusCode == 422) {
-      return const ValidationFailure(
-        'You are not at the destination yet. Move closer, then complete the trip.',
-      );
-    }
     if (action == 'complete this trip' && statusCode == 503) {
       return const ServerFailure.withStatusCode(
         'Your live location is unavailable or out of date. Keep location sharing on and try again.',

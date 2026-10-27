@@ -27,29 +27,6 @@ func ValidateArrivalLocation(
 	return nil
 }
 
-func ValidateCompletionLocation(
-	dropoffLatitude,
-	dropoffLongitude,
-	driverLatitude,
-	driverLongitude,
-	radiusMeters float64,
-) error {
-	if !validCoordinate(dropoffLatitude, dropoffLongitude) ||
-		!validCoordinate(driverLatitude, driverLongitude) ||
-		!validRadius(radiusMeters) {
-		return ErrCompletionLocation
-	}
-	if haversineMeters(
-		dropoffLatitude,
-		dropoffLongitude,
-		driverLatitude,
-		driverLongitude,
-	) > radiusMeters {
-		return ErrCompletionLocation
-	}
-	return nil
-}
-
 func validRadius(radiusMeters float64) bool {
 	return radiusMeters > 0 && !math.IsNaN(radiusMeters) && !math.IsInf(radiusMeters, 0)
 }

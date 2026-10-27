@@ -295,7 +295,7 @@ func TestStartTripIsIdempotentAfterTheServerAlreadyStartedIt(t *testing.T) {
 	}
 }
 
-func TestCompleteTripRequiresDestinationProximity(t *testing.T) {
+func TestCompleteTripDoesNotRequireDestinationProximity(t *testing.T) {
 	driverID := 42
 	store := &fakeLifecycleStore{
 		ride: domain.Ride{
@@ -307,48 +307,14 @@ func TestCompleteTripRequiresDestinationProximity(t *testing.T) {
 			DropoffLongitude: 122.1000,
 		},
 	}
-	service, reader := newLifecycleServiceWithLocation(store, lifecycle.LifecycleConfig{}, 6.7100, 122.1100)
+	service, _ := newLifecycleServiceWithLocation(store, lifecycle.LifecycleConfig{}, 6.7100, 122.1100)
 
-	if _, err := service.CompleteTrip(context.Background(), 1, driverID, 6.7100, 122.1100); !errors.Is(err, domain.ErrCompletionLocation) {
-		t.Fatalf("expected destination proximity error, got %v", err)
-	}
-	if store.ride.Status != string(domain.RideInTransit) {
-		t.Fatalf("ride status changed after rejected completion: %q", store.ride.Status)
-	}
-	reader.point.Latitude = 6.7005
-	reader.point.Longitude = 122.1005
-
-	updated, err := service.CompleteTrip(context.Background(), 1, driverID, 6.7005, 122.1005)
+	updated, err := service.CompleteTrip(context.Background(), 1, driverID, 6.7100, 122.1100)
 	if err != nil {
 		t.Fatalf("CompleteTrip() error = %v", err)
 	}
 	if updated.Status != string(domain.RideCompleted) {
 		t.Fatalf("status = %q, want completed", updated.Status)
-	}
-}
-
-func TestCompleteTripUsesConfiguredDestinationRadius(t *testing.T) {
-	driverID := 42
-	store := &fakeLifecycleStore{
-		ride: domain.Ride{
-			ID:               1,
-			PassengerID:      10,
-			DriverID:         &driverID,
-			Status:           string(domain.RideInTransit),
-			DropoffLatitude:  6.7000,
-			DropoffLongitude: 122.1000,
-		},
-	}
-	service, _ := newLifecycleServiceWithLocation(
-		store,
-		lifecycle.LifecycleConfig{CompletionRadiusMeters: 25},
-		6.7005,
-		122.1005,
-	)
-
-	_, err := service.CompleteTrip(context.Background(), 1, driverID, 6.7005, 122.1005)
-	if !errors.Is(err, domain.ErrCompletionLocation) {
-		t.Fatalf("expected configured destination proximity error, got %v", err)
 	}
 }
 

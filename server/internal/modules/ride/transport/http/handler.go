@@ -620,8 +620,7 @@ func rideErrorStatus(err error) int {
 		return http.StatusBadRequest
 	case errors.Is(err, domain.ErrInvalidEmergencyStop):
 		return http.StatusBadRequest
-	case errors.Is(err, domain.ErrArrivalLocation),
-		errors.Is(err, domain.ErrCompletionLocation):
+	case errors.Is(err, domain.ErrArrivalLocation):
 		return http.StatusUnprocessableEntity
 	case errors.Is(err, domain.ErrDriverLocationUnavailable),
 		errors.Is(err, domain.ErrDriverLocationStale):
@@ -693,8 +692,6 @@ func safeRideError(err error) string {
 		return "Start the trip from the passenger pickup action."
 	case errors.Is(err, domain.ErrTripCompletionCommand):
 		return "Complete the trip from the destination action."
-	case errors.Is(err, domain.ErrCompletionLocation):
-		return "You are not at the destination yet. Move closer, then complete the trip."
 	case errors.Is(err, domain.ErrPassengerNoShowNotReady):
 		return "Keep waiting until the pickup timer finishes before marking a no-show."
 	case errors.Is(err, domain.ErrNoShowCommand):

@@ -21,7 +21,6 @@ var (
 	ErrTripStartCommand          = errors.New("trip start requires the start command")
 	ErrTripCompletionCommand     = errors.New("trip completion requires the completion command")
 	ErrArrivalLocation           = errors.New("driver is not close enough to the pickup")
-	ErrCompletionLocation        = errors.New("driver is not close enough to the destination")
 	ErrDriverLocationUnavailable = errors.New("authoritative driver location is unavailable")
 	ErrDriverLocationStale       = errors.New("authoritative driver location is stale")
 	ErrPassengerNoShowNotReady   = errors.New("the passenger wait period has not elapsed")
