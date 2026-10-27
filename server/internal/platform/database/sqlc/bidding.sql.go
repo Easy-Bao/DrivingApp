@@ -460,31 +460,6 @@ func (q *Queries) HasActivePassengerRide(ctx context.Context, passengerID int32)
 	return exists, err
 }
 
-const hasOverdueCashSettlementForDriver = `-- name: HasOverdueCashSettlementForDriver :one
-SELECT EXISTS (
-    SELECT 1
-    FROM rides AS ride
-    LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
-    WHERE ride.driver_id = $1
-      AND ride.status = 'completed'
-      AND COALESCE(settlement.payment_status, 'unpaid') = 'unpaid'
-      AND ride.completed_at IS NOT NULL
-      AND ride.completed_at <= $2
-)
-`
-
-type HasOverdueCashSettlementForDriverParams struct {
-	DriverID    pgtype.Int4        `db:"driver_id"`
-	CompletedAt pgtype.Timestamptz `db:"completed_at"`
-}
-
-func (q *Queries) HasOverdueCashSettlementForDriver(ctx context.Context, arg HasOverdueCashSettlementForDriverParams) (bool, error) {
-	row := q.db.QueryRow(ctx, hasOverdueCashSettlementForDriver, arg.DriverID, arg.CompletedAt)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
-}
-
 const hasPendingBidOffer = `-- name: HasPendingBidOffer :one
 SELECT EXISTS (
     SELECT 1

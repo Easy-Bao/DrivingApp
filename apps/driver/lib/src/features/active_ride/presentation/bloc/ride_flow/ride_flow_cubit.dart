@@ -57,8 +57,7 @@ class RideFlowCubit({
     if (rideId == null ||
         rideId.isEmpty ||
         _isActionInFlight ||
-        _isRideCompletionPending ||
-        state is RideFlowComplete) {
+        _isRideCompletionPending) {
       return;
     }
 
@@ -77,7 +76,7 @@ class RideFlowCubit({
     required String rideId,
     required String status,
   }) async {
-    if (_isRideCompletionPending || state is RideFlowComplete) return;
+    if (_isRideCompletionPending) return;
     final terminalStatus = RideStatus.fromString(status);
     if (!terminalStatus.isTerminal) return;
     await _finishTerminalRide(rideId: rideId, status: terminalStatus.value);
@@ -891,131 +890,6 @@ class RideFlowCubit({
         _restoreTripAfterFailedAction(tripBeforeAction, actionGeneration);
       }
     }
-  }
-
-  Future<double?> confirmCashPayment({
-    int? cashReceivedAmount,
-    int cashChangeAmount = 0,
-    String cashOutcome = 'paid',
-  }) async {
-    if (_isActionInFlight) return null;
-    final actionGeneration = ++_actionGeneration;
-    _isActionInFlight = true;
-
-    final rideId = _activeRideId;
-    if (rideId == null || rideId.isEmpty) {
-      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
-      emit(const RideFlowError('This trip is no longer active.'));
-      return null;
-    }
-
-    try {
-      int? fareAmount;
-      var receivedAmount = cashReceivedAmount;
-      if (receivedAmount == null) {
-        RideSnapshot? ride;
-        (await _rideRepository.fetchRideResult(rideId))
-            .fold((_) {}, (value) => ride = value);
-        receivedAmount = ride?.fareAmount;
-      }
-      if (receivedAmount == null || receivedAmount <= 0) {
-        emit(const RideFlowError('The cash fare is unavailable.'));
-        return null;
-      }
-      Failure? settleFailure;
-      (await _rideRepository.settleCashResult(
-        rideId: rideId,
-        cashReceivedAmount: receivedAmount,
-        cashChangeAmount: cashChangeAmount,
-        cashOutcome: cashOutcome,
-      )).fold(
-        (failure) => settleFailure = failure,
-        (value) => fareAmount = value,
-      );
-      if (!_isCurrentAction(actionGeneration)) return null;
-      if (fareAmount == null) {
-        final failure = settleFailure;
-        emit(
-          RideFlowError(
-            failure == null
-                ? ErrorHandler.getErrorMessage(const ServerFailure())
-                : ErrorHandler.getErrorMessage(failure),
-          ),
-        );
-        return null;
-      }
-      final finalFare = fareAmount! / 100;
-      emit(RideFlowComplete(fare: finalFare));
-      return finalFare;
-    } catch (error) {
-      if (!_isCurrentAction(actionGeneration)) return null;
-      dev.log('Error settling cash trip: $error');
-      emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
-      return null;
-    } finally {
-      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
-    }
-  }
-
-  Future<RideSnapshot?> restorePendingCashSettlement() async {
-    final cachedRideId = (await _sessionService.readActiveRideId())?.trim();
-    if (cachedRideId == null || cachedRideId.isEmpty) return null;
-
-    final typedRideId = RideId.tryParse(cachedRideId);
-    if (typedRideId == null) {
-      await _clearActiveRideSession();
-      return null;
-    }
-
-    RideSnapshot? ride;
-    Failure? loadFailure;
-    try {
-      (await _rideRepository.fetchRideResult(typedRideId.normalized))
-          .fold((failure) => loadFailure = failure, (value) => ride = value);
-    } catch (error, stackTrace) {
-      dev.log(
-        'Unable to restore the pending cash settlement.',
-        error: error,
-        stackTrace: stackTrace,
-      );
-      loadFailure = const ServerFailure();
-    }
-
-    if (ride == null) {
-      if (loadFailure is RideNotFoundFailure) {
-        await _clearActiveRideSession();
-        return null;
-      }
-      emit(
-        RideFlowError(
-          loadFailure == null
-              ? 'Unable to restore the pending cash settlement.'
-              : ErrorHandler.getErrorMessage(loadFailure!),
-        ),
-      );
-      return null;
-    }
-
-    if (ride!.status != 'completed') {
-      if (ride!.isTerminal) await _clearActiveRideSession();
-      return null;
-    }
-    if (ride!.hasCashSettlement) {
-      await _clearActiveRideSession();
-      return null;
-    }
-
-    final fare = ride!.farePesos;
-    if (fare == null || fare <= 0) {
-      emit(const RideFlowError('The completed cash fare is unavailable.'));
-      return null;
-    }
-
-    _activeRideId = typedRideId.normalized;
-    _activePassengerId = ride!.passengerId;
-    _activePassengerName = ride!.passengerName;
-    emit(RideFlowComplete(fare: fare));
-    return ride;
   }
 
   Future<void> reset() async {

@@ -643,104 +643,6 @@ void main() {
     },
   );
 
-  test('restores a completed ride that still needs a cash outcome', () async {
-    when(() => mockSessionService.readActiveRideId())
-        .thenAnswer((_) async => 'test-ride-id');
-    when(() => mockRideRepository.fetchRide('test-ride-id')).thenAnswer(
-      (_) async => const Ok(
-        RideSnapshot(
-          id: 'test-ride-id',
-          status: 'completed',
-          pickupName: 'Pickup',
-          dropoffName: 'Dropoff',
-          fareAmount: 3000,
-          paymentStatus: 'unpaid',
-          cashOutcome: 'unpaid',
-        ),
-      ),
-    );
-
-    final cubit = _makeCubit(mockRideRepository, mockSessionService);
-    final ride = await cubit.restorePendingCashSettlement();
-
-    expect(ride?.id, 'test-ride-id');
-    expect(cubit.activeRideId, 'test-ride-id');
-    expect(cubit.state, const RideFlowComplete(fare: 30));
-    verify(() => mockRideRepository.fetchRide('test-ride-id')).called(1);
-    await cubit.close();
-  });
-
-  test(
-    'clears a cached ride after its cash outcome was already recorded',
-    () async {
-      when(() => mockSessionService.readActiveRideId())
-          .thenAnswer((_) async => 'test-ride-id');
-      when(() => mockRideRepository.fetchRide('test-ride-id')).thenAnswer(
-        (_) async => Ok(
-          RideSnapshot(
-            id: 'test-ride-id',
-            status: 'completed',
-            pickupName: 'Pickup',
-            dropoffName: 'Dropoff',
-            fareAmount: 3000,
-            paymentStatus: 'unpaid',
-            cashOutcome: 'unpaid',
-            cashReceivedAt: DateTime.utc(2026, 10, 5),
-          ),
-        ),
-      );
-
-      final cubit = _makeCubit(mockRideRepository, mockSessionService);
-      final ride = await cubit.restorePendingCashSettlement();
-
-      expect(ride, isNull);
-      expect(cubit.activeRideId, isNull);
-      verify(() => mockSessionService.clearActiveRideId()).called(1);
-      await cubit.close();
-    },
-  );
-
-  test('silently clears a cached ride that no longer exists', () async {
-    when(() => mockSessionService.readActiveRideId())
-        .thenAnswer((_) async => 'test-ride-id');
-    when(() => mockRideRepository.fetchRide('test-ride-id'))
-        .thenAnswer((_) async => const Err(RideNotFoundFailure()));
-
-    final cubit = _makeCubit(mockRideRepository, mockSessionService);
-    final ride = await cubit.restorePendingCashSettlement();
-
-    expect(ride, isNull);
-    expect(cubit.state, isA<RideFlowInitial>());
-    verify(() => mockSessionService.clearActiveRideId()).called(1);
-    await cubit.close();
-  });
-
-  test(
-    'keeps an active cached ride available for normal trip recovery',
-    () async {
-      when(() => mockSessionService.readActiveRideId())
-          .thenAnswer((_) async => 'test-ride-id');
-      when(() => mockRideRepository.fetchRide('test-ride-id')).thenAnswer(
-        (_) async => const Ok(
-          RideSnapshot(
-            id: 'test-ride-id',
-            status: 'in_transit',
-            pickupName: 'Pickup',
-            dropoffName: 'Dropoff',
-            fareAmount: 3000,
-          ),
-        ),
-      );
-
-      final cubit = _makeCubit(mockRideRepository, mockSessionService);
-      final ride = await cubit.restorePendingCashSettlement();
-
-      expect(ride, isNull);
-      verifyNever(() => mockSessionService.clearActiveRideId());
-      await cubit.close();
-    },
-  );
-
   test('keeps no-show unavailable during the clock-skew buffer', () async {
     final now = DateTime.now().toUtc();
     final cubit = _makeCubit(mockRideRepository, mockSessionService);
@@ -793,7 +695,7 @@ void main() {
     blocTest<RideFlowCubit, RideFlowState>(
       'returns to RideFlowInitial from any state',
       build: () => _makeCubit(mockRideRepository, mockSessionService),
-      seed: () => const RideFlowComplete(fare: 150.0),
+      seed: () => const RideFlowInTransit(passengerName: 'Juan Dela Cruz'),
       act: (cubit) => cubit.reset(),
       expect: () => [isA<RideFlowInitial>()],
     );
@@ -924,40 +826,6 @@ void main() {
     expect(cubit.activeRideId, isNull);
     expect(cubit.state, isA<RideFlowInitial>());
     verify(() => mockSessionService.clearActiveRideId()).called(1);
-    await cubit.close();
-  });
-
-  test('records a partial cash outcome without treating it as paid', () async {
-    when(
-      () => mockRideRepository.settleCash(
-        rideId: 'test-ride-id',
-        cashReceivedAmount: 1500,
-        cashChangeAmount: 0,
-        cashOutcome: 'partial',
-      ),
-    ).thenAnswer((_) async => const Ok(3000));
-    final cubit = _makeCubit(mockRideRepository, mockSessionService);
-    await cubit.resumeRide(
-      rideId: 'test-ride-id',
-      status: 'in_transit',
-      passengerName: 'Juan Dela Cruz',
-    );
-
-    final fare = await cubit.confirmCashPayment(
-      cashReceivedAmount: 1500,
-      cashChangeAmount: 0,
-      cashOutcome: 'partial',
-    );
-
-    expect(fare, 30.0);
-    verify(
-      () => mockRideRepository.settleCash(
-        rideId: 'test-ride-id',
-        cashReceivedAmount: 1500,
-        cashChangeAmount: 0,
-        cashOutcome: 'partial',
-      ),
-    ).called(1);
     await cubit.close();
   });
 }

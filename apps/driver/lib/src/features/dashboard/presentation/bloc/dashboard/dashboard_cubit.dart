@@ -155,20 +155,12 @@ class DashboardCubit({
               _silentDispatchFailureCooldown,
             );
           }
-          // A settlement block is persistent and explains why no requests
-          // arrive, so it is surfaced even for silent background polls.
-          final isSettlementBlock =
-              failure is ServerFailure && failure.statusCode == 409;
-          if (!silent || isSettlementBlock) {
+          if (!silent) {
             if (isClosed) return false;
             emit(
               state.copyWith(
                 isLoadingDispatch: false,
-                // The generic user message would replace the specific reason
-                // the server gave for the settlement block.
-                errorMessage: isSettlementBlock
-                    ? failure.message
-                    : ErrorHandler.getErrorMessage(failure),
+                errorMessage: ErrorHandler.getErrorMessage(failure),
               ),
             );
           }

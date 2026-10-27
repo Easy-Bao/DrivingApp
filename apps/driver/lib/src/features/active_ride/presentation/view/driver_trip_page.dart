@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
-import 'package:driver/src/features/active_ride/active_ride_routes.dart';
+import 'package:driver/src/features/active_ride/domain/services/ride_completion_handler.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
@@ -9,6 +9,7 @@ import 'package:driver/src/features/active_ride/presentation/widgets/driver_ride
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_trip_panel.dart';
 import 'package:driver/src/features/chat/chat.dart';
 import 'package:driver/src/features/chat/chat_routes.dart';
+import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,6 +20,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 class const DriverTripPage({
   super.key,
+  this.rideId,
   required this.pickup,
   required this.dropoff,
   required this.distance,
@@ -27,7 +29,9 @@ class const DriverTripPage({
   required this.chatRepositoryFactory,
   required this.sessionService,
   required this.lifecycleCoordinator,
+  required this.rideCompletionHandler,
 }) extends StatefulWidget {
+  final String? rideId;
   final String pickup;
   final String dropoff;
   final double distance;
@@ -36,6 +40,7 @@ class const DriverTripPage({
   final ChatRepositoryFactory chatRepositoryFactory;
   final SessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
+  final RideCompletionHandler rideCompletionHandler;
 
   @override
   State<DriverTripPage> createState() => _DriverTripPageState();
@@ -57,7 +62,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
   bool _isActing = false;
   String? _actionError;
   bool _isRefreshing = false;
-  bool _paymentOpened = false;
+  bool _tripFinished = false;
   int _unreadChatMessagesCount = 0;
   int _viewedPassengerMessagesCount = 0;
   bool _isInitialChatMessagesCountFetched = false;
@@ -115,7 +120,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
   }
 
   Future<void> _refreshTracking() async {
-    if (!mounted || _isRefreshing || _paymentOpened) return;
+    if (!mounted || _isRefreshing || _tripFinished) return;
     _isRefreshing = true;
     try {
       await _updateUnreadMessagesCount(_rideCubit);
@@ -189,30 +194,22 @@ class _DriverTripPageState extends State<DriverTripPage> {
   }
 
   void _onRideChanged(BuildContext context, RideState state) {
-    if (state is TripCompleted) {
-      _openPayment(state.fare);
-      return;
-    }
     final position = LocationService.lastPosition;
     if (position != null && state is! RideFailed) {
       _drawRoute(position.latitude, position.longitude);
     }
   }
 
-  void _openPayment(double fare) {
-    if (!mounted || _paymentOpened) return;
-    _paymentOpened = true;
-    context.pushReplacementNamed(
-      ActiveRideRoutes.fareSummary,
-      extra: {
-        'rideId': _rideCubit.activeRideId,
-        'pickup': widget.pickup,
-        'dropoff': widget.dropoff,
-        'distance': widget.distance,
-        'fare': fare,
-        'duration': widget.duration,
-      },
-    );
+  Future<void> _finishTrip() async {
+    if (!mounted || _tripFinished) return;
+    _tripFinished = true;
+    final rideId = _rideCubit.activeRideId ?? widget.rideId;
+    await _rideCubit.reset();
+    if (rideId != null && rideId.isNotEmpty) {
+      await widget.rideCompletionHandler.afterRideCompleted(rideId: rideId);
+    }
+    if (!mounted) return;
+    context.goNamed(DashboardRoutes.dashboard);
   }
 
   void _showError(String message) {
@@ -242,7 +239,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
         );
         if (!mounted) return;
         if (fare != null) {
-          _openPayment(fare);
+          await _finishTrip();
           return;
         }
       } else if (state.isWaitingAtPickup) {

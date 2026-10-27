@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:design_system/design_system.dart';
-import 'package:driver/src/features/active_ride/active_ride_routes.dart';
+import 'package:driver/src/features/active_ride/domain/services/ride_completion_handler.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
@@ -29,6 +29,8 @@ class _MapBloc extends MockBloc<LiveMapEvent, LiveMapState>
 class _Session extends Mock implements SessionStore {}
 
 class _Factory extends Mock implements ChatRepositoryFactory {}
+
+class _CompletionHandler extends Mock implements RideCompletionHandler {}
 
 class _Location extends GeolocatorPlatform {
   @override
@@ -131,15 +133,8 @@ void main() {
             chatRepositoryFactory: _Factory(),
             sessionService: session,
             lifecycleCoordinator: lifecycle,
+            rideCompletionHandler: _CompletionHandler(),
           ),
-        ),
-        GoRoute(
-          path: '/payment',
-          name: ActiveRideRoutes.fareSummary,
-          builder: (_, state) {
-            expect((state.extra as Map)['fare'], 42);
-            return const Scaffold(body: Text('Confirm payment'));
-          },
         ),
       ],
     );
@@ -190,9 +185,6 @@ void main() {
     states.add(const RideFlowError('Transient failure'));
     await tester.pumpAndSettle();
     expect(find.text('Head to destination'), findsOneWidget);
-    states.add(const RideFlowComplete(fare: 42));
-    await tester.pumpAndSettle();
-    expect(find.text('Confirm payment'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     router.dispose();

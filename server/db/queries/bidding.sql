@@ -97,18 +97,6 @@ FROM rides
 WHERE driver_id = $1
   AND status IN ('assigned', 'accepted', 'arrived', 'in_transit');
 
--- name: HasOverdueCashSettlementForDriver :one
-SELECT EXISTS (
-    SELECT 1
-    FROM rides AS ride
-    LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
-    WHERE ride.driver_id = $1
-      AND ride.status = 'completed'
-      AND COALESCE(settlement.payment_status, 'unpaid') = 'unpaid'
-      AND ride.completed_at IS NOT NULL
-      AND ride.completed_at <= $2
-);
-
 -- name: ListActiveBidSessions :many
 SELECT sessions.id, sessions.booking_reference, sessions.passenger_id, sessions.ride_type,
     sessions.pickup_latitude, sessions.pickup_longitude, sessions.pickup_name,

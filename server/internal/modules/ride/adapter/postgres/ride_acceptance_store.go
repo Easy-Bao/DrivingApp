@@ -13,8 +13,6 @@ import (
 
 const (
 	_rideAcceptanceStatementTimeout = 3 * time.Second
-	// Matches the grace period enforced when drivers place bids.
-	_overdueSettlementGrace = 15 * time.Minute
 )
 
 func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
@@ -70,19 +68,6 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 	}
 	if activeRides >= domain.MaxActiveRidesPerDriver {
 		return domain.Ride{}, domain.ErrDriverCapacityReached
-	}
-	overdueSettlement, err := transactionQueries.HasOverdueCashSettlementForDriver(
-		ctx,
-		databasepostgres.HasOverdueCashSettlementForDriverParams{
-			DriverID:    pgtype.Int4{Int32: profile.UserID, Valid: true},
-			CompletedAt: pgtype.Timestamptz{Time: time.Now().UTC().Add(-_overdueSettlementGrace), Valid: true},
-		},
-	)
-	if err != nil {
-		return domain.Ride{}, fmt.Errorf("check overdue cash settlement: %w", err)
-	}
-	if overdueSettlement {
-		return domain.Ride{}, domain.ErrDriverSettlementOverdue
 	}
 	trip, err := transactionQueries.LockRequestedRideForAcceptance(ctx, dbRideID)
 	if err != nil {

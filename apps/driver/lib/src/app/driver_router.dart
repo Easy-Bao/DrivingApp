@@ -16,7 +16,7 @@ import 'package:driver/src/app/navigation/driver_navigation_shell.dart';
 import 'package:driver/src/features/profile/profile_module.dart';
 import 'package:driver/src/features/settings/settings_module.dart';
 import 'package:driver/src/features/active_ride/active_ride_module.dart';
-import 'package:driver/src/features/active_ride/domain/services/ride_payment_completion_handler.dart';
+import 'package:driver/src/features/active_ride/domain/services/ride_completion_handler.dart';
 import 'package:driver/src/features/earnings/earnings_module.dart';
 import 'package:driver/src/features/performance/performance_module.dart';
 import 'package:driver/src/features/ride_history/ride_history_module.dart';
@@ -33,8 +33,8 @@ class AppRouter extends Module {
     ProfileModule.binds(i);
 
     i
-      ..addLazySingleton<RidePaymentCompletionHandler>(
-        (i) => _DashboardRidePaymentCompletionHandler(
+      ..addLazySingleton<RideCompletionHandler>(
+        (i) => _DashboardRideCompletionHandler(
           dashboardCubit: i.get<DashboardCubit>(),
         ),
       )
@@ -91,14 +91,13 @@ class AppRouter extends Module {
   ];
 }
 
-final class _DashboardRidePaymentCompletionHandler
-    implements RidePaymentCompletionHandler {
-  const _DashboardRidePaymentCompletionHandler({required this.dashboardCubit});
+final class _DashboardRideCompletionHandler implements RideCompletionHandler {
+  const _DashboardRideCompletionHandler({required this.dashboardCubit});
 
   final DashboardCubit dashboardCubit;
 
   @override
-  Future<void> afterCashPayment({required String rideId}) async {
+  Future<void> afterRideCompleted({required String rideId}) async {
     dashboardCubit.removeActiveRide(rideId);
     if (dashboardCubit.state.isOnline) {
       final position =
@@ -110,6 +109,7 @@ final class _DashboardRidePaymentCompletionHandler
           lng: position.longitude,
         );
       }
+      await dashboardCubit.loadDispatchSnapshot(silent: true, force: true);
     }
     await dashboardCubit.loadStats();
   }

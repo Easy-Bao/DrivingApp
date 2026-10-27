@@ -81,8 +81,6 @@ void main() {
           );
           when(() => flow.state).thenReturn(const Idle());
           when(() => location.state).thenReturn(const LocationAccessReady());
-          when(() => flow.restorePendingCashSettlement())
-              .thenAnswer((_) async => null);
           when(
             () => dashboard.loadDispatchSnapshot(
               includeOffers: false,

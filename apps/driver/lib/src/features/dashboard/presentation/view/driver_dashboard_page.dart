@@ -80,7 +80,6 @@ class _DashboardPageState extends State<DashboardPage>
   bool _isForcingOfflineForLocationLoss = false;
   bool _isForeground = true;
   bool _isHandlingRideTerminal = false;
-  bool _isRestoringPendingCashSettlement = false;
 
   static const _locationAccessPollInterval = Duration(seconds: 5);
   static const _locationAccessFailureThreshold = 2;
@@ -111,7 +110,6 @@ class _DashboardPageState extends State<DashboardPage>
         _syncPulseAnimation(dashboardState.isOnline);
         _startLocationAccessMonitoring();
         unawaited(_loadActiveTrips());
-        unawaited(_restorePendingCashSettlement());
         if (dashboardState.isOnline && _isForeground) {
           unawaited(_resumeOnlineTelemetry());
         }
@@ -184,7 +182,6 @@ class _DashboardPageState extends State<DashboardPage>
     if (!mounted || !_isForeground) return;
     await BlocProvider.of<RideFlowCubit>(context).syncAuthoritativeRideState();
     if (!mounted || !_isForeground) return;
-    await _restorePendingCashSettlement();
     if (!mounted || !_isForeground) return;
     await _refreshLocationAfterResume();
   }
@@ -193,39 +190,6 @@ class _DashboardPageState extends State<DashboardPage>
     if (!mounted || !_isForeground) return;
     await BlocProvider.of<DashboardCubit>(context)
         .loadDispatchSnapshot(includeOffers: false, silent: true);
-  }
-
-  Future<void> _restorePendingCashSettlement() async {
-    if (!mounted || _isRestoringPendingCashSettlement) return;
-    _isRestoringPendingCashSettlement = true;
-    try {
-      final ride = await BlocProvider.of<RideFlowCubit>(context)
-          .restorePendingCashSettlement();
-      if (!mounted || ride == null) return;
-
-      final fare = ride.farePesos;
-      if (fare == null || fare <= 0) {
-        return;
-      }
-
-      final duration = ride.durationMinutes;
-      context.pushReplacementNamed(
-        ActiveRideRoutes.fareSummary,
-        extra: {
-          'rideId': ride.id,
-          'bookingReference': ride.bookingReference,
-          'pickup': ride.pickupName,
-          'dropoff': ride.dropoffName,
-          'distance': ride.distanceKm ?? 0,
-          'fare': fare,
-          'duration': duration == null
-              ? 'Duration unavailable'
-              : '${duration.toStringAsFixed(0)} min',
-        },
-      );
-    } finally {
-      _isRestoringPendingCashSettlement = false;
-    }
   }
 
   Future<void> _refreshLocationAfterResume() async {
@@ -566,13 +530,8 @@ class _DashboardPageState extends State<DashboardPage>
       return;
     }
 
-    final cubit = BlocProvider.of<DashboardCubit>(context);
-    final loaded = await cubit.loadDispatchSnapshot(silent: true);
-    if (!loaded && mounted && cubit.state.errorMessage != null) {
-      // A settlement block leaves the unpaid ride's id in storage; resume its
-      // cash collection prompt so the driver can clear the block.
-      unawaited(_restorePendingCashSettlement());
-    }
+    await BlocProvider.of<DashboardCubit>(context)
+        .loadDispatchSnapshot(silent: true);
     if (mounted && pollGeneration != _pollGeneration) {
       unawaited(_pollRideData(_pollGeneration));
     }
@@ -716,10 +675,26 @@ class _DashboardPageState extends State<DashboardPage>
     _isShowingRequest = true;
     try {
       await Navigator.of(context, rootNavigator: true).push<void>(
-        MaterialPageRoute<void>(
+        PageRouteBuilder<void>(
           fullscreenDialog: true,
-          builder: (_) =>
+          pageBuilder: (_, animation, secondaryAnimation) =>
               IncomingRideRequestPage(cubit: cubit, sessionId: sessionId),
+          transitionsBuilder: (_, animation, secondaryAnimation, child) {
+            final curved = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+              reverseCurve: Curves.easeInCubic,
+            );
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 1),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            );
+          },
+          transitionDuration: AppTransitions.modalDuration,
+          reverseTransitionDuration: AppTransitions.modalDuration,
         ),
       );
     } finally {
@@ -782,6 +757,7 @@ class _DashboardPageState extends State<DashboardPage>
             _tripNavigationError = 'Your trip could not be opened. Refresh its status and try again.';
           }
         });
+        unawaited(_showIncomingRequest());
       }
     }
   }
@@ -850,6 +826,7 @@ class _DashboardPageState extends State<DashboardPage>
     await context.pushNamed(
       ActiveRideRoutes.trip,
       extra: {
+        'rideId': rideId,
         'pickup': resolvedTrip.pickupName,
         'dropoff': resolvedTrip.dropoffName,
         'distance': distance,
@@ -887,7 +864,9 @@ class _DashboardPageState extends State<DashboardPage>
           listenWhen: (previous, current) =>
               previous.activeBids != current.activeBids ||
               previous.submittedOffers != current.submittedOffers ||
-              previous.isOnline != current.isOnline,
+              previous.isOnline != current.isOnline ||
+              (previous.activeRides != current.activeRides &&
+                  current.activeRides.isEmpty),
           listener: (_, _) => unawaited(_showIncomingRequest()),
         ),
         BlocListener<RideFlowCubit, RideFlowState>(
@@ -996,23 +975,6 @@ class _DashboardPageState extends State<DashboardPage>
                                           liveRegion: true,
                                           child: Text(
                                             _availabilityError!,
-                                            style: TextStyle(
-                                              color: context.colorScheme.error,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    if (state.isOnline &&
-                                        state.errorMessage != null &&
-                                        _availabilityError == null)
-                                      Padding(
-                                        padding: const EdgeInsets.all(
-                                          AppSpacing.lg,
-                                        ),
-                                        child: Semantics(
-                                          liveRegion: true,
-                                          child: Text(
-                                            state.errorMessage!,
                                             style: TextStyle(
                                               color: context.colorScheme.error,
                                             ),

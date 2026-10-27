@@ -129,10 +129,6 @@ final class RideFlowInTransit extends TripInProgress {
   });
 }
 
-final class RideFlowComplete extends TripCompleted {
-  const RideFlowComplete({required super.fare});
-}
-
 final class RideFlowError extends RideFailed {
   const RideFlowError(super.message);
 }
@@ -216,27 +212,21 @@ extension RideStatePresentation on RideState {
   double? get destinationLatitude => switch (this) {
     Idle() || SearchingDriver() || TripCompleted() || RideFailed() => null,
     DriverEnRoute(:final destinationLatitude) ||
-    TripInProgress(:final destinationLatitude) =>
-      destinationLatitude,
+    TripInProgress(:final destinationLatitude) => destinationLatitude,
   };
 
   double? get destinationLongitude => switch (this) {
     Idle() || SearchingDriver() || TripCompleted() || RideFailed() => null,
     DriverEnRoute(:final destinationLongitude) ||
-    TripInProgress(:final destinationLongitude) =>
-      destinationLongitude,
+    TripInProgress(:final destinationLongitude) => destinationLongitude,
   };
 
   RideCoordinates? get destinationCoordinates => switch (this) {
-    DriverEnRoute(
-      :final destinationLatitude,
-      :final destinationLongitude,
-    ) when destinationLatitude != null && destinationLongitude != null =>
+    DriverEnRoute(:final destinationLatitude, :final destinationLongitude)
+        when destinationLatitude != null && destinationLongitude != null =>
       (destinationLatitude, destinationLongitude),
-    TripInProgress(
-      :final destinationLatitude,
-      :final destinationLongitude,
-    ) when destinationLatitude != null && destinationLongitude != null =>
+    TripInProgress(:final destinationLatitude, :final destinationLongitude)
+        when destinationLatitude != null && destinationLongitude != null =>
       (destinationLatitude, destinationLongitude),
     _ => null,
   };

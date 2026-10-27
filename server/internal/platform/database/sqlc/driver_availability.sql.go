@@ -29,16 +29,6 @@ WITH eligible_profiles AS (
       )
       AND profile.is_online = true
       AND profile.online_last_seen_at >= $2::timestamptz
-      AND NOT EXISTS (
-          SELECT 1
-          FROM rides AS ride
-          LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
-          WHERE ride.driver_id = profile.user_id
-            AND ride.status = 'completed'
-            AND COALESCE(settlement.payment_status, 'unpaid') = 'unpaid'
-            AND ride.completed_at IS NOT NULL
-            AND ride.completed_at <= now() - interval '15 minutes'
-      )
       AND profile.user_id = ANY($3::int[])
     ORDER BY profile.id
     LIMIT $4::int
@@ -138,16 +128,6 @@ WITH eligible_profiles AS (
       )
       AND profile.is_online = true
       AND profile.online_last_seen_at >= $2::timestamptz
-      AND NOT EXISTS (
-          SELECT 1
-          FROM rides AS ride
-          LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
-          WHERE ride.driver_id = profile.user_id
-            AND ride.status = 'completed'
-            AND COALESCE(settlement.payment_status, 'unpaid') = 'unpaid'
-            AND ride.completed_at IS NOT NULL
-            AND ride.completed_at <= now() - interval '15 minutes'
-      )
     ORDER BY profile.id
     LIMIT $3::int
 ), review_ratings AS (

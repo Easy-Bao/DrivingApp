@@ -82,11 +82,6 @@ func (handler *Handler) ActiveSessions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sessions, err := handler.service.ActiveSessions(r.Context(), &driverID)
-	if errors.Is(err, ridedomain.ErrDriverSettlementOverdue) {
-		// Surface the block so the driver app can explain why no requests arrive.
-		response.Error(w, http.StatusConflict, safeDispatchError(err))
-		return
-	}
 	if err != nil {
 		response.Error(w, 500, "Incoming ride requests are temporarily unavailable.")
 		return
@@ -283,7 +278,6 @@ func dispatchErrorStatus(err error) int {
 	case errors.Is(err, dispatchdomain.ErrSessionClosed),
 		errors.Is(err, ridedomain.ErrActiveBooking),
 		errors.Is(err, ridedomain.ErrDriverCapacityReached),
-		errors.Is(err, ridedomain.ErrDriverSettlementOverdue),
 		errors.Is(err, dispatchdomain.ErrDriverUnavailable),
 		errors.Is(err, dispatchdomain.ErrDuplicateBid):
 		return http.StatusConflict
@@ -314,8 +308,6 @@ func safeDispatchError(err error) string {
 		return "You already have an active ride."
 	case errors.Is(err, ridedomain.ErrDriverCapacityReached):
 		return "This driver already has five active bookings."
-	case errors.Is(err, ridedomain.ErrDriverSettlementOverdue):
-		return "Settle the overdue cash ride before accepting another request."
 	case errors.Is(err, dispatchdomain.ErrUnauthorizedSession):
 		return "You do not have access to this ride."
 	case errors.Is(err, dispatchdomain.ErrDriverUnavailable):

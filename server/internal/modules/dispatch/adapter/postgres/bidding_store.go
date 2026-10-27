@@ -82,24 +82,6 @@ func (repository *Store) CreateSession(
 		return dispatchdomain.BidSession{}, domain.ErrActiveBooking
 	}
 
-	if targetDriverID.Valid {
-		// A driver blocked by an unsettled cash ride can never see or accept the
-		// request, so reject it now instead of letting it expire silently.
-		overdueSettlement, overdueErr := transactionQueries.HasOverdueCashSettlementForDriver(
-			ctx,
-			databasepostgres.HasOverdueCashSettlementForDriverParams{
-				DriverID:    targetDriverID,
-				CompletedAt: bidTimestamp(time.Now().UTC().Add(-15 * time.Minute)),
-			},
-		)
-		if overdueErr != nil {
-			return dispatchdomain.BidSession{}, fmt.Errorf("check target driver cash settlement: %w", overdueErr)
-		}
-		if overdueSettlement {
-			return dispatchdomain.BidSession{}, domain.ErrDriverSettlementOverdue
-		}
-	}
-
 	created, err := transactionQueries.CreateBidSession(ctx, databasepostgres.CreateBidSessionParams{
 		PassengerID: passengerID,
 
@@ -159,7 +141,6 @@ func (repository *Store) ActiveSessions(ctx context.Context, driverID *int) ([]d
 	var (
 		profileLookupDuration   time.Duration
 		activeRideCountDuration time.Duration
-		settlementCheckDuration time.Duration
 		sessionListDuration     time.Duration
 		mappingDuration         time.Duration
 		sessionCount            int
@@ -175,7 +156,6 @@ func (repository *Store) ActiveSessions(ctx context.Context, driverID *int) ([]d
 			slog.Int64("total_us", measure(totalStartedAt).Microseconds()),
 			slog.Int64("online_profile_us", profileLookupDuration.Microseconds()),
 			slog.Int64("active_ride_count_us", activeRideCountDuration.Microseconds()),
-			slog.Int64("settlement_check_us", settlementCheckDuration.Microseconds()),
 			slog.Int64("session_list_us", sessionListDuration.Microseconds()),
 			slog.Int64("mapping_us", mappingDuration.Microseconds()),
 			slog.Int("session_count", sessionCount),
@@ -229,23 +209,6 @@ func (repository *Store) ActiveSessions(ctx context.Context, driverID *int) ([]d
 		if activeRides >= domain.MaxActiveRidesPerDriver {
 			outcome = "active_ride_gate"
 			return []dispatchdomain.BidSession{}, nil
-		}
-
-		settlementCheckStartedAt := startTiming()
-		overdueSettlement, overdueErr := repository.queries.HasOverdueCashSettlementForDriver(
-			ctx,
-			databasepostgres.HasOverdueCashSettlementForDriverParams{
-				DriverID:    pgtype.Int4{Int32: dbDriverID, Valid: true},
-				CompletedAt: bidTimestamp(time.Now().UTC().Add(-15 * time.Minute)),
-			},
-		)
-		settlementCheckDuration = measure(settlementCheckStartedAt)
-		if overdueErr != nil {
-			return nil, fmt.Errorf("check overdue cash settlement: %w", overdueErr)
-		}
-		if overdueSettlement {
-			outcome = "settlement_gate"
-			return nil, domain.ErrDriverSettlementOverdue
 		}
 
 		sessionListStartedAt := startTiming()
@@ -399,19 +362,6 @@ func (repository *Store) PlaceOffer(ctx context.Context, value dispatchdomain.Bi
 	}
 	if activeRides >= domain.MaxActiveRidesPerDriver {
 		return dispatchdomain.BidOffer{}, domain.ErrDriverCapacityReached
-	}
-	overdueSettlement, err := transactionQueries.HasOverdueCashSettlementForDriver(
-		ctx,
-		databasepostgres.HasOverdueCashSettlementForDriverParams{
-			DriverID:    pgtype.Int4{Int32: profile.UserID, Valid: true},
-			CompletedAt: bidTimestamp(time.Now().UTC().Add(-15 * time.Minute)),
-		},
-	)
-	if err != nil {
-		return dispatchdomain.BidOffer{}, fmt.Errorf("check overdue cash settlement: %w", err)
-	}
-	if overdueSettlement {
-		return dispatchdomain.BidOffer{}, domain.ErrDriverSettlementOverdue
 	}
 	existing, err := transactionQueries.HasPendingBidOffer(ctx, databasepostgres.HasPendingBidOfferParams{
 		SessionID: sessionID,
