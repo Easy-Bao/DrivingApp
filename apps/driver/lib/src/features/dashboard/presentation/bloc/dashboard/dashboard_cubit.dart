@@ -164,7 +164,11 @@ class DashboardCubit({
             emit(
               state.copyWith(
                 isLoadingDispatch: false,
-                errorMessage: ErrorHandler.getErrorMessage(failure),
+                // The generic user message would replace the specific reason
+                // the server gave for the settlement block.
+                errorMessage: isSettlementBlock
+                    ? failure.message
+                    : ErrorHandler.getErrorMessage(failure),
               ),
             );
           }
