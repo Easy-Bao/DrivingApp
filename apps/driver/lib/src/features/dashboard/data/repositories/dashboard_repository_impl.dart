@@ -36,6 +36,7 @@ final class DashboardRepositoryImpl({
   final SessionStore _sessionService;
   final SharedPreferences _preferences;
   final BackgroundTelemetry? _backgroundTelemetryService;
+  DateTime? _lastSettlementRecoveryAt;
 
   Failure _mapExceptionToFailure(Object error) => switch (error) {
     final DioException exception => _mapDioFailure(exception),
@@ -350,6 +351,7 @@ final class DashboardRepositoryImpl({
       });
     } on DioException catch (error) {
       if (error.response?.statusCode == 409) {
+        await _recoverUnsettledRide();
         return const Err(
           ServerFailure.withStatusCode(
             'Settle your overdue cash ride to receive new ride requests.',
@@ -360,6 +362,45 @@ final class DashboardRepositoryImpl({
       return Err(_mapExceptionToFailure(error));
     } catch (error) {
       return Err(_mapExceptionToFailure(error));
+    }
+  }
+
+  /// The settlement prompt is normally resumed from a locally cached ride id.
+  /// When that cache is gone (reinstall, cleared storage) the ride stays unpaid
+  /// and blocks dispatch with no way to settle it, so the id is rebuilt from the
+  /// server's trip history.
+  Future<void> _recoverUnsettledRide() async {
+    final now = DateTime.now();
+    final lastAttempt = _lastSettlementRecoveryAt;
+    if (lastAttempt != null &&
+        now.difference(lastAttempt) < const Duration(seconds: 30)) {
+      return;
+    }
+    _lastSettlementRecoveryAt = now;
+    try {
+      final cached = (await _sessionService.readActiveRideId())?.trim();
+      if (cached != null && cached.isNotEmpty) return;
+      final driverId = await _getDriverId();
+      if (driverId.isEmpty) return;
+      final history = await _rideHistoryRepository.fetchTripHistory(
+        driverId,
+        limit: 25,
+      );
+      final items = history.fold(
+        (_) => const <Map<String, dynamic>>[],
+        (page) => page.items,
+      );
+      for (final item in items) {
+        final status = item['status']?.toString().toLowerCase();
+        final paymentStatus = item['payment_status']?.toString().toLowerCase();
+        final id = item['id']?.toString().trim() ?? '';
+        if (status == 'completed' && paymentStatus != 'paid' && id.isNotEmpty) {
+          await _sessionService.saveActiveRideId(id);
+          return;
+        }
+      }
+    } catch (error) {
+      dev.log('Unable to recover the unsettled ride: $error');
     }
   }
 

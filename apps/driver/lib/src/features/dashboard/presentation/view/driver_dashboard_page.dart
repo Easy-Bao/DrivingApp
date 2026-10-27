@@ -566,8 +566,13 @@ class _DashboardPageState extends State<DashboardPage>
       return;
     }
 
-    await BlocProvider.of<DashboardCubit>(context)
-        .loadDispatchSnapshot(silent: true);
+    final cubit = BlocProvider.of<DashboardCubit>(context);
+    final loaded = await cubit.loadDispatchSnapshot(silent: true);
+    if (!loaded && mounted && cubit.state.errorMessage != null) {
+      // A settlement block leaves the unpaid ride's id in storage; resume its
+      // cash collection prompt so the driver can clear the block.
+      unawaited(_restorePendingCashSettlement());
+    }
     if (mounted && pollGeneration != _pollGeneration) {
       unawaited(_pollRideData(_pollGeneration));
     }
