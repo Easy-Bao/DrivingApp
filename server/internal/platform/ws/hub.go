@@ -42,6 +42,7 @@ func (hub *Hub) Subscribe(topics ...string) *Subscription {
 	hub.mutex.Lock()
 	defer hub.mutex.Unlock()
 	if hub.closed {
+		subscription.closed = true
 		close(subscription.events)
 		return subscription
 	}
@@ -137,7 +138,10 @@ func (subscription *Subscription) deliver(envelope event.Envelope) bool {
 drainLoop:
 	for {
 		select {
-		case bufferedEvent := <-subscription.events:
+		case bufferedEvent, ok := <-subscription.events:
+			if !ok {
+				return false
+			}
 			drained = append(drained, bufferedEvent)
 		default:
 			break drainLoop
