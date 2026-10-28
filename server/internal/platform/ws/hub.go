@@ -77,20 +77,25 @@ func (hub *Hub) Close() {
 
 func (hub *Hub) Publish(envelope event.Envelope) {
 	hub.mutex.RLock()
+	var targets []*Subscription
 	delivered := make(map[*Subscription]struct{})
-	var slowSubscriptions []*Subscription
 	for _, topic := range envelope.Topics() {
 		for subscription := range hub.topics[topic] {
 			if _, duplicate := delivered[subscription]; duplicate {
 				continue
 			}
 			delivered[subscription] = struct{}{}
-			if !subscription.deliver(envelope) {
-				slowSubscriptions = append(slowSubscriptions, subscription)
-			}
+			targets = append(targets, subscription)
 		}
 	}
 	hub.mutex.RUnlock()
+
+	var slowSubscriptions []*Subscription
+	for _, subscription := range targets {
+		if !subscription.deliver(envelope) {
+			slowSubscriptions = append(slowSubscriptions, subscription)
+		}
+	}
 
 	for _, subscription := range slowSubscriptions {
 		slog.Warn(
