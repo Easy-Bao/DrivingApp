@@ -250,6 +250,15 @@ func (application *Application) Run(ctx context.Context) error {
 	}()
 	applicationLogger.InfoContext(ctx, "api listening", "address", application.server.Addr)
 
+	stopServer := func() error {
+		shutdownContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
+		defer cancel()
+		return application.server.Shutdown(shutdownContext)
+	}
+	defer func() {
+		_ = stopServer()
+	}()
+
 	select {
 	case serverErr := <-serverErrors:
 		if errors.Is(serverErr, http.ErrServerClosed) {
@@ -257,9 +266,7 @@ func (application *Application) Run(ctx context.Context) error {
 		}
 		return fmt.Errorf("serve HTTP: %w", serverErr)
 	case <-ctx.Done():
-		shutdownContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
-		defer cancel()
-		if err := application.server.Shutdown(shutdownContext); err != nil {
+		if err := stopServer(); err != nil {
 			return fmt.Errorf("api shutdown failed: %w", err)
 		}
 		return nil
