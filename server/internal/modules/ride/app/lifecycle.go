@@ -81,7 +81,7 @@ func (service *LifecycleService) StartTrip(
 	if service.store == nil {
 		return domain.Ride{}, ErrPersistenceUnavailable
 	}
-	current, err := service.store.Get(ctx, rideID)
+	current, location, err := service.loadRideWithDriverLocation(ctx, rideID, driverID)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("load ride for trip start: %w", err)
 	}
@@ -98,7 +98,7 @@ func (service *LifecycleService) StartTrip(
 	if status != domain.RideArrived {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
-	driverLat, driverLng, err := service.authoritativeDriverLocation(ctx, driverID)
+	driverLat, driverLng, err := location()
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -185,7 +185,7 @@ func (service *LifecycleService) MarkArrived(
 	if service.store == nil {
 		return domain.Ride{}, ErrPersistenceUnavailable
 	}
-	current, err := service.store.Get(ctx, rideID)
+	current, location, err := service.loadRideWithDriverLocation(ctx, rideID, driverID)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("load ride for arrival: %w", err)
 	}
@@ -202,7 +202,7 @@ func (service *LifecycleService) MarkArrived(
 	if normalizedStatus != domain.RideAssigned && normalizedStatus != domain.RideAccepted {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
-	driverLatitude, driverLongitude, err := service.authoritativeDriverLocation(ctx, driverID)
+	driverLatitude, driverLongitude, err := location()
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -235,6 +235,47 @@ func (service *LifecycleService) MarkArrived(
 		},
 	)
 	return updated, nil
+}
+
+type driverLocationResult struct {
+	latitude, longitude float64
+	err                 error
+}
+
+// loadRideWithDriverLocation reads the ride and the authoritative driver
+// location concurrently so location-gated commands pay one round trip of
+// latency instead of two. The returned function blocks until the location
+// read finishes; callers still evaluate ride ownership and status first so
+// error precedence is unchanged. The location read is cancelled and drained
+// when the ride cannot be loaded.
+func (service *LifecycleService) loadRideWithDriverLocation(
+	ctx context.Context,
+	rideID, driverID int,
+) (domain.Ride, func() (float64, float64, error), error) {
+	locationCtx, cancel := context.WithCancel(ctx)
+	results := make(chan driverLocationResult, 1)
+	go func() {
+		defer cancel()
+		latitude, longitude, err := service.authoritativeDriverLocation(locationCtx, driverID)
+		results <- driverLocationResult{latitude: latitude, longitude: longitude, err: err}
+	}()
+	current, err := service.store.Get(ctx, rideID)
+	if err != nil {
+		cancel()
+		<-results
+		return domain.Ride{}, nil, err
+	}
+	var (
+		once   bool
+		result driverLocationResult
+	)
+	return current, func() (float64, float64, error) {
+		if !once {
+			once = true
+			result = <-results
+		}
+		return result.latitude, result.longitude, result.err
+	}, nil
 }
 
 func (service *LifecycleService) authoritativeDriverLocation(
