@@ -60,6 +60,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
   AppMapController? _mapController;
   double _progress = 0;
   bool _isActing = false;
+  String? _notice;
   bool _isRefreshing = false;
   bool _tripFinished = false;
   int _unreadChatMessagesCount = 0;
@@ -221,11 +222,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-      );
+    setState(() => _notice = message);
   }
 
   Future<void> _advance() async {
@@ -509,8 +506,13 @@ class _DriverTripPageState extends State<DriverTripPage> {
                             progress: _progress,
                             isBusy: _isActing,
                             unreadCount: _unreadChatMessagesCount,
-                            onProgressChanged: (value) =>
-                                setState(() => _progress = value),
+                            notice: _notice,
+                            onDismissNotice: () =>
+                                setState(() => _notice = null),
+                            onProgressChanged: (value) => setState(() {
+                              _progress = value;
+                              if (value > 0) _notice = null;
+                            }),
                             onAdvance: _advance,
                             onChat: _openChat,
                             onCancel: _cancelRide,

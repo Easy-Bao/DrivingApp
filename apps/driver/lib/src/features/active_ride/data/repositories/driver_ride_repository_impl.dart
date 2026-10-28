@@ -418,12 +418,12 @@ Failure _mapFailure(Object error, {required String action}) {
     }
     if (action == 'confirm arrival' && statusCode == 422) {
       return const ValidationFailure(
-        "The driver must be in the passenger's pickup area before confirming arrival.",
+        "You must be at the passenger's pickup point to confirm arrival.",
       );
     }
     if (action == 'start this trip' && statusCode == 422) {
       return const ValidationFailure(
-        "The driver must be in the passenger's pickup area before starting the trip.",
+        "You must be at the passenger's pickup point to start the trip.",
       );
     }
     if ((action == 'confirm arrival' || action == 'start this trip') &&

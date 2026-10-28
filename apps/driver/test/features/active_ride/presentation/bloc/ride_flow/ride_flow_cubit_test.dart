@@ -235,7 +235,7 @@ void main() {
 
     test('preserves the repository arrival failure message', () async {
       const message =
-          "The driver must be in the passenger's pickup area before confirming arrival.";
+          "You must be at the passenger's pickup point to confirm arrival.";
       when(
         () => mockRideRepository.markArrived(
           rideId: 'test-ride-id',

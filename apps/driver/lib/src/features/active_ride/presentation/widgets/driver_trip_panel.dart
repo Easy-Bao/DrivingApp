@@ -20,6 +20,8 @@ class const DriverTripPanel({
   required this.onCancel,
   required this.onNoShow,
   this.noShowRemaining,
+  this.notice,
+  this.onDismissNotice,
 }) extends StatelessWidget {
   final RideState state;
   final String pickup;
@@ -34,6 +36,8 @@ class const DriverTripPanel({
   final VoidCallback onCancel;
   final VoidCallback? onNoShow;
   final Duration? noShowRemaining;
+  final String? notice;
+  final VoidCallback? onDismissNotice;
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +115,10 @@ class const DriverTripPanel({
               onChat: onChat,
             ),
             const SizedBox(height: AppSpacing.lg),
+            if (notice case final message?) ...[
+              _TripNotice(message: message, onDismiss: onDismissNotice),
+              const SizedBox(height: AppSpacing.md),
+            ],
             if (waiting)
               FilledButton(
                 onPressed: isBusy ? null : onAdvance,
@@ -162,6 +170,58 @@ class const DriverTripPanel({
                     color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class const _TripNotice({required this.message, this.onDismiss})
+    extends StatelessWidget {
+  final String message;
+  final VoidCallback? onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.sm,
+          AppSpacing.xs,
+          AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: colors.errorContainer,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, size: 20, color: colors.onErrorContainer),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                message,
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: colors.onErrorContainer,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            if (onDismiss != null)
+              IconButton(
+                tooltip: 'Dismiss',
+                visualDensity: VisualDensity.compact,
+                onPressed: onDismiss,
+                icon: Icon(
+                  Icons.close,
+                  size: 18,
+                  color: colors.onErrorContainer,
+                ),
+              ),
           ],
         ),
       ),
