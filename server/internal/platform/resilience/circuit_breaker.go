@@ -64,7 +64,15 @@ func (breaker *CircuitBreaker) Do(ctx context.Context, operation func(context.Co
 		return ErrCircuitOpen
 	}
 
+	completed := false
+	defer func() {
+		if !completed {
+			breaker.release()
+		}
+	}()
+
 	err := operation(ctx)
+	completed = true
 	if err != nil {
 		if errors.Is(err, context.Canceled) && errors.Is(ctx.Err(), context.Canceled) {
 			// Caller cancellation says nothing about downstream health.

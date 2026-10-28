@@ -99,3 +99,40 @@ func TestCircuitBreakerIgnoresCallerCancellation(t *testing.T) {
 		t.Fatalf("healthy request rejected after cancellations: %v", err)
 	}
 }
+
+func TestCircuitBreakerReleasesProbeOnPanic(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		breaker := NewCircuitBreaker(CircuitBreakerConfig{
+			FailureThreshold: 1,
+			ResetAfter:       time.Millisecond,
+		})
+		failure := errors.New("downstream failed")
+		if err := breaker.Do(context.Background(), func(context.Context) error { return failure }); err == nil {
+			t.Fatal("expected initial failure")
+		}
+		timer := time.NewTimer(2 * time.Millisecond)
+		defer timer.Stop()
+		<-timer.C
+		synctest.Wait()
+
+		// Probe panics
+		func() {
+			defer func() {
+				_ = recover()
+			}()
+			_ = breaker.Do(context.Background(), func(context.Context) error {
+				panic("unexpected downstream panic")
+			})
+		}()
+
+		// Breaker must not be permanently locked in half-open state
+		timer2 := time.NewTimer(2 * time.Millisecond)
+		defer timer2.Stop()
+		<-timer2.C
+		synctest.Wait()
+
+		if err := breaker.Do(context.Background(), func(context.Context) error { return nil }); err != nil {
+			t.Fatalf("post-panic probe failed: %v", err)
+		}
+	})
+}
