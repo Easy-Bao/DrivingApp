@@ -11,6 +11,7 @@ import (
 
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -48,6 +49,7 @@ func (repository *RideRepository) MarkArrived(
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("begin ride arrival transaction: %w", err)
 	}
+	defer platformdatabase.Rollback(ctx, transaction)
 	transactionQueries := repository.queries.WithTx(transaction)
 	_, err = transactionQueries.MarkRideArrived(ctx, databasepostgres.MarkRideArrivedParams{
 		RideID:        dbRideID,
@@ -122,6 +124,7 @@ func (repository *RideRepository) StartTrip(
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("begin trip start transaction: %w", err)
 	}
+	defer platformdatabase.Rollback(ctx, transaction)
 	transactionQueries := repository.queries.WithTx(transaction)
 	_, err = transactionQueries.StartRide(ctx, databasepostgres.StartRideParams{
 		RideID:   dbRideID,
@@ -166,6 +169,7 @@ func (repository *RideRepository) CompleteTrip(
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("begin trip completion transaction: %w", err)
 	}
+	defer platformdatabase.Rollback(ctx, transaction)
 	transactionQueries := repository.queries.WithTx(transaction)
 	_, err = transactionQueries.CompleteRide(ctx, databasepostgres.CompleteRideParams{
 		RideID:   dbRideID,
@@ -210,6 +214,7 @@ func (repository *RideRepository) MarkPassengerNoShow(
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("begin passenger no-show transaction: %w", err)
 	}
+	defer platformdatabase.Rollback(ctx, transaction)
 	transactionQueries := repository.queries.WithTx(transaction)
 	_, err = transactionQueries.MarkRidePassengerNoShow(ctx, databasepostgres.MarkRidePassengerNoShowParams{
 		DriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
@@ -375,6 +380,7 @@ func (repository *RideRepository) UpdateStatus(
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("begin ride status transaction: %w", err)
 	}
+	defer platformdatabase.Rollback(ctx, transaction)
 	transactionQueries := repository.queries.WithTx(transaction)
 	_, err = transactionQueries.UpdateRideStatus(ctx, databasepostgres.UpdateRideStatusParams{
 		NextStatus:                 string(next),
