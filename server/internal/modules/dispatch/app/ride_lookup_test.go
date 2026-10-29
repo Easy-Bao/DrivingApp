@@ -8,7 +8,6 @@ import (
 	"time"
 
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
-	"github.com/jackc/pgx/v5"
 )
 
 func TestCompletedRideCommunicationWindow(t *testing.T) {
@@ -38,9 +37,9 @@ func TestCompletedRideCommunicationWindow(t *testing.T) {
 	}
 }
 
-func TestIsRideNotFoundRecognizesNativeDatabaseErrors(t *testing.T) {
-	if !isRideNotFound(fmt.Errorf("load ride: %w", pgx.ErrNoRows)) {
-		t.Fatal("expected wrapped PostgreSQL no-rows error to be classified as not found")
+func TestIsRideNotFoundRecognizesDomainError(t *testing.T) {
+	if !isRideNotFound(fmt.Errorf("load ride: %w", ridedomain.ErrRideNotFound)) {
+		t.Fatal("expected wrapped domain error to be classified as not found")
 	}
 	if isRideNotFound(errors.New("ride query failed")) {
 		t.Fatal("unexpected not-found classification for unrelated error")
@@ -65,8 +64,6 @@ func TestRideLookupMissingRideErrors(t *testing.T) {
 	}{
 		{name: "domain missing ride", err: ridedomain.ErrRideNotFound, missing: true},
 		{name: "wrapped domain missing ride", err: fmt.Errorf("find ride: %w", ridedomain.ErrRideNotFound), missing: true},
-		{name: "database missing ride", err: pgx.ErrNoRows, missing: true},
-		{name: "wrapped database missing ride", err: fmt.Errorf("find ride: %w", pgx.ErrNoRows), missing: true},
 		{name: "storage failure", err: errors.New("storage unavailable")},
 	} {
 		t.Run(test.name, func(t *testing.T) {

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
-	"github.com/jackc/pgx/v5"
 )
 
 type RideLookup struct {
@@ -45,7 +44,7 @@ func (lookup *RideLookup) ForRide(
 }
 
 func isRideNotFound(err error) bool {
-	return errors.Is(err, ridedomain.ErrRideNotFound) || errors.Is(err, pgx.ErrNoRows)
+	return errors.Is(err, ridedomain.ErrRideNotFound)
 }
 
 func (lookup *RideLookup) ForDriver(
