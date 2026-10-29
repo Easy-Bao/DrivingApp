@@ -43,7 +43,11 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	mux.With(fare).Post(apiPrefix+"/fares/estimate", router.handler.Estimate)
 	mux.With(router.routeSecurity.Middleware(middleware.RouteRead)).Get(apiPrefix+"/fares/configs", router.handler.FareConfigs)
 	mux.With(router.routeSecurity.Middleware(middleware.RouteRead)).Get(apiPrefix+"/fares/rating-config", router.handler.RatingConfig)
-	mux.With(fare).Post(apiPrefix+"/fares/calculate-final", router.handler.CalculateFinal)
+	driverOrAdmin := middleware.RequireRole(security.RoleDriver, "admin")
+	withAuthenticatedPolicy(middleware.RouteFareQuery, driverOrAdmin).Post(
+		apiPrefix+"/fares/calculate-final",
+		router.handler.CalculateFinal,
+	)
 
 	withAuthenticatedPolicy(middleware.RouteCommand).Post(apiPrefix+"/rides/{id}/status", router.handler.UpdateStatus)
 	withAuthenticatedPolicy(middleware.RouteCommand).Post(apiPrefix+"/rides/{id}/cancel", router.handler.CancelRide)

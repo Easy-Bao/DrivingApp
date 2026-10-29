@@ -143,7 +143,12 @@ func TestFareRoutesExposeEstimateAndFinalCalculation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
-	router := newRideRouter(newRideService(nil, config), nil)
+	verifier := security.NewTokenManager("test-fare-secret")
+	driverToken, err := verifier.IssueWithRole("7", security.RoleDriver)
+	if err != nil {
+		t.Fatal(err)
+	}
+	router := newRideRouter(newRideService(nil, config), verifier)
 	mux := chi.NewRouter()
 	router.RegisterRoutes(mux)
 
@@ -166,6 +171,7 @@ func TestFareRoutesExposeEstimateAndFinalCalculation(t *testing.T) {
 
 	test = httptest.NewRecorder()
 	request = httptest.NewRequest(http.MethodPost, "/api/v1/fares/calculate-final", http.NoBody)
+	request.Header.Set("Authorization", "Bearer "+driverToken)
 	mux.ServeHTTP(test, request)
 	if test.Code != http.StatusBadRequest {
 		t.Fatalf("invalid final fare status = %d", test.Code)
@@ -242,6 +248,12 @@ func TestBookingMutationRoutesRejectTheWrongAccountRole(t *testing.T) {
 		{
 			name:   "passenger cannot place driver offer",
 			path:   api.V1Prefix + "/bids/1/offer",
+			token:  passengerToken,
+			method: http.MethodPost,
+		},
+		{
+			name:   "passenger cannot calculate final fare",
+			path:   api.V1Prefix + "/fares/calculate-final",
 			token:  passengerToken,
 			method: http.MethodPost,
 		},
@@ -467,7 +479,7 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 			name:           "place offer",
 			method:         http.MethodPost,
 			path:           api.V1Prefix + "/bids/101/offer",
-			body:           `{"offer_price":25}`,
+			body:           `{"offer_price":50}`,
 			role:           security.RoleDriver,
 			expectedStatus: http.StatusCreated,
 			bindsSessionID: true,
