@@ -253,12 +253,25 @@ func (service *BookingService) resolveRouteMetrics(
 			return RouteMetrics{}, ctx.Err()
 		}
 	}
-	flight := &fareRouteFlight{done: make(chan struct{})}
+	flight := &fareRouteFlight{
+		done: make(chan struct{}),
+		err:  errors.New("route resolution aborted"),
+	}
 	service.fareRouteFlights[key] = flight
 	service.fareRouteCacheMu.Unlock()
 
+	defer func() {
+		service.fareRouteCacheMu.Lock()
+		delete(service.fareRouteFlights, key)
+		close(flight.done)
+		service.fareRouteCacheMu.Unlock()
+	}()
+
+	calcCtx, cancelCalc := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+	defer cancelCalc()
+
 	metrics, err := service.resolveRoute(
-		ctx,
+		calcCtx,
 		originLatitude,
 		originLongitude,
 		destinationLatitude,
@@ -268,13 +281,11 @@ func (service *BookingService) resolveRouteMetrics(
 	)
 
 	service.fareRouteCacheMu.Lock()
-	delete(service.fareRouteFlights, key)
 	flight.metrics = metrics
 	flight.err = err
 	if err == nil {
 		service.storeFareRouteLocked(key, metrics)
 	}
-	close(flight.done)
 	service.fareRouteCacheMu.Unlock()
 	return metrics, err
 }
