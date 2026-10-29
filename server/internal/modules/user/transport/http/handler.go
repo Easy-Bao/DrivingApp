@@ -15,7 +15,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5"
 )
 
 type Handler struct {
@@ -270,7 +269,7 @@ func writeProfileReadError(w http.ResponseWriter, err error) {
 }
 
 func isProfileNotFound(err error) bool {
-	return errors.Is(err, pgx.ErrNoRows)
+	return errors.Is(err, domain.ErrProfileNotFound)
 }
 
 func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {

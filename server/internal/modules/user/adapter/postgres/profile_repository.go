@@ -80,6 +80,9 @@ func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domai
 
 	account, err := repository.queries.GetUserByID(ctx, dbUserID)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.Profile{}, domain.ErrProfileNotFound
+		}
 		return domain.Profile{}, fmt.Errorf("find profile account: %w", err)
 	}
 
@@ -93,6 +96,9 @@ func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domai
 
 	passengerProfile, err := repository.queries.GetPassengerProfileByUserIDFull(ctx, dbUserID)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.Profile{}, domain.ErrProfileNotFound
+		}
 		return domain.Profile{}, fmt.Errorf("find passenger profile: %w", err)
 	}
 	return passengerProfileFromPostgres(account, passengerProfile), nil

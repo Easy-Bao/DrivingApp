@@ -13,12 +13,11 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5"
 )
 
-func TestIsProfileNotFoundRecognizesNativeDatabaseErrors(t *testing.T) {
-	if !isProfileNotFound(fmt.Errorf("load profile: %w", pgx.ErrNoRows)) {
-		t.Fatal("expected wrapped PostgreSQL no-rows error to be classified as not found")
+func TestIsProfileNotFoundRecognizesDomainError(t *testing.T) {
+	if !isProfileNotFound(fmt.Errorf("load profile: %w", domain.ErrProfileNotFound)) {
+		t.Fatal("expected wrapped domain error to be classified as not found")
 	}
 	if isProfileNotFound(errors.New("profile query failed")) {
 		t.Fatal("unexpected not-found classification for unrelated error")

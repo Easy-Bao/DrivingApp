@@ -13,6 +13,8 @@ var ErrDriverAvailabilityBlocked = errors.New(
 	"driver cannot go offline with an active ride",
 )
 
+var ErrProfileNotFound = errors.New("profile not found")
+
 type Profile struct {
 	ID        int
 	UserID    int
