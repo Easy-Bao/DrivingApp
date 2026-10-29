@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -14,7 +15,9 @@ func Rollback(ctx context.Context, transaction pgx.Tx) {
 	if transaction == nil {
 		return
 	}
-	if err := transaction.Rollback(ctx); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
-		slog.WarnContext(ctx, "rollback transaction failed", "error", err)
+	rollbackCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+	defer cancel()
+	if err := transaction.Rollback(rollbackCtx); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
+		slog.WarnContext(rollbackCtx, "rollback transaction failed", "error", err)
 	}
 }
