@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math/big"
 	"net/mail"
 	"strconv"
 	"strings"
@@ -547,10 +548,9 @@ func (service *OTPService) log() *slog.Logger {
 }
 
 func generateOTP() (string, error) {
-	var bytes [4]byte
-	if _, err := rand.Read(bytes[:]); err != nil {
+	n, err := rand.Int(rand.Reader, big.NewInt(1_000_000))
+	if err != nil {
 		return "", fmt.Errorf("read otp randomness: %w", err)
 	}
-	value := uint32(bytes[0])<<24 | uint32(bytes[1])<<16 | uint32(bytes[2])<<8 | uint32(bytes[3])
-	return fmt.Sprintf("%06d", value%1_000_000), nil
+	return fmt.Sprintf("%06d", n.Int64()), nil
 }
