@@ -119,9 +119,15 @@ end`
 	return nil
 }
 
+const (
+	_defaultMemoryIdempotencyCapacity  = 4096
+	_memoryIdempotencyEvictionInterval = time.Minute
+)
+
 type MemoryIdempotencyStore struct {
-	mu      sync.Mutex
-	entries map[string]memoryIdempotencyEntry
+	mu           sync.Mutex
+	entries      map[string]memoryIdempotencyEntry
+	lastEviction time.Time
 }
 
 var _ IdempotencyStore = (*MemoryIdempotencyStore)(nil)
@@ -129,6 +135,31 @@ var _ IdempotencyStore = (*MemoryIdempotencyStore)(nil)
 type memoryIdempotencyEntry struct {
 	value   []byte
 	expires time.Time
+}
+
+func (store *MemoryIdempotencyStore) evictLocked(now time.Time) {
+	if len(store.entries) < _defaultMemoryIdempotencyCapacity && now.Sub(store.lastEviction) < _memoryIdempotencyEvictionInterval {
+		return
+	}
+	store.lastEviction = now
+	for k, v := range store.entries {
+		if !now.Before(v.expires) {
+			delete(store.entries, k)
+		}
+	}
+	if len(store.entries) >= _defaultMemoryIdempotencyCapacity {
+		var oldestKey string
+		var oldestExpires time.Time
+		for k, v := range store.entries {
+			if oldestKey == "" || v.expires.Before(oldestExpires) {
+				oldestKey = k
+				oldestExpires = v.expires
+			}
+		}
+		if oldestKey != "" {
+			delete(store.entries, oldestKey)
+		}
+	}
 }
 
 func NewMemoryIdempotencyStore() *MemoryIdempotencyStore {
@@ -169,7 +200,9 @@ func (store *MemoryIdempotencyStore) Set(
 	if store.entries == nil {
 		store.entries = make(map[string]memoryIdempotencyEntry)
 	}
-	store.entries[key] = memoryIdempotencyEntry{value: append([]byte(nil), value...), expires: time.Now().Add(expiration)}
+	now := time.Now()
+	store.evictLocked(now)
+	store.entries[key] = memoryIdempotencyEntry{value: append([]byte(nil), value...), expires: now.Add(expiration)}
 	return nil
 }
 
@@ -191,6 +224,7 @@ func (store *MemoryIdempotencyStore) SetNX(
 		store.entries = make(map[string]memoryIdempotencyEntry)
 	}
 	now := time.Now()
+	store.evictLocked(now)
 	if entry, ok := store.entries[key]; ok && now.Before(entry.expires) {
 		return false, nil
 	}

@@ -59,6 +59,23 @@ func TestMemoryIdempotencyStoreOnlyReleasesTheCurrentLockOwner(t *testing.T) {
 	}
 }
 
+func TestMemoryIdempotencyStorePeriodicEviction(t *testing.T) {
+	store := NewMemoryIdempotencyStore()
+	ctx := context.Background()
+	// Insert an expired key
+	_ = store.Set(ctx, "expired-key", []byte("val"), -time.Second)
+	// Force eviction by simulating interval lapse
+	store.lastEviction = time.Now().Add(-2 * time.Minute)
+	_ = store.Set(ctx, "fresh-key", []byte("fresh"), time.Minute)
+
+	store.mu.Lock()
+	_, found := store.entries["expired-key"]
+	store.mu.Unlock()
+	if found {
+		t.Fatal("expected expired-key to be evicted during Set")
+	}
+}
+
 func TestIdempotencyReplaysSuccessfulResponse(t *testing.T) {
 	var calls atomic.Int32
 	idempotency := newTestIdempotency(
