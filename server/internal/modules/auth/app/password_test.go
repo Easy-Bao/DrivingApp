@@ -28,5 +28,7 @@ func newTestRegisterService(dependencies authapp.RegisterDependencies) *authapp.
 
 func newTestAuthenticateService(dependencies authapp.AuthenticateDependencies) *authapp.AuthenticateService {
 	dependencies.HashPassword = testHashPassword
+	minCostHash, _ := testHashPassword("dummy")
+	dependencies.DummyHash = minCostHash
 	return authapp.NewAuthenticateService(dependencies)
 }

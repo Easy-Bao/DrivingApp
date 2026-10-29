@@ -13,12 +13,15 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
+const _dummyBcryptHash = "$2a$12$sjZVk/NciE592gulJMkQWOigSaIF6q6HExHI0yRsy.XMYD7ffKW3i"
+
 type AuthenticateService struct {
 	repository   UserStore
 	tokens       TokenIssuer
 	sessions     SessionStore
 	logger       *slog.Logger
 	hashPassword func(string) (string, error)
+	dummyHash    string
 }
 
 type AuthenticateDependencies struct {
@@ -26,6 +29,7 @@ type AuthenticateDependencies struct {
 	Tokens       TokenIssuer
 	Sessions     SessionStore
 	HashPassword func(string) (string, error)
+	DummyHash    string
 }
 
 func NewAuthenticateService(dependencies AuthenticateDependencies) *AuthenticateService {
@@ -33,12 +37,17 @@ func NewAuthenticateService(dependencies AuthenticateDependencies) *Authenticate
 	if hashPassword == nil {
 		hashPassword = security.HashPassword
 	}
+	dummyHash := dependencies.DummyHash
+	if dummyHash == "" {
+		dummyHash = _dummyBcryptHash
+	}
 	return &AuthenticateService{
 		repository:   dependencies.Repository,
 		tokens:       dependencies.Tokens,
 		sessions:     dependencies.Sessions,
 		logger:       slog.Default(),
 		hashPassword: hashPassword,
+		dummyHash:    dummyHash,
 	}
 }
 
@@ -87,6 +96,11 @@ func (service *AuthenticateService) execute(
 			service.log().WarnContext(ctx, "find account for authentication failed", "error", err)
 			return domain.User{}, SessionTokens{}, fmt.Errorf("lookup user account: %w", err)
 		}
+		dummyHash := service.dummyHash
+		if dummyHash == "" {
+			dummyHash = _dummyBcryptHash
+		}
+		_ = security.VerifyPassword(dummyHash, password)
 		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
 	}
 	if !security.VerifyPassword(account.PasswordHash, password) {
