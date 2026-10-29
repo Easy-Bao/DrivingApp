@@ -81,10 +81,11 @@ func (service *LifecycleService) StartTrip(
 	if service.store == nil {
 		return domain.Ride{}, ErrPersistenceUnavailable
 	}
-	current, location, err := service.loadRideWithDriverLocation(ctx, rideID, driverID)
+	current, location, cleanup, err := service.loadRideWithDriverLocation(ctx, rideID, driverID)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("load ride for trip start: %w", err)
 	}
+	defer cleanup()
 	if current.DriverID == nil || *current.DriverID != driverID {
 		return domain.Ride{}, domain.ErrUnauthorizedRide
 	}
@@ -185,10 +186,11 @@ func (service *LifecycleService) MarkArrived(
 	if service.store == nil {
 		return domain.Ride{}, ErrPersistenceUnavailable
 	}
-	current, location, err := service.loadRideWithDriverLocation(ctx, rideID, driverID)
+	current, location, cleanup, err := service.loadRideWithDriverLocation(ctx, rideID, driverID)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("load ride for arrival: %w", err)
 	}
+	defer cleanup()
 	if current.DriverID == nil || *current.DriverID != driverID {
 		return domain.Ride{}, domain.ErrUnauthorizedRide
 	}
@@ -251,7 +253,7 @@ type driverLocationResult struct {
 func (service *LifecycleService) loadRideWithDriverLocation(
 	ctx context.Context,
 	rideID, driverID int,
-) (domain.Ride, func() (float64, float64, error), error) {
+) (domain.Ride, func() (float64, float64, error), func(), error) {
 	locationCtx, cancel := context.WithCancel(ctx)
 	results := make(chan driverLocationResult, 1)
 	go func() {
@@ -263,7 +265,7 @@ func (service *LifecycleService) loadRideWithDriverLocation(
 	if err != nil {
 		cancel()
 		<-results
-		return domain.Ride{}, nil, err
+		return domain.Ride{}, nil, nil, err
 	}
 	var (
 		once   bool
@@ -275,7 +277,7 @@ func (service *LifecycleService) loadRideWithDriverLocation(
 			result = <-results
 		}
 		return result.latitude, result.longitude, result.err
-	}, nil
+	}, cancel, nil
 }
 
 func (service *LifecycleService) authoritativeDriverLocation(
