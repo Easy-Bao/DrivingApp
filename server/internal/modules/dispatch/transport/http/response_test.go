@@ -111,3 +111,48 @@ func TestDriverAvailabilityResponseMappersPreserveNil(t *testing.T) {
 		t.Fatal("NewPublicDriverSummaryResponses(nil) returned a non-nil slice")
 	}
 }
+
+func TestCanViewSession(t *testing.T) {
+	targetDriver := 10
+	directSession := domain.BidSession{
+		ID:             1,
+		PassengerID:    5,
+		TargetDriverID: &targetDriver,
+	}
+	broadcastSession := domain.BidSession{
+		ID:             2,
+		PassengerID:    5,
+		TargetDriverID: nil,
+	}
+
+	// Owner passenger can always view
+	if !canViewSession(5, "passenger", directSession) {
+		t.Fatal("expected owner passenger to view direct session")
+	}
+	if !canViewSession(5, "passenger", broadcastSession) {
+		t.Fatal("expected owner passenger to view broadcast session")
+	}
+
+	// Unrelated passenger cannot view
+	if canViewSession(6, "passenger", directSession) {
+		t.Fatal("expected unrelated passenger cannot view direct session")
+	}
+	if canViewSession(6, "passenger", broadcastSession) {
+		t.Fatal("expected unrelated passenger cannot view broadcast session")
+	}
+
+	// Target driver can view direct session
+	if !canViewSession(10, "driver", directSession) {
+		t.Fatal("expected target driver to view direct session")
+	}
+
+	// Non-target driver cannot view direct session
+	if canViewSession(11, "driver", directSession) {
+		t.Fatal("expected non-target driver cannot view direct session")
+	}
+
+	// Any authenticated driver can view broadcast session
+	if !canViewSession(11, "driver", broadcastSession) {
+		t.Fatal("expected driver to view broadcast session")
+	}
+}

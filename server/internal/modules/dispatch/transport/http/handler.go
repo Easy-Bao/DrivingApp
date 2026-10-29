@@ -42,6 +42,21 @@ func (handler *Handler) identity(r *http.Request) (int, bool) {
 	return middleware.AuthenticatedUserID(r, handler.verifier)
 }
 
+func (handler *Handler) principal(r *http.Request) (middleware.Principal, bool) {
+	if principal, ok := middleware.PrincipalFromRequest(r); ok {
+		return principal, true
+	}
+	identity, ok := middleware.IdentityFromRequest(r, handler.verifier)
+	if !ok {
+		return middleware.Principal{}, false
+	}
+	userID, err := strconv.Atoi(identity.Subject)
+	if err != nil || userID <= 0 {
+		return middleware.Principal{}, false
+	}
+	return middleware.Principal{UserID: userID, Role: identity.Role}, true
+}
+
 func (handler *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := handler.identity(r)
 	if !ok {
@@ -90,7 +105,7 @@ func (handler *Handler) ActiveSessions(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) Session(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := handler.identity(r)
+	principal, ok := handler.principal(r)
 	if !ok {
 		response.Error(w, 401, "unauthorized")
 		return
@@ -105,7 +120,7 @@ func (handler *Handler) Session(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
-	if !canViewSession(actorID, item) {
+	if !canViewSession(principal.UserID, principal.Role, item) {
 		response.Error(w, http.StatusForbidden, "forbidden")
 		return
 	}
@@ -262,11 +277,17 @@ func (handler *Handler) CancelOffer(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, 200, NewBidOfferResponse(item))
 }
 
-func canViewSession(actorID int, session dispatchdomain.BidSession) bool {
+func canViewSession(actorID int, actorRole string, session dispatchdomain.BidSession) bool {
 	if session.PassengerID == actorID {
 		return true
 	}
-	return session.TargetDriverID != nil && *session.TargetDriverID == actorID
+	if session.TargetDriverID != nil && *session.TargetDriverID == actorID {
+		return true
+	}
+	if session.TargetDriverID == nil && actorRole == string(security.RoleDriver) {
+		return true
+	}
+	return false
 }
 
 func dispatchErrorStatus(err error) int {
