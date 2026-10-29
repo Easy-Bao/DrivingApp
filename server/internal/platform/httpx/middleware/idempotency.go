@@ -383,7 +383,7 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 
 		capture := &idempotentResponseWriter{ResponseWriter: writer}
 		next.ServeHTTP(capture, request)
-		if capture.status >= http.StatusOK && capture.status < http.StatusMultipleChoices {
+		if !capture.uncacheable && capture.status >= http.StatusOK && capture.status < http.StatusMultipleChoices {
 			record, marshalErr := json.Marshal(idempotentResponse{
 				Fingerprint: fingerprint,
 				Status:      capture.status,
@@ -454,8 +454,9 @@ type idempotentResponse struct {
 
 type idempotentResponseWriter struct {
 	http.ResponseWriter
-	body   bytes.Buffer
-	status int
+	body        bytes.Buffer
+	status      int
+	uncacheable bool
 }
 
 func (writer *idempotentResponseWriter) WriteHeader(status int) {
@@ -470,8 +471,15 @@ func (writer *idempotentResponseWriter) Write(body []byte) (int, error) {
 	if writer.status == 0 {
 		writer.WriteHeader(http.StatusOK)
 	}
-	if _, err := writer.body.Write(body); err != nil {
-		slog.Error("capture idempotent response body failed", "error", err)
+	if !writer.uncacheable {
+		if int64(writer.body.Len()+len(body)) > _maxIdempotencyBodyBytes {
+			writer.uncacheable = true
+			writer.body.Reset()
+		} else {
+			if _, err := writer.body.Write(body); err != nil {
+				slog.Error("capture idempotent response body failed", "error", err)
+			}
+		}
 	}
 	return writer.ResponseWriter.Write(body)
 }

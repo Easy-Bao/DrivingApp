@@ -379,3 +379,34 @@ func TestIdempotencyRechecksResultAfterLockAcquisition(t *testing.T) {
 		t.Fatalf("handler calls = %d, want 0 (replayed from rechecked result)", calls.Load())
 	}
 }
+
+func TestIdempotencySkipsCachingLargeResponseBody(t *testing.T) {
+	memStore := NewMemoryIdempotencyStore()
+	var calls atomic.Int32
+	handler := newTestIdempotency(memStore, WithIdempotencyExpiration(time.Minute)).Middleware(
+		http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+			calls.Add(1)
+			writer.WriteHeader(http.StatusOK)
+			// write over 10MB
+			chunk := make([]byte, 1<<20) // 1MB
+			for i := 0; i < 11; i++ {
+				_, _ = writer.Write(chunk)
+			}
+		}),
+	)
+
+	for i := 0; i < 2; i++ {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/large", nil)
+		req.Header.Set("Idempotency-Key", "large-response-key")
+		res := httptest.NewRecorder()
+		handler.ServeHTTP(res, req)
+
+		if res.Code != http.StatusOK {
+			t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
+		}
+	}
+
+	if calls.Load() != 2 {
+		t.Fatalf("handler calls = %d, want 2 (uncached)", calls.Load())
+	}
+}
