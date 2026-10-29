@@ -178,6 +178,6 @@ func safeReviewError(err error) string {
 	case errors.Is(err, application.ErrPersistenceUnavailable):
 		return "Review service is temporarily unavailable."
 	default:
-		return "The ride request could not be completed."
+		return "The review could not be submitted. Please try again."
 	}
 }

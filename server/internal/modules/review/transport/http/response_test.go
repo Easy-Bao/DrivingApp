@@ -2,8 +2,10 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 
+	application "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/review/domain"
 )
 
@@ -52,5 +54,42 @@ func TestReviewResponseMappersPreserveWireShapes(t *testing.T) {
 func TestNewReviewResponsesPreservesNil(t *testing.T) {
 	if NewReviewResponses(nil) != nil {
 		t.Fatal("NewReviewResponses(nil) returned a non-nil slice")
+	}
+}
+
+func TestSafeReviewError(t *testing.T) {
+	tests := []struct {
+		err      error
+		wantMsg  string
+		wantCode int
+	}{
+		{
+			err:      domain.ErrReviewNotAllowed,
+			wantMsg:  "Reviews are available after a completed ride.",
+			wantCode: 400,
+		},
+		{
+			err:      domain.ErrInvalidRating,
+			wantMsg:  "Rating must be between 1 and 5.",
+			wantCode: 400,
+		},
+		{
+			err:      application.ErrPersistenceUnavailable,
+			wantMsg:  "Review service is temporarily unavailable.",
+			wantCode: 503,
+		},
+		{
+			err:      errors.New("unexpected database error"),
+			wantMsg:  "The review could not be submitted. Please try again.",
+			wantCode: 500,
+		},
+	}
+	for _, tc := range tests {
+		if got := safeReviewError(tc.err); got != tc.wantMsg {
+			t.Errorf("safeReviewError(%v) = %q, want %q", tc.err, got, tc.wantMsg)
+		}
+		if got := reviewErrorStatus(tc.err); got != tc.wantCode {
+			t.Errorf("reviewErrorStatus(%v) = %d, want %d", tc.err, got, tc.wantCode)
+		}
 	}
 }
