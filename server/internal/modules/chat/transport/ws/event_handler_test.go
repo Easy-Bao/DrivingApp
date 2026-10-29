@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -72,3 +73,48 @@ func TestEventHandlerKeepsServerIdentityAndTimestamp(t *testing.T) {
 }
 
 func (*roomRepositoryStub) MarkRead(context.Context, string, string, string) error { return nil }
+
+func TestEventHandlerRejectsMalformedAndUnsupportedEvents(t *testing.T) {
+	history := &roomRepositoryStub{}
+	service := application.NewService(application.Dependencies{History: history}).
+		WithRideAssignmentLookup(assignmentLookupStub{})
+	handler := NewEventHandler(service)
+
+	cases := []struct {
+		name    string
+		payload string
+	}{
+		{
+			name:    "invalid json header",
+			payload: `not-valid-json`,
+		},
+		{
+			name:    "unsupported event type",
+			payload: `{"type":"unknown_type","room_id":"303"}`,
+		},
+		{
+			name:    "typing event missing is_typing",
+			payload: `{"type":"typing","room_id":"303","sender_id":"7"}`,
+		},
+		{
+			name:    "malformed typing payload format",
+			payload: `{"type":"typing","room_id":123,"sender_id":456,"is_typing":"not-a-bool"}`,
+		},
+		{
+			name:    "malformed message payload format",
+			payload: `{"type":"message","room_id":123,"text":{}}`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := handler.Handle(context.Background(), []byte(tc.payload))
+			if err == nil {
+				t.Fatalf("expected error for payload %q, got nil", tc.payload)
+			}
+			if !errors.Is(err, domain.ErrInvalidMessage) {
+				t.Fatalf("expected error wrapping domain.ErrInvalidMessage, got %v", err)
+			}
+		})
+	}
+}

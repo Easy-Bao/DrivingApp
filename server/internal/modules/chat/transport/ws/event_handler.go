@@ -3,6 +3,7 @@ package ws
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	application "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/app"
@@ -21,14 +22,14 @@ func (handler *EventHandler) Handle(ctx context.Context, message []byte) error {
 	var header struct {
 		Type string `json:"type"`
 	}
-	if json.Unmarshal(message, &header) != nil {
-		return nil
+	if err := json.Unmarshal(message, &header); err != nil {
+		return fmt.Errorf("%w: parse chat event header: %w", domain.ErrInvalidMessage, err)
 	}
 	switch header.Type {
 	case "CHAT_MESSAGE", "message":
 		var event MessageEvent
-		if json.Unmarshal(message, &event) != nil {
-			return nil
+		if err := json.Unmarshal(message, &event); err != nil {
+			return fmt.Errorf("%w: parse chat message event: %w", domain.ErrInvalidMessage, err)
 		}
 		body := event.Body
 		if body == "" {
@@ -46,11 +47,14 @@ func (handler *EventHandler) Handle(ctx context.Context, message []byte) error {
 			SenderID string `json:"sender_id"`
 			IsTyping *bool  `json:"is_typing"`
 		}
-		if json.Unmarshal(message, &event) != nil || event.IsTyping == nil {
-			return nil
+		if err := json.Unmarshal(message, &event); err != nil {
+			return fmt.Errorf("%w: parse typing event: %w", domain.ErrInvalidMessage, err)
+		}
+		if event.IsTyping == nil {
+			return fmt.Errorf("%w: missing is_typing in typing event", domain.ErrInvalidMessage)
 		}
 		return handler.service.PublishTyping(ctx, event.RoomID, event.SenderID, *event.IsTyping)
 	default:
-		return nil
+		return fmt.Errorf("%w: unsupported chat event type %q", domain.ErrInvalidMessage, header.Type)
 	}
 }
