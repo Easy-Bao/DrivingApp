@@ -36,7 +36,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	}
 
 	withAuthenticatedPolicy(middleware.RouteRead).Get(apiPrefix+"/bids/{sessionID}", router.handler.Session)
-	mux.With(router.routeSecurity.Middleware(middleware.RouteRead)).Get(apiPrefix+"/drivers/public/summaries", router.handler.PublicDriverSummaries)
+	withAuthenticatedPolicy(middleware.RouteRead).Get(apiPrefix+"/drivers/public/summaries", router.handler.PublicDriverSummaries)
 	withAuthenticatedPolicy(middleware.RouteCommand, passengerOnly).Post(apiPrefix+"/bids", router.handler.CreateSession)
 	withAuthenticatedPolicy(middleware.RouteRead, passengerOnly).Get(apiPrefix+"/bids/{sessionID}/offers", router.handler.Offers)
 	withAuthenticatedPolicy(middleware.RouteCommand, passengerOnly).Post(
