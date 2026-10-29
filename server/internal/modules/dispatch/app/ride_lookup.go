@@ -92,12 +92,20 @@ func completedWithinContactWindow(completedAt *string) bool {
 	if completedAt == nil {
 		return false
 	}
-	completed, err := time.Parse(time.RFC3339, strings.TrimSpace(*completedAt))
+	completed, err := parseTimestamp(*completedAt)
 	if err != nil {
 		return false
 	}
 	age := time.Since(completed)
 	return age >= 0 && age <= 24*time.Hour
+}
+
+func parseTimestamp(value string) (time.Time, error) {
+	trimmed := strings.TrimSpace(value)
+	if t, err := time.Parse(time.RFC3339Nano, trimmed); err == nil {
+		return t, nil
+	}
+	return time.Parse(time.RFC3339, trimmed)
 }
 
 func parseID(value string) (int, error) {

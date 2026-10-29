@@ -48,6 +48,14 @@ func TestNativeRideContactAvailabilityHandlesCompletedTimestamp(t *testing.T) {
 		})
 	}
 
+	nanoTime := time.Now().Add(-time.Hour).UTC().Format(time.RFC3339Nano)
+	activeNano, untilNano := rideContactAvailabilityFromRide(domain.Ride{
+		Status: "completed", CompletedAt: &nanoTime,
+	})
+	if !activeNano || untilNano == nil {
+		t.Fatalf("nanosecond timestamp availability = %t/%v, want true", activeNano, untilNano)
+	}
+
 	invalid := "not-a-timestamp"
 	active, until := rideContactAvailabilityFromRide(domain.Ride{Status: "completed", CompletedAt: &invalid})
 	if active || until != nil {

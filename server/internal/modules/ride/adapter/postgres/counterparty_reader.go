@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
@@ -89,7 +90,7 @@ func rideContactAvailabilityFromRide(ride domain.Ride) (bool, *string) {
 		if ride.CompletedAt == nil {
 			return false, nil
 		}
-		completedAt, err := time.Parse(time.RFC3339, *ride.CompletedAt)
+		completedAt, err := parseTimestamp(*ride.CompletedAt)
 		if err != nil {
 			return false, nil
 		}
@@ -99,6 +100,14 @@ func rideContactAvailabilityFromRide(ride domain.Ride) (bool, *string) {
 	default:
 		return false, nil
 	}
+}
+
+func parseTimestamp(value string) (time.Time, error) {
+	trimmed := strings.TrimSpace(value)
+	if t, err := time.Parse(time.RFC3339Nano, trimmed); err == nil {
+		return t, nil
+	}
+	return time.Parse(time.RFC3339, trimmed)
 }
 
 func firstNonEmpty(preferred, fallback string) string {

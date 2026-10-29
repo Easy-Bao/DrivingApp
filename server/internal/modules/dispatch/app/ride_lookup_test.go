@@ -35,6 +35,17 @@ func TestCompletedRideCommunicationWindow(t *testing.T) {
 			}
 		})
 	}
+
+	driverID := 42
+	nanoCompleted := time.Now().Add(-time.Hour).UTC().Format(time.RFC3339Nano)
+	nanoRide := ridedomain.Ride{
+		ID: 303, PassengerID: 99, DriverID: &driverID,
+		Status: "completed", CompletedAt: &nanoCompleted,
+	}
+	got, found := fromRide(nanoRide)
+	if !found || !got.AllowsCommunication() {
+		t.Fatal("expected nanosecond timestamp to allow communication")
+	}
 }
 
 func TestIsRideNotFoundRecognizesDomainError(t *testing.T) {
