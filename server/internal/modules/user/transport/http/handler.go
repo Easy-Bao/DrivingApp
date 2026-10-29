@@ -85,6 +85,10 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusConflict, "Go offline before changing vehicle information.")
 			return
 		}
+		if errors.Is(err, domain.ErrInvalidRole) {
+			response.Error(w, http.StatusBadRequest, "unsupported profile role")
+			return
+		}
 		response.Error(w, http.StatusInternalServerError, "Your profile is temporarily unavailable. Please try again.")
 		return
 	}

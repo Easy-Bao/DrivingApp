@@ -15,6 +15,8 @@ var ErrDriverAvailabilityBlocked = errors.New(
 
 var ErrProfileNotFound = errors.New("profile not found")
 
+var ErrInvalidRole = errors.New("unsupported profile role")
+
 type Profile struct {
 	ID        int
 	UserID    int

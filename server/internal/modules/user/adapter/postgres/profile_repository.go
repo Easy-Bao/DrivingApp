@@ -109,7 +109,7 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 		return domain.Profile{}, fmt.Errorf("validate profile repository: %w", err)
 	}
 	if profile.Role != "driver" && profile.Role != "passenger" {
-		return domain.Profile{}, fmt.Errorf("unsupported profile role %q", profile.Role)
+		return domain.Profile{}, fmt.Errorf("%w: unsupported profile role %q", domain.ErrInvalidRole, profile.Role)
 	}
 	dbUserID, err := toPostgresProfileID(profile.UserID, "user id")
 	if err != nil {
@@ -173,6 +173,8 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 			return domain.Profile{}, fmt.Errorf("update passenger profile: %w", updateErr)
 		}
 		updated = passengerProfileFromPostgres(account, passengerProfile)
+	default:
+		return domain.Profile{}, fmt.Errorf("%w: unsupported profile role %q", domain.ErrInvalidRole, profile.Role)
 	}
 
 	if err := transaction.Commit(ctx); err != nil {

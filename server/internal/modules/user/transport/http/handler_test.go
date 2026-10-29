@@ -185,3 +185,45 @@ func TestRegisteredMarkAllReadRoute(t *testing.T) {
 		t.Fatalf("marked user=%d", store.markedUser)
 	}
 }
+
+type profileUpdateStoreStub struct {
+	app.ProfileStore
+	profile domain.Profile
+	getErr  error
+	saveErr error
+}
+
+func (s *profileUpdateStoreStub) Get(context.Context, int) (domain.Profile, error) {
+	return s.profile, s.getErr
+}
+
+func (s *profileUpdateStoreStub) Save(context.Context, domain.Profile) (domain.Profile, error) {
+	return domain.Profile{}, s.saveErr
+}
+
+func TestProfileUpdateRejectsUnsupportedRole(t *testing.T) {
+	manager := security.NewTokenManager("user-handler-test-secret")
+	token, err := manager.IssueWithRole("9", "passenger")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	store := &profileUpdateStoreStub{
+		profile: domain.Profile{ID: 9, UserID: 9, Role: "unsupported"},
+		saveErr: domain.ErrInvalidRole,
+	}
+	service := app.NewProfileService(app.ProfileServiceDependencies{Repository: store})
+	handler := NewHandler(Dependencies{Service: service, Verifier: manager})
+
+	router := chi.NewRouter()
+	router.Put("/passengers/{id}", handler.ProfileUpdate)
+
+	req := httptest.NewRequest(http.MethodPut, "/passengers/9", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d: %s", rec.Code, http.StatusBadRequest, rec.Body.String())
+	}
+}

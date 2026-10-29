@@ -1,12 +1,15 @@
 package postgres
 
 import (
+	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/domain"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestNewProfileRepositoryRejectsNilPool(t *testing.T) {
@@ -125,5 +128,23 @@ func TestPostgresNotificationMappingUsesUTC(t *testing.T) {
 	}
 	if _, err := toPostgresProfilePageValue(-1, "offset"); err == nil {
 		t.Fatal("expected negative notification offset to be rejected")
+	}
+}
+
+func TestProfileRepositorySaveRejectsUnsupportedRole(t *testing.T) {
+	repository := &ProfileRepository{
+		pool:    &pgxpool.Pool{},
+		queries: &databasepostgres.Queries{},
+	}
+	_, err := repository.Save(context.Background(), domain.Profile{
+		ID:     1,
+		UserID: 1,
+		Role:   "admin",
+	})
+	if err == nil {
+		t.Fatal("expected error for unsupported role, got nil")
+	}
+	if !errors.Is(err, domain.ErrInvalidRole) {
+		t.Fatalf("expected error wrapping domain.ErrInvalidRole, got %v", err)
 	}
 }
