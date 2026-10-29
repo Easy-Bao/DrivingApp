@@ -158,6 +158,16 @@ func TestRequestVerificationAntiEnumeration(t *testing.T) {
 	if gateway.sent != "" {
 		t.Fatal("expected no OTP sent for non-existent account")
 	}
+
+	// Driver accounts should also return nil to prevent role enumeration
+	repository.account = domain.User{ID: 10, Email: "driver@example.test", Role: domain.Driver, AccountStatus: "active"}
+	err = service.RequestVerification(context.Background(), "driver@example.test")
+	if err != nil {
+		t.Fatalf("expected nil for driver account, got %v", err)
+	}
+	if gateway.sent != "" {
+		t.Fatal("expected no OTP sent for driver account")
+	}
 }
 
 func TestSuspendedPassengerCannotUseVerificationOTP(t *testing.T) {

@@ -144,7 +144,7 @@ func (service *OTPService) RequestVerification(ctx context.Context, email string
 	account, err := service.users.FindByEmail(ctx, email)
 	if err == nil && account.ID != 0 {
 		if account.Role != domain.Passenger {
-			return domain.ErrInvalidCredentials
+			return nil
 		}
 		if account.AccountStatus != "" && account.AccountStatus != "active" {
 			// Match the unknown-account response so suspension is not disclosed.
