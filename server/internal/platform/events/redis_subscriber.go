@@ -58,6 +58,7 @@ func (subscriber *DistributedSubscriber) Run(ctx context.Context) error {
 	}
 
 	retryDelay := _redisRetryInitial
+	initial := true
 	for ctx.Err() == nil {
 		pubsub := subscriber.client.Subscribe(ctx, subscriber.channel)
 		stopCloseOnCancel := make(chan struct{})
@@ -85,6 +86,10 @@ func (subscriber *DistributedSubscriber) Run(ctx context.Context) error {
 		if ctx.Err() != nil {
 			return nil
 		}
+		if initial && connectedAt.IsZero() {
+			return fmt.Errorf("initial redis realtime event subscription failed: %w", err)
+		}
+		initial = false
 		if !connectedAt.IsZero() && time.Since(connectedAt) >= _redisStablePeriod {
 			retryDelay = _redisRetryInitial
 		}
