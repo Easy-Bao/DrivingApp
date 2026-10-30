@@ -187,12 +187,7 @@ class const TrackDriverPanel({
             ),
             if (!onTrip)
               OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(
-                    color: context.colorScheme.onSurface,
-                    width: 1.5,
-                  ),
-                ),
+                style: OutlinedButton.styleFrom(side: BorderSide.none),
                 onPressed: isCancellingTrip ? null : onCancelTripPressed,
                 child: Text(isCancellingTrip ? 'Cancelling…' : 'Cancel ride'),
               ),

@@ -61,6 +61,11 @@ void main() {
       );
       expect(buttonSurface.color, AppTheme.main.colorScheme.secondaryContainer);
 
+      final cancelButton = tester.widget<OutlinedButton>(
+        find.widgetWithText(OutlinedButton, 'Cancel ride'),
+      );
+      expect(cancelButton.style?.side?.resolve({}), BorderSide.none);
+
       expect(find.byTooltip('Call driver'), findsNothing);
       expect(find.textContaining('Booking ID'), findsNothing);
       expect(tester.takeException(), isNull);

@@ -202,6 +202,36 @@ void main() {
     );
   });
 
+  test('does not confirm arrival when fresh telemetry fails to post', () async {
+    final observedAt = DateTime.utc(2026, 10, 11, 10);
+    when(
+      () => telemetryDataSource.sendLocationUpdate(
+        lat: 7.82,
+        lng: 123.43,
+        observedAt: observedAt,
+      ),
+    ).thenThrow(_responseException(500));
+
+    final result = await repository.markArrived(
+      rideId: 'ride-7',
+      latitude: 7.82,
+      longitude: 123.43,
+      observedAt: observedAt,
+    );
+
+    expect(
+      result.fold((failure) => failure.message, (_) => ''),
+      'Unable to share your location right now.',
+    );
+    verifyNever(
+      () => rideDataSource.markArrived(
+        rideId: 'ride-7',
+        latitude: 7.82,
+        longitude: 123.43,
+      ),
+    );
+  });
+
   test(
     'explains when the driver is outside the pickup arrival radius',
     () async {
@@ -584,6 +614,45 @@ void main() {
       expect(
         locationResult.fold<(double, double)?>((_) => null, (value) => value),
         (7.828, 123.434),
+      );
+    },
+  );
+
+  test(
+    'returns user-facing message when sharing driver location fails',
+    () async {
+      when(
+        () => telemetryDataSource.sendLocationUpdate(
+          lat: 7.82,
+          lng: 123.43,
+          heading: null,
+          speed: null,
+        ),
+      ).thenThrow(_responseException(500));
+
+      final result = await repository.publishDriverLocationResult(
+        latitude: 7.82,
+        longitude: 123.43,
+      );
+
+      expect(
+        result.fold((failure) => failure.message, (_) => ''),
+        'Unable to share your location right now.',
+      );
+    },
+  );
+
+  test(
+    'returns user-facing message when removing driver location fails',
+    () async {
+      when(() => telemetryDataSource.removeLocation())
+          .thenThrow(_responseException(500));
+
+      final result = await repository.clearDriverLocationResult();
+
+      expect(
+        result.fold((failure) => failure.message, (_) => ''),
+        'Unable to remove your location right now.',
       );
     },
   );

@@ -78,6 +78,12 @@ void main() {
                 findsOneWidget,
               );
             }
+            if (state is! TripInProgress) {
+              final cancelButton = tester.widget<OutlinedButton>(
+                find.widgetWithText(OutlinedButton, 'Cancel ride'),
+              );
+              expect(cancelButton.style?.side?.resolve({}), BorderSide.none);
+            }
             expect(tester.takeException(), isNull);
           },
         );

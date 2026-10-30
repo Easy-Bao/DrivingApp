@@ -231,14 +231,14 @@ extension RideRepositoryResultAdapters on RideRepository {
         heading: heading,
         speed: speed,
       ),
-      message: 'Unable to share driver location right now.',
+      message: 'Unable to share your location right now.',
     );
   }
 
   Future<Result<void, DomainFailure>> clearDriverLocationResult() {
     return captureResult(
       clearDriverLocation,
-      message: 'Unable to remove driver location right now.',
+      message: 'Unable to remove your location right now.',
     );
   }
 }

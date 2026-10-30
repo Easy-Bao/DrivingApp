@@ -146,12 +146,7 @@ class const DriverTripPanel({
             if (!inTransit) ...[
               const SizedBox(height: AppSpacing.sm),
               OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(
-                    color: context.colorScheme.onSurface,
-                    width: 1.5,
-                  ),
-                ),
+                style: OutlinedButton.styleFrom(side: BorderSide.none),
                 onPressed: isBusy ? null : onCancel,
                 child: const Text('Cancel ride'),
               ),

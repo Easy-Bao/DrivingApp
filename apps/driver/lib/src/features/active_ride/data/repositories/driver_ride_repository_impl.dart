@@ -322,7 +322,7 @@ final class RideRepositoryImpl({
         );
         return sent
             ? const Ok(null)
-            : const Err(NetworkFailure('Driver location was not accepted.'));
+            : const Err(NetworkFailure('Your location was not accepted.'));
       }
       await spool.enqueue(
         LocationPoint(
@@ -348,7 +348,7 @@ final class RideRepositoryImpl({
           NetworkAvailabilityCoordinator.isNetworkFailure(error)) {
         return const Ok(null);
       }
-      return Err(_mapFailure(error, action: 'share driver location'));
+      return Err(_mapFailure(error, action: 'share your location'));
     }
   }
 
@@ -358,9 +358,9 @@ final class RideRepositoryImpl({
       final removed = await _telemetryDataSource.removeLocation();
       return removed
           ? const Ok(null)
-          : const Err(ServerFailure('Driver location was not removed.'));
+          : const Err(ServerFailure('Your location was not removed.'));
     } catch (error) {
-      return Err(_mapFailure(error, action: 'remove driver location'));
+      return Err(_mapFailure(error, action: 'remove your location'));
     }
   }
 
@@ -381,7 +381,7 @@ final class RideRepositoryImpl({
               'Your live location could not be updated. Keep location sharing on and try again.',
             );
     } catch (error) {
-      return _mapFailure(error, action: 'share driver location');
+      return _mapFailure(error, action: 'share your location');
     }
   }
 }
@@ -426,7 +426,9 @@ Failure _mapFailure(Object error, {required String action}) {
         "You must be at the passenger's pickup point to start the trip.",
       );
     }
-    if ((action == 'confirm arrival' || action == 'start this trip') &&
+    if ((action == 'confirm arrival' ||
+            action == 'start this trip' ||
+            action == 'share your location') &&
         statusCode == 503) {
       return const ServerFailure.withStatusCode(
         'Your live location is unavailable or out of date. Keep location sharing on and try again.',
