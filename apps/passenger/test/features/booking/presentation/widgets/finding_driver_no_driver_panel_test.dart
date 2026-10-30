@@ -44,6 +44,42 @@ void main() {
 
     expect(retryCount, 1);
   });
+
+  testWidgets('displays Driver timed out when request has expired', (
+    tester,
+  ) async {
+    var retryCount = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: FindingDriverNoDriverPanel(
+            fare: 100,
+            destination: destination,
+            pickupAddress: 'Pickup address',
+            requestExpired: true,
+            onRetryPressed: () => retryCount++,
+            onCancelPressed: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Driver timed out'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'The driver did not respond to your ride request in time',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('No drivers nearby'), findsNothing);
+    expect(find.text('No driver found'), findsNothing);
+
+    await tester.tap(find.text('Retry search'));
+    await tester.pump();
+
+    expect(retryCount, 1);
+  });
   testWidgets(
     'keeps text actions reachable and route pins consistent on a small screen',
     (tester) async {

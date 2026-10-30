@@ -26,11 +26,11 @@ class const FindingDriverNoDriverPanel({
   @override
   Widget build(BuildContext context) {
     return FindingDriverStatusSheet(
-      title: requestExpired ? 'No driver found' : 'No drivers nearby',
+      title: requestExpired ? 'Driver timed out' : 'No drivers nearby',
       message: requestExpired
-          ? 'Your request has ended. Try searching again for an available driver.'
+          ? 'The driver did not respond to your ride request in time. Try searching again or choose another driver.'
           : 'We couldn’t find an available driver nearby. Try searching again in a moment.',
-      statusIcon: LucideIcons.search_x,
+      statusIcon: requestExpired ? LucideIcons.timer : LucideIcons.search_x,
       statusColor: Theme.of(context).colorScheme.onSurface,
       destination: destination.name,
       pickupAddress: pickupAddress,

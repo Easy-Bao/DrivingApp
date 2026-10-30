@@ -284,7 +284,7 @@ WITH expired AS (
     WHERE passenger_id = $1
       AND status = 'open'
       AND expires_at <= $2
-    RETURNING id, passenger_id, booking_reference
+    RETURNING id, passenger_id, booking_reference, target_driver_id
 ), rejected_offers AS (
     UPDATE bid_offers
     SET status = 'rejected'
@@ -292,8 +292,17 @@ WITH expired AS (
       AND session_id IN (SELECT id FROM expired)
 )
 INSERT INTO notifications (user_id, type, title, body)
-SELECT passenger_id, 'ride', 'No nearby driver found',
-    'No nearby driver was found for Booking ID - ' || booking_reference || '.'
+SELECT
+    passenger_id,
+    'ride',
+    CASE
+        WHEN target_driver_id IS NOT NULL THEN 'Driver timed out'
+        ELSE 'Ride request timed out'
+    END,
+    CASE
+        WHEN target_driver_id IS NOT NULL THEN 'The driver did not respond to Booking ID - ' || booking_reference || ' in time.'
+        ELSE 'Your ride request for Booking ID - ' || booking_reference || ' timed out because no driver responded in time.'
+    END
 FROM expired
 `
 
