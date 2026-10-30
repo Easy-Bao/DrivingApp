@@ -12,12 +12,17 @@ import (
 )
 
 const cancelBidSession = `-- name: CancelBidSession :one
+WITH rejected_offers AS (
+    UPDATE bid_offers
+    SET status = 'rejected'
+    WHERE bid_offers.session_id = $1
+      AND bid_offers.status = 'pending'
+)
 UPDATE bid_sessions
 SET status = 'cancelled'
-WHERE id = $1
-  AND passenger_id = $2
-  AND status = 'open'
-  AND expires_at > CURRENT_TIMESTAMP
+WHERE bid_sessions.id = $1
+  AND bid_sessions.passenger_id = $2
+  AND bid_sessions.status = 'open'
 RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
     passenger_note, distance_km, duration_minutes, offered_fare,

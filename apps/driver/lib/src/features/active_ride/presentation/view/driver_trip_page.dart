@@ -195,11 +195,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
 
   void _onRideChanged(BuildContext context, RideState state) {
     if (state is RideFlowTerminal) {
-      if (state.status == 'completed') {
-        unawaited(_finishTrip());
-      } else {
-        if (mounted) context.pop();
-      }
+      unawaited(_finishTrip());
       return;
     }
     final position = LocationService.lastPosition;
@@ -329,7 +325,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
       final marked = await _rideCubit.markPassengerNoShow();
       if (!mounted) return;
       if (marked) {
-        context.pop();
+        await _finishTrip();
         return;
       }
       _showError(
@@ -409,7 +405,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
           .cancelRide(reason: choice.reason, details: choice.details);
       if (!mounted) return;
       if (canceled) {
-        context.pop();
+        await _finishTrip();
       } else {
         _showError(
           _rideCubit.lastActionFailureMessage ??

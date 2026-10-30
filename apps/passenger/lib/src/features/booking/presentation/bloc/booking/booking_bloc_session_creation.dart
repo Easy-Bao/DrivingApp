@@ -282,7 +282,8 @@ extension _BookingBlocSessionCreation on BookingBloc {
         await _recoverAcceptedSession(snapshot!, emit);
         return;
       }
-      if (snapshot?.isCancelled == true ||
+      if (expired ||
+          snapshot?.isCancelled == true ||
           snapshot?.isExpired == true ||
           snapshot?.isDeclined == true) {
         await _clearPendingBooking(sessionId);
@@ -296,6 +297,11 @@ extension _BookingBlocSessionCreation on BookingBloc {
         ),
       );
     } catch (error) {
+      if (expired) {
+        await _clearPendingBooking(sessionId);
+        emit(terminalState);
+        return;
+      }
       emit(
         BookingSessionRecoveryFailure(
           sessionId: sessionId,

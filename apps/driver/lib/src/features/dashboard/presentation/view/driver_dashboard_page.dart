@@ -710,7 +710,11 @@ class _DashboardPageState extends State<DashboardPage>
       final assigned = cubit.state.activeRides
           .where((ride) => !previousRideIds.contains(ride.id))
           .firstOrNull;
-      if (assigned != null) _scheduleActiveTripNavigation(rideId: assigned.id);
+      if (assigned != null) {
+        _scheduleActiveTripNavigation(rideId: assigned.id);
+      } else {
+        unawaited(_refreshOnlinePresence());
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) unawaited(_showIncomingRequest());
       });

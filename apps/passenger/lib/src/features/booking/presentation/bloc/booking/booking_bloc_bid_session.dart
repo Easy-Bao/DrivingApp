@@ -460,7 +460,15 @@ extension _BookingBlocBidSession on BookingBloc {
     ResetBookingEvent event,
     Emitter<BookingState> emit,
   ) async {
-    if (_isCreatingBidSession || _activeBidSessionId != null) return;
+    if (_isCreatingBidSession) return;
+    if (_activeBidSessionId != null &&
+        state is! BookingFailure &&
+        state is! BookingCanceled) {
+      return;
+    }
+    if (_activeBidSessionId != null) {
+      await _clearPendingBooking(_activeBidSessionId!);
+    }
     _nearestSearchCancelled = true;
     _cleanupSubscriptions();
     _activeTrip = null;

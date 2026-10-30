@@ -455,6 +455,8 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
       _isNoDriverFound = false;
       _driverSearchError = null;
       _isLeaving = false;
+      _selectedDriver = null;
+      _isViewingDriverProfile = false;
     });
     _showNearbyDrivers();
   }

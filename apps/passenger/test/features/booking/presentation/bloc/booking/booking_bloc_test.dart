@@ -891,6 +891,77 @@ void main() {
       expect(pendingCancellationId, isNull);
     });
 
+    test('clears active session and allows reset when expired session remote cancellation fails', () async {
+      var isExpired = false;
+      when(() => bookingRepository.createSession(any())).thenAnswer(
+        (_) async => const Ok(
+          BidSessionSnapshot(
+            id: 'expired-session-fail',
+            status: 'open',
+            expiresAt: null,
+            bookingReference: '701612345678999',
+          ),
+        ),
+      );
+      when(() => bookingRepository.cancelSession('expired-session-fail'))
+          .thenAnswer((_) async => const Err(ServerFailure('offline')));
+      when(() => bookingRepository.fetchSession('expired-session-fail'))
+          .thenAnswer(
+            (_) async => Ok(
+              BidSessionSnapshot(
+                id: 'expired-session-fail',
+                status: isExpired ? 'expired' : 'open',
+                expiresAt: isExpired
+                    ? DateTime.now().subtract(const Duration(seconds: 1))
+                    : null,
+              ),
+            ),
+          );
+      final bloc = _makeBookingBloc(
+        driverRepo: driverRepo,
+        bookingRepository: bookingRepository,
+        driverProfileRepository: driverProfileRepository,
+        secureSessionService: secureSessionService,
+      );
+      addTearDown(bloc.close);
+      final created = bloc.stream.firstWhere(
+        (state) => state is BookingOffersReceived,
+      );
+      bloc.add(
+        const StartOpenBookingEvent(
+          trip: testTrip,
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          distanceKm: 2,
+          durationMinutes: 5,
+        ),
+      );
+      await created.timeout(const Duration(seconds: 1));
+      isExpired = true;
+      final expired = bloc.stream.firstWhere(
+        (state) => state is BookingFailure && state.isRequestExpired,
+      );
+      bloc.add(
+        UpdateOffersEvent(
+          const [],
+          session: BidSessionSnapshot(
+            id: 'expired-session-fail',
+            status: 'expired',
+            expiresAt: DateTime.now().subtract(const Duration(seconds: 1)),
+          ),
+        ),
+      );
+      await expired.timeout(const Duration(seconds: 1));
+      expect(bloc.activeBidSessionId, isNull);
+
+      final resetState = bloc.stream.firstWhere(
+        (state) => state is BookingInitial,
+      );
+      bloc.add(const ResetBookingEvent());
+      await resetState.timeout(const Duration(seconds: 1));
+      expect(bloc.state, isA<BookingInitial>());
+    });
+
     test(
       'matches a direct booking from snapshot polling when realtime is absent',
       () async {

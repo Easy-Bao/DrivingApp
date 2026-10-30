@@ -44,8 +44,12 @@ final class const BidSessionSnapshot({
   final String? rideId;
 
   bool get isDeclined => status.trim().toLowerCase() == 'declined';
-  bool get isExpired => status.trim().toLowerCase() == 'expired';
-  bool get isOpen => status.trim().toLowerCase() == 'open';
+  bool get isExpired =>
+      status.trim().toLowerCase() == 'expired' ||
+      (expiresAt != null && expiresAt!.isBefore(DateTime.now()));
+  bool get isOpen =>
+      status.trim().toLowerCase() == 'open' &&
+      (expiresAt == null || !expiresAt!.isBefore(DateTime.now()));
   bool get isAccepted => status.trim().toLowerCase() == 'accepted';
   bool get isCancelled =>
       const {'cancelled', 'canceled'}.contains(status.trim().toLowerCase());

@@ -55,6 +55,11 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
       _selectedDriverId = null;
       _requestSubmitted = false;
     }
+    if (!widget.isSendingRequest &&
+        widget.isChoosingDriver &&
+        widget.requestedDriver == null) {
+      _requestSubmitted = false;
+    }
     if (oldWidget.isSendingRequest &&
         !widget.isSendingRequest &&
         widget.isChoosingDriver) {

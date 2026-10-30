@@ -270,4 +270,30 @@ void main() {
       isNull,
     );
   });
+
+  testWidgets('resets submission state when requestedDriver becomes null', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      isChoosingDriver: true,
+      requestedDriver: null,
+      onSelectDriver: (_) {},
+    );
+    await tester.tap(find.text('Nearby driver'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Request driver'));
+    await tester.pump();
+    expect(find.text('Sending request…'), findsOneWidget);
+
+    await _pump(
+      tester,
+      isChoosingDriver: true,
+      requestedDriver: null,
+      onSelectDriver: (_) {},
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Request driver'), findsOneWidget);
+  });
 }
