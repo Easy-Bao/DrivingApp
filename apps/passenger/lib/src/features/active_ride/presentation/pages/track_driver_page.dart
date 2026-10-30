@@ -434,11 +434,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
 
   Future<void> _handleCancelTrip() async {
     if (_isCancellingTrip) return;
-    final reason = await showDialog<String>(
-      context: context,
-      barrierDismissible: true,
-      builder: (_) => const TripCancellationDialog(),
-    );
+    final reason = await showTripCancellationSheet(context);
     if (reason == null || !mounted) return;
 
     await _cancelTripRequest(reason: reason);
