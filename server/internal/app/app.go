@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 
 	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/admin/adapter/postgres"
@@ -17,7 +18,6 @@ import (
 	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/adapter/postgres"
 	userpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/user/adapter/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
-	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/logger"
 	redisplatform "github.com/Easy-Bao/DrivingApp/server/internal/platform/redis"
@@ -31,8 +31,13 @@ type Application struct {
 	postgresPool    *pgxpool.Pool
 	redisClient     redisClient
 	eventHub        *websockethub.Hub
-	eventSubscriber *eventadapter.DistributedSubscriber
+	eventSubscriber eventSubscriber
 	logger          *slog.Logger
+}
+
+type eventSubscriber interface {
+	Ready() <-chan struct{}
+	Run(ctx context.Context) error
 }
 
 type redisClient interface {
@@ -250,13 +255,20 @@ func (application *Application) Run(ctx context.Context) error {
 	}()
 	applicationLogger.InfoContext(ctx, "api listening", "address", application.server.Addr)
 
+	var shutdownOnce sync.Once
+	var shutdownErr error
 	stopServer := func() error {
-		shutdownContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
-		defer cancel()
-		return application.server.Shutdown(shutdownContext)
+		shutdownOnce.Do(func() {
+			shutdownContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
+			defer cancel()
+			shutdownErr = application.server.Shutdown(shutdownContext)
+		})
+		return shutdownErr
 	}
 	defer func() {
-		_ = stopServer()
+		if err := stopServer(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			applicationLogger.Warn("stop HTTP server", "error", err)
+		}
 	}()
 
 	select {
