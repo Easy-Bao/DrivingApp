@@ -43,6 +43,7 @@ func (hub *Hub) Subscribe(topics ...string) *Subscription {
 	defer hub.mutex.Unlock()
 	if hub.closed {
 		subscription.closed = true
+		subscription.once.Do(func() {})
 		close(subscription.events)
 		return subscription
 	}
@@ -139,7 +140,7 @@ func (subscription *Subscription) deliver(envelope event.Envelope) bool {
 	default:
 	}
 
-	var drained []event.Envelope
+	drained := make([]event.Envelope, 0, _outboundQueueSize)
 drainLoop:
 	for {
 		select {
@@ -207,8 +208,10 @@ func (subscription *Subscription) Close() {
 			}
 		}
 		subscription.evictionMutex.Lock()
-		subscription.closed = true
-		close(subscription.events)
+		if !subscription.closed {
+			subscription.closed = true
+			close(subscription.events)
+		}
 		subscription.evictionMutex.Unlock()
 	})
 }

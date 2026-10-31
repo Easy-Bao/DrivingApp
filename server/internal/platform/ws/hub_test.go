@@ -93,6 +93,21 @@ func TestHubCloseTerminatesOpenSubscriptions(t *testing.T) {
 	}
 }
 
+func TestClosedHubSubscribeAndCloseDoesNotPanic(t *testing.T) {
+	t.Parallel()
+
+	hub := NewHub()
+	hub.Close()
+
+	sub := hub.Subscribe("driver:1")
+	if _, open := <-sub.Events(); open {
+		t.Fatal("subscription on closed hub should be immediately closed")
+	}
+
+	// Must not panic when Close is invoked on subscription from closed hub
+	sub.Close()
+}
+
 func TestHubBurstDelivery(t *testing.T) {
 	t.Parallel()
 
