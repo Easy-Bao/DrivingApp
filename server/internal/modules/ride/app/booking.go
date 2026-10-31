@@ -260,9 +260,21 @@ func (service *BookingService) resolveRouteMetrics(
 	service.fareRouteFlights[key] = flight
 	service.fareRouteCacheMu.Unlock()
 
+	var (
+		metrics   RouteMetrics
+		err       error
+		completed bool
+	)
 	defer func() {
 		service.fareRouteCacheMu.Lock()
 		delete(service.fareRouteFlights, key)
+		if completed {
+			flight.metrics = metrics
+			flight.err = err
+			if err == nil {
+				service.storeFareRouteLocked(key, metrics)
+			}
+		}
 		close(flight.done)
 		service.fareRouteCacheMu.Unlock()
 	}()
@@ -270,7 +282,7 @@ func (service *BookingService) resolveRouteMetrics(
 	calcCtx, cancelCalc := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
 	defer cancelCalc()
 
-	metrics, err := service.resolveRoute(
+	metrics, err = service.resolveRoute(
 		calcCtx,
 		originLatitude,
 		originLongitude,
@@ -279,14 +291,11 @@ func (service *BookingService) resolveRouteMetrics(
 		distanceKm,
 		durationMinutes,
 	)
+	completed = true
 
-	service.fareRouteCacheMu.Lock()
-	flight.metrics = metrics
-	flight.err = err
-	if err == nil {
-		service.storeFareRouteLocked(key, metrics)
+	if ctx.Err() != nil {
+		return RouteMetrics{}, ctx.Err()
 	}
-	service.fareRouteCacheMu.Unlock()
 	return metrics, err
 }
 

@@ -3,7 +3,9 @@ package app_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
+	"time"
 
 	booking "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
@@ -249,3 +251,161 @@ func TestServiceCreateRejectsPassengerWithActiveRide(t *testing.T) {
 }
 
 func floatPointer(value float64) *float64 { return &value }
+
+func TestServiceFareRouteSingleflightLeaderCancellation(t *testing.T) {
+	routeStarted := make(chan struct{})
+	allowRouteToFinish := make(chan struct{})
+
+	service := booking.NewBookingService(booking.BookingDependencies{
+		CalculateFare:    func(distanceKm, durationMinutes float64) int64 { return 2500 },
+		HasRouteProvider: true,
+		ResolveRoute: func(
+			_ context.Context,
+			_, _, _, _ float64,
+			_, _ float64,
+		) (booking.RouteMetrics, error) {
+			close(routeStarted)
+			<-allowRouteToFinish
+			return booking.RouteMetrics{DistanceKm: 5, DurationMinutes: 15}, nil
+		},
+	})
+
+	leaderCtx, cancelLeader := context.WithCancel(context.Background())
+	leaderDone := make(chan error, 1)
+	go func() {
+		_, _, err := service.EstimateFare(
+			leaderCtx,
+			floatPointer(10.1),
+			floatPointer(20.1),
+			floatPointer(30.1),
+			floatPointer(40.1),
+			0,
+			0,
+		)
+		leaderDone <- err
+	}()
+
+	<-routeStarted
+
+	followerDone := make(chan struct {
+		metrics booking.RouteMetrics
+		fare    int64
+		err     error
+	}, 1)
+	go func() {
+		metrics, fare, err := service.EstimateFare(
+			context.Background(),
+			floatPointer(10.1),
+			floatPointer(20.1),
+			floatPointer(30.1),
+			floatPointer(40.1),
+			0,
+			0,
+		)
+		followerDone <- struct {
+			metrics booking.RouteMetrics
+			fare    int64
+			err     error
+		}{metrics, fare, err}
+	}()
+
+	cancelLeader()
+	close(allowRouteToFinish)
+
+	leaderErr := <-leaderDone
+	if !errors.Is(leaderErr, context.Canceled) {
+		t.Fatalf("leader expected context.Canceled, got %v", leaderErr)
+	}
+
+	select {
+	case res := <-followerDone:
+		if res.err != nil {
+			t.Fatalf("follower failed with error: %v", res.err)
+		}
+		if res.metrics.DistanceKm != 5 || res.fare != 2500 {
+			t.Fatalf("follower got unexpected result: %+v, fare: %d", res.metrics, res.fare)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("follower timed out waiting for route singleflight")
+	}
+}
+
+func TestServiceFareRouteSingleflightPanicSafety(t *testing.T) {
+	panicking := true
+	routeStarted := make(chan struct{})
+	followerJoined := make(chan struct{})
+	service := booking.NewBookingService(booking.BookingDependencies{
+		CalculateFare:    func(float64, float64) int64 { return 2500 },
+		HasRouteProvider: true,
+		ResolveRoute: func(
+			_ context.Context,
+			_, _, _, _ float64,
+			_, _ float64,
+		) (booking.RouteMetrics, error) {
+			if panicking {
+				close(routeStarted)
+				<-followerJoined
+				time.Sleep(20 * time.Millisecond)
+				panic("simulated route resolution panic")
+			}
+			return booking.RouteMetrics{DistanceKm: 3, DurationMinutes: 10}, nil
+		},
+	})
+
+	followerDone := make(chan error, 1)
+	go func() {
+		<-routeStarted
+		close(followerJoined)
+		_, _, err := service.EstimateFare(
+			context.Background(),
+			floatPointer(5.0),
+			floatPointer(6.0),
+			floatPointer(7.0),
+			floatPointer(8.0),
+			0,
+			0,
+		)
+		followerDone <- err
+	}()
+
+	func() {
+		defer func() {
+			_ = recover()
+		}()
+		_, _, _ = service.EstimateFare(
+			context.Background(),
+			floatPointer(5.0),
+			floatPointer(6.0),
+			floatPointer(7.0),
+			floatPointer(8.0),
+			0,
+			0,
+		)
+	}()
+
+	select {
+	case err := <-followerDone:
+		if err == nil || !strings.Contains(err.Error(), "route resolution aborted") {
+			t.Fatalf("follower expected 'route resolution aborted', got %v", err)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("follower hung indefinitely after leader panic")
+	}
+
+	panicking = false
+	metrics, fare, err := service.EstimateFare(
+		context.Background(),
+		floatPointer(5.0),
+		floatPointer(6.0),
+		floatPointer(7.0),
+		floatPointer(8.0),
+		0,
+		0,
+	)
+	if err != nil {
+		t.Fatalf("retry after panic failed: %v", err)
+	}
+	if metrics.DistanceKm != 3 || fare != 2500 {
+		t.Fatalf("retry unexpected result: %+v, fare: %d", metrics, fare)
+	}
+}
