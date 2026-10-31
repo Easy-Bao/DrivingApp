@@ -3,6 +3,7 @@ package app_test
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -804,5 +805,52 @@ func TestEmergencyStopUsesSafetyAttributionAfterTripStart(t *testing.T) {
 	}
 	if store.transition.Responsibility != domain.CancellationResponsibilitySafetyRelated {
 		t.Fatalf("responsibility = %q, want %q", store.transition.Responsibility, domain.CancellationResponsibilitySafetyRelated)
+	}
+}
+
+type contextTrackingLocationReader struct {
+	cancelled chan struct{}
+	once      sync.Once
+}
+
+func (r *contextTrackingLocationReader) ReadDriverLocation(ctx context.Context, _ int) (lifecycle.DriverLocation, error) {
+	select {
+	case <-ctx.Done():
+		r.once.Do(func() { close(r.cancelled) })
+		return lifecycle.DriverLocation{}, ctx.Err()
+	case <-time.After(2 * time.Second):
+		return lifecycle.DriverLocation{Latitude: 6.7, Longitude: 122.1, ObservedAt: time.Now()}, nil
+	}
+}
+
+func TestStartTripCancelsDriverLocationOnEarlyRejection(t *testing.T) {
+	assignedDriver := 42
+	unauthorizedDriver := 99
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:              1,
+			PassengerID:     10,
+			DriverID:        &assignedDriver,
+			Status:          string(domain.RideArrived),
+			PickupLatitude:  6.7,
+			PickupLongitude: 122.1,
+		},
+	}
+	locationReader := &contextTrackingLocationReader{cancelled: make(chan struct{})}
+	service := lifecycle.NewLifecycleService(lifecycle.LifecycleDependencies{
+		Store:          store,
+		DriverLocation: locationReader,
+	})
+
+	_, err := service.StartTrip(context.Background(), 1, unauthorizedDriver, 6.7, 122.1)
+	if !errors.Is(err, domain.ErrUnauthorizedRide) {
+		t.Fatalf("StartTrip() error = %v, want ErrUnauthorizedRide", err)
+	}
+
+	select {
+	case <-locationReader.cancelled:
+		// Succeeded: background location reader context was promptly cancelled on early rejection
+	case <-time.After(time.Second):
+		t.Fatal("expected speculative location reader context to be cancelled after early rejection")
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
@@ -268,16 +269,23 @@ func (service *LifecycleService) loadRideWithDriverLocation(
 		return domain.Ride{}, nil, nil, err
 	}
 	var (
-		once   bool
-		result driverLocationResult
+		locationOnce sync.Once
+		result       driverLocationResult
 	)
-	return current, func() (float64, float64, error) {
-		if !once {
-			once = true
-			result = <-results
-		}
+	getLocation := func() (float64, float64, error) {
+		locationOnce.Do(func() {
+			select {
+			case result = <-results:
+			case <-ctx.Done():
+				result = driverLocationResult{err: ctx.Err()}
+			}
+		})
 		return result.latitude, result.longitude, result.err
-	}, cancel, nil
+	}
+	cleanup := sync.OnceFunc(func() {
+		cancel()
+	})
+	return current, getLocation, cleanup, nil
 }
 
 func (service *LifecycleService) authoritativeDriverLocation(
