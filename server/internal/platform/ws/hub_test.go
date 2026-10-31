@@ -285,3 +285,75 @@ func TestHubConcurrentPublishersOnFullQueueDoNotBlockClose(t *testing.T) {
 		t.Fatal("concurrent publishers or Close blocked on a full queue")
 	}
 }
+
+func TestHubPublishSingleAndMultiTopicFastPath(t *testing.T) {
+	t.Parallel()
+
+	hub := NewHub()
+	defer hub.Close()
+
+	// Empty topics: should safely no-op without deadlock or panic
+	emptyEnvelope := event.Envelope{}
+	hub.Publish(emptyEnvelope)
+
+	subA := hub.Subscribe("driver:alpha")
+	subB := hub.Subscribe("passenger:beta")
+	defer subA.Close()
+	defer subB.Close()
+
+	// Single topic publishing
+	singleEnvelope, err := event.New(
+		"evt-single",
+		event.DriverLocationUpdated,
+		time.Now().UTC(),
+		event.Scope{DriverID: "alpha"},
+		map[string]any{},
+	)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	hub.Publish(singleEnvelope)
+
+	// SubA receives, subB does not
+	select {
+	case received := <-subA.Events():
+		if received.ID != "evt-single" {
+			t.Fatalf("subA received ID = %q, want evt-single", received.ID)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("subA timed out waiting for single topic event")
+	}
+
+	select {
+	case unexp := <-subB.Events():
+		t.Fatalf("subB received unexpected event: %#v", unexp)
+	default:
+	}
+
+	// Multi-topic envelope with overlap
+	multiSub := hub.Subscribe("topic:gamma")
+	defer multiSub.Close()
+
+	multiEnvelope, err := event.New(
+		"evt-multi",
+		event.RideMatched,
+		time.Now().UTC(),
+		event.Scope{DriverID: "alpha", PassengerID: "beta"},
+		map[string]any{},
+	)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	hub.Publish(multiEnvelope)
+
+	for _, sub := range []*Subscription{subA, subB} {
+		select {
+		case received := <-sub.Events():
+			if received.ID != "evt-multi" {
+				t.Fatalf("received ID = %q, want evt-multi", received.ID)
+			}
+		case <-time.After(time.Second):
+			t.Fatal("subscriber timed out waiting for multi topic event")
+		}
+	}
+}
