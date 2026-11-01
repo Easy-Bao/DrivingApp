@@ -447,11 +447,18 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 }
 
 func (idempotency *Idempotency) releaseLock(request *http.Request, key string, token []byte) {
-	cleanupContext, cancel := context.WithTimeout(context.WithoutCancel(request.Context()), time.Second)
+	if request == nil {
+		return
+	}
+	ctx := request.Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	cleanupContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
 	defer cancel()
 	if err := idempotency.store.DeleteIfValue(cleanupContext, key, token); err != nil {
 		idempotency.log().WarnContext(
-			request.Context(),
+			ctx,
 			"release idempotency lock failed",
 			"error",
 			err,
@@ -504,7 +511,7 @@ func (writer *idempotentResponseWriter) Write(body []byte) (int, error) {
 	if !writer.uncacheable {
 		if int64(writer.body.Len()+len(body)) > _maxIdempotencyBodyBytes {
 			writer.uncacheable = true
-			writer.body.Reset()
+			writer.body = bytes.Buffer{}
 		} else {
 			if _, err := writer.body.Write(body); err != nil {
 				slog.Error("capture idempotent response body failed", "error", err)
@@ -512,6 +519,16 @@ func (writer *idempotentResponseWriter) Write(body []byte) (int, error) {
 		}
 	}
 	return writer.ResponseWriter.Write(body)
+}
+
+func (writer *idempotentResponseWriter) Unwrap() http.ResponseWriter {
+	return writer.ResponseWriter
+}
+
+func (writer *idempotentResponseWriter) Flush() {
+	if flusher, ok := writer.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
 }
 
 func replayIdempotentResponse(writer http.ResponseWriter, encoded []byte, fingerprint string) {

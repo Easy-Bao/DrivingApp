@@ -447,3 +447,29 @@ func TestIdempotencySkipsCachingLargeResponseBody(t *testing.T) {
 		t.Fatalf("handler calls = %d, want 2 (uncached)", calls.Load())
 	}
 }
+
+type mockFlusherRecorder struct {
+	*httptest.ResponseRecorder
+	flushed bool
+}
+
+func (m *mockFlusherRecorder) Flush() {
+	m.flushed = true
+}
+
+func TestIdempotencyResponseWriterUnwrapAndFlush(t *testing.T) {
+	inner := &mockFlusherRecorder{ResponseRecorder: httptest.NewRecorder()}
+	writer := &idempotentResponseWriter{ResponseWriter: inner}
+
+	if writer.Unwrap() != inner {
+		t.Fatal("expected Unwrap() to return underlying ResponseWriter")
+	}
+
+	rc := http.NewResponseController(writer)
+	if err := rc.Flush(); err != nil {
+		t.Fatalf("Flush() error = %v", err)
+	}
+	if !inner.flushed {
+		t.Fatal("expected underlying flusher to be invoked")
+	}
+}
