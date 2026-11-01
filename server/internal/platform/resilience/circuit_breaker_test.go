@@ -136,3 +136,24 @@ func TestCircuitBreakerReleasesProbeOnPanic(t *testing.T) {
 		}
 	})
 }
+
+func TestCircuitBreakerTripsOnPanicInClosedState(t *testing.T) {
+	breaker := NewCircuitBreaker(CircuitBreakerConfig{
+		FailureThreshold: 2,
+		ResetAfter:       time.Minute,
+	})
+
+	for range 2 {
+		func() {
+			defer func() { _ = recover() }()
+			_ = breaker.Do(context.Background(), func(context.Context) error {
+				panic("simulated panic in closed state")
+			})
+		}()
+	}
+
+	// Should now be open
+	if err := breaker.Do(context.Background(), func(context.Context) error { return nil }); !errors.Is(err, ErrCircuitOpen) {
+		t.Fatalf("expected ErrCircuitOpen after repeated panics, got %v", err)
+	}
+}
