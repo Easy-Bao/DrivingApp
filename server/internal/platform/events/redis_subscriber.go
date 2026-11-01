@@ -76,7 +76,11 @@ func (subscriber *DistributedSubscriber) Run(ctx context.Context) error {
 		var connectedAt time.Time
 		if err == nil {
 			connectedAt = time.Now()
-			subscriber.once.Do(func() { close(subscriber.ready) })
+			subscriber.once.Do(func() {
+				if subscriber.ready != nil {
+					close(subscriber.ready)
+				}
+			})
 			err = subscriber.receive(ctx, pubsub)
 		}
 

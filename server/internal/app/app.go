@@ -225,6 +225,18 @@ func (application *Application) Run(ctx context.Context) error {
 	}()
 	select {
 	case <-application.eventSubscriber.Ready():
+		select {
+		case subscriberErr := <-subscriberDone:
+			subscriberStopped = true
+			if subscriberErr != nil {
+				return fmt.Errorf("run realtime event subscriber: %w", subscriberErr)
+			}
+			if ctx.Err() != nil {
+				return nil
+			}
+			return errors.New("realtime event subscriber stopped before subscribing")
+		default:
+		}
 	case subscriberErr := <-subscriberDone:
 		subscriberStopped = true
 		if subscriberErr != nil {
