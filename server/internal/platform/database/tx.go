@@ -15,6 +15,9 @@ func Rollback(ctx context.Context, transaction pgx.Tx) {
 	if transaction == nil {
 		return
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	rollbackCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancel()
 	if err := transaction.Rollback(rollbackCtx); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
