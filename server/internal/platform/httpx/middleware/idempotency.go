@@ -127,6 +127,7 @@ const (
 type MemoryIdempotencyStore struct {
 	mu           sync.Mutex
 	entries      map[string]memoryIdempotencyEntry
+	capacity     int
 	lastEviction time.Time
 }
 
@@ -138,32 +139,55 @@ type memoryIdempotencyEntry struct {
 }
 
 func (store *MemoryIdempotencyStore) evictLocked(now time.Time) {
-	if len(store.entries) < _defaultMemoryIdempotencyCapacity && now.Sub(store.lastEviction) < _memoryIdempotencyEvictionInterval {
+	if len(store.entries) == 0 {
 		return
 	}
-	store.lastEviction = now
-	for k, v := range store.entries {
-		if !now.Before(v.expires) {
-			delete(store.entries, k)
-		}
+	capacity := store.capacity
+	if capacity <= 0 {
+		capacity = _defaultMemoryIdempotencyCapacity
 	}
-	if len(store.entries) >= _defaultMemoryIdempotencyCapacity {
-		var oldestKey string
-		var oldestExpires time.Time
+	if len(store.entries) >= capacity || now.Sub(store.lastEviction) >= _memoryIdempotencyEvictionInterval {
+		store.lastEviction = now
 		for k, v := range store.entries {
-			if oldestKey == "" || v.expires.Before(oldestExpires) {
-				oldestKey = k
-				oldestExpires = v.expires
+			if !now.Before(v.expires) {
+				delete(store.entries, k)
 			}
 		}
-		if oldestKey != "" {
+	}
+	if len(store.entries) >= capacity {
+		target := (capacity * 9) / 10
+		if target < 1 {
+			target = 1
+		}
+		for len(store.entries) >= capacity && len(store.entries) > target {
+			var oldestKey string
+			var oldestExpires time.Time
+			for k, v := range store.entries {
+				if oldestKey == "" || v.expires.Before(oldestExpires) {
+					oldestKey = k
+					oldestExpires = v.expires
+				}
+			}
+			if oldestKey == "" {
+				break
+			}
 			delete(store.entries, oldestKey)
 		}
 	}
 }
 
 func NewMemoryIdempotencyStore() *MemoryIdempotencyStore {
-	return &MemoryIdempotencyStore{entries: make(map[string]memoryIdempotencyEntry)}
+	return NewMemoryIdempotencyStoreWithCapacity(_defaultMemoryIdempotencyCapacity)
+}
+
+func NewMemoryIdempotencyStoreWithCapacity(capacity int) *MemoryIdempotencyStore {
+	if capacity <= 0 {
+		capacity = _defaultMemoryIdempotencyCapacity
+	}
+	return &MemoryIdempotencyStore{
+		entries:  make(map[string]memoryIdempotencyEntry),
+		capacity: capacity,
+	}
 }
 
 func (store *MemoryIdempotencyStore) Get(ctx context.Context, key string) ([]byte, error) {
@@ -175,6 +199,9 @@ func (store *MemoryIdempotencyStore) Get(ctx context.Context, key string) ([]byt
 	}
 	store.mu.Lock()
 	defer store.mu.Unlock()
+	if store.entries == nil {
+		return nil, nil
+	}
 	entry, ok := store.entries[key]
 	if !ok || !time.Now().Before(entry.expires) {
 		delete(store.entries, key)
@@ -241,6 +268,9 @@ func (store *MemoryIdempotencyStore) DeleteIfValue(ctx context.Context, key stri
 	}
 	store.mu.Lock()
 	defer store.mu.Unlock()
+	if store.entries == nil {
+		return nil
+	}
 	entry, ok := store.entries[key]
 	if ok && bytes.Equal(entry.value, value) {
 		delete(store.entries, key)

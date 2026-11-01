@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -73,6 +74,42 @@ func TestMemoryIdempotencyStorePeriodicEviction(t *testing.T) {
 	store.mu.Unlock()
 	if found {
 		t.Fatal("expected expired-key to be evicted during Set")
+	}
+}
+
+func TestMemoryIdempotencyStoreCapacityBoundedEviction(t *testing.T) {
+	ctx := context.Background()
+	store := NewMemoryIdempotencyStoreWithCapacity(5)
+
+	// Add 5 unexpired entries with staggered expirations
+	for i := 1; i <= 5; i++ {
+		key := fmt.Sprintf("key-%d", i)
+		_ = store.Set(ctx, key, []byte(key), time.Duration(i)*time.Hour)
+	}
+
+	store.mu.Lock()
+	if len(store.entries) != 5 {
+		t.Fatalf("expected 5 entries, got %d", len(store.entries))
+	}
+	store.mu.Unlock()
+
+	// Adding 6th entry must enforce capacity bounds by evicting oldest
+	_ = store.Set(ctx, "key-6", []byte("key-6"), 6*time.Hour)
+
+	store.mu.Lock()
+	count := len(store.entries)
+	_, oldestFound := store.entries["key-1"]
+	_, newestFound := store.entries["key-6"]
+	store.mu.Unlock()
+
+	if count > 5 {
+		t.Fatalf("expected capacity to remain bounded <= 5, got %d", count)
+	}
+	if oldestFound {
+		t.Fatal("expected oldest entry key-1 to be evicted when capacity was reached")
+	}
+	if !newestFound {
+		t.Fatal("expected newest entry key-6 to be stored")
 	}
 }
 
