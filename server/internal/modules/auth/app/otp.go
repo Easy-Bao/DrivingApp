@@ -260,7 +260,7 @@ func (service *OTPService) RequestPasswordResetForRole(ctx context.Context, emai
 	}
 	account, err := service.accountForRole(ctx, email, role)
 	if err != nil {
-		if errors.Is(err, domain.ErrInvalidCredentials) {
+		if errors.Is(err, domain.ErrInvalidCredentials) || errors.Is(err, domain.ErrAccountSuspended) {
 			return nil
 		}
 		return fmt.Errorf("find account for password reset: %w", err)
@@ -280,6 +280,9 @@ func (service *OTPService) ResetPasswordForRole(
 	}
 	account, err := service.accountForRole(ctx, email, role)
 	if err != nil {
+		if errors.Is(err, domain.ErrAccountSuspended) {
+			return err
+		}
 		return fmt.Errorf("find account for password reset: %w", err)
 	}
 	if len(password) < 8 || len([]byte(password)) > 72 {
@@ -345,6 +348,9 @@ func (service *OTPService) RequestEmailChange(
 	if account.ID != userID || !account.IsVerified || !security.VerifyPassword(account.PasswordHash, currentPassword) {
 		return domain.ErrInvalidCredentials
 	}
+	if account.AccountStatus != "" && account.AccountStatus != "active" {
+		return domain.ErrAccountSuspended
+	}
 	if strings.EqualFold(strings.TrimSpace(account.Email), newEmail) {
 		return domain.ErrEmailUnchanged
 	}
@@ -399,6 +405,9 @@ func (service *OTPService) ConfirmEmailChange(
 	}
 	if account.ID != userID || !account.IsVerified {
 		return domain.ErrInvalidCredentials
+	}
+	if account.AccountStatus != "" && account.AccountStatus != "active" {
+		return domain.ErrAccountSuspended
 	}
 	if strings.EqualFold(strings.TrimSpace(account.Email), newEmail) {
 		return domain.ErrEmailUnchanged

@@ -202,6 +202,37 @@ func TestSuspendedPassengerCannotUseVerificationOTP(t *testing.T) {
 	}
 }
 
+func TestSuspendedAccountCannotRequestOrResetPassword(t *testing.T) {
+	repository := &otpRepository{account: domain.User{
+		ID: 8, Email: "driver@example.test", Role: domain.Driver, AccountStatus: "suspended", PasswordHash: "$2a$12$somehash",
+	}}
+	gateway := &otpGateway{}
+	store := &otpMemoryStore{values: map[string]string{}}
+	service := authapp.NewOTPService(authapp.OTPDependencies{
+		Users:    repository,
+		Store:    store,
+		Gateway:  gateway,
+		Tokens:   otpIssuer{},
+		Sessions: newTestRefreshSessionStore(),
+	})
+
+	// Request should return nil silently without sending any code
+	err := service.RequestPasswordResetForRole(context.Background(), "driver@example.test", domain.Driver)
+	if err != nil {
+		t.Fatalf("RequestPasswordResetForRole() error = %v, want nil", err)
+	}
+	if gateway.sent != "" {
+		t.Fatal("reset code was sent to a suspended driver account")
+	}
+
+	// Reset attempt with existing code must be rejected with ErrAccountSuspended
+	store.values["reset:driver@example.test"] = "123456"
+	err = service.ResetPasswordForRole(context.Background(), "driver@example.test", "123456", "new-secret-8", domain.Driver)
+	if !errors.Is(err, domain.ErrAccountSuspended) {
+		t.Fatalf("ResetPasswordForRole() error = %v, want ErrAccountSuspended", err)
+	}
+}
+
 func (repository *otpRepository) UpgradePasswordHash(_ context.Context, id int, expectedHash, passwordHash string) (bool, error) {
 	return false, nil
 }
