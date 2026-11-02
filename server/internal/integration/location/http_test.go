@@ -24,13 +24,32 @@ func TestLocationHTTPRejectsInvalidCoordinatesAsClientErrors(t *testing.T) {
 		"/api/v1/location/nearby?lat=91&lng=123.4",
 		"/api/v1/location/reverse?lat=7.8&lng=181",
 	} {
-		request := httptest.NewRequest(http.MethodGet, path, nil)
+		request := authenticatedRequest(t, http.MethodGet, path, "")
 		response := httptest.NewRecorder()
 
 		router.ServeHTTP(response, request)
 
 		if response.Code != http.StatusBadRequest {
 			t.Fatalf("%s status = %d, want %d", path, response.Code, http.StatusBadRequest)
+		}
+	}
+}
+
+func TestLocationHTTPRejectsUnauthenticatedRequests(t *testing.T) {
+	router := newLocationRouter()
+
+	for _, path := range []string{
+		"/api/v1/location/search?lat=7.8&lng=123.4&q=test",
+		"/api/v1/location/nearby?lat=7.8&lng=123.4",
+		"/api/v1/location/reverse?lat=7.8&lng=123.4",
+	} {
+		request := httptest.NewRequest(http.MethodGet, path, nil)
+		response := httptest.NewRecorder()
+
+		router.ServeHTTP(response, request)
+
+		if response.Code != http.StatusUnauthorized {
+			t.Fatalf("%s status = %d, want %d", path, response.Code, http.StatusUnauthorized)
 		}
 	}
 }

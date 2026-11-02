@@ -29,9 +29,11 @@ func NewRouter(
 func (router *Router) RegisterRoutes(mux chi.Router) {
 	locationPolicy := router.routeSecurity.Middleware(middleware.RouteLocationQuery)
 	authenticate := middleware.RequireAuth(router.verifier)
-	mux.With(locationPolicy, authenticate).Get(api.V1Prefix+"/location/search", router.handler.Search)
-	mux.With(locationPolicy, authenticate).Get(api.V1Prefix+"/location/nearby", router.handler.Nearby)
-	mux.With(locationPolicy, authenticate).Get(api.V1Prefix+"/location/reverse", router.handler.Reverse)
-	mux.With(locationPolicy, authenticate).Post(api.V1Prefix+"/location/route", router.handler.Route)
-	mux.With(locationPolicy, authenticate).Post(api.V1Prefix+"/location/matrix", router.handler.Matrix)
+	mux.With(locationPolicy, authenticate).Group(func(protected chi.Router) {
+		protected.Get(api.V1Prefix+"/location/search", router.handler.Search)
+		protected.Get(api.V1Prefix+"/location/nearby", router.handler.Nearby)
+		protected.Get(api.V1Prefix+"/location/reverse", router.handler.Reverse)
+		protected.Post(api.V1Prefix+"/location/route", router.handler.Route)
+		protected.Post(api.V1Prefix+"/location/matrix", router.handler.Matrix)
+	})
 }
