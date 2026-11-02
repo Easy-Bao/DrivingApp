@@ -58,12 +58,31 @@ func TestPublicDriverSummariesPreserveFieldsAndHideSensitiveData(t *testing.T) {
 	reader := &availabilityReader{summaries: []domain.PublicDriverSummary{{
 		ID: 7, Name: "Ada Driver", VehicleType: "Motorcycle", Rating: 4.8,
 	}}}
-	mux := newAvailabilityRouter(reader, nil)
+	verifier := security.NewTokenManager("dispatch-test-secret")
+	mux := newAvailabilityRouter(reader, verifier)
+
+	// Unauthenticated request must be rejected with 401
+	unauthRequest := httptest.NewRequest(
+		http.MethodGet,
+		api.V1Prefix+"/drivers/public/summaries?limit=1",
+		nil,
+	)
+	unauthResponse := httptest.NewRecorder()
+	mux.ServeHTTP(unauthResponse, unauthRequest)
+	if unauthResponse.Code != http.StatusUnauthorized {
+		t.Fatalf("unauthenticated status = %d, want %d", unauthResponse.Code, http.StatusUnauthorized)
+	}
+
+	token, err := verifier.IssueWithRole("42", security.RolePassenger)
+	if err != nil {
+		t.Fatalf("issue token: %v", err)
+	}
 	request := httptest.NewRequest(
 		http.MethodGet,
 		api.V1Prefix+"/drivers/public/summaries?limit=1",
 		nil,
 	)
+	request.Header.Set("Authorization", "Bearer "+token)
 	response := httptest.NewRecorder()
 	mux.ServeHTTP(response, request)
 

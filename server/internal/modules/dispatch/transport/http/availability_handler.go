@@ -14,6 +14,10 @@ func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
+	if handler.availability == nil {
+		response.Error(w, http.StatusServiceUnavailable, "driver availability unavailable")
+		return
+	}
 	driverIDs, err := driverIDsFromQuery(r)
 	if err != nil {
 		response.Error(w, http.StatusBadRequest, "driver ids are required")
@@ -28,6 +32,14 @@ func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) PublicDriverSummaries(w http.ResponseWriter, r *http.Request) {
+	if _, ok := handler.identity(r); !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	if handler.availability == nil {
+		response.Error(w, http.StatusServiceUnavailable, "driver availability unavailable")
+		return
+	}
 	limit := 5
 	if r.URL.Query().Has("limit") {
 		var err error
