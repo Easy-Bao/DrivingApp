@@ -51,6 +51,13 @@ func NewAuthenticateService(dependencies AuthenticateDependencies) *Authenticate
 	}
 }
 
+func (service *AuthenticateService) getDummyHash() string {
+	if service != nil && service.dummyHash != "" {
+		return service.dummyHash
+	}
+	return _dummyBcryptHash
+}
+
 func (service *AuthenticateService) WithLogger(logger *slog.Logger) *AuthenticateService {
 	if logger != nil {
 		service.logger = logger
@@ -96,14 +103,14 @@ func (service *AuthenticateService) execute(
 			service.log().WarnContext(ctx, "find account for authentication failed", "error", err)
 			return domain.User{}, SessionTokens{}, fmt.Errorf("lookup user account: %w", err)
 		}
-		dummyHash := service.dummyHash
-		if dummyHash == "" {
-			dummyHash = _dummyBcryptHash
-		}
-		_ = security.VerifyPassword(dummyHash, password)
+		_ = security.VerifyPassword(service.getDummyHash(), password)
 		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
 	}
-	if !security.VerifyPassword(account.PasswordHash, password) {
+	hashToVerify := account.PasswordHash
+	if hashToVerify == "" {
+		hashToVerify = service.getDummyHash()
+	}
+	if !security.VerifyPassword(hashToVerify, password) {
 		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
 	}
 	if role != "" && account.Role != role {

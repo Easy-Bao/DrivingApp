@@ -23,7 +23,11 @@ func (r *repository) Create(_ context.Context, account domain.User) (domain.User
 	return account, nil
 }
 func (r *repository) FindByEmail(_ context.Context, email string) (domain.User, error) {
-	return r.users[email], nil
+	account, ok := r.users[email]
+	if !ok {
+		return domain.User{}, domain.ErrUserNotFound
+	}
+	return account, nil
 }
 func (r *repository) FindByID(_ context.Context, id int) (domain.User, error) {
 	for _, account := range r.users {
@@ -31,7 +35,7 @@ func (r *repository) FindByID(_ context.Context, id int) (domain.User, error) {
 			return account, nil
 		}
 	}
-	return domain.User{}, nil
+	return domain.User{}, domain.ErrUserNotFound
 }
 func (r *repository) UpdatePassword(_ context.Context, id int, passwordHash string) error {
 	for email, account := range r.users {
@@ -237,6 +241,32 @@ func TestAuthenticationRejectsSuspendedAccount(t *testing.T) {
 	})
 	if _, _, err := authenticate.Execute(context.Background(), "suspended@example.test", "secret-8"); !errors.Is(err, domain.ErrAccountSuspended) {
 		t.Fatalf("expected ErrAccountSuspended, got %v", err)
+	}
+}
+
+func TestAuthenticationNonExistentUserAndBlankPasswordHash(t *testing.T) {
+	repository := &repository{users: map[string]domain.User{
+		"oauth@example.test": {
+			ID:           11,
+			Email:        "oauth@example.test",
+			Role:         domain.Passenger,
+			PasswordHash: "",
+		},
+	}}
+	authenticate := newTestAuthenticateService(authapp.AuthenticateDependencies{
+		Repository: repository,
+		Tokens:     issuer{},
+		Sessions:   newTestRefreshSessionStore(),
+	})
+
+	// Non-existent user should fail with ErrInvalidCredentials after dummy verification
+	if _, _, err := authenticate.Execute(context.Background(), "ghost@example.test", "wrong-password"); !errors.Is(err, domain.ErrInvalidCredentials) {
+		t.Fatalf("nonexistent user error = %v, want ErrInvalidCredentials", err)
+	}
+
+	// User without password hash should fail with ErrInvalidCredentials after dummy verification
+	if _, _, err := authenticate.Execute(context.Background(), "oauth@example.test", "wrong-password"); !errors.Is(err, domain.ErrInvalidCredentials) {
+		t.Fatalf("blank hash user error = %v, want ErrInvalidCredentials", err)
 	}
 }
 
