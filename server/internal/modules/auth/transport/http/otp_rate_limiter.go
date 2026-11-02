@@ -48,6 +48,19 @@ func (limiter *OTPVerificationRateLimiter) Middleware(next http.Handler) http.Ha
 			return
 		}
 
+		remaining := domain.MaxOTPVerificationAttempts - count
+		if remaining < 0 {
+			remaining = 0
+		}
+		writer.Header().Set(
+			"X-RateLimit-Limit",
+			fmt.Sprintf("%d", domain.MaxOTPVerificationAttempts),
+		)
+		writer.Header().Set(
+			"X-RateLimit-Remaining",
+			fmt.Sprintf("%d", remaining),
+		)
+
 		if count > domain.MaxOTPVerificationAttempts {
 			if count == domain.MaxOTPVerificationAttempts+1 {
 				slog.WarnContext(
@@ -60,10 +73,6 @@ func (limiter *OTPVerificationRateLimiter) Middleware(next http.Handler) http.Ha
 				)
 			}
 			writer.Header().Set("Retry-After", "900")
-			writer.Header().Set(
-				"X-RateLimit-Limit",
-				fmt.Sprintf("%d", domain.MaxOTPVerificationAttempts),
-			)
 			response.Error(writer, http.StatusTooManyRequests, "too many verification attempts")
 			return
 		}

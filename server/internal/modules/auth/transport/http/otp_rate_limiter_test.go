@@ -30,11 +30,20 @@ func TestOTPVerificationRateLimiterThrottlesByIP(t *testing.T) {
 		if response.Code != http.StatusNoContent {
 			t.Fatalf("attempt %d status = %d, want %d", attempt+1, response.Code, http.StatusNoContent)
 		}
+		if limit := response.Header().Get("X-RateLimit-Limit"); limit != "5" {
+			t.Fatalf("attempt %d limit = %q, want 5", attempt+1, limit)
+		}
 	}
 
 	blocked := serveOTPVerificationAttempt(handler, "passenger@example.test", "192.0.2.10:1234")
 	if blocked.Code != http.StatusTooManyRequests {
 		t.Fatalf("blocked status = %d, want %d", blocked.Code, http.StatusTooManyRequests)
+	}
+	if remaining := blocked.Header().Get("X-RateLimit-Remaining"); remaining != "0" {
+		t.Fatalf("blocked remaining = %q, want 0", remaining)
+	}
+	if retryAfter := blocked.Header().Get("Retry-After"); retryAfter != "900" {
+		t.Fatalf("blocked retry-after = %q, want 900", retryAfter)
 	}
 
 	// Another IP is not blocked, even for the same target email
