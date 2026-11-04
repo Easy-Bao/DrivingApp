@@ -296,6 +296,15 @@ final class DashboardRepositoryImpl({
   }
 
   @override
+  Future<Result<void, Failure>> publishDriverLocation({
+    required double lat,
+    required double lng,
+  }) async {
+    if (lat == 0 && lng == 0) return const Ok(null);
+    return _rideRepository.publishDriverLocation(latitude: lat, longitude: lng);
+  }
+
+  @override
   Future<Result<DashboardStats, Failure>> getDashboardStats() async {
     try {
       final driverId = await _getDriverId();

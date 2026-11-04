@@ -104,7 +104,7 @@ class LocationService._() {
       }
       return position;
     } catch (_) {
-      return null;
+      return _lastPosition;
     }
   }
 

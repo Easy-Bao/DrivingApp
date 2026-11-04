@@ -12,6 +12,11 @@ abstract interface class DashboardRepository {
     required double lng,
   });
 
+  Future<Result<void, Failure>> publishDriverLocation({
+    required double lat,
+    required double lng,
+  }) async => const Ok(null);
+
   Future<Result<DashboardStats, Failure>> getDashboardStats();
 
   Future<Result<DispatchSnapshot, Failure>> getDispatchSnapshot({
@@ -45,6 +50,16 @@ extension DashboardRepositoryResultApi on DashboardRepository {
     return captureResult(
       () => updateOnlineStatus(isOnline: isOnline, lat: lat, lng: lng),
       message: 'Unable to update driver availability right now.',
+    );
+  }
+
+  Future<Result<void, DomainFailure>> publishDriverLocationResult({
+    required double lat,
+    required double lng,
+  }) {
+    return captureResult(
+      () => publishDriverLocation(lat: lat, lng: lng),
+      message: 'Unable to publish driver location right now.',
     );
   }
 

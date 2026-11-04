@@ -69,6 +69,7 @@ class _DashboardPageState extends State<DashboardPage>
   bool? _pendingOnline;
   bool _isShowingRequest = false;
   bool _isOpeningTrip = false;
+  bool _isActiveTripRouteOpen = false;
   bool _tripNavigationScheduled = false;
   String? _attemptedTripId;
   String? _tripNavigationError;
@@ -303,14 +304,16 @@ class _DashboardPageState extends State<DashboardPage>
     if (!_isForeground || _isResumingOnline) return;
     _isResumingOnline = true;
     try {
-      final position = await LocationService.getCurrentPosition();
+      final position =
+          await LocationService.getCurrentPosition() ??
+          LocationService.lastPosition;
       if (!mounted) return;
       final cubit = BlocProvider.of<DashboardCubit>(context);
-      if (!cubit.state.isOnline || position == null) return;
+      if (!cubit.state.isOnline) return;
 
       await cubit.refreshOnlinePresence(
-        lat: position.latitude,
-        lng: position.longitude,
+        lat: position?.latitude ?? 0,
+        lng: position?.longitude ?? 0,
       );
       if (!mounted || !cubit.state.isOnline) return;
       // Keep the heartbeat alive after a transient refresh failure; the next
@@ -321,6 +324,9 @@ class _DashboardPageState extends State<DashboardPage>
         'Unable to restore online driver telemetry; preserving online intent.',
         error: error,
       );
+      if (mounted && BlocProvider.of<DashboardCubit>(context).state.isOnline) {
+        _startPolling();
+      }
     } finally {
       _isResumingOnline = false;
     }
@@ -347,6 +353,12 @@ class _DashboardPageState extends State<DashboardPage>
     _locationSubscription = LocationService.getPositionStream().listen(
       (position) {
         if (!mounted || pollGeneration != _pollGeneration) return;
+        unawaited(
+          BlocProvider.of<DashboardCubit>(context).publishDriverLocation(
+            lat: position.latitude,
+            lng: position.longitude,
+          ),
+        );
       },
       onError: (Object error, StackTrace stackTrace) {
         dev.log(
@@ -443,8 +455,20 @@ class _DashboardPageState extends State<DashboardPage>
     ride['id'] = rideId;
     ride['status'] = status;
 
-    BlocProvider.of<DashboardCubit>(context)
-        .mergeActiveRide(RideSnapshot.fromJson(ride, fallbackId: rideId));
+    final payload = event.envelope.payload;
+    final matchedSessionId =
+        valueAsString(payload['session_id']) ??
+        (payload['session'] is Map
+            ? valueAsString((payload['session'] as Map)['id'])
+            : null) ??
+        (payload['offer'] is Map
+            ? valueAsString((payload['offer'] as Map)['session_id'])
+            : null);
+
+    BlocProvider.of<DashboardCubit>(context).mergeActiveRide(
+      RideSnapshot.fromJson(ride, fallbackId: rideId),
+      sessionId: matchedSessionId,
+    );
   }
 
   void _handleRideStatusChanged(RideStatusChangedEvent event) {
@@ -518,7 +542,16 @@ class _DashboardPageState extends State<DashboardPage>
         builder: (dialogContext) =>
             TripEndedDialog(title: title, message: message),
       );
-      if (mounted) context.goNamed(DashboardRoutes.dashboard);
+      if (mounted) {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.goNamed(DashboardRoutes.dashboard);
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) unawaited(_showIncomingRequest());
+        });
+      }
     } finally {
       _isHandlingRideTerminal = false;
     }
@@ -542,14 +575,17 @@ class _DashboardPageState extends State<DashboardPage>
   Future<void> _refreshOnlinePresence() async {
     if (!mounted || !_isForeground || _isRefreshingPresence) return;
     final cubit = BlocProvider.of<DashboardCubit>(context);
-    final position = LocationService.lastPosition;
-    if (!cubit.state.isOnline || position == null) return;
+    if (!cubit.state.isOnline) return;
 
     _isRefreshingPresence = true;
     try {
+      final position =
+          LocationService.lastPosition ??
+          await LocationService.getCurrentPosition();
+      if (!mounted || !cubit.state.isOnline) return;
       await cubit.refreshOnlinePresence(
-        lat: position.latitude,
-        lng: position.longitude,
+        lat: position?.latitude ?? 0,
+        lng: position?.longitude ?? 0,
       );
     } finally {
       _isRefreshingPresence = false;
@@ -632,12 +668,23 @@ class _DashboardPageState extends State<DashboardPage>
         if (resolvedOnline) {
           _startPolling();
           if (LocationService.lastPosition == null) {
-            unawaited(LocationService.getCurrentPosition());
+            unawaited(_publishInitialPositionAfterToggle());
           }
         }
         setState(() => _isTogglingOnline = false);
       }
     }
+  }
+
+  Future<void> _publishInitialPositionAfterToggle() async {
+    final position = await LocationService.getCurrentPosition();
+    if (!mounted || position == null) return;
+    final cubit = BlocProvider.of<DashboardCubit>(context);
+    if (!cubit.state.isOnline) return;
+    await cubit.publishDriverLocation(
+      lat: position.latitude,
+      lng: position.longitude,
+    );
   }
 
   Future<bool> _hasReadyLocationAccess(BuildContext context) async {
@@ -655,13 +702,19 @@ class _DashboardPageState extends State<DashboardPage>
     }
   }
 
+  bool get _canPresentIncomingRequest {
+    if (!mounted || _isShowingRequest || _isOpeningTrip || !_isForeground) {
+      return false;
+    }
+    if (ModalRoute.of(context)?.isCurrent != true) {
+      return false;
+    }
+    final rootCanPop = Navigator.of(context, rootNavigator: true).canPop();
+    return !rootCanPop || _isActiveTripRouteOpen;
+  }
+
   Future<void> _showIncomingRequest() async {
-    if (!mounted ||
-        _isShowingRequest ||
-        _isOpeningTrip ||
-        !_isForeground ||
-        ModalRoute.of(context)?.isCurrent != true ||
-        Navigator.of(context, rootNavigator: true).canPop()) {
+    if (!_canPresentIncomingRequest) {
       return;
     }
     final cubit = BlocProvider.of<DashboardCubit>(context);
@@ -710,7 +763,7 @@ class _DashboardPageState extends State<DashboardPage>
       final assigned = cubit.state.activeRides
           .where((ride) => !previousRideIds.contains(ride.id))
           .firstOrNull;
-      if (assigned != null) {
+      if (assigned != null && !_isActiveTripRouteOpen) {
         _scheduleActiveTripNavigation(rideId: assigned.id);
       } else {
         unawaited(_refreshOnlinePresence());
@@ -734,6 +787,7 @@ class _DashboardPageState extends State<DashboardPage>
     if (!mounted ||
         !_isForeground ||
         _isOpeningTrip ||
+        _isActiveTripRouteOpen ||
         _isShowingRequest ||
         ModalRoute.of(context)?.isCurrent != true ||
         Navigator.of(context, rootNavigator: true).canPop()) {
@@ -754,33 +808,55 @@ class _DashboardPageState extends State<DashboardPage>
       _attemptedTripId = trip.id;
       _tripNavigationError = null;
     });
-    var opened = false;
+    Map<String, Object?>? routeExtra;
+    var resolvedWithoutRoute = false;
     try {
-      opened = await _resumeTrip(trip);
+      (routeExtra, resolvedWithoutRoute) = await _prepareTripNavigation(trip);
     } catch (_) {
-      opened = false;
+      routeExtra = null;
+      resolvedWithoutRoute = false;
     } finally {
       if (mounted) {
         setState(() {
           _isOpeningTrip = false;
-          if (!opened) {
+          if (routeExtra == null && !resolvedWithoutRoute) {
             _tripNavigationError = 'Your trip could not be opened. Refresh its status and try again.';
           }
         });
-        unawaited(_showIncomingRequest());
+      }
+    }
+    if (!mounted || !context.mounted) return;
+    if (routeExtra == null) {
+      unawaited(_showIncomingRequest());
+      return;
+    }
+    _isActiveTripRouteOpen = true;
+    try {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_showIncomingRequest());
+      });
+      await context.pushNamed(ActiveRideRoutes.trip, extra: routeExtra);
+    } finally {
+      _isActiveTripRouteOpen = false;
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) unawaited(_showIncomingRequest());
+        });
       }
     }
   }
 
-  Future<bool> _resumeTrip(RideSnapshot trip) async {
+  Future<(Map<String, Object?>?, bool)> _prepareTripNavigation(
+    RideSnapshot trip,
+  ) async {
     final rideId = trip.id;
     final rideFlowCubit = BlocProvider.of<RideFlowCubit>(context);
     var resolvedTrip = await BlocProvider.of<DashboardCubit>(context)
         .fetchAuthoritativeRide(trip.id);
-    if (resolvedTrip == null) return false;
-    if (!mounted || !context.mounted) return false;
-    if (await _discardTerminalTrip(resolvedTrip, rideId)) return true;
-    if (!mounted || !context.mounted) return false;
+    if (resolvedTrip == null) return (null, false);
+    if (!mounted || !context.mounted) return (null, false);
+    if (await _discardTerminalTrip(resolvedTrip, rideId)) return (null, true);
+    if (!mounted || !context.mounted) return (null, false);
     if (!_reviewedTripIds.contains(rideId) &&
         resolvedTrip.needsRecoveryReview(DateTime.now())) {
       await showDialog<void>(
@@ -801,20 +877,22 @@ class _DashboardPageState extends State<DashboardPage>
           ],
         ),
       );
-      if (!mounted || !context.mounted) return false;
+      if (!mounted || !context.mounted) return (null, false);
       _reviewedTripIds.add(rideId);
       // The passenger may cancel while the review is open.
       resolvedTrip = await BlocProvider.of<DashboardCubit>(context)
           .fetchAuthoritativeRide(rideId);
-      if (!mounted || !context.mounted || resolvedTrip == null) return false;
-      if (await _discardTerminalTrip(resolvedTrip, rideId)) return true;
-      if (!mounted || !context.mounted) return false;
+      if (!mounted || !context.mounted || resolvedTrip == null) {
+        return (null, false);
+      }
+      if (await _discardTerminalTrip(resolvedTrip, rideId)) return (null, true);
+      if (!mounted || !context.mounted) return (null, false);
     }
     final fare = resolvedTrip.farePesos;
     final distance = resolvedTrip.distanceKm;
     final duration = resolvedTrip.durationMinutes;
     if (fare == null || distance == null || duration == null) {
-      return false;
+      return (null, false);
     }
 
     final resumed = await rideFlowCubit.resumeRide(
@@ -831,11 +909,10 @@ class _DashboardPageState extends State<DashboardPage>
       arrivedAt: resolvedTrip.arrivedAt,
       waitingUntil: resolvedTrip.waitingUntil,
     );
-    if (!resumed || !mounted || !context.mounted) return false;
+    if (!resumed || !mounted || !context.mounted) return (null, false);
 
-    await context.pushNamed(
-      ActiveRideRoutes.trip,
-      extra: {
+    return (
+      <String, Object?>{
         'rideId': rideId,
         'pickup': resolvedTrip.pickupName,
         'dropoff': resolvedTrip.dropoffName,
@@ -843,8 +920,8 @@ class _DashboardPageState extends State<DashboardPage>
         'fare': fare,
         'duration': '${duration.toStringAsFixed(0)} min',
       },
+      true,
     );
-    return true;
   }
 
   Future<bool> _discardTerminalTrip(RideSnapshot trip, String rideId) async {

@@ -489,6 +489,57 @@ void main() {
       await cubit.close();
     });
 
+    test('clears the matched session from submitted offers when realtime ride is matched', () async {
+      final now = DateTime.utc(2026, 10, 12, 10);
+      final expiresAt = now.add(const Duration(seconds: 90)).toIso8601String();
+      when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
+        (_) async => Ok(
+          DispatchSnapshot(
+            rideOffers: [
+              {
+                'id': 'session-1',
+                'offered_fare': 25000,
+                'expires_at': expiresAt,
+              },
+              {
+                'id': 'session-2',
+                'offered_fare': 30000,
+                'expires_at': expiresAt,
+              },
+            ],
+          ),
+        ),
+      );
+      when(() => repo.submitRideOffer(sessionId: 'session-1', farePesos: 250))
+          .thenAnswer((_) async => const Ok(null));
+      final cubit = DashboardCubit(repository: repo, now: () => now);
+
+      await cubit.loadDispatchSnapshot();
+      expect(
+        await cubit.submitRideOffer(sessionId: 'session-1', farePesos: 250),
+        isTrue,
+      );
+      expect(cubit.state.submittedOffers, hasLength(1));
+
+      cubit.mergeActiveRide(
+        const RideSnapshot(
+          id: 'ride-1',
+          status: 'accepted',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+        ),
+        sessionId: 'session-1',
+      );
+
+      expect(cubit.state.submittedOffers, isEmpty);
+      expect(cubit.state.activeBids.map((bid) => bid['id']), ['session-2']);
+
+      await cubit.loadDispatchSnapshot();
+      expect(cubit.state.submittedOffers, isEmpty);
+      expect(cubit.state.activeBids.map((bid) => bid['id']), ['session-2']);
+      await cubit.close();
+    });
+
     test(
       'does not restore a ride removed while a snapshot is pending',
       () async {

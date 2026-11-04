@@ -248,4 +248,171 @@ void main() {
       );
     }
   }
+
+  testWidgets(
+    'presents a second incoming booking request while an active trip is open and after returning to dashboard',
+    (tester) async {
+      final dashboard = _Dashboard();
+      final flow = _RideFlow();
+      final location = _Location();
+      final states = StreamController<DashboardState>.broadcast();
+      final lifecycle = AppLifecycleCoordinator();
+      final realtime = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://example.test'),
+        tokenProvider: () async => null,
+      );
+      const firstTrip = RideSnapshot(
+        id: 'trip-1',
+        status: 'accepted',
+        pickupName: 'First Pickup',
+        dropoffName: 'First Destination',
+        distanceKm: 2,
+        durationMinutes: 5,
+        fareAmount: 2800,
+      );
+      const secondTrip = RideSnapshot(
+        id: 'trip-2',
+        status: 'accepted',
+        pickupName: 'Second Pickup',
+        dropoffName: 'Second Destination',
+        distanceKm: 3,
+        durationMinutes: 8,
+        fareAmount: 3500,
+      );
+      const secondBid = <String, dynamic>{
+        'id': 'session-2',
+        'target_driver_id': 42,
+        'offered_fare': 3500,
+        'pickup_name': 'Second Pickup',
+        'dropoff_name': 'Second Destination',
+      };
+
+      var currentState = const DashboardState(isOnline: true);
+      when(() => dashboard.state).thenAnswer((_) => currentState);
+      when(() => dashboard.stream).thenAnswer((_) => states.stream);
+      void emitDashboard(DashboardState next) {
+        currentState = next;
+        states.add(next);
+      }
+
+      when(() => flow.state).thenReturn(const Idle());
+      when(() => location.state).thenReturn(const LocationAccessReady());
+      when(
+        () => dashboard.loadDispatchSnapshot(
+          includeOffers: any(named: 'includeOffers'),
+          silent: any(named: 'silent'),
+          force: any(named: 'force'),
+        ),
+      ).thenAnswer((_) async => true);
+      when(() => dashboard.removeExpiredRideOffers()).thenReturn(false);
+      when(
+        () => dashboard.refreshOnlinePresence(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer((_) async => true);
+      when(() => dashboard.fetchAuthoritativeRide('trip-1'))
+          .thenAnswer((_) async => firstTrip);
+      when(() => dashboard.fetchAuthoritativeRide('trip-2'))
+          .thenAnswer((_) async => secondTrip);
+      when(
+        () => dashboard.submitRideOffer(sessionId: 'session-2', farePesos: 35),
+      ).thenAnswer((_) async {
+        emitDashboard(
+          const DashboardState(
+            isOnline: true,
+            activeRides: [firstTrip, secondTrip],
+          ),
+        );
+        return true;
+      });
+      when(
+        () => flow.resumeRide(
+          rideId: any(named: 'rideId'),
+          bookingReference: any(named: 'bookingReference'),
+          status: any(named: 'status'),
+          passengerName: any(named: 'passengerName'),
+          passengerId: any(named: 'passengerId'),
+          distanceKm: any(named: 'distanceKm'),
+          pickupLatitude: any(named: 'pickupLatitude'),
+          pickupLongitude: any(named: 'pickupLongitude'),
+          destinationLatitude: any(named: 'destinationLatitude'),
+          destinationLongitude: any(named: 'destinationLongitude'),
+          arrivedAt: any(named: 'arrivedAt'),
+          waitingUntil: any(named: 'waitingUntil'),
+        ),
+      ).thenAnswer((_) async => true);
+
+      final observer = _TripObserver();
+      final router = GoRouter(
+        observers: [observer],
+        routes: [
+          ShellRoute(
+            builder: (_, _, child) => child,
+            routes: [
+              GoRoute(
+                path: '/',
+                builder: (_, _) => DashboardPage(
+                  lifecycleCoordinator: lifecycle,
+                  realtimeClient: realtime,
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/trip',
+            name: ActiveRideRoutes.trip,
+            builder: (_, _) => const Scaffold(body: Text('Active trip')),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<DashboardCubit>.value(value: dashboard),
+            BlocProvider<RideFlowCubit>.value(value: flow),
+            BlocProvider<LocationAccessCubit>.value(value: location),
+          ],
+          child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+        ),
+      );
+      await tester.pump();
+
+      // 1st booking is assigned and opens Active trip page.
+      emitDashboard(
+        const DashboardState(isOnline: true, activeRides: [firstTrip]),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Active trip'), findsOneWidget);
+      expect(observer.pushes, 1);
+
+      // 2nd booking arrives for the same driver while 1st trip is open.
+      emitDashboard(
+        const DashboardState(
+          isOnline: true,
+          activeRides: [firstTrip],
+          activeBids: [secondBid],
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('A passenger chose you'), findsOneWidget);
+      expect(find.text('Second Pickup'), findsOneWidget);
+
+      // Driver accepts the 2nd booking and returns to the active 1st trip without pushing a duplicate trip route.
+      await tester.tap(find.text('Accept ride'));
+      await tester.pumpAndSettle();
+      expect(find.text('Active trip'), findsOneWidget);
+      expect(observer.pushes, 1);
+
+      await tester.pumpWidget(const SizedBox());
+      router.dispose();
+      await states.close();
+      await lifecycle.dispose();
+      await realtime.dispose();
+      await dashboard.close();
+      await flow.close();
+      await location.close();
+    },
+  );
 }

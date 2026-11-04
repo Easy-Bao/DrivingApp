@@ -213,7 +213,11 @@ class _DriverTripPageState extends State<DriverTripPage> {
       await widget.rideCompletionHandler.afterRideCompleted(rideId: rideId);
     }
     if (!mounted) return;
-    context.goNamed(DashboardRoutes.dashboard);
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.goNamed(DashboardRoutes.dashboard);
+    }
   }
 
   void _showError(String message) {

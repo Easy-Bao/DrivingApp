@@ -176,8 +176,9 @@ class DashboardCubit({
               .map((ride) => ride.id)
               .toSet();
           for (final current in state.activeRides) {
-            if (!snapshotIds.contains(current.id))
+            if (!snapshotIds.contains(current.id)) {
               _terminalRideIds.add(current.id);
+            }
           }
           for (final ride in snapshot.activeRides.where(
             (ride) => ride.isTerminal,
@@ -293,7 +294,7 @@ class DashboardCubit({
       (failure is ServerFailure &&
           (failure.statusCode == null || failure.statusCode! >= 500));
 
-  void mergeActiveRide(RideSnapshot ride) {
+  void mergeActiveRide(RideSnapshot ride, {String? sessionId}) {
     if (ride.id.isEmpty) return;
     if (ride.isTerminal) {
       removeActiveRide(ride.id);
@@ -307,11 +308,32 @@ class DashboardCubit({
       if (!state.activeRides.any((current) => current.id == ride.id)) ride,
     ]);
     final isFull = rides.length >= DashboardState.maxActiveBookings;
+    final resolvedSessionId = _stringValue(sessionId);
+    if (resolvedSessionId != null) {
+      _recordResolvedOfferSession(resolvedSessionId);
+      _submittedOfferRevision++;
+    }
     emit(
       state.copyWith(
         activeRides: rides,
-        activeBids: isFull ? const [] : null,
-        submittedOffers: isFull ? const [] : null,
+        activeBids: isFull
+            ? const []
+            : resolvedSessionId != null
+            ? _immutableMaps(
+                state.activeBids.where(
+                  (bid) => _stringValue(bid['id']) != resolvedSessionId,
+                ),
+              )
+            : null,
+        submittedOffers: isFull
+            ? const []
+            : resolvedSessionId != null
+            ? _immutableMaps(
+                state.submittedOffers.where(
+                  (offer) => _stringValue(offer['id']) != resolvedSessionId,
+                ),
+              )
+            : null,
       ),
     );
   }
@@ -421,8 +443,7 @@ class DashboardCubit({
     _submittedOfferRevision++;
   }
 
-  bool resolveSubmittedOffer(String? sessionId) {
-    if (sessionId == null) return false;
+  void _recordResolvedOfferSession(String sessionId) {
     final candidates = [...state.submittedOffers, ...state.activeBids];
     Map<String, dynamic>? matchingBid;
     for (final bid in candidates) {
@@ -431,22 +452,38 @@ class DashboardCubit({
         break;
       }
     }
-    if (matchingBid == null) return false;
-
     final expiresAt = DateTime.tryParse(
-      _stringValue(matchingBid['expires_at']) ?? '',
+      _stringValue(matchingBid?['expires_at']) ?? '',
     );
-    if (expiresAt != null && expiresAt.isAfter(_now())) {
-      _resolvedOfferSessions[sessionId] = expiresAt;
-    }
+    final retentionUntil = expiresAt != null && expiresAt.isAfter(_now())
+        ? expiresAt
+        : _now().add(const Duration(minutes: 2));
+    _resolvedOfferSessions[sessionId] = retentionUntil;
+  }
+
+  bool resolveSubmittedOffer(String? sessionId) {
+    final resolvedSessionId = _stringValue(sessionId);
+    if (resolvedSessionId == null) return false;
+    final hasMatchingBid =
+        state.submittedOffers.any(
+          (offer) => _stringValue(offer['id']) == resolvedSessionId,
+        ) ||
+        state.activeBids.any(
+          (bid) => _stringValue(bid['id']) == resolvedSessionId,
+        );
+    _recordResolvedOfferSession(resolvedSessionId);
+    if (!hasMatchingBid) return false;
+
     emit(
       state.copyWith(
         activeBids: _immutableMaps(
-          state.activeBids.where((bid) => _stringValue(bid['id']) != sessionId),
+          state.activeBids.where(
+            (bid) => _stringValue(bid['id']) != resolvedSessionId,
+          ),
         ),
         submittedOffers: _immutableMaps(
           state.submittedOffers.where(
-            (offer) => _stringValue(offer['id']) != sessionId,
+            (offer) => _stringValue(offer['id']) != resolvedSessionId,
           ),
         ),
       ),
@@ -595,6 +632,22 @@ class DashboardCubit({
         emit(state.copyWith(isOnline: false, errorMessage: null));
       },
     );
+  }
+
+  Future<bool> publishDriverLocation({
+    required double lat,
+    required double lng,
+  }) async {
+    if (!state.isOnline || (lat == 0 && lng == 0)) return false;
+    final result = await _repository.publishDriverLocationResult(
+      lat: lat,
+      lng: lng,
+    );
+    if (isClosed) return false;
+    return result.fold((failure) {
+      dev.log('Unable to publish driver location: ${failure.runtimeType}');
+      return false;
+    }, (_) => true);
   }
 
   Future<bool> refreshOnlinePresence({
