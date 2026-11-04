@@ -233,6 +233,23 @@ func TestSuspendedAccountCannotRequestOrResetPassword(t *testing.T) {
 	}
 }
 
+func TestCryptographicOTPGeneration(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		code, err := authapp.GenerateOTP()
+		if err != nil {
+			t.Fatalf("generateOTP() error = %v", err)
+		}
+		if len(code) != 6 {
+			t.Fatalf("generateOTP() len = %d (%q), want 6", len(code), code)
+		}
+		for _, c := range code {
+			if c < '0' || c > '9' {
+				t.Fatalf("generateOTP() non-digit character %q in code %q", c, code)
+			}
+		}
+	}
+}
+
 func (repository *otpRepository) UpgradePasswordHash(_ context.Context, id int, expectedHash, passwordHash string) (bool, error) {
 	return false, nil
 }

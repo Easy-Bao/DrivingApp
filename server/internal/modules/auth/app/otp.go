@@ -32,6 +32,7 @@ type OTPService struct {
 	registrations *RegisterService
 	logger        *slog.Logger
 	hashPassword  func(string) (string, error)
+	generateCode  func() (string, error)
 }
 
 type OTPServiceOption func(*OTPService)
@@ -45,6 +46,7 @@ type OTPDependencies struct {
 	Tokens        TokenIssuer
 	Sessions      SessionStore
 	HashPassword  func(string) (string, error)
+	GenerateCode  func() (string, error)
 }
 
 func WithPendingRegistration(
@@ -65,6 +67,10 @@ func NewOTPService(
 	if hashPassword == nil {
 		hashPassword = security.HashPassword
 	}
+	generateCode := dependencies.GenerateCode
+	if generateCode == nil {
+		generateCode = generateOTP
+	}
 	service := &OTPService{
 		users:         dependencies.Users,
 		emailChanges:  dependencies.EmailChanges,
@@ -75,6 +81,7 @@ func NewOTPService(
 		sessions:      dependencies.Sessions,
 		logger:        slog.Default(),
 		hashPassword:  hashPassword,
+		generateCode:  generateCode,
 	}
 	for _, option := range options {
 		if option != nil {
@@ -358,7 +365,7 @@ func (service *OTPService) RequestEmailChange(
 		return err
 	}
 
-	code, err := generateOTP()
+	code, err := service.generateOTP()
 	if err != nil {
 		return fmt.Errorf("generate email change otp: %w", err)
 	}
@@ -507,7 +514,7 @@ func (service *OTPService) requestCode(ctx context.Context, purpose, email strin
 	if service == nil || service.store == nil || service.gateway == nil {
 		return domain.ErrOTPUnavailable
 	}
-	code, err := generateOTP()
+	code, err := service.generateOTP()
 	if err != nil {
 		return fmt.Errorf("generate otp: %w", err)
 	}
@@ -556,8 +563,21 @@ func (service *OTPService) log() *slog.Logger {
 	return slog.Default()
 }
 
+func (service *OTPService) generateOTP() (string, error) {
+	if service != nil && service.generateCode != nil {
+		return service.generateCode()
+	}
+	return generateOTP()
+}
+
+var _maxOTP = big.NewInt(1_000_000)
+
+func GenerateOTP() (string, error) {
+	return generateOTP()
+}
+
 func generateOTP() (string, error) {
-	n, err := rand.Int(rand.Reader, big.NewInt(1_000_000))
+	n, err := rand.Int(rand.Reader, _maxOTP)
 	if err != nil {
 		return "", fmt.Errorf("read otp randomness: %w", err)
 	}
