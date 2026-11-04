@@ -35,6 +35,20 @@ func NewHandler(dependencies Dependencies) *Handler {
 func (handler *Handler) identity(r *http.Request) (int, bool) {
 	return middleware.AuthenticatedUserID(r, handler.verifier)
 }
+func (handler *Handler) principal(r *http.Request) (middleware.Principal, bool) {
+	if principal, ok := middleware.PrincipalFromRequest(r); ok {
+		return principal, true
+	}
+	identity, ok := middleware.IdentityFromRequest(r, handler.verifier)
+	if !ok {
+		return middleware.Principal{}, false
+	}
+	userID, err := strconv.Atoi(identity.Subject)
+	if err != nil || userID <= 0 {
+		return middleware.Principal{}, false
+	}
+	return middleware.Principal{UserID: userID, Role: identity.Role}, true
+}
 func (handler *Handler) CreateRide(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := handler.identity(r)
 	if !ok {
@@ -555,6 +569,17 @@ func (handler *Handler) RatingConfig(w http.ResponseWriter, _ *http.Request) {
 	response.JSON(w, 200, handler.service.PricingConfig().RatingConfigJSON())
 }
 func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
+	if handler.verifier != nil {
+		principal, ok := handler.principal(r)
+		if !ok {
+			response.Error(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+		if principal.Role != security.RoleDriver && principal.Role != "admin" {
+			response.Error(w, http.StatusForbidden, "forbidden")
+			return
+		}
+	}
 	var input FinalFareRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
 		response.Error(w, 400, "invalid final fare input")
