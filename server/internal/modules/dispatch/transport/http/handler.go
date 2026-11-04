@@ -111,7 +111,7 @@ func (handler *Handler) Session(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
-	if err != nil {
+	if err != nil || id <= 0 {
 		response.Error(w, 400, "invalid session id")
 		return
 	}
@@ -134,7 +134,7 @@ func (handler *Handler) Offers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
-	if err != nil {
+	if err != nil || id <= 0 {
 		response.Error(w, 400, "invalid session id")
 		return
 	}
@@ -162,7 +162,7 @@ func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sessionID, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
-	if err != nil {
+	if err != nil || sessionID <= 0 {
 		response.Error(w, 400, "invalid session id")
 		return
 	}
@@ -198,7 +198,7 @@ func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 	}
 	sessionID, sessionErr := strconv.Atoi(chi.URLParam(r, "sessionID"))
 	offerID, offerErr := strconv.Atoi(chi.URLParam(r, "offerID"))
-	if sessionErr != nil || offerErr != nil {
+	if sessionErr != nil || offerErr != nil || sessionID <= 0 || offerID <= 0 {
 		response.Error(w, 400, "invalid bid id")
 		return
 	}
@@ -246,7 +246,7 @@ func (handler *Handler) CancelSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
-	if err != nil {
+	if err != nil || id <= 0 {
 		response.Error(w, 400, "invalid session id")
 		return
 	}
@@ -265,7 +265,7 @@ func (handler *Handler) CancelOffer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
-	if err != nil {
+	if err != nil || id <= 0 {
 		response.Error(w, 400, "invalid session id")
 		return
 	}
@@ -278,6 +278,9 @@ func (handler *Handler) CancelOffer(w http.ResponseWriter, r *http.Request) {
 }
 
 func canViewSession(actorID int, actorRole string, session dispatchdomain.BidSession) bool {
+	if actorID <= 0 {
+		return false
+	}
 	if session.PassengerID == actorID {
 		return true
 	}

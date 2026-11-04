@@ -155,4 +155,12 @@ func TestCanViewSession(t *testing.T) {
 	if !canViewSession(11, "driver", broadcastSession) {
 		t.Fatal("expected driver to view broadcast session")
 	}
+
+	// Non-positive actor ID cannot view any session
+	if canViewSession(0, "passenger", directSession) {
+		t.Fatal("expected zero actorID cannot view direct session")
+	}
+	if canViewSession(-1, "driver", broadcastSession) {
+		t.Fatal("expected negative actorID cannot view broadcast session")
+	}
 }
