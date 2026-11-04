@@ -134,6 +134,9 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 		Name: toPostgresProfileText(profile.Name),
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.Profile{}, domain.ErrProfileNotFound
+		}
 		return domain.Profile{}, fmt.Errorf("update profile account: %w", err)
 	}
 
@@ -142,6 +145,9 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 	case "driver":
 		currentDriver, lockErr := transactionQueries.LockDriverProfileByUserID(ctx, dbUserID)
 		if lockErr != nil {
+			if errors.Is(lockErr, pgx.ErrNoRows) {
+				return domain.Profile{}, domain.ErrProfileNotFound
+			}
 			return domain.Profile{}, fmt.Errorf("lock driver profile: %w", lockErr)
 		}
 		if currentDriver.IsOnline &&
@@ -156,6 +162,9 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 			PlateNumber: profile.PlateNumber,
 		})
 		if updateErr != nil {
+			if errors.Is(updateErr, pgx.ErrNoRows) {
+				return domain.Profile{}, domain.ErrProfileNotFound
+			}
 			return domain.Profile{}, fmt.Errorf("update driver profile: %w", updateErr)
 		}
 		updated = driverProfileFromUpdateRow(account, driverProfile)
@@ -170,6 +179,9 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 			},
 		)
 		if updateErr != nil {
+			if errors.Is(updateErr, pgx.ErrNoRows) {
+				return domain.Profile{}, domain.ErrProfileNotFound
+			}
 			return domain.Profile{}, fmt.Errorf("update passenger profile: %w", updateErr)
 		}
 		updated = passengerProfileFromPostgres(account, passengerProfile)
@@ -218,6 +230,9 @@ func (repository *ProfileRepository) UpdateOnlineStatus(
 		},
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.Profile{}, domain.ErrProfileNotFound
+		}
 		return domain.Profile{}, fmt.Errorf("lock driver online status profile: %w", err)
 	}
 	if !isOnline {
@@ -243,6 +258,9 @@ func (repository *ProfileRepository) UpdateOnlineStatus(
 		},
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.Profile{}, domain.ErrProfileNotFound
+		}
 		return domain.Profile{}, fmt.Errorf("update driver online status: %w", err)
 	}
 	if err := transaction.Commit(ctx); err != nil {
