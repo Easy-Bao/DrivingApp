@@ -12,6 +12,8 @@ abstract interface class DashboardRepository {
     required double lng,
   });
 
+  Future<Result<void, Failure>> recordActivity() async => const Ok(null);
+
   Future<Result<void, Failure>> publishDriverLocation({
     required double lat,
     required double lng,
@@ -50,6 +52,13 @@ extension DashboardRepositoryResultApi on DashboardRepository {
     return captureResult(
       () => updateOnlineStatus(isOnline: isOnline, lat: lat, lng: lng),
       message: 'Unable to update driver availability right now.',
+    );
+  }
+
+  Future<Result<void, DomainFailure>> recordActivityResult() {
+    return captureResult(
+      recordActivity,
+      message: 'Unable to record driver activity.',
     );
   }
 

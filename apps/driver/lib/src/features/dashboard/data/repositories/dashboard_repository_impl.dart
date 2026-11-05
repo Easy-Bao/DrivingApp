@@ -1,6 +1,8 @@
 import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 
+// ignore_for_file: prefer_initializing_formals
+
 import 'dart:async';
 import 'dart:developer' as dev;
 
@@ -18,16 +20,32 @@ import 'package:driver/src/features/ride_history/domain/repositories/driver_ride
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class DashboardRepositoryImpl({
-  required this._performanceRepository,
-  required this._rideHistoryRepository,
-  required this._availabilityDataSource,
-  required this._rideOfferDataSource,
-  required this._rideRepository,
-  required this._sessionService,
-  required this._preferences,
-  this._backgroundTelemetryService,
-}) implements DashboardRepository {
+final class DashboardRepositoryImpl implements DashboardRepository {
+  DashboardRepositoryImpl({
+    required PerformanceRepository performanceRepository,
+    required RideHistoryRepository rideHistoryRepository,
+    required AvailabilityRemoteDataSource availabilityDataSource,
+    required RideOfferRemoteDataSource rideOfferDataSource,
+    required RideRepository rideRepository,
+    required SessionStore sessionService,
+    required SharedPreferences preferences,
+    BackgroundTelemetry? backgroundTelemetryService,
+    DateTime Function()? now,
+    Duration? maxInactivityDuration,
+  }) : _performanceRepository = performanceRepository,
+       _rideHistoryRepository = rideHistoryRepository,
+       _availabilityDataSource = availabilityDataSource,
+       _rideOfferDataSource = rideOfferDataSource,
+       _rideRepository = rideRepository,
+       _sessionService = sessionService,
+       _preferences = preferences,
+       _backgroundTelemetryService = backgroundTelemetryService,
+       _now = now ?? DateTime.now,
+       _maxInactivityDuration =
+           maxInactivityDuration ?? defaultMaxInactivityDuration;
+
+  static const defaultMaxInactivityDuration = Duration(minutes: 3);
+
   final PerformanceRepository _performanceRepository;
   final RideHistoryRepository _rideHistoryRepository;
   final AvailabilityRemoteDataSource _availabilityDataSource;
@@ -36,6 +54,8 @@ final class DashboardRepositoryImpl({
   final SessionStore _sessionService;
   final SharedPreferences _preferences;
   final BackgroundTelemetry? _backgroundTelemetryService;
+  final DateTime Function() _now;
+  final Duration _maxInactivityDuration;
 
   Failure _mapExceptionToFailure(Object error) => switch (error) {
     final DioException exception => _mapDioFailure(exception),
@@ -145,7 +165,44 @@ final class DashboardRepositoryImpl({
   Future<Result<bool, Failure>> getPersistedOnlineStatus() async {
     try {
       final isOnline = await _sessionService.readDriverOnlineStatus() ?? false;
-      return Ok(isOnline);
+      if (!isOnline) {
+        return const Ok(false);
+      }
+
+      final activeRideId = await _sessionService.readActiveRideId();
+      if (activeRideId != null && activeRideId.trim().isNotEmpty) {
+        await _sessionService.saveDriverLastActive(_now());
+        return const Ok(true);
+      }
+
+      final lastActive = await _sessionService.readDriverLastActive();
+      final now = _now();
+      if (lastActive == null ||
+          now.difference(lastActive) > _maxInactivityDuration) {
+        dev.log(
+          'Driver online status expired due to inactivity: '
+          'lastActive=$lastActive, now=$now, maxInactivity=$_maxInactivityDuration',
+        );
+        final driverId = await _getDriverId();
+        await _clearOnlinePresence(driverId: driverId, markServerOffline: true);
+        return const Ok(false);
+      }
+
+      await _sessionService.saveDriverLastActive(now);
+      return const Ok(true);
+    } catch (error) {
+      return Err(_mapExceptionToFailure(error));
+    }
+  }
+
+  @override
+  Future<Result<void, Failure>> recordActivity() async {
+    try {
+      final isOnline = await _sessionService.readDriverOnlineStatus() ?? false;
+      if (isOnline) {
+        await _sessionService.saveDriverLastActive(_now());
+      }
+      return const Ok(null);
     } catch (error) {
       return Err(_mapExceptionToFailure(error));
     }
@@ -160,6 +217,7 @@ final class DashboardRepositoryImpl({
     // must observe offline before it can send another heartbeat.
     try {
       await _sessionService.saveDriverOnlineStatus(false);
+      await _sessionService.clearDriverLastActive();
     } catch (error) {
       dev.log('Unable to persist offline driver status: $error');
     }
@@ -236,6 +294,7 @@ final class DashboardRepositoryImpl({
   Future<void> _persistOnlineState() async {
     try {
       await _sessionService.saveDriverOnlineStatus(true);
+      await _sessionService.saveDriverLastActive(_now());
     } catch (error) {
       dev.log('Unable to persist driver online status: $error');
     }

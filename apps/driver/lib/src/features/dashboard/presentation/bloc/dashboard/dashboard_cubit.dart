@@ -685,6 +685,43 @@ class DashboardCubit({
     }, (_) => true);
   }
 
+  Future<bool> checkOnlineInactivity() async {
+    if (!state.isOnline) return false;
+    try {
+      final onlineStatusResult = await _repository
+          .getPersistedOnlineStatusResult();
+      final wasExpired = onlineStatusResult.fold((failure) => false, (
+        isOnline,
+      ) {
+        if (isClosed) return false;
+        if (!isOnline && state.isOnline) {
+          emit(state.copyWith(isOnline: false));
+          return true;
+        }
+        return false;
+      });
+      return wasExpired;
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to verify online inactivity: $error',
+        stackTrace: stackTrace,
+      );
+      return false;
+    }
+  }
+
+  Future<void> recordActivity() async {
+    if (!state.isOnline) return;
+    try {
+      await _repository.recordActivityResult();
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to record driver activity: $error',
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
   bool _isAuthoritativeAvailabilityRejection(Failure failure) {
     return failure is ServerFailure &&
         (failure.statusCode == 403 || failure.statusCode == 404);

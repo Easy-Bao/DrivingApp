@@ -242,6 +242,21 @@ void main() {
       },
     );
 
+    test('restores offline status when persisted online status expired due to inactivity', () async {
+      when(() => repo.getPersistedOnlineStatus())
+          .thenAnswer((_) async => const Ok(false));
+      when(() => repo.getDashboardStats()).thenAnswer(
+        (_) async => const Ok(DashboardStats(earnings: 0, completedTrips: 0)),
+      );
+
+      final cubit = _makeCubit(repo);
+      await cubit.initialize();
+
+      expect(cubit.state.isOnline, isFalse);
+      verify(() => repo.getPersistedOnlineStatus()).called(1);
+      await cubit.close();
+    });
+
     test('coalesces concurrent initialization requests', () async {
       when(() => repo.getPersistedOnlineStatus()).thenAnswer((_) async {
         await Future<void>.delayed(const Duration(milliseconds: 10));
@@ -256,6 +271,82 @@ void main() {
 
       verify(() => repo.getPersistedOnlineStatus()).called(1);
       verify(() => repo.getDashboardStats()).called(1);
+      await cubit.close();
+    });
+  });
+
+  group('DashboardCubit — checkOnlineInactivity()', () {
+    test(
+      'returns false without calling repository when state is offline',
+      () async {
+        final cubit = _makeCubit(repo);
+        expect(cubit.state.isOnline, isFalse);
+
+        final wasExpired = await cubit.checkOnlineInactivity();
+
+        expect(wasExpired, isFalse);
+        verifyNever(() => repo.getPersistedOnlineStatus());
+        await cubit.close();
+      },
+    );
+
+    test(
+      'emits offline and returns true when online session has expired',
+      () async {
+        when(() => repo.getPersistedOnlineStatus())
+            .thenAnswer((_) async => const Ok(false));
+
+        final cubit = _makeCubit(repo);
+        cubit.emit(cubit.state.copyWith(isOnline: true));
+
+        final wasExpired = await cubit.checkOnlineInactivity();
+
+        expect(wasExpired, isTrue);
+        expect(cubit.state.isOnline, isFalse);
+        verify(() => repo.getPersistedOnlineStatus()).called(1);
+        await cubit.close();
+      },
+    );
+
+    test(
+      'stays online and returns false when session is still active',
+      () async {
+        when(() => repo.getPersistedOnlineStatus())
+            .thenAnswer((_) async => const Ok(true));
+
+        final cubit = _makeCubit(repo);
+        cubit.emit(cubit.state.copyWith(isOnline: true));
+
+        final wasExpired = await cubit.checkOnlineInactivity();
+
+        expect(wasExpired, isFalse);
+        expect(cubit.state.isOnline, isTrue);
+        verify(() => repo.getPersistedOnlineStatus()).called(1);
+        await cubit.close();
+      },
+    );
+  });
+
+  group('DashboardCubit — recordActivity()', () {
+    test('delegates to repository when online', () async {
+      when(() => repo.recordActivity()).thenAnswer((_) async => const Ok(null));
+
+      final cubit = _makeCubit(repo);
+      cubit.emit(cubit.state.copyWith(isOnline: true));
+
+      await cubit.recordActivity();
+
+      verify(() => repo.recordActivity()).called(1);
+      await cubit.close();
+    });
+
+    test('does not delegate to repository when offline', () async {
+      final cubit = _makeCubit(repo);
+      expect(cubit.state.isOnline, isFalse);
+
+      await cubit.recordActivity();
+
+      verifyNever(() => repo.recordActivity());
       await cubit.close();
     });
   });

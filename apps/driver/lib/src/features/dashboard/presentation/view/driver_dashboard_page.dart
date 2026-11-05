@@ -178,10 +178,12 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   Future<void> _resumeForegroundWork() async {
+    final wasExpired = await BlocProvider.of<DashboardCubit>(context)
+        .checkOnlineInactivity();
+    if (wasExpired || !mounted || !_isForeground) return;
     await _loadActiveTrips();
     if (!mounted || !_isForeground) return;
     await BlocProvider.of<RideFlowCubit>(context).syncAuthoritativeRideState();
-    if (!mounted || !_isForeground) return;
     if (!mounted || !_isForeground) return;
     await _refreshLocationAfterResume();
   }
@@ -593,6 +595,7 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   void _suspendForegroundWork() {
+    unawaited(BlocProvider.of<DashboardCubit>(context).recordActivity());
     _cancelOnlineForegroundWork(clearActiveBids: false);
     _requestCountdownTimer?.cancel();
     _requestCountdownTimer = null;

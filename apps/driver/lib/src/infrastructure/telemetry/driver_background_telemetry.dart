@@ -16,6 +16,7 @@ import 'package:foundation/foundation.dart';
 const _backgroundTelemetryInterval = Duration(seconds: 10);
 const _backgroundPresenceInterval = Duration(seconds: 20);
 const _backgroundRideRequestInterval = Duration(seconds: 4);
+const _backgroundInactivityTimeout = Duration(minutes: 3);
 const _notificationChannelId = 'easyride_driver_location';
 const _notificationId = 4801;
 
@@ -213,17 +214,6 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   var isStopping = false;
   final locationSpool = LocationSpool();
 
-  Future<bool> shouldContinueOnlineWork() async {
-    try {
-      return await sessionStore.readDriverOnlineStatus() == true;
-    } catch (error) {
-      // If the local online intent cannot be read, fail closed. Continuing to
-      // publish a heartbeat could resurrect an explicitly stopped driver.
-      dev.log('Unable to read driver online intent: $error');
-      return false;
-    }
-  }
-
   Future<void> shutdown() async {
     if (isStopping) return;
     isStopping = true;
@@ -255,6 +245,57 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
       await service.stopSelf();
     } catch (error) {
       dev.log('Unable to stop driver telemetry service: $error');
+    }
+  }
+
+  Future<bool> shouldContinueOnlineWork() async {
+    try {
+      final isOnline = await sessionStore.readDriverOnlineStatus() == true;
+      if (!isOnline) return false;
+
+      if (!appIsVisible) {
+        final activeRideId = await sessionStore.readActiveRideId();
+        if (activeRideId == null || activeRideId.trim().isEmpty) {
+          final lastActive = await sessionStore.readDriverLastActive();
+          if (lastActive == null ||
+              DateTime.now().toUtc().difference(lastActive) >
+                  _backgroundInactivityTimeout) {
+            dev.log(
+              'Background telemetry expiring online presence due to inactivity.',
+            );
+            await sessionStore.saveDriverOnlineStatus(false);
+            await sessionStore.clearDriverLastActive();
+            final client = telemetryClient;
+            final provider = tokenProvider;
+            if (client != null && provider != null) {
+              final token = await provider.getToken();
+              final driverId = await sessionStore.readDriverId();
+              if (token != null &&
+                  token.isNotEmpty &&
+                  driverId != null &&
+                  driverId.isNotEmpty) {
+                try {
+                  await client.post<void>(
+                    '/api/v1/drivers/${Uri.encodeComponent(driverId)}/online',
+                    data: {'is_online': false},
+                    options: Options(
+                      headers: {'Authorization': 'Bearer $token'},
+                    ),
+                  );
+                } catch (_) {}
+              }
+            }
+            unawaited(shutdown());
+            return false;
+          }
+        }
+      }
+      return true;
+    } catch (error) {
+      // If the local online intent cannot be read, fail closed. Continuing to
+      // publish a heartbeat could resurrect an explicitly stopped driver.
+      dev.log('Unable to read driver online intent: $error');
+      return false;
     }
   }
 

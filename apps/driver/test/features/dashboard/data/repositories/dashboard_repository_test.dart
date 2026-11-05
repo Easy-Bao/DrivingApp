@@ -42,6 +42,8 @@ DashboardRepositoryImpl _buildRepository({
   required AvailabilityRemoteDataSource availabilityDataSource,
   required SessionStore sessionService,
   BackgroundTelemetry? backgroundTelemetryService,
+  DateTime Function()? now,
+  Duration? maxInactivityDuration,
 }) {
   return DashboardRepositoryImpl(
     performanceRepository: _performanceRepository,
@@ -52,6 +54,8 @@ DashboardRepositoryImpl _buildRepository({
     sessionService: sessionService,
     preferences: _preferences,
     backgroundTelemetryService: backgroundTelemetryService,
+    now: now,
+    maxInactivityDuration: maxInactivityDuration,
   );
 }
 
@@ -597,4 +601,243 @@ void main() {
       verify(() => sessionService.saveDriverOnlineStatus(false)).called(1);
     },
   );
+
+  group('getPersistedOnlineStatus', () {
+    test('returns false when stored online status is false', () async {
+      final availabilityDataSource = MockAvailabilityRemoteDataSource();
+      final sessionService = MockSecureSessionService();
+      when(() => sessionService.readDriverOnlineStatus())
+          .thenAnswer((_) async => false);
+
+      final repository = _buildRepository(
+        availabilityDataSource: availabilityDataSource,
+        sessionService: sessionService,
+      );
+
+      final result = await repository.getPersistedOnlineStatus();
+      expect(result, const Ok<bool, Failure>(false));
+    });
+
+    test('returns false when stored online status is null', () async {
+      final availabilityDataSource = MockAvailabilityRemoteDataSource();
+      final sessionService = MockSecureSessionService();
+      when(() => sessionService.readDriverOnlineStatus())
+          .thenAnswer((_) async => null);
+
+      final repository = _buildRepository(
+        availabilityDataSource: availabilityDataSource,
+        sessionService: sessionService,
+      );
+
+      final result = await repository.getPersistedOnlineStatus();
+      expect(result, const Ok<bool, Failure>(false));
+    });
+
+    test(
+      'expires online status when driver has no last active timestamp',
+      () async {
+        final availabilityDataSource = MockAvailabilityRemoteDataSource();
+        final sessionService = MockSecureSessionService();
+
+        when(() => sessionService.readDriverOnlineStatus())
+            .thenAnswer((_) async => true);
+        when(() => sessionService.readActiveRideId())
+            .thenAnswer((_) async => null);
+        when(() => sessionService.readDriverLastActive())
+            .thenAnswer((_) async => null);
+        when(() => sessionService.readDriverId())
+            .thenAnswer((_) async => 'driver-42');
+        when(() => sessionService.saveDriverOnlineStatus(false))
+            .thenAnswer((_) async {});
+        when(() => sessionService.clearDriverLastActive())
+            .thenAnswer((_) async {});
+        when(
+          () => availabilityDataSource.updateOnlineStatus(
+            driverId: 'driver-42',
+            isOnline: false,
+          ),
+        ).thenAnswer((_) async {});
+        when(() => _rideRepository.clearDriverLocationResult())
+            .thenAnswer((_) async => const Ok(null));
+
+        final repository = _buildRepository(
+          availabilityDataSource: availabilityDataSource,
+          sessionService: sessionService,
+        );
+
+        final result = await repository.getPersistedOnlineStatus();
+        expect(result, const Ok<bool, Failure>(false));
+        verify(() => sessionService.saveDriverOnlineStatus(false)).called(1);
+        verify(() => sessionService.clearDriverLastActive()).called(1);
+        verify(
+          () => availabilityDataSource.updateOnlineStatus(
+            driverId: 'driver-42',
+            isOnline: false,
+          ),
+        ).called(1);
+      },
+    );
+
+    test(
+      'expires online status when inactivity exceeds max duration',
+      () async {
+        final availabilityDataSource = MockAvailabilityRemoteDataSource();
+        final sessionService = MockSecureSessionService();
+        final now = DateTime.utc(2026, 11, 5, 12, 10);
+        final lastActive = DateTime.utc(
+          2026,
+          11,
+          5,
+          12,
+          5,
+        ); // 5 mins ago (> 3 mins)
+
+        when(() => sessionService.readDriverOnlineStatus())
+            .thenAnswer((_) async => true);
+        when(() => sessionService.readActiveRideId())
+            .thenAnswer((_) async => null);
+        when(() => sessionService.readDriverLastActive())
+            .thenAnswer((_) async => lastActive);
+        when(() => sessionService.readDriverId())
+            .thenAnswer((_) async => 'driver-42');
+        when(() => sessionService.saveDriverOnlineStatus(false))
+            .thenAnswer((_) async {});
+        when(() => sessionService.clearDriverLastActive())
+            .thenAnswer((_) async {});
+        when(
+          () => availabilityDataSource.updateOnlineStatus(
+            driverId: 'driver-42',
+            isOnline: false,
+          ),
+        ).thenAnswer((_) async {});
+        when(() => _rideRepository.clearDriverLocationResult())
+            .thenAnswer((_) async => const Ok(null));
+
+        final repository = _buildRepository(
+          availabilityDataSource: availabilityDataSource,
+          sessionService: sessionService,
+          now: () => now,
+          maxInactivityDuration: const Duration(minutes: 3),
+        );
+
+        final result = await repository.getPersistedOnlineStatus();
+        expect(result, const Ok<bool, Failure>(false));
+        verify(() => sessionService.saveDriverOnlineStatus(false)).called(1);
+        verify(() => sessionService.clearDriverLastActive()).called(1);
+        verify(
+          () => availabilityDataSource.updateOnlineStatus(
+            driverId: 'driver-42',
+            isOnline: false,
+          ),
+        ).called(1);
+      },
+    );
+
+    test(
+      'preserves online status when inactivity is within max duration',
+      () async {
+        final availabilityDataSource = MockAvailabilityRemoteDataSource();
+        final sessionService = MockSecureSessionService();
+        final now = DateTime.utc(2026, 11, 5, 12, 10);
+        final lastActive = DateTime.utc(
+          2026,
+          11,
+          5,
+          12,
+          8,
+        ); // 2 mins ago (< 3 mins)
+
+        when(() => sessionService.readDriverOnlineStatus())
+            .thenAnswer((_) async => true);
+        when(() => sessionService.readActiveRideId())
+            .thenAnswer((_) async => null);
+        when(() => sessionService.readDriverLastActive())
+            .thenAnswer((_) async => lastActive);
+        when(() => sessionService.saveDriverLastActive(now))
+            .thenAnswer((_) async {});
+
+        final repository = _buildRepository(
+          availabilityDataSource: availabilityDataSource,
+          sessionService: sessionService,
+          now: () => now,
+          maxInactivityDuration: const Duration(minutes: 3),
+        );
+
+        final result = await repository.getPersistedOnlineStatus();
+        expect(result, const Ok<bool, Failure>(true));
+        verify(() => sessionService.saveDriverLastActive(now)).called(1);
+        verifyNever(() => sessionService.saveDriverOnlineStatus(false));
+      },
+    );
+
+    test(
+      'preserves online status if driver has an active ride even if inactive',
+      () async {
+        final availabilityDataSource = MockAvailabilityRemoteDataSource();
+        final sessionService = MockSecureSessionService();
+        final now = DateTime.utc(2026, 11, 5, 12, 10);
+
+        when(() => sessionService.readDriverOnlineStatus())
+            .thenAnswer((_) async => true);
+        when(() => sessionService.readActiveRideId())
+            .thenAnswer((_) async => 'ride-123');
+        when(() => sessionService.saveDriverLastActive(now))
+            .thenAnswer((_) async {});
+
+        final repository = _buildRepository(
+          availabilityDataSource: availabilityDataSource,
+          sessionService: sessionService,
+          now: () => now,
+          maxInactivityDuration: const Duration(minutes: 3),
+        );
+
+        final result = await repository.getPersistedOnlineStatus();
+        expect(result, const Ok<bool, Failure>(true));
+        verify(() => sessionService.saveDriverLastActive(now)).called(1);
+        verifyNever(() => sessionService.saveDriverOnlineStatus(false));
+      },
+    );
+  });
+
+  group('recordActivity', () {
+    test('updates last active timestamp when driver is online', () async {
+      final availabilityDataSource = MockAvailabilityRemoteDataSource();
+      final sessionService = MockSecureSessionService();
+      final now = DateTime.utc(2026, 11, 5, 12, 10);
+
+      when(() => sessionService.readDriverOnlineStatus())
+          .thenAnswer((_) async => true);
+      when(() => sessionService.saveDriverLastActive(now))
+          .thenAnswer((_) async {});
+
+      final repository = _buildRepository(
+        availabilityDataSource: availabilityDataSource,
+        sessionService: sessionService,
+        now: () => now,
+      );
+
+      final result = await repository.recordActivity();
+      expect(result, const Ok<void, Failure>(null));
+      verify(() => sessionService.saveDriverLastActive(now)).called(1);
+    });
+
+    test('does not update timestamp when driver is offline', () async {
+      final availabilityDataSource = MockAvailabilityRemoteDataSource();
+      final sessionService = MockSecureSessionService();
+      final now = DateTime.utc(2026, 11, 5, 12, 10);
+
+      when(() => sessionService.readDriverOnlineStatus())
+          .thenAnswer((_) async => false);
+
+      final repository = _buildRepository(
+        availabilityDataSource: availabilityDataSource,
+        sessionService: sessionService,
+        now: () => now,
+      );
+
+      final result = await repository.recordActivity();
+      expect(result, const Ok<void, Failure>(null));
+      verifyNever(() => sessionService.saveDriverLastActive(any()));
+    });
+  });
 }

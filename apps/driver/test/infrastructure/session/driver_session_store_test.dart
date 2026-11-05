@@ -70,6 +70,25 @@ void main() {
     expect(await sessionService.readRefreshToken(), 'refresh-jwt-token');
   });
 
+  test('persists and reads driver last active timestamp', () async {
+    final now = DateTime.utc(2026, 11, 5, 12, 30);
+    when(() => storage.read(key: StorageKeys.driverLastActive))
+        .thenAnswer((_) async => now.toIso8601String());
+
+    await sessionService.saveDriverLastActive(now);
+
+    verify(
+      () => storage.write(
+        key: StorageKeys.driverLastActive,
+        value: now.toIso8601String(),
+      ),
+    ).called(1);
+    expect(await sessionService.readDriverLastActive(), now);
+
+    await sessionService.clearDriverLastActive();
+    verify(() => storage.delete(key: StorageKeys.driverLastActive)).called(1);
+  });
+
   test('clears only driver-owned session keys', () async {
     await sessionService.clearSession();
 
@@ -79,6 +98,7 @@ void main() {
       StorageKeys.driverId,
       StorageKeys.driverOnlineStatus,
       StorageKeys.driverOnlineSince,
+      StorageKeys.driverLastActive,
       StorageKeys.passengerId,
       StorageKeys.activeRideId,
     ]) {

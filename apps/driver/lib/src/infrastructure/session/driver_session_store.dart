@@ -55,6 +55,23 @@ class SessionStore({FlutterSecureStorage? storage}) {
     };
   }
 
+  Future<void> saveDriverLastActive(DateTime timestamp) async {
+    await _storage.write(
+      key: StorageKeys.driverLastActive,
+      value: timestamp.toUtc().toIso8601String(),
+    );
+  }
+
+  Future<DateTime?> readDriverLastActive() async {
+    final value = await _storage.read(key: StorageKeys.driverLastActive);
+    if (value == null || value.trim().isEmpty) return null;
+    return DateTime.tryParse(value)?.toUtc();
+  }
+
+  Future<void> clearDriverLastActive() async {
+    await _storage.delete(key: StorageKeys.driverLastActive);
+  }
+
   Future<void> savePassengerId(String passengerId) async {
     await _storage.write(key: StorageKeys.passengerId, value: passengerId);
   }
@@ -83,6 +100,7 @@ class SessionStore({FlutterSecureStorage? storage}) {
         StorageKeys.driverId,
         StorageKeys.driverOnlineStatus,
         StorageKeys.driverOnlineSince,
+        StorageKeys.driverLastActive,
         StorageKeys.passengerId,
         StorageKeys.activeRideId,
       ].map((key) => _storage.delete(key: key)),
