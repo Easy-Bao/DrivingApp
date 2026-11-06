@@ -577,8 +577,9 @@ class RideFlowCubit({
 
   void _restoreTripAfterFailedAction(RideState previous, int generation) {
     if (state is! RideFlowError ||
-        (previous is! DriverEnRoute && previous is! TripInProgress))
+        (previous is! DriverEnRoute && previous is! TripInProgress)) {
       return;
+    }
     _lastActionFailureMessage = state.failureMessage;
     if (previous is DriverEnRoute && previous.isWaitingAtPickup) {
       _startWaitTimer(
