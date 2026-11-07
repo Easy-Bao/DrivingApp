@@ -52,7 +52,7 @@ class RoutePayload._(this._values, this._queryParameters) {
 
   static int? _int(Object? value) {
     if (value is int) return value;
-    if (value is num) return value.toInt();
+    if (value is num) return value.isFinite ? value.toInt() : null;
     return value is String ? int.tryParse(value.trim()) : null;
   }
 }

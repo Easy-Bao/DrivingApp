@@ -48,11 +48,13 @@ class MapNativeService({
     final double deltaLongitude = _toRadians(longitude2 - longitude1);
 
     final double haversineA =
-        math.sin(deltaLatitude / 2.0) * math.sin(deltaLatitude / 2.0) +
-        math.cos(_toRadians(latitude1)) *
-            math.cos(_toRadians(latitude2)) *
-            math.sin(deltaLongitude / 2.0) *
-            math.sin(deltaLongitude / 2.0);
+        (math.sin(deltaLatitude / 2.0) * math.sin(deltaLatitude / 2.0) +
+                math.cos(_toRadians(latitude1)) *
+                    math.cos(_toRadians(latitude2)) *
+                    math.sin(deltaLongitude / 2.0) *
+                    math.sin(deltaLongitude / 2.0))
+            .clamp(0.0, 1.0)
+            .toDouble();
 
     return earthRadiusKm * 2.0 * math.asin(math.sqrt(haversineA));
   }
@@ -63,12 +65,7 @@ class MapNativeService({
     required double latitude2,
     required double longitude2,
   }) async {
-    return calculateHaversine(
-      latitude1,
-      longitude1,
-      latitude2,
-      longitude2,
-    );
+    return calculateHaversine(latitude1, longitude1, latitude2, longitude2);
   }
 
   Future<Result<List<Place>, PlaceFailure>> searchPlaces({

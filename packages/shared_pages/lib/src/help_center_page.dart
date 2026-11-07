@@ -36,6 +36,14 @@ class _AppHelpCenterPageState extends State<AppHelpCenterPage> {
   String? _selectedCategory;
 
   @override
+  void didUpdateWidget(covariant AppHelpCenterPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_selectedCategory != null && !_categories.contains(_selectedCategory)) {
+      _selectedCategory = null;
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();

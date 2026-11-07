@@ -60,4 +60,34 @@ void main() {
     expect(results[0], [7]);
     expect(results[1], [7]);
   });
+
+  test(
+    'clear invalidates in-flight tile loads from earlier generations',
+    () async {
+      var requestCount = 0;
+      final coordinator = DemandHeatmapViewportCoordinator<String>(
+        tileSizeDegrees: 1,
+        loadTile: (bounds) async {
+          final call = ++requestCount;
+          await Future<void>.delayed(Duration.zero);
+          return ['gen-$call'];
+        },
+      );
+      const viewport = MapViewportBounds(
+        minLatitude: 7.1,
+        minLongitude: 123.1,
+        maxLatitude: 7.9,
+        maxLongitude: 123.9,
+      );
+
+      final staleRefresh = coordinator.refresh(viewport);
+      coordinator.clear();
+      final staleResult = await staleRefresh;
+      expect(staleResult, isEmpty);
+
+      final freshResult = await coordinator.refresh(viewport);
+      expect(requestCount, 2);
+      expect(freshResult, ['gen-2']);
+    },
+  );
 }

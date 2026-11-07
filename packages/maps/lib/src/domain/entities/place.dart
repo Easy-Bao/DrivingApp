@@ -152,7 +152,7 @@ Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
 double _numberOrDefault(Object? value, String field) {
   return switch (value) {
     null => 0,
-    final num number => number.toDouble(),
+    final num number => _finiteNumber(number.toDouble(), field),
     final String text => _parseStringNumber(text, field),
     _ => throw FormatException('Place $field must be numeric.'),
   };
@@ -161,7 +161,7 @@ double _numberOrDefault(Object? value, String field) {
 double? _nullableNumber(Object? value, String field) {
   return switch (value) {
     null => null,
-    final num number => number.toDouble(),
+    final num number => _finiteNumber(number.toDouble(), field),
     final String text => _parseStringNumber(text, field),
     _ => throw FormatException('Place $field must be numeric.'),
   };
@@ -172,7 +172,14 @@ double _parseStringNumber(String value, String field) {
   if (parsed == null) {
     throw FormatException('Place $field must be numeric.');
   }
-  return parsed;
+  return _finiteNumber(parsed, field);
+}
+
+double _finiteNumber(double value, String field) {
+  if (!value.isFinite) {
+    throw FormatException('Place $field must be numeric.');
+  }
+  return value;
 }
 
 Map<String, String> _contextMap(Object? value) {

@@ -30,11 +30,21 @@ void main() {
 
   test('rejects non-finite numeric route values', () {
     final data = RoutePayload.from(
-      extra: {'latitude': double.infinity},
-      queryParameters: {'latitude': '7.1'},
+      extra: {'latitude': double.infinity, 'tipAmount': double.nan},
+      queryParameters: {'latitude': '7.1', 'tipAmount': '25'},
     );
 
     expect(data.doubleValue('latitude'), 7.1);
+    expect(data.intValue('tipAmount'), 25);
+  });
+
+  test('SafeParse rejects non-finite numbers and strings', () {
+    expect(SafeParse.toDouble('NaN', 4.5), 4.5);
+    expect(SafeParse.toDouble(double.infinity, 4.5), 4.5);
+    expect(SafeParse.toNullableDouble('Infinity'), isNull);
+    expect(SafeParse.toNullableDouble(double.nan), isNull);
+    expect(SafeParse.toInt(double.infinity, 9), 9);
+    expect(SafeParse.toInt(double.nan, 9), 9);
   });
 
   test('keeps typed objects available at the route seam', () {

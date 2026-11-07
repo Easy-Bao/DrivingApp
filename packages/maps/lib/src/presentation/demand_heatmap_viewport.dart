@@ -38,6 +38,7 @@ final class DemandHeatmapViewportCoordinator<T> {
   final double tileSizeDegrees;
   final Map<_HeatmapTile, List<T>> _loadedTiles = {};
   final Map<_HeatmapTile, Future<List<T>>> _inFlightTiles = {};
+  int _generation = 0;
 
   Future<List<T>> refresh(MapViewportBounds viewport) async {
     if (!viewport.isValid) {
@@ -50,6 +51,7 @@ final class DemandHeatmapViewportCoordinator<T> {
   }
 
   void clear() {
+    _generation++;
     _loadedTiles.clear();
     _inFlightTiles.clear();
   }
@@ -62,12 +64,18 @@ final class DemandHeatmapViewportCoordinator<T> {
       return;
     }
 
+    final requestGeneration = _generation;
     final request = loadTile(tile.bounds(tileSizeDegrees));
     _inFlightTiles[tile] = request;
     try {
-      _loadedTiles[tile] = List<T>.unmodifiable(await request);
+      final items = List<T>.unmodifiable(await request);
+      if (requestGeneration == _generation) {
+        _loadedTiles[tile] = items;
+      }
     } finally {
-      _inFlightTiles.remove(tile);
+      if (identical(_inFlightTiles[tile], request)) {
+        _inFlightTiles.remove(tile);
+      }
     }
   }
 

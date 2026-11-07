@@ -292,6 +292,20 @@ void main() {
         });
       },
     );
+
+    test(
+      'calculateHaversine returns finite distance for antipodal coordinates',
+      () {
+        final distance = MapNativeService.calculateHaversine(
+          0.0,
+          0.0,
+          0.0,
+          180.0,
+        );
+        expect(distance.isFinite, isTrue);
+        expect(distance, closeTo(20015.086, 0.1));
+      },
+    );
   });
 }
 

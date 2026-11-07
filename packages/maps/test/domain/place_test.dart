@@ -45,5 +45,17 @@ void main() {
       () => Place.fromJson(const {'latitude': 'not-a-coordinate'}),
       throwsA(isA<FormatException>()),
     );
+    expect(
+      () => Place.fromJson(const {'latitude': 'NaN'}),
+      throwsA(isA<FormatException>()),
+    );
+    expect(
+      () => Place.fromJson({'longitude': double.infinity}),
+      throwsA(isA<FormatException>()),
+    );
+    expect(
+      () => Place.fromJson({'distance_km': double.nan}),
+      throwsA(isA<FormatException>()),
+    );
   });
 }
