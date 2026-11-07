@@ -4,6 +4,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/features/auth/domain/entities/session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/ride_history/domain/entities/ride_history_overview.dart';
@@ -13,7 +14,12 @@ import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 class MockRideHistoryRepository extends Mock implements RideHistoryRepository {}
 
-class _MockSessionRepository extends Mock implements SessionRepository {}
+class _MockSessionRepository extends Mock implements SessionRepository {
+  _MockSessionRepository() {
+    when(clearSession)
+        .thenAnswer((_) async => const Ok<Session, Failure>(Session.guest()));
+  }
+}
 
 RideHistoryBloc _makeCubit(RideHistoryRepository repo) =>
     RideHistoryBloc(repository: repo);

@@ -14,6 +14,7 @@ import 'package:passenger/src/core/location/location_access_state.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
+import 'package:passenger/src/features/auth/domain/entities/session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
@@ -56,7 +57,12 @@ class _MockRideHistoryBloc extends MockBloc<RideHistoryEvent, RideHistoryState>
 class _MockSavedPlacesCubit extends MockCubit<SavedPlacesState>
     implements SavedPlacesCubit {}
 
-class _MockSessionRepository extends Mock implements SessionRepository {}
+class _MockSessionRepository extends Mock implements SessionRepository {
+  _MockSessionRepository() {
+    when(clearSession)
+        .thenAnswer((_) async => const Ok<Session, Failure>(Session.guest()));
+  }
+}
 
 class _MockSessionStore extends Mock implements SessionStore {}
 
