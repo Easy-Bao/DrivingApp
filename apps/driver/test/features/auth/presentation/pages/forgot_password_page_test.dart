@@ -24,10 +24,12 @@ void main() {
         home: ForgotPasswordPage(forgotPasswordBloc: bloc),
       ),
     );
-    await tester.enterText(find.byType(TextField), 'driver@example.com');
+    await tester.enterText(find.byType(TextField), '  Driver@Example.com ');
     await tester.tap(find.text('Send code'));
     await tester.pumpAndSettle();
 
+    verify(() => repository.resetPassword(email: 'driver@example.com'))
+        .called(1);
     expect(find.text('Something went wrong. Try again.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

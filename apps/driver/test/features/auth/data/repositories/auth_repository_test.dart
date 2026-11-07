@@ -167,4 +167,33 @@ void main() {
       verifyNever(() => secureSessionService.saveDriverId(any()));
     },
   );
+
+  test(
+    'resetPassword succeeds only when response Body indicates success',
+    () async {
+      when(
+        () => remoteDataSource.postJson(
+          AccountAuthEndpoints.forgotPassword,
+          requestBody: {'email': 'driver@example.com'},
+        ),
+      ).thenAnswer((_) async => <String, dynamic>{'success': true});
+
+      final okResult = await repository.resetPassword(
+        email: 'driver@example.com',
+      );
+      expect(okResult.isOk, isTrue);
+
+      when(
+        () => remoteDataSource.postJson(
+          AccountAuthEndpoints.forgotPassword,
+          requestBody: {'email': 'driver@example.com'},
+        ),
+      ).thenAnswer((_) async => <String, dynamic>{'success': false});
+
+      final errResult = await repository.resetPassword(
+        email: 'driver@example.com',
+      );
+      expect(errResult.isErr, isTrue);
+    },
+  );
 }

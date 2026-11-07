@@ -12,6 +12,7 @@ import 'package:driver/src/features/auth/presentation/pages/sign_in_page.dart';
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthModule extends Module {
   @override
@@ -24,6 +25,7 @@ class AuthModule extends Module {
         (i) => AuthRepositoryImpl(
           remoteDataSource: i.get<AuthRemoteDataSource>(),
           secureSessionService: i.get<SessionStore>(),
+          preferences: i.get<SharedPreferences>(),
         ),
       );
     i.add<SignInBloc>((i) => SignInBloc(i.get<AuthRepository>()));

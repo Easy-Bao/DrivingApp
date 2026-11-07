@@ -9,9 +9,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 final class AuthRepositoryImpl({
   required this._remoteDataSource,
   required this._secureSessionService,
+  this._preferences,
 }) implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
   final SessionStore _secureSessionService;
+  final SharedPreferences? _preferences;
 
   @override
   Future<Result<AuthCredentials, Failure>> authenticate({
@@ -70,7 +72,7 @@ final class AuthRepositoryImpl({
       await _secureSessionService.saveRefreshToken(refreshToken);
       await _secureSessionService.saveDriverId(driverId);
 
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = _preferences ?? await SharedPreferences.getInstance();
       await prefs.setString('driver_id', driverId);
       await prefs.setString('driver_name', driverName);
       await prefs.setString('driver_phone', driverPhone);
@@ -131,10 +133,17 @@ final class AuthRepositoryImpl({
   @override
   Future<Result<void, Failure>> resetPassword({required String email}) async {
     try {
-      await _remoteDataSource.postJson(
+      final responseBody = await _remoteDataSource.postJson(
         AccountAuthEndpoints.forgotPassword,
         requestBody: {'email': email},
       );
+      if (responseBody['success'] != true) {
+        return const Err(
+          ServerFailure(
+            "Couldn't send the verification code. Check your email and try again.",
+          ),
+        );
+      }
       return const Ok(null);
     } catch (error) {
       return Err(

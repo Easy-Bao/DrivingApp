@@ -23,7 +23,7 @@ class ForgotPasswordBloc(this._authRepository)
     ForgotPasswordSubmitted event,
     Emitter<ForgotPasswordState> emit,
   ) async {
-    final normalizedEmail = event.email.trim();
+    final normalizedEmail = event.email.trim().toLowerCase();
     if (normalizedEmail.isEmpty || !normalizedEmail.contains('@')) {
       emit(const ForgotPasswordFailure('Enter a valid email address.'));
       return;
