@@ -5,7 +5,7 @@ import 'package:driver/src/features/chat/domain/entities/chat_peer.dart';
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:driver/src/features/chat/data/data_sources/chat_remote_data_source.dart';
+import 'package:driver/src/features/chat/data/datasources/chat_remote_data_source.dart';
 import 'package:driver/src/features/chat/data/dto/chat_message_dto.dart';
 import 'package:driver/src/features/chat/domain/entities/chat_connection_state.dart';
 import 'package:driver/src/features/chat/domain/entities/chat_event.dart';

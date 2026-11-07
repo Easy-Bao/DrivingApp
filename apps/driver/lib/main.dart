@@ -1,3 +1,3 @@
-import 'package:driver/src/app/driver_bootstrap.dart';
+import 'package:driver/src/app/bootstrap.dart';
 
 Future<void> main() => bootstrapApp();

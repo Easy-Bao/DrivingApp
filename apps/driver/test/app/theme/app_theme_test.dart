@@ -1,5 +1,5 @@
 import 'package:design_system/design_system.dart';
-import 'package:driver/src/app/driver_theme.dart';
+import 'package:driver/src/app/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

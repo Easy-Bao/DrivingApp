@@ -1,15 +1,15 @@
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
 import 'package:driver/src/features/auth/auth_routes.dart';
-import 'package:driver/src/features/auth/data/repositories/driver_auth_repository_impl.dart';
-import 'package:driver/src/features/auth/domain/repositories/driver_auth_repository.dart';
+import 'package:driver/src/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:driver/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:driver/src/features/auth/presentation/bloc/forgot_password/forgot_password_bloc.dart';
 import 'package:driver/src/features/auth/presentation/bloc/reset_password/reset_password_bloc.dart';
 import 'package:driver/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
-import 'package:driver/src/features/auth/presentation/view/forgot_password_page.dart';
-import 'package:driver/src/features/auth/presentation/view/reset_password_page.dart';
-import 'package:driver/src/features/auth/presentation/view/sign_in_page.dart';
-import 'package:driver/src/infrastructure/session/driver_session_store.dart';
+import 'package:driver/src/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:driver/src/features/auth/presentation/pages/reset_password_page.dart';
+import 'package:driver/src/features/auth/presentation/pages/sign_in_page.dart';
+import 'package:driver/src/core/session/session_store.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 

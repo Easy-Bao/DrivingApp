@@ -1,0 +1,189 @@
+import 'package:driver/src/app/theme.dart';
+
+import 'dart:async';
+
+import 'package:driver/src/core/telemetry/background_telemetry.dart';
+import 'package:driver/src/core/session/session_store.dart';
+import 'package:maps/maps.dart';
+import 'package:driver/src/app/navigation/app_routes.dart';
+import 'package:driver/src/core/location/location_access_cubit.dart';
+import 'package:driver/src/core/location/location_access_state.dart';
+import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router_modular/go_router_modular.dart';
+import 'package:foundation/foundation.dart';
+import 'package:design_system/design_system.dart';
+
+class const App({super.key}) extends StatefulWidget {
+  @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> with WidgetsBindingObserver {
+  late final LocationAccessCubit _locationAccessCubit;
+  late final AppLifecycleCoordinator _lifecycleCoordinator;
+  bool _locationMonitoringRequested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _locationAccessCubit = Modular.get<LocationAccessCubit>();
+    _lifecycleCoordinator = Modular.get<AppLifecycleCoordinator>();
+    WidgetsBinding.instance.addObserver(this);
+    Modular.routerConfig.routerDelegate.addListener(_onRouteChanged);
+    final lifecycleState = WidgetsBinding.instance.lifecycleState;
+    if (lifecycleState != null) {
+      _lifecycleCoordinator.update(
+        isForeground: lifecycleState == AppLifecycleState.resumed,
+      );
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ensureLocationMonitoring();
+      unawaited(_setBackgroundTelemetryVisibility(true));
+    });
+  }
+
+  @override
+  void dispose() {
+    unawaited(_setBackgroundTelemetryVisibility(false));
+    Modular.routerConfig.routerDelegate.removeListener(_onRouteChanged);
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _lifecycleCoordinator.update(
+      isForeground: state == AppLifecycleState.resumed,
+    );
+    unawaited(
+      _setBackgroundTelemetryVisibility(state == AppLifecycleState.resumed),
+    );
+    if (state == AppLifecycleState.resumed) {
+      MapProvider.clearLookupCaches();
+      _ensureLocationMonitoring();
+      unawaited(_locationAccessCubit.refresh());
+    }
+  }
+
+  void _onRouteChanged() {
+    if (mounted) _ensureLocationMonitoring();
+  }
+
+  Future<void> _setBackgroundTelemetryVisibility(bool isVisible) async {
+    try {
+      await Modular.get<BackgroundTelemetry>().setAppVisible(isVisible);
+    } catch (_) {
+      // The application can reach its first frame before service bindings are
+      // ready. A later lifecycle event or service configuration will sync it.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<LocationAccessCubit>.value(value: _locationAccessCubit),
+        BlocProvider<RideFlowCubit>(
+          create: (_) => RideFlowCubit(
+            rideRepository: Modular.get<RideRepository>(),
+            sessionService: Modular.get<SessionStore>(),
+          ),
+        ),
+      ],
+      child: ModularApp.router(
+        theme: DriverTheme.main,
+        debugShowCheckedModeBanner: false,
+        title: 'EasyRide Driver',
+        builder: (context, child) =>
+            BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
+              builder: (context, locationState) =>
+                  _buildRouteWithLocationOverlay(context, child, locationState),
+            ),
+      ),
+    );
+  }
+
+  Widget _buildRouteWithLocationOverlay(
+    BuildContext context,
+    Widget? child,
+    LocationAccessViewState locationState,
+  ) {
+    final overlay = _buildLocationOverlay(context, locationState);
+    return Stack(
+      fit: StackFit.expand,
+      children: [child ?? const SizedBox.shrink(), ?overlay],
+    );
+  }
+
+  Widget? _buildLocationOverlay(
+    BuildContext context,
+    LocationAccessViewState locationState,
+  ) {
+    final currentPath =
+        Modular.routerConfig.routerDelegate.currentConfiguration.uri.path;
+    if (!currentPath.startsWith(AppRoutes.driverModulePath)) return null;
+
+    final cubit = BlocProvider.of<LocationAccessCubit>(context);
+    return switch (locationState) {
+      LocationAccessChecking() => const LocationAccessOverlay(
+        state: LocationAccessOverlayState.checking,
+        appName: 'EasyRide',
+      ),
+      LocationAccessReady() => null,
+      LocationAccessUnavailable(
+        accessState: final accessState,
+        message: final message,
+      ) =>
+        switch (accessState) {
+          LocationAccessState.ready => null,
+          LocationAccessState.denied => LocationAccessOverlay(
+            state: LocationAccessOverlayState.permissionDenied,
+            appName: 'EasyRide',
+            message: message,
+            onTryAgain: () => unawaited(cubit.enable()),
+          ),
+          LocationAccessState.serviceDisabled => LocationAccessOverlay(
+            state: LocationAccessOverlayState.serviceDisabled,
+            appName: 'EasyRide',
+            message: message,
+            onOpenLocationSettings: () => unawaited(cubit.enable()),
+            onTryAgain: () => unawaited(cubit.refresh()),
+          ),
+          LocationAccessState.deniedForever => LocationAccessOverlay(
+            state: LocationAccessOverlayState.permissionDeniedForever,
+            appName: 'EasyRide',
+            message: message,
+            onOpenAppSettings: () => unawaited(cubit.enable()),
+            onTryAgain: () => unawaited(cubit.refresh()),
+          ),
+        },
+    };
+  }
+
+  void _ensureLocationMonitoring() {
+    final currentPath =
+        Modular.routerConfig.routerDelegate.currentConfiguration.uri.path;
+    if (_locationMonitoringRequested ||
+        !currentPath.startsWith(AppRoutes.driverModulePath)) {
+      return;
+    }
+
+    _locationMonitoringRequested = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _isDriverRoute) {
+        unawaited(_locationAccessCubit.start());
+      }
+    });
+  }
+
+  bool get _isDriverRoute => Modular
+      .routerConfig
+      .routerDelegate
+      .currentConfiguration
+      .uri
+      .path
+      .startsWith(AppRoutes.driverModulePath);
+}

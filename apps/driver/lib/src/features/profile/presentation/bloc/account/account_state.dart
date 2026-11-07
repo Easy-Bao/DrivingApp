@@ -1,4 +1,4 @@
-import 'package:driver/src/features/profile/domain/entities/driver_account_snapshot.dart';
+import 'package:driver/src/features/profile/domain/entities/account_snapshot.dart';
 import 'package:equatable/equatable.dart';
 
 class const AccountState({

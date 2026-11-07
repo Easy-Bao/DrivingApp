@@ -1,4 +1,4 @@
-import 'package:driver/src/features/auth/domain/repositories/driver_auth_repository.dart';
+import 'package:driver/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:driver/src/features/auth/presentation/bloc/reset_password/reset_password_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';

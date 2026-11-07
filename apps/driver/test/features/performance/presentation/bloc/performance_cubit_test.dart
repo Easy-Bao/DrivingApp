@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
-import 'package:driver/src/features/performance/domain/entities/driver_performance_stats.dart';
-import 'package:driver/src/features/performance/domain/repositories/driver_performance_repository.dart';
-import 'package:driver/src/features/performance/presentation/bloc/driver_performance_cubit.dart';
-import 'package:driver/src/features/performance/presentation/bloc/driver_performance_state.dart';
-import 'package:driver/src/infrastructure/session/driver_session_store.dart';
+import 'package:driver/src/features/performance/domain/entities/performance_stats.dart';
+import 'package:driver/src/features/performance/domain/repositories/performance_repository.dart';
+import 'package:driver/src/features/performance/presentation/bloc/performance_cubit.dart';
+import 'package:driver/src/features/performance/presentation/bloc/performance_state.dart';
+import 'package:driver/src/core/session/session_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';

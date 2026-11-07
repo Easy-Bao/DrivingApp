@@ -1,5 +1,5 @@
 import 'package:driver/src/features/profile/presentation/bloc/account/account_state.dart';
-import 'package:driver/src/features/profile/domain/repositories/driver_profile_repository.dart';
+import 'package:driver/src/features/profile/domain/repositories/profile_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 

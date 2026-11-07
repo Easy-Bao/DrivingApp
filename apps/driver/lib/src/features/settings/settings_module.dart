@@ -1,8 +1,9 @@
 import 'package:driver/src/features/settings/settings_routes.dart';
-import 'package:driver/src/features/settings/presentation/view/driver_about_easy_ride_page.dart';
-import 'package:driver/src/features/settings/presentation/view/driver_location_access_status_page.dart';
-import 'package:driver/src/features/settings/presentation/view/driver_settings_page.dart';
-import 'package:driver/src/features/settings/presentation/view/driver_terms_of_service_page.dart';
+import 'package:driver/src/features/settings/presentation/pages/about_page.dart';
+import 'package:driver/src/features/settings/presentation/pages/help_center_page.dart';
+import 'package:driver/src/features/settings/presentation/pages/location_access_status_page.dart';
+import 'package:driver/src/features/settings/presentation/pages/settings_page.dart';
+import 'package:driver/src/features/settings/presentation/pages/terms_of_service_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
@@ -20,6 +21,13 @@ class SettingsModule._() {
       name: SettingsRoutes.locationAccess,
       SettingsRoutes.locationAccessPath,
       child: (context, GoRouterState state) => const LocationAccessStatusPage(),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: SettingsRoutes.helpCenter,
+      SettingsRoutes.helpCenterPath,
+      child: (context, GoRouterState state) => const HelpCenterPage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

@@ -7,16 +7,16 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:dio/dio.dart';
-import 'package:driver/src/infrastructure/telemetry/driver_background_telemetry.dart';
-import 'package:driver/src/infrastructure/session/driver_session_store.dart';
-import 'package:driver/src/features/dashboard/data/data_sources/driver_availability_remote_data_source.dart';
-import 'package:driver/src/features/dashboard/data/data_sources/ride_offer_remote_data_source.dart';
-import 'package:driver/src/features/dashboard/domain/entities/driver_dashboard_stats.dart';
-import 'package:driver/src/features/dashboard/domain/entities/driver_dispatch_snapshot.dart';
+import 'package:driver/src/core/telemetry/background_telemetry.dart';
+import 'package:driver/src/core/session/session_store.dart';
+import 'package:driver/src/features/dashboard/data/datasources/availability_remote_data_source.dart';
+import 'package:driver/src/features/dashboard/data/datasources/ride_offer_remote_data_source.dart';
+import 'package:driver/src/features/dashboard/domain/entities/dashboard_stats.dart';
+import 'package:driver/src/features/dashboard/domain/entities/dispatch_snapshot.dart';
 import 'package:driver/src/features/dashboard/domain/repositories/dashboard_repository.dart';
-import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
-import 'package:driver/src/features/performance/domain/repositories/driver_performance_repository.dart';
-import 'package:driver/src/features/ride_history/domain/repositories/driver_ride_history_repository.dart';
+import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
+import 'package:driver/src/features/performance/domain/repositories/performance_repository.dart';
+import 'package:driver/src/features/ride_history/domain/repositories/ride_history_repository.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

@@ -5,8 +5,8 @@ import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.da
 import 'package:foundation/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:driver/src/features/dashboard/domain/entities/driver_dashboard_stats.dart';
-import 'package:driver/src/features/dashboard/domain/entities/driver_dispatch_snapshot.dart';
+import 'package:driver/src/features/dashboard/domain/entities/dashboard_stats.dart';
+import 'package:driver/src/features/dashboard/domain/entities/dispatch_snapshot.dart';
 import 'package:driver/src/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';

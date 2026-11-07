@@ -9,7 +9,7 @@ import 'package:flutter/material.dart' show Color, EdgeInsets;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rxdart/rxdart.dart';
 
-import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
+import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
 
 part 'live_map_event.dart';
 part 'live_map_state.dart';

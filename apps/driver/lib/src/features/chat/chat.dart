@@ -1,4 +1,4 @@
-export 'data/data_sources/chat_remote_data_source.dart';
+export 'data/datasources/chat_remote_data_source.dart';
 export 'data/dto/chat_message_dto.dart';
 export 'data/repositories/chat_repository_factory.dart';
 export 'data/repositories/chat_repository_impl.dart';

@@ -1,0 +1,471 @@
+import 'package:driver/src/features/active_ride/active_ride.dart';
+import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
+import 'package:dio/dio.dart';
+import 'package:driver/src/features/active_ride/data/datasources/ride_counterparty_remote_data_source.dart';
+import 'package:driver/src/features/active_ride/data/datasources/ride_remote_data_source.dart';
+import 'package:driver/src/features/active_ride/data/datasources/telemetry_remote_data_source.dart';
+import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
+import 'package:foundation/foundation.dart';
+import 'package:driver/src/core/telemetry/location_spool.dart';
+
+final class RideRepositoryImpl({
+  required this._rideDataSource,
+  required this._counterpartyDataSource,
+  required this._telemetryDataSource,
+  this._locationSpool,
+}) implements RideRepository {
+  final RideRemoteDataSource _rideDataSource;
+  final RideCounterpartyRemoteDataSource _counterpartyDataSource;
+  final TelemetryRemoteDataSource _telemetryDataSource;
+  final LocationSpool? _locationSpool;
+
+  @override
+  Future<Result<void, Failure>> acceptRide({
+    required String rideId,
+    required String driverId,
+  }) async {
+    try {
+      final accepted = await _rideDataSource.acceptRide(
+        tripId: rideId,
+        driverId: driverId,
+      );
+      return accepted
+          ? const Ok(null)
+          : const Err(ServerFailure('The ride could not be accepted.'));
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'accept this ride'));
+    }
+  }
+
+  @override
+  Future<Result<RideSnapshot, Failure>> markArrived({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+    required DateTime observedAt,
+  }) async {
+    final locationFailure = await _publishTransitionLocation(
+      latitude: latitude,
+      longitude: longitude,
+      observedAt: observedAt,
+    );
+    if (locationFailure != null) return Err(locationFailure);
+
+    try {
+      final data = await _rideDataSource.markArrived(
+        rideId: rideId,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
+      if (ride.id.isEmpty ||
+          ride.status != RideStatus.arrived.value ||
+          ride.arrivedAt == null ||
+          ride.waitingUntil == null) {
+        return const Err(
+          ValidationFailure('The arrival response is missing the wait timer.'),
+        );
+      }
+      return Ok(ride);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'confirm arrival'));
+    }
+  }
+
+  @override
+  Future<Result<RideSnapshot, Failure>> markPassengerNoShow(
+    String rideId,
+  ) async {
+    try {
+      final data = await _rideDataSource.markPassengerNoShow(rideId);
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
+      if (ride.id.isEmpty || ride.status != RideStatus.cancelled.value) {
+        return const Err(
+          ValidationFailure('The no-show response is incomplete.'),
+        );
+      }
+      return Ok(ride);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'record the passenger no-show'));
+    }
+  }
+
+  @override
+  Future<Result<RideSnapshot, Failure>> cancelRide({
+    required String rideId,
+    required String reason,
+    String details = '',
+  }) async {
+    try {
+      final data = await _rideDataSource.cancelRide(
+        rideId: rideId,
+        reason: reason,
+        details: details,
+      );
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
+      if (ride.id.isEmpty || ride.status != RideStatus.cancelled.value) {
+        return const Err(
+          ValidationFailure('The cancellation response is incomplete.'),
+        );
+      }
+      return Ok(ride);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'cancel this ride'));
+    }
+  }
+
+  @override
+  Future<Result<RideSnapshot, Failure>> emergencyStop({
+    required String rideId,
+    required String reason,
+    String details = '',
+  }) async {
+    try {
+      final data = await _rideDataSource.emergencyStop(
+        rideId: rideId,
+        reason: reason,
+        details: details,
+      );
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
+      final responsibility = SafeParse.toStringValue(
+        data['cancellation_responsibility'],
+      ).toLowerCase();
+      final responseReason = SafeParse.toStringValue(
+        data['cancellation_reason'],
+      ).toLowerCase();
+      if (ride.id.isEmpty ||
+          ride.status != RideStatus.cancelled.value ||
+          responseReason != reason.trim().toLowerCase() ||
+          responsibility != 'safety_related') {
+        return const Err(
+          ValidationFailure('The emergency-stop response is incomplete.'),
+        );
+      }
+      return Ok(ride);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'end this ride for safety'));
+    }
+  }
+
+  @override
+  Future<Result<void, Failure>> createSafetyReport({
+    required String rideId,
+    required String category,
+    required String description,
+  }) async {
+    try {
+      final data = await _rideDataSource.createSafetyReport(
+        rideId: rideId,
+        category: category,
+        description: description,
+      );
+      final reportId = SafeParse.toNullableDouble(data['id']);
+      final status = SafeParse.toStringValue(data['status']).toLowerCase();
+      if (reportId == null || reportId <= 0 || status != 'submitted') {
+        return const Err(
+          ValidationFailure('The safety report response is incomplete.'),
+        );
+      }
+      return const Ok(null);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'submit the safety report'));
+    }
+  }
+
+  @override
+  Future<Result<RideSnapshot, Failure>> startRide({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+    required DateTime observedAt,
+  }) async {
+    final locationFailure = await _publishTransitionLocation(
+      latitude: latitude,
+      longitude: longitude,
+      observedAt: observedAt,
+    );
+    if (locationFailure != null) return Err(locationFailure);
+
+    try {
+      final data = await _rideDataSource.startRide(
+        rideId: rideId,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
+      if (ride.id.isEmpty || ride.status != RideStatus.inTransit.value) {
+        return const Err(
+          ValidationFailure('The trip start response is incomplete.'),
+        );
+      }
+      return Ok(ride);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'start this trip'));
+    }
+  }
+
+  @override
+  Future<Result<RideSnapshot, Failure>> completeRide({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      await _telemetryDataSource.sendLocationUpdate(
+        lat: latitude,
+        lng: longitude,
+      );
+    } catch (_) {
+      // Ephemeral telemetry failure does not block completing the trip.
+    }
+
+    try {
+      final data = await _rideDataSource.completeRide(
+        rideId: rideId,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
+      if (ride.id.isEmpty || ride.status != RideStatus.completed.value) {
+        return const Err(
+          ValidationFailure('The trip completion response is incomplete.'),
+        );
+      }
+      return Ok(ride);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'complete this trip'));
+    }
+  }
+
+  @override
+  Future<Result<RideSnapshot, Failure>> fetchRide(String rideId) async {
+    try {
+      final data = await _rideDataSource.getRideStatus(rideId);
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
+      if (ride.id.isEmpty || ride.status.isEmpty) {
+        return const Err(ValidationFailure('The ride response is incomplete.'));
+      }
+      return Ok(ride);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'load this ride'));
+    }
+  }
+
+  @override
+  Future<Result<int, Failure>> settleCash({
+    required String rideId,
+    required int cashReceivedAmount,
+    required int cashChangeAmount,
+    required String cashOutcome,
+  }) async {
+    try {
+      final data = await _rideDataSource.settleCash(
+        rideId: rideId,
+        cashReceivedAmount: cashReceivedAmount,
+        cashChangeAmount: cashChangeAmount,
+        cashOutcome: cashOutcome,
+      );
+      final fareAmount = SafeParse.toNullableDouble(data['fare_amount']);
+      if (fareAmount == null || fareAmount <= 0) {
+        return const Err(
+          ValidationFailure('The settled ride has no payable fare.'),
+        );
+      }
+      return Ok(fareAmount.round());
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'settle this cash ride'));
+    }
+  }
+
+  @override
+  Future<Result<RideCounterparty, Failure>> fetchCounterparty(
+    String rideId,
+  ) async {
+    try {
+      return Ok(
+        RideCounterparty.fromJson(await _counterpartyDataSource.fetch(rideId)),
+      );
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'load passenger contact details'));
+    }
+  }
+
+  @override
+  Future<Result<(double latitude, double longitude)?, Failure>>
+  fetchPassengerLocation(String rideId) async {
+    try {
+      final data = await _telemetryDataSource.fetchPassengerLocation(rideId);
+      final latitude = SafeParse.toNullableDouble(data['lat']);
+      final longitude = SafeParse.toNullableDouble(data['lng']);
+      if (latitude == null || longitude == null) return const Ok(null);
+      return Ok((latitude, longitude));
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'load passenger location'));
+    }
+  }
+
+  @override
+  Future<Result<void, Failure>> publishDriverLocation({
+    required double latitude,
+    required double longitude,
+    double? heading,
+    double? speed,
+  }) async {
+    try {
+      final spool = _locationSpool;
+      if (spool == null) {
+        final sent = await _telemetryDataSource.sendLocationUpdate(
+          lat: latitude,
+          lng: longitude,
+          heading: heading,
+          speed: speed,
+        );
+        return sent
+            ? const Ok(null)
+            : const Err(NetworkFailure('Your location was not accepted.'));
+      }
+      await spool.enqueue(
+        LocationPoint(
+          latitude: latitude,
+          longitude: longitude,
+          observedAt: DateTime.now().toUtc(),
+          heading: heading,
+          speed: speed,
+        ),
+      );
+      await spool.flush(
+        (point) => _telemetryDataSource.sendLocationUpdate(
+          lat: point.latitude,
+          lng: point.longitude,
+          observedAt: point.observedAt,
+          heading: point.heading,
+          speed: point.speed,
+        ),
+      );
+      return const Ok(null);
+    } catch (error) {
+      if (error is DioException &&
+          NetworkAvailabilityCoordinator.isNetworkFailure(error)) {
+        return const Ok(null);
+      }
+      return Err(_mapFailure(error, action: 'share your location'));
+    }
+  }
+
+  @override
+  Future<Result<void, Failure>> clearDriverLocation() async {
+    try {
+      final removed = await _telemetryDataSource.removeLocation();
+      return removed
+          ? const Ok(null)
+          : const Err(ServerFailure('Your location was not removed.'));
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'remove your location'));
+    }
+  }
+
+  Future<Failure?> _publishTransitionLocation({
+    required double latitude,
+    required double longitude,
+    required DateTime observedAt,
+  }) async {
+    try {
+      final sent = await _telemetryDataSource.sendLocationUpdate(
+        lat: latitude,
+        lng: longitude,
+        observedAt: observedAt,
+      );
+      return sent
+          ? null
+          : const NetworkFailure(
+              'Your live location could not be updated. Keep location sharing on and try again.',
+            );
+    } catch (error) {
+      return _mapFailure(error, action: 'share your location');
+    }
+  }
+}
+
+Failure _mapFailure(Object error, {required String action}) {
+  if (error is Failure) return error;
+  if (error is DioException) {
+    final statusCode = error.response?.statusCode;
+    if (action == 'load this ride' && statusCode == 404) {
+      return const RideNotFoundFailure();
+    }
+    if (statusCode == 401) {
+      return const AuthFailure('Your driver session has ended. Sign in again.');
+    }
+    if (action == 'complete this trip' && statusCode == 403) {
+      return const AuthFailure(
+        'This trip is not assigned to your driver account.',
+      );
+    }
+    if (statusCode == 403) {
+      return const AuthFailure('Your driver session has ended. Sign in again.');
+    }
+    if (action == 'complete this trip' && statusCode == 409) {
+      return const ServerFailure.withStatusCode(
+        'This trip is no longer active. Refresh your ride and try again.',
+        409,
+      );
+    }
+    if (action == 'complete this trip' && statusCode == 503) {
+      return const ServerFailure.withStatusCode(
+        'Your live location is unavailable or out of date. Keep location sharing on and try again.',
+        503,
+      );
+    }
+    if (action == 'confirm arrival' && statusCode == 422) {
+      return const ValidationFailure(
+        "You must be at the passenger's pickup point to confirm arrival.",
+      );
+    }
+    if (action == 'start this trip' && statusCode == 422) {
+      return const ValidationFailure(
+        "You must be at the passenger's pickup point to start the trip.",
+      );
+    }
+    if ((action == 'confirm arrival' ||
+            action == 'start this trip' ||
+            action == 'share your location') &&
+        statusCode == 503) {
+      return const ServerFailure.withStatusCode(
+        'Your live location is unavailable or out of date. Keep location sharing on and try again.',
+        503,
+      );
+    }
+    if (statusCode == 400 || statusCode == 404 || statusCode == 422) {
+      return ValidationFailure('Unable to $action with the supplied ride.');
+    }
+    if (statusCode == null) {
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.receiveTimeout) {
+        return const ServerFailure.withStatusCode(
+          'The ride request timed out.',
+          504,
+        );
+      }
+      return NetworkFailure('Unable to $action. Check your connection.');
+    }
+    return ServerFailure.withStatusCode(
+      'Unable to $action right now.',
+      statusCode,
+    );
+  }
+  if (error is ServerException) {
+    if (action == 'load this ride' && error.statusCode == 404) {
+      return const RideNotFoundFailure();
+    }
+    return FailureMapper.fromException(
+      error,
+      serverMessage: 'Unable to $action right now.',
+      validationMessage: 'Unable to $action with the supplied ride.',
+    );
+  }
+  if (error is FormatException || error is DataParsingException) {
+    return ValidationFailure('Unable to $action because the data is invalid.');
+  }
+  return ServerFailure('Unable to $action right now.');
+}

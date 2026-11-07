@@ -1,0 +1,107 @@
+import 'package:dio/dio.dart';
+import 'package:driver/src/features/performance/data/datasources/performance_remote_data_source.dart';
+import 'package:driver/src/features/performance/data/repositories/performance_repository_impl.dart';
+import 'package:driver/src/features/performance/domain/entities/performance_stats.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:foundation/foundation.dart';
+
+class MockPerformanceRemoteDataSource extends Mock
+    implements PerformanceRemoteDataSource {}
+
+void main() {
+  late MockPerformanceRemoteDataSource dataSource;
+  late PerformanceRepositoryImpl repository;
+
+  setUp(() {
+    dataSource = MockPerformanceRemoteDataSource();
+    repository = PerformanceRepositoryImpl(dataSource: dataSource);
+  });
+
+  test('normalizes the complete driver statistics contract', () async {
+    when(() => dataSource.fetchStats('42')).thenAnswer(
+      (_) async => <String, dynamic>{
+        'today_earnings_amount': '2817',
+        'today_completed_trips': 1,
+        'total_trips': 6,
+        'completed_trips': 5,
+        'total_earnings_amount': 14085,
+        'average_rating': '4.8',
+        'rating_distribution': [1, 0, 1, 2, 2],
+        'standing': {
+          'settled_trips': 6,
+          'driver_fault_cancellations': 1,
+          'passenger_fault_cancellations': 0,
+          'system_fault_cancellations': 0,
+          'no_fault_cancellations': 0,
+          'safety_related_cancellations': 0,
+          'pending_review_cancellations': 0,
+          'admin_override_cancellations': 0,
+          'completion_rate_percent': 83.3333333333,
+          'driver_fault_cancellation_rate_percent': 16.6666666667,
+        },
+      },
+    );
+
+    final result = await repository.fetchStats('42');
+
+    expect(
+      result,
+      const Ok<PerformanceStats, Failure>(
+        PerformanceStats(
+          todayEarningsAmount: 2817,
+          todayCompletedTrips: 1,
+          totalTrips: 6,
+          completedTrips: 5,
+          totalEarningsAmount: 14085,
+          averageRating: 4.8,
+          standing: DriverStanding(
+            settledTrips: 6,
+            driverFaultCancellations: 1,
+            completionRatePercent: 83.3333333333,
+            driverFaultCancellationRatePercent: 16.6666666667,
+          ),
+          ratingDistribution: [1, 0, 1, 2, 2],
+        ),
+      ),
+    );
+  });
+
+  test('rejects fractional trip counts instead of truncating them', () async {
+    when(() => dataSource.fetchStats('42')).thenAnswer(
+      (_) async => <String, dynamic>{
+        'today_earnings_amount': 2817,
+        'today_completed_trips': 1.5,
+        'total_trips': 6,
+        'completed_trips': 5,
+        'total_earnings_amount': 14085,
+        'average_rating': 4.8,
+      },
+    );
+
+    final result = await repository.fetchStats('42');
+
+    expect(result.isErr, isTrue);
+    result.fold(
+      (failure) => expect(failure, isA<ValidationFailure>()),
+      (_) => fail('Expected an invalid statistics response.'),
+    );
+  });
+
+  test('maps an unreachable statistics API to a network failure', () async {
+    when(() => dataSource.fetchStats('42')).thenThrow(
+      DioException(
+        requestOptions: RequestOptions(path: '/api/v1/drivers/42/stats'),
+        type: DioExceptionType.connectionError,
+      ),
+    );
+
+    final result = await repository.fetchStats('42');
+
+    expect(result.isErr, isTrue);
+    result.fold(
+      (failure) => expect(failure, isA<NetworkFailure>()),
+      (_) => fail('Expected a network failure.'),
+    );
+  });
+}

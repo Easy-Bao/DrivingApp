@@ -1,4 +1,4 @@
-import 'package:driver/src/features/earnings/domain/entities/driver_earnings_summary.dart';
+import 'package:driver/src/features/earnings/domain/entities/earnings_summary.dart';
 import 'package:equatable/equatable.dart';
 
 class EarningsState extends Equatable {

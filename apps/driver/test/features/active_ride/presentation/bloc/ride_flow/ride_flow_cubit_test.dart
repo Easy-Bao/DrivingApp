@@ -5,10 +5,10 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:driver/src/infrastructure/session/driver_session_store.dart';
+import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
-import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
+import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
 
 class MockRideRepository extends Mock implements RideRepository {}
 

@@ -1,6 +1,6 @@
-import 'package:driver/src/features/earnings/domain/repositories/driver_earnings_repository.dart';
+import 'package:driver/src/features/earnings/domain/repositories/earnings_repository.dart';
 import 'package:driver/src/features/earnings/presentation/bloc/earnings_state.dart';
-import 'package:driver/src/infrastructure/session/driver_session_store.dart';
+import 'package:driver/src/core/session/session_store.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 

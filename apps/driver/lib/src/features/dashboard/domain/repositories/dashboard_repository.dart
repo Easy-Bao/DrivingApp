@@ -1,7 +1,7 @@
 import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:foundation/foundation.dart';
-import 'package:driver/src/features/dashboard/domain/entities/driver_dashboard_stats.dart';
-import 'package:driver/src/features/dashboard/domain/entities/driver_dispatch_snapshot.dart';
+import 'package:driver/src/features/dashboard/domain/entities/dashboard_stats.dart';
+import 'package:driver/src/features/dashboard/domain/entities/dispatch_snapshot.dart';
 
 abstract interface class DashboardRepository {
   Future<Result<bool, Failure>> getPersistedOnlineStatus();

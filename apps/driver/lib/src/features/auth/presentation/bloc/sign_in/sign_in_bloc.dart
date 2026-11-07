@@ -1,6 +1,6 @@
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:driver/src/features/auth/domain/entities/auth_credentials.dart';
-import 'package:driver/src/features/auth/domain/repositories/driver_auth_repository.dart';
+import 'package:driver/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:driver/src/features/auth/presentation/bloc/sign_in/sign_in_event.dart';
 import 'package:driver/src/features/auth/presentation/bloc/sign_in/sign_in_failure_message.dart';
 import 'package:equatable/equatable.dart';

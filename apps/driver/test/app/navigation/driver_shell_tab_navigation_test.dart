@@ -1,5 +1,5 @@
-import 'package:driver/src/app/navigation/driver_bottom_navigation.dart';
-import 'package:driver/src/app/navigation/driver_navigation_shell.dart';
+import 'package:driver/src/app/navigation/bottom_navigation.dart';
+import 'package:driver/src/app/navigation/navigation_shell.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

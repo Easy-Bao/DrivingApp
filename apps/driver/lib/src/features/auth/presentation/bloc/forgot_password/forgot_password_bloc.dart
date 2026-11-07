@@ -1,5 +1,5 @@
 import 'package:bloc_concurrency/bloc_concurrency.dart';
-import 'package:driver/src/features/auth/domain/repositories/driver_auth_repository.dart';
+import 'package:driver/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:driver/src/features/auth/presentation/bloc/forgot_password/forgot_password_event.dart';
 import 'package:driver/src/features/auth/presentation/bloc/forgot_password/forgot_password_state.dart';
 import 'package:foundation/foundation.dart';
