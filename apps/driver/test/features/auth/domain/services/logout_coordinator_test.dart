@@ -13,6 +13,10 @@ void main() {
         completedSteps.add('telemetry');
         throw StateError('telemetry unavailable');
       },
+      disconnectRealtime: () async {
+        completedSteps.add('realtime');
+        throw StateError('socket unavailable');
+      },
       clearLocationSpool: () async {
         completedSteps.add('spool');
         throw StateError('storage unavailable');
@@ -22,6 +26,12 @@ void main() {
 
     await coordinator.logout();
 
-    expect(completedSteps, ['offline', 'telemetry', 'spool', 'session']);
+    expect(completedSteps, [
+      'offline',
+      'telemetry',
+      'realtime',
+      'spool',
+      'session',
+    ]);
   });
 }

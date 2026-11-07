@@ -15,6 +15,8 @@ void main() {
 
   setUp(() {
     sessionRepository = MockSessionRepository();
+    when(() => sessionRepository.clearSession())
+        .thenAnswer((_) async => const Ok<Session, Failure>(Session.guest()));
   });
 
   blocTest<SessionBloc, SessionState>(
@@ -85,6 +87,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(states.last, const GuestSession());
+      verify(() => sessionRepository.clearSession()).called(1);
       await subscription.cancel();
       await bloc.close();
     },

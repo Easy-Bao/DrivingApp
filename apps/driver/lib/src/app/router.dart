@@ -2,6 +2,7 @@ import 'package:design_system/design_system.dart';
 
 import 'dart:async';
 
+import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
 import 'package:driver/src/core/telemetry/background_telemetry.dart';
 import 'package:driver/src/core/telemetry/location_spool.dart';
@@ -47,6 +48,8 @@ class AppRouter extends Module {
             );
           },
           stopTelemetry: () => i.get<BackgroundTelemetry>().stop(),
+          disconnectRealtime: () =>
+              i.get<RealtimeWebSocketClient>().disconnect(),
           clearLocationSpool: () => i.get<LocationSpool>().clear(),
           clearSession: () => i.get<SessionStore>().clearSession(),
         ),

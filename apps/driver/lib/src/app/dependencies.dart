@@ -23,7 +23,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AppDependencies extends Module {
   AppDependencies({required this.preferences, SessionStore? sessionService})
-    : _sessionService = sessionService ?? SessionStore();
+    : _sessionService =
+          sessionService ?? SessionStore(preferences: preferences);
 
   final SharedPreferences preferences;
   final SessionStore _sessionService;

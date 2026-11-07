@@ -10,11 +10,13 @@ final class const LogoutCoordinator({
   required this._stopTelemetry,
   required this._clearLocationSpool,
   required this._clearSession,
+  this._disconnectRealtime,
 }) {
   final LogoutStep _forceOffline;
   final LogoutStep _stopTelemetry;
   final LogoutStep _clearLocationSpool;
   final LogoutStep _clearSession;
+  final LogoutStep? _disconnectRealtime;
 
   Future<void> logout() async {
     try {
@@ -35,6 +37,19 @@ final class const LogoutCoordinator({
         error: error,
         stackTrace: stackTrace,
       );
+    }
+
+    final disconnectRealtime = _disconnectRealtime;
+    if (disconnectRealtime != null) {
+      try {
+        await disconnectRealtime();
+      } catch (error, stackTrace) {
+        developer.log(
+          'Unable to disconnect driver realtime socket during logout.',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
     }
 
     // Queued points belong to this driver; replaying them under the next

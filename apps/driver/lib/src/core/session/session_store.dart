@@ -1,12 +1,17 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:driver/src/core/session/storage_keys.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class SessionStore({FlutterSecureStorage? storage}) {
+class SessionStore({
+  FlutterSecureStorage? storage,
+  SharedPreferences? preferences,
+}) {
   static const _defaultStorage = FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
+  final SharedPreferences? _preferences;
 
-  this : _storage = storage ?? _defaultStorage;
+  this : _storage = storage ?? _defaultStorage, _preferences = preferences;
 
   Future<void> saveToken(String token) async {
     await _storage.write(key: StorageKeys.accessToken, value: token);
@@ -93,8 +98,9 @@ class SessionStore({FlutterSecureStorage? storage}) {
   }
 
   Future<void> clearSession() async {
-    await Future.wait(
-      const [
+    final preferences = _preferences;
+    await Future.wait([
+      ...const [
         StorageKeys.accessToken,
         StorageKeys.refreshToken,
         StorageKeys.driverId,
@@ -104,6 +110,8 @@ class SessionStore({FlutterSecureStorage? storage}) {
         StorageKeys.passengerId,
         StorageKeys.activeRideId,
       ].map((key) => _storage.delete(key: key)),
-    );
+      if (preferences != null)
+        for (final key in StorageKeys.profileCacheKeys) preferences.remove(key),
+    ]);
   }
 }
