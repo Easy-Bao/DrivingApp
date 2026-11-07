@@ -1,5 +1,3 @@
-import 'package:driver/src/app/theme.dart';
-
 import 'dart:developer' as developer;
 import 'dart:ui' as ui;
 
@@ -135,7 +133,7 @@ Future<void> bootstrapApp() async {
       captureFirstFrameTiming();
       runApp(
         SafeClientErrorApp(
-          theme: DriverTheme.main,
+          theme: AppTheme.main,
           message: ErrorHandler.getErrorMessage(error, stackTrace),
         ),
       );

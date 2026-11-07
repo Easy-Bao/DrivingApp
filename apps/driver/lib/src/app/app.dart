@@ -1,5 +1,3 @@
-import 'package:driver/src/app/theme.dart';
-
 import 'dart:async';
 
 import 'package:driver/src/core/telemetry/background_telemetry.dart';
@@ -94,7 +92,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         ),
       ],
       child: ModularApp.router(
-        theme: DriverTheme.main,
+        theme: AppTheme.main,
         debugShowCheckedModeBanner: false,
         title: 'EasyRide Driver',
         builder: (context, child) =>

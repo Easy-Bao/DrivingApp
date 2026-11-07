@@ -1,11 +1,10 @@
 import 'package:design_system/design_system.dart';
-import 'package:driver/src/app/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('exposes the approved default semantic palette', () {
-    final theme = DriverTheme.main;
+    final theme = AppTheme.main;
     final scheme = theme.colorScheme;
     final semantic = theme.extension<AppSemanticColors>();
 
@@ -26,7 +25,7 @@ void main() {
   });
 
   test('exposes the balanced type scale', () {
-    final theme = DriverTheme.main;
+    final theme = AppTheme.main;
     expect(theme.textTheme.headlineLarge?.fontSize, 32);
     expect(theme.textTheme.headlineLarge?.fontWeight, FontWeight.w700);
     expect(theme.textTheme.titleLarge?.fontSize, 20);
@@ -38,7 +37,7 @@ void main() {
   });
 
   test('keeps icon controls at the shared touch target', () {
-    final style = DriverTheme.main.iconButtonTheme.style!;
+    final style = AppTheme.main.iconButtonTheme.style!;
 
     expect(style.minimumSize?.resolve({}), const Size.square(48));
     expect(style.tapTargetSize, MaterialTapTargetSize.padded);
@@ -49,7 +48,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: DriverTheme.main,
+        theme: AppTheme.main,
         home: Scaffold(
           body: Align(
             alignment: Alignment.bottomCenter,
