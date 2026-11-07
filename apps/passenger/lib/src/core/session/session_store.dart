@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -16,6 +17,7 @@ class SessionStore({FlutterSecureStorage? storage}) {
   final FlutterSecureStorage _storage;
   final Map<String, String> _temporaryValues = {};
   bool _persistent = true;
+  FutureOr<void> Function()? onActiveRideCleared;
   static const _sessionKeys = [
     StorageKeys.accessToken,
     StorageKeys.refreshToken,
@@ -80,10 +82,18 @@ class SessionStore({FlutterSecureStorage? storage}) {
 
   Future<void> saveActiveRideId(String rideId) async {
     await _writeValue(key: StorageKeys.activeRideId, value: rideId);
+    if (rideId.trim().isEmpty) {
+      await onActiveRideCleared?.call();
+    }
   }
 
   Future<String?> readActiveRideId() async {
     return _readValue(key: StorageKeys.activeRideId);
+  }
+
+  Future<void> clearActiveRideId() async {
+    await _deleteKeys(const [StorageKeys.activeRideId]);
+    await onActiveRideCleared?.call();
   }
 
   Future<void> saveActiveBidSessionId(String sessionId) async {

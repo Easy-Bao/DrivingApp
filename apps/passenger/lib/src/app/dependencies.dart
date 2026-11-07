@@ -17,9 +17,11 @@ import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/b
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppDependencies extends Module {
-  AppDependencies({required this._preferences});
+  AppDependencies({required this._preferences, SessionStore? sessionService})
+    : _sessionService = sessionService ?? SessionStore();
 
   final SharedPreferences _preferences;
+  final SessionStore _sessionService;
 
   @override
   void binds(Injector i) {
@@ -31,15 +33,20 @@ class AppDependencies extends Module {
       ..addLazySingleton<NetworkAvailabilityCoordinator>(
         (_) => NetworkAvailabilityCoordinator(),
       )
-      ..addLazySingleton<SessionStore>((i) => SessionStore())
+      ..addLazySingleton<SessionStore>((i) => _sessionService)
       ..addLazySingleton<RefreshableTokenProvider>((i) {
         final session = i.get<SessionStore>();
-        return RefreshableTokenProvider(
+        late final RefreshableTokenProvider provider;
+        provider = RefreshableTokenProvider(
           readAccessToken: session.readToken,
           readRefreshToken: session.readRefreshToken,
           saveAccessToken: session.saveToken,
           saveRefreshToken: session.saveRefreshToken,
           clearSession: session.clearSession,
+          hasActiveMission: () async {
+            final activeRideId = await session.readActiveRideId();
+            return activeRideId != null && activeRideId.trim().isNotEmpty;
+          },
           refreshClient: Dio(
             BaseOptions(
               baseUrl: EnvConfig.apiBaseUri.toString(),
@@ -51,6 +58,8 @@ class AppDependencies extends Module {
           onSessionExpired: () =>
               i.get<SessionBloc>().add(const SessionGuestRequested()),
         );
+        session.onActiveRideCleared = provider.flushDeferredExpiry;
+        return provider;
       })
       ..addLazySingleton<BackgroundTelemetry>(
         (i) => BackgroundTelemetry(
@@ -79,8 +88,6 @@ class AppDependencies extends Module {
           baseUrl: EnvConfig.apiBaseUri,
           sessionService: i.get<SessionStore>(),
           networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
-          onSessionExpired: () =>
-              i.get<SessionBloc>().add(const SessionGuestRequested()),
           tokenProvider: i.get<RefreshableTokenProvider>(),
         ),
       )

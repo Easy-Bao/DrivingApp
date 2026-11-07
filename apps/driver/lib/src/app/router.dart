@@ -48,8 +48,7 @@ class AppRouter extends Module {
             );
           },
           stopTelemetry: () => i.get<BackgroundTelemetry>().stop(),
-          disconnectRealtime: () =>
-              i.get<RealtimeWebSocketClient>().disconnect(),
+          disconnectRealtime: () => i.get<RealtimeWebSocketClient>().stop(),
           clearLocationSpool: () => i.get<LocationSpool>().clear(),
           clearSession: () => i.get<SessionStore>().clearSession(),
         ),

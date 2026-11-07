@@ -1,17 +1,21 @@
+import 'dart:async';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:driver/src/core/session/storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SessionStore({
-  FlutterSecureStorage? storage,
-  SharedPreferences? preferences,
-}) {
+class SessionStore({FlutterSecureStorage? storage, this._preferences}) {
   static const _defaultStorage = FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
   final SharedPreferences? _preferences;
+  FutureOr<void> Function()? onActiveRideCleared;
 
-  this : _storage = storage ?? _defaultStorage, _preferences = preferences;
+  this : _storage = storage ?? _defaultStorage;
+
+  Future<void> notifyActiveRideCleared() async {
+    await onActiveRideCleared?.call();
+  }
 
   Future<void> saveToken(String token) async {
     await _storage.write(key: StorageKeys.accessToken, value: token);
@@ -87,6 +91,9 @@ class SessionStore({
 
   Future<void> saveActiveRideId(String rideId) async {
     await _storage.write(key: StorageKeys.activeRideId, value: rideId);
+    if (rideId.trim().isEmpty) {
+      await notifyActiveRideCleared();
+    }
   }
 
   Future<String?> readActiveRideId() async {
@@ -95,6 +102,7 @@ class SessionStore({
 
   Future<void> clearActiveRideId() async {
     await _storage.delete(key: StorageKeys.activeRideId);
+    await notifyActiveRideCleared();
   }
 
   Future<void> clearSession() async {

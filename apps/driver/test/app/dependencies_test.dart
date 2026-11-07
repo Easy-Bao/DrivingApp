@@ -12,9 +12,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class TestSessionStore extends SessionStore {
   bool sessionCleared = false;
+  String? activeRideId;
 
   @override
   Future<String?> readRefreshToken() async => null;
+
+  @override
+  Future<String?> readActiveRideId() async => activeRideId;
+
+  @override
+  Future<void> clearActiveRideId() async {
+    activeRideId = null;
+    await notifyActiveRideCleared();
+  }
 
   @override
   Future<void> clearSession() async => sessionCleared = true;
@@ -45,6 +55,28 @@ void main() {
 
     await Modular.get<RefreshableTokenProvider>().refreshAccessToken();
 
+    expect(session.sessionCleared, isTrue);
+    expect(
+      Modular.routerConfig.routeInformationProvider.value.uri.path,
+      AuthRoutes.signinPath,
+    );
+
+    // Verify deferred expiry during an active ride and flush when cleared
+    session
+      ..sessionCleared = false
+      ..activeRideId = 'ride-123';
+    Modular.routerConfig.go(DashboardRoutes.fullDashboardPath);
+    await Future<void>.delayed(Duration.zero);
+
+    final provider = Modular.get<RefreshableTokenProvider>();
+    await provider.refreshAccessToken();
+
+    expect(provider.isDeferredExpiryPending, isTrue);
+    expect(session.sessionCleared, isFalse);
+
+    await session.clearActiveRideId();
+
+    expect(provider.isDeferredExpiryPending, isFalse);
     expect(session.sessionCleared, isTrue);
     expect(
       Modular.routerConfig.routeInformationProvider.value.uri.path,

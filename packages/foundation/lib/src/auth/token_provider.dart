@@ -165,6 +165,7 @@ final class RefreshableTokenProvider({
 
   Future<void> flushDeferredExpiry() async {
     if (!_deferredExpiryPending) return;
+    _sessionExpiryNotified = false;
     await _expireSession();
   }
 

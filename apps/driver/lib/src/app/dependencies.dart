@@ -49,7 +49,8 @@ class AppDependencies extends Module {
       ..addLazySingleton<SessionStore>((i) => _sessionService)
       ..addLazySingleton<RefreshableTokenProvider>((i) {
         final session = i.get<SessionStore>();
-        return RefreshableTokenProvider(
+        late final RefreshableTokenProvider provider;
+        provider = RefreshableTokenProvider(
           readAccessToken: session.readToken,
           readRefreshToken: session.readRefreshToken,
           saveAccessToken: session.saveToken,
@@ -69,6 +70,8 @@ class AppDependencies extends Module {
           ),
           onSessionExpired: () => _navigateToSignIn(session),
         );
+        session.onActiveRideCleared = provider.flushDeferredExpiry;
+        return provider;
       })
       ..addLazySingleton<BackgroundTelemetry>(
         (i) => BackgroundTelemetry(
