@@ -252,6 +252,7 @@ class LiveMapBloc() extends Bloc<LiveMapEvent, LiveMapState> {
     _pendingMarkers.clear();
     _pendingMarkerSnapshot = null;
     _pendingRoute = null;
+    _pendingCameraFit = null;
     await _clearAllMarkers();
   }
 

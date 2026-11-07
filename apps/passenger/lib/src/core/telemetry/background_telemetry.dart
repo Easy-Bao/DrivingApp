@@ -7,7 +7,10 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:passenger/src/core/network/auth_interceptor.dart';
 import 'package:passenger/src/core/session/session_store.dart';
+import 'package:passenger/src/core/session/storage_keys.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const _backgroundTelemetryInterval = Duration(seconds: 10);
 const _notificationChannelId = 'easyride_passenger_location';
@@ -65,13 +68,30 @@ class BackgroundTelemetry {
     await initialize();
     await _waitForResumedActivity();
     await _ensureLocationAccess();
+    var serviceWasStarted = false;
     if (!await _service.isRunning()) {
       final started = await _service.startService();
       if (!started) {
         throw StateError('Background telemetry service could not be started.');
       }
+      serviceWasStarted = true;
     }
-    _service.invoke('configure', {'baseUrl': _apiBaseUri.toString()});
+    await _configureService(serviceWasStarted: serviceWasStarted);
+  }
+
+  Future<void> _configureService({required bool serviceWasStarted}) async {
+    final configuration = <String, dynamic>{'baseUrl': _apiBaseUri.toString()};
+    _service.invoke('configure', configuration);
+    if (!serviceWasStarted) return;
+
+    for (final delay in const [
+      Duration(milliseconds: 200),
+      Duration(milliseconds: 500),
+    ]) {
+      await Future<void>.delayed(delay);
+      if (!await _service.isRunning()) return;
+      _service.invoke('configure', configuration);
+    }
   }
 
   Future<void> _stopRunningServiceBeforeConfigure() async {
@@ -140,8 +160,10 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   final storage = const FlutterSecureStorage();
   final sessionStore = SessionStore(storage: storage);
   Dio? telemetryClient;
+  Dio? refreshClient;
   RefreshableTokenProvider? tokenProvider;
   var sending = false;
+  var isConfigured = false;
   Timer? timer;
   StreamSubscription<Map<String, dynamic>?>? configureSubscription;
   StreamSubscription<Map<String, dynamic>?>? stopSubscription;
@@ -150,13 +172,17 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   Future<void> shutdown() async {
     if (isStopping) return;
     isStopping = true;
+    isConfigured = false;
     timer?.cancel();
     timer = null;
 
     final client = telemetryClient;
+    final refresh = refreshClient;
     telemetryClient = null;
+    refreshClient = null;
     tokenProvider = null;
     client?.close(force: true);
+    refresh?.close(force: true);
 
     try {
       await Future.wait([
@@ -179,12 +205,16 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     final baseUrl = event?['baseUrl'] as String?;
     final parsed = Uri.tryParse(baseUrl ?? '');
     if (parsed == null || !_isValidTelemetryBaseUri(parsed)) {
+      isConfigured = false;
       telemetryClient?.close(force: true);
+      refreshClient?.close(force: true);
       telemetryClient = null;
+      refreshClient = null;
       tokenProvider = null;
       return;
     }
     telemetryClient?.close(force: true);
+    refreshClient?.close(force: true);
     final client = Dio(
       BaseOptions(
         baseUrl: parsed.toString(),
@@ -193,24 +223,56 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
         receiveTimeout: const Duration(seconds: 10),
       ),
     );
-    telemetryClient = client;
-    tokenProvider = RefreshableTokenProvider(
+    final refresh = Dio(
+      BaseOptions(
+        baseUrl: parsed.toString(),
+        connectTimeout: const Duration(seconds: 10),
+        sendTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+      ),
+    );
+    final provider = RefreshableTokenProvider(
       readAccessToken: sessionStore.readToken,
       readRefreshToken: sessionStore.readRefreshToken,
       saveAccessToken: sessionStore.saveToken,
       saveRefreshToken: sessionStore.saveRefreshToken,
-      clearSession: sessionStore.clearSession,
-      refreshClient: client,
+      clearSession: () async {
+        await sessionStore.clearSession();
+        try {
+          final preferences = await SharedPreferences.getInstance();
+          for (final key in StorageKeys.profileCacheKeys) {
+            await preferences.remove(key);
+          }
+        } catch (_) {}
+      },
+      hasActiveMission: () async {
+        final activeRideId = await sessionStore.readActiveRideId();
+        return activeRideId != null && activeRideId.trim().isNotEmpty;
+      },
+      refreshClient: refresh,
+      onSessionExpired: shutdown,
     );
+    client.interceptors.add(
+      AuthInterceptor(
+        sessionStore,
+        dio: client,
+        allowedBaseUri: parsed,
+        tokenProvider: provider,
+      ),
+    );
+    telemetryClient = client;
+    refreshClient = refresh;
+    tokenProvider = provider;
+    isConfigured = true;
   });
 
   Future<void> sendLocation() async {
     final client = telemetryClient;
     final provider = tokenProvider;
-    if (sending || client == null || provider == null) return;
+    if (!isConfigured || sending || client == null || provider == null) return;
 
     final token = await provider.getToken();
-    final rideId = await sessionStore.readActiveRideId();
+    final rideId = (await sessionStore.readActiveRideId())?.trim();
     if (token == null || token.isEmpty || rideId == null || rideId.isEmpty) {
       return;
     }
@@ -221,12 +283,12 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
           distanceFilter: 10,
+          timeLimit: Duration(seconds: 5),
         ),
       );
       await client.post<void>(
         '/api/v1/telemetry/passenger/${Uri.encodeComponent(rideId)}',
         data: {'latitude': position.latitude, 'longitude': position.longitude},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
     } on DioException catch (error) {
       dev.log(
