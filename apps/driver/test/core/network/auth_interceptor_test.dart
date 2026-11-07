@@ -213,4 +213,42 @@ void main() {
     verify(() => handler.next(expiredError)).called(1);
     verifyNever(() => dio.fetch<dynamic>(any()));
   });
+
+  test(
+    'notifies onSessionExpired when refresh fails without a token',
+    () async {
+      final secureSessionService = MockSecureSessionService();
+      final dio = MockDio();
+      final refreshClient = MockDio();
+      final handler = MockErrorInterceptorHandler();
+      var expiredNotified = false;
+      final requestOptions = RequestOptions(
+        baseUrl: 'https://api.example',
+        path: '/api/v1/telemetry/location',
+      );
+      final expiredError = DioException(
+        requestOptions: requestOptions,
+        response: Response<Object?>(
+          requestOptions: requestOptions,
+          statusCode: 401,
+        ),
+      );
+
+      when(() => secureSessionService.readRefreshToken())
+          .thenAnswer((_) async => null);
+      when(() => secureSessionService.clearSession()).thenAnswer((_) async {});
+
+      await AuthInterceptor(
+        secureSessionService,
+        dio: dio,
+        refreshClient: refreshClient,
+        allowedBaseUri: Uri.parse('https://api.example'),
+        onSessionExpired: () => expiredNotified = true,
+      ).onError(expiredError, handler);
+
+      expect(expiredNotified, isTrue);
+      verify(() => secureSessionService.clearSession()).called(1);
+      verify(() => handler.next(expiredError)).called(1);
+    },
+  );
 }

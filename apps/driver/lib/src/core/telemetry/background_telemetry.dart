@@ -7,11 +7,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:driver/src/core/network/auth_interceptor.dart';
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/core/telemetry/battery_optimization.dart';
 import 'package:driver/src/core/telemetry/location_point_mapper.dart';
 import 'package:driver/src/core/telemetry/location_spool.dart';
 import 'package:foundation/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const _backgroundTelemetryInterval = Duration(seconds: 10);
 const _backgroundPresenceInterval = Duration(seconds: 20);
@@ -196,6 +198,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   final storage = const FlutterSecureStorage();
   final sessionStore = SessionStore(storage: storage);
   Dio? telemetryClient;
+  Dio? refreshClient;
   RefreshableTokenProvider? tokenProvider;
   var sending = false;
   var sendingPresence = false;
@@ -227,9 +230,12 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     isConfigured = false;
 
     final client = telemetryClient;
+    final refresh = refreshClient;
     telemetryClient = null;
+    refreshClient = null;
     tokenProvider = null;
     client?.close(force: true);
+    refresh?.close(force: true);
 
     try {
       await Future.wait([
@@ -266,21 +272,13 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
             await sessionStore.saveDriverOnlineStatus(false);
             await sessionStore.clearDriverLastActive();
             final client = telemetryClient;
-            final provider = tokenProvider;
-            if (client != null && provider != null) {
-              final token = await provider.getToken();
+            if (client != null) {
               final driverId = await sessionStore.readDriverId();
-              if (token != null &&
-                  token.isNotEmpty &&
-                  driverId != null &&
-                  driverId.isNotEmpty) {
+              if (driverId != null && driverId.isNotEmpty) {
                 try {
                   await client.post<void>(
                     '/api/v1/drivers/${Uri.encodeComponent(driverId)}/online',
                     data: {'is_online': false},
-                    options: Options(
-                      headers: {'Authorization': 'Bearer $token'},
-                    ),
                   );
                 } catch (_) {}
               }
@@ -321,7 +319,9 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     if (parsed == null || !_isValidTelemetryBaseUri(parsed)) {
       isConfigured = false;
       telemetryClient?.close(force: true);
+      refreshClient?.close(force: true);
       telemetryClient = null;
+      refreshClient = null;
       tokenProvider = null;
       return;
     }
@@ -333,6 +333,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
       ),
     );
     telemetryClient?.close(force: true);
+    refreshClient?.close(force: true);
     final client = Dio(
       BaseOptions(
         baseUrl: parsed.toString(),
@@ -341,15 +342,47 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
         receiveTimeout: const Duration(seconds: 10),
       ),
     );
-    telemetryClient = client;
-    tokenProvider = RefreshableTokenProvider(
+    final refresh = Dio(
+      BaseOptions(
+        baseUrl: parsed.toString(),
+        connectTimeout: const Duration(seconds: 10),
+        sendTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+      ),
+    );
+    final provider = RefreshableTokenProvider(
       readAccessToken: sessionStore.readToken,
       readRefreshToken: sessionStore.readRefreshToken,
       saveAccessToken: sessionStore.saveToken,
       saveRefreshToken: sessionStore.saveRefreshToken,
-      clearSession: sessionStore.clearSession,
-      refreshClient: client,
+      clearSession: () async {
+        SharedPreferences? preferences;
+        try {
+          preferences = await SharedPreferences.getInstance();
+        } catch (_) {}
+        await SessionStore(
+          storage: storage,
+          preferences: preferences,
+        ).clearSession();
+      },
+      hasActiveMission: () async {
+        final activeRideId = await sessionStore.readActiveRideId();
+        return activeRideId != null && activeRideId.trim().isNotEmpty;
+      },
+      refreshClient: refresh,
+      onSessionExpired: shutdown,
     );
+    client.interceptors.add(
+      AuthInterceptor(
+        sessionStore,
+        dio: client,
+        allowedBaseUri: parsed,
+        tokenProvider: provider,
+      ),
+    );
+    telemetryClient = client;
+    refreshClient = refresh;
+    tokenProvider = provider;
     isConfigured = true;
   });
   visibilitySubscription = service.on('setAppVisible').listen((event) {
@@ -402,7 +435,6 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
               'heading': point.heading,
               'speed': point.speed,
             },
-            options: Options(headers: {'Authorization': 'Bearer $token'}),
           );
           final acknowledged =
               response.statusCode == 200 ||
@@ -462,10 +494,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
 
     pollingRideRequests = true;
     try {
-      final response = await client.get<List<dynamic>>(
-        '/api/v1/bids/active',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final response = await client.get<List<dynamic>>('/api/v1/bids/active');
       final requestIds = <String>{};
       for (final item in response.data ?? const <dynamic>[]) {
         if (item is! Map<String, dynamic>) continue;
@@ -525,7 +554,6 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
       final response = await client.post<void>(
         '/api/v1/drivers/${Uri.encodeComponent(driverId)}/online',
         data: {'is_online': true},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       if (response.statusCode != 200) {
         dev.log(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:driver/src/core/network/auth_interceptor.dart';
@@ -10,6 +12,7 @@ class ApiClient._() {
     required Uri baseUrl,
     required SessionStore sessionService,
     NetworkAvailabilityCoordinator? networkAvailability,
+    FutureOr<void> Function()? onSessionExpired,
     RefreshableTokenProvider? tokenProvider,
   }) {
     final dio = Dio(
@@ -38,6 +41,7 @@ class ApiClient._() {
         dio: dio,
         refreshClient: refreshClient,
         allowedBaseUri: baseUrl,
+        onSessionExpired: onSessionExpired,
         tokenProvider: tokenProvider,
       ),
     );
