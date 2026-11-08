@@ -43,7 +43,7 @@ func registerHealthRoutes(
 			writeReadinessResponse(writer, http.StatusServiceUnavailable, _readinessNotReady)
 			return
 		}
-		if err := redisClient.Ping(checkContext).Err(); err != nil {
+		if redisClient == nil || redisClient.Ping(checkContext).Err() != nil {
 			writeReadinessResponse(writer, http.StatusServiceUnavailable, _readinessNotReady)
 			return
 		}
