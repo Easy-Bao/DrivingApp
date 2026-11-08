@@ -19,6 +19,9 @@ func NewEventHandler(service *application.Service) *EventHandler {
 }
 
 func (handler *EventHandler) Handle(ctx context.Context, message []byte) error {
+	if handler == nil || handler.service == nil {
+		return domain.ErrRoomUnavailable
+	}
 	var header struct {
 		Type string `json:"type"`
 	}

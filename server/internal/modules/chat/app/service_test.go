@@ -184,6 +184,12 @@ func TestChatRelayPersistsBeforeBroadcasting(t *testing.T) {
 	history := &chatHistory{}
 	service := newChatService(history)
 
+	if err := service.Relay(
+		context.Background(),
+		domain.Message{RoomID: "ride-1", SenderID: "7", Body: "   "},
+	); !errors.Is(err, domain.ErrInvalidMessage) {
+		t.Fatalf("whitespace message error = %v, want %v", err, domain.ErrInvalidMessage)
+	}
 	err := service.Relay(
 		context.Background(),
 		domain.Message{RoomID: "ride-1", SenderID: "7", Body: "hello"},
@@ -191,7 +197,7 @@ func TestChatRelayPersistsBeforeBroadcasting(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(history.messages) != 1 || history.messages[0].Body != "hello" {
+	if len(history.messages) != 1 || history.messages[0].Body != "hello" || history.messages[0].CreatedAt == "" {
 		t.Fatalf("persisted messages = %#v", history.messages)
 	}
 }

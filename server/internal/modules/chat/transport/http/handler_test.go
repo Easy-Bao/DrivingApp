@@ -1,12 +1,31 @@
 package http
 
 import (
+	"bytes"
 	"errors"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
+
+func TestChatHandlerRejectsBlankInputsAndUnavailableService(t *testing.T) {
+	verifier := security.NewTokenManager("0123456789abcdef0123456789abcdef")
+	token, err := verifier.IssueWithRole("7", "passenger")
+	if err != nil {
+		t.Fatal(err)
+	}
+	unavailableHandler := NewHandler(Dependencies{Verifier: verifier})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/chat/rooms", bytes.NewBufferString(`{"ride_id":"ride-1"}`))
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	unavailableHandler.CreateRoom(rec, req)
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusServiceUnavailable)
+	}
+}
 
 func TestChatErrorStatusMapsDomainFailures(t *testing.T) {
 	tests := []struct {

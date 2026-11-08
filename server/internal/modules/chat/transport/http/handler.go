@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 
 	application "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/domain"
@@ -30,6 +31,10 @@ func NewHandler(dependencies Dependencies) *Handler {
 }
 
 func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Request) {
+	if handler == nil || handler.service == nil {
+		response.Error(writer, http.StatusServiceUnavailable, "chat service is unavailable")
+		return
+	}
 	identity, ok := handler.identity(request)
 	if !ok {
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
@@ -42,6 +47,7 @@ func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Req
 		response.Error(writer, http.StatusBadRequest, "invalid chat room")
 		return
 	}
+	input.RideID = strings.TrimSpace(input.RideID)
 	if input.RideID == "" {
 		response.Error(writer, http.StatusBadRequest, "ride id is required")
 		return
@@ -54,6 +60,10 @@ func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Req
 }
 
 func (handler *Handler) Messages(writer http.ResponseWriter, request *http.Request) {
+	if handler == nil || handler.service == nil {
+		response.Error(writer, http.StatusServiceUnavailable, "chat service is unavailable")
+		return
+	}
 	identity, ok := handler.identity(request)
 	if !ok {
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
@@ -68,6 +78,10 @@ func (handler *Handler) Messages(writer http.ResponseWriter, request *http.Reque
 }
 
 func (handler *Handler) Resolve(writer http.ResponseWriter, request *http.Request) {
+	if handler == nil || handler.service == nil {
+		response.Error(writer, http.StatusServiceUnavailable, "chat service is unavailable")
+		return
+	}
 	identity, ok := handler.identity(request)
 	if !ok {
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
@@ -104,6 +118,10 @@ func chatErrorStatus(err error) int {
 }
 
 func (handler *Handler) SendImage(writer http.ResponseWriter, request *http.Request) {
+	if handler == nil || handler.service == nil {
+		response.Error(writer, http.StatusServiceUnavailable, "chat service is unavailable")
+		return
+	}
 	identity, ok := handler.identity(request)
 	if !ok {
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
@@ -135,6 +153,10 @@ func (handler *Handler) SendImage(writer http.ResponseWriter, request *http.Requ
 }
 
 func (handler *Handler) Image(writer http.ResponseWriter, request *http.Request) {
+	if handler == nil || handler.service == nil {
+		response.Error(writer, http.StatusServiceUnavailable, "chat service is unavailable")
+		return
+	}
 	identity, ok := handler.identity(request)
 	if !ok {
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
@@ -152,6 +174,10 @@ func (handler *Handler) Image(writer http.ResponseWriter, request *http.Request)
 }
 
 func (handler *Handler) MarkRead(writer http.ResponseWriter, request *http.Request) {
+	if handler == nil || handler.service == nil {
+		response.Error(writer, http.StatusServiceUnavailable, "chat service is unavailable")
+		return
+	}
 	identity, ok := handler.identity(request)
 	if !ok {
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
@@ -162,6 +188,11 @@ func (handler *Handler) MarkRead(writer http.ResponseWriter, request *http.Reque
 	}
 	if err := sharedrequest.DecodeJSON(writer, request, &input, 8<<10); err != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid read receipt")
+		return
+	}
+	input.MessageID = strings.TrimSpace(input.MessageID)
+	if input.MessageID == "" {
+		response.Error(writer, http.StatusBadRequest, "message id is required")
 		return
 	}
 	if err := handler.service.MarkRead(request.Context(), chi.URLParam(request, "roomID"), identity, input.MessageID); err != nil {

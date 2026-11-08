@@ -72,7 +72,7 @@ func (service *Service) log() *slog.Logger {
 func (service *Service) Relay(ctx context.Context, message domain.Message) error {
 	invalidRoomID := !validRoomID(message.RoomID)
 	invalidSenderID := !validParticipantID(message.SenderID)
-	invalidMessageLength := (len(message.Body) == 0 && message.ImageKey == "") || len(message.Body) > _maxMessageBytes
+	invalidMessageLength := (strings.TrimSpace(message.Body) == "" && message.ImageKey == "") || len(message.Body) > _maxMessageBytes
 	if invalidRoomID || invalidSenderID || invalidMessageLength {
 		return domain.ErrInvalidMessage
 	}
@@ -98,6 +98,13 @@ func (service *Service) Relay(ctx context.Context, message domain.Message) error
 	}
 	if message.ID == "" {
 		message.ID = event.NewID()
+	}
+	if message.CreatedAt == "" {
+		message.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	} else if parsed, err := time.Parse(time.RFC3339Nano, message.CreatedAt); err != nil {
+		message.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	} else {
+		message.CreatedAt = parsed.UTC().Format(time.RFC3339Nano)
 	}
 	if err := service.history.Append(ctx, message); err != nil {
 		return fmt.Errorf("append chat message: %w", err)
@@ -396,6 +403,10 @@ func (service *Service) SendImage(ctx context.Context, roomID, userID string, co
 }
 
 func (service *Service) Image(ctx context.Context, roomID, userID, messageID string) ([]byte, string, error) {
+	messageID = strings.TrimSpace(messageID)
+	if messageID == "" {
+		return nil, "", domain.ErrForbidden
+	}
 	messages, err := service.MessagesForUser(ctx, roomID, userID)
 	if err != nil {
 		return nil, "", err
@@ -413,6 +424,10 @@ func (service *Service) Image(ctx context.Context, roomID, userID, messageID str
 }
 
 func (service *Service) MarkRead(ctx context.Context, roomID, userID, messageID string) error {
+	messageID = strings.TrimSpace(messageID)
+	if messageID == "" {
+		return domain.ErrInvalidMessage
+	}
 	messages, err := service.MessagesForUser(ctx, roomID, userID)
 	if err != nil {
 		return err

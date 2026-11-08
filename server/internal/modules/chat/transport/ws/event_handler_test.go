@@ -117,4 +117,7 @@ func TestEventHandlerRejectsMalformedAndUnsupportedEvents(t *testing.T) {
 			}
 		})
 	}
+	if err := (*EventHandler)(nil).Handle(context.Background(), []byte(`{"type":"message","room_id":"303","sender_id":"7","text":"hi"}`)); !errors.Is(err, domain.ErrRoomUnavailable) {
+		t.Fatalf("nil handler error = %v, want %v", err, domain.ErrRoomUnavailable)
+	}
 }
