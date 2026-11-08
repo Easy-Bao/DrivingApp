@@ -243,6 +243,9 @@ func TestHubEvictsDroppableEventsWithoutClosingSubscription(t *testing.T) {
 	if !foundCritical {
 		t.Fatal("expected critical event to be queued after evicting telemetry")
 	}
+	if !isDroppable(event.ChatMessagesRead) {
+		t.Fatal("expected ChatMessagesRead to be classified as droppable under queue pressure")
+	}
 }
 
 func TestHubConcurrentPublishersOnFullQueueDoNotBlockClose(t *testing.T) {

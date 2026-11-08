@@ -137,6 +137,7 @@ func isDroppable(eventType event.Type) bool {
 	case event.DriverLocationUpdated,
 		event.PassengerLocationUpdated,
 		event.ChatMessageCreated,
+		event.ChatMessagesRead,
 		event.ChatTypingChanged,
 		event.PresenceUpdated:
 		return true

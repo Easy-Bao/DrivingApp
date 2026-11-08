@@ -76,6 +76,9 @@ func (store *ObjectStore) Store(ctx context.Context, content []byte) (string, er
 	if err := store.validate(); err != nil {
 		return "", err
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
@@ -148,6 +151,9 @@ func (store *ObjectStore) Read(ctx context.Context, key string, maxBytes int64) 
 	if err := validateStorageObjectKey(key); err != nil {
 		return nil, err
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -193,6 +199,9 @@ func (store *ObjectStore) Delete(ctx context.Context, key string) error {
 	if err := validateStorageObjectKey(key); err != nil {
 		return err
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -225,6 +234,9 @@ func (store *ObjectStore) Delete(ctx context.Context, key string) error {
 func (store *ObjectStore) MigrateLegacyObjects(ctx context.Context) (int64, error) {
 	if err := store.validate(); err != nil {
 		return 0, err
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	if err := ctx.Err(); err != nil {
 		return 0, err
@@ -304,6 +316,9 @@ func (store *ObjectStore) MigrateLegacyObjects(ctx context.Context) (int64, erro
 func (store *ObjectStore) VerifyExternalObjects(ctx context.Context) (int64, error) {
 	if err := store.validate(); err != nil {
 		return 0, err
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	if err := ctx.Err(); err != nil {
 		return 0, err
