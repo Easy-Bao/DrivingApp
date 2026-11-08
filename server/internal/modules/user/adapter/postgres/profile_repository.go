@@ -535,20 +535,6 @@ func driverProfileFromRow(
 	}
 }
 
-func driverProfileFromPostgres(account databasepostgres.User, profile databasepostgres.DriverProfile) domain.Profile {
-	return driverProfileFromRow(
-		account,
-		profile.ID,
-		profile.UserID,
-		profile.Name,
-		profile.VehicleType,
-		profile.PlateNumber,
-		profile.Rating,
-		profile.IsOnline,
-		profile.OnlineLastSeenAt,
-	)
-}
-
 func driverProfileFromFullRow(account databasepostgres.User, profile databasepostgres.GetDriverProfileByUserIDFullRow) domain.Profile {
 	return driverProfileFromRow(
 		account,

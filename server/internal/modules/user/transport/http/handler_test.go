@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/app"
@@ -225,5 +226,46 @@ func TestProfileUpdateRejectsUnsupportedRole(t *testing.T) {
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want %d: %s", rec.Code, http.StatusBadRequest, rec.Body.String())
+	}
+}
+
+func TestProfileUpdateValidatesBlankNameAndVehicleFields(t *testing.T) {
+	manager := security.NewTokenManager("user-handler-test-secret")
+	token, err := manager.IssueWithRole("9", "driver")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	store := &profileUpdateStoreStub{
+		profile: domain.Profile{ID: 9, UserID: 9, Role: "driver", Name: "Ada", VehicleType: "Sedan", PlateNumber: "ABC123"},
+	}
+	service := app.NewProfileService(app.ProfileServiceDependencies{Repository: store})
+	handler := NewHandler(Dependencies{Service: service, Verifier: manager})
+	router := chi.NewRouter()
+	router.Patch("/users/me", handler.Update)
+	router.Post("/drivers/{id}/online", handler.Online)
+
+	for _, body := range []string{
+		`{"name":"   "}`,
+		`{"vehicle_type":"   "}`,
+		`{"plate_number":"   "}`,
+	} {
+		req := httptest.NewRequest(http.MethodPatch, "/users/me", strings.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		if rec.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("body %s: status = %d, want %d: %s", body, rec.Code, http.StatusUnprocessableEntity, rec.Body.String())
+		}
+	}
+
+	for _, path := range []string{"/drivers/invalid/online", "/drivers/0/online", "/drivers/-1/online"} {
+		req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{"is_online":true}`))
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		if rec.Code != http.StatusBadRequest {
+			t.Fatalf("path %s: status = %d, want %d: %s", path, rec.Code, http.StatusBadRequest, rec.Body.String())
+		}
 	}
 }

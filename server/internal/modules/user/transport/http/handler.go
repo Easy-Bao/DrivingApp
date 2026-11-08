@@ -71,6 +71,22 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusUnprocessableEntity, "Phone changes require verification and cannot be made here.")
 		return
 	}
+	if input.Name != nil {
+		trimmedName := strings.TrimSpace(*input.Name)
+		if trimmedName == "" || len([]rune(trimmedName)) > 100 {
+			response.Error(w, http.StatusUnprocessableEntity, "Please enter a valid name.")
+			return
+		}
+		input.Name = &trimmedName
+	}
+	if input.Address != nil {
+		trimmedAddress := strings.TrimSpace(*input.Address)
+		if len([]rune(trimmedAddress)) > 255 {
+			response.Error(w, http.StatusUnprocessableEntity, "Address must be 255 characters or fewer.")
+			return
+		}
+		input.Address = &trimmedAddress
+	}
 	if input.Gender != nil {
 		normalizedGender, valid := domain.NormalizeGender(*input.Gender)
 		if !valid {
@@ -78,6 +94,22 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		input.Gender = &normalizedGender
+	}
+	if input.VehicleType != nil {
+		trimmedVehicleType := strings.TrimSpace(*input.VehicleType)
+		if trimmedVehicleType == "" || len([]rune(trimmedVehicleType)) > 80 {
+			response.Error(w, http.StatusUnprocessableEntity, "Please enter a valid vehicle type.")
+			return
+		}
+		input.VehicleType = &trimmedVehicleType
+	}
+	if input.PlateNumber != nil {
+		trimmedPlateNumber := strings.TrimSpace(*input.PlateNumber)
+		if trimmedPlateNumber == "" || len([]rune(trimmedPlateNumber)) > 32 {
+			response.Error(w, http.StatusUnprocessableEntity, "Please enter a valid plate number.")
+			return
+		}
+		input.PlateNumber = &trimmedPlateNumber
 	}
 	profile, err := handler.service.Update(r.Context(), applyProfileUpdate(current, input))
 	if err != nil {
@@ -364,8 +396,8 @@ func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		response.Error(w, 403, "forbidden")
+	if err != nil || targetID <= 0 {
+		response.Error(w, http.StatusBadRequest, "invalid driver id")
 		return
 	}
 	var input struct {
