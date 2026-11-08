@@ -360,8 +360,10 @@ func (handler *Handler) Counterparty(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusForbidden, "forbidden")
 		case errors.Is(err, domain.ErrCounterpartyUnavailable):
 			response.Error(w, http.StatusConflict, "ride counterparty is unavailable")
-		default:
+		case errors.Is(err, domain.ErrRideNotFound):
 			response.Error(w, http.StatusNotFound, "ride counterparty not found")
+		default:
+			response.Error(w, http.StatusServiceUnavailable, "ride counterparty is unavailable")
 		}
 		return
 	}
@@ -501,13 +503,13 @@ func (handler *Handler) DriverTrips(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) CreateSafetyReport(w http.ResponseWriter, r *http.Request) {
-	principal, ok := middleware.PrincipalFromRequest(r)
+	principal, ok := handler.principal(r)
 	if !ok {
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
+	if err != nil || rideID <= 0 {
 		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}

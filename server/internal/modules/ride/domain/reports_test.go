@@ -1,6 +1,9 @@
 package domain
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestValidateSafetyReportDerivesRoleSpecificSeverity(t *testing.T) {
 	tests := []struct {
@@ -59,5 +62,8 @@ func TestValidateSafetyReportRejectsBlankOrOversizedDescription(t *testing.T) {
 	}
 	if _, valid := ValidateSafetyReport("driver", SafetyReportOther, string(make([]byte, 2001))); valid {
 		t.Fatal("expected oversized description to be rejected")
+	}
+	if _, valid := ValidateSafetyReport("driver", SafetyReportOther, strings.Repeat("é", 1500)); !valid {
+		t.Fatal("expected 1500-rune UTF-8 description to be accepted")
 	}
 }

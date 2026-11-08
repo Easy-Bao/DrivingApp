@@ -51,5 +51,6 @@ func haversineMeters(
 	a := math.Sin(latitudeDelta/2)*math.Sin(latitudeDelta/2) +
 		math.Cos(firstLatitudeRadians)*math.Cos(secondLatitudeRadians)*
 			math.Sin(longitudeDelta/2)*math.Sin(longitudeDelta/2)
+	a = min(1, max(0, a))
 	return 2 * _earthRadiusMeters * math.Asin(math.Sqrt(a))
 }

@@ -14,7 +14,7 @@ func TestNewPayloadMapsRideModelsToWireNames(t *testing.T) {
 	createdAt := time.Date(2026, 10, 12, 14, 0, 0, 0, time.UTC)
 	payload := NewPayload(map[string]any{
 		"session": dispatchdomain.BidSession{
-			ID: 31, PassengerID: 7, Status: "open", CreatedAt: createdAt,
+			ID: 31, BookingReference: "701612345678901", PassengerID: 7, Status: "open", CreatedAt: createdAt,
 			Offers: []dispatchdomain.BidOffer{{
 				ID: 45, SessionID: 31, DriverID: 9,
 				ProposedFareAmount: 1300, Status: "pending", CreatedAt: createdAt,
@@ -24,7 +24,7 @@ func TestNewPayloadMapsRideModelsToWireNames(t *testing.T) {
 			ID: 45, SessionID: 31, DriverID: 9,
 			ProposedFareAmount: 1300, Status: "pending", CreatedAt: createdAt,
 		},
-		"ride":   domain.Ride{ID: 303, PassengerID: 7, Status: "accepted"},
+		"ride":   domain.Ride{ID: 303, BookingReference: "701698765432100", PassengerID: 7, Status: "accepted"},
 		"reason": "driver_unavailable",
 	})
 
@@ -39,6 +39,7 @@ func TestNewPayloadMapsRideModelsToWireNames(t *testing.T) {
 
 	session := decodePayloadObject(t, result["session"])
 	assertPayloadField(t, session, "id", "31")
+	assertPayloadField(t, session, "booking_reference", `"701612345678901"`)
 	assertPayloadField(t, session, "passenger_id", "7")
 	assertPayloadField(t, session, "status", `"open"`)
 	if _, exists := session["ID"]; exists {
@@ -60,6 +61,7 @@ func TestNewPayloadMapsRideModelsToWireNames(t *testing.T) {
 
 	ride := decodePayloadObject(t, result["ride"])
 	assertPayloadField(t, ride, "id", "303")
+	assertPayloadField(t, ride, "booking_reference", `"701698765432100"`)
 	assertPayloadField(t, ride, "passenger_id", "7")
 	assertPayloadField(t, ride, "status", `"accepted"`)
 	if _, exists := ride["ID"]; exists {

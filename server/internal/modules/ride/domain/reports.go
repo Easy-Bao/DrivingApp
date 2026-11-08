@@ -1,6 +1,9 @@
 package domain
 
-import "strings"
+import (
+	"strings"
+	"unicode/utf8"
+)
 
 type SafetyReportCategory string
 
@@ -50,7 +53,7 @@ func ValidateSafetyReport(reporterRole string, category SafetyReportCategory, de
 	reporterRole = strings.ToLower(strings.TrimSpace(reporterRole))
 	category = SafetyReportCategory(strings.ToLower(strings.TrimSpace(string(category))))
 	description = strings.TrimSpace(description)
-	if len(description) == 0 || len(description) > 2000 {
+	if description == "" || utf8.RuneCountInString(description) > 2000 {
 		return "", false
 	}
 	if !validSafetyReportCategory(reporterRole, category) {
