@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -17,7 +18,22 @@ type declineStore struct {
 	dispatchapp.BiddingStore
 	actorID   int
 	sessionID int
+	session   domain.BidSession
+	offer     domain.BidOffer
 	err       error
+}
+
+func (store *declineStore) ActiveSessions(_ context.Context, _ *int) ([]domain.BidSession, error) {
+	return nil, store.err
+}
+
+func (store *declineStore) Session(_ context.Context, _ int) (domain.BidSession, error) {
+	return store.session, nil
+}
+
+func (store *declineStore) PlaceOffer(_ context.Context, offer domain.BidOffer) (domain.BidOffer, error) {
+	store.offer = offer
+	return offer, store.err
 }
 
 func (store *declineStore) DeclineSession(_ context.Context, sessionID, driverID int) (domain.BidSession, error) {
@@ -69,5 +85,56 @@ func TestDeclineRouteAuthorizationAndResponse(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestActiveSessionsMapsDriverUnavailableToConflict(t *testing.T) {
+	store := &declineStore{err: domain.ErrDriverUnavailable}
+	verifier := security.NewTokenManager("test-secret")
+	mux := chi.NewRouter()
+	NewRouter(Dependencies{Service: dispatchapp.NewService(dispatchapp.Dependencies{Store: store}), Verifier: verifier}).RegisterRoutes(mux)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/bids/active", nil)
+	token, err := verifier.IssueWithRole("201", security.RoleDriver)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Header.Set("Authorization", "Bearer "+token)
+
+	recorder := httptest.NewRecorder()
+	mux.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusConflict {
+		t.Fatalf("status = %d, want %d; body = %s", recorder.Code, http.StatusConflict, recorder.Body.String())
+	}
+}
+
+func TestPlaceOfferRoundsDecimalOfferPriceAndRejectsNegativePrice(t *testing.T) {
+	store := &declineStore{session: domain.BidSession{ID: 55, OfferedFareAmount: 1999}}
+	verifier := security.NewTokenManager("test-secret")
+	mux := chi.NewRouter()
+	NewRouter(Dependencies{Service: dispatchapp.NewService(dispatchapp.Dependencies{Store: store}), Verifier: verifier}).RegisterRoutes(mux)
+
+	token, err := verifier.IssueWithRole("201", security.RoleDriver)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	validRequest := httptest.NewRequest(http.MethodPost, "/api/v1/bids/55/offer", bytes.NewBufferString(`{"offer_price":19.99}`))
+	validRequest.Header.Set("Authorization", "Bearer "+token)
+	validRecorder := httptest.NewRecorder()
+	mux.ServeHTTP(validRecorder, validRequest)
+	if validRecorder.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d; body = %s", validRecorder.Code, http.StatusCreated, validRecorder.Body.String())
+	}
+	if store.offer.ProposedFareAmount != 1999 {
+		t.Fatalf("ProposedFareAmount = %d, want 1999", store.offer.ProposedFareAmount)
+	}
+
+	negativeRequest := httptest.NewRequest(http.MethodPost, "/api/v1/bids/55/offer", bytes.NewBufferString(`{"offer_price":-10}`))
+	negativeRequest.Header.Set("Authorization", "Bearer "+token)
+	negativeRecorder := httptest.NewRecorder()
+	mux.ServeHTTP(negativeRecorder, negativeRequest)
+	if negativeRecorder.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d; body = %s", negativeRecorder.Code, http.StatusBadRequest, negativeRecorder.Body.String())
 	}
 }

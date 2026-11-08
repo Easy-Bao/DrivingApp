@@ -2,6 +2,7 @@ package http
 
 import (
 	"errors"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -98,7 +99,7 @@ func (handler *Handler) ActiveSessions(w http.ResponseWriter, r *http.Request) {
 	}
 	sessions, err := handler.service.ActiveSessions(r.Context(), &driverID)
 	if err != nil {
-		response.Error(w, 500, "Incoming ride requests are temporarily unavailable.")
+		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
 	response.JSON(w, 200, NewBidSessionResponses(sessions))
@@ -172,8 +173,12 @@ func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fare := input.ProposedFareAmount
-	if fare == 0 && input.OfferPrice > 0 {
-		fare = int64(input.OfferPrice * 100)
+	if fare == 0 && input.OfferPrice != 0 {
+		if math.IsNaN(input.OfferPrice) || math.IsInf(input.OfferPrice, 0) || input.OfferPrice < 0 {
+			response.Error(w, 400, "invalid bid offer")
+			return
+		}
+		fare = int64(math.Round(input.OfferPrice * 100))
 	}
 	offer, err := handler.service.PlaceOffer(r.Context(), dispatchdomain.BidOffer{
 		SessionID:          sessionID,
@@ -307,7 +312,8 @@ func dispatchErrorStatus(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, dispatchdomain.ErrUnauthorizedSession):
 		return http.StatusForbidden
-	case errors.Is(err, ridedomain.ErrRouteUnavailable):
+	case errors.Is(err, ridedomain.ErrRouteUnavailable),
+		errors.Is(err, dispatchapp.ErrPersistenceUnavailable):
 		return http.StatusServiceUnavailable
 	default:
 		return http.StatusInternalServerError
@@ -328,6 +334,8 @@ func safeDispatchError(err error) string {
 		return "The custom offer cannot be lower than the calculated minimum fare."
 	case errors.Is(err, ridedomain.ErrRouteUnavailable):
 		return "The route service is temporarily unavailable."
+	case errors.Is(err, dispatchapp.ErrPersistenceUnavailable):
+		return "Incoming ride requests are temporarily unavailable."
 	case errors.Is(err, ridedomain.ErrActiveBooking):
 		return "You already have an active ride."
 	case errors.Is(err, ridedomain.ErrDriverCapacityReached):
