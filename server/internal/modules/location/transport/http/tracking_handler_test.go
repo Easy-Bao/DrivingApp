@@ -44,6 +44,7 @@ func TestNearbyDriversClampsThePublicRadiusBoundary(t *testing.T) {
 	}{
 		{name: "maximum radius is accepted", radius: "50", wantStatus: http.StatusOK, wantCalls: 1},
 		{name: "radius above maximum is rejected", radius: "50.1", wantStatus: http.StatusBadRequest, wantCalls: 0},
+		{name: "NaN radius is rejected", radius: "NaN", wantStatus: http.StatusBadRequest, wantCalls: 0},
 	}
 
 	for _, test := range tests {

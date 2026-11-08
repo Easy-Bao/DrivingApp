@@ -320,6 +320,11 @@ func (service *TrackingService) UpdatePassenger(
 	if missingRideID || missingPassengerID || invalidCoordinates {
 		return domain.ErrInvalidLocation
 	}
+	if point.ObservedAt.IsZero() {
+		point.ObservedAt = time.Now().UTC()
+	} else {
+		point.ObservedAt = point.ObservedAt.UTC()
+	}
 	assignment, err := service.assignmentForRide(ctx, rideID)
 	if err != nil {
 		return err
@@ -465,7 +470,7 @@ func (service *TrackingService) publish(
 	envelope, err := event.New(
 		event.NewID(),
 		eventType,
-		time.Now(),
+		time.Now().UTC(),
 		scope,
 		payload,
 	)

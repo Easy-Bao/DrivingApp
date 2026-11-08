@@ -428,3 +428,31 @@ func TestPassengerLocationRequiresTheRidePassenger(t *testing.T) {
 		t.Fatalf("UpdatePassenger() error = %v, want access denied", err)
 	}
 }
+
+func TestPassengerLocationPopulatesObservedTimestampWhenMissing(t *testing.T) {
+	repository := &locationRepositoryStub{}
+	service := newLocationTrackingService(
+		repository,
+		WithRideAssignments(assignmentLookupStub{
+			assignments: []assignment.Assignment{{
+				RideID:      "ride-7",
+				DriverID:    "driver-1",
+				PassengerID: "passenger-2",
+				Status:      "assigned",
+			}},
+		}),
+	)
+
+	err := service.UpdatePassenger(
+		context.Background(),
+		"ride-7",
+		"passenger-2",
+		domain.DriverPoint{Latitude: 6.7, Longitude: 122.1},
+	)
+	if err != nil {
+		t.Fatalf("UpdatePassenger() error = %v", err)
+	}
+	if repository.passengerPoint.ObservedAt.IsZero() {
+		t.Fatal("expected ObservedAt to be populated when omitted")
+	}
+}

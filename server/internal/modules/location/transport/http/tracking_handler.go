@@ -2,6 +2,7 @@ package http
 
 import (
 	"errors"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -189,7 +190,10 @@ func (handler *TrackingHandler) NearbyDrivers(writer http.ResponseWriter, reques
 	latitude, latErr := strconv.ParseFloat(query.Get("latitude"), 64)
 	longitude, lonErr := strconv.ParseFloat(query.Get("longitude"), 64)
 	radius, radiusErr := strconv.ParseFloat(query.Get("radius_km"), 64)
-	parseFailed := latErr != nil || lonErr != nil || radiusErr != nil
+	parseFailed := latErr != nil || lonErr != nil || radiusErr != nil ||
+		math.IsNaN(latitude) || math.IsInf(latitude, 0) ||
+		math.IsNaN(longitude) || math.IsInf(longitude, 0) ||
+		math.IsNaN(radius) || math.IsInf(radius, 0)
 	invalidCoordinates := latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180
 	invalidRadius := radius <= 0 || radius > 50
 	if parseFailed || invalidCoordinates || invalidRadius {
@@ -198,6 +202,10 @@ func (handler *TrackingHandler) NearbyDrivers(writer http.ResponseWriter, reques
 	}
 	points, err := handler.service.Nearby(request.Context(), latitude, longitude, radius)
 	if err != nil {
+		if errors.Is(err, domain.ErrInvalidLocation) {
+			response.Error(writer, http.StatusBadRequest, "invalid nearby query")
+			return
+		}
 		response.Error(writer, http.StatusServiceUnavailable, "driver availability unavailable")
 		return
 	}
