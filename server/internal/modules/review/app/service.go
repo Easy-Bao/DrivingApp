@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/review/domain"
 )
@@ -62,6 +63,7 @@ func (service *Service) CreateReview(ctx context.Context, review domain.Review) 
 	if service == nil || service.repository == nil {
 		return domain.Review{}, ErrPersistenceUnavailable
 	}
+	review.Comment = strings.TrimSpace(review.Comment)
 	if err := domain.ValidateRating(review.Rating); err != nil {
 		return domain.Review{}, err
 	}
@@ -82,6 +84,7 @@ func (service *Service) CreatePassengerReview(
 	if service == nil || service.repository == nil {
 		return domain.PassengerReview{}, ErrPersistenceUnavailable
 	}
+	review.Comment = strings.TrimSpace(review.Comment)
 	if err := domain.ValidateRating(review.Rating); err != nil {
 		return domain.PassengerReview{}, err
 	}

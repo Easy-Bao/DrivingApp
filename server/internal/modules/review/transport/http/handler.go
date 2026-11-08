@@ -35,7 +35,7 @@ func (handler *Handler) DriverReviews(writer http.ResponseWriter, request *http.
 		return
 	}
 	driverID, err := strconv.Atoi(chi.URLParam(request, "id"))
-	if err != nil {
+	if err != nil || driverID <= 0 {
 		response.Error(writer, http.StatusBadRequest, "invalid driver id")
 		return
 	}
@@ -51,6 +51,10 @@ func (handler *Handler) DriverReviews(writer http.ResponseWriter, request *http.
 	}
 	items, err := handler.service.DriverReviews(request.Context(), driverID, domain.ReviewQuery{Limit: limit, Offset: page.Offset, BeforeCreatedAt: page.BeforeCreatedAt, BeforeID: page.BeforeID})
 	if err != nil {
+		if errors.Is(err, application.ErrPersistenceUnavailable) {
+			response.Error(writer, http.StatusServiceUnavailable, "Driver reviews are temporarily unavailable.")
+			return
+		}
 		response.Error(writer, http.StatusInternalServerError, "Driver reviews are temporarily unavailable.")
 		return
 	}
@@ -60,7 +64,7 @@ func (handler *Handler) DriverReviews(writer http.ResponseWriter, request *http.
 			last := items[page.Limit-1]
 			next, err = sharedrequest.EncodeListCursor(scope, last.CreatedAt, last.ID)
 			if err != nil {
-				response.Error(writer, 500, "Driver reviews are temporarily unavailable.")
+				response.Error(writer, http.StatusInternalServerError, "Driver reviews are temporarily unavailable.")
 				return
 			}
 		}
@@ -105,7 +109,7 @@ func (handler *Handler) CreateReview(writer http.ResponseWriter, request *http.R
 		return
 	}
 	driverID, err := strconv.Atoi(chi.URLParam(request, "id"))
-	if err != nil {
+	if err != nil || driverID <= 0 {
 		response.Error(writer, http.StatusBadRequest, "invalid driver id")
 		return
 	}
@@ -135,7 +139,7 @@ func (handler *Handler) CreatePassengerReview(writer http.ResponseWriter, reques
 		return
 	}
 	passengerID, err := strconv.Atoi(chi.URLParam(request, "id"))
-	if err != nil {
+	if err != nil || passengerID <= 0 {
 		response.Error(writer, http.StatusBadRequest, "invalid passenger id")
 		return
 	}

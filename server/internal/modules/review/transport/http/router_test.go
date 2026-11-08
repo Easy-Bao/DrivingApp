@@ -162,6 +162,13 @@ func TestReviewRoutesKeepPathsRolesAndResponseShapes(t *testing.T) {
 	if response.Code != http.StatusBadRequest {
 		t.Fatalf("invalid cursor status=%d", response.Code)
 	}
+	request = httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/0/reviews", nil)
+	request.Header.Set("Authorization", "Bearer "+passengerToken)
+	response = httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("non-positive driver id status=%d", response.Code)
+	}
 
 	request = httptest.NewRequest(
 		http.MethodPost,

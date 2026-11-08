@@ -66,9 +66,9 @@ func TestCreateReviewRequiresCompletedRideParticipantsAndValidRating(t *testing.
 	service := NewService(repository)
 
 	review, err := service.CreateReview(context.Background(), domain.Review{
-		RideID: 7, PassengerID: 4, DriverID: 9, Rating: 5,
+		RideID: 7, PassengerID: 4, DriverID: 9, Rating: 5, Comment: "  smooth ride  ",
 	})
-	if err != nil || review.ID != 1 || repository.requestedReviewRideID != 7 {
+	if err != nil || review.ID != 1 || repository.requestedReviewRideID != 7 || review.Comment != "smooth ride" {
 		t.Fatalf("CreateReview() = %#v, %v", review, err)
 	}
 
