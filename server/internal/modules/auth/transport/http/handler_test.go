@@ -115,3 +115,15 @@ func TestOTPMaxAttemptsReturnTooManyRequests(t *testing.T) {
 		t.Fatal("expected an informative OTP lockout message")
 	}
 }
+
+func TestAuthHTTPStatusMappingsForValidationAndSuspension(t *testing.T) {
+	if status := registrationErrorStatus(domain.ErrInvalidCredentials); status != http.StatusBadRequest {
+		t.Fatalf("registrationErrorStatus(ErrInvalidCredentials) = %d, want %d", status, http.StatusBadRequest)
+	}
+	if status := otpErrorStatus(domain.ErrInvalidCredentials); status != http.StatusBadRequest {
+		t.Fatalf("otpErrorStatus(ErrInvalidCredentials) = %d, want %d", status, http.StatusBadRequest)
+	}
+	if status := otpErrorStatus(domain.ErrRefreshSessionUnavailable); status != http.StatusServiceUnavailable {
+		t.Fatalf("otpErrorStatus(ErrRefreshSessionUnavailable) = %d, want %d", status, http.StatusServiceUnavailable)
+	}
+}

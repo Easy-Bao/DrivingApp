@@ -63,6 +63,8 @@ func (handler *Handler) ConfirmEmailChange(writer http.ResponseWriter, request *
 
 func writeEmailChangeError(writer http.ResponseWriter, request *http.Request, err error) {
 	switch {
+	case errors.Is(err, domain.ErrAccountSuspended):
+		response.Error(writer, http.StatusForbidden, "Your account has been suspended.")
 	case errors.Is(err, domain.ErrInvalidCredentials):
 		response.Error(writer, http.StatusUnauthorized, "current credentials are invalid")
 	case errors.Is(err, domain.ErrEmailTaken):

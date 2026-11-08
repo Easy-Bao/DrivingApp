@@ -253,3 +253,23 @@ func TestCryptographicOTPGeneration(t *testing.T) {
 func (repository *otpRepository) UpgradePasswordHash(_ context.Context, id int, expectedHash, passwordHash string) (bool, error) {
 	return false, nil
 }
+
+func TestVerifyPassengerAndResetPasswordRequireNonEmptyOTPCode(t *testing.T) {
+	repository := &otpRepository{account: domain.User{
+		ID: 7, Email: "passenger@example.test", Role: domain.Passenger, PasswordHash: "$2a$12$somehash",
+	}}
+	service := authapp.NewOTPService(authapp.OTPDependencies{
+		Users:    repository,
+		Store:    &otpMemoryStore{values: map[string]string{}},
+		Gateway:  &otpGateway{},
+		Tokens:   otpIssuer{},
+		Sessions: newTestRefreshSessionStore(),
+	})
+
+	if _, _, err := service.VerifyPassenger(context.Background(), "passenger@example.test", "   "); !errors.Is(err, domain.ErrOTPRequired) {
+		t.Fatalf("VerifyPassenger(blank code) error = %v, want ErrOTPRequired", err)
+	}
+	if err := service.ResetPasswordForRole(context.Background(), "passenger@example.test", "   ", "new-secret-8", domain.Passenger); !errors.Is(err, domain.ErrOTPRequired) {
+		t.Fatalf("ResetPasswordForRole(blank code) error = %v, want ErrOTPRequired", err)
+	}
+}

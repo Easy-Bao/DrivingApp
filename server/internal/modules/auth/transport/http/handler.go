@@ -356,7 +356,8 @@ func registrationErrorStatus(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, domain.ErrOTPUnavailable), errors.Is(err, authapp.ErrRegistrationUnavailable):
 		return http.StatusServiceUnavailable
-	case errors.Is(err, domain.ErrInvalidEmail),
+	case errors.Is(err, domain.ErrInvalidCredentials),
+		errors.Is(err, domain.ErrInvalidEmail),
 		errors.Is(err, domain.ErrInvalidRole),
 		errors.Is(err, domain.ErrOTPRequired),
 		errors.Is(err, domain.ErrInvalidOTP):
@@ -372,11 +373,12 @@ func otpErrorStatus(err error) int {
 		return http.StatusForbidden
 	case errors.Is(err, domain.ErrOTPMaxAttemptsExceeded):
 		return http.StatusTooManyRequests
-	case errors.Is(err, domain.ErrOTPUnavailable):
+	case errors.Is(err, domain.ErrOTPUnavailable), errors.Is(err, domain.ErrRefreshSessionUnavailable):
 		return http.StatusServiceUnavailable
 	case errors.Is(err, domain.ErrPendingRegistrationNotFound):
 		return http.StatusNotFound
-	case errors.Is(err, domain.ErrOTPRequired),
+	case errors.Is(err, domain.ErrInvalidCredentials),
+		errors.Is(err, domain.ErrOTPRequired),
 		errors.Is(err, domain.ErrInvalidOTP),
 		errors.Is(err, domain.ErrInvalidEmail):
 		return http.StatusBadRequest
