@@ -305,7 +305,7 @@ func writeServiceError(writer http.ResponseWriter, err error) {
 		response.Error(writer, http.StatusNotFound, "document not found")
 	case errors.Is(err, domain.ErrDocumentFinalized):
 		response.Error(writer, http.StatusConflict, "The document review is already finalized.")
-	case errors.Is(err, domain.ErrDocumentCorrupt):
+	case errors.Is(err, domain.ErrDocumentCorrupt), errors.Is(err, app.ErrServiceUnavailable):
 		response.Error(writer, http.StatusServiceUnavailable, "The document content is unavailable.")
 	default:
 		response.Error(writer, http.StatusInternalServerError, "The document service is temporarily unavailable.")

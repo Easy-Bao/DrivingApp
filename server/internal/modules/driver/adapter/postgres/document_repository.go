@@ -172,7 +172,7 @@ func (repository *DocumentRepository) Review(
 	updated, err := repository.queries.ReviewDriverDocument(ctx, databasepostgres.ReviewDriverDocumentParams{
 		ID:         documentID,
 		Status:     string(status),
-		ReviewedAt: toPostgresDocumentTimestamp(time.Now()),
+		ReviewedAt: toPostgresDocumentTimestamp(time.Now().UTC()),
 		ReviewedBy: pgtype.Int4{Int32: dbReviewerID, Valid: true},
 	})
 	if errors.Is(err, pgx.ErrNoRows) {

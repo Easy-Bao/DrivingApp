@@ -2,10 +2,13 @@ package http
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/domain"
 )
 
@@ -64,5 +67,13 @@ func TestDocumentResponsePreservesPublicFieldsAndHidesStorageMetadata(t *testing
 func TestNewDocumentResponsesPreservesNilSlice(t *testing.T) {
 	if responses := NewDocumentResponses(nil); responses != nil {
 		t.Fatalf("NewDocumentResponses(nil) = %#v, want nil", responses)
+	}
+}
+
+func TestWriteServiceErrorMapsServiceUnavailableTo503(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	writeServiceError(recorder, app.ErrServiceUnavailable)
+	if recorder.Code != http.StatusServiceUnavailable {
+		t.Fatalf("writeServiceError(ErrServiceUnavailable) = %d, want %d", recorder.Code, http.StatusServiceUnavailable)
 	}
 }
