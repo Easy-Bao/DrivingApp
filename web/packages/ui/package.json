@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./fonts/*": "./src/assets/fonts/*",
     "./styles/*": "./src/styles/*",
     "./atoms/*": "./src/atoms/*",
     "./molecules/*": "./src/molecules/*",
