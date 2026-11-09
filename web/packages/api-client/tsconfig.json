@@ -5,6 +5,9 @@
   "compilerOptions": {
     "noUncheckedIndexedAccess": true,
     "noEmit": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo"
   }
 }

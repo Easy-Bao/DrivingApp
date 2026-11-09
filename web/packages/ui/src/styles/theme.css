@@ -1,9 +1,5 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @source "../**/*.vue";
-
-/* ==========================================================================
-   Global Font Faces (ProductSans from packages/design_system/assets/fonts)
-   ========================================================================== */
 
 @font-face {
   font-family: 'ProductSans';

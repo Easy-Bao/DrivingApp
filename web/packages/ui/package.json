@@ -4,12 +4,16 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./*": "./src/*",
     "./fonts/*": "./src/assets/fonts/*",
     "./styles/*": "./src/styles/*",
     "./atoms/*": "./src/atoms/*",
     "./molecules/*": "./src/molecules/*",
     "./organisms/*": "./src/organisms/*",
     "./templates/*": "./src/templates/*"
+  },
+  "imports": {
+    "@/*": "./src/*"
   },
   "dependencies": {
     "tailwindcss": "^4.1.11"

@@ -5,10 +5,14 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./*": "./src/*",
     "./http": "./src/http/api-http-client.ts",
     "./errors": "./src/errors/api-client-error.ts",
     "./contracts/*": "./src/contracts/*",
     "./modules/*": "./src/modules/*"
+  },
+  "imports": {
+    "@/*": "./src/*"
   },
   "scripts": {
     "type-check": "vue-tsc --build",
