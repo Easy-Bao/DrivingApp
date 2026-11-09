@@ -10,6 +10,9 @@
     "./organisms/*": "./src/organisms/*",
     "./templates/*": "./src/templates/*"
   },
+  "dependencies": {
+    "tailwindcss": "^4.1.11"
+  },
   "peerDependencies": {
     "vue": "*"
   }

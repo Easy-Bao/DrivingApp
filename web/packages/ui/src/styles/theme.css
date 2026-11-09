@@ -1,1 +1,126 @@
-/* Global UI stylesheet & Tailwind configuration entry point */
+@import 'tailwindcss';
+@source "../**/*.vue";
+
+@theme {
+  /* Fonts */
+  --font-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+    sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Brand & Status Palette */
+  --color-emerald: #059669;
+  --color-emerald-hover: #047857;
+  --color-emerald-soft: #ecfdf5;
+
+  --color-amber: #f59e0b;
+  --color-amber-100: #fef3c7;
+  --color-amber-800: #92400e;
+
+  --color-red-100: #fee2e2;
+  --color-red-800: #7a2020;
+
+  --color-obsidian: #090d16;
+
+  /* Status Colors */
+  --color-status-success: #26845b;
+  --color-status-warning: #b45309;
+  --color-status-error: #d64545;
+  --color-status-info: #3977c3;
+  --color-status-rating: #e0a12d;
+
+  /* Semantic Surface & Text Colors (Mapped to CSS Variables) */
+  --color-background: var(--surface-background);
+  --color-surface: var(--surface-card);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+
+  --color-foreground: var(--text-primary);
+  --color-foreground-secondary: var(--text-secondary);
+  --color-foreground-muted: var(--text-muted);
+
+  --color-primary: var(--brand-primary);
+  --color-primary-hover: var(--brand-primary-hover);
+  --color-primary-soft: var(--brand-primary-soft);
+  --color-on-primary: var(--brand-on-primary);
+
+  /* Spacing Scale (4px -> 32px) */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 0.75rem;
+  --spacing-lg: 1rem;
+  --spacing-xl: 1.25rem;
+  --spacing-xxl: 1.5rem;
+  --spacing-xxxl: 2rem;
+
+  /* Border Radius Scale */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-sheet: 1.75rem;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-key: 0 1px 2px 0 rgba(9, 13, 22, 0.04);
+  --shadow-ambient: 0 4px 12px -2px rgba(9, 13, 22, 0.08), 0 2px 4px -2px rgba(9, 13, 22, 0.04);
+}
+
+:root {
+  --surface-background: #f8fafc;
+  --surface-card: #ffffff;
+  --surface-muted: #f1f5f9;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #78889b;
+
+  --brand-primary: #059669;
+  --brand-primary-hover: #047857;
+  --brand-primary-soft: #ecfdf5;
+  --brand-on-primary: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-background: #090d16;
+    --surface-card: #0f172a;
+    --surface-muted: #1e293b;
+    --border-subtle: #1e293b;
+    --border-strong: #64748b;
+
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+
+    --brand-primary: #059669;
+    --brand-primary-hover: #047857;
+    --brand-primary-soft: rgba(5, 150, 105, 0.15);
+    --brand-on-primary: #ffffff;
+  }
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    border-color: var(--border-subtle);
+  }
+
+  body {
+    min-height: 100vh;
+    margin: 0;
+    background-color: var(--surface-background);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
