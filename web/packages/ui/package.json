@@ -1,0 +1,16 @@
+{
+  "name": "@web/ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./styles/*": "./src/styles/*",
+    "./atoms/*": "./src/atoms/*",
+    "./molecules/*": "./src/molecules/*",
+    "./organisms/*": "./src/organisms/*",
+    "./templates/*": "./src/templates/*"
+  },
+  "peerDependencies": {
+    "vue": "*"
+  }
+}

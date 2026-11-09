@@ -1,0 +1,5 @@
+/* Application-specific overrides for @easyride/landing-application.
+   Global design tokens and reset are provided by @easyride/ui/styles.css */
+#app {
+  min-height: 100vh;
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@web/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./http": "./src/http/api-http-client.ts",
+    "./errors": "./src/errors/api-client-error.ts",
+    "./contracts/*": "./src/contracts/*",
+    "./modules/*": "./src/modules/*"
+  },
+  "scripts": {
+    "type-check": "vue-tsc --build",
+    "test:unit": "vitest run",
+    "build": "vue-tsc --build",
+    "format": "oxfmt src/"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.4",
+    "@vue/tsconfig": "^0.9.1",
+    "oxfmt": "^0.67.0",
+    "typescript": "npm:typescript-native-bridge@latest",
+    "vitest": "^4.1.11",
+    "vue-tsc": "^3.3.11"
+  }
+}
