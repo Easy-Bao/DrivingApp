@@ -14,6 +14,7 @@
     "format": "oxfmt src/"
   },
   "dependencies": {
+    "@iconify/vue": "^5.0.5",
     "@web/api-client": "workspace:*",
     "@web/ui": "workspace:*",
     "pinia": "^4.0.3",

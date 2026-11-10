@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import LandingHomePage from '@/features/marketing-home/presentation/LandingHomePage.vue'
+import LandingHomePage from '@/pages/LandingHomePage.vue'
+import PlatformArchitecturePage from '@/pages/PlatformArchitecturePage.vue'
 
 const applicationRouter = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -8,6 +9,11 @@ const applicationRouter = createRouter({
       path: '/',
       name: 'landing-home',
       component: LandingHomePage,
+    },
+    {
+      path: '/architecture',
+      name: 'platform-architecture',
+      component: PlatformArchitecturePage,
     },
   ],
 })
