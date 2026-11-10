@@ -1,0 +1,5 @@
+/* Application-specific overrides for EasyRide Fleet Admin
+   Global design tokens and reset are provided by @web/ui */
+#app {
+  min-height: 100vh;
+}

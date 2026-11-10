@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import AppLayout from '@/shared/components/AppLayout.vue'
+import AdminLayout from '@/app/layouts/AdminLayout.vue'
 import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <AppLayout>
+  <AdminLayout>
     <RouterView />
-  </AppLayout>
+  </AdminLayout>
 </template>
