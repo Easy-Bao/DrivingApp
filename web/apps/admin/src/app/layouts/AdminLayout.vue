@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import Sidebar from '@/app/layouts/Sidebar.vue'
 
 const route = useRoute()
-const router = useRouter()
 
 const routeMap: Record<string, { section: string; sectionTo: string; item: string }> = {
   '/dashboard/overview': {
@@ -197,6 +196,33 @@ const currentBreadcrumb = computed(() => {
   const match = routeMap[route.path]
   if (match) return match
 
+  if (route.path.startsWith('/payments/topups/')) {
+    const id = (route.params.id as string) || 'Details'
+    return {
+      section: 'Payment & Wallet',
+      sectionTo: '/payments/topups',
+      item: `Top-Up Request #${id}`,
+    }
+  }
+
+  if (route.path.startsWith('/payments/payout-requests/')) {
+    const id = (route.params.id as string) || 'Details'
+    return {
+      section: 'Payment & Wallet',
+      sectionTo: '/payments/payout-requests',
+      item: `Payout Withdrawal #${id}`,
+    }
+  }
+
+  if (route.path.startsWith('/users/driver-applications/')) {
+    const id = (route.params.id as string) || 'Details'
+    return {
+      section: 'Users & Fleet',
+      sectionTo: '/users/driver-applications',
+      item: `Application #${id}`,
+    }
+  }
+
   const parts = route.path.split('/').filter(Boolean)
   const sec = parts[0] ? parts[0].charAt(0).toUpperCase() + parts[0].slice(1) : 'Dashboard'
   const itm = parts[1]
@@ -208,14 +234,6 @@ const currentBreadcrumb = computed(() => {
     item: itm,
   }
 })
-
-function goBack() {
-  if (window.history.length > 1) {
-    router.back()
-  } else {
-    void router.push('/dashboard/overview')
-  }
-}
 </script>
 
 <template>
@@ -229,19 +247,8 @@ function goBack() {
       <header
         class="h-16 border-b border-neutral-200 bg-white px-6 flex items-center justify-between shrink-0 select-none"
       >
-        <!-- Interactive Clickable Breadcrumbs with Back Button -->
+        <!-- Interactive Clickable Breadcrumbs -->
         <nav aria-label="Breadcrumb" class="flex items-center space-x-2 text-xs">
-          <!-- Back Button -->
-          <button
-            type="button"
-            class="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition-colors mr-1 flex items-center justify-center"
-            title="Navigate back"
-            aria-label="Navigate back"
-            @click="goBack"
-          >
-            <Icon icon="lucide:arrow-left" class="text-sm" />
-          </button>
-
           <!-- Home Link -->
           <RouterLink
             to="/dashboard/overview"

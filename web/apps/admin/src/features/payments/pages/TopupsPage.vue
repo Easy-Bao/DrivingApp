@@ -1,119 +1,37 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
+import { useTopups } from '@/features/payments/composables/useTopups'
 
-interface TopUpRequest {
-  id: string
-  driverName: string
-  driverPhone: string
-  vehiclePlate: string
-  currentBalance: number
-  amount: number
-  paymentMethod: 'Company QR Code' | 'Company Bank Transfer'
-  referenceCode: string
-  submittedAt: string
-  companyAccountPaid: string
-  proofNote: string
-  status: 'Pending' | 'Verified' | 'Rejected'
-}
+const router = useRouter()
+const { topUpRequests } = useTopups()
 
-const topUpRequests = ref<TopUpRequest[]>([
-  {
-    id: 'TOP-8921',
-    driverName: 'Marcus Miller',
-    driverPhone: '+1 (555) 234-5678',
-    vehiclePlate: '7XYZ892',
-    currentBalance: 1.5,
-    amount: 50.0,
-    paymentMethod: 'Company QR Code',
-    referenceCode: 'QR-TXN-8829104',
-    submittedAt: '8 minutes ago',
-    companyAccountPaid: 'Company QR Merchant #ER-8801',
-    proofNote: 'Screenshot verified against company mobile payment receipt #8829104',
-    status: 'Pending',
-  },
-  {
-    id: 'TOP-8920',
-    driverName: 'Elena Rostova',
-    driverPhone: '+1 (555) 876-5432',
-    vehiclePlate: 'EV-4491',
-    currentBalance: 3.2,
-    amount: 100.0,
-    paymentMethod: 'Company Bank Transfer',
-    referenceCode: 'WIRE-99218204',
-    submittedAt: '24 minutes ago',
-    companyAccountPaid: 'Company Fleet Acct: 0182-9981-2291',
-    proofNote: 'Bank deposit receipt matches exact timestamp and account holder name',
-    status: 'Pending',
-  },
-  {
-    id: 'TOP-8919',
-    driverName: 'David Kim',
-    driverPhone: '+1 (555) 345-6789',
-    vehiclePlate: 'CAM-8891',
-    currentBalance: 0.0,
-    amount: 30.0,
-    paymentMethod: 'Company QR Code',
-    referenceCode: 'QR-TXN-7719201',
-    submittedAt: '42 minutes ago',
-    companyAccountPaid: 'Company QR Merchant #ER-8801',
-    proofNote: 'Bank notification confirmed for $30.00',
-    status: 'Pending',
-  },
-])
+const filterMethod = ref<'All' | 'Company QR Code' | 'Company Bank Transfer'>('All')
 
-const verificationToast = ref<string | null>(null)
-const selectedProofRequest = ref<TopUpRequest | null>(null)
-
-function verifyAndCredit(req: TopUpRequest) {
-  req.status = 'Verified'
-  req.currentBalance += req.amount
-  verificationToast.value = `Successfully verified ${req.id}! Credited $${req.amount.toFixed(2)} to ${req.driverName}. Driver wallet is now unlocked to accept rides.`
-  setTimeout(() => {
-    verificationToast.value = null
-  }, 6000)
-}
-
-function rejectRequest(req: TopUpRequest) {
-  req.status = 'Rejected'
-  verificationToast.value = `Request ${req.id} for ${req.driverName} rejected. Driver has been notified.`
-  setTimeout(() => {
-    verificationToast.value = null
-  }, 5000)
-}
-
-function openProofModal(req: TopUpRequest) {
-  selectedProofRequest.value = req
-}
-
-function closeProofModal() {
-  selectedProofRequest.value = null
-}
-
-function confirmAndVerify() {
-  if (selectedProofRequest.value) {
-    verifyAndCredit(selectedProofRequest.value)
-    closeProofModal()
-  }
+function navigateToDetails(id: string) {
+  void router.push(`/payments/topups/${id}`)
 }
 </script>
 
 <template>
   <div class="space-y-6">
+    <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
-          Driver Top-Up Verification Queue
+          Driver Wallet Top-Up Verification
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
-          Review manual driver deposits paid to company bank accounts or payment QR codes. Once
-          verified, wallet credits immediately restore ride acceptance.
+          Verify driver manual payment transfers to company QR or company bank account before
+          crediting dispatch wallets.
         </p>
       </div>
-      <div class="flex items-center space-x-2">
+
+      <div class="flex items-center space-x-3">
         <RouterLink
-          to="/payment/payment-methods"
-          class="px-3.5 py-2 bg-white border border-neutral-200 text-neutral-700 rounded-lg text-xs font-semibold hover:bg-neutral-50 flex items-center space-x-1.5"
+          to="/payments/methods"
+          class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-700 shadow-2xs transition-colors"
         >
           <Icon icon="lucide:qr-code" class="text-neutral-500" />
           <span>Manage Company Bank & QR</span>
@@ -121,80 +39,76 @@ function confirmAndVerify() {
       </div>
     </div>
 
-    <!-- Protocol Info Banner -->
-    <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-4 flex items-start space-x-3">
-      <Icon icon="lucide:info" class="text-amber-700 text-lg mt-0.5 shrink-0" />
-      <div class="text-xs text-amber-900 leading-relaxed">
-        <span class="font-bold">Driver Top-Up Protocol:</span> Drivers with low or zero balance
-        cannot accept rides. They transfer directly to the company number or company QR. Validate
-        the receipt reference below, then click <strong>Verify & Credit</strong> to immediately
-        restore the driver's dispatch eligibility.
-      </div>
-    </div>
-
-    <!-- Toast Notification -->
+    <!-- Instructions Banner -->
     <div
-      v-if="verificationToast"
-      class="p-4 rounded-xl bg-emerald-900 text-white text-xs font-medium flex items-center justify-between shadow-lg transition-all animate-in fade-in"
+      class="bg-blue-50/70 border border-blue-200 rounded-xl p-4 flex items-start space-x-3 text-xs"
     >
-      <div class="flex items-center space-x-2">
-        <Icon icon="lucide:check-circle-2" class="text-emerald-400 text-lg shrink-0" />
-        <span>{{ verificationToast }}</span>
+      <Icon icon="lucide:info" class="text-blue-600 text-base shrink-0 mt-0.5" />
+      <div class="space-y-1 text-blue-900 leading-relaxed">
+        <span class="font-bold">Manual Settlement Process:</span>
+        Drivers transfer money to the company official bank account or scan the company payment QR
+        code from the driver app. After receiving driver proof, admins view the detailed request
+        audit record to verify the transaction reference before releasing wallet credits.
       </div>
-      <button
-        type="button"
-        class="text-emerald-300 hover:text-white"
-        @click="verificationToast = null"
-      >
-        <Icon icon="lucide:x" />
-      </button>
     </div>
 
-    <!-- Verification Table -->
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-xs overflow-hidden">
+    <!-- Table -->
+    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-          <h2 class="font-bold text-sm text-neutral-900">Pending Driver Top-Up Queue</h2>
-          <span class="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 rounded-full">
+        <div class="flex items-center space-x-3">
+          <h2 class="font-bold text-sm text-neutral-900">Pending Driver Top-Up Verifications</h2>
+          <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
             {{ topUpRequests.filter((r) => r.status === 'Pending').length }} Pending
           </span>
         </div>
-        <span class="text-xs text-neutral-400">Updates live from driver mobile app</span>
+
+        <div class="flex items-center space-x-2">
+          <select
+            v-model="filterMethod"
+            class="px-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-xs font-medium text-neutral-700"
+          >
+            <option value="All">All Payment Methods</option>
+            <option value="Company QR Code">Company QR Code</option>
+            <option value="Company Bank Transfer">Company Bank Transfer</option>
+          </select>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
-          <thead class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100">
+          <thead
+            class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100 font-semibold"
+          >
             <tr>
               <th class="py-3 px-4">Request ID</th>
-              <th class="py-3 px-4">Driver & Vehicle</th>
-              <th class="py-3 px-4">Top-Up Amount</th>
-              <th class="py-3 px-4">Current Balance</th>
+              <th class="py-3 px-4">Driver</th>
+              <th class="py-3 px-4">Amount</th>
+              <th class="py-3 px-4">Prepaid Balance</th>
               <th class="py-3 px-4">Deposit Channel</th>
-              <th class="py-3 px-4">Bank Ref / Slip</th>
-              <th class="py-3 px-4">Proof</th>
+              <th class="py-3 px-4">Reference Code</th>
               <th class="py-3 px-4">Status</th>
-              <th class="py-3 px-4 text-right">Verification Action</th>
+              <th class="py-3 px-4 text-right">Action</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-neutral-100 text-neutral-700">
-            <tr v-for="req in topUpRequests" :key="req.id" class="hover:bg-neutral-50/50">
+          <tbody class="divide-y divide-neutral-100">
+            <tr
+              v-for="req in topUpRequests"
+              :key="req.id"
+              class="hover:bg-neutral-50/70 transition-colors"
+            >
               <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ req.id }}</td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ req.driverName }}</div>
-                <div class="text-[11px] text-neutral-500">
-                  {{ req.driverPhone }} · <span class="font-mono">{{ req.vehiclePlate }}</span>
+                <div class="text-[11px] text-neutral-400">
+                  {{ req.driverPhone }} · Plate: {{ req.vehiclePlate }}
                 </div>
               </td>
-              <td class="py-3 px-4">
-                <span class="text-sm font-bold text-emerald-700"
-                  >+${{ req.amount.toFixed(2) }}</span
-                >
+              <td class="py-3 px-4 font-bold text-sm text-neutral-900 font-mono">
+                ${{ req.amount.toFixed(2) }}
               </td>
-              <td class="py-3 px-4">
+              <td class="py-3 px-4 font-mono">
                 <div
-                  class="font-medium"
-                  :class="req.currentBalance < 5 ? 'text-rose-600 font-bold' : 'text-neutral-700'"
+                  :class="req.currentBalance < 5 ? 'text-rose-600 font-bold' : 'text-neutral-900'"
                 >
                   ${{ req.currentBalance.toFixed(2) }}
                 </div>
@@ -224,16 +138,6 @@ function confirmAndVerify() {
                 {{ req.referenceCode }}
               </td>
               <td class="py-3 px-4">
-                <button
-                  type="button"
-                  class="px-2 py-1 rounded bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-[11px] font-medium flex items-center space-x-1"
-                  @click="openProofModal(req)"
-                >
-                  <Icon icon="lucide:image" class="text-xs" />
-                  <span>View Proof</span>
-                </button>
-              </td>
-              <td class="py-3 px-4">
                 <span
                   class="px-2.5 py-0.5 rounded-full text-[10px] font-bold"
                   :class="{
@@ -245,124 +149,19 @@ function confirmAndVerify() {
                   {{ req.status }}
                 </span>
               </td>
-              <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
-                <template v-if="req.status === 'Pending'">
-                  <button
-                    type="button"
-                    class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-colors shadow-2xs"
-                    @click="verifyAndCredit(req)"
-                  >
-                    Verify & Credit
-                  </button>
-                  <button
-                    type="button"
-                    class="px-2.5 py-1.5 rounded-lg border border-neutral-200 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 text-neutral-600 font-medium text-xs transition-colors"
-                    @click="rejectRequest(req)"
-                  >
-                    Reject
-                  </button>
-                </template>
-                <span v-else class="text-[11px] text-neutral-400 font-medium italic">
-                  Processed
-                </span>
+              <td class="py-3 px-4 text-right whitespace-nowrap">
+                <button
+                  type="button"
+                  class="px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs transition-colors shadow-2xs inline-flex items-center space-x-1"
+                  @click="navigateToDetails(req.id)"
+                >
+                  <span>View Details</span>
+                  <Icon icon="lucide:arrow-right" class="text-xs" />
+                </button>
               </td>
             </tr>
           </tbody>
         </table>
-      </div>
-    </div>
-
-    <!-- Proof of Payment Modal -->
-    <div
-      v-if="selectedProofRequest"
-      class="fixed inset-0 z-50 bg-neutral-950/50 flex items-center justify-center p-4"
-    >
-      <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl">
-        <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
-          <div class="flex items-center space-x-2">
-            <Icon icon="lucide:receipt" class="text-lg text-neutral-700" />
-            <h3 class="font-bold text-sm text-neutral-900">
-              Payment Verification Proof · {{ selectedProofRequest.id }}
-            </h3>
-          </div>
-          <button
-            type="button"
-            class="text-neutral-400 hover:text-neutral-900"
-            @click="closeProofModal"
-          >
-            <Icon icon="lucide:x" class="text-lg" />
-          </button>
-        </div>
-
-        <div class="space-y-3 text-xs">
-          <div class="bg-neutral-50 p-3 rounded-lg space-y-1">
-            <div class="flex justify-between text-neutral-600">
-              <span>Driver</span>
-              <span class="font-semibold text-neutral-900"
-                >{{ selectedProofRequest.driverName }} ({{
-                  selectedProofRequest.driverPhone
-                }})</span
-              >
-            </div>
-            <div class="flex justify-between text-neutral-600">
-              <span>Amount Transferred</span>
-              <span class="font-bold text-emerald-700 text-sm"
-                >${{ selectedProofRequest.amount.toFixed(2) }}</span
-              >
-            </div>
-            <div class="flex justify-between text-neutral-600">
-              <span>Deposit Channel</span>
-              <span class="font-medium text-neutral-900">{{
-                selectedProofRequest.paymentMethod
-              }}</span>
-            </div>
-            <div class="flex justify-between text-neutral-600">
-              <span>Company Account Credited</span>
-              <span class="font-mono text-neutral-800">{{
-                selectedProofRequest.companyAccountPaid
-              }}</span>
-            </div>
-            <div class="flex justify-between text-neutral-600">
-              <span>Transaction Reference</span>
-              <span class="font-mono font-bold text-neutral-900">{{
-                selectedProofRequest.referenceCode
-              }}</span>
-            </div>
-          </div>
-
-          <div
-            class="border-2 border-dashed border-neutral-200 rounded-xl p-6 text-center space-y-2 bg-neutral-50/50"
-          >
-            <Icon icon="lucide:file-check" class="text-3xl text-emerald-600 mx-auto" />
-            <p class="font-bold text-xs text-neutral-800">
-              Official Transfer Deposit Receipt Attached
-            </p>
-            <p class="text-[11px] text-neutral-500">{{ selectedProofRequest.proofNote }}</p>
-            <span
-              class="inline-block font-mono text-[10px] text-neutral-400 bg-white px-2 py-1 rounded border border-neutral-200"
-            >
-              SHA256: 8f2a991c0e3b...verified
-            </span>
-          </div>
-        </div>
-
-        <div class="flex justify-end space-x-2 pt-2 border-t border-neutral-100">
-          <button
-            type="button"
-            class="px-4 py-2 border border-neutral-200 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-100"
-            @click="closeProofModal"
-          >
-            Close
-          </button>
-          <button
-            v-if="selectedProofRequest.status === 'Pending'"
-            type="button"
-            class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 shadow-sm"
-            @click="confirmAndVerify"
-          >
-            Verify & Credit Wallet Now
-          </button>
-        </div>
       </div>
     </div>
   </div>
