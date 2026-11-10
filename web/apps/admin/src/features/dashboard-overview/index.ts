@@ -1,3 +1,3 @@
-export { default as AdministrationDashboardView } from '@/features/dashboard-overview/components/AdministrationDashboardView.vue'
-export { useAdministrationDashboard } from '@/features/dashboard-overview/composables/useAdministrationDashboard'
+export { default as DashboardView } from '@/features/dashboard-overview/components/DashboardView.vue'
+export { useDashboard } from '@/features/dashboard-overview/composables/useDashboard'
 export type * from '@/features/dashboard-overview/types'

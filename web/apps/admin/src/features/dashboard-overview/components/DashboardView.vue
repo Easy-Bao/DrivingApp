@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { useAdministrationDashboard } from '@/features/dashboard-overview/composables/useAdministrationDashboard'
+import { useDashboard } from '@/features/dashboard-overview/composables/useDashboard'
 
-const { isLoading, metrics, loadMetrics } = useAdministrationDashboard()
+const { isLoading, metrics, loadMetrics } = useDashboard()
 
 onMounted(() => {
   void loadMetrics()
@@ -11,8 +11,8 @@ onMounted(() => {
 
 <template>
   <section class="p-6">
-    <h1 class="text-2xl font-bold mb-4">Administration Overview</h1>
-    <div v-if="isLoading" class="text-neutral-500">Loading overview metrics...</div>
+    <h1 class="text-2xl font-bold mb-4">Dashboard Overview</h1>
+    <div v-if="isLoading" class="text-neutral-500">Loading metrics...</div>
     <div v-else-if="metrics" class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div class="p-4 rounded-lg border border-neutral-200">
         <span class="text-sm text-neutral-600">Active Rides</span>

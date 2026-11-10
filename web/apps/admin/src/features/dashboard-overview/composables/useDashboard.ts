@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { fetchDashboardMetricSummary } from '@/features/dashboard-overview/api/dashboard.api'
 import type { DashboardMetricSummary } from '@/features/dashboard-overview/types'
 
-export function useAdministrationDashboard() {
+export function useDashboard() {
   const isLoading = ref(false)
   const metrics = ref<DashboardMetricSummary | null>(null)
 

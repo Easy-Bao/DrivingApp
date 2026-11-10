@@ -17,8 +17,10 @@
     "@iconify/vue": "^5.0.5",
     "@web/api-client": "workspace:*",
     "@web/ui": "workspace:*",
+    "motion-v": "^2.11.1",
     "pinia": "^4.0.3",
-    "vue": "rc"
+    "vue": "rc",
+    "vue-router": "^5.4.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

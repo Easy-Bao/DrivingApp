@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import AdministrationDashboardPage from '@/pages/AdministrationDashboardPage.vue'
+import AppLayout from '@/shared/components/AppLayout.vue'
+import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <AdministrationDashboardPage />
+  <AppLayout>
+    <RouterView />
+  </AppLayout>
 </template>
