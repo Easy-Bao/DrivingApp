@@ -23,11 +23,20 @@ interface ViewerDocument {
 }
 
 const activeViewerDoc = ref<ViewerDocument | null>(null)
+const licenseSlideDirection = ref<'flip-left' | 'flip-right'>('flip-left')
+
+function setLicenseSide(side: 'front' | 'back') {
+  if (!activeViewerDoc.value) return
+  if (side === activeViewerDoc.value.activeSide) return
+  licenseSlideDirection.value = side === 'back' ? 'flip-left' : 'flip-right'
+  activeViewerDoc.value.activeSide = side
+}
 
 function openLicenseViewer() {
   if (!application.value) return
+  licenseSlideDirection.value = 'flip-left'
   activeViewerDoc.value = {
-    title: "Philippine LTO Driver's License",
+    title: "Driver's License",
     subtitle: `${application.value.licenseType} · ${application.value.licenseNumber}`,
     type: 'license',
     frontUrl: application.value.licenseFrontDoc,
@@ -36,7 +45,7 @@ function openLicenseViewer() {
     metadata: {
       'License Number': application.value.licenseNumber,
       'Classification': application.value.licenseType,
-      'Authorized DL Codes': application.value.licenseCodes,
+      'Authorized DL Code': application.value.licenseCodes,
       'Expiration Date': application.value.licenseExpiry,
       'Issuing Agency': 'Land Transportation Office (LTO Philippines)',
     },
@@ -135,24 +144,24 @@ function goBack() {
 
 <template>
   <div class="space-y-6 w-full">
-    <!-- Back Button -->
+    <!-- Back Button: Only "Back" -->
     <div>
       <button
         type="button"
-        class="inline-flex items-center space-x-2 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 px-3 py-1.5 transition-colors group cursor-pointer"
+        class="inline-flex items-center space-x-1.5 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 px-3 py-1.5 transition-colors group cursor-pointer"
         @click="goBack"
       >
         <Icon
           icon="lucide:arrow-left"
           class="text-sm text-neutral-500 group-hover:text-neutral-900 transition-transform group-hover:-translate-x-0.5"
         />
-        <span>Back to Driver Applications</span>
+        <span>Back</span>
       </button>
     </div>
 
     <!-- Application Details Card if found -->
     <div v-if="application" class="space-y-6">
-      <!-- Title & Status Header (single source of truth for status) -->
+      <!-- Title & Status Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div class="flex items-center space-x-3">
@@ -259,22 +268,18 @@ function goBack() {
         </div>
       </div>
 
-      <!-- Philippine LTO Driver's License Section (Back-to-Back with Viewer) -->
+      <!-- Driver's License Section (Clean single container, no redundant icons or duplicate boxes) -->
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
-          <div class="flex items-center space-x-2">
-            <Icon icon="lucide:id-card" class="text-neutral-700 text-base" />
-            <h2 class="font-bold text-sm text-neutral-900">
-              Philippine LTO Driver's License (Back-to-Back)
-            </h2>
-          </div>
+          <h2 class="font-bold text-sm text-neutral-900">
+            Driver's License
+          </h2>
           <button
             type="button"
-            class="px-2.5 py-1 text-xs font-semibold bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200 flex items-center space-x-1 cursor-pointer transition-colors"
+            class="px-3 py-1.5 text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white transition-colors cursor-pointer"
             @click="openLicenseViewer"
           >
-            <Icon icon="lucide:scan" class="text-xs" />
-            <span>Open Back-to-Back Viewer</span>
+            View License
           </button>
         </div>
 
@@ -292,74 +297,40 @@ function goBack() {
             </div>
           </div>
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">Authorized DL Codes</div>
-            <div class="font-mono font-semibold text-neutral-900 mt-0.5">
+            <div class="text-neutral-400 text-[11px] font-medium">Authorized DL Code</div>
+            <div class="font-mono font-bold text-neutral-900 mt-0.5">
               {{ application.licenseCodes }}
             </div>
           </div>
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">LTO License Expiration</div>
+            <div class="text-neutral-400 text-[11px] font-medium">Expiration Date</div>
             <div class="font-mono font-semibold text-neutral-900 mt-0.5">
               {{ application.licenseExpiry }}
             </div>
           </div>
         </div>
 
-        <!-- Back to Back License Preview Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-          <!-- Front Side -->
-          <div
-            class="p-4 bg-neutral-50 border border-neutral-200 hover:border-neutral-400 transition-colors cursor-pointer group"
-            @click="openLicenseViewer"
-          >
-            <div class="flex items-center justify-between pb-2 border-b border-neutral-200">
-              <span class="text-xs font-bold text-neutral-900 flex items-center space-x-1.5">
-                <Icon icon="lucide:file-text" class="text-neutral-500" />
-                <span>Driver License (Front Side)</span>
-              </span>
-              <span class="text-[11px] font-semibold text-emerald-700">Official Hologram OK</span>
-            </div>
-            <div class="mt-3 flex items-center justify-between text-xs text-neutral-600">
-              <span class="font-mono text-[11px]">{{ application.licenseFrontDoc }}</span>
-              <span class="text-neutral-900 font-semibold group-hover:underline flex items-center space-x-1">
-                <span>View Full Scan</span>
-                <Icon icon="lucide:external-link" class="text-xs" />
-              </span>
-            </div>
+        <!-- Single Clean Document Access Row (replaces duplicate front/back boxes) -->
+        <div
+          class="p-3 bg-neutral-50 border border-neutral-200 flex items-center justify-between text-xs hover:border-neutral-400 transition-colors cursor-pointer"
+          @click="openLicenseViewer"
+        >
+          <div class="flex items-center space-x-2">
+            <span class="font-medium text-neutral-800">Official License Scans</span>
+            <span class="text-[11px] font-mono text-neutral-400">· {{ application.licenseFrontDoc }}</span>
           </div>
-
-          <!-- Back Side -->
-          <div
-            class="p-4 bg-neutral-50 border border-neutral-200 hover:border-neutral-400 transition-colors cursor-pointer group"
-            @click="openLicenseViewer"
-          >
-            <div class="flex items-center justify-between pb-2 border-b border-neutral-200">
-              <span class="text-xs font-bold text-neutral-900 flex items-center space-x-1.5">
-                <Icon icon="lucide:file-text" class="text-neutral-500" />
-                <span>Driver License (Back Side)</span>
-              </span>
-              <span class="text-[11px] font-semibold text-emerald-700">LTO Barcode Verified</span>
-            </div>
-            <div class="mt-3 flex items-center justify-between text-xs text-neutral-600">
-              <span class="font-mono text-[11px]">{{ application.licenseBackDoc }}</span>
-              <span class="text-neutral-900 font-semibold group-hover:underline flex items-center space-x-1">
-                <span>View Full Scan</span>
-                <Icon icon="lucide:external-link" class="text-xs" />
-              </span>
-            </div>
-          </div>
+          <span class="text-xs font-semibold text-neutral-900 hover:underline">
+            View License Scan →
+          </span>
         </div>
       </div>
 
-      <!-- Taxicle (Tricycle Taxi) Specification & Franchise Section -->
+      <!-- Vehicle Specification & Franchise Section (Clean title without redundant icon) -->
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
-          <div class="flex items-center space-x-2">
-            <Icon icon="lucide:car-taxi-front" class="text-neutral-700 text-base" />
-            <h2 class="font-bold text-sm text-neutral-900">
-              Taxicle (Tricycle Cab) Specification & Franchise
-            </h2>
-          </div>
+          <h2 class="font-bold text-sm text-neutral-900">
+            Vehicle Specification & Franchise
+          </h2>
           <span class="text-xs font-semibold px-2 py-0.5 bg-neutral-100 text-neutral-700 border border-neutral-200">
             {{ application.vehicle.type }}
           </span>
@@ -468,21 +439,17 @@ function goBack() {
         </div>
       </div>
 
-      <!-- Philippine Regulatory Background Verification Section -->
+      <!-- Regulatory Background Verification Section (Clean title without redundant icon) -->
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
-          <div class="flex items-center space-x-2">
-            <Icon icon="lucide:shield-check" class="text-neutral-700 text-base" />
-            <h2 class="font-bold text-sm text-neutral-900">
-              Philippine Regulatory Background Screening
-            </h2>
-          </div>
+          <h2 class="font-bold text-sm text-neutral-900">
+            Regulatory Background Screening
+          </h2>
           <button
             type="button"
             class="px-2.5 py-1 text-xs font-semibold bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200 flex items-center space-x-1 cursor-pointer transition-colors"
             @click="openClearanceViewer"
           >
-            <Icon icon="lucide:file-check" class="text-xs" />
             <span>View Clearance Certificate</span>
           </button>
         </div>
@@ -564,11 +531,11 @@ function goBack() {
         class="mt-4 px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
         @click="goBack"
       >
-        Back to Applications Queue
+        Back
       </button>
     </div>
 
-    <!-- Interactive Document & License Viewer Modal (Full Exit / Close Controls) -->
+    <!-- Interactive Document & License Viewer Modal (Full Exit / Close Controls & Left/Right Animations) -->
     <div
       v-if="activeViewerDoc"
       class="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
@@ -599,7 +566,7 @@ function goBack() {
 
         <!-- Modal Body -->
         <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
-          <!-- Back-to-Back Side Switcher for Driver's License -->
+          <!-- Side Switcher for Driver's License (Animates left-to-right / right-to-left) -->
           <div
             v-if="activeViewerDoc.type === 'license'"
             class="flex items-center space-x-2 pb-2 border-b border-neutral-100"
@@ -612,9 +579,9 @@ function goBack() {
                   ? 'bg-neutral-900 text-white border-neutral-900'
                   : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100'
               "
-              @click="activeViewerDoc.activeSide = 'front'"
+              @click="setLicenseSide('front')"
             >
-              Front Side (Photo & Personal Details)
+              Front Side
             </button>
             <button
               type="button"
@@ -624,14 +591,14 @@ function goBack() {
                   ? 'bg-neutral-900 text-white border-neutral-900'
                   : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100'
               "
-              @click="activeViewerDoc.activeSide = 'back'"
+              @click="setLicenseSide('back')"
             >
-              Back Side (Barcode & Restrictions)
+              Back Side
             </button>
           </div>
 
-          <!-- Document Preview Canvas -->
-          <div class="border border-neutral-200 bg-neutral-100 p-6 flex flex-col items-center justify-center min-h-[220px]">
+          <!-- Document Preview Canvas with Directional Slide Transitions -->
+          <div class="border border-neutral-200 bg-neutral-100 p-6 flex flex-col items-center justify-center min-h-[220px] overflow-hidden">
             <!-- Driver Face Photo Viewer -->
             <div v-if="activeViewerDoc.type === 'face' && application" class="text-center">
               <img
@@ -643,73 +610,82 @@ function goBack() {
               <p class="text-[11px] text-neutral-500 font-mono">{{ application.phone }}</p>
             </div>
 
-            <!-- License Front Viewer -->
-            <div
-              v-else-if="activeViewerDoc.type === 'license' && activeViewerDoc.activeSide === 'front' && application"
-              class="w-full max-w-[480px] bg-sky-50 border-2 border-sky-300 p-4 shadow-sm relative overflow-hidden"
+            <!-- License Front/Back Viewer with Directional Animation -->
+            <Transition
+              v-else-if="activeViewerDoc.type === 'license' && application"
+              :name="licenseSlideDirection"
+              mode="out-in"
             >
-              <div class="text-center pb-2 border-b border-sky-200">
-                <div class="text-[10px] uppercase font-bold text-sky-900 tracking-wider">
-                  Republic of the Philippines · Department of Transportation
-                </div>
-                <div class="text-xs font-bold text-sky-950 uppercase">
-                  Land Transportation Office
-                </div>
-                <div class="text-[10px] font-semibold text-sky-800">
-                  Driver's License
-                </div>
-              </div>
-
-              <div class="flex items-center space-x-3 mt-3">
-                <img
-                  :src="application.facePhotoUrl"
-                  :alt="application.applicant"
-                  class="w-16 h-16 object-cover border border-sky-400 bg-sky-200 shrink-0"
-                />
-                <div class="text-xs space-y-0.5">
-                  <div class="font-bold text-neutral-900">{{ application.applicant }}</div>
-                  <div class="font-mono text-[11px] text-neutral-800">
-                    License No: {{ application.licenseNumber }}
+              <!-- Front Side -->
+              <div
+                v-if="activeViewerDoc.activeSide === 'front'"
+                key="license-front"
+                class="w-full max-w-[480px] bg-sky-50 border-2 border-sky-300 p-4 shadow-sm relative overflow-hidden"
+              >
+                <div class="text-center pb-2 border-b border-sky-200">
+                  <div class="text-[10px] uppercase font-bold text-sky-900 tracking-wider">
+                    Republic of the Philippines · Department of Transportation
                   </div>
-                  <div class="text-[10px] text-neutral-600">
-                    Nationality: FILIPINO · Sex: M
+                  <div class="text-xs font-bold text-sky-950 uppercase">
+                    Land Transportation Office
                   </div>
-                  <div class="text-[10px] text-neutral-600 font-mono">
-                    Expires: {{ application.licenseExpiry }}
+                  <div class="text-[10px] font-semibold text-sky-800">
+                    Driver's License
                   </div>
                 </div>
+
+                <div class="flex items-center space-x-3 mt-3">
+                  <img
+                    :src="application.facePhotoUrl"
+                    :alt="application.applicant"
+                    class="w-16 h-16 object-cover border border-sky-400 bg-sky-200 shrink-0"
+                  />
+                  <div class="text-xs space-y-0.5">
+                    <div class="font-bold text-neutral-900">{{ application.applicant }}</div>
+                    <div class="font-mono text-[11px] text-neutral-800">
+                      License No: {{ application.licenseNumber }}
+                    </div>
+                    <div class="text-[10px] text-neutral-600">
+                      Nationality: FILIPINO · Sex: M
+                    </div>
+                    <div class="text-[10px] text-neutral-600 font-mono">
+                      Expires: {{ application.licenseExpiry }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-3 pt-2 border-t border-sky-200 flex justify-between text-[10px] text-sky-900 font-mono">
+                  <span>Authorized DL Code: {{ application.licenseCodes }}</span>
+                  <span>Conditions: NONE</span>
+                </div>
               </div>
 
-              <div class="mt-3 pt-2 border-t border-sky-200 flex justify-between text-[10px] text-sky-900 font-mono">
-                <span>DL Codes: {{ application.licenseCodes }}</span>
-                <span>Conditions: NONE</span>
-              </div>
-            </div>
+              <!-- Back Side -->
+              <div
+                v-else
+                key="license-back"
+                class="w-full max-w-[480px] bg-neutral-50 border-2 border-neutral-300 p-4 shadow-sm relative"
+              >
+                <div class="text-center pb-2 border-b border-neutral-200">
+                  <div class="text-[10px] uppercase font-bold text-neutral-700 tracking-wider">
+                    Official LTO Security Barcode & Restriction Matrix
+                  </div>
+                </div>
 
-            <!-- License Back Viewer -->
-            <div
-              v-else-if="activeViewerDoc.type === 'license' && activeViewerDoc.activeSide === 'back' && application"
-              class="w-full max-w-[480px] bg-neutral-50 border-2 border-neutral-300 p-4 shadow-sm relative"
-            >
-              <div class="text-center pb-2 border-b border-neutral-200">
-                <div class="text-[10px] uppercase font-bold text-neutral-700 tracking-wider">
-                  Official LTO Security Barcode & Restriction Matrix
+                <div class="mt-3 space-y-2 text-xs">
+                  <div class="h-10 bg-neutral-900 flex items-center justify-center text-white font-mono text-xs tracking-widest">
+                    ||||| | |||| |||||| ||| ||||||| |||||||||| ||||
+                  </div>
+                  <div class="text-[10px] text-neutral-500 font-mono text-center">
+                    *{{ application.licenseNumber }}*
+                  </div>
+                  <div class="p-2 bg-white border border-neutral-200 text-[11px] space-y-1">
+                    <div><span class="text-neutral-400">Address:</span> {{ application.city }}</div>
+                    <div><span class="text-neutral-400">Emergency Contact:</span> {{ application.phone }}</div>
+                  </div>
                 </div>
               </div>
-
-              <div class="mt-3 space-y-2 text-xs">
-                <div class="h-10 bg-neutral-900 flex items-center justify-center text-white font-mono text-xs tracking-widest">
-                  ||||| | |||| |||||| ||| ||||||| |||||||||| ||||
-                </div>
-                <div class="text-[10px] text-neutral-500 font-mono text-center">
-                  *{{ application.licenseNumber }}*
-                </div>
-                <div class="p-2 bg-white border border-neutral-200 text-[11px] space-y-1">
-                  <div><span class="text-neutral-400">Address:</span> {{ application.city }}</div>
-                  <div><span class="text-neutral-400">Emergency Contact:</span> {{ application.phone }}</div>
-                </div>
-              </div>
-            </div>
+            </Transition>
 
             <!-- Taxicle OR/CR Viewer -->
             <div

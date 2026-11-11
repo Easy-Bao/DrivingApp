@@ -47,7 +47,7 @@ function goBack() {
           icon="lucide:arrow-left"
           class="text-sm text-neutral-500 group-hover:text-neutral-900 transition-transform group-hover:-translate-x-0.5"
         />
-        <span>Back to Payout Requests</span>
+        <span>Back</span>
       </button>
     </div>
 

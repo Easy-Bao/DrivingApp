@@ -23,8 +23,8 @@ describe('DriverApplicationDetailsPage', () => {
       },
     })
 
-    // Assert internal back button exists inside page
-    expect(wrapper.text()).toContain('Back to Driver Applications')
+    // Assert internal back button exists inside page (only "Back")
+    expect(wrapper.text()).toContain('Back')
 
     // Assert application details and Philippine context
     expect(wrapper.text()).toContain('Application APP-901')
@@ -32,6 +32,8 @@ describe('DriverApplicationDetailsPage', () => {
     expect(wrapper.text()).toContain('+63 917 111 2233')
     expect(wrapper.text()).toContain('Bajaj')
     expect(wrapper.text()).toContain('Taxicle')
+    expect(wrapper.text()).toContain('A1')
+    expect(wrapper.text()).toContain('View License')
     expect(wrapper.text()).toContain('NBI')
 
     // Assert approve action button is present and click approves it cleanly

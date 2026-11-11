@@ -54,7 +54,7 @@ const applications = ref<DriverApplication[]>([
     licenseNumber: 'N01-19-091245',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2029-08-15',
-    licenseCodes: 'A, A1, B, B1 (Motorcycle, Tricycle, Light Vehicles)',
+    licenseCodes: 'A1',
     licenseFrontDoc: 'lto_license_front_brandon_lee.png',
     licenseBackDoc: 'lto_license_back_brandon_lee.png',
     vehicle: {
@@ -96,7 +96,7 @@ const applications = ref<DriverApplication[]>([
     licenseNumber: 'N02-18-048219',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2028-11-20',
-    licenseCodes: 'A, A1, B (Motorcycle, Taxicle, Light Commercial)',
+    licenseCodes: 'A1',
     licenseFrontDoc: 'lto_license_front_danilo.png',
     licenseBackDoc: 'lto_license_back_danilo.png',
     vehicle: {

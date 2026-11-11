@@ -3,3 +3,57 @@
 #app {
   min-height: 100vh;
 }
+
+/* Directional Page & View Transitions (Left to Right / Right to Left) */
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), opacity 0.2s ease-out;
+}
+
+/* Forward / View Details: enters from right to left */
+.slide-left-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+/* Back / Return to Queue: enters from left to right */
+.slide-right-enter-from {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+/* Modal Inner Directional Toggle (Front <-> Back Switch) */
+.flip-left-enter-active,
+.flip-left-leave-active,
+.flip-right-enter-active,
+.flip-right-leave-active {
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), opacity 0.2s ease-out;
+}
+
+.flip-left-enter-from {
+  opacity: 0;
+  transform: translateX(24px);
+}
+.flip-left-leave-to {
+  opacity: 0;
+  transform: translateX(-24px);
+}
+
+.flip-right-enter-from {
+  opacity: 0;
+  transform: translateX(-24px);
+}
+.flip-right-leave-to {
+  opacity: 0;
+  transform: translateX(24px);
+}

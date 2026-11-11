@@ -24,7 +24,7 @@ describe('TopupDetailsPage', () => {
     })
 
     // Assert internal back button exists inside page
-    expect(wrapper.text()).toContain('Back to Driver Top-Ups')
+    expect(wrapper.text()).toContain('Back')
 
     // Assert request details are displayed
     expect(wrapper.text()).toContain('Top-Up Request TOP-8921')
