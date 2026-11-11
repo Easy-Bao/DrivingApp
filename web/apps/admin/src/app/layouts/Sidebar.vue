@@ -176,6 +176,7 @@ const filteredGroups = computed(() => {
             :exit="{ opacity: 0, height: 0 }"
             :transition="{ duration: 0.2, ease: 'easeInOut' }"
             class="overflow-hidden space-y-0.5"
+            :class="!isCollapsed ? 'ml-4 pl-2 border-l border-neutral-200 my-0.5' : ''"
           >
             <button
               v-for="item in group.items"

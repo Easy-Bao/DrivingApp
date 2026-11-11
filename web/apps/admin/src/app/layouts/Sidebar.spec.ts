@@ -38,4 +38,14 @@ describe('Sidebar', () => {
     await toggleButton.trigger('click')
     expect(wrapper.classes()).toContain('w-20')
   })
+
+  it('renders line indent border on expanded child groups', () => {
+    const wrapper = mount(Sidebar)
+    const childContainers = wrapper.findAll('.border-l')
+    expect(childContainers.length).toBeGreaterThan(0)
+    const firstContainer = childContainers[0]
+    expect(firstContainer).toBeDefined()
+    expect(firstContainer?.classes()).toContain('border-neutral-200')
+    expect(firstContainer?.classes()).toContain('ml-4')
+  })
 })
