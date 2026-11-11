@@ -18,6 +18,7 @@ export const usersRoutes: RouteRecordRaw[] = [
     path: '/users/driver-applications/:id',
     name: 'users-driver-application-details',
     component: DriverApplicationDetailsPage,
+    meta: { isDetail: true },
   },
   { path: '/users/riders', name: 'users-riders', component: RidersPage },
   { path: '/users/admin-users', name: 'users-admin-users', component: AdminUsersPage },
