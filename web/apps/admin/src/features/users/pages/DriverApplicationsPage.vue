@@ -28,7 +28,7 @@ function navigateToDetails(id: string) {
           Driver Applications Queue
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
-          Review Philippine taxicle applicant qualifications, LTO licenses, TODA franchises, and NBI clearances.
+          Review Pagadian City, ZDS taxicle applicant qualifications, LTO licenses, and franchise permits.
         </p>
       </div>
 
@@ -46,7 +46,7 @@ function navigateToDetails(id: string) {
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Taxicle Driver Onboarding Queue</h2>
         <span class="text-xs text-neutral-400">
-          Philippine LTO & NBI regulatory validation enabled
+          Pagadian City, ZDS · Local franchise & regulatory validation
         </span>
       </div>
 
@@ -56,9 +56,9 @@ function navigateToDetails(id: string) {
             <tr>
               <th class="py-3 px-4">Application ID</th>
               <th class="py-3 px-4">Driver Applicant</th>
-              <th class="py-3 px-4">Region / City</th>
+              <th class="py-3 px-4">Date Applied</th>
+              <th class="py-3 px-4">City / Barangay</th>
               <th class="py-3 px-4">Taxicle Unit & Body No.</th>
-              <th class="py-3 px-4">Clearance Status</th>
               <th class="py-3 px-4">Status</th>
               <th class="py-3 px-4 text-right">Action</th>
             </tr>
@@ -69,7 +69,7 @@ function navigateToDetails(id: string) {
               :key="app.id"
               class="hover:bg-neutral-50/50 transition-colors"
             >
-              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ app.id }}</td>
+              <td class="py-3 px-4 font-mono font-bold text-neutral-900 whitespace-nowrap">{{ app.id }}</td>
               <td class="py-3 px-4">
                 <div class="flex items-center space-x-2.5">
                   <img
@@ -78,14 +78,19 @@ function navigateToDetails(id: string) {
                     class="w-7 h-7 object-cover bg-neutral-900 border border-neutral-300 shrink-0"
                   />
                   <div>
-                    <span class="font-semibold text-neutral-900">{{ app.applicant }}</span>
-                    <div class="text-[11px] text-neutral-400 font-mono">
-                      {{ app.phone }} · {{ app.appliedDate }}
-                    </div>
+                    <span class="font-semibold text-neutral-900 block">{{ app.applicant }}</span>
+                    <span class="text-[11px] text-neutral-400 font-mono">{{ app.phone }}</span>
                   </div>
                 </div>
               </td>
-              <td class="py-3 px-4">{{ app.city }}</td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                <div class="font-medium text-neutral-900">{{ app.appliedDate }}</div>
+                <div class="text-[11px] text-neutral-400">{{ app.appliedTime }}</div>
+              </td>
+              <td class="py-3 px-4">
+                <div class="font-semibold text-neutral-900">{{ app.city }}</div>
+                <div class="text-[11px] text-neutral-500">{{ app.barangay }}, {{ app.province }}</div>
+              </td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">
                   {{ app.vehicle.make }} {{ app.vehicle.model }}
@@ -94,19 +99,7 @@ function navigateToDetails(id: string) {
                   {{ app.vehicle.plate }} ({{ app.vehicle.bodyNumber }})
                 </div>
               </td>
-              <td class="py-3 px-4">
-                <span
-                  class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                  :class="
-                    app.backgroundStatus === 'Passed'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-amber-100 text-amber-800'
-                  "
-                >
-                  {{ app.clearanceType.includes('NBI') ? 'NBI' : 'PNP' }}: {{ app.backgroundStatus }}
-                </span>
-              </td>
-              <td class="py-3 px-4">
+              <td class="py-3 px-4 whitespace-nowrap">
                 <span
                   class="px-2 py-0.5 rounded-full text-[10px] font-bold"
                   :class="{

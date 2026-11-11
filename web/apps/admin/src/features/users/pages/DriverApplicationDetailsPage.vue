@@ -99,7 +99,7 @@ function openFacePhotoViewer() {
     metadata: {
       'Applicant': application.value.applicant,
       'Mobile Number (PH)': application.value.phone,
-      'Operating Region': application.value.city,
+      'City & Barangay': `${application.value.city}, ${application.value.barangay} (${application.value.province})`,
     },
   }
 }
@@ -196,7 +196,7 @@ function goBack() {
             </span>
           </div>
           <p class="text-sm text-neutral-500 mt-1">
-            Submitted {{ application.appliedDate }} for {{ application.city }} operating zone.
+            Submitted {{ application.appliedTime }} for {{ application.city }}, {{ application.province }} operating zone.
           </p>
         </div>
 
@@ -263,14 +263,14 @@ function goBack() {
 
           <div class="text-left sm:text-right text-xs">
             <span class="text-neutral-400">Operating Territory</span>
-            <div class="font-semibold text-neutral-900 mt-0.5">{{ application.city }}</div>
+            <div class="font-semibold text-neutral-900 mt-0.5">{{ application.city }}, {{ application.province }}</div>
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs pt-1">
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">Assigned TODA / City</div>
-            <div class="font-semibold text-neutral-900 mt-0.5">{{ application.city }}</div>
+            <div class="text-neutral-400 text-[11px] font-medium">City & Barangay</div>
+            <div class="font-semibold text-neutral-900 mt-0.5">{{ application.city }} · {{ application.barangay }}</div>
           </div>
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">Contact Phone (PH Mobile)</div>
@@ -593,6 +593,7 @@ function goBack() {
               <li>LTO License: {{ application.licenseNumber }} (DL Code: {{ application.licenseCodes }})</li>
               <li>Unit: {{ application.vehicle.year }} {{ application.vehicle.make }} {{ application.vehicle.model }} (Plate: {{ application.vehicle.plate }})</li>
               <li>TODA / Franchise: {{ application.vehicle.todaFranchise }}</li>
+              <li>Location: {{ application.city }}, {{ application.barangay }} ({{ application.province }})</li>
               <li>Clearance: {{ application.clearanceType }} (Status: {{ application.backgroundStatus }})</li>
             </ul>
           </div>
@@ -831,7 +832,7 @@ function goBack() {
                     *{{ application.licenseNumber }}*
                   </div>
                   <div class="p-2 bg-white border border-neutral-200 text-[11px] space-y-1">
-                    <div><span class="text-neutral-400">Address:</span> {{ application.city }}</div>
+                    <div><span class="text-neutral-400">Address:</span> {{ application.barangay }}, {{ application.city }}, {{ application.province }}</div>
                     <div><span class="text-neutral-400">Emergency Contact:</span> {{ application.phone }}</div>
                   </div>
                 </div>
