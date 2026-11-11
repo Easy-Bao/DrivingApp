@@ -104,11 +104,6 @@ const filteredGroups = computed(() => {
         :class="isCollapsed ? 'justify-center px-2' : 'justify-between px-4'"
       >
         <div v-if="!isCollapsed" class="flex items-center space-x-3 overflow-hidden min-w-0">
-          <div
-            class="w-9 h-9 bg-neutral-900 flex items-center justify-center text-white shrink-0"
-          >
-            <Icon icon="lucide:car-taxi-front" class="text-lg" />
-          </div>
           <div class="flex flex-col overflow-hidden whitespace-nowrap">
             <span class="font-bold text-sm text-neutral-900 leading-tight">EasyRide</span>
             <span class="text-[11px] text-neutral-500 font-medium">Fleet Administration</span>
