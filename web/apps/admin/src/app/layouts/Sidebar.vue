@@ -17,7 +17,6 @@ const expandedGroups = ref<Record<string, boolean>>({
   trips: true,
   payments: true,
   reports: false,
-  vehicles: false,
   documents: false,
   support: false,
   settings: false,

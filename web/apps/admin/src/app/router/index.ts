@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { dashboardRoutes } from '@/app/router/routes/dashboard.routes'
 import { usersRoutes } from '@/app/router/routes/users.routes'
-import { vehiclesRoutes } from '@/app/router/routes/vehicles.routes'
 import { documentsRoutes } from '@/app/router/routes/documents.routes'
 import { tripsRoutes } from '@/app/router/routes/trips.routes'
 import { paymentsRoutes } from '@/app/router/routes/payments.routes'
@@ -16,7 +15,6 @@ const router = createRouter({
     { path: '/', redirect: '/dashboard/overview' },
     ...dashboardRoutes,
     ...usersRoutes,
-    ...vehiclesRoutes,
     ...documentsRoutes,
     ...tripsRoutes,
     ...paymentsRoutes,

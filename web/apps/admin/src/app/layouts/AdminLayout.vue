@@ -29,8 +29,6 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
     sectionTo: '/users/drivers',
     item: 'Staff Roles & RBAC',
   },
-  '/vehicles': { section: 'Vehicles', sectionTo: '/vehicles', item: 'Vehicles Roster' },
-  '/vehicles/types': { section: 'Vehicles', sectionTo: '/vehicles', item: 'Vehicle Types' },
   '/documents/verification': {
     section: 'Documents',
     sectionTo: '/documents/verification',

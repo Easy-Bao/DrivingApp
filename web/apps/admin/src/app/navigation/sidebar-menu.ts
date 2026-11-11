@@ -53,20 +53,6 @@ export const navigationGroups: SidebarNavGroup[] = [
     ],
   },
   {
-    id: 'vehicles',
-    title: 'Vehicles',
-    icon: 'lucide:car-taxi-front',
-    items: [
-      { id: 'vehicles', label: 'Vehicles', icon: 'lucide:car', path: '/vehicles' },
-      {
-        id: 'vehicle-types',
-        label: 'Vehicle Types',
-        icon: 'lucide:layers',
-        path: '/vehicles/types',
-      },
-    ],
-  },
-  {
     id: 'documents',
     title: 'Documents',
     icon: 'lucide:file-check',
