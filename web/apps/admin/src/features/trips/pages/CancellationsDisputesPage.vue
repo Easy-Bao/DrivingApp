@@ -8,7 +8,7 @@ const cancellations = ref([
     tripId: 'TRP-1089',
     cancelledBy: 'Rider (Sarah Jenkins)',
     reason: 'Driver too far away / ETA increased',
-    cancellationFee: '$5.00',
+    cancellationFee: '₱5.00',
     feeChargedTo: 'Rider',
     disputeStatus: 'Under Admin Review',
     timestamp: '2 hours ago',
@@ -18,7 +18,7 @@ const cancellations = ref([
     tripId: 'TRP-1077',
     cancelledBy: 'Driver (Javier Santos)',
     reason: 'Rider did not show up at pickup location after 5 mins',
-    cancellationFee: '$5.00',
+    cancellationFee: '₱5.00',
     feeChargedTo: 'Rider (Compensated Driver)',
     disputeStatus: 'Resolved (Fee Upheld)',
     timestamp: '5 hours ago',
@@ -28,7 +28,7 @@ const cancellations = ref([
     tripId: 'TRP-1065',
     cancelledBy: 'System Timeout',
     reason: 'No driver accepted dispatch request within 90s',
-    cancellationFee: '$0.00',
+    cancellationFee: '₱0.00',
     feeChargedTo: 'None (System Waived)',
     disputeStatus: 'Closed',
     timestamp: 'Yesterday',
@@ -50,7 +50,7 @@ function waiveFee(can: (typeof cancellations.value)[0]) {
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           Cancellations & Dispute Audits
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -59,7 +59,7 @@ function waiveFee(can: (typeof cancellations.value)[0]) {
         </p>
       </div>
       <div class="flex items-center space-x-2">
-        <span class="px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-800 text-xs font-semibold">
+        <span class="px-3 py-1.5 bg-neutral-100 text-neutral-800 text-xs font-semibold">
           Cancellation Rate: 3.6%
         </span>
       </div>
@@ -67,10 +67,9 @@ function waiveFee(can: (typeof cancellations.value)[0]) {
 
     <div
       v-if="actionToast"
-      class="p-4 rounded-xl bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
+      class="p-4 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
     >
       <div class="flex items-center space-x-2">
-        <Icon icon="lucide:check-circle" class="text-emerald-400 text-base" />
         <span>{{ actionToast }}</span>
       </div>
       <button type="button" @click="actionToast = null">
@@ -78,7 +77,7 @@ function waiveFee(can: (typeof cancellations.value)[0]) {
       </button>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Recent Cancelled Trips</h2>
         <span class="text-xs text-neutral-400"
@@ -112,7 +111,7 @@ function waiveFee(can: (typeof cancellations.value)[0]) {
             <td class="py-3 px-4 text-neutral-600 max-w-xs">{{ c.reason }}</td>
             <td class="py-3 px-4">
               <span class="font-bold text-neutral-900">{{ c.cancellationFee }}</span>
-              <div class="text-[10px] text-neutral-400">{{ c.feeChargedTo }}</div>
+              <div class="text-xs text-neutral-400">{{ c.feeChargedTo }}</div>
             </td>
             <td class="py-3 px-4">
               <span
@@ -132,7 +131,7 @@ function waiveFee(can: (typeof cancellations.value)[0]) {
               <button
                 v-if="c.disputeStatus.includes('Review')"
                 type="button"
-                class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-md text-xs font-semibold transition-colors"
+                class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors"
                 @click="waiveFee(c)"
               >
                 Waive Fee

@@ -28,7 +28,7 @@ const companyAccounts = ref([
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           Official Company Accounts & Payment QR
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -38,7 +38,7 @@ const companyAccounts = ref([
       </div>
       <button
         type="button"
-        class="px-3.5 py-2 bg-neutral-900 text-white rounded-lg text-xs font-semibold hover:bg-neutral-800"
+        class="px-3.5 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800"
       >
         + Add Company Account
       </button>
@@ -48,7 +48,7 @@ const companyAccounts = ref([
       <div
         v-for="acc in companyAccounts"
         :key="acc.id"
-        class="p-6 border border-neutral-200 rounded-xl bg-white shadow-xs space-y-4"
+        class="p-6 border border-neutral-200 bg-white space-y-4"
       >
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-neutral-900 uppercase tracking-wider">{{
@@ -82,13 +82,13 @@ const companyAccounts = ref([
         <div class="pt-4 border-t border-neutral-100 flex space-x-2">
           <button
             type="button"
-            class="flex-1 py-2 text-xs font-semibold border border-neutral-200 rounded-lg hover:bg-neutral-50"
+            class="flex-1 py-2 text-xs font-semibold border border-neutral-200 hover:bg-neutral-50"
           >
             Edit Account Info
           </button>
           <button
             type="button"
-            class="px-3.5 py-2 text-xs font-semibold bg-neutral-900 text-white rounded-lg hover:bg-neutral-800"
+            class="px-3.5 py-2 text-xs font-semibold bg-neutral-900 text-white hover:bg-neutral-800"
           >
             Update QR Code Image
           </button>

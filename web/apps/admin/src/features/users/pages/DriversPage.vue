@@ -51,7 +51,7 @@ const mockDrivers = ref([
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">Active Driver Roster</h1>
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Active Driver Roster</h1>
         <p class="text-sm text-neutral-500 mt-1">
           Monitor active driver fleet, performance ratings, and wallet dispatch statuses.
         </p>
@@ -59,14 +59,14 @@ const mockDrivers = ref([
       <div class="flex items-center space-x-3">
         <RouterLink
           to="/users/driver-applications"
-          class="px-3.5 py-2 bg-neutral-900 text-white rounded-lg text-xs font-semibold hover:bg-neutral-800 transition-colors"
+          class="px-3.5 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors"
         >
           View 8 Pending Applications →
         </RouterLink>
       </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <div class="relative w-72">
           <Icon icon="lucide:search" class="absolute left-3 top-2.5 text-neutral-400 text-sm" />
@@ -74,7 +74,7 @@ const mockDrivers = ref([
             v-model="searchQuery"
             type="text"
             placeholder="Search driver by name, phone, plate..."
-            class="w-full pl-9 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-xs"
+            class="w-full pl-9 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs"
           />
         </div>
         <span class="text-xs text-neutral-500">Showing 4 active drivers</span>
@@ -104,7 +104,7 @@ const mockDrivers = ref([
               class="py-3 px-4 font-mono font-medium"
               :class="d.walletBalance < 5 ? 'text-rose-600 font-bold' : 'text-neutral-800'"
             >
-              ${{ d.walletBalance.toFixed(2) }}
+              ₱{{ d.walletBalance.toFixed(2) }}
             </td>
             <td class="py-3 px-4">
               <span

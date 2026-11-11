@@ -7,25 +7,25 @@ const cohortActivity = ref([
     cohort: 'Active Frequent Flyers (10+ rides/mo)',
     ridersCount: 14200,
     retentionRate: '94.2%',
-    avgSpend: '$284.00',
+    avgSpend: '₱284.00',
   },
   {
     cohort: 'Weekend Leisure Riders (4-9 rides/mo)',
     ridersCount: 28400,
     retentionRate: '86.5%',
-    avgSpend: '$122.50',
+    avgSpend: '₱122.50',
   },
   {
     cohort: 'Occasional Commuters (1-3 rides/mo)',
     ridersCount: 42100,
     retentionRate: '68.0%',
-    avgSpend: '$38.20',
+    avgSpend: '₱38.20',
   },
   {
     cohort: 'New Signups (First 30 Days)',
     ridersCount: 6800,
     retentionRate: '48.9%',
-    avgSpend: '$24.50',
+    avgSpend: '₱24.50',
   },
 ])
 </script>
@@ -33,7 +33,7 @@ const cohortActivity = ref([
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
         Rider Activity & Cohort Analytics
       </h1>
       <p class="text-sm text-neutral-500 mt-1">
@@ -44,7 +44,7 @@ const cohortActivity = ref([
 
     <ReportFilterBar report-title="Rider Cohort Activity" />
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Passenger Engagement Cohorts</h2>
         <span class="text-xs text-neutral-400">Monthly active user benchmark: 91,500 riders</span>

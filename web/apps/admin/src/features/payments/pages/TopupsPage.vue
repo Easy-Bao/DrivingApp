@@ -19,7 +19,7 @@ function navigateToDetails(id: string) {
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           Driver Wallet Top-Up Verification
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -31,9 +31,8 @@ function navigateToDetails(id: string) {
       <div class="flex items-center space-x-3">
         <RouterLink
           to="/payments/methods"
-          class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-700 shadow-2xs transition-colors"
+          class="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-700 transition-colors"
         >
-          <Icon icon="lucide:qr-code" class="text-neutral-500" />
           <span>Manage Company Bank & QR</span>
         </RouterLink>
       </div>
@@ -41,9 +40,8 @@ function navigateToDetails(id: string) {
 
     <!-- Instructions Banner -->
     <div
-      class="bg-blue-50/70 border border-blue-200 rounded-xl p-4 flex items-start space-x-3 text-xs"
+      class="bg-blue-50/70 border border-blue-200 p-4 flex items-start space-x-3 text-xs"
     >
-      <Icon icon="lucide:info" class="text-blue-600 text-base shrink-0 mt-0.5" />
       <div class="space-y-1 text-blue-900 leading-relaxed">
         <span class="font-bold">Manual Settlement Process:</span>
         Drivers transfer money to the company official bank account or scan the company payment QR
@@ -53,7 +51,7 @@ function navigateToDetails(id: string) {
     </div>
 
     <!-- Table -->
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <h2 class="font-bold text-sm text-neutral-900">Pending Driver Top-Up Verifications</h2>
@@ -65,7 +63,7 @@ function navigateToDetails(id: string) {
         <div class="flex items-center space-x-2">
           <select
             v-model="filterMethod"
-            class="px-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-xs font-medium text-neutral-700"
+            class="px-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs font-medium text-neutral-700"
           >
             <option value="All">All Payment Methods</option>
             <option value="Company QR Code">Company QR Code</option>
@@ -104,16 +102,16 @@ function navigateToDetails(id: string) {
                 </div>
               </td>
               <td class="py-3 px-4 font-bold text-sm text-neutral-900 font-mono">
-                ${{ req.amount.toFixed(2) }}
+                ₱{{ req.amount.toFixed(2) }}
               </td>
               <td class="py-3 px-4 font-mono">
                 <div
                   :class="req.currentBalance < 5 ? 'text-rose-600 font-bold' : 'text-neutral-900'"
                 >
-                  ${{ req.currentBalance.toFixed(2) }}
+                  ₱{{ req.currentBalance.toFixed(2) }}
                 </div>
-                <div class="text-[10px] text-neutral-400">
-                  After: ${{
+                <div class="text-xs text-neutral-400">
+                  After: ₱{{
                     (req.currentBalance + (req.status === 'Pending' ? req.amount : 0)).toFixed(2)
                   }}
                 </div>
@@ -130,7 +128,7 @@ function navigateToDetails(id: string) {
                   />
                   <span>{{ req.paymentMethod }}</span>
                 </span>
-                <div class="text-[10px] text-neutral-400 truncate max-w-[140px]">
+                <div class="text-xs text-neutral-400 truncate max-w-[140px]">
                   {{ req.companyAccountPaid }}
                 </div>
               </td>
@@ -152,11 +150,10 @@ function navigateToDetails(id: string) {
               <td class="py-3 px-4 text-right whitespace-nowrap">
                 <button
                   type="button"
-                  class="px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs transition-colors shadow-2xs inline-flex items-center space-x-1"
+                  class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs transition-colors inline-flex items-center space-x-1"
                   @click="navigateToDetails(req.id)"
                 >
                   <span>View Details</span>
-                  <Icon icon="lucide:arrow-right" class="text-xs" />
                 </button>
               </td>
             </tr>

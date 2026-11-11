@@ -50,7 +50,7 @@ const adminUsers = ref([
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">Admin Users & Operators</h1>
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Admin Users & Operators</h1>
         <p class="text-sm text-neutral-500 mt-1">
           Manage corporate administrator accounts, staff department assignments, and security
           authentication credentials.
@@ -59,14 +59,14 @@ const adminUsers = ref([
       <div class="flex items-center space-x-3">
         <RouterLink
           to="/users/roles"
-          class="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 rounded-lg text-xs font-semibold transition-colors"
+          class="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-xs font-semibold transition-colors"
         >
           View Roles & RBAC Matrix →
         </RouterLink>
       </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Active Staff Administrators (4)</h2>
         <span class="text-xs text-neutral-400"

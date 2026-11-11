@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Icon } from '@iconify/vue'
 
 const roles = ref([
   {
@@ -34,7 +33,7 @@ const roles = ref([
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           Staff Roles & Permissions (RBAC)
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -43,7 +42,7 @@ const roles = ref([
       </div>
       <button
         type="button"
-        class="px-3.5 py-2 bg-neutral-900 text-white rounded-lg text-xs font-semibold hover:bg-neutral-800"
+        class="px-3.5 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800"
       >
         + Create Custom Role
       </button>
@@ -53,11 +52,10 @@ const roles = ref([
       <div
         v-for="r in roles"
         :key="r.id"
-        class="p-5 bg-white border border-neutral-200 rounded-xl shadow-xs space-y-3"
+        class="p-5 bg-white border border-neutral-200 space-y-3"
       >
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2">
-            <Icon icon="lucide:shield-check" class="text-xl text-neutral-800" />
             <h3 class="font-bold text-sm text-neutral-900">{{ r.name }}</h3>
           </div>
           <span

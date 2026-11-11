@@ -88,7 +88,7 @@ const filteredGroups = computed(() => {
         <!-- Expanded Brand Display -->
         <div v-if="!isCollapsed" class="flex items-center space-x-3 overflow-hidden min-w-0">
           <div
-            class="w-9 h-9 rounded-lg bg-neutral-900 flex items-center justify-center text-white shrink-0 shadow-sm"
+            class="w-9 h-9 bg-neutral-900 flex items-center justify-center text-white shrink-0"
           >
             <Icon icon="lucide:car-taxi-front" class="text-lg" />
           </div>
@@ -122,7 +122,7 @@ const filteredGroups = computed(() => {
             v-model="searchQuery"
             type="text"
             placeholder="Search all 40+ sections..."
-            class="w-full pl-8 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-xs placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
+            class="w-full pl-8 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
           />
         </div>
       </div>
@@ -135,7 +135,7 @@ const filteredGroups = computed(() => {
         <button
           v-if="!isCollapsed"
           type="button"
-          class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-neutral-400 hover:text-neutral-700 rounded-md transition-colors"
+          class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-neutral-400 hover:text-neutral-700 transition-colors"
           @click="toggleGroup(group.id)"
         >
           <div class="flex items-center space-x-2">
@@ -169,7 +169,7 @@ const filteredGroups = computed(() => {
               v-for="item in group.items"
               :key="item.id"
               type="button"
-              class="w-full flex items-center rounded-lg text-xs font-medium transition-colors group relative"
+              class="w-full flex items-center text-xs font-medium transition-colors group relative"
               :class="[
                 isItemActive(item)
                   ? 'text-white'
@@ -183,12 +183,13 @@ const filteredGroups = computed(() => {
               <motion.span
                 v-if="isItemActive(item)"
                 layoutId="activeSidebarIndicator"
-                class="absolute inset-0 bg-neutral-900 rounded-lg shadow-sm"
+                class="absolute inset-0 rounded-md bg-neutral-900"
                 :transition="{ type: 'spring', stiffness: 380, damping: 30 }"
               />
 
               <div class="relative z-10 flex items-center space-x-2.5 overflow-hidden">
                 <Icon
+                  v-if="isCollapsed"
                   :icon="item.icon"
                   class="text-base shrink-0 transition-colors"
                   :class="
@@ -234,7 +235,7 @@ const filteredGroups = computed(() => {
     <!-- Bottom Account Section -->
     <div class="shrink-0 p-3 border-t border-neutral-200 bg-neutral-50/50">
       <div
-        class="flex items-center rounded-lg p-2 hover:bg-neutral-100 transition-colors"
+        class="flex items-center p-2 hover:bg-neutral-100 transition-colors"
         :class="isCollapsed ? 'justify-center' : 'justify-between'"
       >
         <button
@@ -244,7 +245,7 @@ const filteredGroups = computed(() => {
           @click="navigateTo('/account/profile')"
         >
           <div
-            class="w-8 h-8 rounded-full bg-neutral-900 text-white flex items-center justify-center font-semibold text-xs shrink-0 shadow-sm"
+            class="w-8 h-8 bg-neutral-900 text-white flex items-center justify-center font-semibold text-xs shrink-0"
           >
             AD
           </div>
@@ -258,7 +259,7 @@ const filteredGroups = computed(() => {
         <button
           v-if="!isCollapsed"
           type="button"
-          class="text-neutral-400 hover:text-rose-600 p-1.5 rounded-md hover:bg-rose-50 transition-colors"
+          class="text-neutral-400 hover:text-rose-600 p-1.5 hover:bg-rose-50 transition-colors"
           title="Sign out"
           aria-label="Sign out"
           @click="navigateTo('/account/profile')"

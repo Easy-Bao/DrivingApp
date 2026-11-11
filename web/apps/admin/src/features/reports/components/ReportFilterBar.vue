@@ -29,7 +29,7 @@ function triggerExport(format: 'CSV' | 'PDF' | 'Excel') {
   <div class="space-y-3">
     <!-- Filter Bar Card -->
     <div
-      class="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+      class="bg-white border border-neutral-200 p-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
     >
       <!-- Filters: Date Range, City / Zone, Driver / Vehicle Type -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
@@ -47,7 +47,7 @@ function triggerExport(format: 'CSV' | 'PDF' | 'Excel') {
             />
             <select
               v-model="dateRange"
-              class="w-full pl-7 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-xs text-neutral-800 font-medium focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
+              class="w-full pl-7 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs text-neutral-800 font-medium focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
             >
               <option value="today">Today</option>
               <option value="last-7-days">Last 7 Days</option>
@@ -72,7 +72,7 @@ function triggerExport(format: 'CSV' | 'PDF' | 'Excel') {
             />
             <select
               v-model="cityZone"
-              class="w-full pl-7 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-xs text-neutral-800 font-medium focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
+              class="w-full pl-7 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs text-neutral-800 font-medium focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
             >
               <option value="all-zones">All Operating Zones</option>
               <option value="downtown-central">Downtown Central</option>
@@ -94,7 +94,7 @@ function triggerExport(format: 'CSV' | 'PDF' | 'Excel') {
             <Icon icon="lucide:car" class="absolute left-2.5 top-2.5 text-neutral-400 text-xs" />
             <select
               v-model="vehicleType"
-              class="w-full pl-7 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-xs text-neutral-800 font-medium focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
+              class="w-full pl-7 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs text-neutral-800 font-medium focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
             >
               <option value="all-tiers">All Vehicle Types & Fleets</option>
               <option value="economy">Economy Sedan</option>
@@ -113,7 +113,7 @@ function triggerExport(format: 'CSV' | 'PDF' | 'Excel') {
       >
         <button
           type="button"
-          class="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5"
+          class="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold transition-colors flex items-center space-x-1.5"
           @click="triggerExport('CSV')"
         >
           <Icon icon="lucide:file-text" class="text-neutral-500" />
@@ -121,7 +121,7 @@ function triggerExport(format: 'CSV' | 'PDF' | 'Excel') {
         </button>
         <button
           type="button"
-          class="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5"
+          class="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold transition-colors flex items-center space-x-1.5"
           @click="triggerExport('PDF')"
         >
           <Icon icon="lucide:file-down" class="text-rose-600" />
@@ -129,7 +129,7 @@ function triggerExport(format: 'CSV' | 'PDF' | 'Excel') {
         </button>
         <button
           type="button"
-          class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 shadow-2xs"
+          class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors flex items-center space-x-1.5"
           @click="triggerExport('Excel')"
         >
           <Icon icon="lucide:file-spreadsheet" class="text-emerald-400" />
@@ -141,7 +141,7 @@ function triggerExport(format: 'CSV' | 'PDF' | 'Excel') {
     <!-- Export Notification Toast -->
     <div
       v-if="exportToast"
-      class="p-3.5 rounded-xl bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
+      class="p-3.5 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
     >
       <div class="flex items-center space-x-2">
         <Icon icon="lucide:download-cloud" class="text-emerald-400 text-base animate-bounce" />

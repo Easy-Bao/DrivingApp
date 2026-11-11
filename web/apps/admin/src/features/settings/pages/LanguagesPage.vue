@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Icon } from '@iconify/vue'
 
 const supportedLanguages = ref([
   {
@@ -38,7 +37,7 @@ const supportedLanguages = ref([
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           Localization & Multi-Language Settings
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -47,14 +46,13 @@ const supportedLanguages = ref([
       </div>
       <button
         type="button"
-        class="px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-xs font-semibold transition-colors flex items-center space-x-2"
+        class="px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors flex items-center space-x-2"
       >
-        <Icon icon="lucide:plus" />
         <span>Add Locale Package</span>
       </button>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Supported App Locales</h2>
         <span class="text-xs text-neutral-400">Total string keys: 1,840</span>

@@ -27,7 +27,7 @@ function saveSettings() {
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           Global Application & Dispatch Parameters
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -37,20 +37,18 @@ function saveSettings() {
       </div>
       <button
         type="button"
-        class="px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-xs font-semibold transition-colors flex items-center space-x-2 shadow-2xs"
+        class="px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors flex items-center space-x-2"
         @click="saveSettings"
       >
-        <Icon icon="lucide:save" />
         <span>Save Configuration</span>
       </button>
     </div>
 
     <div
       v-if="actionToast"
-      class="p-4 rounded-xl bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
+      class="p-4 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
     >
       <div class="flex items-center space-x-2">
-        <Icon icon="lucide:check-circle" class="text-emerald-400 text-base" />
         <span>{{ actionToast }}</span>
       </div>
       <button type="button" @click="actionToast = null">
@@ -60,9 +58,8 @@ function saveSettings() {
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Dispatch & Matching Engine -->
-      <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs space-y-4">
+      <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center space-x-2.5 pb-3 border-b border-neutral-100">
-          <Icon icon="lucide:cpu" class="text-neutral-700 text-lg" />
           <h2 class="font-bold text-sm text-neutral-900">Dispatch & Telemetry Parameters</h2>
         </div>
 
@@ -74,7 +71,7 @@ function saveSettings() {
             <input
               v-model.number="settings.maxDispatchRadiusKm"
               type="number"
-              class="w-full px-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg font-mono text-xs"
+              class="w-full px-3 py-1.5 bg-neutral-50 border border-neutral-200 font-mono text-xs"
             />
             <p class="text-[11px] text-neutral-400 mt-0.5">
               Maximum radius to search for online drivers
@@ -88,7 +85,7 @@ function saveSettings() {
             <input
               v-model.number="settings.driverAcceptanceTimeoutSec"
               type="number"
-              class="w-full px-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg font-mono text-xs"
+              class="w-full px-3 py-1.5 bg-neutral-50 border border-neutral-200 font-mono text-xs"
             />
             <p class="text-[11px] text-neutral-400 mt-0.5">
               Window for driver to accept ride offer before auto-reassigning
@@ -102,7 +99,7 @@ function saveSettings() {
             <input
               v-model.number="settings.gpsTelemetryIntervalSec"
               type="number"
-              class="w-full px-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg font-mono text-xs"
+              class="w-full px-3 py-1.5 bg-neutral-50 border border-neutral-200 font-mono text-xs"
             />
             <p class="text-[11px] text-neutral-400 mt-0.5">
               Driver app coordinate beacon transmit cadence
@@ -112,9 +109,8 @@ function saveSettings() {
       </div>
 
       <!-- Financial & System Controls -->
-      <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs space-y-4">
+      <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center space-x-2.5 pb-3 border-b border-neutral-100">
-          <Icon icon="lucide:sliders-horizontal" class="text-neutral-700 text-lg" />
           <h2 class="font-bold text-sm text-neutral-900">Wallet Controls & Features</h2>
         </div>
 
@@ -127,7 +123,7 @@ function saveSettings() {
               v-model.number="settings.minWalletBalanceForDispatch"
               type="number"
               step="0.5"
-              class="w-full px-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg font-mono text-xs"
+              class="w-full px-3 py-1.5 bg-neutral-50 border border-neutral-200 font-mono text-xs"
             />
             <p class="text-[11px] text-neutral-400 mt-0.5">
               Drivers below this balance cannot receive new dispatch offers
@@ -142,7 +138,7 @@ function saveSettings() {
             <input
               v-model="settings.enableSurgePricing"
               type="checkbox"
-              class="rounded text-neutral-900"
+              class=" text-neutral-900"
             />
           </div>
 
@@ -156,7 +152,7 @@ function saveSettings() {
             <input
               v-model="settings.enableScheduledRides"
               type="checkbox"
-              class="rounded text-neutral-900"
+              class=" text-neutral-900"
             />
           </div>
         </div>

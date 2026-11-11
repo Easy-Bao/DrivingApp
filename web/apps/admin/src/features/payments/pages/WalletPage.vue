@@ -43,7 +43,7 @@ const driverWallets = ref([
     creditLimit: 0.0,
     totalTopups: 150.0,
     totalCommissionPaid: 148.5,
-    status: 'Locked (Balance Below Minimum $5.00)',
+    status: 'Locked (Balance Below Minimum ₱5.00)',
   },
 ])
 
@@ -61,7 +61,7 @@ function triggerTopupPrompt(driver: (typeof driverWallets.value)[0]) {
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">Driver Dispatch Wallets</h1>
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Driver Dispatch Wallets</h1>
         <p class="text-sm text-neutral-500 mt-1">
           Prepaid driver wallet balances used to deduct platform commission on cash and direct
           rides.
@@ -70,9 +70,8 @@ function triggerTopupPrompt(driver: (typeof driverWallets.value)[0]) {
       <div class="flex items-center space-x-3">
         <RouterLink
           to="/payment/driver-topups"
-          class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold transition-colors flex items-center space-x-2 shadow-xs"
+          class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-colors flex items-center space-x-2"
         >
-          <Icon icon="lucide:check-circle" />
           <span>Verify Pending Top-Ups (3) →</span>
         </RouterLink>
       </div>
@@ -80,30 +79,29 @@ function triggerTopupPrompt(driver: (typeof driverWallets.value)[0]) {
 
     <!-- Summary Statistics -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="bg-white p-4 rounded-xl border border-neutral-200 shadow-2xs">
+      <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Total In Driver Wallets</span>
-        <div class="text-xl font-bold text-neutral-900 mt-1">$44,210.00</div>
+        <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">₱44,210.00</div>
       </div>
-      <div class="bg-white p-4 rounded-xl border border-neutral-200 shadow-2xs">
+      <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Min Threshold for Dispatch</span>
-        <div class="text-xl font-bold text-neutral-900 mt-1">$5.00</div>
+        <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">₱5.00</div>
       </div>
-      <div class="bg-white p-4 rounded-xl border border-neutral-200 shadow-2xs">
+      <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Locked Drivers (Low Balance)</span>
-        <div class="text-xl font-bold text-rose-600 mt-1">12</div>
+        <div class="text-xl font-bold tabular-nums text-rose-600 mt-1">12</div>
       </div>
-      <div class="bg-white p-4 rounded-xl border border-neutral-200 shadow-2xs">
+      <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Average Top-Up Size</span>
-        <div class="text-xl font-bold text-blue-600 mt-1">$50.00</div>
+        <div class="text-xl font-bold tabular-nums text-blue-600 mt-1">₱50.00</div>
       </div>
     </div>
 
     <div
       v-if="actionToast"
-      class="p-4 rounded-xl bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
+      class="p-4 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
     >
       <div class="flex items-center space-x-2">
-        <Icon icon="lucide:check-circle" class="text-emerald-400 text-base" />
         <span>{{ actionToast }}</span>
       </div>
       <button type="button" @click="actionToast = null">
@@ -111,7 +109,7 @@ function triggerTopupPrompt(driver: (typeof driverWallets.value)[0]) {
       </button>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <div class="relative w-72">
           <Icon icon="lucide:search" class="absolute left-3 top-2.5 text-neutral-400 text-sm" />
@@ -119,7 +117,7 @@ function triggerTopupPrompt(driver: (typeof driverWallets.value)[0]) {
             v-model="searchQuery"
             type="text"
             placeholder="Search driver wallet by name, phone..."
-            class="w-full pl-9 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-xs"
+            class="w-full pl-9 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs"
           />
         </div>
         <span class="text-xs text-neutral-500">No 3rd-party gateway fees</span>
@@ -155,12 +153,12 @@ function triggerTopupPrompt(driver: (typeof driverWallets.value)[0]) {
                 class="font-mono font-bold text-sm"
                 :class="w.balance < 5 ? 'text-rose-600' : 'text-neutral-900'"
               >
-                ${{ w.balance.toFixed(2) }}
+                ₱{{ w.balance.toFixed(2) }}
               </span>
             </td>
-            <td class="py-3 px-4 font-mono text-neutral-700">${{ w.totalTopups.toFixed(2) }}</td>
+            <td class="py-3 px-4 font-mono text-neutral-700">₱{{ w.totalTopups.toFixed(2) }}</td>
             <td class="py-3 px-4 font-mono text-neutral-700">
-              ${{ w.totalCommissionPaid.toFixed(2) }}
+              ₱{{ w.totalCommissionPaid.toFixed(2) }}
             </td>
             <td class="py-3 px-4">
               <span

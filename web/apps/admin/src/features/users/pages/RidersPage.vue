@@ -8,7 +8,7 @@ const mockRiders = ref([
     name: 'Sophia Chen',
     email: 'sophia.c@example.com',
     totalTrips: 84,
-    spent: '$1,892.00',
+    spent: '₱1,892.00',
     rating: 4.98,
     status: 'Good Standing',
   },
@@ -17,7 +17,7 @@ const mockRiders = ref([
     name: 'Liam O’Connor',
     email: 'liam.oc@example.com',
     totalTrips: 32,
-    spent: '$640.50',
+    spent: '₱640.50',
     rating: 4.85,
     status: 'Good Standing',
   },
@@ -26,7 +26,7 @@ const mockRiders = ref([
     name: 'Amina Idris',
     email: 'amina.i@example.com',
     totalTrips: 119,
-    spent: '$2,740.00',
+    spent: '₱2,740.00',
     rating: 5.0,
     status: 'VIP Rider',
   },
@@ -35,7 +35,7 @@ const mockRiders = ref([
     name: 'Lucas Vance',
     email: 'lucas.v@example.com',
     totalTrips: 12,
-    spent: '$210.00',
+    spent: '₱210.00',
     rating: 4.2,
     status: 'Flagged (Dispute)',
   },
@@ -45,13 +45,13 @@ const mockRiders = ref([
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">Riders Management</h1>
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Riders Management</h1>
       <p class="text-sm text-neutral-500 mt-1">
         Review passenger activity, customer lifetime value, ratings, and account standings.
       </p>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <table class="w-full text-left text-xs">
         <thead class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100">
           <tr>

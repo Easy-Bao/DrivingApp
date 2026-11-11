@@ -6,9 +6,9 @@ const transactions = ref([
     id: 'TXN-90812',
     driver: 'Marcus Miller',
     type: 'Ride Fare Credit',
-    amount: '+$34.50',
-    fee: '-$6.21',
-    net: '+$28.29',
+    amount: '+₱34.50',
+    fee: '-₱6.21',
+    net: '+₱28.29',
     date: '12 mins ago',
     status: 'Completed',
   },
@@ -16,9 +16,9 @@ const transactions = ref([
     id: 'TXN-90811',
     driver: 'David Kim',
     type: 'Driver Manual Top-Up',
-    amount: '+$50.00',
-    fee: '$0.00',
-    net: '+$50.00',
+    amount: '+₱50.00',
+    fee: '₱0.00',
+    net: '+₱50.00',
     date: '34 mins ago',
     status: 'Verified',
   },
@@ -26,9 +26,9 @@ const transactions = ref([
     id: 'TXN-90810',
     driver: 'Elena Rostova',
     type: 'Platform Commission Deduction',
-    amount: '-$4.80',
-    fee: '$0.00',
-    net: '-$4.80',
+    amount: '-₱4.80',
+    fee: '₱0.00',
+    net: '-₱4.80',
     date: '1 hour ago',
     status: 'Completed',
   },
@@ -36,9 +36,9 @@ const transactions = ref([
     id: 'TXN-90809',
     driver: 'Anthony Stark',
     type: 'Payout Disbursement',
-    amount: '-$420.00',
-    fee: '-$1.50',
-    net: '-$421.50',
+    amount: '-₱420.00',
+    fee: '-₱1.50',
+    net: '-₱421.50',
     date: 'Yesterday',
     status: 'Processed',
   },
@@ -48,7 +48,7 @@ const transactions = ref([
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
         Platform Transaction Ledger
       </h1>
       <p class="text-sm text-neutral-500 mt-1">
@@ -57,7 +57,7 @@ const transactions = ref([
       </p>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <table class="w-full text-left text-xs">
         <thead class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100">
           <tr>

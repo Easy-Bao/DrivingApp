@@ -6,7 +6,7 @@ const payoutBatches = ref([
   {
     batchId: 'BATCH-2026-W45',
     period: 'Nov 02 - Nov 08, 2026',
-    totalAmount: '$482,190.00',
+    totalAmount: '₱482,190.00',
     driversPaid: 1240,
     status: 'Settled via Bank ACH',
     date: '2026-11-09',
@@ -14,7 +14,7 @@ const payoutBatches = ref([
   {
     batchId: 'BATCH-2026-W44',
     period: 'Oct 26 - Nov 01, 2026',
-    totalAmount: '$456,800.00',
+    totalAmount: '₱456,800.00',
     driversPaid: 1195,
     status: 'Settled via Bank ACH',
     date: '2026-11-02',
@@ -22,7 +22,7 @@ const payoutBatches = ref([
   {
     batchId: 'BATCH-2026-W43',
     period: 'Oct 19 - Oct 25, 2026',
-    totalAmount: '$442,100.00',
+    totalAmount: '₱442,100.00',
     driversPaid: 1180,
     status: 'Settled via Bank ACH',
     date: '2026-10-26',
@@ -33,7 +33,7 @@ const payoutBatches = ref([
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
         Driver Payout & Banking Settlement Reports
       </h1>
       <p class="text-sm text-neutral-500 mt-1">
@@ -44,7 +44,7 @@ const payoutBatches = ref([
 
     <ReportFilterBar report-title="Driver Payout Settlement Audit" />
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Weekly Driver Payout Batches</h2>
         <span class="text-xs text-neutral-400">Company direct bank settlement records</span>

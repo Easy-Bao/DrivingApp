@@ -58,7 +58,7 @@ const topUpRequests = ref<TopUpRequest[]>([
     referenceCode: 'QR-TXN-7719201',
     submittedAt: '42 minutes ago',
     companyAccountPaid: 'Company QR Merchant #ER-8801',
-    proofNote: 'Bank notification confirmed for $30.00',
+    proofNote: 'Bank notification confirmed for ₱30.00',
     receiptFileName: 'company_qr_receipt_7719201.png',
     status: 'Pending',
   },

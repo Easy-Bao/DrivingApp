@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Icon } from '@iconify/vue'
 
 const bookings = ref([
   {
@@ -13,7 +12,7 @@ const bookings = ref([
     tier: 'Executive Black',
     assignedDriver: 'Anthony Stark',
     driverStatus: 'Confirmed & En Route',
-    estFare: '$68.00',
+    estFare: '₱68.00',
   },
   {
     id: 'SCH-702',
@@ -25,7 +24,7 @@ const bookings = ref([
     tier: 'Comfort',
     assignedDriver: 'Marcus Miller',
     driverStatus: 'Dispatched',
-    estFare: '$38.50',
+    estFare: '₱38.50',
   },
   {
     id: 'SCH-703',
@@ -37,7 +36,7 @@ const bookings = ref([
     tier: 'XL Family',
     assignedDriver: 'Pending Auto-Dispatch',
     driverStatus: 'Queued (Auto-assigns 45m before)',
-    estFare: '$45.00',
+    estFare: '₱45.00',
   },
 ])
 </script>
@@ -46,7 +45,7 @@ const bookings = ref([
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           Scheduled & Advance Bookings
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -56,14 +55,14 @@ const bookings = ref([
       </div>
       <div class="flex items-center space-x-2">
         <span
-          class="px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-800"
+          class="px-3 py-1.5 bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-800"
         >
           3 Upcoming Bookings
         </span>
       </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Upcoming Advance Reservations</h2>
         <span class="text-xs text-neutral-400"
@@ -94,7 +93,6 @@ const bookings = ref([
             </td>
             <td class="py-3 px-4 font-semibold text-neutral-900">
               <div class="flex items-center space-x-1.5">
-                <Icon icon="lucide:clock" class="text-neutral-400" />
                 <span>{{ b.pickupTime }}</span>
               </div>
             </td>

@@ -50,7 +50,7 @@ function resolveTicket(t: (typeof tickets.value)[0]) {
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           Customer & Driver Support Tickets
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -60,7 +60,7 @@ function resolveTicket(t: (typeof tickets.value)[0]) {
       </div>
       <div class="flex items-center space-x-2">
         <span
-          class="px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800"
+          class="px-3 py-1.5 bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800"
         >
           3 Open Support Inquiries
         </span>
@@ -69,10 +69,9 @@ function resolveTicket(t: (typeof tickets.value)[0]) {
 
     <div
       v-if="actionToast"
-      class="p-4 rounded-xl bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
+      class="p-4 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
     >
       <div class="flex items-center space-x-2">
-        <Icon icon="lucide:check-circle" class="text-emerald-400 text-base" />
         <span>{{ actionToast }}</span>
       </div>
       <button type="button" @click="actionToast = null">
@@ -80,7 +79,7 @@ function resolveTicket(t: (typeof tickets.value)[0]) {
       </button>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Active Support Ticket Inbox</h2>
         <span class="text-xs text-neutral-400">Target first response time: &lt; 15 mins</span>
@@ -139,7 +138,7 @@ function resolveTicket(t: (typeof tickets.value)[0]) {
               <button
                 v-if="t.status !== 'Resolved'"
                 type="button"
-                class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-md text-xs font-semibold transition-colors"
+                class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors"
                 @click="resolveTicket(t)"
               >
                 Resolve

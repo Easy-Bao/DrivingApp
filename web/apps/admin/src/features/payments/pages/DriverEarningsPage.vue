@@ -6,27 +6,27 @@ const earnings = ref([
     driver: 'David Kim',
     period: 'Oct 28 – Nov 03',
     completedTrips: 64,
-    gross: '$1,840.00',
-    commission: '-$331.20',
-    net: '$1,508.80',
+    gross: '₱1,840.00',
+    commission: '-₱331.20',
+    net: '₱1,508.80',
     status: 'Disbursed',
   },
   {
     driver: 'Marcus Miller',
     period: 'Oct 28 – Nov 03',
     completedTrips: 52,
-    gross: '$1,420.00',
-    commission: '-$255.60',
-    net: '$1,164.40',
+    gross: '₱1,420.00',
+    commission: '-₱255.60',
+    net: '₱1,164.40',
     status: 'Disbursed',
   },
   {
     driver: 'Elena Rostova',
     period: 'Oct 28 – Nov 03',
     completedTrips: 48,
-    gross: '$1,290.00',
-    commission: '-$232.20',
-    net: '$1,057.80',
+    gross: '₱1,290.00',
+    commission: '-₱232.20',
+    net: '₱1,057.80',
     status: 'Pending Payout',
   },
 ])
@@ -35,7 +35,7 @@ const earnings = ref([
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
         Driver Earnings & Settlement Cycles
       </h1>
       <p class="text-sm text-neutral-500 mt-1">
@@ -43,7 +43,7 @@ const earnings = ref([
       </p>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <table class="w-full text-left text-xs">
         <thead class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100">
           <tr>

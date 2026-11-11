@@ -53,7 +53,7 @@ function markReturned(item: (typeof lostItems.value)[0]) {
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           Lost & Found Property Registry
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -62,7 +62,7 @@ function markReturned(item: (typeof lostItems.value)[0]) {
         </p>
       </div>
       <div class="flex items-center space-x-2">
-        <span class="px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-800 text-xs font-semibold">
+        <span class="px-3 py-1.5 bg-neutral-100 text-neutral-800 text-xs font-semibold">
           3 Items Tracked
         </span>
       </div>
@@ -70,10 +70,9 @@ function markReturned(item: (typeof lostItems.value)[0]) {
 
     <div
       v-if="actionToast"
-      class="p-4 rounded-xl bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
+      class="p-4 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
     >
       <div class="flex items-center space-x-2">
-        <Icon icon="lucide:check-circle" class="text-emerald-400 text-base" />
         <span>{{ actionToast }}</span>
       </div>
       <button type="button" @click="actionToast = null">
@@ -81,11 +80,11 @@ function markReturned(item: (typeof lostItems.value)[0]) {
       </button>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Reported In-Cabin Property</h2>
         <span class="text-xs text-neutral-400"
-          >Driver compensation fee ($15) applied for drop-off return</span
+          >Driver compensation fee (₱15) applied for drop-off return</span
         >
       </div>
 
@@ -140,7 +139,7 @@ function markReturned(item: (typeof lostItems.value)[0]) {
               <button
                 v-if="item.status !== 'Returned to Owner'"
                 type="button"
-                class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-md text-xs font-semibold transition-colors"
+                class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors"
                 @click="markReturned(item)"
               >
                 Confirm Return

@@ -103,7 +103,7 @@ function downloadFile(filename: string) {
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           Export & Automated Delivery Center
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -113,20 +113,18 @@ function downloadFile(filename: string) {
       </div>
       <button
         type="button"
-        class="px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-xs font-semibold transition-colors flex items-center space-x-2"
+        class="px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors flex items-center space-x-2"
         @click="actionToast = 'Scheduled report creation wizard opened.'"
       >
-        <Icon icon="lucide:plus" />
         <span>Create Scheduled Report</span>
       </button>
     </div>
 
     <div
       v-if="actionToast"
-      class="p-4 rounded-xl bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
+      class="p-4 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
     >
       <div class="flex items-center space-x-2">
-        <Icon icon="lucide:check-circle" class="text-emerald-400 text-base" />
         <span>{{ actionToast }}</span>
       </div>
       <button type="button" @click="actionToast = null">
@@ -135,7 +133,7 @@ function downloadFile(filename: string) {
     </div>
 
     <!-- Section 1: Scheduled Reports (Auto-emailed) -->
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <div>
           <h2 class="font-bold text-sm text-neutral-900">
@@ -191,7 +189,7 @@ function downloadFile(filename: string) {
             </td>
             <td class="py-3 px-4">
               <span
-                class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neutral-100 text-neutral-800"
+                class="px-2 py-0.5 text-[10px] font-mono font-bold bg-neutral-100 text-neutral-800"
               >
                 .{{ sch.format.toLowerCase() }}
               </span>
@@ -203,7 +201,7 @@ function downloadFile(filename: string) {
             <td class="py-3 px-4 text-right">
               <button
                 type="button"
-                class="px-2.5 py-1 rounded-md text-xs font-semibold transition-colors"
+                class="px-2.5 py-1 text-xs font-semibold transition-colors"
                 :class="
                   sch.isActive
                     ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800'
@@ -220,7 +218,7 @@ function downloadFile(filename: string) {
     </div>
 
     <!-- Section 2: Recent Export Downloads History -->
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <div>
           <h2 class="font-bold text-sm text-neutral-900">Recent Generated Exports</h2>
@@ -267,7 +265,7 @@ function downloadFile(filename: string) {
             <td class="py-3 px-4 text-neutral-700 font-medium">{{ exp.reportCategory }}</td>
             <td class="py-3 px-4">
               <span
-                class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neutral-100 text-neutral-800"
+                class="px-2 py-0.5 text-[10px] font-mono font-bold bg-neutral-100 text-neutral-800"
               >
                 {{ exp.format }}
               </span>
@@ -277,10 +275,9 @@ function downloadFile(filename: string) {
             <td class="py-3 px-4 text-right">
               <button
                 type="button"
-                class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-md text-xs font-semibold transition-colors inline-flex items-center space-x-1.5"
+                class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors inline-flex items-center space-x-1.5"
                 @click="downloadFile(exp.filename)"
               >
-                <Icon icon="lucide:download" class="text-xs" />
                 <span>Download</span>
               </button>
             </td>

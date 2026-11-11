@@ -60,7 +60,7 @@ function resolveSos(alert: SosAlert) {
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           SOS & Emergency Operations Center
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -70,7 +70,7 @@ function resolveSos(alert: SosAlert) {
       </div>
       <div class="flex items-center space-x-2">
         <span
-          class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-rose-50 border border-rose-200 text-xs font-bold text-rose-800"
+          class="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-50 border border-rose-200 text-xs font-bold text-rose-800"
         >
           <span class="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
           <span>2 Active Emergency Alerts</span>
@@ -80,10 +80,9 @@ function resolveSos(alert: SosAlert) {
 
     <div
       v-if="actionToast"
-      class="p-4 rounded-xl bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
+      class="p-4 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
     >
       <div class="flex items-center space-x-2">
-        <Icon icon="lucide:check-circle" class="text-emerald-400 text-base" />
         <span>{{ actionToast }}</span>
       </div>
       <button type="button" @click="actionToast = null">
@@ -91,7 +90,7 @@ function resolveSos(alert: SosAlert) {
       </button>
     </div>
 
-    <div class="bg-white border border-rose-200 rounded-xl shadow-sm overflow-hidden">
+    <div class="bg-white border border-rose-200 overflow-hidden">
       <div class="p-4 bg-rose-50/60 border-b border-rose-100 flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <Icon icon="lucide:siren" class="text-rose-600 text-lg animate-pulse" />
@@ -149,7 +148,7 @@ function resolveSos(alert: SosAlert) {
             <td class="py-3 px-4 text-right space-x-2">
               <button
                 type="button"
-                class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-md text-xs font-semibold shadow-xs transition-colors"
+                class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition-colors"
                 @click="resolveSos(sos)"
               >
                 Resolve Incident

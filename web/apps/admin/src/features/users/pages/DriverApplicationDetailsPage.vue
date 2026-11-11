@@ -40,7 +40,7 @@ function goBack() {
     <div>
       <button
         type="button"
-        class="inline-flex items-center space-x-2 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 px-3 py-1.5 rounded-lg shadow-2xs transition-colors group cursor-pointer"
+        class="inline-flex items-center space-x-2 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 px-3 py-1.5 transition-colors group cursor-pointer"
         @click="goBack"
       >
         <Icon
@@ -54,10 +54,9 @@ function goBack() {
     <!-- Alert / Toast Banner -->
     <div
       v-if="actionToast"
-      class="p-4 rounded-xl bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
+      class="p-4 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
     >
       <div class="flex items-center space-x-2">
-        <Icon icon="lucide:check-circle" class="text-emerald-400 text-base" />
         <span>{{ actionToast }}</span>
       </div>
       <button type="button" @click="actionToast = null">
@@ -71,7 +70,7 @@ function goBack() {
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div class="flex items-center space-x-3">
-            <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+            <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
               Application {{ application.id }}
             </h1>
             <span
@@ -92,7 +91,7 @@ function goBack() {
 
         <div class="flex items-center space-x-2">
           <span
-            class="px-3 py-1.5 rounded-lg text-xs font-semibold border flex items-center space-x-1.5"
+            class="px-3 py-1.5 text-xs font-semibold border flex items-center space-x-1.5"
             :class="
               application.backgroundStatus === 'Passed'
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -113,11 +112,11 @@ function goBack() {
       </div>
 
       <!-- Applicant Identity Section -->
-      <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs space-y-4">
+      <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
           <div class="flex items-center space-x-3">
             <div
-              class="w-10 h-10 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-sm"
+              class="w-10 h-10 bg-neutral-900 text-white flex items-center justify-center font-bold text-sm"
             >
               {{ application.applicant.charAt(0) }}
             </div>
@@ -152,7 +151,7 @@ function goBack() {
         </div>
 
         <div
-          class="p-3 rounded-lg bg-neutral-50 border border-neutral-200 flex items-center justify-between text-xs"
+          class="p-3 bg-neutral-50 border border-neutral-200 flex items-center justify-between text-xs"
         >
           <div class="flex items-center space-x-2">
             <Icon icon="lucide:file-text" class="text-neutral-500 text-sm" />
@@ -161,14 +160,13 @@ function goBack() {
             >
           </div>
           <span class="text-[11px] font-semibold text-emerald-600 flex items-center space-x-1">
-            <Icon icon="lucide:check" class="text-xs" />
             <span>Document Verified</span>
           </span>
         </div>
       </div>
 
       <!-- Vehicle & Registration Section -->
-      <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs space-y-4">
+      <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center space-x-2 pb-3 border-b border-neutral-100">
           <Icon icon="lucide:car" class="text-neutral-500 text-base" />
           <h2 class="font-bold text-sm text-neutral-900">Vehicle Specification & Insurance</h2>
@@ -196,7 +194,7 @@ function goBack() {
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2">
           <div
-            class="p-3 rounded-lg bg-neutral-50 border border-neutral-200 flex items-center justify-between"
+            class="p-3 bg-neutral-50 border border-neutral-200 flex items-center justify-between"
           >
             <div>
               <div class="text-[11px] text-neutral-400">Commercial Auto Policy</div>
@@ -204,11 +202,10 @@ function goBack() {
                 {{ application.vehicle.insurancePolicy }}
               </div>
             </div>
-            <Icon icon="lucide:shield-check" class="text-emerald-500 text-base" />
           </div>
 
           <div
-            class="p-3 rounded-lg bg-neutral-50 border border-neutral-200 flex items-center justify-between"
+            class="p-3 bg-neutral-50 border border-neutral-200 flex items-center justify-between"
           >
             <div>
               <div class="text-[11px] text-neutral-400">Annual Safety Certificate</div>
@@ -216,13 +213,12 @@ function goBack() {
                 {{ application.vehicle.inspectionDoc }}
               </div>
             </div>
-            <Icon icon="lucide:file-check" class="text-emerald-500 text-base" />
           </div>
         </div>
       </div>
 
       <!-- Regulatory Background Verification Section -->
-      <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs space-y-4">
+      <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center space-x-2 pb-3 border-b border-neutral-100">
           <Icon icon="lucide:shield" class="text-neutral-500 text-base" />
           <h2 class="font-bold text-sm text-neutral-900">Background & Motor Vehicle Screening</h2>
@@ -248,9 +244,8 @@ function goBack() {
           </div>
         </div>
 
-        <div class="p-4 rounded-xl bg-neutral-50 border border-neutral-200 space-y-1 text-xs">
+        <div class="p-4 bg-neutral-50 border border-neutral-200 space-y-1 text-xs">
           <div class="font-semibold text-neutral-900 flex items-center space-x-1.5">
-            <Icon icon="lucide:info" class="text-neutral-400" />
             <span>Auditor Verification Remarks</span>
           </div>
           <p class="text-neutral-600 leading-relaxed">{{ application.backgroundNotes }}</p>
@@ -259,7 +254,7 @@ function goBack() {
 
       <!-- Action Footer -->
       <div
-        class="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex items-center justify-between"
+        class="bg-white border border-neutral-200 p-4 flex items-center justify-between"
       >
         <div class="text-xs text-neutral-500">
           <span v-if="application.status === 'Pending Review'">
@@ -277,14 +272,14 @@ function goBack() {
         <div v-if="application.status === 'Pending Review'" class="flex items-center space-x-3">
           <button
             type="button"
-            class="px-4 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+            class="px-4 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition-colors cursor-pointer"
             @click="handleReject"
           >
             Reject Application
           </button>
           <button
             type="button"
-            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
             @click="handleApprove"
           >
             Approve Driver & Issue Credentials
@@ -296,14 +291,13 @@ function goBack() {
     <!-- Application Not Found Fallback -->
     <div
       v-else
-      class="bg-white border border-neutral-200 rounded-xl p-8 text-center text-xs text-neutral-500 shadow-2xs"
+      class="bg-white border border-neutral-200 p-8 text-center text-xs text-neutral-500"
     >
-      <Icon icon="lucide:alert-circle" class="text-2xl text-neutral-400 mx-auto mb-2" />
       <p class="font-semibold text-neutral-900">Application Not Found</p>
       <p class="mt-1">No driver application matches ID {{ applicationId }}.</p>
       <button
         type="button"
-        class="mt-4 px-3 py-1.5 bg-neutral-900 text-white rounded-lg text-xs font-semibold cursor-pointer"
+        class="mt-4 px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
         @click="goBack"
       >
         Back to Applications Queue

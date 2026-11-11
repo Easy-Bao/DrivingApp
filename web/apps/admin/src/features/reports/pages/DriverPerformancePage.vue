@@ -41,7 +41,7 @@ const performanceList = ref([
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
         Driver Performance & QA Metrics
       </h1>
       <p class="text-sm text-neutral-500 mt-1">
@@ -52,7 +52,7 @@ const performanceList = ref([
 
     <ReportFilterBar report-title="Driver Performance Audit" />
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Fleet Service Quality Benchmarks</h2>
         <span class="text-xs text-neutral-400">Acceptance target: ≥ 90%</span>

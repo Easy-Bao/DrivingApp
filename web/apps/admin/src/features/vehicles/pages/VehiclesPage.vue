@@ -61,7 +61,7 @@ const mockVehicles = ref([
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">Vehicle Fleet Roster</h1>
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Vehicle Fleet Roster</h1>
         <p class="text-sm text-neutral-500 mt-1">
           Registered fleet vehicles, safety compliance certificates, and driver assignments.
         </p>
@@ -69,7 +69,7 @@ const mockVehicles = ref([
       <div class="flex items-center space-x-3">
         <RouterLink
           to="/vehicle/vehicle-types"
-          class="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 rounded-lg text-xs font-semibold transition-colors"
+          class="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-xs font-semibold transition-colors"
         >
           Manage Vehicle Tiers →
         </RouterLink>
@@ -78,25 +78,25 @@ const mockVehicles = ref([
 
     <!-- Fleet Overview Stats -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="bg-white p-4 rounded-xl border border-neutral-200 shadow-2xs">
+      <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Total Registered</span>
-        <div class="text-xl font-bold text-neutral-900 mt-1">1,420</div>
+        <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">1,420</div>
       </div>
-      <div class="bg-white p-4 rounded-xl border border-neutral-200 shadow-2xs">
+      <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Active in Service</span>
-        <div class="text-xl font-bold text-emerald-600 mt-1">1,280</div>
+        <div class="text-xl font-bold tabular-nums text-emerald-600 mt-1">1,280</div>
       </div>
-      <div class="bg-white p-4 rounded-xl border border-neutral-200 shadow-2xs">
+      <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Inspection Due Soon</span>
-        <div class="text-xl font-bold text-amber-600 mt-1">14</div>
+        <div class="text-xl font-bold tabular-nums text-amber-600 mt-1">14</div>
       </div>
-      <div class="bg-white p-4 rounded-xl border border-neutral-200 shadow-2xs">
+      <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Electric / Hybrid</span>
-        <div class="text-xl font-bold text-blue-600 mt-1">42%</div>
+        <div class="text-xl font-bold tabular-nums text-blue-600 mt-1">42%</div>
       </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
         class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
       >
@@ -106,13 +106,13 @@ const mockVehicles = ref([
             v-model="searchQuery"
             type="text"
             placeholder="Search vehicle plate, model, driver..."
-            class="w-full pl-9 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-xs focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
+            class="w-full pl-9 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
           />
         </div>
         <div class="flex items-center space-x-2">
           <select
             v-model="filterTier"
-            class="px-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-xs text-neutral-700"
+            class="px-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs text-neutral-700"
           >
             <option value="all">All Tiers</option>
             <option value="Economy">Economy</option>

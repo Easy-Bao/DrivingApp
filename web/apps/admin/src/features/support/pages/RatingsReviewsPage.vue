@@ -38,7 +38,7 @@ const reviews = ref([
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           Ratings & Feedback Audits
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -48,7 +48,7 @@ const reviews = ref([
       </div>
       <div class="flex items-center space-x-2">
         <span
-          class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-xs font-bold text-amber-900"
+          class="flex items-center space-x-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 text-xs font-bold text-amber-900"
         >
           <Icon icon="lucide:star" class="text-amber-500" />
           <span>Platform Fleet Average: 4.88 ★</span>
@@ -56,7 +56,7 @@ const reviews = ref([
       </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Passenger Star Reviews & Comments</h2>
         <span class="text-xs text-neutral-400"
@@ -82,7 +82,7 @@ const reviews = ref([
             <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ r.id }}</td>
             <td class="py-3 px-4">
               <span
-                class="font-bold font-mono px-2 py-0.5 rounded-md text-[11px]"
+                class="font-bold font-mono px-2 py-0.5 text-[11px]"
                 :class="
                   r.rating >= 4 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
                 "

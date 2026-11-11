@@ -15,14 +15,14 @@ const cancellationCauses = ref([
     count: 320,
     share: '25.6%',
     initiatedBy: 'Driver',
-    feeApplicable: 'Yes ($5.00)',
+    feeApplicable: 'Yes (₱5.00)',
   },
   {
     reason: 'Accidental dispatch / rider changed plans',
     count: 240,
     share: '19.2%',
     initiatedBy: 'Rider',
-    feeApplicable: 'Within Grace Period ($0)',
+    feeApplicable: 'Within Grace Period (₱0)',
   },
   {
     reason: 'Driver vehicle mechanical issue / flat tire',
@@ -44,7 +44,7 @@ const cancellationCauses = ref([
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
         Trip Cancellation Root-Cause Analysis
       </h1>
       <p class="text-sm text-neutral-500 mt-1">
@@ -54,7 +54,7 @@ const cancellationCauses = ref([
 
     <ReportFilterBar report-title="Cancellation Analysis Report" />
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Cancellation Reasons Breakdown</h2>
         <span class="text-xs text-neutral-400">Total cancellations this period: 1,250</span>

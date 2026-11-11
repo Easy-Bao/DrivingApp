@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Icon } from '@iconify/vue'
 
 const activeZones = ref([
   {
@@ -65,18 +64,10 @@ const liveDispatches = ref([
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">Real-Time Dispatch Radar</h1>
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Real-Time Dispatch Radar</h1>
         <p class="text-sm text-neutral-500 mt-1">
           Monitor live vehicle telemetry, fleet coverage density, and algorithm matching efficiency.
         </p>
-      </div>
-      <div class="flex items-center space-x-2">
-        <span
-          class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800"
-        >
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Dispatch Engine: Normal Latency (32ms)</span>
-        </span>
       </div>
     </div>
 
@@ -85,12 +76,12 @@ const liveDispatches = ref([
       <div
         v-for="zone in activeZones"
         :key="zone.name"
-        class="bg-white p-4 rounded-xl border border-neutral-200 shadow-2xs space-y-2"
+        class="bg-white p-4 border border-neutral-200 space-y-2"
       >
         <div class="flex items-center justify-between">
           <span class="font-bold text-xs text-neutral-900 truncate">{{ zone.name }}</span>
           <span
-            class="px-2 py-0.5 rounded-md text-[10px] font-bold"
+            class="px-2 py-0.5 text-[10px] font-bold"
             :class="
               zone.surge !== '1.0x'
                 ? 'bg-amber-100 text-amber-800'
@@ -102,15 +93,15 @@ const liveDispatches = ref([
         </div>
         <div class="grid grid-cols-3 gap-1 pt-1 border-t border-neutral-100 text-center">
           <div>
-            <div class="text-[10px] text-neutral-400">Drivers</div>
+            <div class="text-xs text-neutral-400">Drivers</div>
             <div class="text-xs font-bold text-neutral-900">{{ zone.activeDrivers }}</div>
           </div>
           <div>
-            <div class="text-[10px] text-neutral-400">Waiting</div>
+            <div class="text-xs text-neutral-400">Waiting</div>
             <div class="text-xs font-bold text-neutral-900">{{ zone.pendingRequests }}</div>
           </div>
           <div>
-            <div class="text-[10px] text-neutral-400">ETA</div>
+            <div class="text-xs text-neutral-400">ETA</div>
             <div class="text-xs font-bold text-neutral-900">{{ zone.avgWait }}</div>
           </div>
         </div>
@@ -118,10 +109,9 @@ const liveDispatches = ref([
     </div>
 
     <!-- Live Active Dispatches -->
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <div class="flex items-center space-x-2">
-          <Icon icon="lucide:radio" class="text-emerald-500" />
           <h2 class="font-bold text-sm text-neutral-900">Active Real-Time Dispatches</h2>
         </div>
         <span class="text-xs text-neutral-400">Updated every 3 seconds</span>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Icon } from '@iconify/vue'
 
 const rejectedDocs = ref([
   {
@@ -29,14 +28,14 @@ const rejectedDocs = ref([
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">Rejected Driver Documents</h1>
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Rejected Driver Documents</h1>
       <p class="text-sm text-neutral-500 mt-1">
         Audit log of failed document submissions, regulatory rejection grounds, and driver
         resubmissions.
       </p>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Rejected Regulatory Documents</h2>
         <span class="text-xs text-neutral-400">Maintained for legal compliance audits</span>
@@ -70,7 +69,6 @@ const rejectedDocs = ref([
             <td class="py-3 px-4 font-medium text-neutral-800">{{ item.docType }}</td>
             <td class="py-3 px-4 text-rose-700 font-medium">
               <div class="flex items-center space-x-1.5">
-                <Icon icon="lucide:alert-circle" class="shrink-0 text-rose-500" />
                 <span>{{ item.rejectionReason }}</span>
               </div>
             </td>

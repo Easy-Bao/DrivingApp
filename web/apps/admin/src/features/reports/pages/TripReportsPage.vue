@@ -9,7 +9,7 @@ const tripReportData = ref([
     completed: 3980,
     cancelled: 140,
     totalDistance: '48,200 km',
-    grossVolume: '$89,450',
+    grossVolume: '₱89,450',
   },
   {
     date: '2026-11-08',
@@ -17,7 +17,7 @@ const tripReportData = ref([
     completed: 4310,
     cancelled: 140,
     totalDistance: '52,100 km',
-    grossVolume: '$96,800',
+    grossVolume: '₱96,800',
   },
   {
     date: '2026-11-07',
@@ -25,7 +25,7 @@ const tripReportData = ref([
     completed: 4920,
     cancelled: 200,
     totalDistance: '61,300 km',
-    grossVolume: '$114,200',
+    grossVolume: '₱114,200',
   },
   {
     date: '2026-11-06',
@@ -33,7 +33,7 @@ const tripReportData = ref([
     completed: 5190,
     cancelled: 190,
     totalDistance: '64,900 km',
-    grossVolume: '$121,500',
+    grossVolume: '₱121,500',
   },
 ])
 </script>
@@ -41,7 +41,7 @@ const tripReportData = ref([
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
         Trip Volume & Mobility Reports
       </h1>
       <p class="text-sm text-neutral-500 mt-1">
@@ -53,7 +53,7 @@ const tripReportData = ref([
     <!-- Universal Report Filter Bar with CSV/PDF/Excel export -->
     <ReportFilterBar report-title="Trip Volume Report" />
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Trip Aggregations by Day</h2>
         <span class="text-xs text-neutral-400">All data synced from primary dispatch ledger</span>

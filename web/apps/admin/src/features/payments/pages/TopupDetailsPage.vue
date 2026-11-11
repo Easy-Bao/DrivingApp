@@ -16,7 +16,7 @@ const actionToast = ref<string | null>(null)
 function handleApprove() {
   if (!request.value) return
   verifyAndCredit(request.value)
-  actionToast.value = `Successfully verified ${request.value.id}! Credited $${request.value.amount.toFixed(2)} to ${request.value.driverName}'s wallet. Driver dispatch eligibility restored.`
+  actionToast.value = `Successfully verified ${request.value.id}! Credited ₱${request.value.amount.toFixed(2)} to ${request.value.driverName}'s wallet. Driver dispatch eligibility restored.`
 }
 
 function handleReject() {
@@ -40,7 +40,7 @@ function goBack() {
     <div>
       <button
         type="button"
-        class="inline-flex items-center space-x-2 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 px-3 py-1.5 rounded-lg shadow-2xs transition-colors group cursor-pointer"
+        class="inline-flex items-center space-x-2 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 px-3 py-1.5 transition-colors group cursor-pointer"
         @click="goBack"
       >
         <Icon
@@ -54,10 +54,9 @@ function goBack() {
     <!-- Alert / Toast -->
     <div
       v-if="actionToast"
-      class="p-4 rounded-xl bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
+      class="p-4 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
     >
       <div class="flex items-center space-x-2">
-        <Icon icon="lucide:check-circle" class="text-emerald-400 text-base" />
         <span>{{ actionToast }}</span>
       </div>
       <button type="button" @click="actionToast = null">
@@ -71,7 +70,7 @@ function goBack() {
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div class="flex items-center space-x-3">
-            <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+            <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
               Top-Up Request {{ request.id }}
             </h1>
             <span
@@ -95,17 +94,17 @@ function goBack() {
         <div class="text-right">
           <div class="text-xs text-neutral-400 uppercase font-semibold">Requested Amount</div>
           <div class="text-3xl font-extrabold text-neutral-900 mt-0.5 font-mono">
-            ${{ request.amount.toFixed(2) }}
+            ₱{{ request.amount.toFixed(2) }}
           </div>
         </div>
       </div>
 
       <!-- Driver Profile Card -->
-      <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs space-y-4">
+      <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
           <div class="flex items-center space-x-3">
             <div
-              class="w-10 h-10 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-sm"
+              class="w-10 h-10 bg-neutral-900 text-white flex items-center justify-center font-bold text-sm"
             >
               {{ request.driverName.charAt(0) }}
             </div>
@@ -115,14 +114,14 @@ function goBack() {
             </div>
           </div>
           <span
-            class="px-2.5 py-1 rounded-md text-xs font-semibold"
+            class="px-2.5 py-1 text-xs font-semibold"
             :class="
               request.currentBalance < 5
                 ? 'bg-rose-50 text-rose-700 border border-rose-200'
                 : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
             "
           >
-            {{ request.currentBalance < 5 ? 'Dispatch Locked (< $5.00 min)' : 'Dispatch Eligible' }}
+            {{ request.currentBalance < 5 ? 'Dispatch Locked (< ₱5.00 min)' : 'Dispatch Eligible' }}
           </span>
         </div>
 
@@ -139,13 +138,13 @@ function goBack() {
               class="font-mono font-bold mt-0.5"
               :class="request.currentBalance < 5 ? 'text-rose-600' : 'text-neutral-900'"
             >
-              ${{ request.currentBalance.toFixed(2) }}
+              ₱{{ request.currentBalance.toFixed(2) }}
             </div>
           </div>
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">Balance After Approval</div>
             <div class="font-mono font-bold text-emerald-600 mt-0.5">
-              ${{
+              ₱{{
                 (
                   request.currentBalance + (request.status === 'Pending' ? request.amount : 0)
                 ).toFixed(2)
@@ -156,9 +155,8 @@ function goBack() {
       </div>
 
       <!-- Payment & Transaction Details Card -->
-      <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs space-y-4">
+      <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center space-x-2 pb-3 border-b border-neutral-100">
-          <Icon icon="lucide:receipt" class="text-neutral-500 text-base" />
           <h2 class="font-bold text-sm text-neutral-900">Company Payment Method & Reference</h2>
         </div>
 
@@ -199,10 +197,9 @@ function goBack() {
         </div>
 
         <!-- Attached Proof Preview Box -->
-        <div class="mt-4 p-4 rounded-xl bg-neutral-50 border border-neutral-200 space-y-2">
+        <div class="mt-4 p-4 bg-neutral-50 border border-neutral-200 space-y-2">
           <div class="flex items-center justify-between text-xs">
             <span class="font-bold text-neutral-900 flex items-center space-x-1.5">
-              <Icon icon="lucide:file-check" class="text-emerald-500" />
               <span>Payment Proof Verified Against Company Statement</span>
             </span>
             <span class="font-mono text-[11px] text-neutral-400">Direct Settlement</span>
@@ -215,7 +212,7 @@ function goBack() {
 
       <!-- Action Footer -->
       <div
-        class="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex items-center justify-between"
+        class="bg-white border border-neutral-200 p-4 flex items-center justify-between"
       >
         <div class="text-xs text-neutral-500">
           <span v-if="request.status === 'Pending'">
@@ -230,17 +227,17 @@ function goBack() {
         <div v-if="request.status === 'Pending'" class="flex items-center space-x-3">
           <button
             type="button"
-            class="px-4 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-lg text-xs font-semibold transition-colors"
+            class="px-4 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition-colors"
             @click="handleReject"
           >
             Reject Request
           </button>
           <button
             type="button"
-            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-xs"
+            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors"
             @click="handleApprove"
           >
-            Approve & Credit Wallet (${{ request.amount.toFixed(2) }})
+            Approve & Credit Wallet (₱{{ request.amount.toFixed(2) }})
           </button>
         </div>
       </div>
@@ -249,14 +246,13 @@ function goBack() {
     <!-- If request not found -->
     <div
       v-else
-      class="bg-white border border-neutral-200 rounded-xl p-8 text-center text-xs text-neutral-500 shadow-2xs"
+      class="bg-white border border-neutral-200 p-8 text-center text-xs text-neutral-500"
     >
-      <Icon icon="lucide:alert-circle" class="text-2xl text-neutral-400 mx-auto mb-2" />
       <p class="font-semibold text-neutral-900">Request Not Found</p>
       <p class="mt-1">No top-up request matches ID {{ requestId }}.</p>
       <button
         type="button"
-        class="mt-4 px-3 py-1.5 bg-neutral-900 text-white rounded-lg text-xs font-semibold"
+        class="mt-4 px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold"
         @click="goBack"
       >
         Back to List

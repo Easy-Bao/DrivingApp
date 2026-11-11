@@ -72,7 +72,7 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           Driver Document Verification Queue
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -82,7 +82,7 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
       </div>
       <div class="flex items-center space-x-2">
         <span
-          class="px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-800"
+          class="px-3 py-1.5 bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-800"
         >
           12 Pending Verifications
         </span>
@@ -91,10 +91,9 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
 
     <div
       v-if="actionToast"
-      class="p-4 rounded-xl bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
+      class="p-4 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
     >
       <div class="flex items-center space-x-2">
-        <Icon icon="lucide:check-circle" class="text-emerald-400 text-base" />
         <span>{{ actionToast }}</span>
       </div>
       <button type="button" @click="actionToast = null">
@@ -102,7 +101,7 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
       </button>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Compliance Verification Queue</h2>
         <span class="text-xs text-neutral-400">Strict regulatory compliance mode enabled</span>
@@ -153,7 +152,7 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
             <td class="py-3 px-4 text-right">
               <button
                 type="button"
-                class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-md text-xs font-semibold transition-colors"
+                class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors"
                 @click="openReview(doc)"
               >
                 Review Document
@@ -169,7 +168,7 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
       v-if="selectedDoc"
       class="fixed inset-0 z-50 bg-neutral-900/40 backdrop-blur-xs flex items-center justify-center p-4"
     >
-      <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-neutral-200">
+      <div class="bg-white max-w-lg w-full p-6 shadow-2xl border border-neutral-200">
         <div class="flex items-center justify-between pb-4 border-b border-neutral-100">
           <div>
             <h3 class="font-bold text-base text-neutral-900">Audit Document Submission</h3>
@@ -199,7 +198,7 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
               selectedDoc.expiryDate
             }}</span>
           </div>
-          <div class="p-4 bg-neutral-50 rounded-xl border border-neutral-200 text-center">
+          <div class="p-4 bg-neutral-50 border border-neutral-200 text-center">
             <Icon icon="lucide:file-text" class="text-3xl text-neutral-400 mx-auto mb-2" />
             <div class="font-medium text-neutral-800">{{ selectedDoc.docImageUrl }}</div>
             <div class="text-[11px] text-neutral-400 mt-1">
@@ -211,14 +210,14 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
         <div class="flex items-center justify-end space-x-3 pt-4 border-t border-neutral-100">
           <button
             type="button"
-            class="px-4 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-lg text-xs font-semibold transition-colors"
+            class="px-4 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition-colors"
             @click="verifyDoc('Rejected')"
           >
             Reject Document
           </button>
           <button
             type="button"
-            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-xs font-semibold transition-colors"
+            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors"
             @click="verifyDoc('Approved')"
           >
             Approve & Validate

@@ -5,23 +5,23 @@ import ReportFilterBar from '@/features/reports/components/ReportFilterBar.vue'
 const financialSummaries = ref([
   {
     period: 'October 2026',
-    grossVolume: '$2,840,190',
-    platformCommission: '$426,028',
-    driverPayouts: '$2,414,162',
+    grossVolume: '₱2,840,190',
+    platformCommission: '₱426,028',
+    driverPayouts: '₱2,414,162',
     netMargin: '15.0%',
   },
   {
     period: 'September 2026',
-    grossVolume: '$2,610,400',
-    platformCommission: '$391,560',
-    driverPayouts: '$2,218,840',
+    grossVolume: '₱2,610,400',
+    platformCommission: '₱391,560',
+    driverPayouts: '₱2,218,840',
     netMargin: '15.0%',
   },
   {
     period: 'August 2026',
-    grossVolume: '$2,450,800',
-    platformCommission: '$367,620',
-    driverPayouts: '$2,083,180',
+    grossVolume: '₱2,450,800',
+    platformCommission: '₱367,620',
+    driverPayouts: '₱2,083,180',
     netMargin: '15.0%',
   },
 ])
@@ -30,7 +30,7 @@ const financialSummaries = ref([
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
         Platform Revenue & Financial Reports
       </h1>
       <p class="text-sm text-neutral-500 mt-1">
@@ -42,7 +42,7 @@ const financialSummaries = ref([
     <!-- Universal Report Filter Bar with CSV/PDF/Excel export -->
     <ReportFilterBar report-title="Revenue & Commission Report" />
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Monthly Financial Settlement Summary</h2>
         <span class="text-xs text-neutral-400">Prepaid wallet deduction model</span>

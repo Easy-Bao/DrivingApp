@@ -16,7 +16,7 @@ const actionToast = ref<string | null>(null)
 function handleApprove() {
   if (!payout.value) return
   approvePayout(payout.value)
-  actionToast.value = `Payout ${payout.value.id} for ${payout.value.driver} ($${payout.value.amount.toFixed(2)}) approved for ACH wire batch.`
+  actionToast.value = `Payout ${payout.value.id} for ${payout.value.driver} (₱${payout.value.amount.toFixed(2)}) approved for ACH wire batch.`
 }
 
 function handleReject() {
@@ -40,7 +40,7 @@ function goBack() {
     <div>
       <button
         type="button"
-        class="inline-flex items-center space-x-2 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 px-3 py-1.5 rounded-lg shadow-2xs transition-colors group cursor-pointer"
+        class="inline-flex items-center space-x-2 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 px-3 py-1.5 transition-colors group cursor-pointer"
         @click="goBack"
       >
         <Icon
@@ -54,10 +54,9 @@ function goBack() {
     <!-- Alert / Toast Banner -->
     <div
       v-if="actionToast"
-      class="p-4 rounded-xl bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
+      class="p-4 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
     >
       <div class="flex items-center space-x-2">
-        <Icon icon="lucide:check-circle" class="text-emerald-400 text-base" />
         <span>{{ actionToast }}</span>
       </div>
       <button type="button" @click="actionToast = null">
@@ -71,7 +70,7 @@ function goBack() {
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div class="flex items-center space-x-3">
-            <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+            <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
               Payout Withdrawal {{ payout.id }}
             </h1>
             <span
@@ -94,17 +93,17 @@ function goBack() {
         <div class="text-right">
           <div class="text-xs text-neutral-400 uppercase font-semibold">Net Payout Amount</div>
           <div class="text-3xl font-extrabold text-neutral-900 mt-0.5 font-mono">
-            ${{ payout.netPayoutAmount.toFixed(2) }}
+            ₱{{ payout.netPayoutAmount.toFixed(2) }}
           </div>
         </div>
       </div>
 
       <!-- Driver Information -->
-      <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs space-y-4">
+      <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
           <div class="flex items-center space-x-3">
             <div
-              class="w-10 h-10 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-sm"
+              class="w-10 h-10 bg-neutral-900 text-white flex items-center justify-center font-bold text-sm"
             >
               {{ payout.driver.charAt(0) }}
             </div>
@@ -114,7 +113,7 @@ function goBack() {
             </div>
           </div>
           <span
-            class="px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200"
+            class="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200"
           >
             {{ payout.tripsCount }} Completed Trips this Cycle
           </span>
@@ -125,28 +124,27 @@ function goBack() {
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">Gross Fare Earnings</div>
             <div class="font-mono font-bold text-neutral-900 mt-0.5">
-              ${{ payout.weeklyGrossEarnings.toFixed(2) }}
+              ₱{{ payout.weeklyGrossEarnings.toFixed(2) }}
             </div>
           </div>
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">Platform Commission (20%)</div>
             <div class="font-mono font-semibold text-rose-600 mt-0.5">
-              -${{ payout.platformCommissionDeducted.toFixed(2) }}
+              -₱{{ payout.platformCommissionDeducted.toFixed(2) }}
             </div>
           </div>
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">Disbursable Amount</div>
             <div class="font-mono font-extrabold text-emerald-600 mt-0.5">
-              ${{ payout.netPayoutAmount.toFixed(2) }}
+              ₱{{ payout.netPayoutAmount.toFixed(2) }}
             </div>
           </div>
         </div>
       </div>
 
       <!-- Destination Bank Account Details -->
-      <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs space-y-4">
+      <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center space-x-2 pb-3 border-b border-neutral-100">
-          <Icon icon="lucide:building-2" class="text-neutral-500 text-base" />
           <h2 class="font-bold text-sm text-neutral-900">
             Destination Bank Account for Settlement
           </h2>
@@ -170,10 +168,9 @@ function goBack() {
         </div>
 
         <div
-          class="p-3 rounded-lg bg-neutral-50 border border-neutral-200 flex items-center justify-between text-xs"
+          class="p-3 bg-neutral-50 border border-neutral-200 flex items-center justify-between text-xs"
         >
           <div class="flex items-center space-x-2">
-            <Icon icon="lucide:check-circle" class="text-emerald-500 text-sm" />
             <span class="font-medium text-neutral-700">Bank Routing & Ownership Verified</span>
           </div>
           <span class="text-[11px] text-neutral-400 font-mono">Direct ACH Settlement</span>
@@ -182,7 +179,7 @@ function goBack() {
 
       <!-- Action Footer -->
       <div
-        class="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex items-center justify-between"
+        class="bg-white border border-neutral-200 p-4 flex items-center justify-between"
       >
         <div class="text-xs text-neutral-500">
           <span v-if="payout.status === 'Pending Batch'">
@@ -199,17 +196,17 @@ function goBack() {
         <div v-if="payout.status === 'Pending Batch'" class="flex items-center space-x-3">
           <button
             type="button"
-            class="px-4 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+            class="px-4 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition-colors cursor-pointer"
             @click="handleReject"
           >
             Reject Payout
           </button>
           <button
             type="button"
-            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
             @click="handleApprove"
           >
-            Approve Payout (${{ payout.netPayoutAmount.toFixed(2) }})
+            Approve Payout (₱{{ payout.netPayoutAmount.toFixed(2) }})
           </button>
         </div>
       </div>
@@ -218,14 +215,13 @@ function goBack() {
     <!-- Payout Not Found Fallback -->
     <div
       v-else
-      class="bg-white border border-neutral-200 rounded-xl p-8 text-center text-xs text-neutral-500 shadow-2xs"
+      class="bg-white border border-neutral-200 p-8 text-center text-xs text-neutral-500"
     >
-      <Icon icon="lucide:alert-circle" class="text-2xl text-neutral-400 mx-auto mb-2" />
       <p class="font-semibold text-neutral-900">Payout Request Not Found</p>
       <p class="mt-1">No payout request matches ID {{ payoutId }}.</p>
       <button
         type="button"
-        class="mt-4 px-3 py-1.5 bg-neutral-900 text-white rounded-lg text-xs font-semibold cursor-pointer"
+        class="mt-4 px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
         @click="goBack"
       >
         Back to Payout Requests

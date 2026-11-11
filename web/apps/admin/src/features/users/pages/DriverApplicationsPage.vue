@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { Icon } from '@iconify/vue'
 import { useDriverApplications } from '@/features/users/composables/useDriverApplications'
 
 const router = useRouter()
@@ -15,7 +14,7 @@ function navigateToDetails(id: string) {
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           Driver Applications Queue
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -26,7 +25,7 @@ function navigateToDetails(id: string) {
 
       <div class="flex items-center space-x-3">
         <span
-          class="px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800"
+          class="px-3 py-1.5 bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800"
         >
           {{ applications.filter((a) => a.status === 'Pending Review').length }} Pending
           Applications
@@ -34,7 +33,7 @@ function navigateToDetails(id: string) {
       </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Onboarding Submissions Queue</h2>
         <span class="text-xs text-neutral-400"
@@ -95,11 +94,10 @@ function navigateToDetails(id: string) {
               <td class="py-3 px-4 text-right whitespace-nowrap">
                 <button
                   type="button"
-                  class="px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs transition-colors shadow-2xs inline-flex items-center space-x-1 cursor-pointer"
+                  class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs transition-colors inline-flex items-center space-x-1 cursor-pointer"
                   @click="navigateToDetails(app.id)"
                 >
                   <span>View Details</span>
-                  <Icon icon="lucide:arrow-right" class="text-xs" />
                 </button>
               </td>
             </tr>

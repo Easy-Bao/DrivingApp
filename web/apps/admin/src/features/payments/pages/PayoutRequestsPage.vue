@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { Icon } from '@iconify/vue'
 import { usePayoutRequests } from '@/features/payments/composables/usePayoutRequests'
 
 const router = useRouter()
@@ -15,7 +14,7 @@ function navigateToDetails(id: string) {
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">Driver Payout Requests</h1>
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Driver Payout Requests</h1>
         <p class="text-sm text-neutral-500 mt-1">
           Approve weekly driver earning withdrawals to verified bank accounts through company batch
           ACH/wire.
@@ -23,14 +22,14 @@ function navigateToDetails(id: string) {
       </div>
       <div class="flex items-center space-x-2">
         <span
-          class="px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-800"
+          class="px-3 py-1.5 bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-800"
         >
           {{ payoutRequests.filter((p) => p.status === 'Pending Batch').length }} Pending Payouts
         </span>
       </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Payout Withdrawal Queue</h2>
         <span class="text-xs text-neutral-400">Processed via direct company bank settlement</span>
@@ -64,7 +63,7 @@ function navigateToDetails(id: string) {
                 <div class="text-[11px] text-neutral-400">{{ req.phone }}</div>
               </td>
               <td class="py-3 px-4 font-bold text-base text-neutral-900 font-mono">
-                ${{ req.amount.toFixed(2) }}
+                ₱{{ req.amount.toFixed(2) }}
               </td>
               <td class="py-3 px-4">
                 <div class="font-medium text-neutral-800">{{ req.bankName }}</div>
@@ -88,11 +87,10 @@ function navigateToDetails(id: string) {
               <td class="py-3 px-4 text-right whitespace-nowrap">
                 <button
                   type="button"
-                  class="px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs transition-colors shadow-2xs inline-flex items-center space-x-1 cursor-pointer"
+                  class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs transition-colors inline-flex items-center space-x-1 cursor-pointer"
                   @click="navigateToDetails(req.id)"
                 >
                   <span>View Details</span>
-                  <Icon icon="lucide:arrow-right" class="text-xs" />
                 </button>
               </td>
             </tr>

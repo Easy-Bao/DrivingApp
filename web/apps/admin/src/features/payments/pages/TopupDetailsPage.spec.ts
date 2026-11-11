@@ -29,7 +29,7 @@ describe('TopupDetailsPage', () => {
     // Assert request details are displayed
     expect(wrapper.text()).toContain('Top-Up Request TOP-8921')
     expect(wrapper.text()).toContain('Marcus Miller')
-    expect(wrapper.text()).toContain('$50.00')
+    expect(wrapper.text()).toContain('₱50.00')
     expect(wrapper.text()).toContain('Company QR Code')
 
     // Assert approve action button is present and click approves it

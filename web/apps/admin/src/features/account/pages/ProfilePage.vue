@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
 </script>
 
 <template>
   <div class="space-y-6 max-w-4xl">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
         Super Administrator Account
       </h1>
       <p class="text-sm text-neutral-500 mt-1">
@@ -13,10 +12,10 @@ import { Icon } from '@iconify/vue'
       </p>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-xs space-y-6">
+    <div class="bg-white border border-neutral-200 p-6 space-y-6">
       <div class="flex items-center space-x-4 border-b border-neutral-100 pb-6">
         <div
-          class="w-16 h-16 rounded-2xl bg-neutral-900 text-white flex items-center justify-center font-bold text-xl shadow-md"
+          class="w-16 h-16 bg-neutral-900 text-white flex items-center justify-center font-bold text-xl shadow-md"
         >
           AD
         </div>
@@ -37,7 +36,7 @@ import { Icon } from '@iconify/vue'
           <input
             type="text"
             value="System Administrator"
-            class="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-xs"
+            class="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 text-xs"
           />
         </div>
         <div>
@@ -45,14 +44,13 @@ import { Icon } from '@iconify/vue'
           <input
             type="email"
             value="admin@easyride.io"
-            class="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-xs"
+            class="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 text-xs"
           />
         </div>
       </div>
 
       <div class="pt-4 border-t border-neutral-100 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-          <Icon icon="lucide:shield-check" class="text-2xl text-emerald-600" />
           <div>
             <span class="text-xs font-semibold text-neutral-900"
               >Two-Factor Authentication (2FA)</span
@@ -60,7 +58,7 @@ import { Icon } from '@iconify/vue'
             <p class="text-[11px] text-neutral-500">Hardware token or authenticator app active.</p>
           </div>
         </div>
-        <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full"
+        <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full"
           >Enforced</span
         >
       </div>

@@ -39,7 +39,7 @@ const actionToast = ref<string | null>(null)
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
           Help Center & FAQ Knowledge Base
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
@@ -49,20 +49,18 @@ const actionToast = ref<string | null>(null)
       </div>
       <button
         type="button"
-        class="px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-xs font-semibold transition-colors flex items-center space-x-2"
+        class="px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors flex items-center space-x-2"
         @click="actionToast = 'New article composer opened.'"
       >
-        <Icon icon="lucide:plus" />
         <span>Create Knowledge Article</span>
       </button>
     </div>
 
     <div
       v-if="actionToast"
-      class="p-4 rounded-xl bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
+      class="p-4 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
     >
       <div class="flex items-center space-x-2">
-        <Icon icon="lucide:check-circle" class="text-emerald-400 text-base" />
         <span>{{ actionToast }}</span>
       </div>
       <button type="button" @click="actionToast = null">
@@ -74,7 +72,7 @@ const actionToast = ref<string | null>(null)
       <div
         v-for="faq in faqArticles"
         :key="faq.id"
-        class="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs space-y-3 flex flex-col justify-between"
+        class="bg-white border border-neutral-200 p-5 space-y-3 flex flex-col justify-between"
       >
         <div>
           <span

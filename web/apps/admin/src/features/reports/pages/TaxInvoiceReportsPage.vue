@@ -7,24 +7,24 @@ const taxInvoices = ref([
     invoiceId: 'INV-2026-10',
     jurisdiction: 'State Dept of Revenue',
     taxType: 'Ride-Hailing Transportation Excise Tax (3.5%)',
-    taxableBase: '$2,840,190.00',
-    taxDue: '$99,406.65',
+    taxableBase: '₱2,840,190.00',
+    taxDue: '₱99,406.65',
     status: 'Filed & Paid',
   },
   {
     invoiceId: 'INV-2026-09',
     jurisdiction: 'State Dept of Revenue',
     taxType: 'Ride-Hailing Transportation Excise Tax (3.5%)',
-    taxableBase: '$2,610,400.00',
-    taxDue: '$91,364.00',
+    taxableBase: '₱2,610,400.00',
+    taxDue: '₱91,364.00',
     status: 'Filed & Paid',
   },
   {
     invoiceId: 'INV-2026-08',
     jurisdiction: 'State Dept of Revenue',
     taxType: 'Ride-Hailing Transportation Excise Tax (3.5%)',
-    taxableBase: '$2,450,800.00',
-    taxDue: '$85,778.00',
+    taxableBase: '₱2,450,800.00',
+    taxDue: '₱85,778.00',
     status: 'Filed & Paid',
   },
 ])
@@ -33,7 +33,7 @@ const taxInvoices = ref([
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
         Tax & Regulatory Invoicing Reports
       </h1>
       <p class="text-sm text-neutral-500 mt-1">
@@ -44,7 +44,7 @@ const taxInvoices = ref([
 
     <ReportFilterBar report-title="Tax & Regulatory Invoicing Summary" />
 
-    <div class="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Municipal & State Excise Tax Filings</h2>
         <span class="text-xs text-neutral-400">Monthly statutory returns</span>
