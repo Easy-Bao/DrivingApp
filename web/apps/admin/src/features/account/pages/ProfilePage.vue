@@ -2,7 +2,7 @@
 </script>
 
 <template>
-  <div class="space-y-6 max-w-4xl">
+  <div class="space-y-6 w-full">
     <div>
       <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
         Super Administrator Account

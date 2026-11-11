@@ -35,7 +35,7 @@ function goBack() {
 </script>
 
 <template>
-  <div class="space-y-6 max-w-4xl">
+  <div class="space-y-6 w-full">
     <!-- Back Button: Inside the page content area (not in header or breadcrumbs) -->
     <div>
       <button
