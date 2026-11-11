@@ -205,7 +205,6 @@ const pendingDocs = ref<PendingDocument[]>([
   },
 ])
 
-// Pagination State (10 items max per table)
 const currentPage = ref(1)
 const itemsPerPage = 10
 
@@ -214,13 +213,11 @@ const paginatedDocs = computed(() => {
   return pendingDocs.value.slice(start, start + itemsPerPage)
 })
 
-// Review Modal State
 const selectedDoc = ref<PendingDocument | null>(null)
 const activeSide = ref<'front' | 'back'>('front')
 const rejectionReason = ref('')
 const isRejecting = ref(false)
 
-// Validation Checklist State
 const checks = ref({
   clearScan: true,
   sealVerified: true,
@@ -288,7 +285,6 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
       </div>
     </div>
 
-    <!-- Verification Table Container -->
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Compliance & Regulatory Queue</h2>
@@ -362,7 +358,6 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
         </table>
       </div>
 
-      <!-- Table Pagination (10 per page) -->
       <TablePagination
         v-model:current-page="currentPage"
         :total-items="pendingDocs.length"
@@ -370,7 +365,6 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
       />
     </div>
 
-    <!-- Review & Audit Modal (Fixed Width, Full Close/Exit Capabilities) -->
     <div
       v-if="selectedDoc"
       class="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
@@ -382,7 +376,6 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
         aria-modal="true"
         aria-label="Document Verification Modal"
       >
-        <!-- Modal Header with Explicit Close Button -->
         <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
           <div>
             <h3 class="font-bold text-base text-neutral-900">Audit Document Submission</h3>
@@ -392,7 +385,6 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
               <span>Submitted {{ selectedDoc.submittedAt }}</span>
             </div>
           </div>
-          <!-- Close Button -->
           <button
             type="button"
             class="w-8 h-8 flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 border border-neutral-200 transition-colors cursor-pointer"
@@ -404,9 +396,7 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
           </button>
         </div>
 
-        <!-- Modal Content -->
         <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
-          <!-- Driver & Document Metadata Grid -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-neutral-50 border border-neutral-200">
             <div>
               <span class="text-neutral-400 text-[11px] font-medium">Driver Applicant</span>
@@ -427,7 +417,6 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
             </div>
           </div>
 
-          <!-- Back-to-Back Side Toggle (if 2-sided document) -->
           <div v-if="selectedDoc.hasTwoSides" class="flex items-center space-x-2 pt-1">
             <button
               type="button"
@@ -455,7 +444,6 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
             </button>
           </div>
 
-          <!-- Document Inspection Canvas -->
           <div class="p-6 bg-neutral-100 border border-neutral-300 text-center space-y-2">
             <div class="w-full max-w-[420px] mx-auto bg-white border border-neutral-300 p-4 shadow-sm text-left">
               <div class="flex items-center justify-between pb-2 border-b border-neutral-200">
@@ -478,7 +466,6 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
             </div>
           </div>
 
-          <!-- Regulatory Checklist -->
           <div class="border border-neutral-200 p-3 bg-neutral-50/50 space-y-2">
             <div class="font-bold text-neutral-900 text-xs">Official Compliance Verification Checklist</div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
@@ -501,7 +488,6 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
             </div>
           </div>
 
-          <!-- Rejection Ground Input (if rejecting) -->
           <div v-if="isRejecting" class="p-3 bg-rose-50 border border-rose-200 space-y-2">
             <div class="font-bold text-rose-900 text-xs">Specify Regulatory Rejection Grounds</div>
             <select
@@ -518,9 +504,7 @@ function verifyDoc(decision: 'Approved' | 'Rejected') {
           </div>
         </div>
 
-        <!-- Modal Footer: Explicit Cancel/Exit Button + Actions -->
         <div class="px-6 py-4 border-t border-neutral-200 bg-neutral-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <!-- Cancel / Close button -->
           <button
             type="button"
             class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"

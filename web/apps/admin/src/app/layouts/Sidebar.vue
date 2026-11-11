@@ -35,9 +35,29 @@ function navigateTo(path: string) {
   void router.push(path)
 }
 
+const activeItem = computed(() => {
+  const allItems = navigationGroups.flatMap((g) => g.items)
+
+  const exact = allItems.find((item) => route.path === item.path)
+  if (exact) return exact
+
+  if (route.path === '/' || route.path === '/dashboard' || route.path === '/dashboard/overview') {
+    return allItems.find((item) => item.id === 'overview')
+  }
+
+  const prefixMatches = allItems.filter(
+    (item) => item.path !== '/' && route.path.startsWith(`${item.path}/`),
+  )
+  if (prefixMatches.length > 0) {
+    prefixMatches.sort((a, b) => b.path.length - a.path.length)
+    return prefixMatches[0]
+  }
+
+  return null
+})
+
 function isItemActive(item: SidebarSubItem): boolean {
-  if (route.path === '/dashboard/overview' && item.id === 'overview') return true
-  return route.path === item.path
+  return activeItem.value?.id === item.id && activeItem.value?.path === item.path
 }
 
 watch(
@@ -79,13 +99,11 @@ const filteredGroups = computed(() => {
     :class="isCollapsed ? 'w-20' : 'w-72'"
     aria-label="Navigation Sidebar"
   >
-    <!-- Top Header: Exactly h-16 (64px) with border-b border-neutral-200 to align flush with top bar -->
     <div class="shrink-0">
       <div
         class="h-16 flex items-center border-b border-neutral-200 transition-all duration-300"
         :class="isCollapsed ? 'justify-center px-2' : 'justify-between px-4'"
       >
-        <!-- Expanded Brand Display -->
         <div v-if="!isCollapsed" class="flex items-center space-x-3 overflow-hidden min-w-0">
           <div
             class="w-9 h-9 bg-neutral-900 flex items-center justify-center text-white shrink-0"
@@ -98,7 +116,6 @@ const filteredGroups = computed(() => {
           </div>
         </div>
 
-        <!-- Toggle Button: Centered in collapsed mode (w-10 h-10), on right in expanded mode -->
         <button
           type="button"
           class="rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors flex items-center justify-center shrink-0"
@@ -114,7 +131,6 @@ const filteredGroups = computed(() => {
         </button>
       </div>
 
-      <!-- Quick Search Filter (Expanded only) -->
       <div v-if="!isCollapsed" class="p-3 border-b border-neutral-100">
         <div class="relative">
           <Icon icon="lucide:search" class="absolute left-2.5 top-2.5 text-neutral-400 text-sm" />
@@ -128,10 +144,8 @@ const filteredGroups = computed(() => {
       </div>
     </div>
 
-    <!-- Scrollable Navigation Groups -->
     <nav class="flex-1 overflow-y-auto px-3 py-3 space-y-3">
       <div v-for="group in filteredGroups" :key="group.id" class="space-y-1">
-        <!-- Group Header Button (Accordion) -->
         <button
           v-if="!isCollapsed"
           type="button"
@@ -152,10 +166,8 @@ const filteredGroups = computed(() => {
           />
         </button>
 
-        <!-- Divider in Collapsed Mode -->
         <div v-else class="h-px bg-neutral-100 my-2 mx-2" :title="group.title" />
 
-        <!-- Subitems with motion-v expansion animation -->
         <AnimatePresence>
           <motion.div
             v-if="isCollapsed || expandedGroups[group.id] || searchQuery"
@@ -179,7 +191,6 @@ const filteredGroups = computed(() => {
               :title="isCollapsed ? `${group.title}: ${item.label}` : undefined"
               @click="navigateTo(item.path)"
             >
-              <!-- motion-v active indicator pill -->
               <motion.span
                 v-if="isItemActive(item)"
                 layoutId="activeSidebarIndicator"
@@ -201,7 +212,6 @@ const filteredGroups = computed(() => {
                 <span v-if="!isCollapsed" class="truncate">{{ item.label }}</span>
               </div>
 
-              <!-- Item Badge -->
               <span
                 v-if="!isCollapsed && item.badge"
                 class="relative z-10 text-[10px] px-1.5 py-0.5 rounded-full font-semibold transition-colors"
@@ -214,7 +224,6 @@ const filteredGroups = computed(() => {
                 {{ item.badge }}
               </span>
 
-              <!-- Compact Dot Badge in Collapsed Mode -->
               <span
                 v-if="isCollapsed && item.badge"
                 class="relative z-10 absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
@@ -232,7 +241,6 @@ const filteredGroups = computed(() => {
       </div>
     </nav>
 
-    <!-- Bottom Account Section -->
     <div class="shrink-0 p-3 border-t border-neutral-200 bg-neutral-50/50">
       <div
         class="flex items-center p-2 hover:bg-neutral-100 transition-colors"
@@ -255,7 +263,6 @@ const filteredGroups = computed(() => {
           </div>
         </button>
 
-        <!-- Logout Action Button -->
         <button
           v-if="!isCollapsed"
           type="button"

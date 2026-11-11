@@ -132,7 +132,6 @@ function navigateToDetails(id: string) {
         </table>
       </div>
 
-      <!-- Pagination Component: displays when items exceed 10 -->
       <TablePagination
         v-model:current-page="currentPage"
         :total-items="applications.length"

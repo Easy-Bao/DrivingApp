@@ -126,7 +126,6 @@ const rejectedDocs = ref([
   },
 ])
 
-// Pagination State (10 items max per table)
 const currentPage = ref(1)
 const itemsPerPage = 10
 
@@ -202,7 +201,6 @@ const paginatedRejectedDocs = computed(() => {
         </table>
       </div>
 
-      <!-- Pagination Component: displays when items exceed 10 -->
       <TablePagination
         v-model:current-page="currentPage"
         :total-items="rejectedDocs.length"

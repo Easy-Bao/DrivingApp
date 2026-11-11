@@ -14,7 +14,7 @@ vi.mock('vue-router', () => ({
 }))
 
 describe('DriverApplicationDetailsPage', () => {
-  it('renders driver application details, back button, Philippine taxicle info, and allows approval', async () => {
+  it('renders driver application details, back button, Philippine taxicle info, and allows approval via modal', async () => {
     const wrapper = mount(DriverApplicationDetailsPage, {
       global: {
         stubs: {
@@ -23,10 +23,7 @@ describe('DriverApplicationDetailsPage', () => {
       },
     })
 
-    // Assert internal back button exists inside page (only "Back")
     expect(wrapper.text()).toContain('Back')
-
-    // Assert application details and Philippine context
     expect(wrapper.text()).toContain('Application APP-901')
     expect(wrapper.text()).toContain('Brandon Lee')
     expect(wrapper.text()).toContain('+63 917 111 2233')
@@ -36,16 +33,24 @@ describe('DriverApplicationDetailsPage', () => {
     expect(wrapper.text()).toContain('View License')
     expect(wrapper.text()).toContain('NBI')
 
-    // Assert approve action button is present and click approves it cleanly
     const approveBtn = wrapper
       .findAll('button')
       .find((b) => b.text().includes('Approve Driver & Issue Credentials'))
     expect(approveBtn).toBeDefined()
     if (approveBtn) {
       await approveBtn.trigger('click')
-      expect(wrapper.text()).toContain(
-        'Application approved. Taxicle driver credentials and dispatch access active',
-      )
+      expect(wrapper.text()).toContain('Approve Driver Application')
+
+      const confirmBtn = wrapper
+        .findAll('button')
+        .find((b) => b.text().includes('Confirm & Approve Driver'))
+      expect(confirmBtn).toBeDefined()
+      if (confirmBtn) {
+        await confirmBtn.trigger('click')
+        expect(wrapper.text()).toContain(
+          'Application approved. Taxicle driver credentials and dispatch access active',
+        )
+      }
     }
   })
 })

@@ -11,7 +11,6 @@ const { getApplicationById, approveApplication, rejectApplication } = useDriverA
 const applicationId = computed(() => (route.params.id as string) || '')
 const application = computed(() => getApplicationById(applicationId.value))
 
-// Viewer Modal State
 interface ViewerDocument {
   title: string
   subtitle: string
@@ -25,9 +24,13 @@ interface ViewerDocument {
 const activeViewerDoc = ref<ViewerDocument | null>(null)
 const licenseSlideDirection = ref<'flip-left' | 'flip-right'>('flip-left')
 
+const showApproveDialog = ref(false)
+const showRejectDialog = ref(false)
+const rejectReason = ref('Incomplete or unreadable LTO driver license scan')
+const rejectNotes = ref('')
+
 function setLicenseSide(side: 'front' | 'back') {
-  if (!activeViewerDoc.value) return
-  if (side === activeViewerDoc.value.activeSide) return
+  if (!activeViewerDoc.value || side === activeViewerDoc.value.activeSide) return
   licenseSlideDirection.value = side === 'back' ? 'flip-left' : 'flip-right'
   activeViewerDoc.value.activeSide = side
 }
@@ -56,12 +59,8 @@ function openTaxicleDocViewer(docType: 'OR' | 'CR') {
   if (!application.value) return
   const isOR = docType === 'OR'
   activeViewerDoc.value = {
-    title: isOR
-      ? 'LTO Official Receipt (OR)'
-      : 'LTO Certificate of Registration (CR)',
-    subtitle: isOR
-      ? application.value.vehicle.orNumber
-      : application.value.vehicle.crNumber,
+    title: isOR ? 'LTO Official Receipt (OR)' : 'LTO Certificate of Registration (CR)',
+    subtitle: isOR ? application.value.vehicle.orNumber : application.value.vehicle.crNumber,
     type: 'taxicle_orcr',
     metadata: {
       'Document No.': isOR
@@ -110,8 +109,10 @@ function closeViewer() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && activeViewerDoc.value) {
-    closeViewer()
+  if (e.key === 'Escape') {
+    if (showApproveDialog.value) showApproveDialog.value = false
+    else if (showRejectDialog.value) showRejectDialog.value = false
+    else if (activeViewerDoc.value) closeViewer()
   }
 }
 
@@ -123,14 +124,29 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
 })
 
-function handleApprove() {
-  if (!application.value) return
-  approveApplication(application.value)
+function openApproveDialog() {
+  showApproveDialog.value = true
 }
 
-function handleReject() {
+function confirmApprove() {
   if (!application.value) return
-  rejectApplication(application.value, 'Documentation review failed regulatory compliance')
+  approveApplication(application.value)
+  showApproveDialog.value = false
+}
+
+function openRejectDialog() {
+  rejectReason.value = 'Incomplete or unreadable LTO driver license scan'
+  rejectNotes.value = ''
+  showRejectDialog.value = true
+}
+
+function confirmReject() {
+  if (!application.value) return
+  const fullReason = rejectNotes.value.trim()
+    ? `${rejectReason.value}: ${rejectNotes.value.trim()}`
+    : rejectReason.value
+  rejectApplication(application.value, fullReason)
+  showRejectDialog.value = false
 }
 
 function goBack() {
@@ -144,7 +160,6 @@ function goBack() {
 
 <template>
   <div class="space-y-6 w-full">
-    <!-- Back Button: Only "Back" -->
     <div>
       <button
         type="button"
@@ -159,9 +174,7 @@ function goBack() {
       </button>
     </div>
 
-    <!-- Application Details Card if found -->
     <div v-if="application" class="space-y-6">
-      <!-- Title & Status Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div class="flex items-center space-x-3">
@@ -171,9 +184,12 @@ function goBack() {
             <span
               class="px-2.5 py-0.5 text-xs font-bold"
               :class="{
-                'bg-emerald-100 text-emerald-800 border border-emerald-200': application.status === 'Approved',
-                'bg-rose-100 text-rose-800 border border-rose-200': application.status === 'Rejected',
-                'bg-amber-100 text-amber-800 border border-amber-200': application.status === 'Pending Review',
+                'bg-emerald-100 text-emerald-800 border border-emerald-200':
+                  application.status === 'Approved',
+                'bg-rose-100 text-rose-800 border border-rose-200':
+                  application.status === 'Rejected',
+                'bg-amber-100 text-amber-800 border border-amber-200':
+                  application.status === 'Pending Review',
               }"
             >
               {{ application.status }}
@@ -206,11 +222,11 @@ function goBack() {
         </div>
       </div>
 
-      <!-- Applicant Identity & Driver Face Photo Section -->
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-neutral-100 gap-4">
+        <div
+          class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-neutral-100 gap-4"
+        >
           <div class="flex items-center space-x-4">
-            <!-- Driver Face Picture with click to zoom -->
             <button
               type="button"
               class="relative w-16 h-16 bg-neutral-900 border border-neutral-300 overflow-hidden shrink-0 group cursor-pointer"
@@ -222,7 +238,9 @@ function goBack() {
                 :alt="application.applicant"
                 class="w-full h-full object-cover group-hover:scale-105 transition-transform"
               />
-              <div class="absolute inset-0 bg-neutral-900/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <div
+                class="absolute inset-0 bg-neutral-900/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+              >
                 <Icon icon="lucide:zoom-in" class="text-white text-base" />
               </div>
             </button>
@@ -230,7 +248,9 @@ function goBack() {
             <div>
               <div class="flex items-center space-x-2">
                 <h2 class="font-bold text-base text-neutral-900">{{ application.applicant }}</h2>
-                <span class="px-2 py-0.5 text-[10px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200">
+                <span
+                  class="px-2 py-0.5 text-[10px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200"
+                >
                   Taxicle Operator
                 </span>
               </div>
@@ -268,7 +288,6 @@ function goBack() {
         </div>
       </div>
 
-      <!-- Driver's License Section (Clean single container, no redundant icons or duplicate boxes) -->
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
           <h2 class="font-bold text-sm text-neutral-900">
@@ -310,7 +329,6 @@ function goBack() {
           </div>
         </div>
 
-        <!-- Single Clean Document Access Row (replaces duplicate front/back boxes) -->
         <div
           class="p-3 bg-neutral-50 border border-neutral-200 flex items-center justify-between text-xs hover:border-neutral-400 transition-colors cursor-pointer"
           @click="openLicenseViewer"
@@ -325,13 +343,14 @@ function goBack() {
         </div>
       </div>
 
-      <!-- Vehicle Specification & Franchise Section (Clean title without redundant icon) -->
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
           <h2 class="font-bold text-sm text-neutral-900">
             Vehicle Specification & Franchise
           </h2>
-          <span class="text-xs font-semibold px-2 py-0.5 bg-neutral-100 text-neutral-700 border border-neutral-200">
+          <span
+            class="text-xs font-semibold px-2 py-0.5 bg-neutral-100 text-neutral-700 border border-neutral-200"
+          >
             {{ application.vehicle.type }}
           </span>
         </div>
@@ -374,7 +393,6 @@ function goBack() {
           </div>
         </div>
 
-        <!-- Official Receipt (OR) and Certificate of Registration (CR) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2">
           <div
             class="p-3 bg-neutral-50 border border-neutral-200 flex items-center justify-between hover:border-neutral-400 transition-colors cursor-pointer group"
@@ -389,7 +407,9 @@ function goBack() {
                 {{ application.vehicle.orDoc }}
               </div>
             </div>
-            <span class="text-xs font-semibold text-neutral-900 group-hover:underline flex items-center space-x-1">
+            <span
+              class="text-xs font-semibold text-neutral-900 group-hover:underline flex items-center space-x-1"
+            >
               <span>View OR</span>
               <Icon icon="lucide:external-link" class="text-xs" />
             </span>
@@ -408,14 +428,15 @@ function goBack() {
                 {{ application.vehicle.crDoc }}
               </div>
             </div>
-            <span class="text-xs font-semibold text-neutral-900 group-hover:underline flex items-center space-x-1">
+            <span
+              class="text-xs font-semibold text-neutral-900 group-hover:underline flex items-center space-x-1"
+            >
               <span>View CR</span>
               <Icon icon="lucide:external-link" class="text-xs" />
             </span>
           </div>
         </div>
 
-        <!-- Insurance and Inspection -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
           <div class="p-3 bg-neutral-50 border border-neutral-200 flex items-center justify-between">
             <div>
@@ -439,7 +460,6 @@ function goBack() {
         </div>
       </div>
 
-      <!-- Regulatory Background Verification Section (Clean title without redundant icon) -->
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
           <h2 class="font-bold text-sm text-neutral-900">
@@ -486,7 +506,6 @@ function goBack() {
         </div>
       </div>
 
-      <!-- Action Footer (Clean and non-redundant) -->
       <div class="bg-white border border-neutral-200 p-4 flex items-center justify-between">
         <div class="text-xs text-neutral-600">
           <span v-if="application.status === 'Pending Review'">
@@ -504,14 +523,14 @@ function goBack() {
           <button
             type="button"
             class="px-4 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition-colors cursor-pointer"
-            @click="handleReject"
+            @click="openRejectDialog"
           >
             Reject Application
           </button>
           <button
             type="button"
             class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
-            @click="handleApprove"
+            @click="openApproveDialog"
           >
             Approve Driver & Issue Credentials
           </button>
@@ -519,7 +538,6 @@ function goBack() {
       </div>
     </div>
 
-    <!-- Application Not Found Fallback -->
     <div
       v-else
       class="bg-white border border-neutral-200 p-8 text-center text-xs text-neutral-500"
@@ -535,7 +553,146 @@ function goBack() {
       </button>
     </div>
 
-    <!-- Interactive Document & License Viewer Modal (Full Exit / Close Controls & Left/Right Animations) -->
+    <div
+      v-if="showApproveDialog && application"
+      class="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+      @click.self="showApproveDialog = false"
+    >
+      <div
+        class="bg-white w-full max-w-[500px] border border-neutral-300 shadow-2xl flex flex-col my-auto"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Approve Application Confirmation"
+      >
+        <div class="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
+          <div>
+            <h3 class="font-bold text-sm text-neutral-900">Approve Driver Application</h3>
+            <p class="text-xs text-neutral-500 mt-0.5">Application {{ application.id }} · {{ application.applicant }}</p>
+          </div>
+          <button
+            type="button"
+            class="w-8 h-8 flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 border border-neutral-200 transition-colors cursor-pointer"
+            title="Close dialog (Esc)"
+            @click="showApproveDialog = false"
+          >
+            <Icon icon="lucide:x" class="text-base" />
+          </button>
+        </div>
+
+        <div class="p-5 space-y-4 text-xs">
+          <p class="text-neutral-700 leading-relaxed">
+            Are you sure you want to approve this driver application? This will issue platform credentials, grant taxicle dispatch privileges, and notify the driver at <span class="font-mono font-bold text-neutral-900">{{ application.phone }}</span>.
+          </p>
+
+          <div class="p-3 bg-emerald-50 border border-emerald-200 text-xs space-y-1">
+            <div class="font-semibold text-emerald-900 flex items-center space-x-1.5">
+              <Icon icon="lucide:check-circle" class="text-emerald-700" />
+              <span>Verified Qualifications Summary</span>
+            </div>
+            <ul class="text-emerald-800 space-y-0.5 text-[11px] list-disc list-inside">
+              <li>LTO License: {{ application.licenseNumber }} (DL Code: {{ application.licenseCodes }})</li>
+              <li>Unit: {{ application.vehicle.year }} {{ application.vehicle.make }} {{ application.vehicle.model }} (Plate: {{ application.vehicle.plate }})</li>
+              <li>TODA / Franchise: {{ application.vehicle.todaFranchise }}</li>
+              <li>Clearance: {{ application.clearanceType }} (Status: {{ application.backgroundStatus }})</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="px-5 py-3 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end space-x-2">
+          <button
+            type="button"
+            class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
+            @click="showApproveDialog = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
+            @click="confirmApprove"
+          >
+            Confirm & Approve Driver
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="showRejectDialog && application"
+      class="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+      @click.self="showRejectDialog = false"
+    >
+      <div
+        class="bg-white w-full max-w-[500px] border border-neutral-300 shadow-2xl flex flex-col my-auto"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Reject Application Confirmation"
+      >
+        <div class="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
+          <div>
+            <h3 class="font-bold text-sm text-neutral-900">Reject Driver Application</h3>
+            <p class="text-xs text-neutral-500 mt-0.5">Application {{ application.id }} · {{ application.applicant }}</p>
+          </div>
+          <button
+            type="button"
+            class="w-8 h-8 flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 border border-neutral-200 transition-colors cursor-pointer"
+            title="Close dialog (Esc)"
+            @click="showRejectDialog = false"
+          >
+            <Icon icon="lucide:x" class="text-base" />
+          </button>
+        </div>
+
+        <div class="p-5 space-y-4 text-xs">
+          <p class="text-neutral-700 leading-relaxed">
+            Please specify the regulatory compliance or documentation grounds for rejecting this application. This reason will be logged for regulatory audit.
+          </p>
+
+          <div class="space-y-1.5">
+            <label class="font-semibold text-neutral-800">Primary Rejection Ground</label>
+            <select
+              v-model="rejectReason"
+              class="w-full p-2 bg-neutral-50 border border-neutral-200 text-xs text-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+            >
+              <option value="Incomplete or unreadable LTO driver license scan">Incomplete or unreadable LTO driver license scan</option>
+              <option value="Expired or unverified MTOP municipal tricycle permit">Expired or unverified MTOP municipal tricycle permit</option>
+              <option value="TODA franchise association endorsement missing or invalid">TODA franchise association endorsement missing or invalid</option>
+              <option value="Failed NBI or PNP criminal background screening">Failed NBI or PNP criminal background screening</option>
+              <option value="Mismatched vehicle registration (OR/CR) details">Mismatched vehicle registration (OR/CR) details</option>
+              <option value="Other regulatory compliance deficiency">Other regulatory compliance deficiency</option>
+            </select>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="font-semibold text-neutral-800">Auditor Notes (Optional)</label>
+            <textarea
+              v-model="rejectNotes"
+              rows="3"
+              placeholder="Provide specific details or instructions for driver re-submission..."
+              class="w-full p-2 bg-neutral-50 border border-neutral-200 text-xs text-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+            />
+          </div>
+        </div>
+
+        <div class="px-5 py-3 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end space-x-2">
+          <button
+            type="button"
+            class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
+            @click="showRejectDialog = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition-colors cursor-pointer"
+            @click="confirmReject"
+          >
+            Confirm Rejection
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div
       v-if="activeViewerDoc"
       class="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
@@ -547,7 +704,6 @@ function goBack() {
         aria-modal="true"
         aria-label="Document Viewer"
       >
-        <!-- Modal Header with Explicit Close Exit Button -->
         <div class="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
           <div>
             <h3 class="font-bold text-sm text-neutral-900">{{ activeViewerDoc.title }}</h3>
@@ -564,9 +720,7 @@ function goBack() {
           </button>
         </div>
 
-        <!-- Modal Body -->
         <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
-          <!-- Side Switcher for Driver's License (Animates left-to-right / right-to-left) -->
           <div
             v-if="activeViewerDoc.type === 'license'"
             class="flex items-center space-x-2 pb-2 border-b border-neutral-100"
@@ -597,9 +751,9 @@ function goBack() {
             </button>
           </div>
 
-          <!-- Document Preview Canvas with Directional Slide Transitions -->
-          <div class="border border-neutral-200 bg-neutral-100 p-6 flex flex-col items-center justify-center min-h-[220px] overflow-hidden">
-            <!-- Driver Face Photo Viewer -->
+          <div
+            class="border border-neutral-200 bg-neutral-100 p-6 flex flex-col items-center justify-center min-h-[220px] overflow-hidden"
+          >
             <div v-if="activeViewerDoc.type === 'face' && application" class="text-center">
               <img
                 :src="application.facePhotoUrl"
@@ -610,13 +764,11 @@ function goBack() {
               <p class="text-[11px] text-neutral-500 font-mono">{{ application.phone }}</p>
             </div>
 
-            <!-- License Front/Back Viewer with Directional Animation -->
             <Transition
               v-else-if="activeViewerDoc.type === 'license' && application"
               :name="licenseSlideDirection"
               mode="out-in"
             >
-              <!-- Front Side -->
               <div
                 v-if="activeViewerDoc.activeSide === 'front'"
                 key="license-front"
@@ -660,7 +812,6 @@ function goBack() {
                 </div>
               </div>
 
-              <!-- Back Side -->
               <div
                 v-else
                 key="license-back"
@@ -687,7 +838,6 @@ function goBack() {
               </div>
             </Transition>
 
-            <!-- Taxicle OR/CR Viewer -->
             <div
               v-else-if="activeViewerDoc.type === 'taxicle_orcr' && application"
               class="w-full max-w-[480px] bg-amber-50/50 border-2 border-amber-300 p-4 shadow-sm"
@@ -708,7 +858,6 @@ function goBack() {
               </div>
             </div>
 
-            <!-- Clearance Viewer -->
             <div
               v-else-if="activeViewerDoc.type === 'clearance' && application"
               class="w-full max-w-[480px] bg-emerald-50/50 border-2 border-emerald-300 p-4 shadow-sm text-center"
@@ -722,7 +871,6 @@ function goBack() {
             </div>
           </div>
 
-          <!-- Document Metadata Table -->
           <div v-if="activeViewerDoc.metadata" class="border border-neutral-200 divide-y divide-neutral-100">
             <div
               v-for="(val, key) in activeViewerDoc.metadata"
@@ -735,7 +883,6 @@ function goBack() {
           </div>
         </div>
 
-        <!-- Modal Footer with Clear Close & Dismiss Button -->
         <div class="px-5 py-3 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end">
           <button
             type="button"

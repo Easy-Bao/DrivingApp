@@ -126,7 +126,6 @@ const expiringDocs = ref([
   },
 ])
 
-// Pagination State (10 items max per page)
 const currentPage = ref(1)
 const itemsPerPage = 10
 
@@ -165,7 +164,6 @@ function sendUrgentReminder(doc: (typeof expiringDocs.value)[0]) {
       </div>
     </div>
 
-    <!-- Alert / Toast Banner -->
     <div
       v-if="actionToast"
       class="p-4 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
@@ -248,7 +246,6 @@ function sendUrgentReminder(doc: (typeof expiringDocs.value)[0]) {
         </table>
       </div>
 
-      <!-- Pagination Component: displays when items exceed 10 -->
       <TablePagination
         v-model:current-page="currentPage"
         :total-items="expiringDocs.length"

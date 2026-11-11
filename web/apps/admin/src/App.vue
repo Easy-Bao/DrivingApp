@@ -9,8 +9,6 @@ const transitionName = ref<'slide-left' | 'slide-right'>('slide-left')
 router.beforeEach((to, from) => {
   const toDepth = to.path.split('/').filter(Boolean).length
   const fromDepth = from.path.split('/').filter(Boolean).length
-  // When navigating back to parent/shallower view: slide left-to-right ('slide-right')
-  // When navigating forward/deeper view: slide right-to-left ('slide-left')
   if (toDepth < fromDepth) {
     transitionName.value = 'slide-right'
   } else {
