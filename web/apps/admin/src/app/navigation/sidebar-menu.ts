@@ -136,6 +136,14 @@ export const navigationGroups: SidebarNavGroup[] = [
         badgeClass: 'bg-amber-100 text-amber-800 font-bold',
       },
       {
+        id: 'settlements',
+        label: 'Cash Settlements',
+        icon: 'lucide:coins',
+        path: '/payments/settlements',
+        badge: '3',
+        badgeClass: 'bg-rose-100 text-rose-800 font-bold',
+      },
+      {
         id: 'transactions',
         label: 'Transactions',
         icon: 'lucide:receipt',

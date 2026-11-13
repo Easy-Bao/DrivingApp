@@ -14,6 +14,17 @@ export const paymentsRoutes: RouteRecordRaw[] = [
     meta: { isDetail: true },
   },
   {
+    path: '/payments/settlements',
+    name: 'payments-settlements',
+    component: () => import('@/features/payments/pages/SettlementsPage.vue'),
+  },
+  {
+    path: '/payments/settlements/:id',
+    name: 'payments-settlement-details',
+    component: () => import('@/features/payments/pages/SettlementDetailsPage.vue'),
+    meta: { isDetail: true },
+  },
+  {
     path: '/payments/transactions',
     name: 'payments-transactions',
     component: () => import('@/features/payments/pages/TransactionsPage.vue'),
