@@ -26,7 +26,7 @@ describe('RidersPage', () => {
     await inspectBtn!.trigger('click')
 
     expect(wrapper.text()).toContain('Trust & Safety Notes')
-    expect(wrapper.text()).toContain('Santiago District, Pagadian City')
+    expect(wrapper.text()).toContain('Santiago District')
   })
 
   it('suspends a passenger with mandatory audit reason', async () => {

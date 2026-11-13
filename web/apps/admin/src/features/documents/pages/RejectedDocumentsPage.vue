@@ -24,7 +24,7 @@ const rejectedDocs = ref<RejectedDocument[]>([
     id: 'REJ-401',
     driver: 'Javier Santos',
     driverPhone: '+63 917 987 6543',
-    city: 'Pagadian City (Brgy. San Pedro)',
+    city: 'Brgy. San Pedro',
     docType: 'LTO Driver License Back Photo',
     rejectionReason: 'Reverse barcode scan blurred; LTO restriction codes unreadable',
     rejectedBy: 'Marisol Lim',
@@ -35,8 +35,8 @@ const rejectedDocs = ref<RejectedDocument[]>([
     id: 'REJ-402',
     driver: 'Rodelio Cruz',
     driverPhone: '+63 917 440 2184',
-    city: 'Pagadian City (Brgy. San Jose)',
-    docType: 'Taxicle CTPL Insurance Certificate',
+    city: 'Brgy. San Jose',
+    docType: 'CTPL Insurance Certificate',
     rejectionReason: 'Policyholder name does not match applicant identity on LTO OR/CR',
     rejectedBy: 'Operations Lead',
     rejectedAt: '3 days ago',
@@ -46,8 +46,8 @@ const rejectedDocs = ref<RejectedDocument[]>([
     id: 'REJ-403',
     driver: 'Danilo Mendoza',
     driverPhone: '+63 928 412 8890',
-    city: 'Pagadian City (Brgy. Tuburan)',
-    docType: 'Pagadian MTOP Municipal Tricycle Permit',
+    city: 'Brgy. Tuburan',
+    docType: 'MTOP Municipal Tricycle Permit',
     rejectionReason: 'Expired MTOP permit without stamped city treasurer official receipt',
     rejectedBy: 'Operations Lead',
     rejectedAt: '4 days ago',
@@ -57,7 +57,7 @@ const rejectedDocs = ref<RejectedDocument[]>([
     id: 'REJ-404',
     driver: 'Reynaldo Garcia',
     driverPhone: '+63 908 771 9923',
-    city: 'Pagadian City (Brgy. Balangasan)',
+    city: 'Brgy. Balangasan',
     docType: 'PNP National Police Clearance',
     rejectionReason: 'Document expired; issuance date exceeds 6 months validity',
     rejectedBy: 'Marisol Lim',
@@ -68,8 +68,8 @@ const rejectedDocs = ref<RejectedDocument[]>([
     id: 'REJ-405',
     driver: 'Eduardo Santos',
     driverPhone: '+63 919 332 4455',
-    city: 'Pagadian City (Brgy. Kawit)',
-    docType: 'LTO Certificate of Registration (CR)',
+    city: 'Brgy. Kawit',
+    docType: 'LTO Certificate of Registration',
     rejectionReason: 'Chassis number illegible on mobile camera photograph',
     rejectedBy: 'Operations Lead',
     rejectedAt: '6 days ago',
@@ -79,8 +79,8 @@ const rejectedDocs = ref<RejectedDocument[]>([
     id: 'REJ-406',
     driver: 'Felipe Cruz',
     driverPhone: '+63 916 445 8821',
-    city: 'Pagadian City (Brgy. Tiguma)',
-    docType: 'Barangay Commercial Driver Clearance',
+    city: 'Brgy. Tiguma',
+    docType: 'Barangay Driver Clearance',
     rejectionReason: 'Barangay clearance jurisdiction differs from assigned TODA zone',
     rejectedBy: 'Marisol Lim',
     rejectedAt: '1 week ago',
@@ -90,7 +90,7 @@ const rejectedDocs = ref<RejectedDocument[]>([
     id: 'REJ-407',
     driver: 'Antonio Villanueva',
     driverPhone: '+63 939 556 1209',
-    city: 'Pagadian City (Brgy. Dao)',
+    city: 'Brgy. Dao',
     docType: 'LTO Driver License Front Side',
     rejectionReason: 'Flash glare obscuring birthdate and driver license number',
     rejectedBy: 'Operations Lead',
@@ -101,8 +101,8 @@ const rejectedDocs = ref<RejectedDocument[]>([
     id: 'REJ-408',
     driver: 'Cristopher Alcantara',
     driverPhone: '+63 921 778 2234',
-    city: 'Pagadian City (Brgy. Santiago)',
-    docType: 'Taxicle Annual Inspection Certificate',
+    city: 'Brgy. Santiago',
+    docType: 'Annual Inspection Certificate',
     rejectionReason: 'Inspection report missing official MVIC verifier signature',
     rejectedBy: 'Operations Lead',
     rejectedAt: '12 days ago',
@@ -112,7 +112,7 @@ const rejectedDocs = ref<RejectedDocument[]>([
     id: 'REJ-409',
     driver: 'Nestor Macaraeg',
     driverPhone: '+63 947 889 1120',
-    city: 'Pagadian City (Brgy. Danlugan)',
+    city: 'Brgy. Danlugan',
     docType: 'NBI National Criminal Clearance',
     rejectionReason: 'Clearance QR code not scannable; re-upload required',
     rejectedBy: 'Marisol Lim',
@@ -165,14 +165,12 @@ const queueForReReview = (item: RejectedDocument) => {
       <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
         Rejected Driver Documents
       </h1>
-      <p class="text-sm text-neutral-500 mt-1">
-        Audit log of rejected Pagadian driver documents, regulatory grounds, and resubmissions.
-      </p>
+      <p class="text-sm text-neutral-500 mt-1">Rejected driver documents and resubmissions.</p>
     </div>
 
     <ToastBanner :message="toastMessage" tone="info" @dismiss="toastMessage = null" />
 
-    <div class="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
         class="p-4 border-b border-neutral-100 flex flex-col md:flex-row md:items-center justify-between gap-3"
       >
@@ -186,7 +184,7 @@ const queueForReReview = (item: RejectedDocument) => {
               v-model="searchQuery"
               type="text"
               placeholder="Search log ID, driver, reason..."
-              class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+              class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
             />
           </div>
           <BaseSelect
@@ -281,9 +279,7 @@ const queueForReReview = (item: RejectedDocument) => {
         aria-modal="true"
         @click.self="inspectedRejected = null"
       >
-        <div
-          class="bg-white rounded-lg border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4"
-        >
+        <div class="bg-white border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4">
           <div class="flex items-start justify-between border-b border-neutral-100 pb-3">
             <div>
               <span class="font-mono text-[11px] text-neutral-400">{{ inspectedRejected.id }}</span>
@@ -313,7 +309,7 @@ const queueForReReview = (item: RejectedDocument) => {
               <span class="text-neutral-500">Location:</span>
               <span class="text-neutral-800 ml-1">{{ inspectedRejected.city }}</span>
             </div>
-            <div class="p-3 bg-rose-50 border border-rose-200 rounded-md text-rose-900">
+            <div class="p-3 bg-neutral-50 border border-neutral-300 text-neutral-800">
               <div class="font-semibold mb-1">Recorded Rejection Grounds</div>
               <p>{{ inspectedRejected.rejectionReason }}</p>
             </div>
@@ -323,7 +319,7 @@ const queueForReReview = (item: RejectedDocument) => {
             <button
               type="button"
               @click="inspectedRejected = null"
-              class="px-4 py-2 bg-white border border-neutral-200 rounded-md text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+              class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
             >
               Close
             </button>
@@ -331,7 +327,7 @@ const queueForReReview = (item: RejectedDocument) => {
               v-if="inspectedRejected.resubmitted && !inspectedRejected.reopened"
               type="button"
               @click="queueForReReview(inspectedRejected)"
-              class="px-4 py-2 bg-neutral-900 text-white rounded-md text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+              class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
             >
               Re-Open for Verification
             </button>

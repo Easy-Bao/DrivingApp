@@ -8,7 +8,6 @@ interface RoutePolicyRule {
 
 const ROUTE_ACCESS_POLICY: readonly RoutePolicyRule[] = [
   { prefix: '/users/operators', roles: ['root_operator'] },
-  { prefix: '/users/admin-users', roles: ['root_operator'] },
   { prefix: '/users/roles', roles: ['root_operator'] },
   { prefix: '/settings/content', roles: ['root_operator'] },
   { prefix: '/settings/app-settings', roles: ['root_operator'] },

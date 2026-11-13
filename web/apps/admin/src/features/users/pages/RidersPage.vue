@@ -34,7 +34,7 @@ const riders = ref<RiderRecord[]>([
     id: 'RDR-201',
     name: 'Althea Mae Villanueva',
     phone: '+63 935 812 4091',
-    barangay: 'Brgy. San Pedro, Pagadian City',
+    barangay: 'Brgy. San Pedro',
     totalTrips: 84,
     lifetimeSpend: 4680.0,
     rating: 4.98,
@@ -45,7 +45,7 @@ const riders = ref<RiderRecord[]>([
     id: 'RDR-202',
     name: 'Carlo Magno Ocampo',
     phone: '+63 917 650 3182',
-    barangay: 'Brgy. Gatas, Pagadian City',
+    barangay: 'Brgy. Gatas',
     totalTrips: 32,
     lifetimeSpend: 1790.5,
     rating: 4.85,
@@ -56,7 +56,7 @@ const riders = ref<RiderRecord[]>([
     id: 'RDR-203',
     name: 'Jessa Mae Lim',
     phone: '+63 926 301 7742',
-    barangay: 'Brgy. Balangasan, Pagadian City',
+    barangay: 'Brgy. Balangasan',
     totalTrips: 119,
     lifetimeSpend: 6840.0,
     rating: 5.0,
@@ -67,7 +67,7 @@ const riders = ref<RiderRecord[]>([
     id: 'RDR-204',
     name: 'Mark Anthony Reyes',
     phone: '+63 945 204 8810',
-    barangay: 'Santiago District, Pagadian City',
+    barangay: 'Santiago District',
     totalTrips: 12,
     lifetimeSpend: 695.0,
     rating: 4.2,
@@ -78,7 +78,7 @@ const riders = ref<RiderRecord[]>([
     id: 'RDR-205',
     name: 'Kristine Joy Navarro',
     phone: '+63 998 411 6620',
-    barangay: 'Brgy. Santa Lucia, Pagadian City',
+    barangay: 'Brgy. Santa Lucia',
     totalTrips: 46,
     lifetimeSpend: 2540.0,
     rating: 4.91,
@@ -89,7 +89,7 @@ const riders = ref<RiderRecord[]>([
     id: 'RDR-206',
     name: 'Jericho Dalisay',
     phone: '+63 915 702 3319',
-    barangay: 'Brgy. Tuburan, Pagadian City',
+    barangay: 'Brgy. Tuburan',
     totalTrips: 27,
     lifetimeSpend: 1485.0,
     rating: 4.78,
@@ -163,17 +163,13 @@ const confirmStandingUpdate = () => {
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-        Riders Management
-      </h1>
-      <p class="text-sm text-neutral-500 mt-1">
-        Review Pagadian passenger activity, lifetime spend, mutual ratings, and account standings.
-      </p>
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Riders</h1>
+      <p class="text-sm text-neutral-500 mt-1">Passenger activity, spend, and standings.</p>
     </div>
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 
-    <div class="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
         class="p-4 border-b border-neutral-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
       >
@@ -186,15 +182,15 @@ const confirmStandingUpdate = () => {
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Search name, phone, barangay..."
-              class="w-full pl-9 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+              placeholder="Search name, phone, area..."
+              class="w-full pl-9 pr-3 py-1.5 bg-white border border-neutral-200 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
             />
           </div>
           <BaseSelect
             v-model="standingFilter"
             aria-label="Filter riders by standing"
             :options="[
-              { label: 'All Standings', value: 'ALL' },
+              { label: 'All', value: 'ALL' },
               { label: 'VIP Rider', value: 'VIP Rider' },
               { label: 'Good Standing', value: 'Good Standing' },
               { label: 'Flagged (Dispute)', value: 'Flagged (Dispute)' },
@@ -202,8 +198,10 @@ const confirmStandingUpdate = () => {
             ]"
           />
         </div>
-        <span class="text-xs text-neutral-500 tabular-nums">
-          {{ filteredRiders.length }} registered passengers
+        <span
+          class="px-2.5 py-1.5 bg-neutral-50 border border-neutral-300 text-xs font-semibold text-neutral-800 tabular-nums"
+        >
+          Riders: {{ filteredRiders.length }}
         </span>
       </div>
 
@@ -211,12 +209,12 @@ const confirmStandingUpdate = () => {
         <table class="w-full min-w-[820px] text-left text-xs">
           <thead class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100">
             <tr>
-              <th class="py-3 px-4">Rider ID</th>
-              <th class="py-3 px-4">Passenger Name</th>
-              <th class="py-3 px-4">Mobile (PH)</th>
-              <th class="py-3 px-4">Barangay</th>
+              <th class="py-3 px-4">ID</th>
+              <th class="py-3 px-4">Name</th>
+              <th class="py-3 px-4">Phone</th>
+              <th class="py-3 px-4">Area</th>
               <th class="py-3 px-4">Trips</th>
-              <th class="py-3 px-4">Lifetime Spend</th>
+              <th class="py-3 px-4">Spend</th>
               <th class="py-3 px-4">Rating</th>
               <th class="py-3 px-4">Standing</th>
               <th class="py-3 px-4 text-right">Action</th>
@@ -241,20 +239,15 @@ const confirmStandingUpdate = () => {
               <td class="py-3 px-4 text-right space-x-2 whitespace-nowrap">
                 <button
                   type="button"
-                  @click="inspectedRider = r"
                   class="text-xs text-neutral-700 hover:text-neutral-900 font-semibold cursor-pointer"
+                  @click="inspectedRider = r"
                 >
                   Inspect
                 </button>
                 <button
                   type="button"
+                  class="text-xs text-neutral-700 hover:text-neutral-900 font-medium cursor-pointer"
                   @click="openStandingDialog(r)"
-                  class="text-xs font-medium cursor-pointer"
-                  :class="
-                    r.standing === 'Suspended'
-                      ? 'text-emerald-700 hover:text-emerald-900'
-                      : 'text-rose-600 hover:text-rose-800'
-                  "
                 >
                   {{ r.standing === 'Suspended' ? 'Reinstate' : 'Suspend' }}
                 </button>
@@ -262,7 +255,7 @@ const confirmStandingUpdate = () => {
             </tr>
             <tr v-if="paginatedRiders.length === 0">
               <td colspan="9" class="py-8 text-center text-xs text-neutral-500">
-                No passengers match the active search filter.
+                No riders match filter.
               </td>
             </tr>
           </tbody>
@@ -284,9 +277,7 @@ const confirmStandingUpdate = () => {
         aria-modal="true"
         @click.self="inspectedRider = null"
       >
-        <div
-          class="bg-white rounded-lg border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4"
-        >
+        <div class="bg-white border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4">
           <div class="flex items-start justify-between border-b border-neutral-100 pb-3">
             <div>
               <span class="font-mono text-[11px] text-neutral-400">{{ inspectedRider.id }}</span>
@@ -295,8 +286,8 @@ const confirmStandingUpdate = () => {
             <button
               type="button"
               aria-label="Close modal"
-              @click="inspectedRider = null"
               class="text-neutral-400 hover:text-neutral-700 cursor-pointer"
+              @click="inspectedRider = null"
             >
               <Icon icon="lucide:x" class="w-4 h-4" />
             </button>
@@ -304,23 +295,23 @@ const confirmStandingUpdate = () => {
 
           <div class="space-y-2.5 text-xs">
             <div class="flex justify-between">
-              <span class="text-neutral-500">Phone Number</span>
+              <span class="text-neutral-500">Phone</span>
               <span class="font-mono font-semibold text-neutral-900">{{
                 inspectedRider.phone
               }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-neutral-500">Home Barangay</span>
+              <span class="text-neutral-500">Area</span>
               <span class="font-medium text-neutral-900">{{ inspectedRider.barangay }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-neutral-500">Total Completed Trips</span>
+              <span class="text-neutral-500">Trips</span>
               <span class="font-mono font-semibold text-neutral-900">{{
                 inspectedRider.totalTrips
               }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-neutral-500">Lifetime Fares</span>
+              <span class="text-neutral-500">Spend</span>
               <span class="font-mono font-semibold text-neutral-900">
                 {{ formatPhp(inspectedRider.lifetimeSpend) }}
               </span>
@@ -336,15 +327,15 @@ const confirmStandingUpdate = () => {
           <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
             <RouterLink
               to="/payments/settlements"
+              class="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold"
               @click="inspectedRider = null"
-              class="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-md text-xs font-semibold"
             >
-              View Cash Settlements
+              Settlements
             </RouterLink>
             <button
               type="button"
+              class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
               @click="inspectedRider = null"
-              class="px-4 py-2 bg-neutral-900 text-white rounded-md text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
             >
               Close
             </button>
@@ -357,22 +348,20 @@ const confirmStandingUpdate = () => {
       :open="Boolean(pendingStatusRider)"
       v-model:reason="statusReason"
       :title="
-        pendingStatusRider?.standing === 'Suspended'
-          ? 'Reinstate Passenger Account'
-          : 'Suspend Passenger Account'
+        pendingStatusRider?.standing === 'Suspended' ? 'Reinstate Passenger' : 'Suspend Passenger'
       "
       :description="
         pendingStatusRider?.standing === 'Suspended'
-          ? `Allow ${pendingStatusRider?.name} to book taxicle rides in Pagadian City again.`
-          : `Prevent ${pendingStatusRider?.name} from requesting trips while safety or settlement disputes are investigated.`
+          ? `Restore ${pendingStatusRider?.name} to book rides again.`
+          : `Prevent ${pendingStatusRider?.name} from requesting trips during investigation.`
       "
       :confirm-label="
         pendingStatusRider?.standing === 'Suspended' ? 'Reinstate Passenger' : 'Suspend Passenger'
       "
-      :tone="pendingStatusRider?.standing === 'Suspended' ? 'emerald' : 'rose'"
+      tone="neutral"
       :require-reason="pendingStatusRider?.standing !== 'Suspended'"
-      reason-label="Audit reason (mandatory)"
-      reason-placeholder="Enter repeated fare refusal, harassment, or dispute reference..."
+      reason-label="Reason"
+      reason-placeholder="Enter dispute or safety reason..."
       @cancel="pendingStatusRider = null"
       @confirm="confirmStandingUpdate"
     />
