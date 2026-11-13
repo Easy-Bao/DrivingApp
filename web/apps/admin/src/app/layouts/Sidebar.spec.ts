@@ -50,7 +50,13 @@ describe('Sidebar', () => {
   })
 
   it('shows empty search message, allows clearing, and confirms sign out', async () => {
-    const wrapper = mount(Sidebar)
+    const wrapper = mount(Sidebar, {
+      global: {
+        stubs: {
+          Teleport: true,
+        },
+      },
+    })
     const searchInput = wrapper.find('input[type="text"]')
 
     await searchInput.setValue('nonexistent-xyz-section')

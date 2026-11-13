@@ -1,37 +1,58 @@
+import { defineComponent, ref } from 'vue'
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
 
 describe('ConfirmDialog', () => {
   it('enforces mandatory reason when configured and emits confirm', async () => {
-    const wrapper = mount(ConfirmDialog, {
-      props: {
-        open: true,
-        title: 'Suspend Taxicle Driver',
-        description: 'Confirm driver suspension in Pagadian dispatch.',
-        confirmLabel: 'Suspend Driver',
-        requireReason: true,
-        reason: '',
-        'onUpdate:reason': (value: string) => wrapper.setProps({ reason: value }),
+    const onConfirm = ref(false)
+    const Host = defineComponent({
+      components: { ConfirmDialog },
+      setup() {
+        const open = ref(true)
+        const reason = ref('')
+        return { open, reason, onConfirm }
+      },
+      template: `
+        <ConfirmDialog
+          v-model:open="open"
+          v-model:reason="reason"
+          title="Suspend Taxicle Driver"
+          description="Confirm driver suspension in Pagadian dispatch."
+          confirm-label="Suspend Driver"
+          :require-reason="true"
+          @confirm="onConfirm = true"
+        />
+      `,
+    })
+
+    const wrapper = mount(Host, {
+      global: {
+        stubs: {
+          Teleport: { template: '<div><slot /></div>' },
+        },
       },
     })
 
-    const confirmBtn = wrapper
-      .findAll('button')
-      .find((button) => button.text().includes('Suspend Driver'))
-    expect(confirmBtn).toBeDefined()
-    expect(confirmBtn?.attributes('disabled')).toBeDefined()
+    const findConfirmButton = () =>
+      wrapper.findAll('button').find((button) => button.text().includes('Suspend Driver'))
 
-    const textarea = wrapper.find('textarea')
-    await textarea.setValue('Expired LTO restriction A1 license')
+    expect(findConfirmButton()?.attributes('disabled')).toBeDefined()
 
-    expect(confirmBtn?.attributes('disabled')).toBeUndefined()
-    await confirmBtn?.trigger('click')
-    expect(wrapper.emitted('confirm')).toBeTruthy()
+    await wrapper.find('textarea').setValue('Expired LTO restriction A1 license')
+    expect(findConfirmButton()?.attributes('disabled')).toBeUndefined()
+
+    await findConfirmButton()?.trigger('click')
+    expect(onConfirm.value).toBe(true)
   })
 
   it('closes on escape key press', async () => {
     const wrapper = mount(ConfirmDialog, {
+      global: {
+        stubs: {
+          Teleport: { template: '<div><slot /></div>' },
+        },
+      },
       props: {
         open: true,
         title: 'Confirm Action',

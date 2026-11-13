@@ -251,12 +251,9 @@ const currentBreadcrumb = computed(() => {
       @click="mobileNavOpen = false"
     />
 
-    <!-- Left Navigation Sidebar -->
     <Sidebar :mobile-open="mobileNavOpen" @close-mobile="mobileNavOpen = false" />
 
-    <!-- Right Workspace Pane -->
     <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-      <!-- Top Navigation Header: Exactly h-16 (64px) border-b border-neutral-200 matching sidebar header -->
       <header
         class="h-16 border-b border-neutral-200 bg-white px-4 sm:px-6 flex items-center justify-between gap-4 shrink-0 select-none"
       >
@@ -270,9 +267,7 @@ const currentBreadcrumb = computed(() => {
             <Icon icon="lucide:menu" class="text-base" aria-hidden="true" />
           </button>
 
-          <!-- Interactive Clickable Breadcrumbs -->
           <nav aria-label="Breadcrumb" class="flex items-center space-x-2 text-xs min-w-0 truncate">
-            <!-- Home Link -->
             <RouterLink
               to="/dashboard/overview"
               class="text-neutral-400 hover:text-neutral-900 transition-colors flex items-center shrink-0"
@@ -288,7 +283,6 @@ const currentBreadcrumb = computed(() => {
               aria-hidden="true"
             />
 
-            <!-- Parent Section Link -->
             <RouterLink
               :to="currentBreadcrumb.sectionTo"
               class="font-semibold text-neutral-500 hover:text-neutral-900 transition-colors truncate"
@@ -303,7 +297,6 @@ const currentBreadcrumb = computed(() => {
               aria-hidden="true"
             />
 
-            <!-- Current Active Page -->
             <span
               v-if="currentBreadcrumb.item !== currentBreadcrumb.section"
               class="font-bold text-neutral-900 truncate"
@@ -335,8 +328,7 @@ const currentBreadcrumb = computed(() => {
         </div>
       </header>
 
-      <!-- Main Scrollable Content Area -->
-      <main class="flex-1 overflow-y-auto p-4 sm:p-6 bg-neutral-50">
+      <main class="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 bg-neutral-50">
         <slot />
       </main>
     </div>
