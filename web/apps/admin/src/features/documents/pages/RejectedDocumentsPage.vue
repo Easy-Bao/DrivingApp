@@ -1,49 +1,65 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { Icon } from '@iconify/vue'
 import TablePagination from '@/app/components/TablePagination.vue'
+import StatusBadge from '@/shared/components/StatusBadge.vue'
+import ToastBanner from '@/shared/components/ToastBanner.vue'
 
-const rejectedDocs = ref([
+interface RejectedDocument {
+  id: string
+  driver: string
+  driverPhone: string
+  city: string
+  docType: string
+  rejectionReason: string
+  rejectedBy: string
+  rejectedAt: string
+  resubmitted: boolean
+  reopened?: boolean
+}
+
+const rejectedDocs = ref<RejectedDocument[]>([
   {
     id: 'REJ-401',
     driver: 'Javier Santos',
     driverPhone: '+63 917 987 6543',
-    city: 'Quezon City',
-    docType: "LTO Driver's License Back Photo",
+    city: 'Pagadian City (Brgy. San Pedro)',
+    docType: 'LTO Driver License Back Photo',
     rejectionReason: 'Reverse barcode scan blurred; LTO restriction codes unreadable',
-    rejectedBy: 'Admin User',
+    rejectedBy: 'Marisol Lim',
     rejectedAt: 'Yesterday 14:20',
     resubmitted: false,
   },
   {
     id: 'REJ-402',
-    driver: 'Fatima Al-Mansoor',
-    driverPhone: '+63 928 444 5566',
-    city: 'Pasig City',
+    driver: 'Rodelio Cruz',
+    driverPhone: '+63 917 440 2184',
+    city: 'Pagadian City (Brgy. San Jose)',
     docType: 'Taxicle CTPL Insurance Certificate',
     rejectionReason: 'Policyholder name does not match applicant identity on LTO OR/CR',
-    rejectedBy: 'Super Admin',
+    rejectedBy: 'Operations Lead',
     rejectedAt: '3 days ago',
     resubmitted: true,
   },
   {
     id: 'REJ-403',
-    driver: 'Vicente Legaspi',
-    driverPhone: '+63 917 882 4433',
-    city: 'Davao City',
-    docType: 'Davao MTOP Municipal Tricycle Permit',
+    driver: 'Danilo Mendoza',
+    driverPhone: '+63 928 412 8890',
+    city: 'Pagadian City (Brgy. Tuburan)',
+    docType: 'Pagadian MTOP Municipal Tricycle Permit',
     rejectionReason: 'Expired MTOP permit without stamped city treasurer official receipt',
     rejectedBy: 'Operations Lead',
     rejectedAt: '4 days ago',
-    resubmitted: false,
+    resubmitted: true,
   },
   {
     id: 'REJ-404',
-    driver: 'Ramon Valderama',
-    driverPhone: '+63 927 334 9912',
-    city: 'Caloocan City',
+    driver: 'Reynaldo Garcia',
+    driverPhone: '+63 908 771 9923',
+    city: 'Pagadian City (Brgy. Balangasan)',
     docType: 'PNP National Police Clearance',
     rejectionReason: 'Document expired; issuance date exceeds 6 months validity',
-    rejectedBy: 'Admin User',
+    rejectedBy: 'Marisol Lim',
     rejectedAt: '5 days ago',
     resubmitted: true,
   },
@@ -51,88 +67,95 @@ const rejectedDocs = ref([
     id: 'REJ-405',
     driver: 'Eduardo Santos',
     driverPhone: '+63 919 332 4455',
-    city: 'Taguig City',
+    city: 'Pagadian City (Brgy. Kawit)',
     docType: 'LTO Certificate of Registration (CR)',
     rejectionReason: 'Chassis number illegible on mobile camera photograph',
-    rejectedBy: 'Super Admin',
+    rejectedBy: 'Operations Lead',
     rejectedAt: '6 days ago',
     resubmitted: true,
   },
   {
     id: 'REJ-406',
-    driver: 'Danilo Mendoza',
-    driverPhone: '+63 928 412 8890',
-    city: 'Pasig City',
-    docType: 'TODA Operating Franchise Endorsement',
-    rejectionReason: 'Missing TODA president signature and association dry seal',
-    rejectedBy: 'Operations Lead',
-    rejectedAt: '1 week ago',
-    resubmitted: true,
-  },
-  {
-    id: 'REJ-407',
-    driver: 'Reynaldo Garcia',
-    driverPhone: '+63 908 771 9923',
-    city: 'Manila City',
-    docType: 'LTO Official Receipt (OR)',
-    rejectionReason: 'Expired official receipt; proof of annual MV registration needed',
-    rejectedBy: 'Admin User',
-    rejectedAt: '1 week ago',
-    resubmitted: true,
-  },
-  {
-    id: 'REJ-408',
     driver: 'Felipe Cruz',
     driverPhone: '+63 916 445 8821',
-    city: 'Pasay City',
+    city: 'Pagadian City (Brgy. Tiguma)',
     docType: 'Barangay Commercial Driver Clearance',
-    rejectionReason: 'Barangay clearance jurisdiction differs from assigned operating zone',
-    rejectedBy: 'Admin User',
+    rejectionReason: 'Barangay clearance jurisdiction differs from assigned TODA zone',
+    rejectedBy: 'Marisol Lim',
     rejectedAt: '1 week ago',
     resubmitted: false,
   },
   {
-    id: 'REJ-409',
+    id: 'REJ-407',
     driver: 'Antonio Villanueva',
     driverPhone: '+63 939 556 1209',
-    city: 'Mandaluyong City',
-    docType: "LTO Driver's License Front Side",
+    city: 'Pagadian City (Brgy. Dao)',
+    docType: 'LTO Driver License Front Side',
     rejectionReason: 'Flash glare obscuring birthdate and driver license number',
-    rejectedBy: 'Super Admin',
+    rejectedBy: 'Operations Lead',
     rejectedAt: '10 days ago',
     resubmitted: true,
   },
   {
-    id: 'REJ-410',
+    id: 'REJ-408',
     driver: 'Cristopher Alcantara',
     driverPhone: '+63 921 778 2234',
-    city: 'Marikina City',
+    city: 'Pagadian City (Brgy. Santiago)',
     docType: 'Taxicle Annual Inspection Certificate',
-    rejectionReason: 'Inspection report failed emissions and noise standard check',
+    rejectionReason: 'Inspection report missing official MVIC verifier signature',
     rejectedBy: 'Operations Lead',
     rejectedAt: '12 days ago',
     resubmitted: true,
   },
   {
-    id: 'REJ-411',
+    id: 'REJ-409',
     driver: 'Nestor Macaraeg',
     driverPhone: '+63 947 889 1120',
-    city: 'Valenzuela City',
+    city: 'Pagadian City (Brgy. Danlugan)',
     docType: 'NBI National Criminal Clearance',
     rejectionReason: 'Clearance QR code not scannable; re-upload required',
-    rejectedBy: 'Admin User',
+    rejectedBy: 'Marisol Lim',
     rejectedAt: '2 weeks ago',
     resubmitted: false,
   },
 ])
 
+const searchQuery = ref('')
+const resubFilter = ref<'ALL' | 'RESUBMITTED' | 'AWAITING'>('ALL')
 const currentPage = ref(1)
 const itemsPerPage = 10
+const inspectedRejected = ref<RejectedDocument | null>(null)
+const toastMessage = ref<string | null>(null)
+
+const filteredRejected = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  return rejectedDocs.value.filter((item) => {
+    if (resubFilter.value === 'RESUBMITTED' && !item.resubmitted) return false
+    if (resubFilter.value === 'AWAITING' && item.resubmitted) return false
+    if (!q) return true
+    return (
+      item.id.toLowerCase().includes(q) ||
+      item.driver.toLowerCase().includes(q) ||
+      item.docType.toLowerCase().includes(q) ||
+      item.rejectionReason.toLowerCase().includes(q)
+    )
+  })
+})
+
+watch([searchQuery, resubFilter], () => {
+  currentPage.value = 1
+})
 
 const paginatedRejectedDocs = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
-  return rejectedDocs.value.slice(start, start + itemsPerPage)
+  return filteredRejected.value.slice(start, start + itemsPerPage)
 })
+
+const queueForReReview = (item: RejectedDocument) => {
+  item.reopened = true
+  inspectedRejected.value = null
+  toastMessage.value = `${item.id} (${item.driver}) moved back to active verification queue.`
+}
 </script>
 
 <template>
@@ -142,18 +165,44 @@ const paginatedRejectedDocs = computed(() => {
         Rejected Driver Documents
       </h1>
       <p class="text-sm text-neutral-500 mt-1">
-        Audit log of failed Philippine driver document submissions, regulatory rejection grounds, and resubmissions.
+        Audit log of rejected Pagadian driver documents, regulatory grounds, and resubmissions.
       </p>
     </div>
 
-    <div class="bg-white border border-neutral-200 overflow-hidden">
-      <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
-        <h2 class="font-bold text-sm text-neutral-900">Rejected Regulatory Documents</h2>
+    <ToastBanner :message="toastMessage" tone="info" @dismiss="toastMessage = null" />
+
+    <div class="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+      <div
+        class="p-4 border-b border-neutral-100 flex flex-col md:flex-row md:items-center justify-between gap-3"
+      >
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div class="relative w-full sm:w-64">
+            <Icon
+              icon="lucide:search"
+              class="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2"
+            />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search log ID, driver, reason..."
+              class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+            />
+          </div>
+          <select
+            v-model="resubFilter"
+            aria-label="Filter by resubmission status"
+            class="px-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs font-medium text-neutral-700 focus:outline-none focus:border-neutral-900 cursor-pointer"
+          >
+            <option value="ALL">All Submissions</option>
+            <option value="RESUBMITTED">Resubmitted Ready</option>
+            <option value="AWAITING">Awaiting Driver Upload</option>
+          </select>
+        </div>
         <span class="text-xs text-neutral-400">Maintained for legal compliance audits</span>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
+        <table class="w-full min-w-[840px] text-left text-xs">
           <thead
             class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100 font-semibold"
           >
@@ -163,8 +212,8 @@ const paginatedRejectedDocs = computed(() => {
               <th class="py-3 px-4">Document</th>
               <th class="py-3 px-4">Rejection Grounds</th>
               <th class="py-3 px-4">Auditor</th>
-              <th class="py-3 px-4">Date</th>
-              <th class="py-3 px-4 text-right">Status</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4 text-right">Action</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100">
@@ -177,24 +226,39 @@ const paginatedRejectedDocs = computed(() => {
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ item.driver }}</div>
                 <div class="text-[11px] text-neutral-400 font-mono">{{ item.driverPhone }}</div>
+                <div class="text-[10px] text-neutral-400">{{ item.city }}</div>
               </td>
               <td class="py-3 px-4 font-medium text-neutral-800">{{ item.docType }}</td>
               <td class="py-3 px-4 text-neutral-600 max-w-[240px]">{{ item.rejectionReason }}</td>
-              <td class="py-3 px-4 text-neutral-500">{{ item.rejectedBy }}</td>
-              <td class="py-3 px-4 text-neutral-500 font-mono text-[11px]">{{ item.rejectedAt }}</td>
+              <td class="py-3 px-4 text-neutral-500">
+                <div>{{ item.rejectedBy }}</div>
+                <div class="font-mono text-[10px] text-neutral-400">{{ item.rejectedAt }}</div>
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                <StatusBadge
+                  :label="
+                    item.reopened
+                      ? 'Queued for Re-Review'
+                      : item.resubmitted
+                        ? 'Resubmitted'
+                        : 'Awaiting Upload'
+                  "
+                  :tone="item.reopened ? 'success' : item.resubmitted ? 'info' : 'danger'"
+                />
+              </td>
               <td class="py-3 px-4 text-right whitespace-nowrap">
-                <span
-                  v-if="item.resubmitted"
-                  class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-800"
+                <button
+                  type="button"
+                  @click="inspectedRejected = item"
+                  class="text-xs font-semibold text-neutral-800 hover:text-neutral-900 cursor-pointer"
                 >
-                  Resubmitted
-                </span>
-                <span
-                  v-else
-                  class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800"
-                >
-                  Pending Driver Action
-                </span>
+                  Inspect
+                </button>
+              </td>
+            </tr>
+            <tr v-if="paginatedRejectedDocs.length === 0">
+              <td colspan="7" class="py-8 text-center text-xs text-neutral-500">
+                No rejected document logs match the filter.
               </td>
             </tr>
           </tbody>
@@ -203,9 +267,76 @@ const paginatedRejectedDocs = computed(() => {
 
       <TablePagination
         v-model:current-page="currentPage"
-        :total-items="rejectedDocs.length"
+        :total-items="filteredRejected.length"
         :items-per-page="itemsPerPage"
       />
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="inspectedRejected"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 backdrop-blur-[1px] p-4"
+        role="dialog"
+        aria-modal="true"
+        @click.self="inspectedRejected = null"
+      >
+        <div
+          class="bg-white rounded-lg border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4"
+        >
+          <div class="flex items-start justify-between border-b border-neutral-100 pb-3">
+            <div>
+              <span class="font-mono text-[11px] text-neutral-400">{{ inspectedRejected.id }}</span>
+              <h3 class="text-base font-bold text-neutral-900">{{ inspectedRejected.docType }}</h3>
+            </div>
+            <button
+              type="button"
+              aria-label="Close modal"
+              @click="inspectedRejected = null"
+              class="text-neutral-400 hover:text-neutral-700 cursor-pointer"
+            >
+              <Icon icon="lucide:x" class="w-4 h-4" />
+            </button>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <div>
+              <span class="text-neutral-500">Applicant:</span>
+              <span class="font-semibold text-neutral-900 ml-1">{{
+                inspectedRejected.driver
+              }}</span>
+              <span class="font-mono text-neutral-500 ml-1"
+                >({{ inspectedRejected.driverPhone }})</span
+              >
+            </div>
+            <div>
+              <span class="text-neutral-500">Location:</span>
+              <span class="text-neutral-800 ml-1">{{ inspectedRejected.city }}</span>
+            </div>
+            <div class="p-3 bg-rose-50 border border-rose-200 rounded-md text-rose-900">
+              <div class="font-semibold mb-1">Recorded Rejection Grounds</div>
+              <p>{{ inspectedRejected.rejectionReason }}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
+            <button
+              type="button"
+              @click="inspectedRejected = null"
+              class="px-4 py-2 bg-white border border-neutral-200 rounded-md text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+            >
+              Close
+            </button>
+            <button
+              v-if="inspectedRejected.resubmitted && !inspectedRejected.reopened"
+              type="button"
+              @click="queueForReReview(inspectedRejected)"
+              class="px-4 py-2 bg-neutral-900 text-white rounded-md text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+            >
+              Re-Open for Verification
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

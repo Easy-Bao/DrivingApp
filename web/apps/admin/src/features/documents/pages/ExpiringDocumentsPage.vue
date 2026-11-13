@@ -1,14 +1,29 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import TablePagination from '@/app/components/TablePagination.vue'
+import StatusBadge from '@/shared/components/StatusBadge.vue'
+import ToastBanner from '@/shared/components/ToastBanner.vue'
 
-const expiringDocs = ref([
+type ExpiryStatus = 'Action Required' | 'Notice Sent' | 'Grace Period'
+
+interface ExpiringDocument {
+  id: string
+  driver: string
+  driverPhone: string
+  city: string
+  docType: string
+  expiryDate: string
+  daysLeft: number
+  status: ExpiryStatus
+}
+
+const expiringDocs = ref<ExpiringDocument[]>([
   {
     id: 'EXP-101',
     driver: 'Danilo Mendoza',
     driverPhone: '+63 928 412 8890',
-    city: 'Pasig City',
+    city: 'Pagadian City (Brgy. Tuburan)',
     docType: 'Taxicle MTOP Municipal Permit',
     expiryDate: '2026-11-15',
     daysLeft: 4,
@@ -18,18 +33,18 @@ const expiringDocs = ref([
     id: 'EXP-102',
     driver: 'Reynaldo Garcia',
     driverPhone: '+63 908 771 9923',
-    city: 'Manila City',
+    city: 'Pagadian City (Brgy. Balangasan)',
     docType: 'Taxicle Compulsory TPL Insurance',
     expiryDate: '2026-11-20',
     daysLeft: 9,
-    status: 'Notice Sent',
+    status: 'Action Required',
   },
   {
     id: 'EXP-103',
-    driver: 'Ramon Valderama',
-    driverPhone: '+63 927 334 9912',
-    city: 'Caloocan City',
-    docType: "Philippine LTO Driver's License",
+    driver: 'Javier Santos',
+    driverPhone: '+63 917 987 6543',
+    city: 'Pagadian City (Brgy. San Pedro)',
+    docType: "LTO Professional Driver's License",
     expiryDate: '2026-11-28',
     daysLeft: 17,
     status: 'Notice Sent',
@@ -38,8 +53,8 @@ const expiringDocs = ref([
     id: 'EXP-104',
     driver: 'Eduardo Santos',
     driverPhone: '+63 919 332 4455',
-    city: 'Taguig City',
-    docType: 'LTO Roadworthiness & TRU Certificate',
+    city: 'Pagadian City (Brgy. Kawit)',
+    docType: 'LTO Roadworthiness & MVIC Certificate',
     expiryDate: '2026-12-05',
     daysLeft: 24,
     status: 'Grace Period',
@@ -48,8 +63,8 @@ const expiringDocs = ref([
     id: 'EXP-105',
     driver: 'Maria Lourdes Ramos',
     driverPhone: '+63 920 882 1144',
-    city: 'Cebu City',
-    docType: 'Metro Cebu TODA Franchise Renewal',
+    city: 'Pagadian City (Brgy. Santa Lucia)',
+    docType: 'Santa Lucia TODA Franchise Renewal',
     expiryDate: '2026-12-10',
     daysLeft: 29,
     status: 'Grace Period',
@@ -58,8 +73,8 @@ const expiringDocs = ref([
     id: 'EXP-106',
     driver: 'Jose Mari Bautista',
     driverPhone: '+63 918 665 4411',
-    city: 'Davao City',
-    docType: 'Davao City MTOP Tricycle Permit',
+    city: 'Pagadian City (Brgy. Gatas)',
+    docType: 'Pagadian City MTOP Tricycle Permit',
     expiryDate: '2026-12-15',
     daysLeft: 34,
     status: 'Notice Sent',
@@ -68,8 +83,8 @@ const expiringDocs = ref([
     id: 'EXP-107',
     driver: 'Felipe Cruz',
     driverPhone: '+63 916 445 8821',
-    city: 'Pasay City',
-    docType: 'Pasay TODA Association Clearance',
+    city: 'Pagadian City (Brgy. Tiguma)',
+    docType: 'Tiguma TODA Association Clearance',
     expiryDate: '2026-12-22',
     daysLeft: 41,
     status: 'Grace Period',
@@ -78,7 +93,7 @@ const expiringDocs = ref([
     id: 'EXP-108',
     driver: 'Antonio Villanueva',
     driverPhone: '+63 939 556 1209',
-    city: 'Mandaluyong City',
+    city: 'Pagadian City (Brgy. Dao)',
     docType: 'LTO Motor Vehicle Inspection Report',
     expiryDate: '2027-01-05',
     daysLeft: 55,
@@ -88,8 +103,8 @@ const expiringDocs = ref([
     id: 'EXP-109',
     driver: 'Cristopher Alcantara',
     driverPhone: '+63 921 778 2234',
-    city: 'Marikina City',
-    docType: 'Marikina TRU Annual Inspection Certificate',
+    city: 'Pagadian City (Brgy. Santiago)',
+    docType: 'Pagadian TRU Annual Inspection Certificate',
     expiryDate: '2027-01-14',
     daysLeft: 64,
     status: 'Grace Period',
@@ -98,7 +113,7 @@ const expiringDocs = ref([
     id: 'EXP-110',
     driver: 'Nestor Macaraeg',
     driverPhone: '+63 947 889 1120',
-    city: 'Valenzuela City',
+    city: 'Pagadian City (Brgy. Danlugan)',
     docType: 'Barangay Commercial Driver Permit',
     expiryDate: '2027-01-20',
     daysLeft: 70,
@@ -106,41 +121,76 @@ const expiringDocs = ref([
   },
   {
     id: 'EXP-111',
-    driver: 'Rodelio Manalo',
+    driver: 'Ernesto Manalo',
     driverPhone: '+63 915 221 8890',
-    city: 'Las Pinas City',
+    city: 'Pagadian City (Brgy. Bulatok)',
     docType: 'LTO Taxicle Registration (OR/CR)',
     expiryDate: '2027-01-30',
     daysLeft: 80,
     status: 'Grace Period',
   },
-  {
-    id: 'EXP-112',
-    driver: 'Gilberto Soriano',
-    driverPhone: '+63 926 771 3344',
-    city: 'Paranaque City',
-    docType: 'TODA Commercial Operating Franchise',
-    expiryDate: '2027-02-12',
-    daysLeft: 93,
-    status: 'Grace Period',
-  },
 ])
 
+const searchQuery = ref('')
+const statusFilter = ref<'ALL' | 'CRITICAL' | ExpiryStatus>('ALL')
 const currentPage = ref(1)
 const itemsPerPage = 10
+const actionToast = ref<string | null>(null)
+
+const filteredDocs = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  return expiringDocs.value.filter((doc) => {
+    if (statusFilter.value === 'CRITICAL' && doc.daysLeft > 15) return false
+    if (
+      statusFilter.value !== 'ALL' &&
+      statusFilter.value !== 'CRITICAL' &&
+      doc.status !== statusFilter.value
+    ) {
+      return false
+    }
+    if (!q) return true
+    return (
+      doc.id.toLowerCase().includes(q) ||
+      doc.driver.toLowerCase().includes(q) ||
+      doc.docType.toLowerCase().includes(q) ||
+      doc.city.toLowerCase().includes(q)
+    )
+  })
+})
+
+watch([searchQuery, statusFilter], () => {
+  currentPage.value = 1
+})
 
 const paginatedExpiringDocs = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
-  return expiringDocs.value.slice(start, start + itemsPerPage)
+  return filteredDocs.value.slice(start, start + itemsPerPage)
 })
 
-const actionToast = ref<string | null>(null)
+const criticalCount = computed(() => expiringDocs.value.filter((d) => d.daysLeft <= 15).length)
 
-function sendUrgentReminder(doc: (typeof expiringDocs.value)[0]) {
+function sendUrgentReminder(doc: ExpiringDocument) {
+  doc.status = 'Notice Sent'
   actionToast.value = `Urgent renewal SMS dispatched to ${doc.driver} (${doc.driverPhone}).`
-  setTimeout(() => {
-    actionToast.value = null
-  }, 4000)
+}
+
+function broadcastCriticalReminders() {
+  const criticalDocs = expiringDocs.value.filter(
+    (doc) => doc.daysLeft <= 15 && doc.status !== 'Notice Sent',
+  )
+  for (const doc of criticalDocs) {
+    doc.status = 'Notice Sent'
+  }
+  actionToast.value =
+    criticalDocs.length > 0
+      ? `Dispatched SMS renewal alerts to ${criticalDocs.length} critical-expiry drivers.`
+      : 'All critical-expiry drivers already have an active SMS reminder sent.'
+}
+
+const statusTone = (status: ExpiryStatus) => {
+  if (status === 'Action Required') return 'danger'
+  if (status === 'Notice Sent') return 'warning'
+  return 'neutral'
 }
 </script>
 
@@ -152,38 +202,61 @@ function sendUrgentReminder(doc: (typeof expiringDocs.value)[0]) {
           Expiring Driver Documents
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
-          Monitor Philippine LTO driver licenses, MTOP municipal permits, and TODA franchise renewals.
+          Monitor Pagadian LTO licenses, MTOP municipal permits, and TODA franchise renewals.
         </p>
       </div>
-      <div class="flex items-center space-x-3">
+      <div class="flex flex-wrap items-center gap-2">
         <span
-          class="px-3 py-1.5 bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800"
+          class="px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-md text-xs font-semibold text-amber-800"
         >
-          {{ expiringDocs.filter((d) => d.daysLeft <= 15).length }} Critical Expirations (&lt; 15 Days)
+          {{ criticalCount }} Critical Expirations (&lt;= 15 Days)
         </span>
+        <button
+          type="button"
+          @click="broadcastCriticalReminders"
+          class="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer"
+        >
+          Alert Critical Cohort
+        </button>
       </div>
     </div>
 
-    <div
-      v-if="actionToast"
-      class="p-4 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
-    >
-      <div class="flex items-center space-x-2">
-        <span>{{ actionToast }}</span>
-      </div>
-      <button type="button" @click="actionToast = null">
-        <Icon icon="lucide:x" />
-      </button>
-    </div>
+    <ToastBanner :message="actionToast" tone="success" @dismiss="actionToast = null" />
 
-    <div class="bg-white border border-neutral-200 overflow-hidden">
-      <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
-        <h2 class="font-bold text-sm text-neutral-900">Driver Document Expiry Tracking</h2>
+    <div class="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+      <div
+        class="p-4 border-b border-neutral-100 flex flex-col md:flex-row md:items-center justify-between gap-3"
+      >
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div class="relative w-full sm:w-64">
+            <Icon
+              icon="lucide:search"
+              class="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2"
+            />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search driver, document, barangay..."
+              class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+            />
+          </div>
+          <select
+            v-model="statusFilter"
+            aria-label="Filter expiring documents"
+            class="px-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs font-medium text-neutral-700 focus:outline-none focus:border-neutral-900 cursor-pointer"
+          >
+            <option value="ALL">All Expiry Windows</option>
+            <option value="CRITICAL">Critical (&lt;= 15 Days)</option>
+            <option value="Action Required">Action Required</option>
+            <option value="Notice Sent">Notice Sent</option>
+            <option value="Grace Period">Grace Period</option>
+          </select>
+        </div>
         <span class="text-xs text-neutral-400">Automated SMS renewal alerts enabled</span>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
+        <table class="w-full min-w-[820px] text-left text-xs">
           <thead
             class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100 font-semibold"
           >
@@ -208,38 +281,35 @@ function sendUrgentReminder(doc: (typeof expiringDocs.value)[0]) {
                 <div class="font-semibold text-neutral-900">{{ doc.driver }}</div>
                 <div class="text-[11px] text-neutral-400 font-mono">{{ doc.driverPhone }}</div>
               </td>
-              <td class="py-3 px-4 font-medium text-neutral-800">{{ doc.docType }}</td>
+              <td class="py-3 px-4">
+                <div class="font-medium text-neutral-800">{{ doc.docType }}</div>
+                <div class="text-[11px] text-neutral-400">{{ doc.city }}</div>
+              </td>
               <td class="py-3 px-4 font-mono">{{ doc.expiryDate }}</td>
               <td class="py-3 px-4">
                 <span
                   class="font-mono font-bold"
-                  :class="doc.daysLeft <= 7 ? 'text-rose-600' : 'text-amber-600'"
+                  :class="doc.daysLeft <= 15 ? 'text-rose-600' : 'text-amber-600'"
                 >
                   {{ doc.daysLeft }} days
                 </span>
               </td>
               <td class="py-3 px-4">
-                <span
-                  class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                  :class="
-                    doc.status === 'Action Required'
-                      ? 'bg-rose-100 text-rose-800'
-                      : doc.status === 'Notice Sent'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-neutral-100 text-neutral-700'
-                  "
-                >
-                  {{ doc.status }}
-                </span>
+                <StatusBadge :label="doc.status" :tone="statusTone(doc.status)" />
               </td>
               <td class="py-3 px-4 text-right whitespace-nowrap">
                 <button
                   type="button"
-                  class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
+                  class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer"
                   @click="sendUrgentReminder(doc)"
                 >
                   Send Renewal SMS
                 </button>
+              </td>
+            </tr>
+            <tr v-if="paginatedExpiringDocs.length === 0">
+              <td colspan="7" class="py-8 text-center text-xs text-neutral-500">
+                No expiring documents match the current filter.
               </td>
             </tr>
           </tbody>
@@ -248,7 +318,7 @@ function sendUrgentReminder(doc: (typeof expiringDocs.value)[0]) {
 
       <TablePagination
         v-model:current-page="currentPage"
-        :total-items="expiringDocs.length"
+        :total-items="filteredDocs.length"
         :items-per-page="itemsPerPage"
       />
     </div>
