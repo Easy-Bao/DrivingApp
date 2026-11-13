@@ -152,27 +152,31 @@ const createSchedule = () => {
           Download regional CSV ledgers or manage scheduled Pagadian City operational briefings.
         </p>
       </div>
-      <button
-        type="button"
-        class="self-start sm:self-auto px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors"
-        @click="openCreateModal"
-      >
-        + Create Scheduled Report
-      </button>
     </div>
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
-      <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
+      <div
+        class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+      >
         <div>
           <h2 class="font-bold text-sm text-neutral-900">Scheduled Automated Reports</h2>
           <p class="text-xs text-neutral-400 mt-0.5">
             Dispatched automatically in Philippine Standard Time (PHT / UTC+8)
           </p>
         </div>
-        <StatusBadge
-          :label="`${scheduledReports.filter((s) => s.isActive).length} Active Schedules`"
-          tone="success"
-        />
+        <div class="flex flex-wrap items-center gap-2">
+          <StatusBadge
+            :label="`${scheduledReports.filter((s) => s.isActive).length} Active Schedules`"
+            tone="neutral"
+          />
+          <button
+            type="button"
+            class="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors cursor-pointer shrink-0"
+            @click="openCreateModal"
+          >
+            + Schedule Report
+          </button>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
@@ -228,7 +232,7 @@ const createSchedule = () => {
                   class="px-2.5 py-1 text-xs font-semibold rounded-none transition-colors"
                   :class="
                     sch.isActive
-                      ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800'
+                      ? 'bg-neutral-900 hover:bg-neutral-800 text-white'
                       : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-600'
                   "
                   @click="toggleSchedule(sch)"

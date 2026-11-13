@@ -98,12 +98,6 @@ const handleExport = () => {
           franchise, LTO OR/CR, and insurance renewals.
         </p>
       </div>
-      <RouterLink
-        to="/documents/expiring"
-        class="self-start sm:self-auto px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-      >
-        Open Renewal Queue
-      </RouterLink>
     </div>
 
     <ReportFilterBar
@@ -113,11 +107,21 @@ const handleExport = () => {
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
-      <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
-        <h2 class="font-bold text-sm text-neutral-900">Document Renewal Projections</h2>
-        <span class="text-xs text-neutral-400">
-          Automated driver reminders trigger 30 days prior to expiry
-        </span>
+      <div
+        class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+      >
+        <div>
+          <h2 class="font-bold text-sm text-neutral-900">Document Renewal Projections</h2>
+          <p class="text-xs text-neutral-400 mt-0.5">
+            Automated driver reminders trigger 30 days prior to expiry
+          </p>
+        </div>
+        <RouterLink
+          to="/documents/expiring"
+          class="self-start sm:self-auto px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800 shrink-0"
+        >
+          Open Renewal Queue
+        </RouterLink>
       </div>
 
       <div class="overflow-x-auto">
@@ -152,8 +156,8 @@ const handleExport = () => {
               <td class="py-3 px-4 font-semibold text-neutral-800">
                 {{ f.insuranceExpiring }} policies
               </td>
-              <td class="py-3 px-4 font-bold text-amber-700">{{ totalAudits(f) }}</td>
-              <td class="py-3 px-4 text-right font-mono font-bold text-emerald-700">
+              <td class="py-3 px-4 font-bold text-neutral-900">{{ totalAudits(f) }}</td>
+              <td class="py-3 px-4 text-right font-mono font-bold text-neutral-900">
                 {{ f.complianceRate }}
               </td>
             </tr>
