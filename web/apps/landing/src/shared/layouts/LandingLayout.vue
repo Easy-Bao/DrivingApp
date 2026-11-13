@@ -4,12 +4,12 @@ import SiteHeader from '@/shared/components/SiteHeader.vue'
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-white text-[#090d16] font-sans antialiased">
+  <div class="flex min-h-screen flex-col bg-neutral-50 text-neutral-900 font-sans antialiased">
     <a
       href="#main-content"
-      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-emerald-700 focus:px-4 focus:py-2.5 focus:text-sm focus:font-bold focus:text-white focus:shadow-lg"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-neutral-900 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
     >
-      Skip to main content
+      Skip to content
     </a>
 
     <SiteHeader />

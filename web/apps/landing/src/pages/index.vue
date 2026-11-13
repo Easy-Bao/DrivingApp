@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import {
-  BiddingShowcaseSection,
-  CoverageCorridorsSection,
-  DriverBannerSection,
-  FaqSection,
+  DriveCalloutSection,
   FleetServicesSection,
   HeroSection,
-  SafetyTrustSection,
+  HowItWorksSection,
 } from '@/features/landing-showcase'
 import LandingLayout from '@/shared/layouts/LandingLayout.vue'
 </script>
@@ -15,10 +12,7 @@ import LandingLayout from '@/shared/layouts/LandingLayout.vue'
   <LandingLayout>
     <HeroSection />
     <FleetServicesSection />
-    <BiddingShowcaseSection />
-    <CoverageCorridorsSection />
-    <SafetyTrustSection />
-    <DriverBannerSection />
-    <FaqSection />
+    <HowItWorksSection />
+    <DriveCalloutSection />
   </LandingLayout>
 </template>

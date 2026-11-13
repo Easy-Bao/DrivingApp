@@ -66,13 +66,6 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
-    '/safety': RouteRecordInfo<
-      '/safety',
-      '/safety',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
   }
 
   /**
@@ -121,14 +114,6 @@ declare module 'vue-router/auto-routes' {
     'src/pages/drive.vue': {
       routes:
         | '/drive'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
-    'src/pages/safety.vue': {
-      routes:
-        | '/safety'
       views:
         | never
       pathParamNames:

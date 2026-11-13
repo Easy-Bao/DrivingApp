@@ -1,14 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { handleHotUpdate, routes } from 'vue-router/auto-routes'
 
-const DEFAULT_TITLE = 'EasyRide — Transparent Taxicle & TukTuk Rides in Pagadian City'
+const DEFAULT_TITLE = 'EasyRide — Pagadian Rides'
 
 const ROUTE_TITLES: Record<string, string> = {
-  '/': 'EasyRide — Pagadian Taxicle & TukTuk Rides with Upfront Fares',
-  '/drive': 'Drive & Earn with EasyRide — Pagadian Driver Wallet & Tiers',
-  '/safety': 'Safety & Verification — EasyRide Pagadian Dispatch',
-  '/download': 'Download EasyRide Apps — Passenger & Driver Builds',
-  '/architecture': 'Platform Architecture — EasyRide Dispatch & Realtime Stack',
+  '/': 'EasyRide — Pagadian Rides',
+  '/drive': 'EasyRide — Drive',
+  '/download': 'EasyRide — Download',
+  '/architecture': 'EasyRide — Architecture',
 }
 
 const applicationRouter = createRouter({
@@ -21,7 +20,7 @@ const applicationRouter = createRouter({
     if (to.hash) {
       return {
         el: to.hash,
-        top: 84,
+        top: 76,
         behavior: 'smooth',
       }
     }

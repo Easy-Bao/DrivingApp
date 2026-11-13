@@ -5,13 +5,12 @@ import PlatformArchitecturePage from '@/pages/PlatformArchitecturePage.vue'
 import ArchitecturePage from '@/pages/architecture.vue'
 
 describe('PlatformArchitecturePage', () => {
-  it('renders platform architecture page with client cards and explorer', async () => {
+  it('renders architecture page and service explorer', async () => {
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [
         { path: '/', component: { template: '<div>Home</div>' } },
         { path: '/drive', component: { template: '<div>Drive</div>' } },
-        { path: '/safety', component: { template: '<div>Safety</div>' } },
         { path: '/download', component: { template: '<div>Download</div>' } },
         { path: '/architecture', component: ArchitecturePage },
       ],
@@ -25,11 +24,8 @@ describe('PlatformArchitecturePage', () => {
       },
     })
 
-    expect(wrapper.find('h1').text()).toBe(
-      'Dispatch platform architecture built for real-time reliability',
-    )
-    expect(wrapper.text()).toContain('apps/passenger (Flutter)')
-    expect(wrapper.text()).toContain('Go API Gateway')
-    expect(wrapper.text()).toContain('Realtime Bidding Broker')
+    expect(wrapper.find('h1').text()).toBe('System Architecture')
+    expect(wrapper.text()).toContain('API Gateway')
+    expect(wrapper.text()).toContain('Core Dispatch')
   })
 })

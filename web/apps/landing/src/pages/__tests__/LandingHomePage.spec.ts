@@ -10,7 +10,6 @@ function createTestRouter() {
     routes: [
       { path: '/', component: IndexPage },
       { path: '/drive', component: { template: '<div>Drive</div>' } },
-      { path: '/safety', component: { template: '<div>Safety</div>' } },
       { path: '/download', component: { template: '<div>Download</div>' } },
       { path: '/architecture', component: { template: '<div>Architecture</div>' } },
     ],
@@ -18,7 +17,7 @@ function createTestRouter() {
 }
 
 describe('Landing Home Page', () => {
-  it('renders Pagadian hero headline, upfront fare estimator, and showcase bands', async () => {
+  it('renders minimalist hero, fare estimator, rides, steps, and driver callout', async () => {
     const router = createTestRouter()
     await router.push('/')
     await router.isReady()
@@ -29,13 +28,14 @@ describe('Landing Home Page', () => {
       },
     })
 
-    expect(wrapper.find('h1').text()).toBe('Pagadian Taxicles, priced upfront before you step in.')
-    expect(wrapper.text()).toContain('Check your upfront fare floor')
-    expect(wrapper.text()).toContain('Four three-wheel tiers matched to Pagadian terrain')
-    expect(wrapper.text()).toContain('No curbside haggling. Choose your driver in 90 seconds.')
+    expect(wrapper.find('h1').text()).toBe('Pagadian Rides.')
+    expect(wrapper.text()).toContain('Fare Estimate')
+    expect(wrapper.text()).toContain('Our Rides')
+    expect(wrapper.text()).toContain('How It Works')
+    expect(wrapper.text()).toContain('Drive EasyRide')
   })
 
-  it('switches bidding walkthrough steps when clicked', async () => {
+  it('selects Uphill tier in calculator when clicking Check rate on Uphill card', async () => {
     const router = createTestRouter()
     await router.push('/')
     await router.isReady()
@@ -46,43 +46,13 @@ describe('Landing Home Page', () => {
       },
     })
 
-    const stepButtons = wrapper.findAll('#bidding-flow [role="tab"]')
-    expect(stepButtons.length).toBe(3)
-
-    const thirdTab = stepButtons[2]
-    expect(thirdTab).toBeDefined()
-    if (thirdTab) {
-      await thirdTab.trigger('click')
-      expect(wrapper.text()).toContain('Driver En Route')
-    }
-  })
-
-  it('prefills hero fare estimator when selecting a coverage corridor route', async () => {
-    const router = createTestRouter()
-    await router.push('/')
-    await router.isReady()
-
-    const wrapper = mount(IndexPage, {
-      global: {
-        plugins: [router],
-      },
-    })
-
-    const coverageTabs = wrapper.findAll('#coverage [role="tab"]')
-    const airportTab = coverageTabs[3]
-    expect(airportTab).toBeDefined()
-    if (airportTab) {
-      await airportTab.trigger('click')
-    }
-
-    const prefillButton = wrapper
-      .findAll('#coverage button')
-      .find((button) => button.text().includes('Prefill this corridor in calculator'))
-    expect(prefillButton).toBeDefined()
-    if (prefillButton) {
-      await prefillButton.trigger('click')
-      const destinationInput = wrapper.find('#landing-destination-input')
-      expect((destinationInput.element as HTMLInputElement).value).toBe('Pagadian City Airport')
+    const rideButtons = wrapper.findAll('#rides button')
+    const uphillButton = rideButtons[1]
+    expect(uphillButton).toBeDefined()
+    if (uphillButton) {
+      await uphillButton.trigger('click')
+      const tierRadios = wrapper.findAll('[role="radio"]')
+      expect(tierRadios[1]?.attributes('aria-checked')).toBe('true')
     }
   })
 })

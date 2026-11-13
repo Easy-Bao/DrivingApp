@@ -1,5 +1,4 @@
-/* Application-specific tokens and utility safeguards for @web/landing.
-   Global Tailwind v4 + ProductSans tokens come from @web/ui/styles/theme.css. */
+/* Minimal monochrome theme aligned with @web/admin and @web/ui neutral tokens. */
 :root {
   color-scheme: light;
   --surface-background: #f8fafc;
@@ -8,8 +7,11 @@
   --border-subtle: #e2e8f0;
   --border-strong: #cbd5e1;
   --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
+  --text-secondary: #64748b;
+  --text-muted: #78889b;
+  --brand-primary: #090d16;
+  --brand-primary-hover: #1e293b;
+  --brand-primary-soft: #f1f5f9;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -21,8 +23,19 @@
     --border-subtle: #e2e8f0;
     --border-strong: #cbd5e1;
     --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #64748b;
+    --text-secondary: #64748b;
+    --text-muted: #78889b;
+    --brand-primary: #090d16;
+    --brand-primary-hover: #1e293b;
+    --brand-primary-soft: #f1f5f9;
+  }
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-radius: 0;
   }
 }
 
@@ -50,7 +63,7 @@
 
 html {
   scroll-behavior: smooth;
-  background-color: #ffffff;
+  background-color: #f8fafc;
   color: #0f172a;
 }
 
@@ -62,28 +75,22 @@ select,
 select option,
 select optgroup {
   color-scheme: light;
+  border-radius: 0;
 }
 
-:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: 2px solid #047857;
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #090d16;
   outline-offset: 2px;
 }
 
 .page-fade-enter-active,
 .page-fade-leave-active {
-  transition:
-    opacity 0.18s ease,
-    transform 0.18s ease;
+  transition: opacity 0.14s ease;
 }
 
-.page-fade-enter-from {
-  opacity: 0;
-  transform: translateY(4px);
-}
-
+.page-fade-enter-from,
 .page-fade-leave-to {
   opacity: 0;
-  transform: translateY(-2px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -94,10 +101,5 @@ select optgroup {
   .page-fade-enter-active,
   .page-fade-leave-active {
     transition: none;
-  }
-
-  .page-fade-enter-from,
-  .page-fade-leave-to {
-    transform: none;
   }
 }

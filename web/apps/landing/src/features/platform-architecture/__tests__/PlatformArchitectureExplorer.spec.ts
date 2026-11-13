@@ -3,12 +3,12 @@ import { describe, expect, it } from 'vitest'
 import PlatformArchitectureExplorer from '@/features/platform-architecture/components/PlatformArchitectureExplorer.vue'
 
 describe('PlatformArchitectureExplorer', () => {
-  it('renders architecture service nodes and updates active node specification on click', async () => {
+  it('renders service nodes and updates selected node detail on click', async () => {
     const wrapper = mount(PlatformArchitectureExplorer)
 
-    expect(wrapper.text()).toContain('Go API Gateway')
-    expect(wrapper.text()).toContain('Core Dispatch Service')
-    expect(wrapper.text()).toContain('Realtime Bidding Broker')
+    expect(wrapper.text()).toContain('API Gateway')
+    expect(wrapper.text()).toContain('Core Dispatch')
+    expect(wrapper.text()).toContain('Realtime Broker')
 
     const nodeButtons = wrapper.findAll('button')
     expect(nodeButtons.length).toBe(3)
@@ -17,8 +17,8 @@ describe('PlatformArchitectureExplorer', () => {
     expect(realtimeButton).toBeDefined()
     if (realtimeButton) {
       await realtimeButton.trigger('click')
-      expect(wrapper.find('h3').text()).toBe('Realtime Bidding Broker')
-      expect(wrapper.text()).toContain('90-second deterministic auction countdown timer')
+      expect(wrapper.find('h3').text()).toBe('Realtime Broker')
+      expect(wrapper.text()).toContain('90s windows')
     }
   })
 })

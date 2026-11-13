@@ -45,7 +45,7 @@ export const RIDE_TIER_CONFIGS: Record<RideTier, RideTierConfig> = {
 export const PRESET_CORRIDORS: PresetCorridor[] = [
   {
     id: 'poblacion-dao',
-    label: 'Agora -> Dao Capitol',
+    label: 'Agora -> Dao',
     pickup: 'Agora Public Market, Poblacion',
     destination: 'Dao Provincial Capitol & Medical Center',
     distanceKm: 3.4,
@@ -54,7 +54,7 @@ export const PRESET_CORRIDORS: PresetCorridor[] = [
   },
   {
     id: 'plaza-bulatok',
-    label: 'Plaza Luzon -> Bulatok Terminal',
+    label: 'Plaza -> Bulatok',
     pickup: 'Plaza Luzon Oval, Poblacion',
     destination: 'Integrated Bus Terminal (Bulatok)',
     distanceKm: 4.3,
@@ -63,7 +63,7 @@ export const PRESET_CORRIDORS: PresetCorridor[] = [
   },
   {
     id: 'tiguma-airport',
-    label: 'Robinsons Tiguma -> Airport',
+    label: 'Tiguma -> Airport',
     pickup: 'Robinsons Place Pagadian (Tiguma)',
     destination: 'Pagadian City Airport',
     distanceKm: 6.1,
@@ -72,7 +72,7 @@ export const PRESET_CORRIDORS: PresetCorridor[] = [
   },
   {
     id: 'wharf-gaisano',
-    label: 'Santiago Wharf -> Gaisano',
+    label: 'Wharf -> Gaisano',
     pickup: 'Santiago Wharf & Pier Port',
     destination: 'Gaisano Capital Pagadian',
     distanceKm: 2.2,
