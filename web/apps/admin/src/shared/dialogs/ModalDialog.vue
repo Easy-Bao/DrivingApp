@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, useId, watch } from 'vue'
+import { computed, useId } from 'vue'
 import { Icon } from '@iconify/vue'
+import { useEscapeKey } from '@/shared/composables/use-escape-key'
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl'
 
@@ -54,30 +55,7 @@ function handleBackdropClick() {
   }
 }
 
-function handleKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape' && props.open) {
-    closeDialog()
-  }
-}
-
-watch(
-  () => props.open,
-  (isOpen) => {
-    if (typeof window === 'undefined') return
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeydown)
-    } else {
-      window.removeEventListener('keydown', handleKeydown)
-    }
-  },
-  { immediate: true },
-)
-
-onBeforeUnmount(() => {
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('keydown', handleKeydown)
-  }
-})
+useEscapeKey(() => props.open, closeDialog)
 </script>
 
 <template>

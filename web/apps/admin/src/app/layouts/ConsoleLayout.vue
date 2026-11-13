@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import Sidebar from '@/app/layouts/Sidebar.vue'
 import { navigationGroups } from '@/app/navigation/menu'
+import { useEscapeKey } from '@/shared/composables/use-escape-key'
 
 interface BreadcrumbMeta {
   section: string
@@ -46,29 +47,8 @@ watch(
   },
 )
 
-function handleEscapeKey(event: KeyboardEvent) {
-  if (event.key === 'Escape' && mobileNavOpen.value) {
-    mobileNavOpen.value = false
-  }
-}
-
-watch(
-  mobileNavOpen,
-  (isOpen) => {
-    if (typeof window === 'undefined') return
-    if (isOpen) {
-      window.addEventListener('keydown', handleEscapeKey)
-    } else {
-      window.removeEventListener('keydown', handleEscapeKey)
-    }
-  },
-  { immediate: true },
-)
-
-onBeforeUnmount(() => {
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('keydown', handleEscapeKey)
-  }
+useEscapeKey(mobileNavOpen, () => {
+  mobileNavOpen.value = false
 })
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {

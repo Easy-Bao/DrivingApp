@@ -17,20 +17,33 @@ const emit = defineEmits<{
   (e: 'update:currentPage', page: number): void
 }>()
 
-const totalPages = computed(() => Math.max(1, Math.ceil(props.totalItems / props.itemsPerPage)))
+const safeItemsPerPage = computed(() => {
+  if (!Number.isFinite(props.itemsPerPage)) return 1
+  return Math.max(1, Math.floor(props.itemsPerPage))
+})
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(Math.max(0, props.totalItems) / safeItemsPerPage.value)),
+)
+
+const safeCurrentPage = computed(() => {
+  const raw = Number.isFinite(props.currentPage) ? Math.floor(props.currentPage) : 1
+  return Math.min(totalPages.value, Math.max(1, raw))
+})
 
 const startItem = computed(() => {
-  if (props.totalItems === 0) return 0
-  return (props.currentPage - 1) * props.itemsPerPage + 1
+  if (props.totalItems <= 0) return 0
+  return (safeCurrentPage.value - 1) * safeItemsPerPage.value + 1
 })
 
 const endItem = computed(() => {
-  return Math.min(props.totalItems, props.currentPage * props.itemsPerPage)
+  if (props.totalItems <= 0) return 0
+  return Math.min(props.totalItems, safeCurrentPage.value * safeItemsPerPage.value)
 })
 
 const visiblePages = computed<(number | 'ellipsis-left' | 'ellipsis-right')[]>(() => {
   const total = totalPages.value
-  const current = props.currentPage
+  const current = safeCurrentPage.value
   if (total <= 7) {
     return Array.from({ length: total }, (_, index) => index + 1)
   }
@@ -54,14 +67,14 @@ const visiblePages = computed<(number | 'ellipsis-left' | 'ellipsis-right')[]>((
 })
 
 function goToPage(page: number) {
-  if (page < 1 || page > totalPages.value || page === props.currentPage) return
+  if (page < 1 || page > totalPages.value || page === safeCurrentPage.value) return
   emit('update:currentPage', page)
 }
 </script>
 
 <template>
   <div
-    v-if="totalItems > itemsPerPage"
+    v-if="totalItems > safeItemsPerPage"
     class="px-4 py-3 border-t border-neutral-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs bg-neutral-50/50 select-none"
   >
     <div class="text-neutral-500 tabular-nums">
@@ -75,15 +88,15 @@ function goToPage(page: number) {
         type="button"
         aria-label="Previous page"
         class="inline-flex items-center px-2.5 h-8 text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
-        :disabled="currentPage <= 1"
-        @click="goToPage(currentPage - 1)"
+        :disabled="safeCurrentPage <= 1"
+        @click="goToPage(safeCurrentPage - 1)"
       >
         <Icon icon="lucide:chevron-left" class="mr-1 text-xs" aria-hidden="true" />
         <span>Prev</span>
       </button>
 
       <span class="sm:hidden px-2 text-xs text-neutral-600 font-medium tabular-nums">
-        Page {{ currentPage }} / {{ totalPages }}
+        Page {{ safeCurrentPage }} / {{ totalPages }}
       </span>
 
       <div class="hidden sm:flex items-center gap-1">
@@ -99,10 +112,10 @@ function goToPage(page: number) {
             v-else
             type="button"
             :aria-label="`Page ${entry}`"
-            :aria-current="entry === currentPage ? 'page' : undefined"
+            :aria-current="entry === safeCurrentPage ? 'page' : undefined"
             class="w-8 h-8 flex items-center justify-center font-semibold border tabular-nums transition-colors cursor-pointer"
             :class="
-              entry === currentPage
+              entry === safeCurrentPage
                 ? 'bg-neutral-900 text-white border-neutral-900'
                 : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100'
             "
@@ -117,8 +130,8 @@ function goToPage(page: number) {
         type="button"
         aria-label="Next page"
         class="inline-flex items-center px-2.5 h-8 text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
-        :disabled="currentPage >= totalPages"
-        @click="goToPage(currentPage + 1)"
+        :disabled="safeCurrentPage >= totalPages"
+        @click="goToPage(safeCurrentPage + 1)"
       >
         <span>Next</span>
         <Icon icon="lucide:chevron-right" class="ml-1 text-xs" aria-hidden="true" />

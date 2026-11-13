@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
+import FloatingToast from '@/shared/feedback/FloatingToast.vue'
 import { formatBookingReference } from '@/shared/utils/format'
 import { useClipboardCopy } from '@/shared/utils/use-clipboard-copy'
 
@@ -30,20 +31,6 @@ const { copied, toastMessage, copy } = useClipboardCopy('Copied Booking ID')
       />
     </button>
 
-    <Teleport to="body">
-      <div
-        v-if="toastMessage"
-        role="status"
-        aria-live="polite"
-        class="fixed bottom-4 right-4 z-[60] bg-neutral-900 text-white border border-neutral-800 px-3 py-2 text-xs font-sans font-medium shadow-lg inline-flex items-center gap-2"
-      >
-        <Icon
-          icon="lucide:check"
-          class="h-3.5 w-3.5 text-emerald-400 shrink-0"
-          aria-hidden="true"
-        />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Teleport>
+    <FloatingToast :message="toastMessage" />
   </div>
 </template>

@@ -25,6 +25,7 @@ export function formatBookingReference(id: string): string {
  * Converts integer centavos stored by the backend into formatted PHP currency.
  */
 export function formatCentavos(centavos: number): string {
+  if (!Number.isFinite(centavos)) return formatPhp(0)
   return formatPhp(centavos / 100)
 }
 
@@ -32,6 +33,7 @@ export function formatCentavos(centavos: number): string {
  * Converts percentage basis points (e.g. 1500 bps -> "15%") for display.
  */
 export function formatBpsAsPercent(bps: number): string {
+  if (!Number.isFinite(bps)) return '0%'
   const percent = bps / 100
   return Number.isInteger(percent) ? `${percent}%` : `${percent.toFixed(2)}%`
 }
