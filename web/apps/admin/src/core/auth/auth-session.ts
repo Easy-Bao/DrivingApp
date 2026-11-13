@@ -1,19 +1,19 @@
 import { readonly, ref } from 'vue'
 
-export type AdminRole = 'super_admin' | 'fleet_ops' | 'finance_admin' | 'support_lead'
+export type OperatorRole = 'root_operator' | 'fleet_ops' | 'finance_ops' | 'support_lead'
 
 export interface AuthSession {
   token: string | null
   userId: string | null
   operatorName: string
   operatorEmail: string
-  role: AdminRole | null
+  role: OperatorRole | null
   expiresAt: number
   locked: boolean
 }
 
 export interface RoleProfile {
-  role: AdminRole
+  role: OperatorRole
   label: string
   operatorName: string
   operatorEmail: string
@@ -21,51 +21,51 @@ export interface RoleProfile {
   scopeSummary: string
 }
 
-export const ROLE_PROFILES: Record<AdminRole, RoleProfile> = {
-  super_admin: {
-    role: 'super_admin',
-    label: 'Super Administrator',
-    operatorName: 'Operations Control Lead',
+export const ROLE_PROFILES: Record<OperatorRole, RoleProfile> = {
+  root_operator: {
+    role: 'root_operator',
+    label: 'Root Operator',
+    operatorName: 'Operations Lead',
     operatorEmail: 'ops@easyride.ph',
-    userId: 'ADM-001',
-    scopeSummary: 'Full platform configuration, RBAC, ledger, dispatch, and safety access',
+    userId: 'OP-001',
+    scopeSummary: 'All routes, operators, ledger, dispatch, and settings.',
   },
   fleet_ops: {
     role: 'fleet_ops',
-    label: 'Dispatch & Safety Supervisor',
+    label: 'Fleet Ops',
     operatorName: 'Ramon Villanueva',
     operatorEmail: 'dispatch@easyride.ph',
-    userId: 'ADM-002',
-    scopeSummary: 'Trips, live dispatch, KYC documents, service zones, and passenger safety',
+    userId: 'OP-002',
+    scopeSummary: 'Trips, live dispatch, documents, zones, and safety.',
   },
-  finance_admin: {
-    role: 'finance_admin',
-    label: 'Treasury & Settlements Officer',
+  finance_ops: {
+    role: 'finance_ops',
+    label: 'Finance Ops',
     operatorName: 'Clarisse Mendoza',
     operatorEmail: 'treasury@easyride.ph',
-    userId: 'ADM-003',
-    scopeSummary: 'Driver top-ups, cash settlement ledger, tariffs, commissions, and reports',
+    userId: 'OP-003',
+    scopeSummary: 'Top-ups, settlements, tariffs, commissions, and reports.',
   },
   support_lead: {
     role: 'support_lead',
-    label: 'Trust & Safety Lead',
+    label: 'Support Lead',
     operatorName: 'Marisol Lim',
     operatorEmail: 'safety@easyride.ph',
-    userId: 'ADM-004',
-    scopeSummary: 'Support tickets, incident reports, disputes, rider standing, and refunds',
+    userId: 'OP-004',
+    scopeSummary: 'Tickets, disputes, safety reports, and refunds.',
   },
 }
 
-const STORAGE_KEY = 'easyride_admin_session_v1'
+const STORAGE_KEY = 'easyride_console_session_v1'
 const SESSION_DURATION_MS = 8 * 60 * 60 * 1000
-const VALID_ROLES = new Set<AdminRole>([
-  'super_admin',
+const VALID_ROLES = new Set<OperatorRole>([
+  'root_operator',
   'fleet_ops',
-  'finance_admin',
+  'finance_ops',
   'support_lead',
 ])
 
-function createActiveSession(role: AdminRole, now = Date.now()): AuthSession {
+function createActiveSession(role: OperatorRole, now = Date.now()): AuthSession {
   const profile = ROLE_PROFILES[role]
   return {
     token: `ezr-${role}-7016-${now.toString(36)}`,
@@ -82,8 +82,8 @@ function createLockedSession(previous?: Partial<AuthSession>): AuthSession {
   return {
     token: null,
     userId: null,
-    operatorName: previous?.operatorName || ROLE_PROFILES.super_admin.operatorName,
-    operatorEmail: previous?.operatorEmail || ROLE_PROFILES.super_admin.operatorEmail,
+    operatorName: previous?.operatorName || ROLE_PROFILES.root_operator.operatorName,
+    operatorEmail: previous?.operatorEmail || ROLE_PROFILES.root_operator.operatorEmail,
     role: null,
     expiresAt: 0,
     locked: true,
@@ -101,12 +101,12 @@ function persistSession(session: AuthSession): void {
 
 function loadInitialSession(): AuthSession {
   if (typeof window === 'undefined' || typeof window.sessionStorage === 'undefined') {
-    return createActiveSession('super_admin')
+    return createActiveSession('root_operator')
   }
   try {
     const raw = window.sessionStorage.getItem(STORAGE_KEY)
     if (!raw) {
-      const initial = createActiveSession('super_admin')
+      const initial = createActiveSession('root_operator')
       persistSession(initial)
       return initial
     }
@@ -137,7 +137,7 @@ function loadInitialSession(): AuthSession {
     persistSession(expired)
     return expired
   } catch {
-    return createActiveSession('super_admin')
+    return createActiveSession('root_operator')
   }
 }
 
@@ -167,12 +167,12 @@ export function isSessionAuthenticated(now = Date.now()): boolean {
 }
 
 export function loginOperator(
-  role: AdminRole,
+  role: OperatorRole,
   pin: string,
 ): { ok: true; session: AuthSession } | { ok: false; error: string } {
   const normalizedPin = pin.trim()
   if (normalizedPin.length < 4) {
-    return { ok: false, error: 'Enter a valid operator security PIN (minimum 4 characters).' }
+    return { ok: false, error: 'PIN must be at least 4 characters.' }
   }
   const next = createActiveSession(role)
   sessionState.value = next
@@ -190,7 +190,7 @@ export function setAuthSessionForTesting(session: Partial<AuthSession>): void {
 }
 
 export function restoreDefaultDemoSession(): void {
-  const next = createActiveSession('super_admin')
+  const next = createActiveSession('root_operator')
   sessionState.value = next
   persistSession(next)
 }

@@ -3,21 +3,21 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
-import { ROLE_PROFILES, loginOperator, type AdminRole } from '@/core/auth/auth-session'
+import { ROLE_PROFILES, loginOperator, type OperatorRole } from '@/core/auth/auth-session'
 import { sanitizeRedirectPath } from '@/app/router/guards'
 
 const route = useRoute()
 const router = useRouter()
 
-const selectedRole = ref<AdminRole>('super_admin')
+const selectedRole = ref<OperatorRole>('root_operator')
 const securityPin = ref('7016')
 const errorMessage = ref('')
 
 const roleOptions = [
-  { label: 'Super Administrator (Full Access)', value: 'super_admin' as AdminRole },
-  { label: 'Dispatch & Safety Supervisor', value: 'fleet_ops' as AdminRole },
-  { label: 'Treasury & Settlements Officer', value: 'finance_admin' as AdminRole },
-  { label: 'Trust & Safety Lead', value: 'support_lead' as AdminRole },
+  { label: 'Root Operator', value: 'root_operator' as OperatorRole },
+  { label: 'Fleet Ops', value: 'fleet_ops' as OperatorRole },
+  { label: 'Finance Ops', value: 'finance_ops' as OperatorRole },
+  { label: 'Support Lead', value: 'support_lead' as OperatorRole },
 ]
 
 const activeProfile = computed(() => ROLE_PROFILES[selectedRole.value])
@@ -45,12 +45,8 @@ function submitSignIn() {
             ER
           </div>
           <div>
-            <h1 class="text-base font-bold text-neutral-900 tracking-tight">
-              EasyRide Operations Console
-            </h1>
-            <p class="text-[11px] text-neutral-500">
-              Pagadian City (7016) · Protected Admin Access
-            </p>
+            <h1 class="text-base font-bold text-neutral-900 tracking-tight">EasyRide Operations</h1>
+            <p class="text-[11px] text-neutral-500">Pagadian City · 7016</p>
           </div>
         </div>
         <Icon icon="lucide:shield-check" class="text-xl text-neutral-800" aria-hidden="true" />
@@ -59,18 +55,18 @@ function submitSignIn() {
       <form class="p-6 space-y-4 text-xs" @submit.prevent="submitSignIn">
         <div
           v-if="route.query.redirect"
-          class="p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs"
+          class="p-3 bg-neutral-50 border border-neutral-300 text-neutral-800 text-xs"
         >
-          Session is locked. Authenticate to access
-          <span class="font-mono font-semibold">{{ redirectTarget }}</span>
-          .
+          Locked. Sign in for
+          <span class="font-mono font-semibold">{{ redirectTarget }}</span
+          >.
         </div>
 
         <div class="space-y-1.5">
-          <label class="block font-semibold text-neutral-800">Operator Role Profile</label>
+          <label class="block font-semibold text-neutral-800">Role</label>
           <BaseSelect
             v-model="selectedRole"
-            aria-label="Select operator role profile"
+            aria-label="Select operator role"
             :full-width="true"
             :options="roleOptions"
           />
@@ -82,26 +78,29 @@ function submitSignIn() {
 
         <div class="p-3 bg-neutral-50 border border-neutral-200 space-y-1">
           <div class="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
-            Authorized Route Scope
+            Access Scope
           </div>
           <p class="text-xs text-neutral-700">{{ activeProfile.scopeSummary }}</p>
         </div>
 
         <div class="space-y-1.5">
           <label for="operator-pin" class="block font-semibold text-neutral-800">
-            Operator Security PIN
+            Security PIN
           </label>
           <input
             id="operator-pin"
             v-model="securityPin"
             type="password"
             autocomplete="current-password"
-            placeholder="Enter 4+ digit PIN"
+            placeholder="4+ digit PIN"
             class="w-full px-3 py-2 bg-white border border-neutral-300 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
           />
         </div>
 
-        <div v-if="errorMessage" class="p-2.5 bg-rose-50 border border-rose-200 text-rose-800">
+        <div
+          v-if="errorMessage"
+          class="p-2.5 bg-neutral-50 border border-neutral-300 border-l-2 border-l-rose-600 text-neutral-900"
+        >
           {{ errorMessage }}
         </div>
 
@@ -109,7 +108,7 @@ function submitSignIn() {
           type="submit"
           class="w-full py-2.5 px-4 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
         >
-          Unlock Admin Console
+          Unlock Session
         </button>
       </form>
     </div>

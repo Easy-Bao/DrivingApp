@@ -1,36 +1,37 @@
 import type { RouteLocationNormalized, RouteLocationRaw, Router } from 'vue-router'
-import { getAuthSession, isSessionAuthenticated, type AdminRole } from '@/core/auth/auth-session'
+import { getAuthSession, isSessionAuthenticated, type OperatorRole } from '@/core/auth/auth-session'
 
 interface RoutePolicyRule {
   prefix: string
-  roles: readonly AdminRole[]
+  roles: readonly OperatorRole[]
 }
 
 const ROUTE_ACCESS_POLICY: readonly RoutePolicyRule[] = [
-  { prefix: '/users/admin-users', roles: ['super_admin'] },
-  { prefix: '/users/roles', roles: ['super_admin'] },
-  { prefix: '/settings/content', roles: ['super_admin'] },
-  { prefix: '/settings/app-settings', roles: ['super_admin'] },
-  { prefix: '/settings/audit-logs', roles: ['super_admin'] },
-  { prefix: '/settings/service-zones', roles: ['super_admin', 'fleet_ops'] },
-  { prefix: '/settings/cities', roles: ['super_admin', 'fleet_ops'] },
-  { prefix: '/documents', roles: ['super_admin', 'fleet_ops'] },
-  { prefix: '/payments/refunds', roles: ['super_admin', 'finance_admin', 'support_lead'] },
-  { prefix: '/payments', roles: ['super_admin', 'finance_admin'] },
-  { prefix: '/trips', roles: ['super_admin', 'fleet_ops', 'support_lead'] },
-  { prefix: '/users', roles: ['super_admin', 'fleet_ops', 'support_lead'] },
-  { prefix: '/support', roles: ['super_admin', 'support_lead', 'fleet_ops'] },
+  { prefix: '/users/operators', roles: ['root_operator'] },
+  { prefix: '/users/admin-users', roles: ['root_operator'] },
+  { prefix: '/users/roles', roles: ['root_operator'] },
+  { prefix: '/settings/content', roles: ['root_operator'] },
+  { prefix: '/settings/app-settings', roles: ['root_operator'] },
+  { prefix: '/settings/audit-logs', roles: ['root_operator'] },
+  { prefix: '/settings/service-zones', roles: ['root_operator', 'fleet_ops'] },
+  { prefix: '/settings/cities', roles: ['root_operator', 'fleet_ops'] },
+  { prefix: '/documents', roles: ['root_operator', 'fleet_ops'] },
+  { prefix: '/payments/refunds', roles: ['root_operator', 'finance_ops', 'support_lead'] },
+  { prefix: '/payments', roles: ['root_operator', 'finance_ops'] },
+  { prefix: '/trips', roles: ['root_operator', 'fleet_ops', 'support_lead'] },
+  { prefix: '/users', roles: ['root_operator', 'fleet_ops', 'support_lead'] },
+  { prefix: '/support', roles: ['root_operator', 'support_lead', 'fleet_ops'] },
   {
     prefix: '/reports',
-    roles: ['super_admin', 'fleet_ops', 'finance_admin', 'support_lead'],
+    roles: ['root_operator', 'fleet_ops', 'finance_ops', 'support_lead'],
   },
   {
     prefix: '/dashboard',
-    roles: ['super_admin', 'fleet_ops', 'finance_admin', 'support_lead'],
+    roles: ['root_operator', 'fleet_ops', 'finance_ops', 'support_lead'],
   },
   {
     prefix: '/account',
-    roles: ['super_admin', 'fleet_ops', 'finance_admin', 'support_lead'],
+    roles: ['root_operator', 'fleet_ops', 'finance_ops', 'support_lead'],
   },
 ]
 
@@ -72,14 +73,14 @@ function validateDynamicParams(to: Pick<RouteLocationNormalized, 'params' | 'nam
 
 export function getAllowedRolesForRoute(
   to: Pick<RouteLocationNormalized, 'path' | 'matched' | 'meta' | 'name'>,
-): readonly AdminRole[] {
-  const metaRoles = to.meta?.allowedRoles as readonly AdminRole[] | undefined
+): readonly OperatorRole[] {
+  const metaRoles = to.meta?.allowedRoles as readonly OperatorRole[] | undefined
   if (Array.isArray(metaRoles) && metaRoles.length > 0) {
     return metaRoles
   }
 
   for (const matched of to.matched) {
-    const recordRoles = matched.meta?.allowedRoles as readonly AdminRole[] | undefined
+    const recordRoles = matched.meta?.allowedRoles as readonly OperatorRole[] | undefined
     if (Array.isArray(recordRoles) && recordRoles.length > 0) {
       return recordRoles
     }
@@ -92,7 +93,7 @@ export function getAllowedRolesForRoute(
     return matchedRule.roles
   }
 
-  return ['super_admin']
+  return ['root_operator']
 }
 
 export function enforceRouteSecurity(to: RouteLocationNormalized): RouteLocationRaw | true {

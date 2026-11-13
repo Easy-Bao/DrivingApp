@@ -18,7 +18,7 @@ const requestedPath = computed(() => {
 })
 
 const requiredRoles = computed(() => {
-  return typeof route.query.required === 'string' ? route.query.required : 'super_admin'
+  return typeof route.query.required === 'string' ? route.query.required : 'root_operator'
 })
 
 function switchOperatorRole() {
@@ -33,26 +33,23 @@ function switchOperatorRole() {
   <div class="min-h-[60vh] w-full flex items-center justify-center p-6">
     <div class="w-full max-w-md bg-white border border-neutral-300 p-8 text-center space-y-5">
       <div
-        class="w-12 h-12 mx-auto bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700"
+        class="w-12 h-12 mx-auto bg-neutral-100 border border-neutral-300 flex items-center justify-center text-neutral-900"
       >
         <Icon icon="lucide:shield-alert" class="text-2xl" aria-hidden="true" />
       </div>
 
       <div class="space-y-1.5">
-        <p class="text-[11px] font-mono font-bold uppercase tracking-wider text-rose-600">
-          Error 403 · Route Guard Enforced
+        <p class="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-500">
+          403 · Restricted
         </p>
-        <h1 class="text-xl font-bold text-neutral-900 tracking-tight">
-          Access Restricted for Active Role
-        </h1>
+        <h1 class="text-xl font-bold text-neutral-900 tracking-tight">Restricted Access</h1>
         <p class="text-xs text-neutral-600 leading-relaxed">
-          Signed-in profile
           <span class="font-semibold text-neutral-900">{{ currentRoleLabel }}</span>
-          does not hold clearance for
+          cannot open
           <span class="font-mono text-neutral-900">{{ requestedPath }}</span
           >.
         </p>
-        <p class="text-[11px] font-mono text-neutral-400">Required: {{ requiredRoles }}</p>
+        <p class="text-[11px] font-mono text-neutral-400">Allowed: {{ requiredRoles }}</p>
       </div>
 
       <div class="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
@@ -60,14 +57,14 @@ function switchOperatorRole() {
           to="/dashboard/overview"
           class="w-full sm:w-auto px-4 py-2 bg-white border border-neutral-300 hover:bg-neutral-50 text-xs font-semibold text-neutral-800 transition-colors"
         >
-          Return to Overview
+          Overview
         </RouterLink>
         <button
           type="button"
           class="w-full sm:w-auto px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
           @click="switchOperatorRole"
         >
-          Switch Operator Role
+          Switch Role
         </button>
       </div>
     </div>
