@@ -5,7 +5,7 @@ import { Icon } from '@iconify/vue'
 import { useTopups, type TopUpRequest } from '@/features/payments/composables/useTopups'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
 import StatusBadge, { type BadgeTone } from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/app/components/TablePagination.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
 import { formatPhp } from '@/shared/utils/format'
 
 const router = useRouter()

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import TablePagination from '@/app/components/TablePagination.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'

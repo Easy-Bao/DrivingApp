@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDriverApplications } from '@/features/users/composables/useDriverApplications'
-import TablePagination from '@/app/components/TablePagination.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
 
 const router = useRouter()
 const { applications } = useDriverApplications()

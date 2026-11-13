@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import router from '@/app/router'
-import { navigationGroups } from '@/app/navigation/sidebar-menu'
+import { navigationGroups } from '@/app/navigation/menu'
 import { sanitizeRedirectPath } from '@/app/router/guards'
 import {
   lockAuthSession,

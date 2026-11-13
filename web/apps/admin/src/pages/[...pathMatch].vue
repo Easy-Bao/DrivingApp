@@ -10,8 +10,10 @@ function goBack() {
 </script>
 
 <template>
-  <div class="min-h-[60vh] w-full flex items-center justify-center p-6">
-    <div class="w-full max-w-md bg-white border border-neutral-200 p-8 text-center space-y-5">
+  <div class="min-h-[60dvh] w-full flex items-center justify-center p-4 sm:p-6">
+    <div
+      class="w-full max-w-md bg-white border border-neutral-200 p-6 sm:p-8 text-center space-y-5"
+    >
       <div
         class="w-12 h-12 mx-auto bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-700"
       >
@@ -22,11 +24,9 @@ function goBack() {
         <p class="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-400">
           Error 404
         </p>
-        <h1 class="text-xl font-bold text-neutral-900 tracking-tight">
-          Operations Section Not Found
-        </h1>
+        <h1 class="text-xl font-bold text-neutral-900 tracking-tight">Page Not Found</h1>
         <p class="text-xs text-neutral-500 leading-relaxed">
-          The requested admin route does not exist or has been retired during platform alignment.
+          The requested page does not exist or has been moved.
         </p>
       </div>
 

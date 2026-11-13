@@ -4,14 +4,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { motion, AnimatePresence } from 'motion-v'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import {
-  navigationGroups,
-  type SidebarNavGroup,
-  type SidebarSubItem,
-} from '@/app/navigation/sidebar-menu'
+import { navigationGroups, type NavGroup, type NavItem } from '@/app/navigation/menu'
 import { ROLE_PROFILES, lockAuthSession, useAuthSession } from '@/core/auth/auth-session'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     mobileOpen?: boolean
   }>(),
@@ -28,6 +24,7 @@ const route = useRoute()
 const router = useRouter()
 
 const isCollapsed = ref(false)
+const effectivelyCollapsed = computed(() => isCollapsed.value && !props.mobileOpen)
 const isToggleHovered = ref(false)
 const searchQuery = ref('')
 const showSignOutConfirm = ref(false)
@@ -70,8 +67,8 @@ const clearFlyoutTimer = () => {
   }
 }
 
-const openGroupFlyout = (group: SidebarNavGroup, event: Event) => {
-  if (!isCollapsed.value) return
+const openGroupFlyout = (group: NavGroup, event: Event) => {
+  if (!effectivelyCollapsed.value) return
   clearFlyoutTimer()
   collapsedTooltip.value = null
   const target = event.currentTarget as HTMLElement | null
@@ -103,7 +100,7 @@ const openGroupFlyout = (group: SidebarNavGroup, event: Event) => {
 }
 
 const openProfileFlyout = (event: Event) => {
-  if (!isCollapsed.value) return
+  if (!effectivelyCollapsed.value) return
   clearFlyoutTimer()
   collapsedTooltip.value = null
   const target = event.currentTarget as HTMLElement | null
@@ -155,7 +152,7 @@ const cancelCloseFlyout = () => {
 }
 
 const showButtonTooltip = (label: string, event: Event) => {
-  if (!isCollapsed.value) return
+  if (!effectivelyCollapsed.value) return
   const target = event.currentTarget as HTMLElement | null
   if (!target) return
   const rect = target.getBoundingClientRect()
@@ -170,8 +167,31 @@ const hideButtonTooltip = () => {
   collapsedTooltip.value = null
 }
 
+function handleFlyoutEscape(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    activeFlyout.value = null
+    collapsedTooltip.value = null
+  }
+}
+
+watch(
+  activeFlyout,
+  (flyout) => {
+    if (typeof window === 'undefined') return
+    if (flyout) {
+      window.addEventListener('keydown', handleFlyoutEscape)
+    } else {
+      window.removeEventListener('keydown', handleFlyoutEscape)
+    }
+  },
+  { immediate: true },
+)
+
 onBeforeUnmount(() => {
   clearFlyoutTimer()
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('keydown', handleFlyoutEscape)
+  }
 })
 
 const activeRoleLabel = computed(() => {
@@ -247,15 +267,15 @@ const activeItem = computed(() => {
   return null
 })
 
-function isItemActive(item: SidebarSubItem): boolean {
+function isItemActive(item: NavItem): boolean {
   return activeItem.value?.id === item.id && activeItem.value?.path === item.path
 }
 
-function isGroupActive(group: SidebarNavGroup): boolean {
+function isGroupActive(group: NavGroup): boolean {
   return group.items.some((item) => isItemActive(item))
 }
 
-function getGroupNotificationCount(group: SidebarNavGroup): number {
+function getGroupNotificationCount(group: NavGroup): number {
   return group.items.filter(
     (item) =>
       item.badge !== undefined &&
@@ -296,21 +316,24 @@ const filteredGroups = computed(() => {
 
 <template>
   <motion.aside
-    :animate="{ width: isCollapsed ? '5rem' : '18rem' }"
+    :animate="{ width: effectivelyCollapsed ? '5rem' : '18rem' }"
     :transition="{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }"
-    class="bg-white border-r border-neutral-200 flex flex-col justify-between shrink-0 select-none h-screen fixed inset-y-0 left-0 lg:sticky lg:top-0 z-40 overflow-hidden transition-transform duration-200"
+    class="bg-white border-r border-neutral-200 flex flex-col justify-between shrink-0 select-none h-dvh fixed inset-y-0 left-0 lg:sticky lg:top-0 z-40 overflow-hidden transition-transform duration-200"
     :class="[
-      isCollapsed ? 'w-20' : 'w-72',
+      effectivelyCollapsed ? 'w-20' : 'w-72',
       mobileOpen ? 'translate-x-0 shadow-2xl lg:shadow-none' : '-translate-x-full lg:translate-x-0',
     ]"
     aria-label="Navigation Sidebar"
   >
     <div class="shrink-0">
       <div
-        class="h-16 flex items-center border-b border-neutral-200 transition-all duration-300"
-        :class="isCollapsed ? 'justify-center px-2' : 'justify-between px-4'"
+        class="h-14 sm:h-16 flex items-center border-b border-neutral-200 transition-all duration-300"
+        :class="effectivelyCollapsed ? 'justify-center px-2' : 'justify-between px-4'"
       >
-        <div v-if="!isCollapsed" class="flex items-center space-x-3 overflow-hidden min-w-0">
+        <div
+          v-if="!effectivelyCollapsed"
+          class="flex items-center space-x-3 overflow-hidden min-w-0"
+        >
           <div class="flex flex-col overflow-hidden whitespace-nowrap">
             <span class="font-bold text-sm text-neutral-900 leading-tight">EasyRide</span>
             <span class="text-[11px] text-neutral-500 font-medium">Pagadian Ops</span>
@@ -321,7 +344,7 @@ const filteredGroups = computed(() => {
           <button
             v-if="mobileOpen"
             type="button"
-            class="lg:hidden rounded-none text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 p-1.5 transition-colors cursor-pointer"
+            class="lg:hidden rounded-none text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 p-2 transition-colors cursor-pointer"
             aria-label="Close navigation menu"
             @click="emit('closeMobile')"
           >
@@ -329,10 +352,11 @@ const filteredGroups = computed(() => {
           </button>
 
           <button
+            v-else
             type="button"
             class="p-1.5 text-neutral-700 hover:text-neutral-900 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
-            :aria-label="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-            :title="isCollapsed ? undefined : 'Collapse sidebar'"
+            :aria-label="effectivelyCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+            :title="effectivelyCollapsed ? undefined : 'Collapse sidebar'"
             @mouseenter="((isToggleHovered = true), showButtonTooltip('Expand', $event))"
             @mouseleave="((isToggleHovered = false), hideButtonTooltip())"
             @focus="((isToggleHovered = true), showButtonTooltip('Expand', $event))"
@@ -340,7 +364,7 @@ const filteredGroups = computed(() => {
             @click="toggleCollapse"
           >
             <svg
-              v-if="isCollapsed && !isToggleHovered"
+              v-if="effectivelyCollapsed && !isToggleHovered"
               data-test="collapsed-brand-logo"
               viewBox="0 0 24 24"
               class="w-5 h-5"
@@ -360,14 +384,14 @@ const filteredGroups = computed(() => {
             <Icon
               v-else
               data-test="sidebar-toggle-icon"
-              :icon="isCollapsed ? 'lucide:panel-left-open' : 'lucide:panel-left-close'"
+              :icon="effectivelyCollapsed ? 'lucide:panel-left-open' : 'lucide:panel-left-close'"
               class="text-lg"
             />
           </button>
         </div>
       </div>
 
-      <div v-if="!isCollapsed" class="p-3 border-b border-neutral-100">
+      <div v-if="!effectivelyCollapsed" class="p-3 border-b border-neutral-100">
         <div class="relative">
           <Icon
             icon="lucide:search"
@@ -380,6 +404,7 @@ const filteredGroups = computed(() => {
             aria-label="Filter navigation sections"
             placeholder="Search sections..."
             class="w-full pl-8 pr-7 py-1.5 bg-neutral-50 border border-neutral-200 text-xs placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
+            @keydown.escape="searchQuery = ''"
           />
           <button
             v-if="searchQuery"
@@ -403,7 +428,7 @@ const filteredGroups = computed(() => {
       </div>
       <div v-for="group in filteredGroups" :key="group.id" class="space-y-1">
         <button
-          v-if="!isCollapsed"
+          v-if="!effectivelyCollapsed"
           type="button"
           class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-neutral-400 hover:text-neutral-700 transition-colors"
           @click="toggleGroup(group.id)"
@@ -460,7 +485,7 @@ const filteredGroups = computed(() => {
 
         <AnimatePresence>
           <motion.div
-            v-if="!isCollapsed && (expandedGroups[group.id] || searchQuery)"
+            v-if="!effectivelyCollapsed && (expandedGroups[group.id] || searchQuery)"
             :initial="{ opacity: 0, height: 0 }"
             :animate="{ opacity: 1, height: 'auto' }"
             :exit="{ opacity: 0, height: 0 }"
@@ -510,18 +535,18 @@ const filteredGroups = computed(() => {
     <div class="shrink-0 p-3 border-t border-neutral-200 bg-neutral-50/50">
       <div
         class="flex items-center p-2 transition-colors"
-        :class="isCollapsed ? 'justify-center' : 'justify-between hover:bg-neutral-100'"
+        :class="effectivelyCollapsed ? 'justify-center' : 'justify-between hover:bg-neutral-100'"
       >
         <button
           type="button"
           class="flex items-center space-x-3 overflow-hidden text-left focus:outline-none cursor-pointer"
           aria-label="Profile"
-          :aria-expanded="isCollapsed ? activeFlyout?.id === 'profile' : undefined"
-          :aria-haspopup="isCollapsed ? 'menu' : undefined"
-          @mouseenter="isCollapsed ? openProfileFlyout($event) : undefined"
-          @mouseleave="isCollapsed ? scheduleCloseFlyout() : undefined"
-          @focus="isCollapsed ? openProfileFlyout($event) : undefined"
-          @blur="isCollapsed ? scheduleCloseFlyout() : undefined"
+          :aria-expanded="effectivelyCollapsed ? activeFlyout?.id === 'profile' : undefined"
+          :aria-haspopup="effectivelyCollapsed ? 'menu' : undefined"
+          @mouseenter="effectivelyCollapsed ? openProfileFlyout($event) : undefined"
+          @mouseleave="effectivelyCollapsed ? scheduleCloseFlyout() : undefined"
+          @focus="effectivelyCollapsed ? openProfileFlyout($event) : undefined"
+          @blur="effectivelyCollapsed ? scheduleCloseFlyout() : undefined"
           @click="navigateTo('/account/profile')"
         >
           <div
@@ -529,7 +554,7 @@ const filteredGroups = computed(() => {
           >
             {{ operatorInitials }}
           </div>
-          <div v-if="!isCollapsed" class="flex flex-col overflow-hidden whitespace-nowrap">
+          <div v-if="!effectivelyCollapsed" class="flex flex-col overflow-hidden whitespace-nowrap">
             <span class="text-xs font-semibold text-neutral-900 truncate">{{
               authSession.operatorName
             }}</span>
@@ -538,7 +563,7 @@ const filteredGroups = computed(() => {
         </button>
 
         <button
-          v-if="!isCollapsed"
+          v-if="!effectivelyCollapsed"
           type="button"
           class="text-neutral-400 hover:text-neutral-900 p-1.5 hover:bg-neutral-100 transition-colors cursor-pointer"
           title="Lock session"
@@ -550,7 +575,7 @@ const filteredGroups = computed(() => {
       </div>
 
       <p
-        v-if="signedOutNotice && !isCollapsed"
+        v-if="signedOutNotice && !effectivelyCollapsed"
         class="mt-2 px-2 py-1 text-[10px] font-medium bg-neutral-100 text-neutral-700 border border-neutral-200"
       >
         Session locked.
@@ -568,7 +593,7 @@ const filteredGroups = computed(() => {
 
     <Teleport to="body">
       <div
-        v-if="isCollapsed && activeFlyout"
+        v-if="effectivelyCollapsed && activeFlyout"
         data-test="collapsed-flyout"
         role="menu"
         :aria-label="activeFlyout.title"
@@ -626,7 +651,7 @@ const filteredGroups = computed(() => {
       </div>
 
       <div
-        v-if="isCollapsed && collapsedTooltip && !activeFlyout"
+        v-if="effectivelyCollapsed && collapsedTooltip && !activeFlyout"
         data-test="collapsed-tooltip"
         role="tooltip"
         class="fixed z-50 -translate-y-1/2 bg-neutral-900 text-white px-2.5 py-1.5 text-xs font-medium pointer-events-none shadow-sm"

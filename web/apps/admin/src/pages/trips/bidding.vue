@@ -5,7 +5,7 @@ import BaseSelect from '@/shared/components/BaseSelect.vue'
 import StatusBadge, { type BadgeTone } from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import TablePagination from '@/app/components/TablePagination.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
 import { formatPhp } from '@/shared/utils/format'
 
 type BidSessionStatus = 'open' | 'accepted' | 'cancelled' | 'expired' | 'declined'

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, watch } from 'vue'
+import { computed, onBeforeUnmount, useId, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 
 const props = withDefaults(
@@ -33,7 +33,8 @@ const emit = defineEmits<{
   (e: 'cancel'): void
 }>()
 
-const headingId = 'confirm-dialog-title'
+const headingId = useId()
+const reasonInputId = useId()
 
 const canConfirm = computed(() => {
   if (!props.requireReason) return true
@@ -97,10 +98,12 @@ onBeforeUnmount(() => {
       role="dialog"
       aria-modal="true"
       :aria-labelledby="headingId"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-3 sm:p-4"
       @click.self="closeDialog"
     >
-      <div class="bg-white border border-neutral-200 max-w-md w-full p-6 space-y-4 shadow-xl">
+      <div
+        class="bg-white border border-neutral-200 max-w-md w-full p-5 sm:p-6 space-y-4 shadow-xl max-h-[90dvh] overflow-y-auto"
+      >
         <div class="flex items-start justify-between gap-3">
           <div class="space-y-1">
             <h3 :id="headingId" class="text-base font-bold text-neutral-900">
@@ -121,11 +124,11 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-if="requireReason" class="space-y-1.5">
-          <label for="confirm-dialog-reason" class="block text-xs font-semibold text-neutral-700">
+          <label :for="reasonInputId" class="block text-xs font-semibold text-neutral-700">
             {{ reasonLabel }}
           </label>
           <textarea
-            id="confirm-dialog-reason"
+            :id="reasonInputId"
             :value="reason"
             rows="3"
             :placeholder="reasonPlaceholder"

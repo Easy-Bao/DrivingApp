@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute, useRouter, RouterView } from 'vue-router'
-import AdminLayout from '@/app/layouts/AdminLayout.vue'
+import ConsoleLayout from '@/app/layouts/ConsoleLayout.vue'
 
 const currentRoute = useRoute()
 const router = useRouter()
@@ -43,7 +43,7 @@ router.beforeEach((to, from) => {
   <RouterView v-if="currentRoute.meta?.hideChrome === true" v-slot="{ Component, route }">
     <component :is="Component" :key="route.path" />
   </RouterView>
-  <AdminLayout v-else>
+  <ConsoleLayout v-else>
     <RouterView v-slot="{ Component, route }">
       <Transition
         :name="transitionName"
@@ -53,5 +53,5 @@ router.beforeEach((to, from) => {
         <component :is="Component" :key="route.path" />
       </Transition>
     </RouterView>
-  </AdminLayout>
+  </ConsoleLayout>
 </template>

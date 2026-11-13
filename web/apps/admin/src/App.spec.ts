@@ -32,7 +32,7 @@ vi.mock('vue-router', () => ({
   },
 }))
 
-vi.mock('@/app/layouts/AdminLayout.vue', () => ({
+vi.mock('@/app/layouts/ConsoleLayout.vue', () => ({
   default: { template: '<div><slot /></div>' },
 }))
 

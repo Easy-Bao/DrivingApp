@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { reactive } from 'vue'
-import AdminLayout from '@/app/layouts/AdminLayout.vue'
+import ConsoleLayout from '@/app/layouts/ConsoleLayout.vue'
 
 const mockRoute = reactive({
   path: '/dashboard/overview',
@@ -16,14 +16,14 @@ vi.mock('vue-router', () => ({
   },
 }))
 
-describe('AdminLayout', () => {
+describe('ConsoleLayout', () => {
   beforeEach(() => {
     mockRoute.path = '/dashboard/overview'
     mockRoute.params = {}
   })
 
   function mountLayout() {
-    return mount(AdminLayout, {
+    return mount(ConsoleLayout, {
       global: {
         stubs: {
           Sidebar: { template: '<aside />' },
@@ -59,7 +59,7 @@ describe('AdminLayout', () => {
 
     const links = nav
       .findAll('a')
-      .map((a) => ({ text: a.text().trim(), href: a.attributes('href') }))
+      .map((anchor) => ({ text: anchor.text().trim(), href: anchor.attributes('href') }))
     expect(links).toContainEqual({ text: 'Payments', href: '/payments/topups' })
     expect(links).toContainEqual({ text: 'Top-Ups', href: '/payments/topups' })
     expect(nav.find('[aria-current="page"]').text()).toBe('#TOP-8921')
@@ -73,7 +73,7 @@ describe('AdminLayout', () => {
 
     const links = nav
       .findAll('a')
-      .map((a) => ({ text: a.text().trim(), href: a.attributes('href') }))
+      .map((anchor) => ({ text: anchor.text().trim(), href: anchor.attributes('href') }))
     expect(links).toContainEqual({ text: 'Users', href: '/users/drivers' })
     expect(links).toContainEqual({ text: 'Applications', href: '/users/driver-applications' })
     expect(nav.find('[aria-current="page"]').text()).toBe('#APP-901')

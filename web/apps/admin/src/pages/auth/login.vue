@@ -15,6 +15,7 @@ const router = useRouter()
 
 const selectedRole = ref<OperatorRole>('root_operator')
 const securityPin = ref('7016')
+const showPin = ref(false)
 const errorMessage = ref('')
 
 const roleOptions = [
@@ -39,9 +40,11 @@ function submitSignIn() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-100 flex items-center justify-center p-4 sm:p-6">
+  <div class="min-h-dvh min-h-screen bg-neutral-100 flex items-center justify-center p-4 sm:p-6">
     <div class="w-full max-w-md bg-white border border-neutral-300 shadow-sm">
-      <div class="px-6 py-5 border-b border-neutral-200 flex items-center justify-between">
+      <div
+        class="px-5 sm:px-6 py-4 sm:py-5 border-b border-neutral-200 flex items-center justify-between gap-3"
+      >
         <div class="flex items-center gap-3">
           <div
             class="w-9 h-9 bg-neutral-900 text-white flex items-center justify-center font-bold text-sm"
@@ -56,7 +59,7 @@ function submitSignIn() {
         <Icon icon="lucide:shield-check" class="text-xl text-neutral-800" aria-hidden="true" />
       </div>
 
-      <form class="p-6 space-y-4 text-xs" @submit.prevent="submitSignIn">
+      <form class="p-5 sm:p-6 space-y-4 text-xs" @submit.prevent="submitSignIn">
         <div
           v-if="route.query.redirect"
           class="p-3 bg-neutral-50 border border-neutral-300 text-neutral-800 text-xs"
@@ -91,18 +94,33 @@ function submitSignIn() {
           <label for="operator-pin" class="block font-semibold text-neutral-800">
             Security PIN
           </label>
-          <input
-            id="operator-pin"
-            v-model="securityPin"
-            type="password"
-            autocomplete="current-password"
-            placeholder="4+ digit PIN"
-            class="w-full px-3 py-2 bg-white border border-neutral-300 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
-          />
+          <div class="relative">
+            <input
+              id="operator-pin"
+              v-model="securityPin"
+              :type="showPin ? 'text' : 'password'"
+              autocomplete="current-password"
+              placeholder="4+ digit PIN"
+              class="w-full px-3 pr-9 py-2 bg-white border border-neutral-300 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+            />
+            <button
+              type="button"
+              :aria-label="showPin ? 'Hide security PIN' : 'Show security PIN'"
+              class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-900 transition-colors cursor-pointer"
+              @click="showPin = !showPin"
+            >
+              <Icon
+                :icon="showPin ? 'lucide:eye-off' : 'lucide:eye'"
+                class="text-sm"
+                aria-hidden="true"
+              />
+            </button>
+          </div>
         </div>
 
         <div
           v-if="errorMessage"
+          role="alert"
           class="p-2.5 bg-neutral-50 border border-neutral-300 border-l-2 border-l-rose-600 text-neutral-900"
         >
           {{ errorMessage }}

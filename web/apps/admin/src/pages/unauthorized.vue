@@ -22,7 +22,15 @@ const requestedPath = computed(() => {
 })
 
 const requiredRoles = computed(() => {
-  return typeof route.query.required === 'string' ? route.query.required : 'root_operator'
+  const raw = typeof route.query.required === 'string' ? route.query.required : 'root_operator'
+  return raw
+    .split(',')
+    .map((key) => {
+      const trimmed = key.trim() as keyof typeof ROLE_PROFILES
+      return ROLE_PROFILES[trimmed]?.label || key.trim()
+    })
+    .filter(Boolean)
+    .join(', ')
 })
 
 function switchOperatorRole() {
@@ -34,8 +42,10 @@ function switchOperatorRole() {
 </script>
 
 <template>
-  <div class="min-h-[60vh] w-full flex items-center justify-center p-6">
-    <div class="w-full max-w-md bg-white border border-neutral-300 p-8 text-center space-y-5">
+  <div class="min-h-[60dvh] w-full flex items-center justify-center p-4 sm:p-6">
+    <div
+      class="w-full max-w-md bg-white border border-neutral-300 p-6 sm:p-8 text-center space-y-5"
+    >
       <div
         class="w-12 h-12 mx-auto bg-neutral-100 border border-neutral-300 flex items-center justify-center text-neutral-900"
       >

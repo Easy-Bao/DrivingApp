@@ -1,4 +1,4 @@
-export interface SidebarSubItem {
+export interface NavItem {
   id: string
   label: string
   icon: string
@@ -7,14 +7,14 @@ export interface SidebarSubItem {
   badgeClass?: string
 }
 
-export interface SidebarNavGroup {
+export interface NavGroup {
   id: string
   title: string
   icon: string
-  items: SidebarSubItem[]
+  items: NavItem[]
 }
 
-export const navigationGroups: SidebarNavGroup[] = [
+export const navigationGroups: NavGroup[] = [
   {
     id: 'dashboard',
     title: 'Dashboard',
