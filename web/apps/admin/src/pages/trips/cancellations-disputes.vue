@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Icon } from '@iconify/vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 import { formatPhp } from '@/shared/utils/format'
 
@@ -90,7 +93,7 @@ const responsibilityLabels: Record<CancellationResponsibility, string> = {
 }
 
 const filteredCases = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
+  const query = searchQuery.value.trim().toLowerCase()
   return cancellations.value.filter((item) => {
     if (statusFilter.value === 'Under Review' && item.disputeStatus !== 'Under Review') {
       return false
@@ -98,12 +101,12 @@ const filteredCases = computed(() => {
     if (statusFilter.value === 'RESOLVED' && item.disputeStatus === 'Under Review') {
       return false
     }
-    if (!q) return true
+    if (!query) return true
     return (
-      item.id.toLowerCase().includes(q) ||
-      item.tripId.toLowerCase().includes(q) ||
-      item.cancelledBy.toLowerCase().includes(q) ||
-      item.route.toLowerCase().includes(q)
+      item.id.toLowerCase().includes(query) ||
+      item.tripId.toLowerCase().includes(query) ||
+      item.cancelledBy.toLowerCase().includes(query) ||
+      item.route.toLowerCase().includes(query)
     )
   })
 })
@@ -111,6 +114,14 @@ const filteredCases = computed(() => {
 watch([searchQuery, statusFilter], () => {
   currentPage.value = 1
 })
+
+const hasActiveFilters = computed(() => searchQuery.value !== '' || statusFilter.value !== 'ALL')
+
+function resetFilters() {
+  searchQuery.value = ''
+  statusFilter.value = 'ALL'
+  currentPage.value = 1
+}
 
 const paginatedCases = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
@@ -145,14 +156,10 @@ const applyResolution = () => {
 
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-        Cancellations &amp; Disputes
-      </h1>
-      <p class="text-sm text-neutral-500 mt-1">
-        Review ride cancellations, fault responsibility, and penalty fees.
-      </p>
-    </div>
+    <PageHeader
+      title="Cancellations &amp; Disputes"
+      description="Review ride cancellations, fault responsibility, and penalty fees."
+    />
 
     <ToastBanner :message="toastMessage" tone="success" @dismiss="toastMessage = null" />
 
@@ -161,16 +168,11 @@ const applyResolution = () => {
         class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
       >
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <div class="relative w-full sm:w-64">
-            <Icon
-              icon="lucide:search"
-              class="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2"
-            />
-            <input
+          <div class="w-full sm:w-64">
+            <SearchField
               v-model="searchQuery"
-              type="text"
               placeholder="Search trip ID, initiated by, route..."
-              class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+              aria-label="Search cancellations and disputes"
             />
           </div>
           <BaseSelect
@@ -207,26 +209,26 @@ const applyResolution = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="c in paginatedCases"
-              :key="c.id"
+              v-for="dispute in paginatedCases"
+              :key="dispute.id"
               class="hover:bg-neutral-50/70 transition-colors"
             >
               <td class="py-3 px-4 font-mono">
-                <div class="font-bold text-neutral-900">{{ c.id }}</div>
-                <div class="text-[11px] text-neutral-500">{{ c.tripId }}</div>
+                <div class="font-bold text-neutral-900">{{ dispute.id }}</div>
+                <div class="text-[11px] text-neutral-500">{{ dispute.tripId }}</div>
               </td>
-              <td class="py-3 px-4 font-medium text-neutral-900">{{ c.cancelledBy }}</td>
+              <td class="py-3 px-4 font-medium text-neutral-900">{{ dispute.cancelledBy }}</td>
               <td class="py-3 px-4 text-neutral-600 max-w-xs">
-                <div>{{ c.reason }}</div>
-                <div class="text-[11px] text-neutral-400 mt-0.5">{{ c.route }}</div>
+                <div>{{ dispute.reason }}</div>
+                <div class="text-[11px] text-neutral-400 mt-0.5">{{ dispute.route }}</div>
               </td>
               <td class="py-3 px-4">
                 <StatusBadge
-                  :label="responsibilityLabels[c.responsibility]"
+                  :label="responsibilityLabels[dispute.responsibility]"
                   :tone="
-                    c.responsibility === 'pending_review'
+                    dispute.responsibility === 'pending_review'
                       ? 'warning'
-                      : c.responsibility === 'safety_related'
+                      : dispute.responsibility === 'safety_related'
                         ? 'danger'
                         : 'neutral'
                   "
@@ -234,17 +236,17 @@ const applyResolution = () => {
               </td>
               <td class="py-3 px-4">
                 <span class="font-mono font-bold text-neutral-900">
-                  {{ formatPhp(c.cancellationFee) }}
+                  {{ formatPhp(dispute.cancellationFee) }}
                 </span>
-                <div class="text-[11px] text-neutral-400">{{ c.feeChargedTo }}</div>
+                <div class="text-[11px] text-neutral-400">{{ dispute.feeChargedTo }}</div>
               </td>
               <td class="py-3 px-4">
                 <StatusBadge
-                  :label="c.disputeStatus"
+                  :label="dispute.disputeStatus"
                   :tone="
-                    c.disputeStatus === 'Under Review'
+                    dispute.disputeStatus === 'Under Review'
                       ? 'warning'
-                      : c.disputeStatus.includes('Waived')
+                      : dispute.disputeStatus.includes('Waived')
                         ? 'info'
                         : 'success'
                   "
@@ -253,18 +255,20 @@ const applyResolution = () => {
               <td class="py-3 px-4 text-right whitespace-nowrap">
                 <button
                   type="button"
-                  @click="openResolutionModal(c)"
                   class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
+                  @click="openResolutionModal(dispute)"
                 >
-                  {{ c.disputeStatus === 'Under Review' ? 'Review' : 'Edit' }}
+                  {{ dispute.disputeStatus === 'Under Review' ? 'Review' : 'Edit' }}
                 </button>
               </td>
             </tr>
-            <tr v-if="paginatedCases.length === 0">
-              <td colspan="7" class="py-8 text-center text-xs text-neutral-500">
-                No cancellation records match the active filter.
-              </td>
-            </tr>
+            <EmptyTableRow
+              v-if="paginatedCases.length === 0"
+              :colspan="7"
+              title="No cancellation records match the active filter"
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>
@@ -276,85 +280,64 @@ const applyResolution = () => {
       />
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="reviewingCase"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 backdrop-blur-[1px] p-4"
-        role="dialog"
-        aria-modal="true"
-        @click.self="reviewingCase = null"
-      >
-        <form
-          class="bg-white border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4"
-          @submit.prevent="applyResolution"
-        >
-          <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
-            <h3 class="text-sm font-bold text-neutral-900">
-              Responsibility Override · {{ reviewingCase.tripId }}
-            </h3>
-            <button
-              type="button"
-              aria-label="Close modal"
-              @click="reviewingCase = null"
-              class="text-neutral-400 hover:text-neutral-700 cursor-pointer"
-            >
-              <Icon icon="lucide:x" class="w-4 h-4" />
-            </button>
+    <ModalDialog
+      :open="Boolean(reviewingCase)"
+      :title="reviewingCase ? `Responsibility Override · ${reviewingCase.tripId}` : ''"
+      size="md"
+      close-label="Close modal"
+      @update:open="(open) => !open && (reviewingCase = null)"
+    >
+      <form v-if="reviewingCase" class="space-y-4 text-xs" @submit.prevent="applyResolution">
+        <div class="space-y-3">
+          <div>
+            <label class="block font-semibold text-neutral-700 mb-1"> Fault Classification </label>
+            <BaseSelect
+              v-model="overrideResponsibility"
+              aria-label="Select fault classification"
+              :full-width="true"
+              :options="[
+                { label: 'No Fault (Mutual / Traffic)', value: 'no_fault' },
+                { label: 'Driver Fault', value: 'driver_fault' },
+                { label: 'Passenger Fault', value: 'passenger_fault' },
+                { label: 'System Fault', value: 'system_fault' },
+                { label: 'Safety Related', value: 'safety_related' },
+                { label: 'Operator Override', value: 'operator_override' },
+              ]"
+            />
           </div>
+          <label class="flex items-center space-x-2 text-neutral-800 cursor-pointer">
+            <input v-model="shouldWaiveFee" type="checkbox" class="accent-neutral-900" />
+            <span>Waive cancellation fee ({{ formatPhp(reviewingCase.cancellationFee) }})</span>
+          </label>
+          <div>
+            <label class="block font-semibold text-neutral-700 mb-1"> Reason </label>
+            <textarea
+              v-model="auditNote"
+              rows="3"
+              required
+              placeholder="Explain GPS evidence or operator call verification..."
+              class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
+            />
+          </div>
+        </div>
 
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block font-semibold text-neutral-700 mb-1">
-                Fault Classification
-              </label>
-              <BaseSelect
-                v-model="overrideResponsibility"
-                aria-label="Select fault classification"
-                :full-width="true"
-                :options="[
-                  { label: 'No Fault (Mutual / Traffic)', value: 'no_fault' },
-                  { label: 'Driver Fault', value: 'driver_fault' },
-                  { label: 'Passenger Fault', value: 'passenger_fault' },
-                  { label: 'System Fault', value: 'system_fault' },
-                  { label: 'Safety Related', value: 'safety_related' },
-                  { label: 'Operator Override', value: 'operator_override' },
-                ]"
-              />
-            </div>
-            <label class="flex items-center space-x-2 text-neutral-800 cursor-pointer">
-              <input v-model="shouldWaiveFee" type="checkbox" class="accent-neutral-900" />
-              <span>Waive cancellation fee ({{ formatPhp(reviewingCase.cancellationFee) }})</span>
-            </label>
-            <div>
-              <label class="block font-semibold text-neutral-700 mb-1"> Reason </label>
-              <textarea
-                v-model="auditNote"
-                rows="3"
-                required
-                placeholder="Explain GPS evidence or operator call verification..."
-                class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
-              />
-            </div>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
-            <button
-              type="button"
-              @click="reviewingCase = null"
-              class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              :disabled="!auditNote.trim()"
-              class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 disabled:opacity-40 cursor-pointer"
-            >
-              Save Determination
-            </button>
-          </div>
-        </form>
-      </div>
-    </Teleport>
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100">
+          <button
+            type="button"
+            class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
+            @click="reviewingCase = null"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            :disabled="!auditNote.trim()"
+            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 disabled:opacity-40 cursor-pointer"
+          >
+            Save Determination
+          </button>
+        </div>
+      </form>
+    </ModalDialog>
   </div>
 </template>

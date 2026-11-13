@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Icon } from '@iconify/vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
@@ -125,12 +126,10 @@ const confirmDriverAssignment = () => {
 
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Live Dispatch</h1>
-      <p class="text-sm text-neutral-500 mt-1">
-        Monitor zone supply, adjust surge caps, and assign trips.
-      </p>
-    </div>
+    <PageHeader
+      title="Live Dispatch"
+      description="Monitor zone supply, adjust surge caps, and assign trips."
+    />
 
     <ToastBanner :message="toastMessage" tone="success" @dismiss="toastMessage = null" />
 
@@ -203,28 +202,28 @@ const confirmDriverAssignment = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="d in liveDispatches"
-              :key="d.id"
+              v-for="dispatch in liveDispatches"
+              :key="dispatch.id"
               class="hover:bg-neutral-50/70 transition-colors"
             >
-              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ d.id }}</td>
-              <td class="py-3 px-4 font-medium text-neutral-900">{{ d.rider }}</td>
-              <td class="py-3 px-4 text-neutral-800">{{ d.driver }}</td>
-              <td class="py-3 px-4 text-neutral-500">{{ d.zone }}</td>
-              <td class="py-3 px-4 font-semibold text-neutral-900">{{ d.eta }}</td>
+              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ dispatch.id }}</td>
+              <td class="py-3 px-4 font-medium text-neutral-900">{{ dispatch.rider }}</td>
+              <td class="py-3 px-4 text-neutral-800">{{ dispatch.driver }}</td>
+              <td class="py-3 px-4 text-neutral-500">{{ dispatch.zone }}</td>
+              <td class="py-3 px-4 font-semibold text-neutral-900">{{ dispatch.eta }}</td>
               <td class="py-3 px-4">
                 <StatusBadge
-                  :label="d.status"
-                  :tone="d.driver === 'Unassigned' ? 'warning' : 'success'"
+                  :label="dispatch.status"
+                  :tone="dispatch.driver === 'Unassigned' ? 'warning' : 'success'"
                 />
               </td>
               <td class="py-3 px-4 text-right whitespace-nowrap">
                 <button
                   type="button"
-                  @click="openAssignModal(d)"
                   class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
+                  @click="openAssignModal(dispatch)"
                 >
-                  {{ d.driver === 'Unassigned' ? 'Assign Driver' : 'Reassign' }}
+                  {{ dispatch.driver === 'Unassigned' ? 'Assign Driver' : 'Reassign' }}
                 </button>
               </td>
             </tr>
@@ -233,114 +232,84 @@ const confirmDriverAssignment = () => {
       </div>
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="editingZone"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 backdrop-blur-[1px] p-4"
-        role="dialog"
-        aria-modal="true"
-        @click.self="editingZone = null"
-      >
-        <form
-          class="bg-white border border-neutral-200 shadow-2xl w-full max-w-sm p-6 space-y-4"
-          @submit.prevent="applySurgeOverride"
-        >
-          <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
-            <h3 class="text-sm font-bold text-neutral-900">Zone Surge Multiplier</h3>
-            <button
-              type="button"
-              aria-label="Close modal"
-              @click="editingZone = null"
-              class="text-neutral-400 hover:text-neutral-700 cursor-pointer"
-            >
-              <Icon icon="lucide:x" class="w-4 h-4" />
-            </button>
-          </div>
-          <div class="text-xs space-y-2">
-            <div class="font-semibold text-neutral-800">{{ editingZone.name }}</div>
-            <label class="block text-neutral-500">Select temporary demand multiplier</label>
-            <BaseSelect
-              v-model="selectedSurge"
-              aria-label="Select surge zone multiplier"
-              :full-width="true"
-              :options="surgeOptions"
-            />
-          </div>
-          <div class="flex items-center justify-end gap-2 pt-2">
-            <button
-              type="button"
-              @click="editingZone = null"
-              class="px-3.5 py-1.5 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              class="px-3.5 py-1.5 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
-            >
-              Apply Surge
-            </button>
-          </div>
-        </form>
-      </div>
-    </Teleport>
+    <ModalDialog
+      :open="Boolean(editingZone)"
+      title="Zone Surge Multiplier"
+      size="sm"
+      close-label="Close modal"
+      @update:open="(open) => !open && (editingZone = null)"
+    >
+      <form v-if="editingZone" class="space-y-4 text-xs" @submit.prevent="applySurgeOverride">
+        <div class="space-y-2">
+          <div class="font-semibold text-neutral-800">{{ editingZone.name }}</div>
+          <label class="block text-neutral-500">Select temporary demand multiplier</label>
+          <BaseSelect
+            v-model="selectedSurge"
+            aria-label="Select surge zone multiplier"
+            :full-width="true"
+            :options="surgeOptions"
+          />
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100">
+          <button
+            type="button"
+            class="px-3.5 py-1.5 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
+            @click="editingZone = null"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-3.5 py-1.5 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
+          >
+            Apply Surge
+          </button>
+        </div>
+      </form>
+    </ModalDialog>
 
-    <Teleport to="body">
-      <div
+    <ModalDialog
+      :open="Boolean(assigningDispatch)"
+      :title="assigningDispatch ? `Manual Taxicle Dispatch · ${assigningDispatch.id}` : ''"
+      size="md"
+      close-label="Close modal"
+      @update:open="(open) => !open && (assigningDispatch = null)"
+    >
+      <form
         v-if="assigningDispatch"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 backdrop-blur-[1px] p-4"
-        role="dialog"
-        aria-modal="true"
-        @click.self="assigningDispatch = null"
+        class="space-y-4 text-xs"
+        @submit.prevent="confirmDriverAssignment"
       >
-        <form
-          class="bg-white border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4"
-          @submit.prevent="confirmDriverAssignment"
-        >
-          <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
-            <h3 class="text-sm font-bold text-neutral-900">
-              Manual Taxicle Dispatch · {{ assigningDispatch.id }}
-            </h3>
-            <button
-              type="button"
-              aria-label="Close modal"
-              @click="assigningDispatch = null"
-              class="text-neutral-400 hover:text-neutral-700 cursor-pointer"
-            >
-              <Icon icon="lucide:x" class="w-4 h-4" />
-            </button>
+        <div class="space-y-2">
+          <div>
+            Passenger: <span class="font-semibold">{{ assigningDispatch.rider }}</span> ({{
+              assigningDispatch.zone
+            }})
           </div>
-          <div class="text-xs space-y-2">
-            <div>
-              Passenger: <span class="font-semibold">{{ assigningDispatch.rider }}</span> ({{
-                assigningDispatch.zone
-              }})
-            </div>
-            <label class="block text-neutral-500 pt-1">Select Driver Unit</label>
-            <BaseSelect
-              v-model="selectedDriver"
-              aria-label="Select replacement driver"
-              :full-width="true"
-              :options="availableDrivers"
-            />
-          </div>
-          <div class="flex items-center justify-end gap-2 pt-2">
-            <button
-              type="button"
-              @click="assigningDispatch = null"
-              class="px-3.5 py-1.5 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              class="px-3.5 py-1.5 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
-            >
-              Dispatch Driver
-            </button>
-          </div>
-        </form>
-      </div>
-    </Teleport>
+          <label class="block text-neutral-500 pt-1">Select Driver Unit</label>
+          <BaseSelect
+            v-model="selectedDriver"
+            aria-label="Select replacement driver"
+            :full-width="true"
+            :options="availableDrivers"
+          />
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100">
+          <button
+            type="button"
+            class="px-3.5 py-1.5 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
+            @click="assigningDispatch = null"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-3.5 py-1.5 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
+          >
+            Dispatch Driver
+          </button>
+        </div>
+      </form>
+    </ModalDialog>
   </div>
 </template>

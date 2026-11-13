@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Icon } from '@iconify/vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
 interface RejectedDocument {
@@ -47,7 +50,7 @@ const rejectedDocs = ref<RejectedDocument[]>([
     driver: 'Danilo Mendoza',
     driverPhone: '+63 928 412 8890',
     city: 'Brgy. Tuburan',
-    docType: 'MTOP Municipal Tricycle Permit',
+    docType: 'MTOP Municipal Taxicle Permit',
     rejectionReason: 'Expired MTOP permit without stamped city treasurer official receipt',
     rejectedBy: 'Operations Lead',
     rejectedAt: '4 days ago',
@@ -122,34 +125,44 @@ const rejectedDocs = ref<RejectedDocument[]>([
 ])
 
 const searchQuery = ref('')
-const resubFilter = ref<'ALL' | 'RESUBMITTED' | 'AWAITING'>('ALL')
+const resubmissionFilter = ref<'ALL' | 'RESUBMITTED' | 'AWAITING'>('ALL')
 const currentPage = ref(1)
 const itemsPerPage = 10
 const inspectedRejected = ref<RejectedDocument | null>(null)
 const toastMessage = ref<string | null>(null)
 
-const filteredRejected = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
+const filteredRejectedDocs = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
   return rejectedDocs.value.filter((item) => {
-    if (resubFilter.value === 'RESUBMITTED' && !item.resubmitted) return false
-    if (resubFilter.value === 'AWAITING' && item.resubmitted) return false
-    if (!q) return true
+    if (resubmissionFilter.value === 'RESUBMITTED' && !item.resubmitted) return false
+    if (resubmissionFilter.value === 'AWAITING' && item.resubmitted) return false
+    if (!query) return true
     return (
-      item.id.toLowerCase().includes(q) ||
-      item.driver.toLowerCase().includes(q) ||
-      item.docType.toLowerCase().includes(q) ||
-      item.rejectionReason.toLowerCase().includes(q)
+      item.id.toLowerCase().includes(query) ||
+      item.driver.toLowerCase().includes(query) ||
+      item.docType.toLowerCase().includes(query) ||
+      item.rejectionReason.toLowerCase().includes(query)
     )
   })
 })
 
-watch([searchQuery, resubFilter], () => {
+watch([searchQuery, resubmissionFilter], () => {
   currentPage.value = 1
 })
 
+const hasActiveFilters = computed(
+  () => searchQuery.value !== '' || resubmissionFilter.value !== 'ALL',
+)
+
+function resetFilters() {
+  searchQuery.value = ''
+  resubmissionFilter.value = 'ALL'
+  currentPage.value = 1
+}
+
 const paginatedRejectedDocs = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
-  return filteredRejected.value.slice(start, start + itemsPerPage)
+  return filteredRejectedDocs.value.slice(start, start + itemsPerPage)
 })
 
 const queueForReReview = (item: RejectedDocument) => {
@@ -161,12 +174,10 @@ const queueForReReview = (item: RejectedDocument) => {
 
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-        Rejected Driver Documents
-      </h1>
-      <p class="text-sm text-neutral-500 mt-1">Rejected driver documents and resubmissions.</p>
-    </div>
+    <PageHeader
+      title="Rejected Driver Documents"
+      description="Rejected driver documents and resubmissions."
+    />
 
     <ToastBanner :message="toastMessage" tone="info" @dismiss="toastMessage = null" />
 
@@ -175,20 +186,15 @@ const queueForReReview = (item: RejectedDocument) => {
         class="p-4 border-b border-neutral-100 flex flex-col md:flex-row md:items-center justify-between gap-3"
       >
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <div class="relative w-full sm:w-64">
-            <Icon
-              icon="lucide:search"
-              class="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2"
-            />
-            <input
+          <div class="w-full sm:w-64">
+            <SearchField
               v-model="searchQuery"
-              type="text"
               placeholder="Search log ID, driver, reason..."
-              class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+              aria-label="Search rejected documents"
             />
           </div>
           <BaseSelect
-            v-model="resubFilter"
+            v-model="resubmissionFilter"
             aria-label="Filter by resubmission status"
             :options="[
               { label: 'All Submissions', value: 'ALL' },
@@ -255,85 +261,67 @@ const queueForReReview = (item: RejectedDocument) => {
                 </button>
               </td>
             </tr>
-            <tr v-if="paginatedRejectedDocs.length === 0">
-              <td colspan="7" class="py-8 text-center text-xs text-neutral-500">
-                No rejected document logs match the filter.
-              </td>
-            </tr>
+            <EmptyTableRow
+              v-if="paginatedRejectedDocs.length === 0"
+              :colspan="7"
+              title="No rejected document logs match the filter"
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>
 
       <TablePagination
         v-model:current-page="currentPage"
-        :total-items="filteredRejected.length"
+        :total-items="filteredRejectedDocs.length"
         :items-per-page="itemsPerPage"
       />
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="inspectedRejected"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 backdrop-blur-[1px] p-4"
-        role="dialog"
-        aria-modal="true"
-        @click.self="inspectedRejected = null"
-      >
-        <div class="bg-white border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4">
-          <div class="flex items-start justify-between border-b border-neutral-100 pb-3">
-            <div>
-              <span class="font-mono text-[11px] text-neutral-400">{{ inspectedRejected.id }}</span>
-              <h3 class="text-base font-bold text-neutral-900">{{ inspectedRejected.docType }}</h3>
-            </div>
-            <button
-              type="button"
-              aria-label="Close modal"
-              @click="inspectedRejected = null"
-              class="text-neutral-400 hover:text-neutral-700 cursor-pointer"
-            >
-              <Icon icon="lucide:x" class="w-4 h-4" />
-            </button>
-          </div>
-
-          <div class="space-y-2 text-xs">
-            <div>
-              <span class="text-neutral-500">Applicant:</span>
-              <span class="font-semibold text-neutral-900 ml-1">{{
-                inspectedRejected.driver
-              }}</span>
-              <span class="font-mono text-neutral-500 ml-1"
-                >({{ inspectedRejected.driverPhone }})</span
-              >
-            </div>
-            <div>
-              <span class="text-neutral-500">Location:</span>
-              <span class="text-neutral-800 ml-1">{{ inspectedRejected.city }}</span>
-            </div>
-            <div class="p-3 bg-neutral-50 border border-neutral-300 text-neutral-800">
-              <div class="font-semibold mb-1">Recorded Rejection Grounds</div>
-              <p>{{ inspectedRejected.rejectionReason }}</p>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
-            <button
-              type="button"
-              @click="inspectedRejected = null"
-              class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
-            >
-              Close
-            </button>
-            <button
-              v-if="inspectedRejected.resubmitted && !inspectedRejected.reopened"
-              type="button"
-              @click="queueForReReview(inspectedRejected)"
-              class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-            >
-              Re-Open for Verification
-            </button>
-          </div>
+    <ModalDialog
+      :open="Boolean(inspectedRejected)"
+      :title="inspectedRejected?.docType ?? ''"
+      :subtitle="inspectedRejected?.id"
+      size="md"
+      close-label="Close modal"
+      @update:open="(open) => !open && (inspectedRejected = null)"
+    >
+      <div v-if="inspectedRejected" class="space-y-2.5 text-xs">
+        <div>
+          <span class="text-neutral-500">Applicant:</span>
+          <span class="font-semibold text-neutral-900 ml-1">{{ inspectedRejected.driver }}</span>
+          <span class="font-mono text-neutral-500 ml-1">({{ inspectedRejected.driverPhone }})</span>
+        </div>
+        <div>
+          <span class="text-neutral-500">Location:</span>
+          <span class="text-neutral-800 ml-1">{{ inspectedRejected.city }}</span>
+        </div>
+        <div class="p-3 bg-neutral-50 border border-neutral-300 text-neutral-800">
+          <div class="font-semibold mb-1">Recorded Rejection Grounds</div>
+          <p>{{ inspectedRejected.rejectionReason }}</p>
         </div>
       </div>
-    </Teleport>
+
+      <template #footer>
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+            @click="inspectedRejected = null"
+          >
+            Close
+          </button>
+          <button
+            v-if="inspectedRejected?.resubmitted && !inspectedRejected?.reopened"
+            type="button"
+            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+            @click="queueForReReview(inspectedRejected)"
+          >
+            Re-Open for Verification
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>

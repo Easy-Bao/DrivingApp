@@ -2,8 +2,12 @@
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
@@ -42,7 +46,7 @@ const trips = ref<TripRecord[]>([
     driver: 'Rodelio Cruz',
     driverPhone: '+63 917 440 2184',
     plateNumber: '1284-ND',
-    vehicleModel: 'Bajaj RE 4S (Solo Taxicle)',
+    vehicleModel: 'Bajaj RE 4S (TukTuk)',
     pickup: 'Brgy. San Jose, Pagadian City',
     dropoff: 'Agora Public Market, Poblacion',
     fare: 55.0,
@@ -59,7 +63,7 @@ const trips = ref<TripRecord[]>([
     driver: 'Danilo Mendoza',
     driverPhone: '+63 928 412 8890',
     plateNumber: '4912-NC',
-    vehicleModel: 'Kawasaki Barako II (Solo Taxicle)',
+    vehicleModel: 'TVS King Deluxe (TukTuk)',
     pickup: 'Brgy. Gatas, Pagadian City',
     dropoff: "Robinson's Place Pagadian, Tiguma",
     fare: 65.0,
@@ -76,7 +80,7 @@ const trips = ref<TripRecord[]>([
     driver: 'Reynaldo Garcia',
     driverPhone: '+63 908 771 9923',
     plateNumber: '9021-ND',
-    vehicleModel: 'Honda TMX 125 Alpha (Solo Taxicle)',
+    vehicleModel: 'Bajaj RE FI (Bao-Bao)',
     pickup: 'Pagadian Integrated Bus Terminal',
     dropoff: 'Zamboanga del Sur Medical Center, Dao',
     fare: 85.0,
@@ -93,7 +97,7 @@ const trips = ref<TripRecord[]>([
     driver: 'Unassigned',
     driverPhone: '—',
     plateNumber: 'Pending',
-    vehicleModel: 'Solo Taxicle',
+    vehicleModel: '3-Wheeled Taxicle (TukTuk / Bao-Bao)',
     pickup: 'Santiago District, Pagadian City',
     dropoff: 'Provincial Capitol Complex, Balangasan',
     fare: 50.0,
@@ -110,7 +114,7 @@ const trips = ref<TripRecord[]>([
     driver: 'Maria Lourdes Ramos',
     driverPhone: '+63 920 882 1144',
     plateNumber: '3391-ND',
-    vehicleModel: 'Bajaj Maxima Z (Solo Taxicle)',
+    vehicleModel: 'Bajaj Maxima Z (Bao-Bao)',
     pickup: 'Brgy. Santa Lucia, Pagadian City',
     dropoff: 'Pagadian City Rotunda',
     fare: 45.0,
@@ -121,6 +125,14 @@ const trips = ref<TripRecord[]>([
     timestamp: '2 hours ago',
   },
 ])
+
+const hasActiveFilters = computed(() => searchQuery.value !== '' || filterStatus.value !== 'all')
+
+function resetFilters() {
+  searchQuery.value = ''
+  filterStatus.value = 'all'
+  currentPage.value = 1
+}
 
 const filteredTrips = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
@@ -182,26 +194,27 @@ const handleExport = () => {
 
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">All Trips</h1>
-      <p class="text-sm text-neutral-500 mt-1">
-        Taxicle trip records, bidding fares, and settlement status.
-      </p>
-    </div>
+    <PageHeader
+      title="All Trips"
+      description="Taxicle trip records, bidding fares, and settlement status."
+    />
 
     <ToastBanner :message="toastMessage" tone="success" @dismiss="toastMessage = null" />
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Completed</span>
         <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
-          {{ trips.filter((t) => t.status === 'Completed').length }}
+          {{ trips.filter((trip) => trip.status === 'Completed').length }}
         </div>
       </div>
       <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Active</span>
         <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
-          {{ trips.filter((t) => t.status === 'In Progress' || t.status === 'Dispatching').length }}
+          {{
+            trips.filter((trip) => trip.status === 'In Progress' || trip.status === 'Dispatching')
+              .length
+          }}
         </div>
       </div>
       <div class="bg-white p-4 border border-neutral-200">
@@ -220,16 +233,11 @@ const handleExport = () => {
       <div
         class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
       >
-        <div class="relative w-full sm:w-72">
-          <Icon
-            icon="lucide:search"
-            class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm"
-          />
-          <input
+        <div class="w-full sm:w-72">
+          <SearchField
             v-model="searchQuery"
-            type="text"
             placeholder="Search trip ID, rider, driver, barangay..."
-            class="w-full pl-9 pr-3 py-1.5 bg-white border border-neutral-200 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+            aria-label="Search trips"
           />
         </div>
         <div class="flex items-center gap-2">
@@ -308,11 +316,13 @@ const handleExport = () => {
                 </button>
               </td>
             </tr>
-            <tr v-if="paginatedTrips.length === 0">
-              <td colspan="7" class="py-8 text-center text-xs text-neutral-500">
-                No trip records match the active filter criteria.
-              </td>
-            </tr>
+            <EmptyTableRow
+              v-if="paginatedTrips.length === 0"
+              :colspan="7"
+              title="No trip records match the active filter criteria"
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>
@@ -324,98 +334,78 @@ const handleExport = () => {
       />
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="selectedTrip"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 backdrop-blur-[1px] p-4"
-        role="dialog"
-        aria-modal="true"
-        @click.self="selectedTrip = null"
-      >
-        <div class="bg-white border border-neutral-200 shadow-2xl w-full max-w-lg p-6 space-y-4">
-          <div class="flex items-start justify-between border-b border-neutral-100 pb-3">
+    <ModalDialog
+      :open="Boolean(selectedTrip)"
+      :title="selectedTrip ? `Trip Route & Fare Summary · ${selectedTrip.id}` : ''"
+      :subtitle="selectedTrip?.timestamp"
+      size="lg"
+      close-label="Close modal"
+      @update:open="(open) => !open && (selectedTrip = null)"
+    >
+      <div v-if="selectedTrip" class="space-y-3 text-xs">
+        <div class="p-3 bg-neutral-50 border border-neutral-200 space-y-2">
+          <div class="flex items-start space-x-2">
+            <span class="w-2 h-2 bg-emerald-600 mt-1 shrink-0" />
             <div>
-              <span class="font-mono text-[11px] text-neutral-400">{{
-                selectedTrip.timestamp
-              }}</span>
-              <h3 class="text-base font-bold text-neutral-900">
-                Trip Route &amp; Fare Summary · {{ selectedTrip.id }}
-              </h3>
-            </div>
-            <button
-              type="button"
-              aria-label="Close modal"
-              @click="selectedTrip = null"
-              class="text-neutral-400 hover:text-neutral-700 cursor-pointer"
-            >
-              <Icon icon="lucide:x" class="w-4 h-4" />
-            </button>
-          </div>
-
-          <div class="space-y-3 text-xs">
-            <div class="p-3 bg-neutral-50 border border-neutral-200 space-y-2">
-              <div class="flex items-start space-x-2">
-                <span class="w-2 h-2 bg-emerald-600 mt-1 shrink-0" />
-                <div>
-                  <div class="text-[11px] text-neutral-500">Pickup</div>
-                  <div class="font-semibold text-neutral-900">{{ selectedTrip.pickup }}</div>
-                </div>
-              </div>
-              <div class="flex items-start space-x-2">
-                <span class="w-2 h-2 bg-neutral-900 mt-1 shrink-0" />
-                <div>
-                  <div class="text-[11px] text-neutral-500">Dropoff Destination</div>
-                  <div class="font-semibold text-neutral-900">{{ selectedTrip.dropoff }}</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <div class="text-neutral-500">Passenger</div>
-                <div class="font-semibold text-neutral-900">{{ selectedTrip.rider }}</div>
-                <div class="font-mono text-neutral-500">{{ selectedTrip.riderPhone }}</div>
-              </div>
-              <div>
-                <div class="text-neutral-500">Assigned Driver</div>
-                <div class="font-semibold text-neutral-900">{{ selectedTrip.driver }}</div>
-                <div class="font-mono text-neutral-500">
-                  {{ selectedTrip.plateNumber }} · {{ selectedTrip.driverPhone }}
-                </div>
-              </div>
-              <div>
-                <div class="text-neutral-500">Distance / Duration</div>
-                <div class="font-mono font-semibold text-neutral-900">
-                  {{ selectedTrip.distanceKm }} km · {{ selectedTrip.duration }}
-                </div>
-              </div>
-              <div>
-                <div class="text-neutral-500">Fare</div>
-                <div class="font-mono font-bold text-neutral-900">
-                  {{ formatPhp(selectedTrip.fare) }} ({{ selectedTrip.paymentMethod }})
-                </div>
-              </div>
+              <div class="text-[11px] text-neutral-500">Pickup</div>
+              <div class="font-semibold text-neutral-900">{{ selectedTrip.pickup }}</div>
             </div>
           </div>
+          <div class="flex items-start space-x-2">
+            <span class="w-2 h-2 bg-neutral-900 mt-1 shrink-0" />
+            <div>
+              <div class="text-[11px] text-neutral-500">Dropoff Destination</div>
+              <div class="font-semibold text-neutral-900">{{ selectedTrip.dropoff }}</div>
+            </div>
+          </div>
+        </div>
 
-          <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
-            <RouterLink
-              to="/payments/settlements"
-              @click="selectedTrip = null"
-              class="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold"
-            >
-              Settlements
-            </RouterLink>
-            <button
-              type="button"
-              @click="selectedTrip = null"
-              class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-            >
-              Close
-            </button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <div class="text-neutral-500">Passenger</div>
+            <div class="font-semibold text-neutral-900">{{ selectedTrip.rider }}</div>
+            <div class="font-mono text-neutral-500">{{ selectedTrip.riderPhone }}</div>
+          </div>
+          <div>
+            <div class="text-neutral-500">Assigned Driver</div>
+            <div class="font-semibold text-neutral-900">{{ selectedTrip.driver }}</div>
+            <div class="font-mono text-neutral-500">
+              {{ selectedTrip.plateNumber }} · {{ selectedTrip.driverPhone }}
+            </div>
+          </div>
+          <div>
+            <div class="text-neutral-500">Distance / Duration</div>
+            <div class="font-mono font-semibold text-neutral-900">
+              {{ selectedTrip.distanceKm }} km · {{ selectedTrip.duration }}
+            </div>
+          </div>
+          <div>
+            <div class="text-neutral-500">Fare</div>
+            <div class="font-mono font-bold text-neutral-900">
+              {{ formatPhp(selectedTrip.fare) }} ({{ selectedTrip.paymentMethod }})
+            </div>
           </div>
         </div>
       </div>
-    </Teleport>
+
+      <template #footer>
+        <div class="flex items-center justify-end gap-2">
+          <RouterLink
+            to="/payments/settlements"
+            class="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold"
+            @click="selectedTrip = null"
+          >
+            Settlements
+          </RouterLink>
+          <button
+            type="button"
+            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+            @click="selectedTrip = null"
+          >
+            Close
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>

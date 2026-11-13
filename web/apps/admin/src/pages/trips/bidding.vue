@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { Icon } from '@iconify/vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
-import StatusBadge, { type BadgeTone } from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
+import StatusBadge, { type BadgeTone } from '@/shared/components/StatusBadge.vue'
 import TablePagination from '@/shared/components/TablePagination.vue'
+import ToastBanner from '@/shared/components/ToastBanner.vue'
 import { formatPhp } from '@/shared/utils/format'
 
 type BidSessionStatus = 'open' | 'accepted' | 'cancelled' | 'expired' | 'declined'
@@ -14,7 +17,7 @@ interface BidOffer {
   id: string
   driverName: string
   plate: string
-  sidecarBody: string
+  bodyUnit: string
   driverRating: number
   etaMinutes: number
   status: 'pending' | 'accepted' | 'declined' | 'expired'
@@ -59,7 +62,7 @@ const sessions = ref<BidSession[]>([
         id: 'OFR-901',
         driverName: 'Danilo Mendoza',
         plate: '3891-ZK',
-        sidecarBody: 'Sidecar #042',
+        bodyUnit: 'Bao-Bao #042',
         driverRating: 4.92,
         etaMinutes: 3,
         status: 'pending',
@@ -68,7 +71,7 @@ const sessions = ref<BidSession[]>([
         id: 'OFR-902',
         driverName: 'Edgar Tolentino',
         plate: '5190-QP',
-        sidecarBody: 'Sidecar #109',
+        bodyUnit: 'Bao-Bao #109',
         driverRating: 4.78,
         etaMinutes: 5,
         status: 'pending',
@@ -95,7 +98,7 @@ const sessions = ref<BidSession[]>([
         id: 'OFR-898',
         driverName: 'Brandon Lee',
         plate: '1284-ND',
-        sidecarBody: 'Sidecar #084',
+        bodyUnit: 'Bao-Bao #084',
         driverRating: 4.95,
         etaMinutes: 2,
         status: 'accepted',
@@ -122,7 +125,7 @@ const sessions = ref<BidSession[]>([
         id: 'OFR-895',
         driverName: 'Rodelio Cruz',
         plate: '9102-AB',
-        sidecarBody: 'Sidecar #019',
+        bodyUnit: 'Bao-Bao #019',
         driverRating: 4.61,
         etaMinutes: 4,
         status: 'declined',
@@ -236,6 +239,14 @@ function statusTone(status: BidSessionStatus): BadgeTone {
   }
 }
 
+const hasActiveFilters = computed(() => searchQuery.value !== '' || statusFilter.value !== 'all')
+
+function resetFilters() {
+  searchQuery.value = ''
+  statusFilter.value = 'all'
+  currentPage.value = 1
+}
+
 function promptExpireSession(session: BidSession) {
   pendingExpireSession.value = session
   expireReason.value = ''
@@ -255,12 +266,7 @@ function confirmExpireSession() {
 
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-        Bidding Sessions
-      </h1>
-      <p class="text-sm text-neutral-500 mt-1">Active passenger offers and driver bids.</p>
-    </div>
+    <PageHeader title="Bidding Sessions" description="Active passenger offers and driver bids." />
 
     <ToastBanner :message="toastMessage" tone="info" @dismiss="toastMessage = null" />
 
@@ -268,18 +274,11 @@ function confirmExpireSession() {
       <div
         class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
       >
-        <div class="relative w-full sm:w-80">
-          <Icon
-            icon="lucide:search"
-            class="absolute left-3 top-2.5 text-neutral-400 text-sm"
-            aria-hidden="true"
-          />
-          <input
+        <div class="w-full sm:w-80">
+          <SearchField
             v-model="searchQuery"
-            type="text"
-            aria-label="Search bidding sessions"
             placeholder="Search ref 7016..., passenger, barangay..."
-            class="w-full pl-9 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs focus:outline-none focus:border-neutral-900"
+            aria-label="Search bidding sessions"
           />
         </div>
 
@@ -310,7 +309,7 @@ function confirmExpireSession() {
       </div>
 
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
+        <table class="w-full min-w-[840px] text-left text-xs">
           <thead
             class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100 font-semibold"
           >
@@ -387,11 +386,13 @@ function confirmExpireSession() {
                 </div>
               </td>
             </tr>
-            <tr v-if="paginatedSessions.length === 0">
-              <td colspan="7" class="py-10 px-4 text-center text-xs text-neutral-500">
-                No bidding sessions match the selected filters.
-              </td>
-            </tr>
+            <EmptyTableRow
+              v-if="paginatedSessions.length === 0"
+              :colspan="7"
+              title="No bidding sessions match the selected filters"
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>
@@ -403,35 +404,22 @@ function confirmExpireSession() {
       />
     </div>
 
-    <div
-      v-if="inspectedSession"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="bid-inspect-title"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      @click.self="inspectedSession = null"
+    <ModalDialog
+      :open="Boolean(inspectedSession)"
+      :title="inspectedSession ? `Bid Session ${inspectedSession.id}` : ''"
+      :subtitle="
+        inspectedSession
+          ? `Ref: ${inspectedSession.bookingRef} · ${inspectedSession.createdAt}`
+          : undefined
+      "
+      size="lg"
+      close-label="Close offer inspector"
+      @update:open="(open) => !open && (inspectedSession = null)"
     >
-      <div class="bg-white border border-neutral-200 max-w-lg w-full p-6 space-y-4 shadow-xl">
-        <div class="flex items-start justify-between border-b border-neutral-100 pb-3">
-          <div>
-            <h2 id="bid-inspect-title" class="text-base font-bold text-neutral-900">
-              Bid Session {{ inspectedSession.id }}
-            </h2>
-            <p class="text-xs font-mono text-neutral-500">
-              Ref: {{ inspectedSession.bookingRef }} · {{ inspectedSession.createdAt }}
-            </p>
-          </div>
-          <button
-            type="button"
-            aria-label="Close offer inspector"
-            class="p-1 text-neutral-400 hover:text-neutral-700 cursor-pointer"
-            @click="inspectedSession = null"
-          >
-            <Icon icon="lucide:x" class="text-sm" aria-hidden="true" />
-          </button>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3 text-xs bg-neutral-50 p-3 border border-neutral-200">
+      <div v-if="inspectedSession" class="space-y-4 text-xs">
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-neutral-50 p-3 border border-neutral-200"
+        >
           <div>
             <div class="text-neutral-500">System Fare Estimate</div>
             <div class="font-bold font-mono text-neutral-900">
@@ -444,7 +432,7 @@ function confirmExpireSession() {
               {{ formatPhp(inspectedSession.passengerOffer + inspectedSession.tipAmount) }}
             </div>
           </div>
-          <div class="col-span-2" v-if="inspectedSession.note">
+          <div v-if="inspectedSession.note" class="sm:col-span-2">
             <div class="text-neutral-500">Pickup Note</div>
             <div class="text-neutral-800">{{ inspectedSession.note }}</div>
           </div>
@@ -463,14 +451,14 @@ function confirmExpireSession() {
           <div
             v-for="offer in inspectedSession.offers"
             :key="offer.id"
-            class="flex items-center justify-between p-3 border border-neutral-200 text-xs"
+            class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 border border-neutral-200 text-xs"
           >
             <div>
               <div class="font-bold text-neutral-900">
                 {{ offer.driverName }} · ★ {{ offer.driverRating.toFixed(2) }}
               </div>
               <div class="text-[11px] font-mono text-neutral-500">
-                {{ offer.plate }} · {{ offer.sidecarBody }} · ETA {{ offer.etaMinutes }} mins
+                {{ offer.plate }} · {{ offer.bodyUnit }} · ETA {{ offer.etaMinutes }} mins
               </div>
             </div>
             <StatusBadge
@@ -485,8 +473,10 @@ function confirmExpireSession() {
             />
           </div>
         </div>
+      </div>
 
-        <div class="flex justify-end pt-2 border-t border-neutral-100">
+      <template #footer>
+        <div class="flex justify-end">
           <button
             type="button"
             class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer"
@@ -495,8 +485,8 @@ function confirmExpireSession() {
             Close
           </button>
         </div>
-      </div>
-    </div>
+      </template>
+    </ModalDialog>
 
     <ConfirmDialog
       v-model:open="showExpireDialog"

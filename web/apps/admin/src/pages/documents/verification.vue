@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
 type VerificationStatus = 'Pending Review' | 'Approved' | 'Rejected'
@@ -67,7 +71,7 @@ const pendingDocs = ref<PendingDocument[]>([
     driverPhone: '+63 928 412 8890',
     city: 'Brgy. Tuburan',
     docType: 'MTOP Franchise Permit',
-    issuingAgency: 'Tricycle Franchising Board',
+    issuingAgency: 'Taxicle Franchising Board',
     expiryDate: '2027-11-20',
     submittedAt: '4 hours ago',
     docImageUrl: 'mtop_permit_pagadian_4912nc.pdf',
@@ -215,21 +219,33 @@ const toastMessage = ref<string | null>(null)
 const toastTone = ref<'success' | 'warning' | 'error'>('success')
 
 const filteredDocs = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
+  const query = searchQuery.value.trim().toLowerCase()
   return pendingDocs.value.filter((doc) => {
     if (statusFilter.value !== 'ALL' && doc.status !== statusFilter.value) {
       return false
     }
-    if (!q) return true
+    if (!query) return true
     return (
-      doc.id.toLowerCase().includes(q) ||
-      doc.driver.toLowerCase().includes(q) ||
-      doc.docType.toLowerCase().includes(q) ||
-      doc.issuingAgency.toLowerCase().includes(q) ||
-      doc.city.toLowerCase().includes(q)
+      doc.id.toLowerCase().includes(query) ||
+      doc.driver.toLowerCase().includes(query) ||
+      doc.docType.toLowerCase().includes(query) ||
+      doc.issuingAgency.toLowerCase().includes(query) ||
+      doc.city.toLowerCase().includes(query)
     )
   })
 })
+
+const hasActiveFilters = computed(() => searchQuery.value !== '' || statusFilter.value !== 'ALL')
+
+const pendingReviewCount = computed(
+  () => pendingDocs.value.filter((doc) => doc.status === 'Pending Review').length,
+)
+
+function resetFilters() {
+  searchQuery.value = ''
+  statusFilter.value = 'ALL'
+  currentPage.value = 1
+}
 
 watch([searchQuery, statusFilter], () => {
   currentPage.value = 1
@@ -292,20 +308,6 @@ function closeReview() {
   rejectionReason.value = ''
 }
 
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && selectedDoc.value) {
-    closeReview()
-  }
-}
-
-onMounted(() => {
-  window.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown)
-})
-
 function verifyDoc(decision: 'Approved' | 'Rejected') {
   if (!selectedDoc.value) return
   if (decision === 'Approved' && !allChecksPassed.value) return
@@ -332,16 +334,10 @@ const statusTone = (status: VerificationStatus) => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-          Verification
-        </h1>
-        <p class="text-sm text-neutral-500 mt-1">
-          LTO licenses, MTOP permits, OR/CR, and clearances.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Verification"
+      description="LTO licenses, MTOP permits, OR/CR, and clearances."
+    />
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 
@@ -350,16 +346,11 @@ const statusTone = (status: VerificationStatus) => {
         class="p-4 border-b border-neutral-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3"
       >
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <div class="relative w-full sm:w-64">
-            <Icon
-              icon="lucide:search"
-              class="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2"
-            />
-            <input
+          <div class="w-full sm:w-64">
+            <SearchField
               v-model="searchQuery"
-              type="text"
               placeholder="Search doc ID, driver..."
-              class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+              aria-label="Search verification documents"
             />
           </div>
           <BaseSelect
@@ -374,9 +365,9 @@ const statusTone = (status: VerificationStatus) => {
           />
         </div>
         <span
-          class="px-2.5 py-1.5 bg-neutral-50 border border-neutral-300 text-xs font-semibold tabular-nums text-neutral-800"
+          class="px-2.5 py-1.5 bg-neutral-50 border border-neutral-300 text-xs font-semibold tabular-nums text-neutral-800 self-start lg:self-auto"
         >
-          Pending: {{ pendingDocs.filter((d) => d.status === 'Pending Review').length }}
+          Pending: {{ pendingReviewCount }}
         </span>
       </div>
 
@@ -433,11 +424,13 @@ const statusTone = (status: VerificationStatus) => {
                 </button>
               </td>
             </tr>
-            <tr v-if="paginatedDocs.length === 0">
-              <td colspan="7" class="py-8 text-center text-xs text-neutral-500">
-                No documents match the active filter criteria.
-              </td>
-            </tr>
+            <EmptyTableRow
+              v-if="paginatedDocs.length === 0"
+              :colspan="7"
+              title="No documents match the active filter criteria"
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>
@@ -449,199 +442,171 @@ const statusTone = (status: VerificationStatus) => {
       />
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="selectedDoc"
-        class="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
-        @click.self="closeReview"
-      >
+    <ModalDialog
+      :open="Boolean(selectedDoc)"
+      title="Review Submission"
+      :subtitle="selectedDoc ? `${selectedDoc.id} · ${selectedDoc.submittedAt}` : undefined"
+      size="xl"
+      close-label="Close modal"
+      @update:open="(open) => !open && closeReview()"
+    >
+      <div v-if="selectedDoc" class="space-y-4 text-xs">
         <div
-          class="bg-white w-full max-w-[680px] shadow-2xl border border-neutral-200 flex flex-col my-auto overflow-hidden"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Document Verification Modal"
+          class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-neutral-50 border border-neutral-200"
         >
-          <div
-            class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50"
-          >
-            <div>
-              <h3 class="font-bold text-base text-neutral-900">Review Submission</h3>
-              <div class="flex items-center space-x-2 text-xs text-neutral-500 mt-0.5">
-                <span class="font-mono font-bold text-neutral-800">{{ selectedDoc.id }}</span>
-                <span>·</span>
-                <span>{{ selectedDoc.submittedAt }}</span>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="w-8 h-8 flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 border border-neutral-200 transition-colors cursor-pointer"
-              title="Close modal (Esc)"
-              aria-label="Close modal"
-              @click="closeReview"
-            >
-              <Icon icon="lucide:x" class="text-base" />
-            </button>
-          </div>
-
-          <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
-            <div
-              class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-neutral-50 border border-neutral-200"
-            >
-              <div>
-                <span class="text-neutral-400 text-[11px] font-medium">Driver</span>
-                <div class="font-bold text-neutral-900 mt-0.5">{{ selectedDoc.driver }}</div>
-                <div class="text-[11px] font-mono text-neutral-600">
-                  {{ selectedDoc.driverPhone }}
-                </div>
-              </div>
-              <div>
-                <span class="text-neutral-400 text-[11px] font-medium">Area</span>
-                <div class="font-semibold text-neutral-900 mt-0.5">{{ selectedDoc.city }}</div>
-              </div>
-              <div>
-                <span class="text-neutral-400 text-[11px] font-medium">Document</span>
-                <div class="font-semibold text-neutral-900 mt-0.5">{{ selectedDoc.docType }}</div>
-              </div>
-              <div>
-                <span class="text-neutral-400 text-[11px] font-medium">Expires</span>
-                <div class="font-mono font-bold text-neutral-900 mt-0.5">
-                  {{ selectedDoc.expiryDate }}
-                </div>
-              </div>
-            </div>
-
-            <div v-if="selectedDoc.hasTwoSides" class="flex items-center space-x-2 pt-1">
-              <button
-                type="button"
-                class="px-3 py-1.5 text-xs font-semibold border transition-colors cursor-pointer"
-                :class="
-                  activeSide === 'front'
-                    ? 'bg-neutral-900 text-white border-neutral-900'
-                    : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100'
-                "
-                @click="activeSide = 'front'"
-              >
-                Front
-              </button>
-              <button
-                type="button"
-                class="px-3 py-1.5 text-xs font-semibold border transition-colors cursor-pointer"
-                :class="
-                  activeSide === 'back'
-                    ? 'bg-neutral-900 text-white border-neutral-900'
-                    : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100'
-                "
-                @click="activeSide = 'back'"
-              >
-                Back
-              </button>
-            </div>
-
-            <div class="p-3 bg-neutral-100 border border-neutral-200 space-y-2">
-              <img
-                :src="activePreviewDataUrl"
-                :alt="`${selectedDoc.docType} scan for ${selectedDoc.driver}`"
-                class="w-full border border-neutral-300 bg-white object-contain max-h-56"
-              />
-              <div
-                class="flex items-center justify-between text-[11px] font-mono text-neutral-600 px-1"
-              >
-                <span>
-                  {{
-                    selectedDoc.hasTwoSides
-                      ? activeSide === 'front'
-                        ? selectedDoc.frontScanUrl
-                        : selectedDoc.backScanUrl
-                      : selectedDoc.docImageUrl
-                  }}
-                </span>
-                <span class="text-neutral-700 font-semibold">sha256 ok</span>
-              </div>
-            </div>
-
-            <div class="border border-neutral-200 p-3 bg-neutral-50/50 space-y-2">
-              <div class="font-bold text-neutral-900 text-xs">Checklist</div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer">
-                  <input v-model="checks.clearScan" type="checkbox" class="accent-neutral-900" />
-                  <span>Legible scan</span>
-                </label>
-                <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer">
-                  <input v-model="checks.sealVerified" type="checkbox" class="accent-neutral-900" />
-                  <span>Valid seal / QR</span>
-                </label>
-                <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer">
-                  <input v-model="checks.nameMatches" type="checkbox" class="accent-neutral-900" />
-                  <span>Name matches profile</span>
-                </label>
-                <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer">
-                  <input v-model="checks.validExpiry" type="checkbox" class="accent-neutral-900" />
-                  <span>Valid expiry</span>
-                </label>
-              </div>
-            </div>
-
-            <div v-if="isRejecting" class="p-3 bg-neutral-50 border border-neutral-300 space-y-2">
-              <div class="font-bold text-neutral-900 text-xs">Rejection Reason</div>
-              <BaseSelect
-                v-model="rejectionReason"
-                aria-label="Regulatory rejection ground"
-                placeholder="Select reason"
-                :full-width="true"
-                :options="[
-                  { label: 'Select reason', value: '' },
-                  'Image blurred or unreadable official seal',
-                  'Document expired or near expiration (< 60 days)',
-                  'Applicant identity does not match LTO / TRU records',
-                  'Missing reverse/back side scan of government ID',
-                  'Invalid TODA franchise or expired MTOP municipal permit',
-                ]"
-              />
+          <div>
+            <span class="text-neutral-400 text-[11px] font-medium">Driver</span>
+            <div class="font-bold text-neutral-900 mt-0.5">{{ selectedDoc.driver }}</div>
+            <div class="text-[11px] font-mono text-neutral-600">
+              {{ selectedDoc.driverPhone }}
             </div>
           </div>
-
-          <div
-            class="px-6 py-4 border-t border-neutral-200 bg-neutral-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-          >
-            <button
-              type="button"
-              class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
-              @click="closeReview"
-            >
-              Cancel
-            </button>
-
-            <div class="flex items-center space-x-2">
-              <button
-                v-if="!isRejecting"
-                type="button"
-                class="px-4 py-2 border border-neutral-300 text-neutral-800 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
-                @click="isRejecting = true"
-              >
-                Reject Document
-              </button>
-              <button
-                v-else
-                type="button"
-                :disabled="!rejectionReason.trim()"
-                class="px-4 py-2 bg-neutral-800 hover:bg-neutral-900 disabled:opacity-40 text-white text-xs font-semibold transition-colors cursor-pointer"
-                @click="verifyDoc('Rejected')"
-              >
-                Confirm Rejection
-              </button>
-
-              <button
-                type="button"
-                :disabled="!allChecksPassed"
-                class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 text-white text-xs font-semibold transition-colors cursor-pointer"
-                @click="verifyDoc('Approved')"
-              >
-                Approve &amp; Validate
-              </button>
+          <div>
+            <span class="text-neutral-400 text-[11px] font-medium">Area</span>
+            <div class="font-semibold text-neutral-900 mt-0.5">{{ selectedDoc.city }}</div>
+          </div>
+          <div>
+            <span class="text-neutral-400 text-[11px] font-medium">Document</span>
+            <div class="font-semibold text-neutral-900 mt-0.5">{{ selectedDoc.docType }}</div>
+          </div>
+          <div>
+            <span class="text-neutral-400 text-[11px] font-medium">Expires</span>
+            <div class="font-mono font-bold text-neutral-900 mt-0.5">
+              {{ selectedDoc.expiryDate }}
             </div>
           </div>
         </div>
+
+        <div v-if="selectedDoc.hasTwoSides" class="flex items-center space-x-2 pt-1">
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs font-semibold border transition-colors cursor-pointer"
+            :class="
+              activeSide === 'front'
+                ? 'bg-neutral-900 text-white border-neutral-900'
+                : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100'
+            "
+            @click="activeSide = 'front'"
+          >
+            Front
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs font-semibold border transition-colors cursor-pointer"
+            :class="
+              activeSide === 'back'
+                ? 'bg-neutral-900 text-white border-neutral-900'
+                : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100'
+            "
+            @click="activeSide = 'back'"
+          >
+            Back
+          </button>
+        </div>
+
+        <div class="p-3 bg-neutral-100 border border-neutral-200 space-y-2">
+          <img
+            :src="activePreviewDataUrl"
+            :alt="`${selectedDoc.docType} scan for ${selectedDoc.driver}`"
+            class="w-full border border-neutral-300 bg-white object-contain max-h-56"
+          />
+          <div
+            class="flex items-center justify-between text-[11px] font-mono text-neutral-600 px-1"
+          >
+            <span>
+              {{
+                selectedDoc.hasTwoSides
+                  ? activeSide === 'front'
+                    ? selectedDoc.frontScanUrl
+                    : selectedDoc.backScanUrl
+                  : selectedDoc.docImageUrl
+              }}
+            </span>
+            <span class="text-neutral-700 font-semibold">sha256 ok</span>
+          </div>
+        </div>
+
+        <div class="border border-neutral-200 p-3 bg-neutral-50/50 space-y-2">
+          <div class="font-bold text-neutral-900 text-xs">Checklist</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer">
+              <input v-model="checks.clearScan" type="checkbox" class="accent-neutral-900" />
+              <span>Legible scan</span>
+            </label>
+            <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer">
+              <input v-model="checks.sealVerified" type="checkbox" class="accent-neutral-900" />
+              <span>Valid seal / QR</span>
+            </label>
+            <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer">
+              <input v-model="checks.nameMatches" type="checkbox" class="accent-neutral-900" />
+              <span>Name matches profile</span>
+            </label>
+            <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer">
+              <input v-model="checks.validExpiry" type="checkbox" class="accent-neutral-900" />
+              <span>Valid expiry</span>
+            </label>
+          </div>
+        </div>
+
+        <div v-if="isRejecting" class="p-3 bg-neutral-50 border border-neutral-300 space-y-2">
+          <div class="font-bold text-neutral-900 text-xs">Rejection Reason</div>
+          <BaseSelect
+            v-model="rejectionReason"
+            aria-label="Regulatory rejection ground"
+            placeholder="Select reason"
+            :full-width="true"
+            :options="[
+              { label: 'Select reason', value: '' },
+              'Image blurred or unreadable official seal',
+              'Document expired or near expiration (< 60 days)',
+              'Applicant identity does not match LTO / TRU records',
+              'Missing reverse/back side scan of government ID',
+              'Invalid TODA franchise or expired MTOP municipal permit',
+            ]"
+          />
+        </div>
       </div>
-    </Teleport>
+
+      <template #footer>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <button
+            type="button"
+            class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
+            @click="closeReview"
+          >
+            Cancel
+          </button>
+
+          <div class="flex flex-wrap items-center justify-end gap-2">
+            <button
+              v-if="!isRejecting"
+              type="button"
+              class="px-4 py-2 border border-neutral-300 text-neutral-800 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
+              @click="isRejecting = true"
+            >
+              Reject Document
+            </button>
+            <button
+              v-else
+              type="button"
+              :disabled="!rejectionReason.trim()"
+              class="px-4 py-2 bg-neutral-800 hover:bg-neutral-900 disabled:opacity-40 text-white text-xs font-semibold transition-colors cursor-pointer"
+              @click="verifyDoc('Rejected')"
+            >
+              Confirm Rejection
+            </button>
+
+            <button
+              type="button"
+              :disabled="!allChecksPassed"
+              class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 text-white text-xs font-semibold transition-colors cursor-pointer"
+              @click="verifyDoc('Approved')"
+            >
+              Approve &amp; Validate
+            </button>
+          </div>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>

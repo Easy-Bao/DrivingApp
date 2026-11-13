@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Icon } from '@iconify/vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
 type ExpiryStatus = 'Action Required' | 'Notice Sent' | 'Grace Period'
@@ -75,7 +77,7 @@ const expiringDocs = ref<ExpiringDocument[]>([
     driver: 'Jose Mari Bautista',
     driverPhone: '+63 918 665 4411',
     city: 'Brgy. Gatas',
-    docType: 'MTOP Tricycle Permit',
+    docType: 'MTOP Taxicle Permit',
     expiryDate: '2026-12-15',
     daysLeft: 34,
     status: 'Notice Sent',
@@ -139,7 +141,7 @@ const itemsPerPage = 10
 const actionToast = ref<string | null>(null)
 
 const filteredDocs = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
+  const query = searchQuery.value.trim().toLowerCase()
   return expiringDocs.value.filter((doc) => {
     if (statusFilter.value === 'CRITICAL' && doc.daysLeft > 15) return false
     if (
@@ -149,12 +151,12 @@ const filteredDocs = computed(() => {
     ) {
       return false
     }
-    if (!q) return true
+    if (!query) return true
     return (
-      doc.id.toLowerCase().includes(q) ||
-      doc.driver.toLowerCase().includes(q) ||
-      doc.docType.toLowerCase().includes(q) ||
-      doc.city.toLowerCase().includes(q)
+      doc.id.toLowerCase().includes(query) ||
+      doc.driver.toLowerCase().includes(query) ||
+      doc.docType.toLowerCase().includes(query) ||
+      doc.city.toLowerCase().includes(query)
     )
   })
 })
@@ -163,12 +165,20 @@ watch([searchQuery, statusFilter], () => {
   currentPage.value = 1
 })
 
+const hasActiveFilters = computed(() => searchQuery.value !== '' || statusFilter.value !== 'ALL')
+
+function resetFilters() {
+  searchQuery.value = ''
+  statusFilter.value = 'ALL'
+  currentPage.value = 1
+}
+
 const paginatedExpiringDocs = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
   return filteredDocs.value.slice(start, start + itemsPerPage)
 })
 
-const criticalCount = computed(() => expiringDocs.value.filter((d) => d.daysLeft <= 15).length)
+const criticalCount = computed(() => expiringDocs.value.filter((doc) => doc.daysLeft <= 15).length)
 
 function sendUrgentReminder(doc: ExpiringDocument) {
   doc.status = 'Notice Sent'
@@ -197,14 +207,7 @@ const statusTone = (status: ExpiryStatus) => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-          Expiring Docs
-        </h1>
-        <p class="text-sm text-neutral-500 mt-1">Renewal tracking and SMS reminders.</p>
-      </div>
-    </div>
+    <PageHeader title="Expiring Docs" description="Renewal tracking and SMS reminders." />
 
     <ToastBanner :message="actionToast" tone="success" @dismiss="actionToast = null" />
 
@@ -213,16 +216,11 @@ const statusTone = (status: ExpiryStatus) => {
         class="p-4 border-b border-neutral-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3"
       >
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <div class="relative w-full sm:w-64">
-            <Icon
-              icon="lucide:search"
-              class="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2"
-            />
-            <input
+          <div class="w-full sm:w-64">
+            <SearchField
               v-model="searchQuery"
-              type="text"
               placeholder="Search driver, doc..."
-              class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+              aria-label="Search expiring documents"
             />
           </div>
           <BaseSelect
@@ -305,11 +303,13 @@ const statusTone = (status: ExpiryStatus) => {
                 </button>
               </td>
             </tr>
-            <tr v-if="paginatedExpiringDocs.length === 0">
-              <td colspan="7" class="py-8 text-center text-xs text-neutral-500">
-                No expiring documents match the current filter.
-              </td>
-            </tr>
+            <EmptyTableRow
+              v-if="paginatedExpiringDocs.length === 0"
+              :colspan="7"
+              title="No expiring documents match the current filter"
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
@@ -127,42 +128,41 @@ const confirmResolution = () => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <div class="flex items-center gap-2.5">
-          <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-            SOS Alerts
-          </h1>
+    <PageHeader title="SOS Alerts" description="Dispatch hotline: 911 · CDRRMO (062-925-0911)">
+      <template #actions>
+        <div class="flex flex-wrap items-center gap-1.5">
           <span
-            class="px-2 py-0.5 text-xs font-semibold tabular-nums border border-neutral-300 bg-white text-neutral-900"
+            class="px-2 py-1 text-xs font-semibold tabular-nums border border-neutral-300 bg-white text-neutral-900"
           >
             {{ activeAlertsCount }} Active
           </span>
+          <button
+            v-for="tab in filterTabs"
+            :key="tab.key"
+            type="button"
+            class="px-3 py-1.5 text-xs font-medium tabular-nums border transition-colors cursor-pointer"
+            :class="
+              statusFilter === tab.key
+                ? 'bg-neutral-900 text-white border-neutral-900'
+                : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50'
+            "
+            @click="statusFilter = tab.key"
+          >
+            {{ tab.label }} ({{ tab.count }})
+          </button>
         </div>
-        <p class="text-xs text-neutral-500 mt-1">Dispatch hotline: 911 · CDRRMO (062-925-0911)</p>
-      </div>
-
-      <div class="flex items-center gap-1.5 shrink-0">
-        <button
-          v-for="tab in filterTabs"
-          :key="tab.key"
-          type="button"
-          class="px-3 py-1.5 text-xs font-medium tabular-nums border transition-colors cursor-pointer"
-          :class="
-            statusFilter === tab.key
-              ? 'bg-neutral-900 text-white border-neutral-900'
-              : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50'
-          "
-          @click="statusFilter = tab.key"
-        >
-          {{ tab.label }} ({{ tab.count }})
-        </button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <ToastBanner :message="toastMessage" tone="info" @dismiss="toastMessage = null" />
 
     <div class="space-y-3">
+      <div
+        v-if="filteredAlerts.length === 0"
+        class="bg-white border border-neutral-200 p-8 text-center text-xs text-neutral-500"
+      >
+        No SOS alerts match the selected filter.
+      </div>
       <div
         v-for="alert in filteredAlerts"
         :key="alert.id"

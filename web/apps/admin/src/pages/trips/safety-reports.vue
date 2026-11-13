@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 import { exportToCsv } from '@/shared/utils/format'
 
@@ -126,17 +130,17 @@ const modalError = ref<string | null>(null)
 const toastMessage = ref<string | null>(null)
 
 const filteredReports = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
+  const query = searchQuery.value.trim().toLowerCase()
   return reports.value.filter((item) => {
     const matchesSeverity = severityFilter.value === 'all' || item.severity === severityFilter.value
     const matchesStatus = statusFilter.value === 'all' || item.status === statusFilter.value
     const matchesSearch =
-      !q ||
-      item.id.toLowerCase().includes(q) ||
-      item.tripId.toLowerCase().includes(q) ||
-      item.reporterName.toLowerCase().includes(q) ||
-      item.reportedParty.toLowerCase().includes(q) ||
-      categoryLabels[item.category].toLowerCase().includes(q)
+      !query ||
+      item.id.toLowerCase().includes(query) ||
+      item.tripId.toLowerCase().includes(query) ||
+      item.reporterName.toLowerCase().includes(query) ||
+      item.reportedParty.toLowerCase().includes(query) ||
+      categoryLabels[item.category].toLowerCase().includes(query)
     return matchesSeverity && matchesStatus && matchesSearch
   })
 })
@@ -144,6 +148,17 @@ const filteredReports = computed(() => {
 watch([searchQuery, severityFilter, statusFilter], () => {
   currentPage.value = 1
 })
+
+const hasActiveFilters = computed(
+  () => searchQuery.value !== '' || severityFilter.value !== 'all' || statusFilter.value !== 'all',
+)
+
+function resetFilters() {
+  searchQuery.value = ''
+  severityFilter.value = 'all'
+  statusFilter.value = 'all'
+  currentPage.value = 1
+}
 
 const paginatedReports = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
@@ -222,15 +237,15 @@ const exportReports = () => {
       'Severity',
       'Status',
     ],
-    filteredReports.value.map((r) => [
-      r.id,
-      r.tripId,
-      r.reporterRole,
-      r.reporterName,
-      r.reportedParty,
-      categoryLabels[r.category],
-      r.severity,
-      r.status,
+    filteredReports.value.map((report) => [
+      report.id,
+      report.tripId,
+      report.reporterRole,
+      report.reporterName,
+      report.reportedParty,
+      categoryLabels[report.category],
+      report.severity,
+      report.status,
     ]),
   )
 }
@@ -238,6 +253,11 @@ const exportReports = () => {
 
 <template>
   <div class="space-y-6">
+    <PageHeader
+      title="Safety Reports"
+      description="Passenger and driver incident moderation queue."
+    />
+
     <ToastBanner
       v-if="toastMessage"
       :message="toastMessage"
@@ -245,23 +265,17 @@ const exportReports = () => {
       @dismiss="toastMessage = null"
     />
 
-    <div>
-      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-        Safety Reports
-      </h1>
-      <p class="text-sm text-neutral-500 mt-1">Passenger and driver incident moderation queue.</p>
-    </div>
-
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
         class="p-4 border-b border-neutral-200 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
       >
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search report ID, trip ID, reporter, driver, or category..."
-          class="w-full md:max-w-sm px-3 py-1.5 border border-neutral-300 text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
-        />
+        <div class="w-full md:max-w-sm">
+          <SearchField
+            v-model="searchQuery"
+            placeholder="Search report ID, trip ID, reporter, driver, or category..."
+            aria-label="Search safety reports"
+          />
+        </div>
 
         <div class="flex flex-wrap items-center gap-2">
           <span
@@ -365,11 +379,13 @@ const exportReports = () => {
                 </button>
               </td>
             </tr>
-            <tr v-if="paginatedReports.length === 0">
-              <td colspan="6" class="py-10 px-4 text-center text-xs text-neutral-500">
-                No safety reports match your selected filters.
-              </td>
-            </tr>
+            <EmptyTableRow
+              v-if="paginatedReports.length === 0"
+              :colspan="6"
+              title="No safety reports match your selected filters"
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>
@@ -381,107 +397,103 @@ const exportReports = () => {
       />
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="inspectedReport"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4"
-        @click.self="closeModerationModal"
-      >
+    <ModalDialog
+      :open="Boolean(inspectedReport)"
+      :title="inspectedReport ? `Safety Report Moderation · ${inspectedReport.id}` : ''"
+      :subtitle="
+        inspectedReport
+          ? `${categoryLabels[inspectedReport.category]} · Trip ${inspectedReport.tripId}`
+          : undefined
+      "
+      size="lg"
+      close-label="Close modal"
+      @update:open="(open) => !open && closeModerationModal()"
+    >
+      <template #header-meta>
+        <StatusBadge
+          v-if="inspectedReport"
+          :label="inspectedReport.severity.toUpperCase()"
+          :tone="severityTone(inspectedReport.severity)"
+        />
+      </template>
+
+      <div v-if="inspectedReport" class="space-y-3 text-xs">
         <div
-          role="dialog"
-          aria-modal="true"
-          class="w-full max-w-lg bg-white border border-neutral-200 p-5 space-y-4 shadow-xl"
+          class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-neutral-50 border border-neutral-200 p-3"
         >
-          <div class="flex items-start justify-between border-b border-neutral-100 pb-3">
-            <div>
-              <h3 class="text-sm font-bold text-neutral-900">
-                Safety Report Moderation · {{ inspectedReport.id }}
-              </h3>
-              <p class="text-xs text-neutral-500 mt-0.5">
-                {{ categoryLabels[inspectedReport.category] }} · Trip {{ inspectedReport.tripId }}
-              </p>
+          <div>
+            <div class="text-neutral-500">Filed By ({{ inspectedReport.reporterRole }})</div>
+            <div class="font-semibold text-neutral-900 mt-0.5">
+              {{ inspectedReport.reporterName }}
             </div>
-            <StatusBadge
-              :label="inspectedReport.severity.toUpperCase()"
-              :tone="severityTone(inspectedReport.severity)"
-            />
+            <div class="font-mono text-neutral-500">{{ inspectedReport.reporterPhone }}</div>
           </div>
-
-          <div class="space-y-3 text-xs">
-            <div class="grid grid-cols-2 gap-3 bg-neutral-50 border border-neutral-200 p-3">
-              <div>
-                <div class="text-neutral-500">Filed By ({{ inspectedReport.reporterRole }})</div>
-                <div class="font-semibold text-neutral-900 mt-0.5">
-                  {{ inspectedReport.reporterName }}
-                </div>
-                <div class="font-mono text-neutral-500">{{ inspectedReport.reporterPhone }}</div>
-              </div>
-              <div>
-                <div class="text-neutral-500">Reported Party</div>
-                <div class="font-semibold text-neutral-900 mt-0.5">
-                  {{ inspectedReport.reportedParty }}
-                </div>
-                <div class="text-neutral-500">{{ inspectedReport.corridor }}</div>
-              </div>
+          <div>
+            <div class="text-neutral-500">Reported Party</div>
+            <div class="font-semibold text-neutral-900 mt-0.5">
+              {{ inspectedReport.reportedParty }}
             </div>
-
-            <div>
-              <div class="text-neutral-500 font-medium mb-1">Incident Narrative</div>
-              <div class="border border-neutral-200 bg-white p-3 text-neutral-800">
-                {{ inspectedReport.narrative }}
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-xs font-medium text-neutral-700 mb-1">
-                Updated Moderation Status
-              </label>
-              <BaseSelect
-                v-model="draftStatus"
-                aria-label="Updated moderation status"
-                :full-width="true"
-                :options="[
-                  { label: 'Submitted (Unassigned)', value: 'submitted' },
-                  { label: 'Under Review', value: 'under_review' },
-                  { label: 'Resolved & Action Taken', value: 'resolved' },
-                  { label: 'Dismiss Report', value: 'dismissed' },
-                ]"
-              />
-            </div>
-
-            <div>
-              <label class="block text-xs font-medium text-neutral-700 mb-1">
-                Investigation &amp; Disposition Note
-              </label>
-              <textarea
-                v-model="moderationNote"
-                rows="3"
-                placeholder="Record evidence review, suspension outcome, or passenger callback note..."
-                class="w-full px-3 py-2 border border-neutral-300 text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
-              />
-            </div>
-
-            <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 border-t border-neutral-100 pt-3">
-            <button
-              type="button"
-              class="px-3 py-1.5 border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-              @click="closeModerationModal"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800"
-              @click="saveModerationDecision"
-            >
-              Save Decision
-            </button>
+            <div class="text-neutral-500">{{ inspectedReport.corridor }}</div>
           </div>
         </div>
+
+        <div>
+          <div class="text-neutral-500 font-medium mb-1">Incident Narrative</div>
+          <div class="border border-neutral-200 bg-white p-3 text-neutral-800">
+            {{ inspectedReport.narrative }}
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-neutral-700 mb-1">
+            Updated Moderation Status
+          </label>
+          <BaseSelect
+            v-model="draftStatus"
+            aria-label="Updated moderation status"
+            :full-width="true"
+            :options="[
+              { label: 'Submitted (Unassigned)', value: 'submitted' },
+              { label: 'Under Review', value: 'under_review' },
+              { label: 'Resolved & Action Taken', value: 'resolved' },
+              { label: 'Dismiss Report', value: 'dismissed' },
+            ]"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-neutral-700 mb-1">
+            Investigation &amp; Disposition Note
+          </label>
+          <textarea
+            v-model="moderationNote"
+            rows="3"
+            placeholder="Record evidence review, suspension outcome, or passenger callback note..."
+            class="w-full px-3 py-2 border border-neutral-300 text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+          />
+        </div>
+
+        <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
       </div>
-    </Teleport>
+
+      <template #footer>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+            @click="closeModerationModal"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
+            @click="saveModerationDecision"
+          >
+            Save Decision
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>
