@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { handleHotUpdate, routes } from 'vue-router/auto-routes'
 
-const DEFAULT_TITLE = 'EasyRide — Pagadian Rides'
+const DEFAULT_TITLE = 'EasyRide'
 
 const ROUTE_TITLES: Record<string, string> = {
   '/': 'EasyRide — Pagadian Rides',
