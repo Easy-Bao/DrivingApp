@@ -61,7 +61,7 @@ export function isSafeRouteParam(value: unknown): boolean {
 }
 
 function validateDynamicParams(to: Pick<RouteLocationNormalized, 'params' | 'name'>): boolean {
-  if (to.name === 'not-found' || !to.params) return true
+  if (to.name === '/[...pathMatch]' || !to.params) return true
   for (const [key, rawValue] of Object.entries(to.params)) {
     if (key === 'pathMatch') continue
     if (Array.isArray(rawValue)) return false
@@ -97,7 +97,7 @@ export function getAllowedRolesForRoute(
 
 export function enforceRouteSecurity(to: RouteLocationNormalized): RouteLocationRaw | true {
   if (!validateDynamicParams(to)) {
-    return { name: 'not-found' }
+    return { name: '/[...pathMatch]', params: { pathMatch: to.path.replace(/^\/+/, '') } }
   }
 
   const isPublic =
@@ -106,16 +106,16 @@ export function enforceRouteSecurity(to: RouteLocationNormalized): RouteLocation
 
   if (!isPublic && !authenticated) {
     return {
-      name: 'auth-login',
+      name: '/auth/login',
       query: { redirect: sanitizeRedirectPath(to.fullPath) },
     }
   }
 
-  if (to.name === 'auth-login' && authenticated) {
+  if (to.name === '/auth/login' && authenticated) {
     return sanitizeRedirectPath(to.query?.redirect)
   }
 
-  if (isPublic || to.name === 'not-found' || to.name === 'unauthorized') {
+  if (isPublic || to.name === '/[...pathMatch]' || to.name === '/unauthorized') {
     return true
   }
 
@@ -123,7 +123,7 @@ export function enforceRouteSecurity(to: RouteLocationNormalized): RouteLocation
   const allowedRoles = getAllowedRolesForRoute(to)
   if (!session.role || !allowedRoles.includes(session.role)) {
     return {
-      name: 'unauthorized',
+      name: '/unauthorized',
       query: {
         from: sanitizeRedirectPath(to.path),
         required: allowedRoles.join(','),

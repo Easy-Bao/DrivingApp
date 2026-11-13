@@ -3,8 +3,18 @@ import { mount } from '@vue/test-utils'
 import App from '@/App.vue'
 
 type NavigationGuard = (
-  to: { path: string; name?: string; params?: Record<string, string>; meta?: Record<string, unknown> },
-  from: { path: string; name?: string; params?: Record<string, string>; meta?: Record<string, unknown> },
+  to: {
+    path: string
+    name?: string
+    params?: Record<string, string>
+    meta?: Record<string, unknown>
+  },
+  from: {
+    path: string
+    name?: string
+    params?: Record<string, string>
+    meta?: Record<string, unknown>
+  },
 ) => void
 
 let registeredGuard: NavigationGuard | null = null
@@ -17,7 +27,8 @@ vi.mock('vue-router', () => ({
   }),
   useRoute: () => ({ path: '/dashboard/overview', query: {} }),
   RouterView: {
-    template: '<div><slot :Component="{ template: \'<div>Page</div>\' }" :route="{ path: \'/dashboard/overview\' }" /></div>',
+    template:
+      '<div><slot :Component="{ template: \'<div>Page</div>\' }" :route="{ path: \'/dashboard/overview\' }" /></div>',
   },
 }))
 

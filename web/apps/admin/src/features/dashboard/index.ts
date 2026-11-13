@@ -1,3 +1,3 @@
-export { default as OverviewPage } from '@/features/dashboard/pages/OverviewPage.vue'
+export { default as OverviewPage } from '@/pages/dashboard/overview.vue'
 export { useDashboard } from '@/features/dashboard/composables/useDashboard'
 export * from '@/features/dashboard/dashboard.types'

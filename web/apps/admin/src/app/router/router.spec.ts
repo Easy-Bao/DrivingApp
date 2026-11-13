@@ -21,7 +21,9 @@ describe('router security guards', () => {
     for (const item of navItems) {
       const resolved = router.resolve(item.path)
       expect(resolved.name, `Missing route for sidebar path ${item.path}`).toBeTruthy()
-      expect(resolved.name, `Sidebar path ${item.path} hit 404 fallback`).not.toBe('not-found')
+      expect(resolved.name, `Sidebar path ${item.path} hit 404 fallback`).not.toBe(
+        '/[...pathMatch]',
+      )
     }
   })
 
@@ -38,7 +40,7 @@ describe('router security guards', () => {
     }
 
     const unknown = router.resolve('/legacy/retired-section')
-    expect(unknown.name).toBe('not-found')
+    expect(unknown.name).toBe('/[...pathMatch]')
   })
 
   it('redirects root path to the executive overview route', async () => {
@@ -50,13 +52,13 @@ describe('router security guards', () => {
   it('blocks protected routes when session is locked or expired and preserves safe redirect targets', async () => {
     lockAuthSession()
     await router.push('/payments/topups')
-    expect(router.currentRoute.value.name).toBe('auth-login')
+    expect(router.currentRoute.value.name).toBe('/auth/login')
     expect(router.currentRoute.value.query.redirect).toBe('/payments/topups')
 
     restoreDefaultDemoSession()
     setAuthSessionForTesting({ expiresAt: Date.now() - 10_000 })
     await router.push('/settings/app-settings')
-    expect(router.currentRoute.value.name).toBe('auth-login')
+    expect(router.currentRoute.value.name).toBe('/auth/login')
   })
 
   it('neutralizes open-redirect and unsafe route parameter injection attempts', async () => {
@@ -73,10 +75,10 @@ describe('router security guards', () => {
     expect(router.currentRoute.value.path).toBe('/dashboard/overview')
 
     await router.push('/payments/topups/bad..id')
-    expect(router.currentRoute.value.name).toBe('not-found')
+    expect(router.currentRoute.value.name).toBe('/[...pathMatch]')
 
     await router.push('/users/driver-applications/<script>')
-    expect(router.currentRoute.value.name).toBe('not-found')
+    expect(router.currentRoute.value.name).toBe('/[...pathMatch]')
   })
 
   it('enforces role-based authorization boundaries across operational roles', async () => {
@@ -84,28 +86,28 @@ describe('router security guards', () => {
     expect(fin.ok).toBe(true)
 
     await router.push('/payments/topups')
-    expect(router.currentRoute.value.name).toBe('payments-topups')
+    expect(router.currentRoute.value.name).toBe('/payments/topups/')
 
     await router.push('/settings/app-settings')
-    expect(router.currentRoute.value.name).toBe('unauthorized')
+    expect(router.currentRoute.value.name).toBe('/unauthorized')
     expect(router.currentRoute.value.query.from).toBe('/settings/app-settings')
 
     const support = loginOperator('support_lead', '7016')
     expect(support.ok).toBe(true)
 
     await router.push('/trips/safety-reports')
-    expect(router.currentRoute.value.name).toBe('trips-safety-reports')
+    expect(router.currentRoute.value.name).toBe('/trips/safety-reports')
 
     await router.push('/payments/topups')
-    expect(router.currentRoute.value.name).toBe('unauthorized')
+    expect(router.currentRoute.value.name).toBe('/unauthorized')
 
     const fleet = loginOperator('fleet_ops', '7016')
     expect(fleet.ok).toBe(true)
 
     await router.push('/documents/verification')
-    expect(router.currentRoute.value.name).toBe('documents-verification')
+    expect(router.currentRoute.value.name).toBe('/documents/verification')
 
     await router.push('/users/operators')
-    expect(router.currentRoute.value.name).toBe('unauthorized')
+    expect(router.currentRoute.value.name).toBe('/unauthorized')
   })
 })

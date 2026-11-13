@@ -56,7 +56,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. San Jose',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N01-19-091245',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2029-08-15',
@@ -101,7 +102,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. Tuburan',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N02-18-048219',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2028-11-20',
@@ -132,7 +134,8 @@ const applications = ref<DriverApplication[]>([
     clearanceNumber: 'PNP-ZDS-2026-440912',
     clearanceDoc: 'pnp_clearance_danilo.pdf',
     backgroundProvider: 'PNP Directorate for Investigation and Detective Management (DIDM)',
-    backgroundNotes: 'Clean PNP national clearance, active franchise franchise confirmation verified.',
+    backgroundNotes:
+      'Clean PNP national clearance, active franchise franchise confirmation verified.',
     status: 'Pending Review',
   },
   {
@@ -145,7 +148,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. Balangasan',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N03-17-091204',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2027-04-12',
@@ -189,7 +193,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. San Pedro',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N04-20-001923',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2030-01-30',
@@ -233,7 +238,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. Kawit',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N07-16-099120',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2027-09-18',
@@ -277,7 +283,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. Santa Lucia',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N11-15-081290',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2026-12-05',
@@ -321,7 +328,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. Gatas',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N01-21-008819',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2031-03-14',
@@ -365,7 +373,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. Tiguma',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N01-18-091823',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2028-08-22',
@@ -409,7 +418,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. Dao',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N02-19-033102',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2029-06-11',
@@ -453,7 +463,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. Santiago',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N03-20-081923',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2030-10-09',
@@ -497,7 +508,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. Danlugan',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N04-18-099124',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2028-04-19',
@@ -541,7 +553,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. Bulatok',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N01-19-044192',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2029-07-28',
@@ -585,7 +598,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. Dumagoc',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1521119989659-a83eee488004?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1521119989659-a83eee488004?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N02-21-018293',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2031-11-03',
@@ -629,7 +643,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. Lenienza',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N04-19-091823',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2029-02-14',
@@ -673,7 +688,8 @@ const applications = ref<DriverApplication[]>([
     city: 'Pagadian City',
     province: 'ZDS',
     barangay: 'Brgy. White Beach',
-    facePhotoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80',
+    facePhotoUrl:
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80',
     licenseNumber: 'N11-15-088192',
     licenseType: 'Professional Driver License (PH-LTO)',
     licenseExpiry: '2026-05-10',

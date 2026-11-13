@@ -210,7 +210,8 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
   if (parts.length >= 3) {
     const parentPath = `/${parts[0]}/${parts[1]}`
     const parentMatch = routeMap[parentPath]
-    const detailId = (route.params.id as string) || parts.slice(2).join('/')
+    const paramId = 'id' in route.params ? String(route.params.id) : ''
+    const detailId = paramId || parts.slice(2).join('/')
     if (parentMatch) {
       return [
         { label: parentMatch.section, to: parentMatch.sectionTo },

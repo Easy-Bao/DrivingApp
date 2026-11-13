@@ -223,7 +223,7 @@ function confirmSignOut() {
   signedOutNotice.value = true
   lockAuthSession()
   emit('closeMobile')
-  void router.push({ name: 'auth-login', query: { redirect: route.fullPath } })
+  void router.push({ name: '/auth/login', query: { redirect: route.fullPath } })
 }
 
 const activeItem = computed(() => {

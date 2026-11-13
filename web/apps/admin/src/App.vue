@@ -15,6 +15,7 @@ const isDetailsRoute = (route: {
 }) => {
   return (
     route.meta?.isDetail === true ||
+    String(route.name || '').endsWith('/[id]') ||
     String(route.name || '').endsWith('-details') ||
     Boolean(route.params && Object.keys(route.params).length > 0 && route.params.id)
   )
