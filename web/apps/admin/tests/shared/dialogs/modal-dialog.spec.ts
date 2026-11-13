@@ -14,11 +14,6 @@ describe('ModalDialog', () => {
         default: '<p>Modal body content</p>',
         footer: '<button type="button">Done</button>',
       },
-      global: {
-        stubs: {
-          Teleport: { template: '<div><slot /></div>' },
-        },
-      },
     })
 
     const dialog = wrapper.find('[role="dialog"]')

@@ -4,14 +4,7 @@ import RidersPage from '@/pages/users/riders.vue'
 
 describe('RidersPage', () => {
   it('filters Pagadian passengers and opens inspection modal', async () => {
-    const wrapper = mount(RidersPage, {
-      global: {
-        stubs: {
-          RouterLink: { template: '<a><slot /></a>' },
-          Teleport: true,
-        },
-      },
-    })
+    const wrapper = mount(RidersPage)
 
     expect(wrapper.text()).toContain('Althea Mae Villanueva')
     expect(wrapper.text()).toContain('+63 935 812 4091')
@@ -30,14 +23,7 @@ describe('RidersPage', () => {
   })
 
   it('suspends a passenger with mandatory audit reason', async () => {
-    const wrapper = mount(RidersPage, {
-      global: {
-        stubs: {
-          RouterLink: { template: '<a><slot /></a>' },
-          Teleport: true,
-        },
-      },
-    })
+    const wrapper = mount(RidersPage)
 
     const suspendBtn = wrapper.findAll('button').find((b) => b.text().trim() === 'Suspend')
     expect(suspendBtn).toBeDefined()

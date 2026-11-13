@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import SosAlertsPage from '@/pages/trips/sos-alerts.vue'
 
@@ -7,18 +7,8 @@ describe('SosAlertsPage', () => {
     vi.useFakeTimers()
   })
 
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
   it('displays actual incident counts, filters status tabs, and auto-dismisses action toasts', async () => {
-    const wrapper = mount(SosAlertsPage, {
-      global: {
-        stubs: {
-          Teleport: { template: '<div><slot /></div>' },
-        },
-      },
-    })
+    const wrapper = mount(SosAlertsPage)
 
     expect(wrapper.text()).toContain('2 Active')
     expect(wrapper.text()).toContain('All (3)')

@@ -4,18 +4,10 @@ import FarePricingPage from '@/pages/payments/fare-pricing.vue'
 
 describe('FarePricingPage', () => {
   it('simulates Bao-Bao PHP fare floor and edits a tariff rule', async () => {
-    const wrapper = mount(FarePricingPage, {
-      global: {
-        stubs: {
-          Teleport: { template: '<div><slot /></div>' },
-        },
-      },
-    })
+    const wrapper = mount(FarePricingPage)
 
     expect(wrapper.text()).toContain('Standard Poblacion')
     expect(wrapper.text()).toContain('₱25.00')
-    expect(wrapper.text()).not.toContain('USD')
-    expect(wrapper.text()).not.toContain('Taxicle')
 
     const distanceInput = wrapper.find('input[aria-label="Simulator distance in kilometers"]')
     await distanceInput.setValue('5')

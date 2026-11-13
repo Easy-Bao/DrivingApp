@@ -26,13 +26,7 @@ describe('ConfirmDialog', () => {
       `,
     })
 
-    const wrapper = mount(Host, {
-      global: {
-        stubs: {
-          Teleport: { template: '<div><slot /></div>' },
-        },
-      },
-    })
+    const wrapper = mount(Host)
 
     const findConfirmButton = () =>
       wrapper.findAll('button').find((button) => button.text().includes('Suspend Driver'))
@@ -48,11 +42,6 @@ describe('ConfirmDialog', () => {
 
   it('closes on escape key press', async () => {
     const wrapper = mount(ConfirmDialog, {
-      global: {
-        stubs: {
-          Teleport: { template: '<div><slot /></div>' },
-        },
-      },
       props: {
         open: true,
         title: 'Confirm Action',

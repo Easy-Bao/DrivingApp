@@ -10,10 +10,7 @@ const mockRoute = reactive({
 
 vi.mock('vue-router', () => ({
   useRoute: () => mockRoute,
-  RouterLink: {
-    props: ['to'],
-    template: "<a :href=\"typeof to === 'string' ? to : ''\"><slot /></a>",
-  },
+  RouterLink: true,
 }))
 
 describe('ConsoleLayout', () => {
@@ -28,10 +25,6 @@ describe('ConsoleLayout', () => {
         stubs: {
           Sidebar: { template: '<aside />' },
           Icon: { template: '<span />' },
-          RouterLink: {
-            props: ['to'],
-            template: '<a :href="String(to)"><slot /></a>',
-          },
         },
       },
       slots: {

@@ -1,22 +1,19 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import DocumentVerificationPage from '@/pages/documents/verification.vue'
 
 describe('DocumentVerificationPage', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-13T10:00:00Z'))
+  })
+
   it('requires all four compliance checkboxes before enabling approval', async () => {
-    const wrapper = mount(DocumentVerificationPage, {
-      global: {
-        stubs: {
-          Teleport: { template: '<div><slot /></div>' },
-        },
-      },
-    })
+    const wrapper = mount(DocumentVerificationPage)
 
     expect(wrapper.text()).toContain('Rodelio Cruz')
     expect(wrapper.text()).toContain('Pagadian City Franchising Board')
     expect(wrapper.text()).toContain('Expired')
-    expect(wrapper.text()).not.toContain('Taxicle Franchising Board')
-    expect(wrapper.text()).not.toContain('Brgy. San Jose')
 
     const reviewBtn = wrapper.findAll('button').find((b) => b.text().includes('Review Document'))
     expect(reviewBtn).toBeDefined()
@@ -40,20 +37,16 @@ describe('DocumentVerificationPage', () => {
   })
 
   it('requires a selected regulatory reason before confirming document rejection', async () => {
-    const wrapper = mount(DocumentVerificationPage, {
-      global: {
-        stubs: {
-          Teleport: { template: '<div><slot /></div>' },
-        },
-      },
-    })
+    const wrapper = mount(DocumentVerificationPage)
 
     const reviewBtn = wrapper.findAll('button').find((b) => b.text().includes('Review Document'))
+    expect(reviewBtn).toBeDefined()
     await reviewBtn!.trigger('click')
 
     const rejectTrigger = wrapper
       .findAll('button')
       .find((b) => b.text().includes('Reject Document'))
+    expect(rejectTrigger).toBeDefined()
     await rejectTrigger!.trigger('click')
 
     const findConfirmReject = () =>

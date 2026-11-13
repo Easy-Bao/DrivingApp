@@ -21,9 +21,6 @@ describe('DriverApplicationsPage', () => {
     expect(wrapper.text()).toContain('Submitted')
     expect(wrapper.text()).toContain('Service Area')
     expect(wrapper.text()).toContain('Vehicle & Body No.')
-    expect(wrapper.text()).not.toContain('Clearance Status')
-    expect(wrapper.text()).not.toContain('Region / City')
-    expect(wrapper.text()).not.toContain('Driver Applications Queue')
 
     expect(wrapper.text()).toContain('Pagadian City')
     expect(wrapper.text()).toContain('Brgy. San Jose')

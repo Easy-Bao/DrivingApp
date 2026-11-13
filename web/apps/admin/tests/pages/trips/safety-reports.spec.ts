@@ -4,13 +4,7 @@ import SafetyReportsPage from '@/pages/trips/safety-reports.vue'
 
 describe('SafetyReportsPage', () => {
   it('filters safety reports by severity and saves a moderation disposition', async () => {
-    const wrapper = mount(SafetyReportsPage, {
-      global: {
-        stubs: {
-          Teleport: { template: '<div><slot /></div>' },
-        },
-      },
-    })
+    const wrapper = mount(SafetyReportsPage)
 
     expect(wrapper.text()).toContain('RPT-7016-409')
     expect(wrapper.text()).toContain('Driver Identity Mismatch')

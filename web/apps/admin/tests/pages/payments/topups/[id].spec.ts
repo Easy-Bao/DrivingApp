@@ -15,14 +15,7 @@ vi.mock('vue-router', () => ({
 
 describe('TopupDetailsPage', () => {
   it('renders localized topup details with receipt preview image and approval workflow', async () => {
-    const wrapper = mount(TopupDetailsPage, {
-      global: {
-        stubs: {
-          RouterLink: true,
-          Teleport: { template: '<div><slot /></div>' },
-        },
-      },
-    })
+    const wrapper = mount(TopupDetailsPage)
 
     expect(wrapper.text()).toContain('Back')
     expect(wrapper.text()).toContain('Top-Up Request TOP-8921')

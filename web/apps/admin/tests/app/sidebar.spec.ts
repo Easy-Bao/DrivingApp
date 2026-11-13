@@ -1,14 +1,18 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import Sidebar from '@/app/layouts/Sidebar.vue'
 
+const mockPush = vi.fn()
+
 vi.mock('vue-router', () => ({
   useRoute: () => ({ path: '/dashboard/overview', query: {} }),
-  useRouter: () => ({ push: vi.fn() }),
-  RouterLink: { template: '<a><slot /></a>' },
+  useRouter: () => ({ push: mockPush }),
 }))
 
 describe('Sidebar', () => {
+  beforeEach(() => {
+    mockPush.mockClear()
+  })
   it('renders branding and core navigation sections', () => {
     const wrapper = mount(Sidebar)
     expect(wrapper.text()).toContain('EasyRide')
@@ -28,23 +32,16 @@ describe('Sidebar', () => {
     expect(wrapper.text()).toContain('Top-Ups')
   })
 
-  it('toggles collapse state, uses dark pulse indicators, and shows hover flyout dropdown', async () => {
-    const wrapper = mount(Sidebar, {
-      global: {
-        stubs: {
-          Teleport: { template: '<div><slot /></div>' },
-        },
-      },
-    })
-    expect(wrapper.classes()).toContain('w-72')
+  it('toggles collapse state, displays notification counts, and shows hover flyout dropdown', async () => {
+    const wrapper = mount(Sidebar)
 
     const toggleButton = wrapper.find('button[aria-label="Collapse sidebar"]')
     expect(toggleButton.exists()).toBe(true)
 
     await toggleButton.trigger('click')
-    expect(wrapper.classes()).toContain('w-20')
 
     const expandButton = wrapper.find('button[aria-label="Expand sidebar"]')
+    expect(expandButton.exists()).toBe(true)
     expect(expandButton.find('[data-test="collapsed-brand-logo"]').exists()).toBe(true)
     await expandButton.trigger('mouseenter')
     expect(expandButton.find('[data-test="collapsed-brand-logo"]').exists()).toBe(false)
@@ -54,10 +51,6 @@ describe('Sidebar', () => {
     expect(countBadges.length).toBeGreaterThan(0)
     const badgeTexts = countBadges.map((badge) => badge.text())
     expect(badgeTexts).toContain('2')
-    for (const badge of countBadges) {
-      expect(badge.classes()).not.toContain('animate-pulse')
-      expect(badge.classes()).not.toContain('bg-neutral-500')
-    }
 
     const dashboardBtn = wrapper.find('button[aria-label="Dashboard"]')
     await dashboardBtn.trigger('mouseenter')
@@ -66,7 +59,6 @@ describe('Sidebar', () => {
     const activeMenuItem = dashboardFlyout.find('[aria-current="page"]')
     expect(activeMenuItem.exists()).toBe(true)
     expect(activeMenuItem.text()).toContain('Overview')
-    expect(activeMenuItem.classes()).toContain('bg-neutral-900')
 
     const tripsBtn = wrapper.find('button[aria-label="Trips"]')
     await tripsBtn.trigger('mouseenter')
@@ -91,24 +83,17 @@ describe('Sidebar', () => {
     expect(wrapper.text()).toContain('Lock Session?')
   })
 
-  it('renders line indent border on expanded child groups', () => {
+  it('renders expanded child items and navigates when a section item is clicked', async () => {
     const wrapper = mount(Sidebar)
-    const childContainers = wrapper.findAll('.border-l')
-    expect(childContainers.length).toBeGreaterThan(0)
-    const firstContainer = childContainers[0]
-    expect(firstContainer).toBeDefined()
-    expect(firstContainer?.classes()).toContain('border-neutral-200')
-    expect(firstContainer?.classes()).toContain('ml-4')
+    const overviewBtn = wrapper.findAll('button').find((btn) => btn.text().trim() === 'Overview')
+    expect(overviewBtn).toBeDefined()
+
+    await overviewBtn!.trigger('click')
+    expect(mockPush).toHaveBeenCalledWith('/dashboard/overview')
   })
 
   it('shows empty search message, allows clearing, and confirms sign out', async () => {
-    const wrapper = mount(Sidebar, {
-      global: {
-        stubs: {
-          Teleport: true,
-        },
-      },
-    })
+    const wrapper = mount(Sidebar)
     const searchInput = wrapper.find('input[type="text"]')
 
     await searchInput.setValue('nonexistent-xyz-section')

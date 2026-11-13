@@ -4,13 +4,7 @@ import TicketsPage from '@/pages/support/tickets.vue'
 
 describe('TicketsPage', () => {
   it('opens the support thread modal and resolves a Pagadian inquiry with an operator reply', async () => {
-    const wrapper = mount(TicketsPage, {
-      global: {
-        stubs: {
-          Teleport: { template: '<div><slot /></div>' },
-        },
-      },
-    })
+    const wrapper = mount(TicketsPage)
 
     expect(wrapper.text()).toContain('TCK-7016-204')
     expect(wrapper.text()).toContain('Rodelio Cruz')

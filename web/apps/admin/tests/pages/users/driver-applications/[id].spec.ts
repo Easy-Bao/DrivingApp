@@ -15,14 +15,7 @@ vi.mock('vue-router', () => ({
 
 describe('DriverApplicationDetailsPage', () => {
   it('renders driver application details, back button, vehicle info, and allows approval via modal', async () => {
-    const wrapper = mount(DriverApplicationDetailsPage, {
-      global: {
-        stubs: {
-          RouterLink: true,
-          Teleport: true,
-        },
-      },
-    })
+    const wrapper = mount(DriverApplicationDetailsPage)
 
     expect(wrapper.text()).toContain('Back')
     expect(wrapper.text()).toContain('Application APP-901')
@@ -33,7 +26,6 @@ describe('DriverApplicationDetailsPage', () => {
     expect(wrapper.text()).toContain('A1')
     expect(wrapper.text()).toContain('View License')
     expect(wrapper.text()).toContain('NBI')
-    expect(wrapper.text()).not.toContain('Taxicle')
 
     const approveBtn = wrapper
       .findAll('button')

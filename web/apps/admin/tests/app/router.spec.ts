@@ -27,9 +27,9 @@ describe('router security guards', () => {
 
   it('marks detail routes with detail transition metadata and sends unknown paths to not-found', () => {
     const detailPaths = [
-      '/users/driver-applications/APP-001',
+      '/users/driver-applications/APP-901',
       '/payments/topups/TOP-8921',
-      '/payments/settlements/SET-401',
+      '/payments/settlements/STL-9401',
     ]
 
     for (const path of detailPaths) {
