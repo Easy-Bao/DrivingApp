@@ -27,4 +27,9 @@ export const tripsRoutes: RouteRecordRaw[] = [
     name: 'trips-sos-alerts',
     component: () => import('@/features/trips/pages/SosAlertsPage.vue'),
   },
+  {
+    path: '/trips/safety-reports',
+    name: 'trips-safety-reports',
+    component: () => import('@/features/trips/pages/SafetyReportsPage.vue'),
+  },
 ]

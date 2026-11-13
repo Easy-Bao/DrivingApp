@@ -120,6 +120,14 @@ export const navigationGroups: SidebarNavGroup[] = [
         badge: '2',
         badgeClass: 'bg-rose-500 text-white font-bold animate-pulse',
       },
+      {
+        id: 'safety-reports',
+        label: 'Safety Reports',
+        icon: 'lucide:shield-alert',
+        path: '/trips/safety-reports',
+        badge: '2',
+        badgeClass: 'bg-amber-500/20 text-amber-400',
+      },
     ],
   },
   {
