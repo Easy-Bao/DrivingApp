@@ -1,5 +1,8 @@
+export { default as BenefitsSection } from '@/features/landing-showcase/components/BenefitsSection.vue'
 export { default as DriveCalloutSection } from '@/features/landing-showcase/components/DriveCalloutSection.vue'
 export { default as DriverEarningsCalculator } from '@/features/landing-showcase/components/DriverEarningsCalculator.vue'
+export { default as FareTrySection } from '@/features/landing-showcase/components/FareTrySection.vue'
+export { default as FinalCtaSection } from '@/features/landing-showcase/components/FinalCtaSection.vue'
 export { default as FleetServicesSection } from '@/features/landing-showcase/components/FleetServicesSection.vue'
 export { default as HeroSection } from '@/features/landing-showcase/components/HeroSection.vue'
 export { default as HowItWorksSection } from '@/features/landing-showcase/components/HowItWorksSection.vue'

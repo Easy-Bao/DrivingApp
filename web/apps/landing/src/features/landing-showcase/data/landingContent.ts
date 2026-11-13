@@ -21,10 +21,11 @@ export interface CommissionTierItem {
   note: string
 }
 
-export const HERO_STATS = [
-  { label: 'Base Fare', value: '₱25' },
-  { label: 'Live Bids', value: '90s' },
-  { label: 'Payment', value: 'Cash' },
+export const BENEFITS = [
+  { title: 'Upfront fares', description: 'See the price before you book. No haggling.' },
+  { title: 'Pick your driver', description: 'Compare nearby bids by price and arrival time.' },
+  { title: 'Pay in cash', description: 'Hand over the exact fare when you arrive.' },
+  { title: 'Local drivers', description: 'Taxicle, TukTuk, and e-BaoBao from your own city.' },
 ] as const
 
 export const FLEET_TIERS: FleetTierSummary[] = [

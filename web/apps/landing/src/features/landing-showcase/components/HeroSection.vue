@@ -1,52 +1,68 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { FareEstimatorCard } from '@/features/fare-estimation'
-import { HERO_STATS } from '@/features/landing-showcase/data/landingContent'
 </script>
 
 <template>
-  <section
-    id="fare-estimator"
-    class="border-b border-neutral-200 bg-neutral-50 py-12 sm:py-16 lg:py-20"
-  >
-    <div class="mx-auto max-w-6xl px-4 sm:px-6">
-      <div class="grid items-center gap-10 lg:grid-cols-12 lg:gap-12">
-        <div class="lg:col-span-6">
-          <h1 class="text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl">
-            Pagadian Rides.
-          </h1>
+  <section class="border-b border-neutral-200 bg-white">
+    <div
+      class="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:py-24"
+    >
+      <div>
+        <p class="text-xs font-semibold tracking-widest text-neutral-500 uppercase">
+          Pagadian City
+        </p>
+        <h1
+          class="mt-4 text-4xl leading-tight font-bold tracking-tight text-neutral-900 sm:text-5xl lg:text-6xl"
+        >
+          Rides around Pagadian, made easy.
+        </h1>
+        <p class="mt-5 max-w-md text-base leading-relaxed text-neutral-600 sm:text-lg">
+          Book a Taxicle in seconds. See the fare first, pick your driver, and pay in cash.
+        </p>
 
-          <p class="mt-4 max-w-md text-base leading-relaxed text-neutral-600 sm:text-lg">
-            Check upfront Taxicle fares and pick a nearby driver without street haggling.
-          </p>
-
-          <div class="mt-7 flex flex-wrap items-center gap-3">
-            <RouterLink
-              to="/download"
-              class="inline-flex min-h-11 items-center bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
-            >
-              Get App
-            </RouterLink>
-            <RouterLink
-              to="/drive"
-              class="inline-flex min-h-11 items-center border border-neutral-300 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-900 transition-colors hover:bg-neutral-100"
-            >
-              Drive EasyRide
-            </RouterLink>
-          </div>
-
-          <dl class="mt-10 grid grid-cols-3 gap-6 border-t border-neutral-200 pt-6">
-            <div v-for="stat in HERO_STATS" :key="stat.label">
-              <dt class="text-xs font-medium text-neutral-500">{{ stat.label }}</dt>
-              <dd class="mt-1 text-xl font-bold tabular-nums text-neutral-900 sm:text-2xl">
-                {{ stat.value }}
-              </dd>
-            </div>
-          </dl>
+        <div class="mt-8 flex flex-wrap items-center gap-3">
+          <RouterLink
+            to="/download"
+            class="inline-flex min-h-12 items-center bg-neutral-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
+          >
+            Download App
+          </RouterLink>
+          <RouterLink
+            to="/drive"
+            class="inline-flex min-h-12 items-center border border-neutral-300 bg-white px-6 py-3 text-sm font-semibold text-neutral-900 transition-colors hover:bg-neutral-100"
+          >
+            Become a Driver
+          </RouterLink>
         </div>
 
-        <div class="lg:col-span-6">
-          <FareEstimatorCard />
+        <p class="mt-5 text-xs text-neutral-500">Free for passengers. Android and iOS.</p>
+      </div>
+
+      <div class="flex justify-center lg:justify-end" aria-hidden="true">
+        <div class="w-64 border-[10px] border-neutral-900 bg-neutral-50 shadow-xl sm:w-72">
+          <div class="flex h-72 flex-col justify-between bg-neutral-200 p-4">
+            <span class="w-fit bg-white px-2 py-1 text-[10px] font-semibold text-neutral-700">
+              Agora Public Market
+            </span>
+            <span
+              class="w-fit self-end bg-neutral-900 px-2 py-1 text-[10px] font-semibold text-white"
+            >
+              Dao Capitol
+            </span>
+          </div>
+          <div class="space-y-3 border-t border-neutral-200 bg-white p-4">
+            <div class="flex items-baseline justify-between">
+              <span class="text-sm font-bold text-neutral-900">Standard</span>
+              <span class="text-lg font-bold tabular-nums text-neutral-900">₱61</span>
+            </div>
+            <div class="flex items-center justify-between text-xs text-neutral-500">
+              <span>3.4 km · 11 min</span>
+              <span>3 drivers nearby</span>
+            </div>
+            <div class="bg-neutral-900 py-2.5 text-center text-xs font-semibold text-white">
+              Book Ride
+            </div>
+          </div>
         </div>
       </div>
     </div>

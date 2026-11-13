@@ -28,7 +28,7 @@ describe('Landing Home Page', () => {
       },
     })
 
-    expect(wrapper.find('h1').text()).toBe('Pagadian Rides.')
+    expect(wrapper.find('h1').text()).toBe('Rides around Pagadian, made easy.')
     expect(wrapper.text()).toContain('Fare Estimate')
     expect(wrapper.text()).toContain('Our Rides')
     expect(wrapper.text()).toContain('How It Works')

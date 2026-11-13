@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import {
+  BenefitsSection,
   DriveCalloutSection,
+  FareTrySection,
+  FinalCtaSection,
   FleetServicesSection,
   HeroSection,
   HowItWorksSection,
@@ -11,8 +14,11 @@ import LandingLayout from '@/shared/layouts/LandingLayout.vue'
 <template>
   <LandingLayout>
     <HeroSection />
-    <FleetServicesSection />
+    <BenefitsSection />
     <HowItWorksSection />
+    <FleetServicesSection />
+    <FareTrySection />
     <DriveCalloutSection />
+    <FinalCtaSection />
   </LandingLayout>
 </template>
