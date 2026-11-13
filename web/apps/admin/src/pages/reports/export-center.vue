@@ -2,6 +2,9 @@
 import { ref } from 'vue'
 import { Icon } from '@iconify/vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 import { exportToCsv } from '@/shared/utils/format'
@@ -143,16 +146,10 @@ const createSchedule = () => {
       @dismiss="actionToast = null"
     />
 
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-          Export &amp; Automated Delivery Center
-        </h1>
-        <p class="text-sm text-neutral-500 mt-1">
-          Download regional CSV ledgers or manage scheduled Pagadian City operational briefings.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Export &amp; Automated Delivery Center"
+      description="Download regional CSV ledgers or manage scheduled Pagadian City operational briefings."
+    />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
@@ -166,7 +163,7 @@ const createSchedule = () => {
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <StatusBadge
-            :label="`${scheduledReports.filter((s) => s.isActive).length} Active Schedules`"
+            :label="`${scheduledReports.filter((schedule) => schedule.isActive).length} Active Schedules`"
             tone="neutral"
           />
           <button
@@ -195,21 +192,21 @@ const createSchedule = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="sch in scheduledReports"
-              :key="sch.id"
+              v-for="schedule in scheduledReports"
+              :key="schedule.id"
               class="hover:bg-neutral-50/70 transition-colors"
             >
               <td class="py-3 px-4">
-                <div class="font-bold text-neutral-900">{{ sch.name }}</div>
-                <div class="text-[11px] font-mono text-neutral-400">{{ sch.id }}</div>
+                <div class="font-bold text-neutral-900">{{ schedule.name }}</div>
+                <div class="text-[11px] font-mono text-neutral-400">{{ schedule.id }}</div>
               </td>
               <td class="py-3 px-4">
                 <StatusBadge
-                  :label="sch.frequency"
+                  :label="schedule.frequency"
                   :tone="
-                    sch.frequency === 'Daily'
+                    schedule.frequency === 'Daily'
                       ? 'info'
-                      : sch.frequency === 'Weekly'
+                      : schedule.frequency === 'Weekly'
                         ? 'warning'
                         : 'success'
                   "
@@ -219,28 +216,35 @@ const createSchedule = () => {
                 <span
                   class="px-2 py-0.5 text-[10px] font-mono font-bold bg-neutral-100 text-neutral-800"
                 >
-                  .{{ sch.format.toLowerCase() }}
+                  .{{ schedule.format.toLowerCase() }}
                 </span>
               </td>
               <td class="py-3 px-4 text-neutral-700 font-mono text-[11px] max-w-xs truncate">
-                {{ sch.recipients }}
+                {{ schedule.recipients }}
               </td>
-              <td class="py-3 px-4 text-neutral-500 font-medium">{{ sch.timeSchedule }}</td>
+              <td class="py-3 px-4 text-neutral-500 font-medium">{{ schedule.timeSchedule }}</td>
               <td class="py-3 px-4 text-right">
                 <button
                   type="button"
-                  class="px-2.5 py-1 text-xs font-semibold rounded-none transition-colors"
+                  class="px-2.5 py-1 text-xs font-semibold rounded-none transition-colors cursor-pointer"
                   :class="
-                    sch.isActive
+                    schedule.isActive
                       ? 'bg-neutral-900 hover:bg-neutral-800 text-white'
                       : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-600'
                   "
-                  @click="toggleSchedule(sch)"
+                  @click="toggleSchedule(schedule)"
                 >
-                  {{ sch.isActive ? 'Active (Auto-Email)' : 'Paused' }}
+                  {{ schedule.isActive ? 'Active (Auto-Email)' : 'Paused' }}
                 </button>
               </td>
             </tr>
+            <EmptyTableRow
+              v-if="scheduledReports.length === 0"
+              :colspan="6"
+              title="No automated report schedules configured"
+              description="Create a schedule to dispatch automated Pagadian City operational briefings."
+              :show-reset="false"
+            />
           </tbody>
         </table>
       </div>
@@ -270,140 +274,137 @@ const createSchedule = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="exp in recentExports"
-              :key="exp.id"
+              v-for="exportItem in recentExports"
+              :key="exportItem.id"
               class="hover:bg-neutral-50/70 transition-colors"
             >
               <td class="py-3 px-4 font-mono font-medium text-neutral-900 flex items-center gap-2">
                 <Icon
                   :icon="
-                    exp.format === 'CSV'
+                    exportItem.format === 'CSV'
                       ? 'lucide:file-text'
-                      : exp.format === 'PDF'
+                      : exportItem.format === 'PDF'
                         ? 'lucide:file-down'
                         : 'lucide:file-spreadsheet'
                   "
                   class="text-neutral-500 text-base shrink-0"
                   aria-hidden="true"
                 />
-                <span>{{ exp.filename }}</span>
+                <span>{{ exportItem.filename }}</span>
               </td>
-              <td class="py-3 px-4 text-neutral-700 font-medium">{{ exp.reportCategory }}</td>
+              <td class="py-3 px-4 text-neutral-700 font-medium">
+                {{ exportItem.reportCategory }}
+              </td>
               <td class="py-3 px-4">
                 <span
                   class="px-2 py-0.5 text-[10px] font-mono font-bold bg-neutral-100 text-neutral-800"
                 >
-                  {{ exp.format }}
+                  {{ exportItem.format }}
                 </span>
               </td>
-              <td class="py-3 px-4 font-mono text-neutral-500">{{ exp.size }}</td>
-              <td class="py-3 px-4 text-neutral-500">{{ exp.generatedAt }}</td>
+              <td class="py-3 px-4 font-mono text-neutral-500">{{ exportItem.size }}</td>
+              <td class="py-3 px-4 text-neutral-500">{{ exportItem.generatedAt }}</td>
               <td class="py-3 px-4 text-right">
                 <button
                   type="button"
-                  class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors"
-                  @click="downloadFile(exp.filename, exp.reportCategory)"
+                  class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors cursor-pointer"
+                  @click="downloadFile(exportItem.filename, exportItem.reportCategory)"
                 >
                   Download
                 </button>
               </td>
             </tr>
+            <EmptyTableRow
+              v-if="recentExports.length === 0"
+              :colspan="6"
+              title="No recent exports available"
+              description="Generated snapshot downloads will appear here once processed."
+              :show-reset="false"
+            />
           </tbody>
         </table>
       </div>
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="showScheduleModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4"
-        @click.self="showScheduleModal = false"
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          class="w-full max-w-md bg-white border border-neutral-200 rounded-none p-5 space-y-4 shadow-xl"
-        >
-          <div class="border-b border-neutral-100 pb-3">
-            <h3 class="text-sm font-bold text-neutral-900">Create Scheduled Export</h3>
-            <p class="text-xs text-neutral-500 mt-0.5">
-              Configure recurring automated email delivery for operations or finance teams.
-            </p>
+    <ModalDialog
+      v-model:open="showScheduleModal"
+      title="Create Scheduled Export"
+      subtitle="Configure recurring automated email delivery for operations or finance teams."
+      size="sm"
+    >
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Schedule Title</label>
+          <input
+            v-model="newName"
+            type="text"
+            placeholder="e.g., Weekly Toda Cash Settlement Reconciliation"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-neutral-700 mb-1">Frequency</label>
+            <BaseSelect
+              v-model="newFrequency"
+              :full-width="true"
+              aria-label="Export frequency"
+              :options="['Daily', 'Weekly', 'Monthly']"
+            />
           </div>
-
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Schedule Title</label>
-              <input
-                v-model="newName"
-                type="text"
-                placeholder="e.g., Weekly Toda Cash Settlement Reconciliation"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block font-medium text-neutral-700 mb-1">Frequency</label>
-                <BaseSelect
-                  v-model="newFrequency"
-                  :full-width="true"
-                  aria-label="Export frequency"
-                  :options="['Daily', 'Weekly', 'Monthly']"
-                />
-              </div>
-              <div>
-                <label class="block font-medium text-neutral-700 mb-1">Format</label>
-                <BaseSelect
-                  v-model="newFormat"
-                  :full-width="true"
-                  aria-label="Export file format"
-                  :options="['CSV', 'PDF', 'Excel']"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Recipient Emails</label>
-              <input
-                v-model="newRecipients"
-                type="text"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-              />
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Execution Window</label>
-              <input
-                v-model="newWindow"
-                type="text"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-
-            <p v-if="scheduleError" class="text-xs font-medium text-rose-700">
-              {{ scheduleError }}
-            </p>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 border-t border-neutral-100 pt-3">
-            <button
-              type="button"
-              class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-              @click="showScheduleModal = false"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-              @click="createSchedule"
-            >
-              Save Schedule
-            </button>
+          <div>
+            <label class="block font-medium text-neutral-700 mb-1">Format</label>
+            <BaseSelect
+              v-model="newFormat"
+              :full-width="true"
+              aria-label="Export file format"
+              :options="['CSV', 'PDF', 'Excel']"
+            />
           </div>
         </div>
+
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Recipient Emails</label>
+          <input
+            v-model="newRecipients"
+            type="text"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+          />
+        </div>
+
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Execution Window</label>
+          <input
+            v-model="newWindow"
+            type="text"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
+        </div>
+
+        <p v-if="scheduleError" class="text-xs font-medium text-rose-700">
+          {{ scheduleError }}
+        </p>
       </div>
-    </Teleport>
+
+      <template #footer>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+            @click="showScheduleModal = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800 cursor-pointer"
+            @click="createSchedule"
+          >
+            Save Schedule
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>

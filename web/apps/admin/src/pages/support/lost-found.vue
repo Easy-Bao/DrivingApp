@@ -2,6 +2,10 @@
 import { computed, ref } from 'vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
@@ -72,19 +76,28 @@ const newDriver = ref('Rodelio Cruz (ZDS-4821)')
 const logError = ref<string | null>(null)
 
 const filteredItems = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
+  const query = searchQuery.value.trim().toLowerCase()
   return lostItems.value.filter((item) => {
     const matchesStatus = statusFilter.value === 'All' || item.status === statusFilter.value
     const matchesSearch =
-      !q ||
-      item.id.toLowerCase().includes(q) ||
-      item.itemDescription.toLowerCase().includes(q) ||
-      item.reportedBy.toLowerCase().includes(q) ||
-      item.driver.toLowerCase().includes(q) ||
-      item.tripId.toLowerCase().includes(q)
+      !query ||
+      item.id.toLowerCase().includes(query) ||
+      item.itemDescription.toLowerCase().includes(query) ||
+      item.reportedBy.toLowerCase().includes(query) ||
+      item.driver.toLowerCase().includes(query) ||
+      item.tripId.toLowerCase().includes(query)
     return matchesStatus && matchesSearch
   })
 })
+
+const hasActiveFilters = computed(
+  () => searchQuery.value.trim().length > 0 || statusFilter.value !== 'All',
+)
+
+const resetFilters = () => {
+  searchQuery.value = ''
+  statusFilter.value = 'All'
+}
 
 const openReturnDialog = (item: LostFoundRecord) => {
   returningItem.value = item
@@ -141,26 +154,20 @@ const createLostItem = () => {
       @dismiss="toastMessage = null"
     />
 
-    <div
-      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div>
-        <h2 class="text-sm font-semibold text-neutral-900">Lost &amp; Found Recovery Desk</h2>
-        <p class="text-xs text-neutral-500 mt-0.5">
-          Coordinate property recovery between Pagadian City passengers and taxicle operators.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Lost & Found Recovery Desk"
+      description="Coordinate property recovery between Pagadian City passengers and taxicle operators."
+    />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
         class="p-4 border-b border-neutral-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
       >
-        <input
+        <SearchField
           v-model="searchQuery"
-          type="text"
           placeholder="Search item description, passenger, driver, or trip ID..."
-          class="w-full md:w-80 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+          aria-label="Search lost and found reports"
+          class="md:w-80"
         />
 
         <div class="flex flex-wrap items-center gap-2">
@@ -246,6 +253,14 @@ const createLostItem = () => {
                 <span v-else class="text-neutral-400 text-xs">Closed</span>
               </td>
             </tr>
+            <EmptyTableRow
+              v-if="filteredItems.length === 0"
+              :colspan="7"
+              title="No matching recovery cases"
+              description="No lost and found reports match the current filters."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>
@@ -265,91 +280,77 @@ const createLostItem = () => {
       @cancel="returnDialogOpen = false"
     />
 
-    <Teleport to="body">
-      <div
-        v-if="showLogModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4"
-        @click.self="showLogModal = false"
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          class="w-full max-w-md bg-white border border-neutral-200 rounded-none p-5 space-y-4 shadow-xl"
-        >
-          <div class="border-b border-neutral-100 pb-3">
-            <h3 class="text-sm font-bold text-neutral-900">Log Lost &amp; Found Report</h3>
+    <ModalDialog v-model:open="showLogModal" title="Log Lost & Found Report" size="md">
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Item Description</label>
+          <input
+            v-model="newDescription"
+            type="text"
+            placeholder="e.g., Leather wallet with student ID"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
+        </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Passenger Name</label>
+          <input
+            v-model="newReporter"
+            type="text"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-neutral-700 mb-1">Contact (+63)</label>
+            <input
+              v-model="newReporterPhone"
+              type="text"
+              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+            />
           </div>
-
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Item Description</label>
-              <input
-                v-model="newDescription"
-                type="text"
-                placeholder="e.g., Leather wallet with student ID"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Passenger Name</label>
-              <input
-                v-model="newReporter"
-                type="text"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block font-medium text-neutral-700 mb-1">Contact (+63)</label>
-                <input
-                  v-model="newReporterPhone"
-                  type="text"
-                  class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-                />
-              </div>
-              <div>
-                <label class="block font-medium text-neutral-700 mb-1">Trip Reference</label>
-                <input
-                  v-model="newTripId"
-                  type="text"
-                  class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-                />
-              </div>
-            </div>
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Assigned Taxicle Driver</label>
-              <BaseSelect
-                v-model="newDriver"
-                :full-width="true"
-                aria-label="Select driver"
-                :options="[
-                  'Rodelio Cruz (ZDS-4821)',
-                  'Danilo Mendoza (ZDS-3019)',
-                  'Reynaldo Bautista (ZDS-1944)',
-                ]"
-              />
-            </div>
-            <p v-if="logError" class="text-xs font-medium text-rose-700">{{ logError }}</p>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 border-t border-neutral-100 pt-3">
-            <button
-              type="button"
-              class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-              @click="showLogModal = false"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-              @click="createLostItem"
-            >
-              Submit Report
-            </button>
+          <div>
+            <label class="block font-medium text-neutral-700 mb-1">Trip Reference</label>
+            <input
+              v-model="newTripId"
+              type="text"
+              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+            />
           </div>
         </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Assigned Taxicle Driver</label>
+          <BaseSelect
+            v-model="newDriver"
+            :full-width="true"
+            aria-label="Select driver"
+            :options="[
+              'Rodelio Cruz (ZDS-4821)',
+              'Danilo Mendoza (ZDS-3019)',
+              'Reynaldo Bautista (ZDS-1944)',
+            ]"
+          />
+        </div>
+        <p v-if="logError" class="text-xs font-medium text-rose-700">{{ logError }}</p>
       </div>
-    </Teleport>
+
+      <template #footer>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            @click="showLogModal = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
+            @click="createLostItem"
+          >
+            Submit Report
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>

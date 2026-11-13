@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 import { formatPhp } from '@/shared/utils/format'
@@ -97,7 +99,7 @@ const saveMunicipality = () => {
     return
   }
   if (editingMarketId.value) {
-    const existing = cities.value.find((c) => c.id === editingMarketId.value)
+    const existing = cities.value.find((city) => city.id === editingMarketId.value)
     if (existing) {
       existing.municipality = draftName.value.trim()
       existing.zipCode = draftZip.value.trim()
@@ -133,19 +135,10 @@ const saveMunicipality = () => {
       @dismiss="toastMessage = null"
     />
 
-    <div
-      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div>
-        <h2 class="text-sm font-semibold text-neutral-900">
-          Zamboanga del Sur Municipal Service Coverage
-        </h2>
-        <p class="text-xs text-neutral-500 mt-0.5">
-          Manage municipal launch status, TODA MTOP charter enforcement, and baseline PHP minimum
-          fares.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Zamboanga del Sur Municipal Service Coverage"
+      description="Manage municipal launch status, TODA MTOP charter enforcement, and baseline PHP minimum fares."
+    />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
@@ -227,100 +220,86 @@ const saveMunicipality = () => {
       </div>
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="showModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4"
-        @click.self="showModal = false"
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          class="w-full max-w-md bg-white border border-neutral-200 rounded-none p-5 space-y-4 shadow-xl"
-        >
-          <div class="border-b border-neutral-100 pb-3">
-            <h3 class="text-sm font-bold text-neutral-900">
-              {{
-                editingMarketId
-                  ? `Configure Municipality · ${editingMarketId}`
-                  : 'Add Zamboanga del Sur Municipality'
-              }}
-            </h3>
+    <ModalDialog
+      v-model:open="showModal"
+      :title="
+        editingMarketId
+          ? `Configure Municipality · ${editingMarketId}`
+          : 'Add Zamboanga del Sur Municipality'
+      "
+      size="md"
+    >
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block font-medium text-neutral-700 mb-1">Municipality Name</label>
+            <input
+              v-model="draftName"
+              type="text"
+              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            />
           </div>
-
-          <div class="space-y-3 text-xs">
-            <div class="grid grid-cols-3 gap-3">
-              <div class="col-span-2">
-                <label class="block font-medium text-neutral-700 mb-1">Municipality Name</label>
-                <input
-                  v-model="draftName"
-                  type="text"
-                  class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-                />
-              </div>
-              <div>
-                <label class="block font-medium text-neutral-700 mb-1">ZIP Code</label>
-                <input
-                  v-model="draftZip"
-                  type="text"
-                  class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Min Base Fare (PHP)</label>
-              <input
-                v-model.number="draftMinFare"
-                type="number"
-                min="15"
-                step="5"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-              />
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Launch State</label>
-              <BaseSelect
-                v-model="draftStatus"
-                :full-width="true"
-                aria-label="Municipality launch state"
-                :options="['Active Launch Market', 'Pilot Rollout', 'Planned Expansion']"
-              />
-            </div>
-
-            <label
-              class="inline-flex items-center gap-2 cursor-pointer font-medium text-neutral-800"
-            >
-              <input
-                v-model="draftRequireToda"
-                type="checkbox"
-                class="h-4 w-4 accent-neutral-900 rounded-none"
-              />
-              Require verified municipal TODA MTOP franchise certificate
-            </label>
-
-            <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 border-t border-neutral-100 pt-3">
-            <button
-              type="button"
-              class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-              @click="showModal = false"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-              @click="saveMunicipality"
-            >
-              Save Municipality
-            </button>
+          <div>
+            <label class="block font-medium text-neutral-700 mb-1">ZIP Code</label>
+            <input
+              v-model="draftZip"
+              type="text"
+              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+            />
           </div>
         </div>
+
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Min Base Fare (PHP)</label>
+          <input
+            v-model.number="draftMinFare"
+            type="number"
+            min="15"
+            step="5"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+          />
+        </div>
+
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Launch State</label>
+          <BaseSelect
+            v-model="draftStatus"
+            :full-width="true"
+            aria-label="Municipality launch state"
+            :options="['Active Launch Market', 'Pilot Rollout', 'Planned Expansion']"
+          />
+        </div>
+
+        <label class="inline-flex items-center gap-2 cursor-pointer font-medium text-neutral-800">
+          <input
+            v-model="draftRequireToda"
+            type="checkbox"
+            class="h-4 w-4 accent-neutral-900 rounded-none"
+          />
+          Require verified municipal TODA MTOP franchise certificate
+        </label>
+
+        <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
       </div>
-    </Teleport>
+
+      <template #footer>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            @click="showModal = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
+            @click="saveMunicipality"
+          >
+            Save Municipality
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>

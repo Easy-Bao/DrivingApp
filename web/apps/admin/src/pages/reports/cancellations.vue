@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import ReportFilterBar, {
   type ReportFilterValues,
 } from '@/features/reports/components/ReportFilterBar.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
@@ -80,16 +82,25 @@ const sharePercent = (count: number) => {
   return `${((count / totalCancellations.value) * 100).toFixed(1)}%`
 }
 
+const filterBarRef = ref<InstanceType<typeof ReportFilterBar> | null>(null)
+const hasActiveFilters = computed(
+  () =>
+    activeFilters.value.dateRange !== 'last-30-days' ||
+    activeFilters.value.cityZone !== 'all-zones' ||
+    activeFilters.value.vehicleTier !== 'all-tiers',
+)
+const resetFilters = () => filterBarRef.value?.resetFilters()
+
 const handleExport = () => {
   exportToCsv(
     'pagadian-cancellation-analysis.csv',
     ['Root Cause', 'Incidents', 'Share', 'Responsibility Enum', 'Fee Rule'],
-    filteredCauses.value.map((c) => [
-      c.reason,
-      String(c.count),
-      sharePercent(c.count),
-      c.responsibility,
-      `${formatPhp(c.feePhp)} (${c.feeNote})`,
+    filteredCauses.value.map((cause) => [
+      cause.reason,
+      String(cause.count),
+      sharePercent(cause.count),
+      cause.responsibility,
+      `${formatPhp(cause.feePhp)} (${cause.feeNote})`,
     ]),
   )
 }
@@ -97,24 +108,22 @@ const handleExport = () => {
 
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-        Trip Cancellation Root-Cause Analysis
-      </h1>
-      <p class="text-sm text-neutral-500 mt-1">
-        Breakdown of Pagadian ride cancellations aligned with backend responsibility
-        classifications.
-      </p>
-    </div>
+    <PageHeader
+      title="Trip Cancellation Root-Cause Analysis"
+      description="Breakdown of Pagadian ride cancellations aligned with backend responsibility classifications."
+    />
 
     <ReportFilterBar
+      ref="filterBarRef"
       report-title="Cancellation Analysis Report"
       @change="activeFilters = $event"
       @export="handleExport"
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
-      <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
+      <div
+        class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+      >
         <h2 class="font-bold text-sm text-neutral-900">Cancellation Reasons Breakdown</h2>
         <span class="text-xs text-neutral-400">
           Filtered cancellations: {{ totalCancellations.toLocaleString() }} incidents
@@ -136,29 +145,37 @@ const handleExport = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="c in filteredCauses"
-              :key="c.reason"
+              v-for="cause in filteredCauses"
+              :key="cause.reason"
               class="hover:bg-neutral-50/70 transition-colors"
             >
-              <td class="py-3 px-4 font-semibold text-neutral-900">{{ c.reason }}</td>
-              <td class="py-3 px-4 font-mono font-bold text-neutral-800">{{ c.count }}</td>
-              <td class="py-3 px-4 font-mono text-neutral-600">{{ sharePercent(c.count) }}</td>
+              <td class="py-3 px-4 font-semibold text-neutral-900">{{ cause.reason }}</td>
+              <td class="py-3 px-4 font-mono font-bold text-neutral-800">{{ cause.count }}</td>
+              <td class="py-3 px-4 font-mono text-neutral-600">{{ sharePercent(cause.count) }}</td>
               <td class="py-3 px-4">
                 <StatusBadge
-                  :label="c.responsibility"
+                  :label="cause.responsibility"
                   :tone="
-                    c.responsibility === 'passenger_fault'
+                    cause.responsibility === 'passenger_fault'
                       ? 'warning'
-                      : c.responsibility === 'driver_fault'
+                      : cause.responsibility === 'driver_fault'
                         ? 'danger'
                         : 'neutral'
                   "
                 />
               </td>
               <td class="py-3 px-4 text-right font-mono font-medium text-neutral-700">
-                {{ formatPhp(c.feePhp) }} · {{ c.feeNote }}
+                {{ formatPhp(cause.feePhp) }} · {{ cause.feeNote }}
               </td>
             </tr>
+            <EmptyTableRow
+              v-if="filteredCauses.length === 0"
+              :colspan="5"
+              title="No cancellation root causes match your current filters"
+              description="Adjust the corridor zone or report filters to review cancellation breakdowns."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>

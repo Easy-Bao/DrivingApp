@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import ReportFilterBar, {
   type ReportFilterValues,
 } from '@/features/reports/components/ReportFilterBar.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
 interface RiderCohortRow {
@@ -66,16 +68,25 @@ const totalActiveRiders = computed(() =>
   filteredCohorts.value.reduce((sum, row) => sum + row.ridersCount, 0),
 )
 
+const filterBarRef = ref<InstanceType<typeof ReportFilterBar> | null>(null)
+const hasActiveFilters = computed(
+  () =>
+    activeFilters.value.dateRange !== 'last-30-days' ||
+    activeFilters.value.cityZone !== 'all-zones' ||
+    activeFilters.value.vehicleTier !== 'all-tiers',
+)
+const resetFilters = () => filterBarRef.value?.resetFilters()
+
 const handleExport = () => {
   exportToCsv(
     'pagadian-passenger-cohorts.csv',
     ['Cohort Segment', 'Primary Zone', 'Active Passengers', '30-Day Retention', 'Avg Spend (PHP)'],
-    filteredCohorts.value.map((c) => [
-      c.cohort,
-      c.corridorFocus,
-      String(c.ridersCount),
-      c.retentionRate,
-      c.avgMonthlySpendPhp.toFixed(2),
+    filteredCohorts.value.map((cohort) => [
+      cohort.cohort,
+      cohort.corridorFocus,
+      String(cohort.ridersCount),
+      cohort.retentionRate,
+      cohort.avgMonthlySpendPhp.toFixed(2),
     ]),
   )
 }
@@ -83,24 +94,22 @@ const handleExport = () => {
 
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-        Passenger Activity &amp; Cohort Analytics
-      </h1>
-      <p class="text-sm text-neutral-500 mt-1">
-        Pagadian City passenger retention segments, corridor booking cadence, and monthly PHP fare
-        spend.
-      </p>
-    </div>
+    <PageHeader
+      title="Passenger Activity &amp; Cohort Analytics"
+      description="Pagadian City passenger retention segments, corridor booking cadence, and monthly PHP fare spend."
+    />
 
     <ReportFilterBar
+      ref="filterBarRef"
       report-title="Passenger Cohort Activity"
       @change="activeFilters = $event"
       @export="handleExport"
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
-      <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
+      <div
+        class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+      >
         <h2 class="font-bold text-sm text-neutral-900">Passenger Engagement Cohorts</h2>
         <span class="text-xs text-neutral-400">
           Filtered active population: {{ totalActiveRiders.toLocaleString() }} passengers
@@ -122,20 +131,28 @@ const handleExport = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="c in filteredCohorts"
-              :key="c.cohort"
+              v-for="cohort in filteredCohorts"
+              :key="cohort.cohort"
               class="hover:bg-neutral-50/70 transition-colors"
             >
-              <td class="py-3 px-4 font-bold text-neutral-900">{{ c.cohort }}</td>
-              <td class="py-3 px-4 text-neutral-700">{{ c.corridorFocus }}</td>
+              <td class="py-3 px-4 font-bold text-neutral-900">{{ cohort.cohort }}</td>
+              <td class="py-3 px-4 text-neutral-700">{{ cohort.corridorFocus }}</td>
               <td class="py-3 px-4 font-semibold text-neutral-800 tabular-nums">
-                {{ c.ridersCount.toLocaleString() }}
+                {{ cohort.ridersCount.toLocaleString() }}
               </td>
-              <td class="py-3 px-4 text-emerald-700 font-semibold">{{ c.retentionRate }}</td>
+              <td class="py-3 px-4 text-emerald-700 font-semibold">{{ cohort.retentionRate }}</td>
               <td class="py-3 px-4 text-right font-mono font-bold text-neutral-900 tabular-nums">
-                {{ formatPhp(c.avgMonthlySpendPhp) }}
+                {{ formatPhp(cohort.avgMonthlySpendPhp) }}
               </td>
             </tr>
+            <EmptyTableRow
+              v-if="filteredCohorts.length === 0"
+              :colspan="5"
+              title="No passenger cohorts match your current filters"
+              description="Adjust the corridor zone or report filters to review retention segments."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>

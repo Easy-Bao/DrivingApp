@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
@@ -33,6 +33,21 @@ const emitFilters = () => {
 }
 
 watch([dateRange, cityZone, vehicleTier], emitFilters, { immediate: true })
+
+const hasActiveFilters = computed(
+  () =>
+    dateRange.value !== 'last-30-days' ||
+    cityZone.value !== 'all-zones' ||
+    vehicleTier.value !== 'all-tiers',
+)
+
+const resetFilters = () => {
+  dateRange.value = 'last-30-days'
+  cityZone.value = 'all-zones'
+  vehicleTier.value = 'all-tiers'
+}
+
+defineExpose({ resetFilters })
 
 const triggerExport = (format: 'CSV' | 'PDF' | 'Excel') => {
   const filters: ReportFilterValues = {
@@ -109,9 +124,9 @@ const triggerExport = (format: 'CSV' | 'PDF' | 'Excel') => {
             aria-label="Filter report vehicle tier"
             :options="[
               { label: 'All Taxicle Tiers', value: 'all-tiers' },
-              { label: 'Solo Taxicle · Standard', value: 'solo-standard' },
-              { label: 'Solo Taxicle · Express', value: 'solo-express' },
-              { label: 'Electric Tricycle', value: 'etrike' },
+              { label: 'Standard TukTuk', value: 'tuktuk-standard' },
+              { label: 'Express Bao-Bao', value: 'tuktuk-express' },
+              { label: 'Electric Bao-Bao Pioneer', value: 'ebao-pioneer' },
             ]"
           />
         </div>
@@ -121,8 +136,16 @@ const triggerExport = (format: 'CSV' | 'PDF' | 'Excel') => {
         class="flex flex-wrap items-center gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-neutral-100"
       >
         <button
+          v-if="hasActiveFilters"
           type="button"
-          class="px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded-none text-xs font-semibold transition-colors inline-flex items-center gap-1.5"
+          class="px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-700 rounded-none text-xs font-medium transition-colors cursor-pointer"
+          @click="resetFilters"
+        >
+          Reset
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded-none text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer"
           @click="triggerExport('CSV')"
         >
           <Icon icon="lucide:file-text" class="text-neutral-500 h-3.5 w-3.5" aria-hidden="true" />

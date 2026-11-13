@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
@@ -70,17 +73,26 @@ const draftAnswer = ref('')
 const editorError = ref<string | null>(null)
 
 const filteredFaqs = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  return faqs.value.filter((f) => {
-    const matchesAud = audienceFilter.value === 'All' || f.audience === audienceFilter.value
+  const query = searchQuery.value.trim().toLowerCase()
+  return faqs.value.filter((faq) => {
+    const matchesAudience = audienceFilter.value === 'All' || faq.audience === audienceFilter.value
     const matchesQuery =
-      !q ||
-      f.question.toLowerCase().includes(q) ||
-      f.answer.toLowerCase().includes(q) ||
-      f.category.toLowerCase().includes(q)
-    return matchesAud && matchesQuery
+      !query ||
+      faq.question.toLowerCase().includes(query) ||
+      faq.answer.toLowerCase().includes(query) ||
+      faq.category.toLowerCase().includes(query)
+    return matchesAudience && matchesQuery
   })
 })
+
+const hasActiveFilters = computed(
+  () => searchQuery.value.trim().length > 0 || audienceFilter.value !== 'All',
+)
+
+const resetFilters = () => {
+  searchQuery.value = ''
+  audienceFilter.value = 'All'
+}
 
 const openCreateFaq = () => {
   editingId.value = null
@@ -109,7 +121,7 @@ const saveFaqArticle = () => {
   }
 
   if (editingId.value) {
-    const target = faqs.value.find((f) => f.id === editingId.value)
+    const target = faqs.value.find((faq) => faq.id === editingId.value)
     if (target) {
       target.category = draftCategory.value
       target.audience = draftAudience.value
@@ -149,27 +161,19 @@ const togglePublished = (article: FaqArticle) => {
       @dismiss="toastMessage = null"
     />
 
-    <div
-      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div>
-        <h2 class="text-sm font-semibold text-neutral-900">
-          Help Center &amp; Operational FAQ Manager
-        </h2>
-        <p class="text-xs text-neutral-500 mt-0.5">
-          Manage help articles synced to the Pagadian Passenger and Driver mobile apps.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Help Center & Operational FAQ Manager"
+      description="Manage help articles synced to the Pagadian Passenger and Driver mobile apps."
+    />
 
     <div
       class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
     >
-      <input
+      <SearchField
         v-model="searchQuery"
-        type="text"
         placeholder="Search FAQ question, answer, or topic..."
-        class="w-full md:w-80 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+        aria-label="Search FAQ articles"
+        class="md:w-80"
       />
 
       <div class="flex flex-wrap items-center gap-2">
@@ -235,86 +239,92 @@ const togglePublished = (article: FaqArticle) => {
           Mobile Help Views: {{ faq.views.toLocaleString() }}
         </div>
       </div>
+
+      <div
+        v-if="filteredFaqs.length === 0"
+        class="bg-white border border-neutral-200 p-8 text-center space-y-2"
+      >
+        <p class="text-xs font-semibold text-neutral-700">No matching FAQ articles</p>
+        <p class="text-[11px] text-neutral-500">
+          Try adjusting your search query or audience filter.
+        </p>
+        <button
+          v-if="hasActiveFilters"
+          type="button"
+          class="mt-1 px-3 py-1.5 border border-neutral-300 bg-white text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+          @click="resetFilters"
+        >
+          Reset filters
+        </button>
+      </div>
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="showEditorModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4"
-        @click.self="showEditorModal = false"
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          class="w-full max-w-lg bg-white border border-neutral-200 rounded-none p-5 space-y-4 shadow-xl"
-        >
-          <div class="border-b border-neutral-100 pb-3">
-            <h3 class="text-sm font-bold text-neutral-900">
-              {{ editingId ? `Edit FAQ Article · ${editingId}` : 'Create Help Center Article' }}
-            </h3>
+    <ModalDialog
+      v-model:open="showEditorModal"
+      :title="editingId ? `Edit FAQ Article · ${editingId}` : 'Create Help Center Article'"
+      size="lg"
+    >
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-neutral-700 mb-1">Topic Category</label>
+            <BaseSelect
+              v-model="draftCategory"
+              :full-width="true"
+              aria-label="FAQ category"
+              :options="['Fare Bidding', 'Driver Top-Ups', 'Safety & SOS', 'Documents & TODA']"
+            />
           </div>
-
-          <div class="space-y-3 text-xs">
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block font-medium text-neutral-700 mb-1">Topic Category</label>
-                <BaseSelect
-                  v-model="draftCategory"
-                  :full-width="true"
-                  aria-label="FAQ category"
-                  :options="['Fare Bidding', 'Driver Top-Ups', 'Safety & SOS', 'Documents & TODA']"
-                />
-              </div>
-              <div>
-                <label class="block font-medium text-neutral-700 mb-1">Target App</label>
-                <BaseSelect
-                  v-model="draftAudience"
-                  :full-width="true"
-                  aria-label="FAQ target app"
-                  :options="['Passenger', 'Driver']"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Question Heading</label>
-              <input
-                v-model="draftQuestion"
-                type="text"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Answer Copy</label>
-              <textarea
-                v-model="draftAnswer"
-                rows="4"
-                class="w-full px-3 py-2 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-
-            <p v-if="editorError" class="text-xs font-medium text-rose-700">{{ editorError }}</p>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 border-t border-neutral-100 pt-3">
-            <button
-              type="button"
-              class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-              @click="showEditorModal = false"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-              @click="saveFaqArticle"
-            >
-              {{ editingId ? 'Save Changes' : 'Publish Article' }}
-            </button>
+          <div>
+            <label class="block font-medium text-neutral-700 mb-1">Target App</label>
+            <BaseSelect
+              v-model="draftAudience"
+              :full-width="true"
+              aria-label="FAQ target app"
+              :options="['Passenger', 'Driver']"
+            />
           </div>
         </div>
+
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Question Heading</label>
+          <input
+            v-model="draftQuestion"
+            type="text"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
+        </div>
+
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Answer Copy</label>
+          <textarea
+            v-model="draftAnswer"
+            rows="4"
+            class="w-full px-3 py-2 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
+        </div>
+
+        <p v-if="editorError" class="text-xs font-medium text-rose-700">{{ editorError }}</p>
       </div>
-    </Teleport>
+
+      <template #footer>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            @click="showEditorModal = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
+            @click="saveFaqArticle"
+          >
+            {{ editingId ? 'Save Changes' : 'Publish Article' }}
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>

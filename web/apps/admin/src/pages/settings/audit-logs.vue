@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
 import { exportToCsv } from '@/shared/utils/format'
 
 interface AuditLogEntry {
@@ -72,18 +76,27 @@ const itemsPerPage = 10
 const inspectedLog = ref<AuditLogEntry | null>(null)
 
 const filteredLogs = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
+  const query = searchQuery.value.trim().toLowerCase()
   return logs.value.filter((log) => {
     const matchesSeverity = severityFilter.value === 'All' || log.severity === severityFilter.value
     const matchesSearch =
-      !q ||
-      log.id.toLowerCase().includes(q) ||
-      log.actor.toLowerCase().includes(q) ||
-      log.action.toLowerCase().includes(q) ||
-      log.targetEntity.toLowerCase().includes(q)
+      !query ||
+      log.id.toLowerCase().includes(query) ||
+      log.actor.toLowerCase().includes(query) ||
+      log.action.toLowerCase().includes(query) ||
+      log.targetEntity.toLowerCase().includes(query)
     return matchesSeverity && matchesSearch
   })
 })
+
+const hasActiveFilters = computed(
+  () => searchQuery.value.trim().length > 0 || severityFilter.value !== 'All',
+)
+
+const resetFilters = () => {
+  searchQuery.value = ''
+  severityFilter.value = 'All'
+}
 
 watch([searchQuery, severityFilter], () => {
   currentPage.value = 1
@@ -98,15 +111,15 @@ const exportAuditLogs = () => {
   exportToCsv(
     'pagadian-admin-audit-logs.csv',
     ['Event ID', 'Timestamp', 'Operator', 'Role', 'Action', 'Target', 'Severity', 'IP'],
-    filteredLogs.value.map((l) => [
-      l.id,
-      l.timestamp,
-      l.actor,
-      l.role,
-      l.action,
-      l.targetEntity,
-      l.severity,
-      l.ipAddress,
+    filteredLogs.value.map((log) => [
+      log.id,
+      log.timestamp,
+      log.actor,
+      log.role,
+      log.action,
+      log.targetEntity,
+      log.severity,
+      log.ipAddress,
     ]),
   )
 }
@@ -114,29 +127,20 @@ const exportAuditLogs = () => {
 
 <template>
   <div class="space-y-6">
-    <div
-      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div>
-        <h2 class="text-sm font-semibold text-neutral-900">
-          Security Audit Trail &amp; Operator Mutations
-        </h2>
-        <p class="text-xs text-neutral-500 mt-0.5">
-          Immutable log of role updates, wallet adjustments, suspension events, and runtime tariff
-          changes.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Security Audit Trail & Operator Mutations"
+      description="Immutable log of role updates, wallet adjustments, suspension events, and runtime tariff changes."
+    />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
         class="p-4 border-b border-neutral-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
       >
-        <input
+        <SearchField
           v-model="searchQuery"
-          type="text"
           placeholder="Search event ID, operator, action, or target entity..."
-          class="w-full md:w-80 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+          aria-label="Search audit logs"
+          class="md:w-80"
         />
 
         <div class="flex flex-wrap items-center gap-2">
@@ -205,13 +209,21 @@ const exportAuditLogs = () => {
               <td class="py-3 px-4 text-right">
                 <button
                   type="button"
-                  class="px-3 py-1 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50"
+                  class="px-3 py-1 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50 cursor-pointer"
                   @click="inspectedLog = log"
                 >
                   Inspect Payload
                 </button>
               </td>
             </tr>
+            <EmptyTableRow
+              v-if="paginatedLogs.length === 0"
+              :colspan="6"
+              title="No audit log entries match your current filter"
+              description="Adjust the severity filter or search query to inspect immutable admin records."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>
@@ -223,63 +235,63 @@ const exportAuditLogs = () => {
       />
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="inspectedLog"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4"
-        @click.self="inspectedLog = null"
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          class="w-full max-w-lg bg-white border border-neutral-200 rounded-none p-5 space-y-4 shadow-xl"
-        >
-          <div class="border-b border-neutral-100 pb-3 flex items-center justify-between">
-            <div>
-              <h3 class="text-sm font-bold text-neutral-900">
-                Audit Payload · {{ inspectedLog.id }}
-              </h3>
-              <p class="text-xs font-mono text-neutral-500 mt-0.5">{{ inspectedLog.timestamp }}</p>
-            </div>
-            <StatusBadge
-              :label="inspectedLog.severity"
-              :tone="inspectedLog.severity === 'Critical' ? 'danger' : 'info'"
-            />
-          </div>
+    <ModalDialog
+      :open="inspectedLog !== null"
+      :title="inspectedLog ? `Audit Payload · ${inspectedLog.id}` : ''"
+      :subtitle="inspectedLog?.timestamp"
+      size="md"
+      @update:open="
+        (open) => {
+          if (!open) inspectedLog = null
+        }
+      "
+    >
+      <template v-if="inspectedLog" #header-meta>
+        <StatusBadge
+          :label="inspectedLog.severity"
+          :tone="
+            inspectedLog.severity === 'Critical'
+              ? 'danger'
+              : inspectedLog.severity === 'Warning'
+                ? 'warning'
+                : 'info'
+          "
+        />
+      </template>
 
-          <div class="space-y-2 text-xs">
-            <div>
-              <span class="text-neutral-500">Operator:</span> {{ inspectedLog.actor }} ({{
-                inspectedLog.role
-              }})
-            </div>
-            <div>
-              <span class="text-neutral-500">Source IP:</span>
-              <span class="font-mono">{{ inspectedLog.ipAddress }}</span>
-            </div>
-            <div>
-              <span class="text-neutral-500">Action:</span>
-              <span class="font-mono font-bold">{{ inspectedLog.action }}</span>
-            </div>
-            <div>
-              <div class="text-neutral-500 mb-1">Recorded State Diff</div>
-              <pre
-                class="bg-neutral-950 text-emerald-300 p-3 rounded-none font-mono text-[11px] overflow-x-auto"
-                >{{ inspectedLog.payloadDiff }}</pre>
-            </div>
-          </div>
-
-          <div class="flex justify-end border-t border-neutral-100 pt-3">
-            <button
-              type="button"
-              class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-              @click="inspectedLog = null"
-            >
-              Close
-            </button>
-          </div>
+      <div v-if="inspectedLog" class="space-y-2 text-xs">
+        <div>
+          <span class="text-neutral-500">Operator:</span> {{ inspectedLog.actor }} ({{
+            inspectedLog.role
+          }})
+        </div>
+        <div>
+          <span class="text-neutral-500">Source IP:</span>
+          <span class="font-mono">{{ inspectedLog.ipAddress }}</span>
+        </div>
+        <div>
+          <span class="text-neutral-500">Action:</span>
+          <span class="font-mono font-bold">{{ inspectedLog.action }}</span>
+        </div>
+        <div>
+          <div class="text-neutral-500 mb-1">Recorded State Diff</div>
+          <pre
+            class="bg-neutral-950 text-emerald-300 p-3 rounded-none font-mono text-[11px] overflow-x-auto"
+            >{{ inspectedLog.payloadDiff }}</pre>
         </div>
       </div>
-    </Teleport>
+
+      <template #footer>
+        <div class="flex justify-end">
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800 cursor-pointer"
+            @click="inspectedLog = null"
+          >
+            Close
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>

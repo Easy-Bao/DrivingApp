@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
@@ -81,15 +83,10 @@ const saveDocument = () => {
       @dismiss="toastMessage = null"
     />
 
-    <div class="bg-white border border-neutral-200 p-4">
-      <h2 class="text-sm font-semibold text-neutral-900">
-        Platform Legal Notices &amp; Philippine Policy Texts
-      </h2>
-      <p class="text-xs text-neutral-500 mt-0.5">
-        Maintain live policy documents displayed inside the Passenger and Driver mobile clients
-        under RA 10173 and LTO guidelines.
-      </p>
-    </div>
+    <PageHeader
+      title="Platform Legal Notices & Philippine Policy Texts"
+      description="Maintain live policy documents displayed inside the Passenger and Driver mobile clients under RA 10173 and LTO guidelines."
+    />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="overflow-x-auto">
@@ -136,76 +133,68 @@ const saveDocument = () => {
       </div>
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="editingDoc"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4"
-        @click.self="editingDoc = null"
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          class="w-full max-w-xl bg-white border border-neutral-200 rounded-none p-5 space-y-4 shadow-xl"
-        >
-          <div class="border-b border-neutral-100 pb-3 flex items-center justify-between">
-            <div>
-              <h3 class="text-sm font-bold text-neutral-900">Edit Policy · {{ editingDoc.id }}</h3>
-              <p class="text-xs text-neutral-500 mt-0.5">
-                Current live version: v{{ editingDoc.versionMajor }}.{{ editingDoc.versionMinor }}
-              </p>
-            </div>
-            <StatusBadge :label="editingDoc.audience" tone="info" />
-          </div>
+    <ModalDialog
+      :open="Boolean(editingDoc)"
+      :title="editingDoc ? `Edit Policy · ${editingDoc.id}` : ''"
+      :subtitle="
+        editingDoc
+          ? `Current live version: v${editingDoc.versionMajor}.${editingDoc.versionMinor}`
+          : ''
+      "
+      size="lg"
+      @update:open="(open) => !open && (editingDoc = null)"
+    >
+      <template #header-meta>
+        <StatusBadge v-if="editingDoc" :label="editingDoc.audience" tone="info" />
+      </template>
 
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Document Heading</label>
-              <input
-                v-model="draftTitle"
-                type="text"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Policy Content</label>
-              <textarea
-                v-model="draftBody"
-                rows="7"
-                class="w-full px-3 py-2 border border-neutral-300 rounded-none font-mono text-xs bg-white text-neutral-900"
-              />
-            </div>
-
-            <label
-              class="inline-flex items-center gap-2 cursor-pointer font-medium text-neutral-800"
-            >
-              <input
-                v-model="bumpMinor"
-                type="checkbox"
-                class="h-4 w-4 accent-neutral-900 rounded-none"
-              />
-              Increment minor revision number (requires app acceptance on next launch)
-            </label>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 border-t border-neutral-100 pt-3">
-            <button
-              type="button"
-              class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-              @click="editingDoc = null"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-              @click="saveDocument"
-            >
-              Publish Revision
-            </button>
-          </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Document Heading</label>
+          <input
+            v-model="draftTitle"
+            type="text"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
         </div>
+
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Policy Content</label>
+          <textarea
+            v-model="draftBody"
+            rows="7"
+            class="w-full px-3 py-2 border border-neutral-300 rounded-none font-mono text-xs bg-white text-neutral-900"
+          />
+        </div>
+
+        <label class="inline-flex items-center gap-2 cursor-pointer font-medium text-neutral-800">
+          <input
+            v-model="bumpMinor"
+            type="checkbox"
+            class="h-4 w-4 accent-neutral-900 rounded-none"
+          />
+          Increment minor revision number (requires app acceptance on next launch)
+        </label>
       </div>
-    </Teleport>
+
+      <template #footer>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            @click="editingDoc = null"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
+            @click="saveDocument"
+          >
+            Publish Revision
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>

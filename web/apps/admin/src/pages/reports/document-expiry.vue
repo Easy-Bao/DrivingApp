@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import ReportFilterBar, {
   type ReportFilterValues,
 } from '@/features/reports/components/ReportFilterBar.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import { exportToCsv } from '@/shared/utils/format'
 
 interface ExpiryForecastRow {
@@ -70,17 +72,26 @@ const filteredForecast = computed(() =>
 const totalAudits = (row: ExpiryForecastRow) =>
   row.ltoLicensesExpiring + row.todaMtopExpiring + row.orCrExpiring + row.insuranceExpiring
 
+const filterBarRef = ref<InstanceType<typeof ReportFilterBar> | null>(null)
+const hasActiveFilters = computed(
+  () =>
+    activeFilters.value.dateRange !== 'last-30-days' ||
+    activeFilters.value.cityZone !== 'all-zones' ||
+    activeFilters.value.vehicleTier !== 'all-tiers',
+)
+const resetFilters = () => filterBarRef.value?.resetFilters()
+
 const handleExport = () => {
   exportToCsv(
     'pagadian-document-expiry-forecast.csv',
     ['Month', 'LTO Licenses', 'TODA MTOP Franchises', 'LTO OR/CR', 'Insurance', 'Compliance Rate'],
-    filteredForecast.value.map((f) => [
-      f.month,
-      String(f.ltoLicensesExpiring),
-      String(f.todaMtopExpiring),
-      String(f.orCrExpiring),
-      String(f.insuranceExpiring),
-      f.complianceRate,
+    filteredForecast.value.map((forecast) => [
+      forecast.month,
+      String(forecast.ltoLicensesExpiring),
+      String(forecast.todaMtopExpiring),
+      String(forecast.orCrExpiring),
+      String(forecast.insuranceExpiring),
+      forecast.complianceRate,
     ]),
   )
 }
@@ -88,19 +99,13 @@ const handleExport = () => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-          Fleet Document Expiry &amp; Compliance Forecast
-        </h1>
-        <p class="text-sm text-neutral-500 mt-1">
-          Quarterly projection of upcoming LTO Professional Driver License, Pagadian TODA MTOP
-          franchise, LTO OR/CR, and insurance renewals.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Fleet Document Expiry &amp; Compliance Forecast"
+      description="Quarterly projection of upcoming LTO Professional Driver License, Pagadian TODA MTOP franchise, LTO OR/CR, and insurance renewals."
+    />
 
     <ReportFilterBar
+      ref="filterBarRef"
       report-title="Document Expiry & Compliance Forecast"
       @change="activeFilters = $event"
       @export="handleExport"
@@ -141,26 +146,36 @@ const handleExport = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="f in filteredForecast"
-              :key="f.month"
+              v-for="forecast in filteredForecast"
+              :key="forecast.month"
               class="hover:bg-neutral-50/70 transition-colors"
             >
-              <td class="py-3 px-4 font-bold text-neutral-900">{{ f.month }}</td>
+              <td class="py-3 px-4 font-bold text-neutral-900">{{ forecast.month }}</td>
               <td class="py-3 px-4 font-semibold text-neutral-800">
-                {{ f.ltoLicensesExpiring }} licenses
+                {{ forecast.ltoLicensesExpiring }} licenses
               </td>
               <td class="py-3 px-4 font-semibold text-neutral-800">
-                {{ f.todaMtopExpiring }} franchises
+                {{ forecast.todaMtopExpiring }} franchises
               </td>
-              <td class="py-3 px-4 font-semibold text-neutral-800">{{ f.orCrExpiring }} units</td>
               <td class="py-3 px-4 font-semibold text-neutral-800">
-                {{ f.insuranceExpiring }} policies
+                {{ forecast.orCrExpiring }} units
               </td>
-              <td class="py-3 px-4 font-bold text-neutral-900">{{ totalAudits(f) }}</td>
+              <td class="py-3 px-4 font-semibold text-neutral-800">
+                {{ forecast.insuranceExpiring }} policies
+              </td>
+              <td class="py-3 px-4 font-bold text-neutral-900">{{ totalAudits(forecast) }}</td>
               <td class="py-3 px-4 text-right font-mono font-bold text-neutral-900">
-                {{ f.complianceRate }}
+                {{ forecast.complianceRate }}
               </td>
             </tr>
+            <EmptyTableRow
+              v-if="filteredForecast.length === 0"
+              :colspan="7"
+              title="No document expiry projections match your current filters"
+              description="Adjust the corridor zone or report filters to inspect renewal forecasts."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>

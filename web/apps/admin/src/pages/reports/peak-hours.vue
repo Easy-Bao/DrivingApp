@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import ReportFilterBar, {
   type ReportFilterValues,
 } from '@/features/reports/components/ReportFilterBar.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import { exportToCsv } from '@/shared/utils/format'
 
@@ -68,17 +70,26 @@ const filteredDemand = computed(() =>
   ),
 )
 
+const filterBarRef = ref<InstanceType<typeof ReportFilterBar> | null>(null)
+const hasActiveFilters = computed(
+  () =>
+    activeFilters.value.dateRange !== 'last-30-days' ||
+    activeFilters.value.cityZone !== 'all-zones' ||
+    activeFilters.value.vehicleTier !== 'all-tiers',
+)
+const resetFilters = () => filterBarRef.value?.resetFilters()
+
 const handleExport = () => {
   exportToCsv(
     'pagadian-peak-hours-demand.csv',
     ['Time Window', 'Corridor', 'Classification', 'Surge Multiplier', 'Requests', 'Utilization'],
-    filteredDemand.value.map((h) => [
-      h.timeWindow,
-      h.corridorLabel,
-      h.period,
-      `${h.avgSurge.toFixed(2)}x`,
-      String(h.rideRequests),
-      h.driverUtilization,
+    filteredDemand.value.map((demand) => [
+      demand.timeWindow,
+      demand.corridorLabel,
+      demand.period,
+      `${demand.avgSurge.toFixed(2)}x`,
+      String(demand.rideRequests),
+      demand.driverUtilization,
     ]),
   )
 }
@@ -86,24 +97,22 @@ const handleExport = () => {
 
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-        Peak Hours &amp; Pagadian Demand Heatmap
-      </h1>
-      <p class="text-sm text-neutral-500 mt-1">
-        Hourly passenger bidding request windows, surge multiplier averages (capped at 2.5x), and
-        TODA utilization.
-      </p>
-    </div>
+    <PageHeader
+      title="Peak Hours &amp; Pagadian Demand Heatmap"
+      description="Hourly passenger bidding request windows, surge multiplier averages (capped at 2.5x), and TODA utilization."
+    />
 
     <ReportFilterBar
+      ref="filterBarRef"
       report-title="Peak Hours Demand Heatmap"
       @change="activeFilters = $event"
       @export="handleExport"
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
-      <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
+      <div
+        class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+      >
         <h2 class="font-bold text-sm text-neutral-900">Demand Curves by Operational Window</h2>
         <span class="text-xs text-neutral-400">Hard server surge ceiling: 2.50x</span>
       </div>
@@ -124,26 +133,36 @@ const handleExport = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="h in filteredDemand"
-              :key="h.timeWindow"
+              v-for="demand in filteredDemand"
+              :key="demand.timeWindow"
               class="hover:bg-neutral-50/70 transition-colors"
             >
-              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ h.timeWindow }}</td>
-              <td class="py-3 px-4 text-neutral-700">{{ h.corridorLabel }}</td>
-              <td class="py-3 px-4 font-semibold text-neutral-800">{{ h.period }}</td>
+              <td class="py-3 px-4 font-mono font-bold text-neutral-900">
+                {{ demand.timeWindow }}
+              </td>
+              <td class="py-3 px-4 text-neutral-700">{{ demand.corridorLabel }}</td>
+              <td class="py-3 px-4 font-semibold text-neutral-800">{{ demand.period }}</td>
               <td class="py-3 px-4">
                 <StatusBadge
-                  :label="`${h.avgSurge.toFixed(2)}x`"
-                  :tone="h.avgSurge >= 1.5 ? 'warning' : 'neutral'"
+                  :label="`${demand.avgSurge.toFixed(2)}x`"
+                  :tone="demand.avgSurge >= 1.5 ? 'warning' : 'neutral'"
                 />
               </td>
               <td class="py-3 px-4 font-semibold text-neutral-800">
-                {{ h.rideRequests.toLocaleString() }} bids
+                {{ demand.rideRequests.toLocaleString() }} bids
               </td>
               <td class="py-3 px-4 text-right font-mono font-bold text-emerald-700">
-                {{ h.driverUtilization }}
+                {{ demand.driverUtilization }}
               </td>
             </tr>
+            <EmptyTableRow
+              v-if="filteredDemand.length === 0"
+              :colspan="6"
+              title="No demand windows match your current filters"
+              description="Adjust the corridor zone or report filters to inspect hourly demand curves."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>

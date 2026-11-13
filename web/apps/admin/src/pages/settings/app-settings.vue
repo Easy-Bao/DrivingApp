@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
@@ -42,29 +43,21 @@ const commitSettings = () => {
       @dismiss="toastMessage = null"
     />
 
-    <div
-      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+    <PageHeader
+      title="Pagadian Dispatch & Wallet Runtime Parameters"
+      description="Governs live taxicle bidding timeouts, PHP prepaid dispatch thresholds, and driver document gates."
     >
-      <div>
-        <div class="flex flex-wrap items-center gap-2">
-          <h2 class="text-sm font-semibold text-neutral-900">
-            Pagadian Dispatch &amp; Wallet Runtime Parameters
-          </h2>
-          <StatusBadge label="Live Bidding Architecture" tone="neutral" />
-        </div>
-        <p class="text-xs text-neutral-500 mt-0.5">
-          Governs live taxicle bidding timeouts, PHP prepaid dispatch thresholds, and driver
-          document gates.
-        </p>
-      </div>
-      <button
-        type="button"
-        class="self-start sm:self-auto px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold"
-        @click="requestSave"
-      >
-        Save Runtime Configuration
-      </button>
-    </div>
+      <template #actions>
+        <StatusBadge label="Live Bidding Architecture" tone="neutral" />
+        <button
+          type="button"
+          class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold"
+          @click="requestSave"
+        >
+          Save Runtime Configuration
+        </button>
+      </template>
+    </PageHeader>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
@@ -105,7 +98,7 @@ const commitSettings = () => {
             </p>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-neutral-700 font-medium mb-1">Max Surge Ceiling (x)</label>
               <input

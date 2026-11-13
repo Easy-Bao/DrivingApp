@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import ReportFilterBar, {
   type ReportFilterValues,
 } from '@/features/reports/components/ReportFilterBar.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
 interface TripReportRow {
@@ -22,7 +24,7 @@ const tripReportData = ref<TripReportRow[]>([
     date: '2026-11-12',
     zoneKey: 'poblacion',
     zoneLabel: 'Poblacion & Agora Market',
-    tierKey: 'solo-standard',
+    tierKey: 'tuktuk-standard',
     totalRides: 1480,
     completed: 1412,
     cancelled: 68,
@@ -33,7 +35,7 @@ const tripReportData = ref<TripReportRow[]>([
     date: '2026-11-12',
     zoneKey: 'terminal',
     zoneLabel: 'Integrated Bus Terminal',
-    tierKey: 'solo-express',
+    tierKey: 'tuktuk-express',
     totalRides: 960,
     completed: 918,
     cancelled: 42,
@@ -44,7 +46,7 @@ const tripReportData = ref<TripReportRow[]>([
     date: '2026-11-11',
     zoneKey: 'dao-capitol',
     zoneLabel: 'Dao Capitol & Gaisano',
-    tierKey: 'solo-express',
+    tierKey: 'tuktuk-express',
     totalRides: 1120,
     completed: 1068,
     cancelled: 52,
@@ -55,7 +57,7 @@ const tripReportData = ref<TripReportRow[]>([
     date: '2026-11-10',
     zoneKey: 'santiago-port',
     zoneLabel: 'Santiago Port & Coastal',
-    tierKey: 'etrike',
+    tierKey: 'ebao-pioneer',
     totalRides: 690,
     completed: 662,
     cancelled: 28,
@@ -82,18 +84,27 @@ const filteredRows = computed(() => {
   })
 })
 
+const filterBarRef = ref<InstanceType<typeof ReportFilterBar> | null>(null)
+const hasActiveFilters = computed(
+  () =>
+    activeFilters.value.dateRange !== 'last-30-days' ||
+    activeFilters.value.cityZone !== 'all-zones' ||
+    activeFilters.value.vehicleTier !== 'all-tiers',
+)
+const resetFilters = () => filterBarRef.value?.resetFilters()
+
 const handleExport = () => {
   exportToCsv(
     'pagadian-trip-volume-report.csv',
     ['Date', 'Zone', 'Requested', 'Completed', 'Cancelled', 'Distance (km)', 'Gross (PHP)'],
-    filteredRows.value.map((r) => [
-      r.date,
-      r.zoneLabel,
-      String(r.totalRides),
-      String(r.completed),
-      String(r.cancelled),
-      String(r.totalKm),
-      r.grossVolumePhp.toFixed(2),
+    filteredRows.value.map((row) => [
+      row.date,
+      row.zoneLabel,
+      String(row.totalRides),
+      String(row.completed),
+      String(row.cancelled),
+      String(row.totalKm),
+      row.grossVolumePhp.toFixed(2),
     ]),
   )
 }
@@ -101,24 +112,22 @@ const handleExport = () => {
 
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-        Trip Volume &amp; Mobility Reports
-      </h1>
-      <p class="text-sm text-neutral-500 mt-1">
-        Aggregated Pagadian City taxicle trip completions, corridor distances, and PHP booking
-        volume.
-      </p>
-    </div>
+    <PageHeader
+      title="Trip Volume &amp; Mobility Reports"
+      description="Aggregated Pagadian City taxicle trip completions, corridor distances, and PHP booking volume."
+    />
 
     <ReportFilterBar
+      ref="filterBarRef"
       report-title="Pagadian Trip Volume Report"
       @change="activeFilters = $event"
       @export="handleExport"
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
-      <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
+      <div
+        class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+      >
         <h2 class="font-bold text-sm text-neutral-900">Trip Aggregations by Day &amp; Corridor</h2>
         <span class="text-xs text-neutral-400">
           Showing {{ filteredRows.length }} matching ledger groups
@@ -142,31 +151,34 @@ const handleExport = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="r in filteredRows"
-              :key="`${r.date}-${r.zoneKey}`"
+              v-for="row in filteredRows"
+              :key="`${row.date}-${row.zoneKey}`"
               class="hover:bg-neutral-50/70 transition-colors"
             >
-              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ r.date }}</td>
-              <td class="py-3 px-4 font-medium text-neutral-800">{{ r.zoneLabel }}</td>
+              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ row.date }}</td>
+              <td class="py-3 px-4 font-medium text-neutral-800">{{ row.zoneLabel }}</td>
               <td class="py-3 px-4 font-semibold text-neutral-800">
-                {{ r.totalRides.toLocaleString() }}
+                {{ row.totalRides.toLocaleString() }}
               </td>
               <td class="py-3 px-4 text-emerald-700 font-semibold">
-                {{ r.completed.toLocaleString() }}
+                {{ row.completed.toLocaleString() }}
               </td>
-              <td class="py-3 px-4 text-rose-600 font-medium">{{ r.cancelled }}</td>
+              <td class="py-3 px-4 text-rose-600 font-medium">{{ row.cancelled }}</td>
               <td class="py-3 px-4 font-mono text-neutral-600">
-                {{ r.totalKm.toLocaleString() }} km
+                {{ row.totalKm.toLocaleString() }} km
               </td>
               <td class="py-3 px-4 text-right font-mono font-bold text-neutral-900 tabular-nums">
-                {{ formatPhp(r.grossVolumePhp) }}
+                {{ formatPhp(row.grossVolumePhp) }}
               </td>
             </tr>
-            <tr v-if="filteredRows.length === 0">
-              <td colspan="7" class="py-10 px-4 text-center text-xs text-neutral-500">
-                No trip volume rows match the active zone, tier, or date filter.
-              </td>
-            </tr>
+            <EmptyTableRow
+              v-if="filteredRows.length === 0"
+              :colspan="7"
+              title="No trip volume rows match your current filters"
+              description="Adjust the corridor zone, taxicle tier, or date window to view trip aggregations."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>

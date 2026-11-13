@@ -2,6 +2,9 @@
 import { computed, ref } from 'vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
@@ -65,6 +68,7 @@ const reviews = ref<ReviewEntry[]>([
   },
 ])
 
+const searchQuery = ref('')
 const directionFilter = ref<'All' | ReviewEntry['direction']>('All')
 const stateFilter = ref<'All' | ReviewEntry['moderationState']>('All')
 const toastMessage = ref<string | null>(null)
@@ -74,13 +78,34 @@ const pendingAction = ref<'hide' | 'approve'>('approve')
 const dialogOpen = ref(false)
 const moderationReason = ref('')
 
-const filteredReviews = computed(() =>
-  reviews.value.filter((r) => {
-    const matchesDir = directionFilter.value === 'All' || r.direction === directionFilter.value
-    const matchesState = stateFilter.value === 'All' || r.moderationState === stateFilter.value
-    return matchesDir && matchesState
-  }),
+const filteredReviews = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  return reviews.value.filter((review) => {
+    const matchesDir = directionFilter.value === 'All' || review.direction === directionFilter.value
+    const matchesState = stateFilter.value === 'All' || review.moderationState === stateFilter.value
+    const matchesSearch =
+      !query ||
+      review.id.toLowerCase().includes(query) ||
+      review.tripId.toLowerCase().includes(query) ||
+      review.author.toLowerCase().includes(query) ||
+      review.subjectParty.toLowerCase().includes(query) ||
+      review.comment.toLowerCase().includes(query)
+    return matchesDir && matchesState && matchesSearch
+  })
+})
+
+const hasActiveFilters = computed(
+  () =>
+    searchQuery.value.trim().length > 0 ||
+    directionFilter.value !== 'All' ||
+    stateFilter.value !== 'All',
 )
+
+const resetFilters = () => {
+  searchQuery.value = ''
+  directionFilter.value = 'All'
+  stateFilter.value = 'All'
+}
 
 const openModerationConfirm = (entry: ReviewEntry, action: 'hide' | 'approve') => {
   targetReview.value = entry
@@ -110,27 +135,26 @@ const confirmModeration = () => {
       @dismiss="toastMessage = null"
     />
 
-    <div
-      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div>
-        <h2 class="text-sm font-semibold text-neutral-900">
-          Two-Sided Ratings &amp; Review Moderation
-        </h2>
-        <p class="text-xs text-neutral-500 mt-0.5">
-          Audit passenger reviews for drivers (governing the 4.5★ high-rating incentive) and driver
-          feedback for passengers.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Two-Sided Ratings & Review Moderation"
+      description="Audit passenger reviews for drivers (governing the 4.5★ high-rating incentive) and driver feedback for passengers."
+    />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
-        class="p-4 border-b border-neutral-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        class="p-4 border-b border-neutral-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
       >
-        <span class="text-xs font-medium text-neutral-500 tabular-nums">
-          {{ filteredReviews.length }} Reviews
-        </span>
+        <div class="flex flex-wrap items-center gap-3">
+          <SearchField
+            v-model="searchQuery"
+            placeholder="Search review ID, trip ID, driver, or passenger..."
+            aria-label="Search reviews"
+            class="md:w-72"
+          />
+          <span class="text-xs font-medium text-neutral-500 tabular-nums">
+            {{ filteredReviews.length }} Reviews
+          </span>
+        </div>
 
         <div class="flex flex-wrap items-center gap-2">
           <BaseSelect
@@ -171,24 +195,24 @@ const confirmModeration = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="r in filteredReviews"
-              :key="r.id"
+              v-for="review in filteredReviews"
+              :key="review.id"
               class="hover:bg-neutral-50/70 transition-colors"
             >
               <td class="py-3.5 px-4">
-                <div class="font-mono font-bold text-neutral-900">{{ r.id }}</div>
-                <div class="text-[11px] font-mono text-neutral-500">{{ r.tripId }}</div>
-                <div class="text-[10px] text-neutral-400">{{ r.direction }}</div>
+                <div class="font-mono font-bold text-neutral-900">{{ review.id }}</div>
+                <div class="text-[11px] font-mono text-neutral-500">{{ review.tripId }}</div>
+                <div class="text-[10px] text-neutral-400">{{ review.direction }}</div>
               </td>
               <td class="py-3.5 px-4">
-                <div class="font-semibold text-neutral-900">{{ r.subjectParty }}</div>
-                <div class="text-[11px] text-neutral-500">By {{ r.author }}</div>
+                <div class="font-semibold text-neutral-900">{{ review.subjectParty }}</div>
+                <div class="text-[11px] text-neutral-500">By {{ review.author }}</div>
               </td>
               <td class="py-3.5 px-4">
-                <div class="font-mono font-bold text-neutral-900">{{ r.rating }}.0 ★</div>
+                <div class="font-mono font-bold text-neutral-900">{{ review.rating }}.0 ★</div>
                 <div class="flex flex-wrap gap-1 mt-1">
                   <span
-                    v-for="tag in r.tags"
+                    v-for="tag in review.tags"
                     :key="tag"
                     class="px-1.5 py-0.5 bg-neutral-100 text-neutral-700 text-[10px]"
                   >
@@ -197,18 +221,21 @@ const confirmModeration = () => {
                 </div>
               </td>
               <td class="py-3.5 px-4 max-w-sm text-neutral-700">
-                <div>{{ r.comment }}</div>
-                <div v-if="r.moderationReason" class="text-[11px] text-neutral-500 mt-1 italic">
-                  Moderator: {{ r.moderationReason }}
+                <div>{{ review.comment }}</div>
+                <div
+                  v-if="review.moderationReason"
+                  class="text-[11px] text-neutral-500 mt-1 italic"
+                >
+                  Moderator: {{ review.moderationReason }}
                 </div>
               </td>
               <td class="py-3.5 px-4">
                 <StatusBadge
-                  :label="r.moderationState"
+                  :label="review.moderationState"
                   :tone="
-                    r.moderationState === 'Published'
+                    review.moderationState === 'Published'
                       ? 'success'
-                      : r.moderationState === 'Flagged for Review'
+                      : review.moderationState === 'Flagged for Review'
                         ? 'warning'
                         : 'danger'
                   "
@@ -217,24 +244,32 @@ const confirmModeration = () => {
               <td class="py-3.5 px-4 text-right whitespace-nowrap">
                 <div class="inline-flex items-center gap-2">
                   <button
-                    v-if="r.moderationState !== 'Published'"
+                    v-if="review.moderationState !== 'Published'"
                     type="button"
                     class="px-2.5 py-1 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-                    @click="openModerationConfirm(r, 'approve')"
+                    @click="openModerationConfirm(review, 'approve')"
                   >
                     Approve Public
                   </button>
                   <button
-                    v-if="r.moderationState !== 'Hidden by Moderator'"
+                    v-if="review.moderationState !== 'Hidden by Moderator'"
                     type="button"
                     class="px-2.5 py-1 border border-neutral-300 bg-white text-neutral-700 rounded-none text-xs font-medium hover:bg-neutral-50"
-                    @click="openModerationConfirm(r, 'hide')"
+                    @click="openModerationConfirm(review, 'hide')"
                   >
                     Hide Remark
                   </button>
                 </div>
               </td>
             </tr>
+            <EmptyTableRow
+              v-if="filteredReviews.length === 0"
+              :colspan="6"
+              title="No matching review entries"
+              description="No rating or review entries match the active filters."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>

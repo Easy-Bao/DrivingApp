@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
@@ -72,15 +76,21 @@ const draftStatus = ref<ServiceZone['status']>('Active')
 const modalError = ref<string | null>(null)
 
 const filteredZones = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return zones.value
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) return zones.value
   return zones.value.filter(
-    (z) =>
-      z.id.toLowerCase().includes(q) ||
-      z.name.toLowerCase().includes(q) ||
-      z.barangaysCovered.toLowerCase().includes(q),
+    (zone) =>
+      zone.id.toLowerCase().includes(query) ||
+      zone.name.toLowerCase().includes(query) ||
+      zone.barangaysCovered.toLowerCase().includes(query),
   )
 })
+
+const hasActiveFilters = computed(() => searchQuery.value.trim().length > 0)
+
+const resetFilters = () => {
+  searchQuery.value = ''
+}
 
 const openCreateZone = () => {
   editingZoneId.value = null
@@ -116,7 +126,7 @@ const saveZone = () => {
     return
   }
   if (editingZoneId.value) {
-    const existing = zones.value.find((z) => z.id === editingZoneId.value)
+    const existing = zones.value.find((zone) => zone.id === editingZoneId.value)
     if (existing) {
       existing.name = draftName.value.trim()
       existing.barangaysCovered = draftBarangays.value.trim()
@@ -153,29 +163,20 @@ const saveZone = () => {
       @dismiss="toastMessage = null"
     />
 
-    <div
-      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div>
-        <h2 class="text-sm font-semibold text-neutral-900">
-          Pagadian City Geofence Zones &amp; Surge Boundaries
-        </h2>
-        <p class="text-xs text-neutral-500 mt-0.5">
-          Configure barangay polygon boundaries and localized bidding demand multipliers (max 2.5x
-          server cap).
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Pagadian City Geofence Zones & Surge Boundaries"
+      description="Configure barangay polygon boundaries and localized bidding demand multipliers (max 2.5x server cap)."
+    />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
         class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
       >
-        <input
+        <SearchField
           v-model="searchQuery"
-          type="text"
           placeholder="Search zone ID, corridor, or Pagadian barangay..."
-          class="w-full max-w-sm px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+          aria-label="Search geofence zones"
+          class="sm:max-w-sm"
         />
         <button
           type="button"
@@ -204,144 +205,144 @@ const saveZone = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="z in filteredZones"
-              :key="z.id"
+              v-for="zone in filteredZones"
+              :key="zone.id"
               class="hover:bg-neutral-50/70 transition-colors"
             >
-              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ z.id }}</td>
+              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ zone.id }}</td>
               <td class="py-3 px-4">
-                <div class="font-bold text-neutral-900">{{ z.name }}</div>
-                <div class="text-[11px] text-neutral-500">{{ z.barangaysCovered }}</div>
+                <div class="font-bold text-neutral-900">{{ zone.name }}</div>
+                <div class="text-[11px] text-neutral-500">{{ zone.barangaysCovered }}</div>
               </td>
-              <td class="py-3 px-4 font-mono text-[11px] text-neutral-600">{{ z.centerCoords }}</td>
+              <td class="py-3 px-4 font-mono text-[11px] text-neutral-600">
+                {{ zone.centerCoords }}
+              </td>
               <td class="py-3 px-4 font-mono font-bold text-neutral-900">
-                {{ z.surgeFactor.toFixed(1) }}x
+                {{ zone.surgeFactor.toFixed(1) }}x
               </td>
-              <td class="py-3 px-4 font-mono text-neutral-500">{{ z.polygonPoints }} vertices</td>
-              <td class="py-3 px-4 font-bold text-neutral-800">{{ z.activeDrivers }} drivers</td>
+              <td class="py-3 px-4 font-mono text-neutral-500">
+                {{ zone.polygonPoints }} vertices
+              </td>
+              <td class="py-3 px-4 font-bold text-neutral-800">{{ zone.activeDrivers }} drivers</td>
               <td class="py-3 px-4">
                 <StatusBadge
-                  :label="z.status"
+                  :label="zone.status"
                   :tone="
-                    z.status === 'Active'
+                    zone.status === 'Active'
                       ? 'success'
-                      : z.status === 'Monitoring'
+                      : zone.status === 'Monitoring'
                         ? 'warning'
                         : 'neutral'
                   "
                 />
               </td>
-              <td class="py-3 px-4 text-right">
+              <td class="py-3 px-4 text-right whitespace-nowrap">
                 <button
                   type="button"
                   class="px-3 py-1 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50"
-                  @click="openEditZone(z)"
+                  @click="openEditZone(zone)"
                 >
                   Edit Zone &amp; Surge
                 </button>
               </td>
             </tr>
+            <EmptyTableRow
+              v-if="filteredZones.length === 0"
+              :colspan="8"
+              title="No matching service zones"
+              description="No geofence zones match the current search query."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="showModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4"
-        @click.self="showModal = false"
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          class="w-full max-w-md bg-white border border-neutral-200 rounded-none p-5 space-y-4 shadow-xl"
-        >
-          <div class="border-b border-neutral-100 pb-3">
-            <h3 class="text-sm font-bold text-neutral-900">
-              {{ editingZoneId ? `Configure Zone · ${editingZoneId}` : 'Create Geofence Zone' }}
-            </h3>
+    <ModalDialog
+      v-model:open="showModal"
+      :title="editingZoneId ? `Configure Zone · ${editingZoneId}` : 'Create Geofence Zone'"
+      size="md"
+    >
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Zone Name</label>
+          <input
+            v-model="draftName"
+            type="text"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
+        </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">
+            Covered Barangays / Landmarks
+          </label>
+          <input
+            v-model="draftBarangays"
+            type="text"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-neutral-700 mb-1">Surge (1.0x–2.5x)</label>
+            <input
+              v-model.number="draftSurge"
+              type="number"
+              min="1"
+              max="2.5"
+              step="0.1"
+              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+            />
           </div>
-
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Zone Name</label>
-              <input
-                v-model="draftName"
-                type="text"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">
-                Covered Barangays / Landmarks
-              </label>
-              <input
-                v-model="draftBarangays"
-                type="text"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block font-medium text-neutral-700 mb-1">Surge (1.0x–2.5x)</label>
-                <input
-                  v-model.number="draftSurge"
-                  type="number"
-                  min="1"
-                  max="2.5"
-                  step="0.1"
-                  class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-                />
-              </div>
-              <div>
-                <label class="block font-medium text-neutral-700 mb-1">Polygon Vertices</label>
-                <input
-                  v-model.number="draftPoints"
-                  type="number"
-                  min="4"
-                  class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-                />
-              </div>
-            </div>
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Center Coordinates</label>
-              <input
-                v-model="draftCoords"
-                type="text"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Zone Status</label>
-              <BaseSelect
-                v-model="draftStatus"
-                :full-width="true"
-                aria-label="Service zone status"
-                :options="['Active', 'Monitoring', 'Paused']"
-              />
-            </div>
-            <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 border-t border-neutral-100 pt-3">
-            <button
-              type="button"
-              class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-              @click="showModal = false"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-              @click="saveZone"
-            >
-              Save Service Zone
-            </button>
+          <div>
+            <label class="block font-medium text-neutral-700 mb-1">Polygon Vertices</label>
+            <input
+              v-model.number="draftPoints"
+              type="number"
+              min="4"
+              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+            />
           </div>
         </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Center Coordinates</label>
+          <input
+            v-model="draftCoords"
+            type="text"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+          />
+        </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Zone Status</label>
+          <BaseSelect
+            v-model="draftStatus"
+            :full-width="true"
+            aria-label="Service zone status"
+            :options="['Active', 'Monitoring', 'Paused']"
+          />
+        </div>
+        <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
       </div>
-    </Teleport>
+
+      <template #footer>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            @click="showModal = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
+            @click="saveZone"
+          >
+            Save Service Zone
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>

@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import ReportFilterBar, {
   type ReportFilterValues,
 } from '@/features/reports/components/ReportFilterBar.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
 interface RevenueSummaryRow {
@@ -67,6 +69,15 @@ const filteredSummaries = computed(() =>
   ),
 )
 
+const filterBarRef = ref<InstanceType<typeof ReportFilterBar> | null>(null)
+const hasActiveFilters = computed(
+  () =>
+    activeFilters.value.dateRange !== 'last-30-days' ||
+    activeFilters.value.cityZone !== 'all-zones' ||
+    activeFilters.value.vehicleTier !== 'all-tiers',
+)
+const resetFilters = () => filterBarRef.value?.resetFilters()
+
 const handleExport = () => {
   exportToCsv(
     'pagadian-revenue-commission-report.csv',
@@ -78,13 +89,13 @@ const handleExport = () => {
       'Driver Cash Take-Home (PHP)',
       'Effective Cut',
     ],
-    filteredSummaries.value.map((r) => [
-      r.period,
-      r.zoneLabel,
-      r.grossVolumePhp.toFixed(2),
-      r.platformCommissionPhp.toFixed(2),
-      r.driverTakeHomePhp.toFixed(2),
-      r.effectiveCutPercent,
+    filteredSummaries.value.map((summary) => [
+      summary.period,
+      summary.zoneLabel,
+      summary.grossVolumePhp.toFixed(2),
+      summary.platformCommissionPhp.toFixed(2),
+      summary.driverTakeHomePhp.toFixed(2),
+      summary.effectiveCutPercent,
     ]),
   )
 }
@@ -92,24 +103,22 @@ const handleExport = () => {
 
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-        Platform Revenue &amp; Commission Reports
-      </h1>
-      <p class="text-sm text-neutral-500 mt-1">
-        Gross cash booking volume, prepaid wallet commission deductions (1500 bps baseline), and net
-        Pagadian taxicle driver take-home totals.
-      </p>
-    </div>
+    <PageHeader
+      title="Platform Revenue &amp; Commission Reports"
+      description="Gross cash booking volume, prepaid wallet commission deductions (1500 bps baseline), and net Pagadian taxicle driver take-home totals."
+    />
 
     <ReportFilterBar
+      ref="filterBarRef"
       report-title="Revenue & Commission Report"
       @change="activeFilters = $event"
       @export="handleExport"
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
-      <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
+      <div
+        class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+      >
         <h2 class="font-bold text-sm text-neutral-900">Financial Settlement Summary by Corridor</h2>
         <span class="text-xs text-neutral-400">Prepaid credit wallet deduction model</span>
       </div>
@@ -130,25 +139,33 @@ const handleExport = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="f in filteredSummaries"
-              :key="`${f.period}-${f.zoneKey}`"
+              v-for="summary in filteredSummaries"
+              :key="`${summary.period}-${summary.zoneKey}`"
               class="hover:bg-neutral-50/70 transition-colors"
             >
-              <td class="py-3 px-4 font-bold text-neutral-900">{{ f.period }}</td>
-              <td class="py-3 px-4 text-neutral-700">{{ f.zoneLabel }}</td>
+              <td class="py-3 px-4 font-bold text-neutral-900">{{ summary.period }}</td>
+              <td class="py-3 px-4 text-neutral-700">{{ summary.zoneLabel }}</td>
               <td class="py-3 px-4 font-mono font-semibold text-neutral-900 tabular-nums">
-                {{ formatPhp(f.grossVolumePhp) }}
+                {{ formatPhp(summary.grossVolumePhp) }}
               </td>
               <td class="py-3 px-4 font-mono font-bold text-emerald-700 tabular-nums">
-                {{ formatPhp(f.platformCommissionPhp) }}
+                {{ formatPhp(summary.platformCommissionPhp) }}
               </td>
               <td class="py-3 px-4 font-mono text-neutral-700 tabular-nums">
-                {{ formatPhp(f.driverTakeHomePhp) }}
+                {{ formatPhp(summary.driverTakeHomePhp) }}
               </td>
               <td class="py-3 px-4 text-right font-mono font-bold text-neutral-900">
-                {{ f.effectiveCutPercent }}
+                {{ summary.effectiveCutPercent }}
               </td>
             </tr>
+            <EmptyTableRow
+              v-if="filteredSummaries.length === 0"
+              :colspan="6"
+              title="No revenue summaries match your current filters"
+              description="Adjust the corridor zone or report filters to review settlement totals."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>

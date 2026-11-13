@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
 interface SupportTicket {
@@ -54,7 +58,7 @@ const tickets = ref<SupportTicket[]>([
     category: 'App Account',
     priority: 'Normal',
     status: 'Open',
-    lastMessage: 'Uploaded front photo of new municipal tricycle permit sticker.',
+    lastMessage: 'Uploaded front photo of new municipal taxicle permit sticker.',
     updatedAt: '2 hours ago',
   },
   {
@@ -84,18 +88,31 @@ const modalError = ref<string | null>(null)
 const toastMessage = ref<string | null>(null)
 
 const filteredTickets = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  return tickets.value.filter((t) => {
-    const matchesStatus = statusFilter.value === 'All' || t.status === statusFilter.value
+  const query = searchQuery.value.trim().toLowerCase()
+  return tickets.value.filter((ticket) => {
+    const matchesStatus = statusFilter.value === 'All' || ticket.status === statusFilter.value
     const matchesSearch =
-      !q ||
-      t.id.toLowerCase().includes(q) ||
-      t.user.toLowerCase().includes(q) ||
-      t.subject.toLowerCase().includes(q) ||
-      t.category.toLowerCase().includes(q)
+      !query ||
+      ticket.id.toLowerCase().includes(query) ||
+      ticket.user.toLowerCase().includes(query) ||
+      ticket.subject.toLowerCase().includes(query) ||
+      ticket.category.toLowerCase().includes(query)
     return matchesStatus && matchesSearch
   })
 })
+
+const activeInquiryCount = computed(
+  () => tickets.value.filter((ticket) => ticket.status !== 'Resolved').length,
+)
+
+const hasActiveFilters = computed(
+  () => searchQuery.value.trim().length > 0 || statusFilter.value !== 'All',
+)
+
+const resetFilters = () => {
+  searchQuery.value = ''
+  statusFilter.value = 'All'
+}
 
 watch([searchQuery, statusFilter], () => {
   currentPage.value = 1
@@ -141,34 +158,24 @@ const submitReply = () => {
       @dismiss="toastMessage = null"
     />
 
-    <div
-      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div>
-        <h2 class="text-sm font-semibold text-neutral-900">Help Desk &amp; Support Inbox</h2>
-        <p class="text-xs text-neutral-500 mt-0.5">
-          Respond to Pagadian City passenger and taxicle driver inquiries, wallet escalations, and
-          trip inquiries.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Help Desk & Support Inbox"
+      description="Respond to Pagadian City passenger and taxicle driver inquiries, wallet escalations, and trip inquiries."
+    />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
         class="p-4 border-b border-neutral-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
       >
-        <input
+        <SearchField
           v-model="searchQuery"
-          type="text"
           placeholder="Search ticket ID, user, category, or subject..."
-          class="w-full md:w-80 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+          aria-label="Search support tickets"
+          class="md:w-80"
         />
 
         <div class="flex flex-wrap items-center gap-2">
-          <StatusBadge
-            :label="`${tickets.filter((t) => t.status !== 'Resolved').length} Active Inquiries`"
-            tone="neutral"
-          />
+          <StatusBadge :label="`${activeInquiryCount} Active Inquiries`" tone="neutral" />
           <BaseSelect
             v-model="statusFilter"
             aria-label="Filter by ticket status"
@@ -199,55 +206,58 @@ const submitReply = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="t in paginatedTickets"
-              :key="t.id"
+              v-for="ticket in paginatedTickets"
+              :key="ticket.id"
               class="hover:bg-neutral-50/70 transition-colors"
             >
               <td class="py-3 px-4">
-                <div class="font-mono font-bold text-neutral-900">{{ t.id }}</div>
-                <div class="text-[11px] text-neutral-400">{{ t.updatedAt }}</div>
+                <div class="font-mono font-bold text-neutral-900">{{ ticket.id }}</div>
+                <div class="text-[11px] text-neutral-400">{{ ticket.updatedAt }}</div>
               </td>
               <td class="py-3 px-4">
-                <div class="font-semibold text-neutral-900">{{ t.user }}</div>
+                <div class="font-semibold text-neutral-900">{{ ticket.user }}</div>
                 <div class="text-[11px] text-neutral-500 font-mono">
-                  {{ t.role }} · {{ t.phone }}
+                  {{ ticket.role }} · {{ ticket.phone }}
                 </div>
               </td>
-              <td class="py-3 px-4 text-neutral-800 font-medium max-w-xs">{{ t.subject }}</td>
-              <td class="py-3 px-4 text-neutral-600">{{ t.category }}</td>
+              <td class="py-3 px-4 text-neutral-800 font-medium max-w-xs">{{ ticket.subject }}</td>
+              <td class="py-3 px-4 text-neutral-600">{{ ticket.category }}</td>
               <td class="py-3 px-4">
                 <StatusBadge
-                  :label="t.priority"
-                  :tone="t.priority === 'High' ? 'danger' : 'neutral'"
+                  :label="ticket.priority"
+                  :tone="ticket.priority === 'High' ? 'danger' : 'neutral'"
                 />
               </td>
               <td class="py-3 px-4">
                 <StatusBadge
-                  :label="t.status"
+                  :label="ticket.status"
                   :tone="
-                    t.status === 'Resolved'
+                    ticket.status === 'Resolved'
                       ? 'success'
-                      : t.status === 'In Review'
+                      : ticket.status === 'In Review'
                         ? 'warning'
                         : 'info'
                   "
                 />
               </td>
-              <td class="py-3 px-4 text-right">
+              <td class="py-3 px-4 text-right whitespace-nowrap">
                 <button
                   type="button"
                   class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors"
-                  @click="openTicketModal(t)"
+                  @click="openTicketModal(ticket)"
                 >
-                  {{ t.status === 'Resolved' ? 'View Thread' : 'Inspect & Reply' }}
+                  {{ ticket.status === 'Resolved' ? 'View Thread' : 'Inspect & Reply' }}
                 </button>
               </td>
             </tr>
-            <tr v-if="paginatedTickets.length === 0">
-              <td colspan="7" class="py-10 px-4 text-center text-xs text-neutral-500">
-                No support tickets match your active filters.
-              </td>
-            </tr>
+            <EmptyTableRow
+              v-if="paginatedTickets.length === 0"
+              :colspan="7"
+              title="No matching support tickets"
+              description="No support tickets match your active filters."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>
@@ -259,82 +269,74 @@ const submitReply = () => {
       />
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="inspectedTicket"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4"
-        @click.self="closeTicketModal"
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          class="w-full max-w-lg bg-white border border-neutral-200 rounded-none p-5 space-y-4 shadow-xl"
-        >
-          <div class="flex items-start justify-between border-b border-neutral-100 pb-3">
-            <div>
-              <h3 class="text-sm font-bold text-neutral-900">
-                Support Ticket Thread · {{ inspectedTicket.id }}
-              </h3>
-              <p class="text-xs text-neutral-500 mt-0.5">
-                {{ inspectedTicket.user }} ({{ inspectedTicket.role }}) ·
-                {{ inspectedTicket.phone }}
-              </p>
-            </div>
-            <StatusBadge
-              :label="inspectedTicket.category"
-              :tone="inspectedTicket.priority === 'High' ? 'danger' : 'neutral'"
-            />
-          </div>
+    <ModalDialog
+      :open="Boolean(inspectedTicket)"
+      :title="inspectedTicket ? `Support Ticket Thread · ${inspectedTicket.id}` : ''"
+      :subtitle="
+        inspectedTicket
+          ? `${inspectedTicket.user} (${inspectedTicket.role}) · ${inspectedTicket.phone}`
+          : ''
+      "
+      size="lg"
+      @update:open="(open) => !open && closeTicketModal()"
+    >
+      <template #header-meta>
+        <StatusBadge
+          v-if="inspectedTicket"
+          :label="inspectedTicket.category"
+          :tone="inspectedTicket.priority === 'High' ? 'danger' : 'neutral'"
+        />
+      </template>
 
-          <div class="space-y-3 text-xs">
-            <div class="bg-neutral-50 border border-neutral-200 p-3">
-              <div class="font-semibold text-neutral-900">{{ inspectedTicket.subject }}</div>
-              <p class="text-neutral-600 mt-1">{{ inspectedTicket.lastMessage }}</p>
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Next Ticket Status</label>
-              <BaseSelect
-                v-model="draftStatus"
-                :full-width="true"
-                aria-label="Updated ticket status"
-                :options="['Open', 'In Review', 'Resolved']"
-              />
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">
-                Operator Reply &amp; Resolution Message
-              </label>
-              <textarea
-                v-model="draftReply"
-                rows="3"
-                placeholder="Write a clear response sent to the driver or passenger..."
-                class="w-full px-3 py-2 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
-              />
-            </div>
-
-            <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 border-t border-neutral-100 pt-3">
-            <button
-              type="button"
-              class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-              @click="closeTicketModal"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-              @click="submitReply"
-            >
-              Send Reply &amp; Save
-            </button>
-          </div>
+      <div v-if="inspectedTicket" class="space-y-3 text-xs">
+        <div class="bg-neutral-50 border border-neutral-200 p-3">
+          <div class="font-semibold text-neutral-900">{{ inspectedTicket.subject }}</div>
+          <p class="text-neutral-600 mt-1">{{ inspectedTicket.lastMessage }}</p>
         </div>
+
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Next Ticket Status</label>
+          <BaseSelect
+            v-model="draftStatus"
+            :full-width="true"
+            aria-label="Updated ticket status"
+            :options="['Open', 'In Review', 'Resolved']"
+          />
+        </div>
+
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">
+            Operator Reply &amp; Resolution Message
+          </label>
+          <textarea
+            v-model="draftReply"
+            rows="3"
+            placeholder="Write a clear response sent to the driver or passenger..."
+            class="w-full px-3 py-2 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+          />
+        </div>
+
+        <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
       </div>
-    </Teleport>
+
+      <template #footer>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            @click="closeTicketModal"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
+            @click="submitReply"
+          >
+            Send Reply &amp; Save
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>
