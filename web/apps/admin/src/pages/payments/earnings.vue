@@ -100,7 +100,7 @@ const exportEarningsCsv = () => {
 <template>
   <div class="space-y-6">
     <div
-      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 rounded-md p-4"
+      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 p-4"
     >
       <div>
         <h2 class="text-sm font-semibold text-neutral-900">
@@ -110,21 +110,6 @@ const exportEarningsCsv = () => {
           Direct cash fares retained by Pagadian taxicle drivers alongside prepaid commission fees
           debited at settlement (15% standard / 12% top-rated).
         </p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2 shrink-0">
-        <button
-          type="button"
-          class="px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-          @click="exportEarningsCsv"
-        >
-          Export Earnings CSV
-        </button>
-        <RouterLink
-          to="/payments/settlements"
-          class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-        >
-          View Settlement Ledger
-        </RouterLink>
       </div>
     </div>
 
@@ -139,15 +124,30 @@ const exportEarningsCsv = () => {
           class="w-full md:w-72 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
         />
 
-        <BaseSelect
-          v-model="walletFilter"
-          aria-label="Filter by prepaid wallet state"
-          :options="[
-            { label: 'All Wallet States', value: 'All' },
-            { label: 'Prepaid Credit Active', value: 'Prepaid Credit Active' },
-            { label: 'Low Prepaid Wallet', value: 'Low Prepaid Wallet' },
-          ]"
-        />
+        <div class="flex flex-wrap items-center gap-2">
+          <BaseSelect
+            v-model="walletFilter"
+            aria-label="Filter by prepaid wallet state"
+            :options="[
+              { label: 'All Wallet States', value: 'All' },
+              { label: 'Prepaid Credit Active', value: 'Prepaid Credit Active' },
+              { label: 'Low Prepaid Wallet', value: 'Low Prepaid Wallet' },
+            ]"
+          />
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer shrink-0"
+            @click="exportEarningsCsv"
+          >
+            Export CSV
+          </button>
+          <RouterLink
+            to="/payments/settlements"
+            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800 shrink-0"
+          >
+            Settlement Ledger
+          </RouterLink>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
@@ -178,13 +178,13 @@ const exportEarningsCsv = () => {
               <td class="py-3.5 px-4 font-mono font-semibold text-neutral-900 tabular-nums">
                 {{ formatPhp(row.cashGrossPhp) }}
               </td>
-              <td class="py-3.5 px-4 font-mono text-rose-700 tabular-nums">
+              <td class="py-3.5 px-4 font-mono text-neutral-600 tabular-nums">
                 -{{ formatPhp(platformCommission(row)) }}
                 <span class="text-[10px] text-neutral-400 ml-1">
                   ({{ (row.commissionBps / 100).toFixed(0) }}%)
                 </span>
               </td>
-              <td class="py-3.5 px-4 font-mono font-bold text-emerald-700 tabular-nums">
+              <td class="py-3.5 px-4 font-mono font-bold text-neutral-900 tabular-nums">
                 {{ formatPhp(driverTakeHome(row)) }}
               </td>
               <td class="py-3.5 px-4 text-right">

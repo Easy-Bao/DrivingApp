@@ -142,7 +142,7 @@ const submitReply = () => {
     />
 
     <div
-      class="bg-white border border-neutral-200 rounded-md p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div>
         <h2 class="text-sm font-semibold text-neutral-900">Help Desk &amp; Support Inbox</h2>
@@ -151,10 +151,6 @@ const submitReply = () => {
           trip inquiries.
         </p>
       </div>
-      <StatusBadge
-        :label="`${tickets.filter((t) => t.status !== 'Resolved').length} Active Inquiries`"
-        tone="warning"
-      />
     </div>
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
@@ -168,16 +164,22 @@ const submitReply = () => {
           class="w-full md:w-80 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
         />
 
-        <BaseSelect
-          v-model="statusFilter"
-          aria-label="Filter by ticket status"
-          :options="[
-            { label: 'All Ticket Statuses', value: 'All' },
-            { label: 'Open', value: 'Open' },
-            { label: 'In Review', value: 'In Review' },
-            { label: 'Resolved', value: 'Resolved' },
-          ]"
-        />
+        <div class="flex flex-wrap items-center gap-2">
+          <StatusBadge
+            :label="`${tickets.filter((t) => t.status !== 'Resolved').length} Active Inquiries`"
+            tone="neutral"
+          />
+          <BaseSelect
+            v-model="statusFilter"
+            aria-label="Filter by ticket status"
+            :options="[
+              { label: 'All Ticket Statuses', value: 'All' },
+              { label: 'Open', value: 'Open' },
+              { label: 'In Review', value: 'In Review' },
+              { label: 'Resolved', value: 'Resolved' },
+            ]"
+          />
+        </div>
       </div>
 
       <div class="overflow-x-auto">

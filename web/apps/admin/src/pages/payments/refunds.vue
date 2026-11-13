@@ -103,18 +103,12 @@ const confirmDecision = () => {
     />
 
     <div
-      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 rounded-md p-4"
+      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 p-4"
     >
       <div>
-        <div class="flex items-center gap-2">
-          <h2 class="text-sm font-semibold text-neutral-900">
-            Fare Adjustments &amp; Commission Fee Waivers
-          </h2>
-          <StatusBadge
-            :label="`${pendingCount} Pending Review`"
-            :tone="pendingCount > 0 ? 'warning' : 'success'"
-          />
-        </div>
+        <h2 class="text-sm font-semibold text-neutral-900">
+          Fare Adjustments &amp; Commission Fee Waivers
+        </h2>
         <p class="text-xs text-neutral-500 mt-0.5">
           Audit claims for passenger cash fare rebates and driver prepaid commission reversals
           across Pagadian City trips.
@@ -133,16 +127,19 @@ const confirmDecision = () => {
           class="w-full md:w-80 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
         />
 
-        <BaseSelect
-          v-model="statusFilter"
-          aria-label="Filter by claim status"
-          :options="[
-            { label: 'All Claim Statuses', value: 'All' },
-            { label: 'Pending Approval', value: 'Pending Approval' },
-            { label: 'Approved & Credited', value: 'Approved & Credited' },
-            { label: 'Declined', value: 'Declined' },
-          ]"
-        />
+        <div class="flex flex-wrap items-center gap-2">
+          <StatusBadge :label="`${pendingCount} Pending Review`" tone="neutral" />
+          <BaseSelect
+            v-model="statusFilter"
+            aria-label="Filter by claim status"
+            :options="[
+              { label: 'All Claim Statuses', value: 'All' },
+              { label: 'Pending Approval', value: 'Pending Approval' },
+              { label: 'Approved & Credited', value: 'Approved & Credited' },
+              { label: 'Declined', value: 'Declined' },
+            ]"
+          />
+        </div>
       </div>
 
       <div class="overflow-x-auto">

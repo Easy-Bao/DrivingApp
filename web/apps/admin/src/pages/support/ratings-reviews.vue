@@ -111,7 +111,7 @@ const confirmModeration = () => {
     />
 
     <div
-      class="bg-white border border-neutral-200 rounded-md p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div>
         <h2 class="text-sm font-semibold text-neutral-900">
@@ -122,31 +122,39 @@ const confirmModeration = () => {
           feedback for passengers.
         </p>
       </div>
-
-      <div class="flex flex-wrap items-center gap-2">
-        <BaseSelect
-          v-model="directionFilter"
-          aria-label="Filter by review direction"
-          :options="[
-            { label: 'All Feedback', value: 'All' },
-            { label: 'Driver Reviews', value: 'Driver Review' },
-            { label: 'Passenger Reviews', value: 'Passenger Review' },
-          ]"
-        />
-        <BaseSelect
-          v-model="stateFilter"
-          aria-label="Filter by moderation state"
-          :options="[
-            { label: 'All States', value: 'All' },
-            { label: 'Published', value: 'Published' },
-            { label: 'Flagged for Review', value: 'Flagged for Review' },
-            { label: 'Hidden by Moderator', value: 'Hidden by Moderator' },
-          ]"
-        />
-      </div>
     </div>
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
+      <div
+        class="p-4 border-b border-neutral-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <span class="text-xs font-medium text-neutral-500 tabular-nums">
+          {{ filteredReviews.length }} Reviews
+        </span>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <BaseSelect
+            v-model="directionFilter"
+            aria-label="Filter by review direction"
+            :options="[
+              { label: 'All Feedback', value: 'All' },
+              { label: 'Driver Reviews', value: 'Driver Review' },
+              { label: 'Passenger Reviews', value: 'Passenger Review' },
+            ]"
+          />
+          <BaseSelect
+            v-model="stateFilter"
+            aria-label="Filter by moderation state"
+            :options="[
+              { label: 'All States', value: 'All' },
+              { label: 'Published', value: 'Published' },
+              { label: 'Flagged for Review', value: 'Flagged for Review' },
+              { label: 'Hidden by Moderator', value: 'Hidden by Moderator' },
+            ]"
+          />
+        </div>
+      </div>
+
       <div class="overflow-x-auto">
         <table class="min-w-[840px] w-full text-left text-xs">
           <thead
@@ -177,7 +185,7 @@ const confirmModeration = () => {
                 <div class="text-[11px] text-neutral-500">By {{ r.author }}</div>
               </td>
               <td class="py-3.5 px-4">
-                <div class="font-mono font-bold text-amber-600">{{ r.rating }}.0 ★</div>
+                <div class="font-mono font-bold text-neutral-900">{{ r.rating }}.0 ★</div>
                 <div class="flex flex-wrap gap-1 mt-1">
                   <span
                     v-for="tag in r.tags"

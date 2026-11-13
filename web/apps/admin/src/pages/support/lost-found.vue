@@ -142,7 +142,7 @@ const createLostItem = () => {
     />
 
     <div
-      class="bg-white border border-neutral-200 rounded-md p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div>
         <h2 class="text-sm font-semibold text-neutral-900">Lost &amp; Found Recovery Desk</h2>
@@ -150,13 +150,6 @@ const createLostItem = () => {
           Coordinate property recovery between Pagadian City passengers and taxicle operators.
         </p>
       </div>
-      <button
-        type="button"
-        class="self-start sm:self-auto px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold"
-        @click="openLogModal"
-      >
-        + Log Lost Item Report
-      </button>
     </div>
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
@@ -170,16 +163,25 @@ const createLostItem = () => {
           class="w-full md:w-80 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
         />
 
-        <BaseSelect
-          v-model="statusFilter"
-          aria-label="Filter by recovery status"
-          :options="[
-            { label: 'All Recovery States', value: 'All' },
-            { label: 'Searching Driver', value: 'Searching Driver' },
-            { label: 'Driver Confirmed Found', value: 'Driver Confirmed Found' },
-            { label: 'Returned to Owner', value: 'Returned to Owner' },
-          ]"
-        />
+        <div class="flex flex-wrap items-center gap-2">
+          <BaseSelect
+            v-model="statusFilter"
+            aria-label="Filter by recovery status"
+            :options="[
+              { label: 'All Recovery States', value: 'All' },
+              { label: 'Searching Driver', value: 'Searching Driver' },
+              { label: 'Driver Confirmed Found', value: 'Driver Confirmed Found' },
+              { label: 'Returned to Owner', value: 'Returned to Owner' },
+            ]"
+          />
+          <button
+            type="button"
+            class="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold cursor-pointer shrink-0"
+            @click="openLogModal"
+          >
+            + Log Report
+          </button>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
@@ -207,7 +209,7 @@ const createLostItem = () => {
               <td class="py-3 px-4 max-w-xs">
                 <div class="font-medium text-neutral-900">{{ item.itemDescription }}</div>
                 <div class="text-[11px] text-neutral-400 mt-0.5">{{ item.corridor }}</div>
-                <div v-if="item.handoffNote" class="text-[11px] text-emerald-700 mt-1">
+                <div v-if="item.handoffNote" class="text-[11px] text-neutral-600 mt-1">
                   Handoff: {{ item.handoffNote }}
                 </div>
               </td>
