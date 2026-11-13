@@ -3,13 +3,29 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { motion, AnimatePresence } from 'motion-v'
+import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
 import { navigationGroups, type SidebarSubItem } from '@/app/navigation/sidebar-menu'
+
+withDefaults(
+  defineProps<{
+    mobileOpen?: boolean
+  }>(),
+  {
+    mobileOpen: false,
+  },
+)
+
+const emit = defineEmits<{
+  (e: 'closeMobile'): void
+}>()
 
 const route = useRoute()
 const router = useRouter()
 
 const isCollapsed = ref(false)
 const searchQuery = ref('')
+const showSignOutConfirm = ref(false)
+const signedOutNotice = ref(false)
 
 const expandedGroups = ref<Record<string, boolean>>({
   dashboard: true,
@@ -31,7 +47,14 @@ function toggleGroup(groupId: string) {
 }
 
 function navigateTo(path: string) {
+  emit('closeMobile')
   void router.push(path)
+}
+
+function confirmSignOut() {
+  signedOutNotice.value = true
+  emit('closeMobile')
+  void router.push('/dashboard/overview')
 }
 
 const activeItem = computed(() => {
@@ -94,8 +117,11 @@ const filteredGroups = computed(() => {
   <motion.aside
     :animate="{ width: isCollapsed ? '5rem' : '18rem' }"
     :transition="{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }"
-    class="bg-white border-r border-neutral-200 flex flex-col justify-between shrink-0 select-none h-screen sticky top-0 z-20 overflow-hidden"
-    :class="isCollapsed ? 'w-20' : 'w-72'"
+    class="bg-white border-r border-neutral-200 flex flex-col justify-between shrink-0 select-none h-screen fixed inset-y-0 left-0 lg:sticky lg:top-0 z-40 overflow-hidden transition-transform duration-200"
+    :class="[
+      isCollapsed ? 'w-20' : 'w-72',
+      mobileOpen ? 'translate-x-0 shadow-2xl lg:shadow-none' : '-translate-x-full lg:translate-x-0',
+    ]"
     aria-label="Navigation Sidebar"
   >
     <div class="shrink-0">
@@ -106,39 +132,71 @@ const filteredGroups = computed(() => {
         <div v-if="!isCollapsed" class="flex items-center space-x-3 overflow-hidden min-w-0">
           <div class="flex flex-col overflow-hidden whitespace-nowrap">
             <span class="font-bold text-sm text-neutral-900 leading-tight">EasyRide</span>
-            <span class="text-[11px] text-neutral-500 font-medium">Fleet Administration</span>
+            <span class="text-[11px] text-neutral-500 font-medium">Pagadian Ops · 7016</span>
           </div>
         </div>
 
-        <button
-          type="button"
-          class="rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors flex items-center justify-center shrink-0"
-          :class="isCollapsed ? 'w-10 h-10 bg-neutral-50 border border-neutral-200' : 'p-1.5'"
-          :aria-label="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-          :title="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-          @click="toggleCollapse"
-        >
-          <Icon
-            :icon="isCollapsed ? 'lucide:panel-left-open' : 'lucide:panel-left-close'"
-            class="text-lg"
-          />
-        </button>
+        <div class="flex items-center gap-1">
+          <button
+            v-if="mobileOpen"
+            type="button"
+            class="lg:hidden rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 p-1.5 transition-colors cursor-pointer"
+            aria-label="Close navigation menu"
+            @click="emit('closeMobile')"
+          >
+            <Icon icon="lucide:x" class="text-lg" aria-hidden="true" />
+          </button>
+
+          <button
+            type="button"
+            class="rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors flex items-center justify-center shrink-0"
+            :class="isCollapsed ? 'w-10 h-10 bg-neutral-50 border border-neutral-200' : 'p-1.5'"
+            :aria-label="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+            :title="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+            @click="toggleCollapse"
+          >
+            <Icon
+              :icon="isCollapsed ? 'lucide:panel-left-open' : 'lucide:panel-left-close'"
+              class="text-lg"
+            />
+          </button>
+        </div>
       </div>
 
       <div v-if="!isCollapsed" class="p-3 border-b border-neutral-100">
         <div class="relative">
-          <Icon icon="lucide:search" class="absolute left-2.5 top-2.5 text-neutral-400 text-sm" />
+          <Icon
+            icon="lucide:search"
+            class="absolute left-2.5 top-2.5 text-neutral-400 text-sm"
+            aria-hidden="true"
+          />
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search all 40+ sections..."
-            class="w-full pl-8 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
+            aria-label="Filter navigation sections"
+            placeholder="Search sections..."
+            class="w-full pl-8 pr-7 py-1.5 bg-neutral-50 border border-neutral-200 text-xs placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
           />
+          <button
+            v-if="searchQuery"
+            type="button"
+            aria-label="Clear navigation filter"
+            class="absolute right-2 top-2 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+            @click="searchQuery = ''"
+          >
+            <Icon icon="lucide:x" class="text-xs" aria-hidden="true" />
+          </button>
         </div>
       </div>
     </div>
 
-    <nav class="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+    <nav class="flex-1 overflow-y-auto px-3 py-3 space-y-3" aria-label="Main navigation">
+      <div
+        v-if="filteredGroups.length === 0"
+        class="px-3 py-6 text-center text-xs text-neutral-500 border border-dashed border-neutral-200"
+      >
+        No matching sections for "{{ searchQuery }}"
+      </div>
       <div v-for="group in filteredGroups" :key="group.id" class="space-y-1">
         <button
           v-if="!isCollapsed"
@@ -261,14 +319,30 @@ const filteredGroups = computed(() => {
         <button
           v-if="!isCollapsed"
           type="button"
-          class="text-neutral-400 hover:text-rose-600 p-1.5 hover:bg-rose-50 transition-colors"
+          class="text-neutral-400 hover:text-rose-600 p-1.5 hover:bg-rose-50 transition-colors cursor-pointer"
           title="Sign out"
           aria-label="Sign out"
-          @click="navigateTo('/account/profile')"
+          @click="showSignOutConfirm = true"
         >
           <Icon icon="lucide:log-out" class="text-base" />
         </button>
       </div>
+
+      <p
+        v-if="signedOutNotice && !isCollapsed"
+        class="mt-2 px-2 py-1 text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200"
+      >
+        Local demo session locked for review.
+      </p>
     </div>
+
+    <ConfirmDialog
+      v-model:open="showSignOutConfirm"
+      title="End Admin Console Session?"
+      description="Signing out locks the current operator session and returns to the overview screen."
+      confirm-label="Lock Session"
+      tone="rose"
+      @confirm="confirmSignOut"
+    />
   </motion.aside>
 </template>

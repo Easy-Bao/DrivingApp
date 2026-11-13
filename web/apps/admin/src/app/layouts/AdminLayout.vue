@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import Sidebar from '@/app/layouts/Sidebar.vue'
 
 const route = useRoute()
+const mobileNavOpen = ref(false)
+
+watch(
+  () => route.path,
+  () => {
+    mobileNavOpen.value = false
+  },
+)
 
 const routeMap: Record<string, { section: string; sectionTo: string; item: string }> = {
   '/dashboard/overview': {
@@ -236,55 +244,99 @@ const currentBreadcrumb = computed(() => {
 
 <template>
   <div class="h-screen bg-neutral-50 flex overflow-hidden font-sans text-neutral-900">
+    <div
+      v-if="mobileNavOpen"
+      class="fixed inset-0 z-30 bg-black/40 lg:hidden"
+      aria-hidden="true"
+      @click="mobileNavOpen = false"
+    />
+
     <!-- Left Navigation Sidebar -->
-    <Sidebar />
+    <Sidebar :mobile-open="mobileNavOpen" @close-mobile="mobileNavOpen = false" />
 
     <!-- Right Workspace Pane -->
     <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
       <!-- Top Navigation Header: Exactly h-16 (64px) border-b border-neutral-200 matching sidebar header -->
       <header
-        class="h-16 border-b border-neutral-200 bg-white px-6 flex items-center justify-between shrink-0 select-none"
+        class="h-16 border-b border-neutral-200 bg-white px-4 sm:px-6 flex items-center justify-between gap-4 shrink-0 select-none"
       >
-        <!-- Interactive Clickable Breadcrumbs -->
-        <nav aria-label="Breadcrumb" class="flex items-center space-x-2 text-xs">
-          <!-- Home Link -->
-          <RouterLink
-            to="/dashboard/overview"
-            class="text-neutral-400 hover:text-neutral-900 transition-colors flex items-center"
-            title="Dashboard Overview"
+        <div class="flex items-center gap-3 min-w-0">
+          <button
+            type="button"
+            class="lg:hidden p-1.5 border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+            aria-label="Open navigation menu"
+            @click="mobileNavOpen = true"
           >
-            <Icon icon="lucide:home" class="text-sm" />
-          </RouterLink>
+            <Icon icon="lucide:menu" class="text-base" aria-hidden="true" />
+          </button>
 
-          <Icon icon="lucide:chevron-right" class="text-[11px] text-neutral-300 shrink-0" />
+          <!-- Interactive Clickable Breadcrumbs -->
+          <nav aria-label="Breadcrumb" class="flex items-center space-x-2 text-xs min-w-0 truncate">
+            <!-- Home Link -->
+            <RouterLink
+              to="/dashboard/overview"
+              class="text-neutral-400 hover:text-neutral-900 transition-colors flex items-center shrink-0"
+              title="Dashboard Overview"
+              aria-label="Dashboard Overview"
+            >
+              <Icon icon="lucide:home" class="text-sm" aria-hidden="true" />
+            </RouterLink>
 
-          <!-- Parent Section Link -->
-          <RouterLink
-            :to="currentBreadcrumb.sectionTo"
-            class="font-semibold text-neutral-500 hover:text-neutral-900 transition-colors"
-          >
-            {{ currentBreadcrumb.section }}
-          </RouterLink>
+            <Icon
+              icon="lucide:chevron-right"
+              class="text-[11px] text-neutral-300 shrink-0"
+              aria-hidden="true"
+            />
 
-          <Icon
-            v-if="currentBreadcrumb.item !== currentBreadcrumb.section"
-            icon="lucide:chevron-right"
-            class="text-[11px] text-neutral-300 shrink-0"
-          />
+            <!-- Parent Section Link -->
+            <RouterLink
+              :to="currentBreadcrumb.sectionTo"
+              class="font-semibold text-neutral-500 hover:text-neutral-900 transition-colors truncate"
+            >
+              {{ currentBreadcrumb.section }}
+            </RouterLink>
 
-          <!-- Current Active Page -->
+            <Icon
+              v-if="currentBreadcrumb.item !== currentBreadcrumb.section"
+              icon="lucide:chevron-right"
+              class="text-[11px] text-neutral-300 shrink-0"
+              aria-hidden="true"
+            />
+
+            <!-- Current Active Page -->
+            <span
+              v-if="currentBreadcrumb.item !== currentBreadcrumb.section"
+              class="font-bold text-neutral-900 truncate"
+              aria-current="page"
+            >
+              {{ currentBreadcrumb.item }}
+            </span>
+          </nav>
+        </div>
+
+        <div class="hidden sm:flex items-center gap-2 shrink-0">
           <span
-            v-if="currentBreadcrumb.item !== currentBreadcrumb.section"
-            class="font-bold text-neutral-900"
-            aria-current="page"
+            class="px-2.5 py-1 bg-neutral-100 border border-neutral-200 text-[11px] font-mono font-semibold text-neutral-700"
           >
-            {{ currentBreadcrumb.item }}
+            Pagadian · 7016
           </span>
-        </nav>
+          <RouterLink
+            to="/payments/topups"
+            class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-[11px] font-semibold text-amber-800 transition-colors"
+          >
+            Top-Ups
+          </RouterLink>
+          <RouterLink
+            to="/trips/sos-alerts"
+            class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-[11px] font-semibold text-rose-700 transition-colors"
+          >
+            SOS
+          </RouterLink>
+        </div>
       </header>
 
       <!-- Main Scrollable Content Area -->
-      <main class="flex-1 overflow-y-auto p-6 bg-neutral-50">
+      <main class="flex-1 overflow-y-auto p-4 sm:p-6 bg-neutral-50">
         <slot />
       </main>
     </div>

@@ -45,14 +45,15 @@ function goToPage(page: number) {
       <span class="font-semibold text-neutral-900">{{ totalItems }}</span> entries
     </div>
 
-    <div class="flex items-center space-x-1">
+    <nav aria-label="Pagination" class="flex items-center space-x-1">
       <button
         type="button"
+        aria-label="Previous page"
         class="inline-flex items-center px-2.5 py-1 text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium"
         :disabled="currentPage <= 1"
         @click="goToPage(currentPage - 1)"
       >
-        <Icon icon="lucide:chevron-left" class="mr-1 text-xs" />
+        <Icon icon="lucide:chevron-left" class="mr-1 text-xs" aria-hidden="true" />
         <span>Prev</span>
       </button>
 
@@ -60,6 +61,8 @@ function goToPage(page: number) {
         v-for="page in totalPages"
         :key="page"
         type="button"
+        :aria-label="`Page ${page}`"
+        :aria-current="page === currentPage ? 'page' : undefined"
         class="w-7 h-7 flex items-center justify-center font-semibold border tabular-nums transition-colors"
         :class="
           page === currentPage
@@ -73,13 +76,14 @@ function goToPage(page: number) {
 
       <button
         type="button"
+        aria-label="Next page"
         class="inline-flex items-center px-2.5 py-1 text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium"
         :disabled="currentPage >= totalPages"
         @click="goToPage(currentPage + 1)"
       >
         <span>Next</span>
-        <Icon icon="lucide:chevron-right" class="ml-1 text-xs" />
+        <Icon icon="lucide:chevron-right" class="ml-1 text-xs" aria-hidden="true" />
       </button>
-    </div>
+    </nav>
   </div>
 </template>

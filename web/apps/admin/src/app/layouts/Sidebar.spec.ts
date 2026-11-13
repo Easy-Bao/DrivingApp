@@ -48,4 +48,21 @@ describe('Sidebar', () => {
     expect(firstContainer?.classes()).toContain('border-neutral-200')
     expect(firstContainer?.classes()).toContain('ml-4')
   })
+
+  it('shows empty search message, allows clearing, and confirms sign out', async () => {
+    const wrapper = mount(Sidebar)
+    const searchInput = wrapper.find('input[type="text"]')
+
+    await searchInput.setValue('nonexistent-xyz-section')
+    expect(wrapper.text()).toContain('No matching sections for "nonexistent-xyz-section"')
+
+    const clearBtn = wrapper.find('button[aria-label="Clear navigation filter"]')
+    expect(clearBtn.exists()).toBe(true)
+    await clearBtn.trigger('click')
+    expect(wrapper.text()).toContain('Dashboard')
+
+    const signOutBtn = wrapper.find('button[aria-label="Sign out"]')
+    await signOutBtn.trigger('click')
+    expect(wrapper.text()).toContain('End Admin Console Session?')
+  })
 })
