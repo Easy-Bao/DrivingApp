@@ -33,13 +33,12 @@ function buildReceiptPreviewSvg(params: {
 }): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="540" height="680" viewBox="0 0 540 680">
   <rect width="540" height="680" fill="#f8fafc"/>
-  <rect x="30" y="28" width="480" height="624" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
-  <rect x="30" y="28" width="480" height="84" rx="12" fill="${params.accent}"/>
-  <rect x="30" y="92" width="480" height="20" fill="${params.accent}"/>
+  <rect x="30" y="28" width="480" height="624" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+  <rect x="30" y="28" width="480" height="84" fill="${params.accent}"/>
   <text x="58" y="68" font-family="sans-serif" font-size="18" font-weight="700" fill="#ffffff">${params.provider}</text>
   <text x="58" y="92" font-family="sans-serif" font-size="12" fill="#e2e8f0">Official Electronic Fund Transfer Receipt</text>
-  <circle cx="270" cy="176" r="28" fill="#dcfce7"/>
-  <path d="M256 176 l10 10 l18 -20" stroke="#15803d" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="242" y="148" width="56" height="56" fill="#dcfce7"/>
+  <path d="M256 176 l10 10 l18 -20" stroke="#15803d" stroke-width="4" fill="none" stroke-linecap="square" stroke-linejoin="miter"/>
   <text x="270" y="232" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#15803d">TRANSFER COMPLETED</text>
   <text x="270" y="274" text-anchor="middle" font-family="monospace" font-size="34" font-weight="800" fill="#0f172a">PHP ${params.amount.toFixed(2)}</text>
   <line x1="58" y1="304" x2="482" y2="304" stroke="#e2e8f0" stroke-dasharray="6 4"/>
@@ -51,7 +50,7 @@ function buildReceiptPreviewSvg(params: {
   <text x="58" y="494" font-family="monospace" font-size="15" font-weight="700" fill="#0f172a">${params.reference}</text>
   <text x="58" y="536" font-family="sans-serif" font-size="12" fill="#64748b">Timestamp (PHT · UTC+8)</text>
   <text x="58" y="558" font-family="monospace" font-size="13" font-weight="600" fill="#334155">${params.timestamp}</text>
-  <rect x="58" y="586" width="424" height="40" rx="6" fill="#f1f5f9"/>
+  <rect x="58" y="586" width="424" height="40" fill="#f1f5f9"/>
   <text x="270" y="610" text-anchor="middle" font-family="monospace" font-size="11" fill="#475569">Pagadian City Taxicle Dispatch Wallet Top-Up</text>
 </svg>`
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`

@@ -138,8 +138,8 @@ function goBack() {
             class="px-2.5 py-1 text-xs font-semibold w-fit"
             :class="
               request.currentBalance < 50
-                ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                ? 'bg-neutral-100 text-neutral-900 border border-neutral-300'
+                : 'bg-neutral-50 text-neutral-700 border border-neutral-200'
             "
           >
             {{
@@ -160,16 +160,13 @@ function goBack() {
           </div>
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">Current Wallet Balance</div>
-            <div
-              class="font-mono font-bold mt-0.5 tabular-nums"
-              :class="request.currentBalance < 50 ? 'text-rose-600' : 'text-neutral-900'"
-            >
+            <div class="font-mono font-bold mt-0.5 tabular-nums text-neutral-900">
               {{ formatPhp(request.currentBalance) }}
             </div>
           </div>
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">Balance After Approval</div>
-            <div class="font-mono font-bold text-emerald-600 mt-0.5 tabular-nums">
+            <div class="font-mono font-bold text-neutral-900 mt-0.5 tabular-nums">
               {{
                 formatPhp(
                   request.currentBalance + (request.status === 'Pending' ? request.amount : 0),
@@ -238,7 +235,7 @@ function goBack() {
             <p class="text-neutral-600 leading-relaxed">{{ request.proofNote }}</p>
             <p
               v-if="request.rejectionReason"
-              class="pt-2 border-t border-rose-200 text-rose-700 font-semibold"
+              class="pt-2 border-t border-neutral-200 text-neutral-800 font-semibold"
             >
               Rejection Reason: {{ request.rejectionReason }}
             </p>
@@ -284,10 +281,10 @@ function goBack() {
           <span v-if="request.status === 'Pending'">
             Verify transfer reference and receipt picture before confirming credit release.
           </span>
-          <span v-else-if="request.status === 'Verified'" class="text-emerald-600 font-semibold">
+          <span v-else-if="request.status === 'Verified'" class="text-neutral-900 font-semibold">
             This request has already been verified and credited.
           </span>
-          <span v-else class="text-rose-600 font-semibold">
+          <span v-else class="text-neutral-700 font-semibold">
             This request has been rejected and closed.
           </span>
         </div>
@@ -295,7 +292,7 @@ function goBack() {
         <div v-if="request.status === 'Pending'" class="flex items-center space-x-3 shrink-0">
           <button
             type="button"
-            class="px-4 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition-colors cursor-pointer"
+            class="px-4 py-2 border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 text-xs font-semibold transition-colors cursor-pointer"
             @click="showRejectDialog = true"
           >
             Reject Request

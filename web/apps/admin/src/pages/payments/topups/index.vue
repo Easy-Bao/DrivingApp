@@ -70,27 +70,9 @@ function navigateToDetails(id: string) {
           Driver Wallet Top-Ups
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
-          Verify driver GCash, Maya QRPh, and Philippine bank transfer receipts before crediting
-          prepaid commission wallets.
+          Verify driver payment transfer receipts before crediting prepaid commission wallets.
         </p>
       </div>
-
-      <div class="flex items-center space-x-3 shrink-0">
-        <RouterLink
-          to="/payments/methods"
-          class="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-700 transition-colors"
-        >
-          <Icon icon="lucide:qr-code" class="text-sm text-neutral-500" aria-hidden="true" />
-          <span>Manage Company Bank &amp; QR</span>
-        </RouterLink>
-      </div>
-    </div>
-
-    <div class="bg-blue-50/70 border border-blue-200 p-4 text-xs text-blue-900 leading-relaxed">
-      <span class="font-bold">Manual Settlement Process:</span>
-      Taxicle drivers transfer funds via company QRPh or bank deposit from the driver app and attach
-      their transaction receipt image. Open any request below to inspect the uploaded proof image
-      and reference code before releasing wallet credits.
     </div>
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
@@ -99,7 +81,9 @@ function navigateToDetails(id: string) {
       >
         <div class="flex items-center space-x-3">
           <h2 class="font-bold text-sm text-neutral-900">Driver Top-Up Submissions</h2>
-          <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+          <span
+            class="px-2 py-0.5 border border-neutral-200 bg-neutral-100 text-xs font-semibold text-neutral-800 tabular-nums"
+          >
             {{ pendingCount }} Pending
           </span>
         </div>
@@ -140,6 +124,14 @@ function navigateToDetails(id: string) {
               { label: 'Rejected', value: 'Rejected' },
             ]"
           />
+
+          <RouterLink
+            to="/payments/methods"
+            class="inline-flex items-center justify-center space-x-1.5 px-3 py-1.5 border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-700 transition-colors shrink-0"
+          >
+            <Icon icon="lucide:qr-code" class="text-sm text-neutral-500" aria-hidden="true" />
+            <span>Channels</span>
+          </RouterLink>
         </div>
       </div>
 
@@ -177,7 +169,9 @@ function navigateToDetails(id: string) {
               </td>
               <td class="py-3 px-4 font-mono tabular-nums">
                 <div
-                  :class="req.currentBalance < 50 ? 'text-rose-600 font-bold' : 'text-neutral-900'"
+                  :class="
+                    req.currentBalance < 50 ? 'text-neutral-900 font-bold' : 'text-neutral-900'
+                  "
                 >
                   {{ formatPhp(req.currentBalance) }}
                 </div>
@@ -208,7 +202,7 @@ function navigateToDetails(id: string) {
                   {{ req.referenceCode }}
                 </div>
                 <div
-                  class="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium mt-0.5"
+                  class="inline-flex items-center gap-1 text-[11px] text-neutral-600 font-medium mt-0.5"
                 >
                   <Icon icon="lucide:image" class="text-xs" aria-hidden="true" />
                   <span>Receipt Image</span>

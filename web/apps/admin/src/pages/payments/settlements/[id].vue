@@ -111,7 +111,7 @@ const resolutionBadgeLabel = computed(() => {
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="bg-white border border-neutral-200 rounded-lg p-5 space-y-3">
+      <div class="bg-white border border-neutral-200 p-5 space-y-3">
         <h2 class="text-sm font-semibold text-neutral-900">Driver &amp; Vehicle Details</h2>
         <div class="text-xs space-y-1.5">
           <div class="font-bold text-neutral-900 text-sm">{{ record.driverName }}</div>
@@ -125,7 +125,7 @@ const resolutionBadgeLabel = computed(() => {
         </div>
       </div>
 
-      <div class="bg-white border border-neutral-200 rounded-lg p-5 space-y-3">
+      <div class="bg-white border border-neutral-200 p-5 space-y-3">
         <h2 class="text-sm font-semibold text-neutral-900">Cash Outcome &amp; Commission Split</h2>
         <div class="grid grid-cols-2 gap-3 text-xs">
           <div>
@@ -152,7 +152,9 @@ const resolutionBadgeLabel = computed(() => {
             <div class="text-neutral-500">Uncollected Shortfall</div>
             <div
               class="font-mono font-bold mt-0.5"
-              :class="getShortfallCentavos(record) > 0 ? 'text-rose-600' : 'text-emerald-600'"
+              :class="
+                getShortfallCentavos(record) > 0 ? 'text-neutral-900 font-bold' : 'text-neutral-600'
+              "
             >
               {{ formatCentavos(getShortfallCentavos(record)) }}
             </div>
@@ -161,18 +163,18 @@ const resolutionBadgeLabel = computed(() => {
       </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-lg p-5 space-y-3">
+    <div class="bg-white border border-neutral-200 p-5 space-y-3">
       <h2 class="text-sm font-semibold text-neutral-900">
         Driver Incident Note &amp; Audit History
       </h2>
       <p
-        class="text-xs text-neutral-700 leading-relaxed bg-neutral-50 border border-neutral-100 p-3 rounded-md"
+        class="text-xs text-neutral-700 leading-relaxed bg-neutral-50 border border-neutral-100 p-3"
       >
         {{ record.notes }}
       </p>
       <div
         v-if="record.resolutionNotes"
-        class="text-xs text-emerald-900 bg-emerald-50 border border-emerald-200 p-3 rounded-md"
+        class="text-xs text-neutral-800 bg-neutral-50 border border-neutral-200 p-3"
       >
         <div class="font-semibold">Resolution ({{ record.resolvedAt || 'Updated' }}):</div>
         <p class="mt-0.5">{{ record.resolutionNotes }}</p>
@@ -181,7 +183,7 @@ const resolutionBadgeLabel = computed(() => {
 
     <div
       v-if="record.resolutionState === 'pending_review'"
-      class="bg-white border border-neutral-200 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+      class="bg-white border border-neutral-200 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
     >
       <div class="text-xs text-neutral-600">
         Confirm whether full cash was subsequently settled or waive the platform commission
@@ -191,14 +193,14 @@ const resolutionBadgeLabel = computed(() => {
         <button
           type="button"
           @click="((actionReason = ''), (activeAction = 'waive'))"
-          class="px-4 py-2 bg-white border border-rose-200 text-rose-700 text-xs font-semibold rounded-md hover:bg-rose-50 transition-colors cursor-pointer"
+          class="px-4 py-2 bg-white border border-neutral-200 text-neutral-700 text-xs font-semibold hover:bg-neutral-50 transition-colors cursor-pointer"
         >
           Waive Driver Commission Fee
         </button>
         <button
           type="button"
           @click="((actionReason = ''), (activeAction = 'reconcile'))"
-          class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold rounded-md hover:bg-neutral-800 transition-colors cursor-pointer"
+          class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
         >
           Mark Full Fare Settled
         </button>
@@ -223,14 +225,14 @@ const resolutionBadgeLabel = computed(() => {
       confirm-label="Confirm Fee Waiver"
       tone="rose"
       require-reason
-      reason-label="Audit justification (mandatory)"
+      reason-label="Audit justification"
       reason-placeholder="Specify verification details for waiving platform commission..."
       @cancel="activeAction = null"
       @confirm="confirmWaive"
     />
   </div>
 
-  <div v-else class="bg-white border border-neutral-200 rounded-lg p-12 text-center space-y-3">
+  <div v-else class="bg-white border border-neutral-200 p-12 text-center space-y-3">
     <Icon icon="lucide:file-search" class="w-8 h-8 text-neutral-400 mx-auto" />
     <h2 class="text-base font-semibold text-neutral-900">Settlement Record Not Found</h2>
     <p class="text-xs text-neutral-500">
@@ -238,7 +240,7 @@ const resolutionBadgeLabel = computed(() => {
     </p>
     <RouterLink
       to="/payments/settlements"
-      class="inline-flex items-center px-4 py-2 bg-neutral-900 text-white text-xs font-semibold rounded-md hover:bg-neutral-800"
+      class="inline-flex items-center px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800"
     >
       Return to Cash Settlements
     </RouterLink>
