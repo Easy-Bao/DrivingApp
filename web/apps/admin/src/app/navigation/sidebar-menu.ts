@@ -301,13 +301,6 @@ export const navigationGroups: SidebarNavGroup[] = [
         icon: 'lucide:building-2',
         path: '/settings/cities',
       },
-      { id: 'taxes', label: 'Taxes', icon: 'lucide:scale', path: '/settings/taxes' },
-      {
-        id: 'languages',
-        label: 'Languages',
-        icon: 'lucide:languages',
-        path: '/settings/languages',
-      },
       {
         id: 'content-pages',
         label: 'Legal & Content',
