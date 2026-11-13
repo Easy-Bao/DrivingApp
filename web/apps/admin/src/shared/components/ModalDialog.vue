@@ -94,27 +94,30 @@ onBeforeUnmount(() => {
         :class="sizeClass"
         class="w-full bg-white border border-neutral-200 shadow-xl flex flex-col max-h-[90dvh]"
       >
-        <div
-          class="px-5 py-4 border-b border-neutral-200 flex items-start justify-between gap-3 shrink-0"
-        >
-          <div class="min-w-0">
-            <h3 :id="headingId" class="text-sm sm:text-base font-bold text-neutral-900">
-              {{ title }}
-            </h3>
-            <p v-if="subtitle" class="text-xs text-neutral-500 mt-0.5">
-              {{ subtitle }}
-            </p>
+        <div class="px-5 py-4 border-b border-neutral-200 shrink-0">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1 min-w-0">
+              <h3 :id="headingId" class="text-sm sm:text-base font-bold text-neutral-900">
+                {{ title }}
+              </h3>
+              <p v-if="subtitle && !$slots.subtitle" class="text-xs text-neutral-500 mt-0.5">
+                {{ subtitle }}
+              </p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <slot name="header-meta" />
+              <button
+                type="button"
+                :aria-label="closeLabel"
+                class="p-1 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition-colors cursor-pointer"
+                @click="closeDialog"
+              >
+                <Icon icon="lucide:x" class="text-base" aria-hidden="true" />
+              </button>
+            </div>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <slot name="header-meta" />
-            <button
-              type="button"
-              :aria-label="closeLabel"
-              class="p-1 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition-colors cursor-pointer"
-              @click="closeDialog"
-            >
-              <Icon icon="lucide:x" class="text-base" aria-hidden="true" />
-            </button>
+          <div v-if="$slots.subtitle" class="mt-1.5">
+            <slot name="subtitle" />
           </div>
         </div>
 

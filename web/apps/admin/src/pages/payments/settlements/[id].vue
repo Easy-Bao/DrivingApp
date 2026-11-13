@@ -100,7 +100,7 @@ const resolutionBadgeLabel = computed(() => {
 
       <div class="text-left sm:text-right">
         <div class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
-          Gross Agreed Fare
+          Gross Trip Fare
         </div>
         <div class="text-2xl font-bold font-mono tabular-nums text-neutral-900">
           {{ formatCentavos(record.grossFareCentavos) }}
