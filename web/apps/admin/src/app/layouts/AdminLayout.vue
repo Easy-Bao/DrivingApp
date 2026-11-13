@@ -53,7 +53,7 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
     item: 'Rejected Documents',
   },
   '/trips/all': { section: 'Trips', sectionTo: '/trips/all', item: 'All Trips' },
-  '/trips/scheduled': { section: 'Trips', sectionTo: '/trips/all', item: 'Scheduled Bookings' },
+  '/trips/bidding': { section: 'Trips', sectionTo: '/trips/all', item: 'Live Bidding Monitor' },
   '/trips/dispatch': { section: 'Trips', sectionTo: '/trips/all', item: 'Live Dispatch Radar' },
   '/trips/cancellations-disputes': {
     section: 'Trips',

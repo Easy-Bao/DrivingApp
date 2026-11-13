@@ -1,19 +1,30 @@
 import type { RouteRecordRaw } from 'vue-router'
-import AllTripsPage from '@/features/trips/pages/AllTripsPage.vue'
-import ScheduledBookingsPage from '@/features/trips/pages/ScheduledBookingsPage.vue'
-import DispatchPage from '@/features/trips/pages/DispatchPage.vue'
-import CancellationsDisputesPage from '@/features/trips/pages/CancellationsDisputesPage.vue'
-import SosAlertsPage from '@/features/trips/pages/SosAlertsPage.vue'
 
 export const tripsRoutes: RouteRecordRaw[] = [
   { path: '/trips', redirect: '/trips/all' },
-  { path: '/trips/all', name: 'trips-all', component: AllTripsPage },
-  { path: '/trips/scheduled', name: 'trips-scheduled', component: ScheduledBookingsPage },
-  { path: '/trips/dispatch', name: 'trips-dispatch', component: DispatchPage },
+  {
+    path: '/trips/all',
+    name: 'trips-all',
+    component: () => import('@/features/trips/pages/AllTripsPage.vue'),
+  },
+  {
+    path: '/trips/bidding',
+    name: 'trips-bidding',
+    component: () => import('@/features/trips/pages/BiddingSessionsPage.vue'),
+  },
+  {
+    path: '/trips/dispatch',
+    name: 'trips-dispatch',
+    component: () => import('@/features/trips/pages/DispatchPage.vue'),
+  },
   {
     path: '/trips/cancellations-disputes',
     name: 'trips-cancellations-disputes',
-    component: CancellationsDisputesPage,
+    component: () => import('@/features/trips/pages/CancellationsDisputesPage.vue'),
   },
-  { path: '/trips/sos-alerts', name: 'trips-sos-alerts', component: SosAlertsPage },
+  {
+    path: '/trips/sos-alerts',
+    name: 'trips-sos-alerts',
+    component: () => import('@/features/trips/pages/SosAlertsPage.vue'),
+  },
 ]

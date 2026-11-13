@@ -93,10 +93,10 @@ export const navigationGroups: SidebarNavGroup[] = [
         path: '/trips/all',
       },
       {
-        id: 'scheduled-bookings',
-        label: 'Scheduled Bookings',
-        icon: 'lucide:calendar-clock',
-        path: '/trips/scheduled',
+        id: 'bidding-sessions',
+        label: 'Live Bidding Monitor',
+        icon: 'lucide:gavel',
+        path: '/trips/bidding',
       },
       {
         id: 'dispatch',
