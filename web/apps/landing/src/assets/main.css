@@ -1,5 +1,103 @@
-/* Application-specific overrides for @easyride/landing-application.
-   Global design tokens and reset are provided by @easyride/ui/styles.css */
+/* Application-specific tokens and utility safeguards for @web/landing.
+   Global Tailwind v4 + ProductSans tokens come from @web/ui/styles/theme.css. */
+:root {
+  color-scheme: light;
+  --surface-background: #f8fafc;
+  --surface-card: #ffffff;
+  --surface-muted: #f1f5f9;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: light;
+    --surface-background: #f8fafc;
+    --surface-card: #ffffff;
+    --surface-muted: #f1f5f9;
+    --border-subtle: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+  }
+}
+
+/* Restore container max-width scale shadowed by --spacing-* tokens in @web/ui */
+@layer utilities {
+  .max-w-xs {
+    max-width: 20rem;
+  }
+  .max-w-sm {
+    max-width: 24rem;
+  }
+  .max-w-md {
+    max-width: 28rem;
+  }
+  .max-w-lg {
+    max-width: 32rem;
+  }
+  .max-w-xl {
+    max-width: 36rem;
+  }
+  .max-w-2xl {
+    max-width: 42rem;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
 #app {
   min-height: 100vh;
+}
+
+select,
+select option,
+select optgroup {
+  color-scheme: light;
+}
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid #047857;
+  outline-offset: 2px;
+}
+
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.page-fade-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .page-fade-enter-active,
+  .page-fade-leave-active {
+    transition: none;
+  }
+
+  .page-fade-enter-from,
+  .page-fade-leave-to {
+    transform: none;
+  }
 }

@@ -1,0 +1,8 @@
+export { default as BiddingShowcaseSection } from '@/features/landing-showcase/components/BiddingShowcaseSection.vue'
+export { default as CoverageCorridorsSection } from '@/features/landing-showcase/components/CoverageCorridorsSection.vue'
+export { default as DriverBannerSection } from '@/features/landing-showcase/components/DriverBannerSection.vue'
+export { default as DriverEarningsCalculator } from '@/features/landing-showcase/components/DriverEarningsCalculator.vue'
+export { default as FaqSection } from '@/features/landing-showcase/components/FaqSection.vue'
+export { default as FleetServicesSection } from '@/features/landing-showcase/components/FleetServicesSection.vue'
+export { default as HeroSection } from '@/features/landing-showcase/components/HeroSection.vue'
+export { default as SafetyTrustSection } from '@/features/landing-showcase/components/SafetyTrustSection.vue'

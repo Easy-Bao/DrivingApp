@@ -1,26 +1,23 @@
 <script setup lang="ts">
-import ApplicationShellLayout from '@web/ui/templates/ApplicationShellLayout.vue'
-import NavigationHeader from '@web/ui/organisms/NavigationHeader.vue'
-import { RouterLink } from 'vue-router'
+import SiteFooter from '@/shared/components/SiteFooter.vue'
+import SiteHeader from '@/shared/components/SiteHeader.vue'
 </script>
 
 <template>
-  <ApplicationShellLayout class="min-h-screen bg-neutral-50 flex flex-col font-sans">
-    <NavigationHeader class="border-b border-neutral-200 bg-white px-6 py-4">
-      <div class="flex items-center justify-between max-w-6xl mx-auto w-full">
-        <RouterLink to="/" class="font-bold text-lg text-neutral-900">EasyRide</RouterLink>
-        <nav class="flex items-center space-x-6 text-sm">
-          <RouterLink to="/" class="text-neutral-600 hover:text-neutral-900 font-medium"
-            >Home</RouterLink
-          >
-          <RouterLink to="/architecture" class="text-neutral-600 hover:text-neutral-900 font-medium"
-            >Architecture</RouterLink
-          >
-        </nav>
-      </div>
-    </NavigationHeader>
-    <main class="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
+  <div class="flex min-h-screen flex-col bg-white text-[#090d16] font-sans antialiased">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-emerald-700 focus:px-4 focus:py-2.5 focus:text-sm focus:font-bold focus:text-white focus:shadow-lg"
+    >
+      Skip to main content
+    </a>
+
+    <SiteHeader />
+
+    <main id="main-content" tabindex="-1" class="flex-1 focus:outline-none">
       <slot />
     </main>
-  </ApplicationShellLayout>
+
+    <SiteFooter />
+  </div>
 </template>
