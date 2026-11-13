@@ -154,7 +154,7 @@ const saveZone = () => {
     />
 
     <div
-      class="bg-white border border-neutral-200 rounded-md p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div>
         <h2 class="text-sm font-semibold text-neutral-900">
@@ -165,23 +165,25 @@ const saveZone = () => {
           server cap).
         </p>
       </div>
-      <button
-        type="button"
-        class="self-start sm:self-auto px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold"
-        @click="openCreateZone"
-      >
-        + Create Service Zone
-      </button>
     </div>
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
-      <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
+      <div
+        class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+      >
         <input
           v-model="searchQuery"
           type="text"
           placeholder="Search zone ID, corridor, or Pagadian barangay..."
           class="w-full max-w-sm px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
         />
+        <button
+          type="button"
+          class="self-start sm:self-auto px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold cursor-pointer shrink-0"
+          @click="openCreateZone"
+        >
+          + Create Zone
+        </button>
       </div>
 
       <div class="overflow-x-auto">
@@ -212,7 +214,7 @@ const saveZone = () => {
                 <div class="text-[11px] text-neutral-500">{{ z.barangaysCovered }}</div>
               </td>
               <td class="py-3 px-4 font-mono text-[11px] text-neutral-600">{{ z.centerCoords }}</td>
-              <td class="py-3 px-4 font-mono font-bold text-amber-700">
+              <td class="py-3 px-4 font-mono font-bold text-neutral-900">
                 {{ z.surgeFactor.toFixed(1) }}x
               </td>
               <td class="py-3 px-4 font-mono text-neutral-500">{{ z.polygonPoints }} vertices</td>

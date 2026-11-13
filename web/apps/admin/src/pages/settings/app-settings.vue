@@ -43,14 +43,14 @@ const commitSettings = () => {
     />
 
     <div
-      class="bg-white border border-neutral-200 rounded-md p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div>
         <div class="flex flex-wrap items-center gap-2">
           <h2 class="text-sm font-semibold text-neutral-900">
             Pagadian Dispatch &amp; Wallet Runtime Parameters
           </h2>
-          <StatusBadge label="Live Bidding Architecture" tone="info" />
+          <StatusBadge label="Live Bidding Architecture" tone="neutral" />
         </div>
         <p class="text-xs text-neutral-500 mt-0.5">
           Governs live taxicle bidding timeouts, PHP prepaid dispatch thresholds, and driver

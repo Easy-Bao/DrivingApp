@@ -150,7 +150,7 @@ const togglePublished = (article: FaqArticle) => {
     />
 
     <div
-      class="bg-white border border-neutral-200 rounded-md p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div>
         <h2 class="text-sm font-semibold text-neutral-900">
@@ -160,13 +160,6 @@ const togglePublished = (article: FaqArticle) => {
           Manage help articles synced to the Pagadian Passenger and Driver mobile apps.
         </p>
       </div>
-      <button
-        type="button"
-        class="self-start sm:self-auto px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold"
-        @click="openCreateFaq"
-      >
-        + New FAQ Article
-      </button>
     </div>
 
     <div
@@ -179,15 +172,24 @@ const togglePublished = (article: FaqArticle) => {
         class="w-full md:w-80 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
       />
 
-      <BaseSelect
-        v-model="audienceFilter"
-        aria-label="Filter by app audience"
-        :options="[
-          { label: 'All App Audiences', value: 'All' },
-          { label: 'Passenger App', value: 'Passenger' },
-          { label: 'Driver App', value: 'Driver' },
-        ]"
-      />
+      <div class="flex flex-wrap items-center gap-2">
+        <BaseSelect
+          v-model="audienceFilter"
+          aria-label="Filter by app audience"
+          :options="[
+            { label: 'All App Audiences', value: 'All' },
+            { label: 'Passenger App', value: 'Passenger' },
+            { label: 'Driver App', value: 'Driver' },
+          ]"
+        />
+        <button
+          type="button"
+          class="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold cursor-pointer shrink-0"
+          @click="openCreateFaq"
+        >
+          + New FAQ
+        </button>
+      </div>
     </div>
 
     <div class="space-y-3">

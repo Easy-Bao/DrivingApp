@@ -134,7 +134,7 @@ const saveMunicipality = () => {
     />
 
     <div
-      class="bg-white border border-neutral-200 rounded-md p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div>
         <h2 class="text-sm font-semibold text-neutral-900">
@@ -145,16 +145,23 @@ const saveMunicipality = () => {
           fares.
         </p>
       </div>
-      <button
-        type="button"
-        class="self-start sm:self-auto px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold"
-        @click="openCreateModal"
-      >
-        + Add Municipality
-      </button>
     </div>
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
+      <div
+        class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+      >
+        <span class="text-xs font-medium text-neutral-500 tabular-nums">
+          {{ cities.length }} Municipalities
+        </span>
+        <button
+          type="button"
+          class="self-start sm:self-auto px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold cursor-pointer shrink-0"
+          @click="openCreateModal"
+        >
+          + Add Municipality
+        </button>
+      </div>
       <div class="overflow-x-auto">
         <table class="min-w-[800px] w-full text-left text-xs">
           <thead

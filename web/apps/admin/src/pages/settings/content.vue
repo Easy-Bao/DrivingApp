@@ -81,7 +81,7 @@ const saveDocument = () => {
       @dismiss="toastMessage = null"
     />
 
-    <div class="bg-white border border-neutral-200 rounded-md p-4">
+    <div class="bg-white border border-neutral-200 p-4">
       <h2 class="text-sm font-semibold text-neutral-900">
         Platform Legal Notices &amp; Philippine Policy Texts
       </h2>
