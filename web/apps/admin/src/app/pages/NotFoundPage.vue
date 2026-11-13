@@ -10,7 +10,7 @@ function goBack() {
 </script>
 
 <template>
-  <div class="min-h-[60vh] flex items-center justify-center p-6">
+  <div class="min-h-[60vh] w-full flex items-center justify-center p-6">
     <div class="w-full max-w-md bg-white border border-neutral-200 p-8 text-center space-y-5">
       <div
         class="w-12 h-12 mx-auto bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-700"
