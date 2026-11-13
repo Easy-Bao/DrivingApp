@@ -13,21 +13,19 @@ describe('RolesPage', () => {
       },
     })
 
-    const createTrigger = wrapper
-      .findAll('button')
-      .find((b) => b.text().includes('+ Create Custom Role'))
+    const createTrigger = wrapper.findAll('button').find((b) => b.text().includes('+ Create Role'))
     expect(createTrigger).toBeDefined()
     await createTrigger!.trigger('click')
 
     const inputs = wrapper.findAll('input[type="text"]')
     expect(inputs.length).toBeGreaterThanOrEqual(2)
     await inputs[0]!.setValue('Night Shift Dispatch')
-    await inputs[1]!.setValue('Handles evening terminal bidding queues.')
+    await inputs[1]!.setValue('Handles evening terminal queues.')
 
     await wrapper.find('form').trigger('submit')
 
     expect(wrapper.text()).toContain('Night Shift Dispatch')
-    expect(wrapper.text()).toContain('Created custom RBAC role "Night Shift Dispatch".')
+    expect(wrapper.text()).toContain('Created role "Night Shift Dispatch".')
   })
 
   it('opens permission editor for an existing role and saves changes', async () => {
@@ -47,10 +45,10 @@ describe('RolesPage', () => {
     expect(wrapper.text()).toContain('Edit Role Permissions')
 
     const titleInput = wrapper.find('input[type="text"]')
-    await titleInput.setValue('Primary Super Admin')
+    await titleInput.setValue('Root Lead')
 
     await wrapper.find('form').trigger('submit')
-    expect(wrapper.text()).toContain('Primary Super Admin')
-    expect(wrapper.text()).toContain('Updated RBAC permissions for Primary Super Admin.')
+    expect(wrapper.text()).toContain('Root Lead')
+    expect(wrapper.text()).toContain('Updated permissions for Root Lead.')
   })
 })

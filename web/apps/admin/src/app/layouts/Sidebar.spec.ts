@@ -28,8 +28,14 @@ describe('Sidebar', () => {
     expect(wrapper.text()).toContain('Top-Ups')
   })
 
-  it('toggles collapse state without layout overflow', async () => {
-    const wrapper = mount(Sidebar)
+  it('toggles collapse state, uses dark pulse indicators, and shows hover flyout dropdown', async () => {
+    const wrapper = mount(Sidebar, {
+      global: {
+        stubs: {
+          Teleport: { template: '<div><slot /></div>' },
+        },
+      },
+    })
     expect(wrapper.classes()).toContain('w-72')
 
     const toggleButton = wrapper.find('button[aria-label="Collapse sidebar"]')
@@ -37,6 +43,38 @@ describe('Sidebar', () => {
 
     await toggleButton.trigger('click')
     expect(wrapper.classes()).toContain('w-20')
+
+    const expandButton = wrapper.find('button[aria-label="Expand sidebar"]')
+    expect(expandButton.find('[data-test="collapsed-brand-logo"]').exists()).toBe(true)
+    await expandButton.trigger('mouseenter')
+    expect(expandButton.find('[data-test="collapsed-brand-logo"]').exists()).toBe(false)
+    expect(expandButton.find('[data-test="sidebar-toggle-icon"]').exists()).toBe(true)
+
+    const countBadges = wrapper.findAll('[data-test="collapsed-notif-count"]')
+    expect(countBadges.length).toBeGreaterThan(0)
+    const badgeTexts = countBadges.map((badge) => badge.text())
+    expect(badgeTexts).toContain('2')
+    for (const badge of countBadges) {
+      expect(badge.classes()).not.toContain('animate-pulse')
+      expect(badge.classes()).not.toContain('bg-neutral-500')
+    }
+
+    const dashboardBtn = wrapper.find('button[aria-label="Dashboard"]')
+    await dashboardBtn.trigger('mouseenter')
+    const dashboardFlyout = wrapper.find('[data-test="collapsed-flyout"]')
+    expect(dashboardFlyout.exists()).toBe(true)
+    const activeMenuItem = dashboardFlyout.find('[aria-current="page"]')
+    expect(activeMenuItem.exists()).toBe(true)
+    expect(activeMenuItem.text()).toContain('Overview')
+    expect(activeMenuItem.classes()).toContain('bg-neutral-900')
+
+    const tripsBtn = wrapper.find('button[aria-label="Trips"]')
+    await tripsBtn.trigger('mouseenter')
+    const flyout = wrapper.find('[data-test="collapsed-flyout"]')
+    expect(flyout.exists()).toBe(true)
+    expect(flyout.text()).toContain('Trips')
+    expect(flyout.text()).toContain('SOS Alerts')
+    expect(flyout.text()).toContain('Live Bidding')
   })
 
   it('renders line indent border on expanded child groups', () => {

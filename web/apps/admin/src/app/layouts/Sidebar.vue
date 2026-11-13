@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { motion, AnimatePresence } from 'motion-v'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import { navigationGroups, type SidebarSubItem } from '@/app/navigation/sidebar-menu'
+import {
+  navigationGroups,
+  type SidebarNavGroup,
+  type SidebarSubItem,
+} from '@/app/navigation/sidebar-menu'
 import { ROLE_PROFILES, lockAuthSession, useAuthSession } from '@/core/auth/auth-session'
 
 withDefaults(
@@ -24,14 +28,89 @@ const route = useRoute()
 const router = useRouter()
 
 const isCollapsed = ref(false)
+const isToggleHovered = ref(false)
 const searchQuery = ref('')
 const showSignOutConfirm = ref(false)
 const signedOutNotice = ref(false)
 const authSession = useAuthSession()
 
+interface FlyoutState {
+  group: SidebarNavGroup
+  top: number
+  left: number
+}
+
+interface TooltipState {
+  label: string
+  top: number
+  left: number
+}
+
+const activeFlyout = ref<FlyoutState | null>(null)
+const collapsedTooltip = ref<TooltipState | null>(null)
+let flyoutCloseTimer: ReturnType<typeof setTimeout> | null = null
+
+const clearFlyoutTimer = () => {
+  if (flyoutCloseTimer !== null) {
+    clearTimeout(flyoutCloseTimer)
+    flyoutCloseTimer = null
+  }
+}
+
+const openGroupFlyout = (group: SidebarNavGroup, event: Event) => {
+  if (!isCollapsed.value) return
+  clearFlyoutTimer()
+  collapsedTooltip.value = null
+  const target = event.currentTarget as HTMLElement | null
+  if (!target) return
+  const rect = target.getBoundingClientRect()
+  const estimatedHeight = 44 + group.items.length * 36
+  const maxTop =
+    typeof window !== 'undefined'
+      ? Math.max(8, window.innerHeight - estimatedHeight - 12)
+      : rect.top
+  activeFlyout.value = {
+    group,
+    top: Math.min(rect.top, maxTop),
+    left: rect.right + 4,
+  }
+}
+
+const scheduleCloseFlyout = () => {
+  clearFlyoutTimer()
+  flyoutCloseTimer = setTimeout(() => {
+    activeFlyout.value = null
+    flyoutCloseTimer = null
+  }, 140)
+}
+
+const cancelCloseFlyout = () => {
+  clearFlyoutTimer()
+}
+
+const showButtonTooltip = (label: string, event: Event) => {
+  if (!isCollapsed.value) return
+  const target = event.currentTarget as HTMLElement | null
+  if (!target) return
+  const rect = target.getBoundingClientRect()
+  collapsedTooltip.value = {
+    label,
+    top: rect.top + rect.height / 2,
+    left: rect.right + 8,
+  }
+}
+
+const hideButtonTooltip = () => {
+  collapsedTooltip.value = null
+}
+
+onBeforeUnmount(() => {
+  clearFlyoutTimer()
+})
+
 const activeRoleLabel = computed(() => {
   const role = authSession.value.role
-  return role ? ROLE_PROFILES[role].label : 'Locked Session'
+  return role ? ROLE_PROFILES[role].label : 'Locked'
 })
 
 const operatorInitials = computed(() => {
@@ -57,6 +136,9 @@ const expandedGroups = ref<Record<string, boolean>>({
 
 function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value
+  isToggleHovered.value = false
+  activeFlyout.value = null
+  collapsedTooltip.value = null
 }
 
 function toggleGroup(groupId: string) {
@@ -64,6 +146,8 @@ function toggleGroup(groupId: string) {
 }
 
 function navigateTo(path: string) {
+  activeFlyout.value = null
+  collapsedTooltip.value = null
   emit('closeMobile')
   void router.push(path)
 }
@@ -99,6 +183,18 @@ const activeItem = computed(() => {
 
 function isItemActive(item: SidebarSubItem): boolean {
   return activeItem.value?.id === item.id && activeItem.value?.path === item.path
+}
+
+function isGroupActive(group: SidebarNavGroup): boolean {
+  return group.items.some((item) => isItemActive(item))
+}
+
+function getGroupNotificationCount(group: SidebarNavGroup): number {
+  return group.items.filter(
+    (item) =>
+      item.badge !== undefined &&
+      (typeof item.badge === 'number' || /^\d+$/.test(item.badge.trim())),
+  ).length
 }
 
 watch(
@@ -151,7 +247,7 @@ const filteredGroups = computed(() => {
         <div v-if="!isCollapsed" class="flex items-center space-x-3 overflow-hidden min-w-0">
           <div class="flex flex-col overflow-hidden whitespace-nowrap">
             <span class="font-bold text-sm text-neutral-900 leading-tight">EasyRide</span>
-            <span class="text-[11px] text-neutral-500 font-medium">Pagadian Ops · 7016</span>
+            <span class="text-[11px] text-neutral-500 font-medium">Pagadian Ops</span>
           </div>
         </div>
 
@@ -168,13 +264,36 @@ const filteredGroups = computed(() => {
 
           <button
             type="button"
-            class="rounded-none text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors flex items-center justify-center shrink-0"
-            :class="isCollapsed ? 'w-10 h-10 bg-neutral-50 border border-neutral-200' : 'p-1.5'"
+            class="p-1.5 text-neutral-700 hover:text-neutral-900 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
             :aria-label="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-            :title="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+            :title="isCollapsed ? undefined : 'Collapse sidebar'"
+            @mouseenter="((isToggleHovered = true), showButtonTooltip('Expand', $event))"
+            @mouseleave="((isToggleHovered = false), hideButtonTooltip())"
+            @focus="((isToggleHovered = true), showButtonTooltip('Expand', $event))"
+            @blur="((isToggleHovered = false), hideButtonTooltip())"
             @click="toggleCollapse"
           >
+            <svg
+              v-if="isCollapsed && !isToggleHovered"
+              data-test="collapsed-brand-logo"
+              viewBox="0 0 24 24"
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="square"
+              stroke-linejoin="miter"
+              aria-hidden="true"
+            >
+              <polygon points="12,2 21,7 21,17 12,22 3,17 3,7" />
+              <circle cx="12" cy="12" r="2.5" />
+              <line x1="12" y1="2" x2="12" y2="9.5" />
+              <line x1="20" y1="16.5" x2="14.2" y2="13.2" />
+              <line x1="4" y1="16.5" x2="9.8" y2="13.2" />
+            </svg>
             <Icon
+              v-else
+              data-test="sidebar-toggle-icon"
               :icon="isCollapsed ? 'lucide:panel-left-open' : 'lucide:panel-left-close'"
               class="text-lg"
             />
@@ -237,30 +356,61 @@ const filteredGroups = computed(() => {
           />
         </button>
 
-        <div v-else class="h-px bg-neutral-100 my-2 mx-2" :title="group.title" />
+        <div v-else class="flex justify-center py-0.5">
+          <button
+            type="button"
+            :aria-label="group.title"
+            :aria-expanded="activeFlyout?.group.id === group.id"
+            aria-haspopup="menu"
+            class="relative w-11 h-11 flex items-center justify-center transition-colors cursor-pointer"
+            :class="
+              isGroupActive(group)
+                ? 'bg-neutral-900 text-white'
+                : activeFlyout?.group.id === group.id
+                  ? 'bg-neutral-100 text-neutral-900'
+                  : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+            "
+            @mouseenter="openGroupFlyout(group, $event)"
+            @mouseleave="scheduleCloseFlyout"
+            @focus="openGroupFlyout(group, $event)"
+            @blur="scheduleCloseFlyout"
+            @click="navigateTo(group.items[0]?.path || '/dashboard/overview')"
+          >
+            <Icon :icon="group.icon" class="text-base shrink-0" />
+            <span
+              v-if="getGroupNotificationCount(group) > 0"
+              data-test="collapsed-notif-count"
+              class="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold leading-none tabular-nums"
+              :class="
+                isGroupActive(group)
+                  ? 'bg-white text-neutral-900 border border-neutral-900'
+                  : 'bg-neutral-900 text-white'
+              "
+            >
+              {{ getGroupNotificationCount(group) }}
+            </span>
+          </button>
+        </div>
 
         <AnimatePresence>
           <motion.div
-            v-if="isCollapsed || expandedGroups[group.id] || searchQuery"
+            v-if="!isCollapsed && (expandedGroups[group.id] || searchQuery)"
             :initial="{ opacity: 0, height: 0 }"
             :animate="{ opacity: 1, height: 'auto' }"
             :exit="{ opacity: 0, height: 0 }"
             :transition="{ duration: 0.2, ease: 'easeInOut' }"
-            class="overflow-hidden space-y-0.5"
-            :class="!isCollapsed ? 'ml-4 pl-2 border-l border-neutral-200 my-0.5' : ''"
+            class="overflow-hidden space-y-0.5 ml-4 pl-2 border-l border-neutral-200 my-0.5"
           >
             <button
               v-for="item in group.items"
               :key="item.id"
               type="button"
-              class="w-full flex items-center text-xs font-medium transition-colors group relative"
-              :class="[
+              class="w-full flex items-center justify-between px-3 py-2 text-xs font-medium transition-colors group relative"
+              :class="
                 isItemActive(item)
                   ? 'text-white'
-                  : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900',
-                isCollapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2',
-              ]"
-              :title="isCollapsed ? `${group.title}: ${item.label}` : undefined"
+                  : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+              "
               @click="navigateTo(item.path)"
             >
               <motion.span
@@ -271,21 +421,11 @@ const filteredGroups = computed(() => {
               />
 
               <div class="relative z-10 flex items-center space-x-2.5 overflow-hidden">
-                <Icon
-                  v-if="isCollapsed"
-                  :icon="item.icon"
-                  class="text-base shrink-0 transition-colors"
-                  :class="
-                    isItemActive(item)
-                      ? 'text-white'
-                      : 'text-neutral-400 group-hover:text-neutral-700'
-                  "
-                />
-                <span v-if="!isCollapsed" class="truncate">{{ item.label }}</span>
+                <span class="truncate">{{ item.label }}</span>
               </div>
 
               <span
-                v-if="!isCollapsed && item.badge"
+                v-if="item.badge"
                 class="relative z-10 text-[10px] px-1.5 py-0.5 rounded-none font-semibold transition-colors"
                 :class="
                   isItemActive(item)
@@ -295,12 +435,6 @@ const filteredGroups = computed(() => {
               >
                 {{ item.badge }}
               </span>
-
-              <span
-                v-if="isCollapsed && item.badge"
-                class="relative z-10 absolute top-1.5 right-1.5 w-2 h-2 rounded-none"
-                :class="item.id === 'sos-alerts' ? 'bg-neutral-900' : 'bg-neutral-500'"
-              />
             </button>
           </motion.div>
         </AnimatePresence>
@@ -314,8 +448,12 @@ const filteredGroups = computed(() => {
       >
         <button
           type="button"
-          class="flex items-center space-x-3 overflow-hidden text-left focus:outline-none"
-          :title="isCollapsed ? 'Profile' : undefined"
+          class="flex items-center space-x-3 overflow-hidden text-left focus:outline-none cursor-pointer"
+          aria-label="Profile"
+          @mouseenter="showButtonTooltip('Profile', $event)"
+          @mouseleave="hideButtonTooltip"
+          @focus="showButtonTooltip('Profile', $event)"
+          @blur="hideButtonTooltip"
           @click="navigateTo('/account/profile')"
         >
           <div
@@ -359,5 +497,77 @@ const filteredGroups = computed(() => {
       tone="neutral"
       @confirm="confirmSignOut"
     />
+
+    <Teleport to="body">
+      <div
+        v-if="isCollapsed && activeFlyout"
+        data-test="collapsed-flyout"
+        role="menu"
+        :aria-label="activeFlyout.group.title"
+        class="fixed z-50 w-56 bg-white border border-neutral-300 shadow-lg"
+        :style="{ top: `${activeFlyout.top}px`, left: `${activeFlyout.left}px` }"
+        @mouseenter="cancelCloseFlyout"
+        @mouseleave="scheduleCloseFlyout"
+      >
+        <div
+          class="bg-neutral-900 text-white px-3 py-2 flex items-center justify-between gap-2 text-xs font-semibold"
+        >
+          <span>{{ activeFlyout.group.title }}</span>
+          <span
+            v-if="isGroupActive(activeFlyout.group) && activeItem"
+            class="text-[10px] font-medium text-neutral-300 truncate max-w-[110px]"
+          >
+            {{ activeItem.label }}
+          </span>
+          <span v-else class="text-[10px] font-mono text-neutral-300">
+            {{ activeFlyout.group.items.length }}
+          </span>
+        </div>
+        <div class="p-1 space-y-0.5 max-h-72 overflow-y-auto">
+          <button
+            v-for="item in activeFlyout.group.items"
+            :key="item.id"
+            type="button"
+            role="menuitem"
+            :aria-current="isItemActive(item) ? 'page' : undefined"
+            class="w-full px-2.5 py-2 text-left text-xs font-medium flex items-center justify-between gap-2 transition-colors cursor-pointer"
+            :class="
+              isItemActive(item)
+                ? 'bg-neutral-900 text-white font-semibold'
+                : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
+            "
+            @click="navigateTo(item.path)"
+          >
+            <span class="flex items-center gap-2 min-w-0">
+              <Icon
+                :icon="item.icon"
+                class="text-sm shrink-0"
+                :class="isItemActive(item) ? 'text-white' : 'text-neutral-500'"
+              />
+              <span class="truncate">{{ item.label }}</span>
+            </span>
+            <span
+              v-if="item.badge"
+              class="px-1.5 py-0.5 text-[10px] font-semibold shrink-0"
+              :class="
+                isItemActive(item) ? 'bg-white text-neutral-900' : 'bg-neutral-900 text-white'
+              "
+            >
+              {{ item.badge }}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div
+        v-if="isCollapsed && collapsedTooltip && !activeFlyout"
+        data-test="collapsed-tooltip"
+        role="tooltip"
+        class="fixed z-50 -translate-y-1/2 bg-neutral-900 text-white px-2.5 py-1.5 text-xs font-medium pointer-events-none shadow-sm"
+        :style="{ top: `${collapsedTooltip.top}px`, left: `${collapsedTooltip.left}px` }"
+      >
+        {{ collapsedTooltip.label }}
+      </div>
+    </Teleport>
   </motion.aside>
 </template>
