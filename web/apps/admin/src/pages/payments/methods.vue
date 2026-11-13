@@ -255,14 +255,14 @@ const toggleAccountStatus = (account: CompanyCollectionAccount) => {
     />
 
     <div
-      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 rounded-md p-4"
+      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 p-4"
     >
       <div>
         <div class="flex flex-wrap items-center gap-2">
           <h2 class="text-sm font-semibold text-neutral-900">
             Company Top-Up Collection Accounts &amp; QRPh Channels
           </h2>
-          <StatusBadge :label="`${activeCount} Active Channels`" tone="success" />
+          <StatusBadge :label="`${activeCount} Active Channels`" tone="neutral" />
         </div>
         <p class="text-xs text-neutral-500 mt-0.5">
           Receiving QRPh codes and corporate bank accounts displayed inside the Driver app for
@@ -355,12 +355,7 @@ const toggleAccountStatus = (account: CompanyCollectionAccount) => {
 
           <button
             type="button"
-            class="px-3 py-1.5 text-xs font-medium rounded-none border transition-colors"
-            :class="
-              account.isActive
-                ? 'border-amber-300 text-amber-800 bg-amber-50 hover:bg-amber-100'
-                : 'border-emerald-300 text-emerald-800 bg-emerald-50 hover:bg-emerald-100'
-            "
+            class="px-3 py-1.5 text-xs font-medium rounded-none border border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50 transition-colors cursor-pointer"
             @click="toggleAccountStatus(account)"
           >
             {{ account.isActive ? 'Pause Channel' : 'Activate Channel' }}

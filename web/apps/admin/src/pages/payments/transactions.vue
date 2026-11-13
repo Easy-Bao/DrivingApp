@@ -73,7 +73,7 @@ const transactions = ref<WalletLedgerEntry[]>([
     referenceId: 'CAN-7016-302',
     driver: 'Reynaldo Bautista',
     type: 'Settlement Fee Waiver',
-    method: 'Admin Override · Credit Back',
+    method: 'Operator Override · Credit Back',
     amountPhp: 15.0,
     direction: 'credit',
     status: 'Settled',
@@ -130,7 +130,7 @@ const exportLedger = () => {
 <template>
   <div class="space-y-6">
     <div
-      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 rounded-md p-4"
+      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 p-4"
     >
       <div>
         <h2 class="text-sm font-semibold text-neutral-900">
@@ -141,13 +141,6 @@ const exportLedger = () => {
           waivers in PHP.
         </p>
       </div>
-      <button
-        type="button"
-        class="self-start sm:self-auto px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-        @click="exportLedger"
-      >
-        Export Ledger CSV
-      </button>
     </div>
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
@@ -161,17 +154,26 @@ const exportLedger = () => {
           class="w-full md:w-80 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
         />
 
-        <BaseSelect
-          v-model="typeFilter"
-          aria-label="Filter by ledger entry type"
-          :options="[
-            { label: 'All Ledger Entries', value: 'All' },
-            { label: 'Commission Deduction', value: 'Commission Deduction' },
-            { label: 'QRPh Wallet Top-Up', value: 'QRPh Wallet Top-Up' },
-            { label: 'Bank Top-Up', value: 'Bank Top-Up' },
-            { label: 'Settlement Fee Waiver', value: 'Settlement Fee Waiver' },
-          ]"
-        />
+        <div class="flex flex-wrap items-center gap-2">
+          <BaseSelect
+            v-model="typeFilter"
+            aria-label="Filter by ledger entry type"
+            :options="[
+              { label: 'All Ledger Entries', value: 'All' },
+              { label: 'Commission Deduction', value: 'Commission Deduction' },
+              { label: 'QRPh Wallet Top-Up', value: 'QRPh Wallet Top-Up' },
+              { label: 'Bank Top-Up', value: 'Bank Top-Up' },
+              { label: 'Settlement Fee Waiver', value: 'Settlement Fee Waiver' },
+            ]"
+          />
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer shrink-0"
+            @click="exportLedger"
+          >
+            Export CSV
+          </button>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
@@ -203,10 +205,7 @@ const exportLedger = () => {
                 <div class="font-medium text-neutral-900">{{ txn.type }}</div>
                 <div class="text-[11px] text-neutral-500">{{ txn.method }}</div>
               </td>
-              <td
-                class="py-3 px-4 font-mono font-bold tabular-nums"
-                :class="txn.direction === 'credit' ? 'text-emerald-700' : 'text-neutral-900'"
-              >
+              <td class="py-3 px-4 font-mono font-bold tabular-nums text-neutral-900">
                 {{ txn.direction === 'credit' ? '+' : '-' }}{{ formatPhp(txn.amountPhp) }}
               </td>
               <td class="py-3 px-4">

@@ -157,7 +157,7 @@ const applyWalletAdjustment = () => {
     adjustingWallet.value.totalTopups = Number(
       (adjustingWallet.value.totalTopups + delta).toFixed(2),
     )
-    adjustingWallet.value.lastTopupAt = 'Just now (Admin Credit)'
+    adjustingWallet.value.lastTopupAt = 'Just now (Operator Credit)'
   }
   toastMessage.value = `${adjustmentType.value === 'credit' ? 'Credited' : 'Debited'} ${formatPhp(adjustmentAmount.value)} for ${adjustingWallet.value.driver}. New balance: ${formatPhp(adjustingWallet.value.balance)}.`
   closeAdjustModal()
@@ -190,7 +190,7 @@ const exportWalletLedger = () => {
     />
 
     <div
-      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 rounded-md p-4"
+      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 p-4"
     >
       <div>
         <h2 class="text-sm font-semibold text-neutral-900">
@@ -200,21 +200,6 @@ const exportWalletLedger = () => {
           Drivers maintain at least {{ formatPhp(MINIMUM_DISPATCH_BALANCE) }} prepaid commission
           credits to remain eligible for live bidding offers in Pagadian City.
         </p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2 shrink-0">
-        <button
-          type="button"
-          class="px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-          @click="exportWalletLedger"
-        >
-          Export Wallet CSV
-        </button>
-        <RouterLink
-          to="/payments/topups"
-          class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-        >
-          Review Pending Top-Ups
-        </RouterLink>
       </div>
     </div>
 
@@ -229,13 +214,13 @@ const exportWalletLedger = () => {
         <span class="text-xs text-neutral-500 font-medium">
           Dispatch Locked (&lt; {{ formatPhp(MINIMUM_DISPATCH_BALANCE) }} min)
         </span>
-        <div class="text-xl font-bold tabular-nums text-rose-600 mt-1">
+        <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
           {{ dispatchLockedCount }} Drivers
         </div>
       </div>
       <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Platform Commission Collected</span>
-        <div class="text-xl font-bold tabular-nums text-emerald-700 mt-1">
+        <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
           {{ formatPhp(totalCommissionCollected) }}
         </div>
       </div>
@@ -260,12 +245,12 @@ const exportWalletLedger = () => {
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search driver, +63 phone, or TODA plate..."
+            placeholder="Search driver, phone, or TODA plate..."
             class="w-full pl-9 pr-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
           />
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           <BaseSelect
             v-model="eligibilityFilter"
             aria-label="Filter by dispatch eligibility"
@@ -275,6 +260,19 @@ const exportWalletLedger = () => {
               { label: 'Dispatch Locked (< ₱50)', value: 'Locked' },
             ]"
           />
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+            @click="exportWalletLedger"
+          >
+            Export CSV
+          </button>
+          <RouterLink
+            to="/payments/topups"
+            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
+          >
+            Pending Top-Ups
+          </RouterLink>
         </div>
       </div>
 
@@ -312,12 +310,7 @@ const exportWalletLedger = () => {
                 </div>
               </td>
               <td class="py-3 px-4">
-                <span
-                  class="font-mono font-bold text-sm tabular-nums"
-                  :class="
-                    wallet.balance < MINIMUM_DISPATCH_BALANCE ? 'text-rose-600' : 'text-neutral-900'
-                  "
-                >
+                <span class="font-mono font-bold text-sm tabular-nums text-neutral-900">
                   {{ formatPhp(wallet.balance) }}
                 </span>
               </td>

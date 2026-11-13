@@ -96,14 +96,14 @@ const saveConfig = () => {
     />
 
     <div
-      class="bg-white border border-neutral-200 rounded-md p-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+      class="bg-white border border-neutral-200 p-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
     >
       <div>
         <div class="flex items-center gap-2">
           <h2 class="text-sm font-semibold text-neutral-900">
             Platform Commission &amp; Settlement Basis-Point Rules
           </h2>
-          <StatusBadge label="Cash Settlement Model" tone="info" />
+          <StatusBadge label="Cash Settlement Model" tone="neutral" />
         </div>
         <p class="text-xs text-neutral-500 mt-0.5">
           Drivers collect 100% fare in cash; platform commission is automatically debited in basis

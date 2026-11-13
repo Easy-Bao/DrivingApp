@@ -122,34 +122,37 @@ const saveInlineChanges = () => {
     />
 
     <div
-      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 rounded-md p-4"
+      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 p-4"
     >
       <div>
         <div class="flex flex-wrap items-center gap-2">
           <h2 class="text-sm font-semibold text-neutral-900">
             Pagadian Solo Taxicle Fare &amp; Bidding Caps
           </h2>
-          <StatusBadge label="PHP (₱) Active Tariff" tone="info" />
+          <StatusBadge label="PHP Active Tariff" tone="neutral" />
         </div>
         <p class="text-xs text-neutral-500 mt-0.5">
           All amounts in Philippine Pesos (₱). Server enforces a 2.5x maximum bidding surge cap and
           a 1.05x reward multiplier for drivers rated 4.5★ or higher.
         </p>
       </div>
-
-      <button
-        type="button"
-        class="self-start sm:self-auto px-4 py-1.5 bg-neutral-900 text-white text-xs font-medium rounded-none hover:bg-neutral-800 transition-colors"
-        @click="saveInlineChanges"
-      >
-        Publish Tariff Matrix
-      </button>
     </div>
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
-      <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-neutral-900">Active Regional Pricing Matrix</h3>
-        <span class="text-xs text-neutral-500 font-mono">Pagadian City (7016)</span>
+      <div
+        class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+      >
+        <div class="flex flex-wrap items-center gap-2">
+          <h3 class="text-sm font-semibold text-neutral-900">Active Regional Pricing Matrix</h3>
+          <span class="text-xs text-neutral-500 font-mono">Pagadian City · 7016</span>
+        </div>
+        <button
+          type="button"
+          class="self-start sm:self-auto px-4 py-1.5 bg-neutral-900 text-white text-xs font-medium rounded-none hover:bg-neutral-800 transition-colors cursor-pointer shrink-0"
+          @click="saveInlineChanges"
+        >
+          Publish Tariff Matrix
+        </button>
       </div>
 
       <div class="overflow-x-auto">
@@ -194,10 +197,10 @@ const saveInlineChanges = () => {
               <td class="py-3.5 px-4 font-mono tabular-nums text-neutral-700">
                 {{ formatPhp(rule.cancellationFee) }}
               </td>
-              <td class="py-3.5 px-4 font-mono font-bold text-amber-700">
+              <td class="py-3.5 px-4 font-mono font-bold text-neutral-900">
                 {{ rule.maxBiddingSurgeCap.toFixed(1) }}x
               </td>
-              <td class="py-3.5 px-4 font-mono font-bold text-emerald-700">
+              <td class="py-3.5 px-4 font-mono font-bold text-neutral-900">
                 {{ rule.highRatingDriverBonus.toFixed(2) }}x
               </td>
               <td class="py-3.5 px-4 text-right">
@@ -302,7 +305,7 @@ const saveInlineChanges = () => {
         </div>
         <div class="bg-neutral-50 border border-neutral-200 p-3">
           <div class="text-neutral-500">15% Prepaid Commission Deducted</div>
-          <div class="text-lg font-bold font-mono text-emerald-700 mt-0.5 tabular-nums">
+          <div class="text-lg font-bold font-mono text-neutral-900 mt-0.5 tabular-nums">
             {{ formatPhp(estimatedPlatformCut) }}
           </div>
         </div>
