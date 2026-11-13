@@ -10,6 +10,20 @@
   --text-muted: #78889b;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: light;
+    --surface-background: #f8fafc;
+    --surface-card: #ffffff;
+    --surface-muted: #f1f5f9;
+    --border-subtle: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --text-muted: #78889b;
+  }
+}
+
 /* Restore container max-width scale shadowed by --spacing-* tokens in @web/ui */
 @layer utilities {
   .max-w-xs {
@@ -33,9 +47,32 @@
 }
 
 select,
-select option {
+select option,
+select optgroup {
+  color-scheme: light;
   background-color: #ffffff;
   color: #171717;
+  border-radius: 0;
+}
+
+@supports (appearance: base-select) {
+  select,
+  select::picker(select) {
+    appearance: base-select;
+    background-color: #ffffff;
+    color: #171717;
+    border-radius: 0;
+  }
+
+  select::picker(select) {
+    border: 1px solid #d4d4d4;
+  }
+
+  select option {
+    border-radius: 0;
+    background-color: #ffffff;
+    color: #171717;
+  }
 }
 
 #app {

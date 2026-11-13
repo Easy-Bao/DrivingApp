@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { useTopups, type TopUpRequest } from '@/features/payments/composables/useTopups'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
 import StatusBadge, { type BadgeTone } from '@/shared/components/StatusBadge.vue'
 import TablePagination from '@/app/components/TablePagination.vue'
 import { formatPhp } from '@/shared/utils/format'
@@ -119,26 +120,26 @@ function navigateToDetails(id: string) {
             />
           </div>
 
-          <select
+          <BaseSelect
             v-model="filterMethod"
             aria-label="Filter by payment method"
-            class="px-3 py-1.5 bg-white border border-neutral-200 text-xs font-medium text-neutral-900"
-          >
-            <option value="All">All Payment Methods</option>
-            <option value="Company QR Code">Company QR Code</option>
-            <option value="Company Bank Transfer">Company Bank Transfer</option>
-          </select>
+            :options="[
+              { label: 'All Payment Methods', value: 'All' },
+              { label: 'Company QR Code', value: 'Company QR Code' },
+              { label: 'Company Bank Transfer', value: 'Company Bank Transfer' },
+            ]"
+          />
 
-          <select
+          <BaseSelect
             v-model="filterStatus"
             aria-label="Filter by request status"
-            class="px-3 py-1.5 bg-white border border-neutral-200 text-xs font-medium text-neutral-900"
-          >
-            <option value="All">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Verified">Verified</option>
-            <option value="Rejected">Rejected</option>
-          </select>
+            :options="[
+              { label: 'All Statuses', value: 'All' },
+              { label: 'Pending', value: 'Pending' },
+              { label: 'Verified', value: 'Verified' },
+              { label: 'Rejected', value: 'Rejected' },
+            ]"
+          />
         </div>
       </div>
 
