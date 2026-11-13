@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
 import { useDriverApplications } from '@/features/users/composables/useDriverApplications'
 
 const route = useRoute()
@@ -47,7 +48,7 @@ function openLicenseViewer() {
     activeSide: 'front',
     metadata: {
       'License Number': application.value.licenseNumber,
-      'Classification': application.value.licenseType,
+      Classification: application.value.licenseType,
       'Authorized DL Code': application.value.licenseCodes,
       'Expiration Date': application.value.licenseExpiry,
       'Issuing Agency': 'Land Transportation Office (LTO Philippines)',
@@ -97,7 +98,7 @@ function openFacePhotoViewer() {
     subtitle: `${application.value.applicant} · ${application.value.phone}`,
     type: 'face',
     metadata: {
-      'Applicant': application.value.applicant,
+      Applicant: application.value.applicant,
       'Mobile Number (PH)': application.value.phone,
       'City & Barangay': `${application.value.city}, ${application.value.barangay} (${application.value.province})`,
     },
@@ -196,7 +197,8 @@ function goBack() {
             </span>
           </div>
           <p class="text-sm text-neutral-500 mt-1">
-            Submitted {{ application.appliedTime }} for {{ application.city }}, {{ application.province }} operating zone.
+            Submitted {{ application.appliedTime }} for {{ application.city }},
+            {{ application.province }} operating zone.
           </p>
         </div>
 
@@ -263,14 +265,18 @@ function goBack() {
 
           <div class="text-left sm:text-right text-xs">
             <span class="text-neutral-400">Operating Territory</span>
-            <div class="font-semibold text-neutral-900 mt-0.5">{{ application.city }}, {{ application.province }}</div>
+            <div class="font-semibold text-neutral-900 mt-0.5">
+              {{ application.city }}, {{ application.province }}
+            </div>
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs pt-1">
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">City & Barangay</div>
-            <div class="font-semibold text-neutral-900 mt-0.5">{{ application.city }} · {{ application.barangay }}</div>
+            <div class="font-semibold text-neutral-900 mt-0.5">
+              {{ application.city }} · {{ application.barangay }}
+            </div>
           </div>
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">Contact Phone (PH Mobile)</div>
@@ -290,9 +296,7 @@ function goBack() {
 
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
-          <h2 class="font-bold text-sm text-neutral-900">
-            Driver's License
-          </h2>
+          <h2 class="font-bold text-sm text-neutral-900">Driver's License</h2>
           <button
             type="button"
             class="px-3 py-1.5 text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white transition-colors cursor-pointer"
@@ -335,7 +339,9 @@ function goBack() {
         >
           <div class="flex items-center space-x-2">
             <span class="font-medium text-neutral-800">Official License Scans</span>
-            <span class="text-[11px] font-mono text-neutral-400">· {{ application.licenseFrontDoc }}</span>
+            <span class="text-[11px] font-mono text-neutral-400"
+              >· {{ application.licenseFrontDoc }}</span
+            >
           </div>
           <span class="text-xs font-semibold text-neutral-900 hover:underline">
             View License Scan →
@@ -345,9 +351,7 @@ function goBack() {
 
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
-          <h2 class="font-bold text-sm text-neutral-900">
-            Vehicle Specification & Franchise
-          </h2>
+          <h2 class="font-bold text-sm text-neutral-900">Vehicle Specification & Franchise</h2>
           <span
             class="text-xs font-semibold px-2 py-0.5 bg-neutral-100 text-neutral-700 border border-neutral-200"
           >
@@ -359,7 +363,8 @@ function goBack() {
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">Tricycle Make & Model</div>
             <div class="font-semibold text-neutral-900 mt-0.5">
-              {{ application.vehicle.year }} {{ application.vehicle.make }} {{ application.vehicle.model }}
+              {{ application.vehicle.year }} {{ application.vehicle.make }}
+              {{ application.vehicle.model }}
             </div>
           </div>
           <div>
@@ -385,11 +390,15 @@ function goBack() {
           </div>
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">Engine Number</div>
-            <div class="font-mono text-neutral-700 mt-0.5">{{ application.vehicle.engineNumber }}</div>
+            <div class="font-mono text-neutral-700 mt-0.5">
+              {{ application.vehicle.engineNumber }}
+            </div>
           </div>
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">Chassis / Frame Number</div>
-            <div class="font-mono text-neutral-700 mt-0.5">{{ application.vehicle.chassisNumber }}</div>
+            <div class="font-mono text-neutral-700 mt-0.5">
+              {{ application.vehicle.chassisNumber }}
+            </div>
           </div>
         </div>
 
@@ -420,7 +429,9 @@ function goBack() {
             @click="openTaxicleDocViewer('CR')"
           >
             <div>
-              <div class="text-[11px] text-neutral-400 font-medium">LTO Certificate of Registration (CR)</div>
+              <div class="text-[11px] text-neutral-400 font-medium">
+                LTO Certificate of Registration (CR)
+              </div>
               <div class="font-mono font-semibold text-neutral-800 mt-0.5">
                 {{ application.vehicle.crNumber }}
               </div>
@@ -438,9 +449,13 @@ function goBack() {
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
-          <div class="p-3 bg-neutral-50 border border-neutral-200 flex items-center justify-between">
+          <div
+            class="p-3 bg-neutral-50 border border-neutral-200 flex items-center justify-between"
+          >
             <div>
-              <div class="text-[11px] text-neutral-400">Compulsory Third-Party Liability (CTPL)</div>
+              <div class="text-[11px] text-neutral-400">
+                Compulsory Third-Party Liability (CTPL)
+              </div>
               <div class="font-semibold text-neutral-800 mt-0.5">
                 {{ application.vehicle.insurancePolicy }}
               </div>
@@ -448,9 +463,13 @@ function goBack() {
             <span class="text-[11px] font-semibold text-emerald-700">Active Policy</span>
           </div>
 
-          <div class="p-3 bg-neutral-50 border border-neutral-200 flex items-center justify-between">
+          <div
+            class="p-3 bg-neutral-50 border border-neutral-200 flex items-center justify-between"
+          >
             <div>
-              <div class="text-[11px] text-neutral-400">Roadworthiness & TRU Inspection Certificate</div>
+              <div class="text-[11px] text-neutral-400">
+                Roadworthiness & TRU Inspection Certificate
+              </div>
               <div class="font-mono text-neutral-800 mt-0.5">
                 {{ application.vehicle.inspectionDoc }}
               </div>
@@ -462,9 +481,7 @@ function goBack() {
 
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
-          <h2 class="font-bold text-sm text-neutral-900">
-            Regulatory Background Screening
-          </h2>
+          <h2 class="font-bold text-sm text-neutral-900">Regulatory Background Screening</h2>
           <button
             type="button"
             class="px-2.5 py-1 text-xs font-semibold bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200 flex items-center space-x-1 cursor-pointer transition-colors"
@@ -509,9 +526,13 @@ function goBack() {
       <div class="bg-white border border-neutral-200 p-4 flex items-center justify-between">
         <div class="text-xs text-neutral-600">
           <span v-if="application.status === 'Pending Review'">
-            Carefully verify LTO license, TODA/MTOP franchise, and NBI clearance before issuing driver credentials.
+            Carefully verify LTO license, TODA/MTOP franchise, and NBI clearance before issuing
+            driver credentials.
           </span>
-          <span v-else-if="application.status === 'Approved'" class="text-emerald-700 font-semibold">
+          <span
+            v-else-if="application.status === 'Approved'"
+            class="text-emerald-700 font-semibold"
+          >
             Application approved. Taxicle driver credentials and dispatch access active.
           </span>
           <span v-else class="text-rose-700 font-semibold">
@@ -538,10 +559,7 @@ function goBack() {
       </div>
     </div>
 
-    <div
-      v-else
-      class="bg-white border border-neutral-200 p-8 text-center text-xs text-neutral-500"
-    >
+    <div v-else class="bg-white border border-neutral-200 p-8 text-center text-xs text-neutral-500">
       <p class="font-semibold text-neutral-900">Application Not Found</p>
       <p class="mt-1">No driver application matches ID {{ applicationId }}.</p>
       <button
@@ -564,10 +582,14 @@ function goBack() {
         aria-modal="true"
         aria-label="Approve Application Confirmation"
       >
-        <div class="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
+        <div
+          class="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50"
+        >
           <div>
             <h3 class="font-bold text-sm text-neutral-900">Approve Driver Application</h3>
-            <p class="text-xs text-neutral-500 mt-0.5">Application {{ application.id }} · {{ application.applicant }}</p>
+            <p class="text-xs text-neutral-500 mt-0.5">
+              Application {{ application.id }} · {{ application.applicant }}
+            </p>
           </div>
           <button
             type="button"
@@ -581,7 +603,10 @@ function goBack() {
 
         <div class="p-5 space-y-4 text-xs">
           <p class="text-neutral-700 leading-relaxed">
-            Are you sure you want to approve this driver application? This will issue platform credentials, grant taxicle dispatch privileges, and notify the driver at <span class="font-mono font-bold text-neutral-900">{{ application.phone }}</span>.
+            Are you sure you want to approve this driver application? This will issue platform
+            credentials, grant taxicle dispatch privileges, and notify the driver at
+            <span class="font-mono font-bold text-neutral-900">{{ application.phone }}</span
+            >.
           </p>
 
           <div class="p-3 bg-emerald-50 border border-emerald-200 text-xs space-y-1">
@@ -590,16 +615,31 @@ function goBack() {
               <span>Verified Qualifications Summary</span>
             </div>
             <ul class="text-emerald-800 space-y-0.5 text-[11px] list-disc list-inside">
-              <li>LTO License: {{ application.licenseNumber }} (DL Code: {{ application.licenseCodes }})</li>
-              <li>Unit: {{ application.vehicle.year }} {{ application.vehicle.make }} {{ application.vehicle.model }} (Plate: {{ application.vehicle.plate }})</li>
+              <li>
+                LTO License: {{ application.licenseNumber }} (DL Code:
+                {{ application.licenseCodes }})
+              </li>
+              <li>
+                Unit: {{ application.vehicle.year }} {{ application.vehicle.make }}
+                {{ application.vehicle.model }} (Plate: {{ application.vehicle.plate }})
+              </li>
               <li>TODA / Franchise: {{ application.vehicle.todaFranchise }}</li>
-              <li>Location: {{ application.city }}, {{ application.barangay }} ({{ application.province }})</li>
-              <li>Clearance: {{ application.clearanceType }} (Status: {{ application.backgroundStatus }})</li>
+              <li>
+                Location: {{ application.city }}, {{ application.barangay }} ({{
+                  application.province
+                }})
+              </li>
+              <li>
+                Clearance: {{ application.clearanceType }} (Status:
+                {{ application.backgroundStatus }})
+              </li>
             </ul>
           </div>
         </div>
 
-        <div class="px-5 py-3 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end space-x-2">
+        <div
+          class="px-5 py-3 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end space-x-2"
+        >
           <button
             type="button"
             class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
@@ -629,10 +669,14 @@ function goBack() {
         aria-modal="true"
         aria-label="Reject Application Confirmation"
       >
-        <div class="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
+        <div
+          class="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50"
+        >
           <div>
             <h3 class="font-bold text-sm text-neutral-900">Reject Driver Application</h3>
-            <p class="text-xs text-neutral-500 mt-0.5">Application {{ application.id }} · {{ application.applicant }}</p>
+            <p class="text-xs text-neutral-500 mt-0.5">
+              Application {{ application.id }} · {{ application.applicant }}
+            </p>
           </div>
           <button
             type="button"
@@ -646,22 +690,25 @@ function goBack() {
 
         <div class="p-5 space-y-4 text-xs">
           <p class="text-neutral-700 leading-relaxed">
-            Please specify the regulatory compliance or documentation grounds for rejecting this application. This reason will be logged for regulatory audit.
+            Please specify the regulatory compliance or documentation grounds for rejecting this
+            application. This reason will be logged for regulatory audit.
           </p>
 
           <div class="space-y-1.5">
             <label class="font-semibold text-neutral-800">Primary Rejection Ground</label>
-            <select
+            <BaseSelect
               v-model="rejectReason"
-              class="w-full p-2 bg-neutral-50 border border-neutral-200 text-xs text-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-900"
-            >
-              <option value="Incomplete or unreadable LTO driver license scan">Incomplete or unreadable LTO driver license scan</option>
-              <option value="Expired or unverified MTOP municipal tricycle permit">Expired or unverified MTOP municipal tricycle permit</option>
-              <option value="TODA franchise association endorsement missing or invalid">TODA franchise association endorsement missing or invalid</option>
-              <option value="Failed NBI or PNP criminal background screening">Failed NBI or PNP criminal background screening</option>
-              <option value="Mismatched vehicle registration (OR/CR) details">Mismatched vehicle registration (OR/CR) details</option>
-              <option value="Other regulatory compliance deficiency">Other regulatory compliance deficiency</option>
-            </select>
+              aria-label="Primary rejection ground"
+              :full-width="true"
+              :options="[
+                'Incomplete or unreadable LTO driver license scan',
+                'Expired or unverified MTOP municipal tricycle permit',
+                'TODA franchise association endorsement missing or invalid',
+                'Failed NBI or PNP criminal background screening',
+                'Mismatched vehicle registration (OR/CR) details',
+                'Other regulatory compliance deficiency',
+              ]"
+            />
           </div>
 
           <div class="space-y-1.5">
@@ -675,7 +722,9 @@ function goBack() {
           </div>
         </div>
 
-        <div class="px-5 py-3 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end space-x-2">
+        <div
+          class="px-5 py-3 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end space-x-2"
+        >
           <button
             type="button"
             class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
@@ -705,7 +754,9 @@ function goBack() {
         aria-modal="true"
         aria-label="Document Viewer"
       >
-        <div class="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
+        <div
+          class="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50"
+        >
           <div>
             <h3 class="font-bold text-sm text-neutral-900">{{ activeViewerDoc.title }}</h3>
             <p class="text-xs text-neutral-500 mt-0.5">{{ activeViewerDoc.subtitle }}</p>
@@ -782,9 +833,7 @@ function goBack() {
                   <div class="text-xs font-bold text-sky-950 uppercase">
                     Land Transportation Office
                   </div>
-                  <div class="text-[10px] font-semibold text-sky-800">
-                    Driver's License
-                  </div>
+                  <div class="text-[10px] font-semibold text-sky-800">Driver's License</div>
                 </div>
 
                 <div class="flex items-center space-x-3 mt-3">
@@ -798,16 +847,16 @@ function goBack() {
                     <div class="font-mono text-[11px] text-neutral-800">
                       License No: {{ application.licenseNumber }}
                     </div>
-                    <div class="text-[10px] text-neutral-600">
-                      Nationality: FILIPINO · Sex: M
-                    </div>
+                    <div class="text-[10px] text-neutral-600">Nationality: FILIPINO · Sex: M</div>
                     <div class="text-[10px] text-neutral-600 font-mono">
                       Expires: {{ application.licenseExpiry }}
                     </div>
                   </div>
                 </div>
 
-                <div class="mt-3 pt-2 border-t border-sky-200 flex justify-between text-[10px] text-sky-900 font-mono">
+                <div
+                  class="mt-3 pt-2 border-t border-sky-200 flex justify-between text-[10px] text-sky-900 font-mono"
+                >
                   <span>Authorized DL Code: {{ application.licenseCodes }}</span>
                   <span>Conditions: NONE</span>
                 </div>
@@ -825,15 +874,23 @@ function goBack() {
                 </div>
 
                 <div class="mt-3 space-y-2 text-xs">
-                  <div class="h-10 bg-neutral-900 flex items-center justify-center text-white font-mono text-xs tracking-widest">
+                  <div
+                    class="h-10 bg-neutral-900 flex items-center justify-center text-white font-mono text-xs tracking-widest"
+                  >
                     ||||| | |||| |||||| ||| ||||||| |||||||||| ||||
                   </div>
                   <div class="text-[10px] text-neutral-500 font-mono text-center">
                     *{{ application.licenseNumber }}*
                   </div>
                   <div class="p-2 bg-white border border-neutral-200 text-[11px] space-y-1">
-                    <div><span class="text-neutral-400">Address:</span> {{ application.barangay }}, {{ application.city }}, {{ application.province }}</div>
-                    <div><span class="text-neutral-400">Emergency Contact:</span> {{ application.phone }}</div>
+                    <div>
+                      <span class="text-neutral-400">Address:</span> {{ application.barangay }},
+                      {{ application.city }}, {{ application.province }}
+                    </div>
+                    <div>
+                      <span class="text-neutral-400">Emergency Contact:</span>
+                      {{ application.phone }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -852,10 +909,24 @@ function goBack() {
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-2 mt-3 text-xs">
-                <div><span class="text-neutral-400">Plate Number:</span> <span class="font-mono font-bold">{{ application.vehicle.plate }}</span></div>
-                <div><span class="text-neutral-400">Body / Sidecar:</span> <span class="font-bold">{{ application.vehicle.bodyNumber }}</span></div>
-                <div><span class="text-neutral-400">Make & Model:</span> <span class="font-semibold">{{ application.vehicle.make }} {{ application.vehicle.model }}</span></div>
-                <div><span class="text-neutral-400">TODA Franchise:</span> <span class="font-semibold">{{ application.vehicle.todaFranchise }}</span></div>
+                <div>
+                  <span class="text-neutral-400">Plate Number:</span>
+                  <span class="font-mono font-bold">{{ application.vehicle.plate }}</span>
+                </div>
+                <div>
+                  <span class="text-neutral-400">Body / Sidecar:</span>
+                  <span class="font-bold">{{ application.vehicle.bodyNumber }}</span>
+                </div>
+                <div>
+                  <span class="text-neutral-400">Make & Model:</span>
+                  <span class="font-semibold"
+                    >{{ application.vehicle.make }} {{ application.vehicle.model }}</span
+                  >
+                </div>
+                <div>
+                  <span class="text-neutral-400">TODA Franchise:</span>
+                  <span class="font-semibold">{{ application.vehicle.todaFranchise }}</span>
+                </div>
               </div>
             </div>
 
@@ -864,15 +935,22 @@ function goBack() {
               class="w-full max-w-[480px] bg-emerald-50/50 border-2 border-emerald-300 p-4 shadow-sm text-center"
             >
               <Icon icon="lucide:award" class="text-4xl text-emerald-600 mx-auto mb-1" />
-              <div class="text-xs font-bold text-emerald-950 uppercase">{{ application.clearanceType }}</div>
-              <div class="text-[11px] font-mono text-emerald-800 mt-0.5">ID: {{ application.clearanceNumber }}</div>
+              <div class="text-xs font-bold text-emerald-950 uppercase">
+                {{ application.clearanceType }}
+              </div>
+              <div class="text-[11px] font-mono text-emerald-800 mt-0.5">
+                ID: {{ application.clearanceNumber }}
+              </div>
               <div class="mt-2 text-xs text-neutral-700 bg-white border border-emerald-200 p-2">
                 {{ application.backgroundNotes }}
               </div>
             </div>
           </div>
 
-          <div v-if="activeViewerDoc.metadata" class="border border-neutral-200 divide-y divide-neutral-100">
+          <div
+            v-if="activeViewerDoc.metadata"
+            class="border border-neutral-200 divide-y divide-neutral-100"
+          >
             <div
               v-for="(val, key) in activeViewerDoc.metadata"
               :key="key"
@@ -884,7 +962,9 @@ function goBack() {
           </div>
         </div>
 
-        <div class="px-5 py-3 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end">
+        <div
+          class="px-5 py-3 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end"
+        >
           <button
             type="button"
             class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"

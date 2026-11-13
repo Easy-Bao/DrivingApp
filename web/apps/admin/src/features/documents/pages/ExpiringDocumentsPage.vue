@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
 import TablePagination from '@/app/components/TablePagination.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
@@ -240,17 +241,17 @@ const statusTone = (status: ExpiryStatus) => {
               class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
             />
           </div>
-          <select
+          <BaseSelect
             v-model="statusFilter"
             aria-label="Filter expiring documents"
-            class="px-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs font-medium text-neutral-700 focus:outline-none focus:border-neutral-900 cursor-pointer"
-          >
-            <option value="ALL">All Expiry Windows</option>
-            <option value="CRITICAL">Critical (&lt;= 15 Days)</option>
-            <option value="Action Required">Action Required</option>
-            <option value="Notice Sent">Notice Sent</option>
-            <option value="Grace Period">Grace Period</option>
-          </select>
+            :options="[
+              { label: 'All Expiry Windows', value: 'ALL' },
+              { label: 'Critical (<= 15 Days)', value: 'CRITICAL' },
+              { label: 'Action Required', value: 'Action Required' },
+              { label: 'Notice Sent', value: 'Notice Sent' },
+              { label: 'Grace Period', value: 'Grace Period' },
+            ]"
+          />
         </div>
         <span class="text-xs text-neutral-400">Automated SMS renewal alerts enabled</span>
       </div>

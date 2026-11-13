@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
 import TablePagination from '@/app/components/TablePagination.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
@@ -370,16 +371,16 @@ const statusTone = (status: VerificationStatus) => {
               class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
             />
           </div>
-          <select
+          <BaseSelect
             v-model="statusFilter"
             aria-label="Filter documents by verification status"
-            class="px-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs font-medium text-neutral-700 focus:outline-none focus:border-neutral-900 cursor-pointer"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="Pending Review">Pending Review</option>
-            <option value="Approved">Approved</option>
-            <option value="Rejected">Rejected</option>
-          </select>
+            :options="[
+              { label: 'All Statuses', value: 'ALL' },
+              { label: 'Pending Review', value: 'Pending Review' },
+              { label: 'Approved', value: 'Approved' },
+              { label: 'Rejected', value: 'Rejected' },
+            ]"
+          />
         </div>
         <span class="text-xs text-neutral-400">
           LTO, NBI, and Pagadian City TRU compliance standards
@@ -599,28 +600,20 @@ const statusTone = (status: VerificationStatus) => {
               <div class="font-bold text-rose-900 text-xs">
                 Specify Regulatory Rejection Grounds (mandatory)
               </div>
-              <select
+              <BaseSelect
                 v-model="rejectionReason"
                 aria-label="Regulatory rejection ground"
-                class="w-full p-2 bg-white border border-rose-300 rounded-md text-xs text-neutral-800 focus:outline-none focus:ring-1 focus:ring-rose-500"
-              >
-                <option value="">-- Select Rejection Ground --</option>
-                <option value="Image blurred or unreadable official seal">
-                  Image blurred or unreadable official seal
-                </option>
-                <option value="Document expired or near expiration (&lt; 60 days)">
-                  Document expired or near expiration (&lt; 60 days)
-                </option>
-                <option value="Applicant identity does not match LTO / TRU records">
-                  Applicant identity does not match LTO / TRU records
-                </option>
-                <option value="Missing reverse/back side scan of government ID">
-                  Missing reverse/back side scan of government ID
-                </option>
-                <option value="Invalid TODA franchise or expired MTOP municipal permit">
-                  Invalid TODA franchise or expired MTOP municipal permit
-                </option>
-              </select>
+                placeholder="-- Select Rejection Ground --"
+                :full-width="true"
+                :options="[
+                  { label: '-- Select Rejection Ground --', value: '' },
+                  'Image blurred or unreadable official seal',
+                  'Document expired or near expiration (< 60 days)',
+                  'Applicant identity does not match LTO / TRU records',
+                  'Missing reverse/back side scan of government ID',
+                  'Invalid TODA franchise or expired MTOP municipal permit',
+                ]"
+              />
             </div>
           </div>
 

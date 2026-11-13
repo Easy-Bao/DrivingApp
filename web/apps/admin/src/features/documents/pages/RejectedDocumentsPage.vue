@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
 import TablePagination from '@/app/components/TablePagination.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
@@ -188,15 +189,15 @@ const queueForReReview = (item: RejectedDocument) => {
               class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
             />
           </div>
-          <select
+          <BaseSelect
             v-model="resubFilter"
             aria-label="Filter by resubmission status"
-            class="px-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs font-medium text-neutral-700 focus:outline-none focus:border-neutral-900 cursor-pointer"
-          >
-            <option value="ALL">All Submissions</option>
-            <option value="RESUBMITTED">Resubmitted Ready</option>
-            <option value="AWAITING">Awaiting Driver Upload</option>
-          </select>
+            :options="[
+              { label: 'All Submissions', value: 'ALL' },
+              { label: 'Resubmitted Ready', value: 'RESUBMITTED' },
+              { label: 'Awaiting Driver Upload', value: 'AWAITING' },
+            ]"
+          />
         </div>
         <span class="text-xs text-neutral-400">Maintained for legal compliance audits</span>
       </div>

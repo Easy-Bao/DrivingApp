@@ -58,8 +58,13 @@ describe('DocumentVerificationPage', () => {
 
     expect(findConfirmReject()?.attributes('disabled')).toBeDefined()
 
-    const reasonSelect = wrapper.find('select[aria-label="Regulatory rejection ground"]')
-    await reasonSelect.setValue('Image blurred or unreadable official seal')
+    const reasonTrigger = wrapper.find('button[aria-label="Regulatory rejection ground"]')
+    await reasonTrigger.trigger('click')
+    const reasonOption = wrapper
+      .findAll('[role="option"]')
+      .find((opt) => opt.text().includes('Image blurred or unreadable official seal'))
+    expect(reasonOption).toBeDefined()
+    await reasonOption!.trigger('click')
     expect(findConfirmReject()?.attributes('disabled')).toBeUndefined()
 
     await findConfirmReject()?.trigger('click')
