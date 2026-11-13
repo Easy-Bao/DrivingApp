@@ -22,7 +22,15 @@ const router = createRouter({
     ...supportRoutes,
     ...settingsRoutes,
     ...accountRoutes,
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/app/pages/NotFoundPage.vue'),
+    },
   ],
+  scrollBehavior() {
+    return { top: 0 }
+  },
 })
 
 export default router

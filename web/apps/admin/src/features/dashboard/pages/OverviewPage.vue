@@ -105,7 +105,7 @@ const recentTrips = ref([
             <h2 class="font-semibold text-sm text-neutral-900">Recent Trip Dispatches</h2>
           </div>
           <RouterLink
-            to="/trips?tab=all-trips"
+            to="/trips/all"
             class="text-xs font-semibold text-neutral-900 hover:underline"
           >
             View All Trips →

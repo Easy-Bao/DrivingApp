@@ -61,7 +61,9 @@ function triggerTopupPrompt(driver: (typeof driverWallets.value)[0]) {
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Driver Dispatch Wallets</h1>
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
+          Driver Dispatch Wallets
+        </h1>
         <p class="text-sm text-neutral-500 mt-1">
           Prepaid driver wallet balances used to deduct platform commission on cash and direct
           rides.
@@ -69,7 +71,7 @@ function triggerTopupPrompt(driver: (typeof driverWallets.value)[0]) {
       </div>
       <div class="flex items-center space-x-3">
         <RouterLink
-          to="/payment/driver-topups"
+          to="/payments/topups"
           class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-colors flex items-center space-x-2"
         >
           <span>Verify Pending Top-Ups (3) →</span>
