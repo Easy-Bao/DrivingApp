@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Icon } from '@iconify/vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
@@ -241,17 +242,14 @@ const confirmStatusToggle = () => {
               </td>
               <td class="py-3 px-4 text-neutral-700 font-medium">{{ user.department }}</td>
               <td class="py-3 px-4">
-                <select
-                  :value="user.role"
+                <BaseSelect
+                  :model-value="user.role"
                   :disabled="user.id === 'ADM-001'"
                   aria-label="Assign operator role"
-                  class="px-2.5 py-1 bg-white border border-neutral-200 rounded-md text-xs font-medium text-neutral-800 focus:outline-none focus:border-neutral-900 disabled:bg-neutral-100 disabled:text-neutral-500"
-                  @change="updateRole(user, ($event.target as HTMLSelectElement).value)"
-                >
-                  <option v-for="roleName in availableRoles" :key="roleName" :value="roleName">
-                    {{ roleName }}
-                  </option>
-                </select>
+                  :full-width="true"
+                  :options="availableRoles"
+                  @update:model-value="updateRole(user, $event)"
+                />
               </td>
               <td class="py-3 px-4">
                 <button
@@ -363,14 +361,12 @@ const confirmStatusToggle = () => {
             </div>
             <div>
               <label class="block font-semibold text-neutral-700 mb-1">RBAC Role</label>
-              <select
+              <BaseSelect
                 v-model="inviteForm.role"
-                class="w-full px-3 py-2 bg-white border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-900"
-              >
-                <option v-for="roleName in availableRoles" :key="roleName" :value="roleName">
-                  {{ roleName }}
-                </option>
-              </select>
+                aria-label="Select RBAC role"
+                :full-width="true"
+                :options="availableRoles"
+              />
             </div>
             <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer pt-1">
               <input v-model="inviteForm.mfaEnabled" type="checkbox" class="accent-neutral-900" />

@@ -42,4 +42,25 @@ describe('BaseSelect', () => {
     expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['Company QR Code'])
     expect(wrapper.find('[role="listbox"]').exists()).toBe(false)
   })
+
+  it('prevents opening the menu when disabled', async () => {
+    const wrapper = mount(BaseSelect, {
+      props: {
+        modelValue: 'Super Administrator',
+        disabled: true,
+        options: ['Super Administrator', 'Dispatch & Safety Supervisor'],
+      },
+      global: {
+        stubs: {
+          Teleport: { template: '<div><slot /></div>' },
+        },
+      },
+    })
+
+    const trigger = wrapper.find('button[role="combobox"]')
+    expect(trigger.attributes('disabled')).toBeDefined()
+
+    await trigger.trigger('click')
+    expect(wrapper.find('[role="listbox"]').exists()).toBe(false)
+  })
 })

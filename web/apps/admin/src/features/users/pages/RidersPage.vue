@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
 import TablePagination from '@/app/components/TablePagination.vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
@@ -189,17 +190,17 @@ const confirmStandingUpdate = () => {
               class="w-full pl-9 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
             />
           </div>
-          <select
+          <BaseSelect
             v-model="standingFilter"
             aria-label="Filter riders by standing"
-            class="px-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs font-medium text-neutral-700 focus:outline-none focus:border-neutral-900 cursor-pointer"
-          >
-            <option value="ALL">All Standings</option>
-            <option value="VIP Rider">VIP Rider</option>
-            <option value="Good Standing">Good Standing</option>
-            <option value="Flagged (Dispute)">Flagged (Dispute)</option>
-            <option value="Suspended">Suspended</option>
-          </select>
+            :options="[
+              { label: 'All Standings', value: 'ALL' },
+              { label: 'VIP Rider', value: 'VIP Rider' },
+              { label: 'Good Standing', value: 'Good Standing' },
+              { label: 'Flagged (Dispute)', value: 'Flagged (Dispute)' },
+              { label: 'Suspended', value: 'Suspended' },
+            ]"
+          />
         </div>
         <span class="text-xs text-neutral-500 tabular-nums">
           {{ filteredRiders.length }} registered passengers

@@ -17,11 +17,13 @@ const props = withDefaults(
     ariaLabel?: string
     placeholder?: string
     fullWidth?: boolean
+    disabled?: boolean
   }>(),
   {
     ariaLabel: 'Select option',
     placeholder: 'Select...',
     fullWidth: false,
+    disabled: false,
   },
 )
 
@@ -98,6 +100,7 @@ const detachListeners = () => {
 }
 
 const openMenu = async () => {
+  if (props.disabled) return
   isOpen.value = true
   const currentIdx = normalizedOptions.value.findIndex((o) => o.value === props.modelValue)
   activeIndex.value = currentIdx >= 0 ? currentIdx : 0
@@ -117,6 +120,7 @@ const closeMenu = (restoreFocus = false) => {
 }
 
 const toggleMenu = () => {
+  if (props.disabled) return
   if (isOpen.value) {
     closeMenu(true)
   } else {
@@ -173,6 +177,7 @@ const onDocumentKeydown = (event: KeyboardEvent) => {
 }
 
 const onTriggerKeydown = (event: KeyboardEvent) => {
+  if (props.disabled) return
   if (!isOpen.value && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
     event.preventDefault()
     void openMenu()
@@ -189,11 +194,17 @@ onBeforeUnmount(() => {
     ref="triggerRef"
     type="button"
     role="combobox"
+    :disabled="disabled"
     :aria-expanded="isOpen"
     aria-haspopup="listbox"
     :aria-label="ariaLabel"
-    :class="fullWidth ? 'w-full' : 'w-full sm:w-auto'"
-    class="inline-flex items-center justify-between gap-3 px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-900 hover:border-neutral-400 focus:outline-none focus:border-neutral-900 transition-colors cursor-pointer"
+    :class="[
+      fullWidth ? 'w-full' : 'w-full sm:w-auto',
+      disabled
+        ? 'bg-neutral-100 text-neutral-500 cursor-not-allowed'
+        : 'bg-white text-neutral-900 hover:border-neutral-400 cursor-pointer',
+    ]"
+    class="inline-flex items-center justify-between gap-3 px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium focus:outline-none focus:border-neutral-900 transition-colors"
     @click="toggleMenu"
     @keydown="onTriggerKeydown"
   >

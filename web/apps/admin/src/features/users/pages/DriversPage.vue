@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
 import TablePagination from '@/app/components/TablePagination.vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
@@ -281,16 +282,16 @@ const confirmStatusChange = () => {
               class="w-full pl-9 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
             />
           </div>
-          <select
+          <BaseSelect
             v-model="statusFilter"
             aria-label="Filter drivers by status"
-            class="px-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs font-medium text-neutral-700 focus:outline-none focus:border-neutral-900 cursor-pointer"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Low Balance (Locked)">Low Balance (Locked)</option>
-            <option value="Suspended">Suspended</option>
-          </select>
+            :options="[
+              { label: 'All Statuses', value: 'ALL' },
+              { label: 'Active', value: 'Active' },
+              { label: 'Low Balance (Locked)', value: 'Low Balance (Locked)' },
+              { label: 'Suspended', value: 'Suspended' },
+            ]"
+          />
         </div>
         <span class="text-xs text-neutral-500 tabular-nums">
           Showing {{ filteredDrivers.length }} registered drivers
