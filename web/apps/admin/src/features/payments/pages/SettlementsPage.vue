@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import TablePagination from '@/app/components/TablePagination.vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 import { exportToCsv, formatBpsAsPercent, formatCentavos } from '@/shared/utils/format'
@@ -197,18 +198,18 @@ const handleExport = () => {
               class="w-full sm:w-56 pl-8 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-900"
             />
           </div>
-          <select
+          <BaseSelect
             v-model="outcomeFilter"
             aria-label="Filter by cash outcome"
-            class="px-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs font-medium text-neutral-700 focus:outline-none focus:border-neutral-900 cursor-pointer"
-          >
-            <option value="ALL">All Cash Outcomes</option>
-            <option value="partial">Partial</option>
-            <option value="disputed">Disputed</option>
-            <option value="refused">Refused</option>
-            <option value="unpaid">Unpaid</option>
-            <option value="paid">Paid</option>
-          </select>
+            :options="[
+              { label: 'All Cash Outcomes', value: 'ALL' },
+              { label: 'Partial', value: 'partial' },
+              { label: 'Disputed', value: 'disputed' },
+              { label: 'Refused', value: 'refused' },
+              { label: 'Unpaid', value: 'unpaid' },
+              { label: 'Paid', value: 'paid' },
+            ]"
+          />
         </div>
       </div>
 

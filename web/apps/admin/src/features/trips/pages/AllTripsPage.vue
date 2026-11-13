@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
 import TablePagination from '@/app/components/TablePagination.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
@@ -244,17 +245,17 @@ const handleExport = () => {
             class="w-full pl-9 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
           />
         </div>
-        <select
+        <BaseSelect
           v-model="filterStatus"
           aria-label="Filter trips by status"
-          class="px-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs font-medium text-neutral-700 focus:outline-none focus:border-neutral-900 cursor-pointer"
-        >
-          <option value="all">All Statuses</option>
-          <option value="Completed">Completed</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Dispatching">Dispatching</option>
-          <option value="Cancelled">Cancelled</option>
-        </select>
+          :options="[
+            { label: 'All Statuses', value: 'all' },
+            { label: 'Completed', value: 'Completed' },
+            { label: 'In Progress', value: 'In Progress' },
+            { label: 'Dispatching', value: 'Dispatching' },
+            { label: 'Cancelled', value: 'Cancelled' },
+          ]"
+        />
       </div>
 
       <div class="overflow-x-auto">

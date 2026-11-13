@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
 import StatusBadge, { type BadgeTone } from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
@@ -300,18 +301,18 @@ function confirmExpireSession() {
         </div>
 
         <div class="flex items-center gap-2">
-          <select
+          <BaseSelect
             v-model="statusFilter"
             aria-label="Filter by session status"
-            class="px-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs font-medium text-neutral-700"
-          >
-            <option value="all">All Session States</option>
-            <option value="open">Open</option>
-            <option value="accepted">Accepted</option>
-            <option value="declined">Declined</option>
-            <option value="expired">Expired</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+            :options="[
+              { label: 'All Session States', value: 'all' },
+              { label: 'Open', value: 'open' },
+              { label: 'Accepted', value: 'accepted' },
+              { label: 'Declined', value: 'declined' },
+              { label: 'Expired', value: 'expired' },
+              { label: 'Cancelled', value: 'cancelled' },
+            ]"
+          />
         </div>
       </div>
 

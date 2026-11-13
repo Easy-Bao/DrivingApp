@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
 import TablePagination from '@/app/components/TablePagination.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
@@ -185,15 +186,15 @@ const applyResolution = () => {
               class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
             />
           </div>
-          <select
+          <BaseSelect
             v-model="statusFilter"
             aria-label="Filter disputes by status"
-            class="px-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs font-medium text-neutral-700 focus:outline-none focus:border-neutral-900 cursor-pointer"
-          >
-            <option value="ALL">All Disputes</option>
-            <option value="Under Admin Review">Under Admin Review</option>
-            <option value="RESOLVED">Resolved Cases</option>
-          </select>
+            :options="[
+              { label: 'All Disputes', value: 'ALL' },
+              { label: 'Under Admin Review', value: 'Under Admin Review' },
+              { label: 'Resolved Cases', value: 'RESOLVED' },
+            ]"
+          />
         </div>
         <span class="text-xs text-neutral-400">2-minute post-dispatch grace period active</span>
       </div>
@@ -315,17 +316,19 @@ const applyResolution = () => {
               <label class="block font-semibold text-neutral-700 mb-1">
                 Fault Classification (server enum)
               </label>
-              <select
+              <BaseSelect
                 v-model="overrideResponsibility"
-                class="w-full px-3 py-2 bg-white border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-900"
-              >
-                <option value="no_fault">No Fault (Mutual / Traffic)</option>
-                <option value="driver_fault">Driver Fault</option>
-                <option value="passenger_fault">Passenger Fault</option>
-                <option value="system_fault">System Fault</option>
-                <option value="safety_related">Safety Related</option>
-                <option value="admin_override">Admin Override</option>
-              </select>
+                aria-label="Select fault classification"
+                :full-width="true"
+                :options="[
+                  { label: 'No Fault (Mutual / Traffic)', value: 'no_fault' },
+                  { label: 'Driver Fault', value: 'driver_fault' },
+                  { label: 'Passenger Fault', value: 'passenger_fault' },
+                  { label: 'System Fault', value: 'system_fault' },
+                  { label: 'Safety Related', value: 'safety_related' },
+                  { label: 'Admin Override', value: 'admin_override' },
+                ]"
+              />
             </div>
             <label class="flex items-center space-x-2 text-neutral-800 cursor-pointer">
               <input v-model="shouldWaiveFee" type="checkbox" class="accent-neutral-900" />

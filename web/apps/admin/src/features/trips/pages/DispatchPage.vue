@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Icon } from '@iconify/vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
@@ -257,14 +258,12 @@ const confirmDriverAssignment = () => {
           <div class="text-xs space-y-2">
             <div class="font-semibold text-neutral-800">{{ editingZone.name }}</div>
             <label class="block text-neutral-500">Select temporary demand multiplier</label>
-            <select
+            <BaseSelect
               v-model="selectedSurge"
-              class="w-full px-3 py-2 bg-white border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-900"
-            >
-              <option v-for="option in surgeOptions" :key="option" :value="option">
-                {{ option }}
-              </option>
-            </select>
+              aria-label="Select surge zone multiplier"
+              :full-width="true"
+              :options="surgeOptions"
+            />
           </div>
           <div class="flex items-center justify-end gap-2 pt-2">
             <button
@@ -317,14 +316,12 @@ const confirmDriverAssignment = () => {
               }})
             </div>
             <label class="block text-neutral-500 pt-1">Select Active Pagadian Taxicle Unit</label>
-            <select
+            <BaseSelect
               v-model="selectedDriver"
-              class="w-full px-3 py-2 bg-white border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-900"
-            >
-              <option v-for="driver in availablePagadianDrivers" :key="driver" :value="driver">
-                {{ driver }}
-              </option>
-            </select>
+              aria-label="Select replacement driver"
+              :full-width="true"
+              :options="availablePagadianDrivers"
+            />
           </div>
           <div class="flex items-center justify-end gap-2 pt-2">
             <button
