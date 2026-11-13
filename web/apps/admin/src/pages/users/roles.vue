@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Icon } from '@iconify/vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
@@ -113,37 +114,35 @@ const saveRoleModal = () => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Staff Roles</h1>
-        <p class="text-sm text-neutral-500 mt-1">Manage role permissions and access scopes.</p>
-      </div>
-      <button
-        type="button"
-        @click="openCreateModal"
-        class="px-3.5 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
-      >
-        + Create Role
-      </button>
-    </div>
+    <PageHeader title="Staff Roles" description="Manage role permissions and access scopes.">
+      <template #actions>
+        <button
+          type="button"
+          class="px-3.5 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
+          @click="openCreateModal"
+        >
+          + Create Role
+        </button>
+      </template>
+    </PageHeader>
 
     <ToastBanner :message="toastMessage" tone="success" @dismiss="toastMessage = null" />
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div
-        v-for="r in roles"
-        :key="r.id"
+        v-for="role in roles"
+        :key="role.id"
         class="p-5 bg-white border border-neutral-200 space-y-3 flex flex-col justify-between"
       >
         <div class="space-y-3">
           <div class="flex items-center justify-between gap-2">
-            <h3 class="font-bold text-sm text-neutral-900">{{ r.name }}</h3>
-            <StatusBadge :label="`${r.usersCount} Users`" tone="neutral" />
+            <h3 class="font-bold text-sm text-neutral-900">{{ role.name }}</h3>
+            <StatusBadge :label="`${role.usersCount} Users`" tone="neutral" />
           </div>
-          <p class="text-xs text-neutral-600 leading-relaxed">{{ r.summary }}</p>
+          <p class="text-xs text-neutral-600 leading-relaxed">{{ role.summary }}</p>
           <div class="flex flex-wrap gap-1.5">
             <span
-              v-for="scope in r.scopes"
+              v-for="scope in role.scopes"
               :key="scope"
               class="px-2 py-0.5 bg-neutral-100 text-neutral-700 text-[11px] font-medium"
             >
@@ -154,7 +153,7 @@ const saveRoleModal = () => {
         <div class="pt-3 border-t border-neutral-100 flex justify-between items-center text-xs">
           <button
             type="button"
-            @click="openEditModal(r)"
+            @click="openEditModal(role)"
             class="text-neutral-700 hover:text-neutral-900 font-semibold cursor-pointer"
           >
             Edit Permissions
@@ -169,90 +168,70 @@ const saveRoleModal = () => {
       </div>
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="showRoleModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 backdrop-blur-[1px] p-4"
-        role="dialog"
-        aria-modal="true"
-        @click.self="showRoleModal = false"
-      >
-        <form
-          class="bg-white border border-neutral-200 shadow-2xl w-full max-w-lg p-6 space-y-4"
-          @submit.prevent="saveRoleModal"
-        >
-          <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
-            <h3 class="text-base font-bold text-neutral-900">
-              {{ editingRoleId ? 'Edit Role Permissions' : 'Create Role' }}
-            </h3>
-            <button
-              type="button"
-              aria-label="Close modal"
-              @click="showRoleModal = false"
-              class="text-neutral-400 hover:text-neutral-700 cursor-pointer"
-            >
-              <Icon icon="lucide:x" class="w-4 h-4" />
-            </button>
+    <ModalDialog
+      v-model:open="showRoleModal"
+      :title="editingRoleId ? 'Edit Role Permissions' : 'Create Role'"
+      size="lg"
+      close-label="Close modal"
+    >
+      <form class="space-y-4 text-xs" @submit.prevent="saveRoleModal">
+        <div class="space-y-3">
+          <div>
+            <label class="block font-semibold text-neutral-700 mb-1">Role Name</label>
+            <input
+              v-model="formName"
+              type="text"
+              required
+              placeholder="e.g. Dispatch Reviewer"
+              class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
+            />
           </div>
+          <div>
+            <label class="block font-semibold text-neutral-700 mb-1">Summary</label>
+            <input
+              v-model="formSummary"
+              type="text"
+              placeholder="Role responsibilities..."
+              class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
+            />
+          </div>
+          <div>
+            <span class="block font-semibold text-neutral-700 mb-2">Permissions</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label
+                v-for="scope in permissionCatalog"
+                :key="scope"
+                class="flex items-center space-x-2 p-2 border border-neutral-200 cursor-pointer hover:bg-neutral-50"
+              >
+                <input
+                  type="checkbox"
+                  :checked="formScopes.includes(scope)"
+                  class="accent-neutral-900"
+                  @change="toggleScope(scope)"
+                />
+                <span class="text-neutral-800 font-medium">{{ scope }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
 
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block font-semibold text-neutral-700 mb-1">Role Name</label>
-              <input
-                v-model="formName"
-                type="text"
-                required
-                placeholder="e.g. Dispatch Reviewer"
-                class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-semibold text-neutral-700 mb-1">Summary</label>
-              <input
-                v-model="formSummary"
-                type="text"
-                placeholder="Role responsibilities..."
-                class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
-              />
-            </div>
-            <div>
-              <span class="block font-semibold text-neutral-700 mb-2">Permissions</span>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <label
-                  v-for="scope in permissionCatalog"
-                  :key="scope"
-                  class="flex items-center space-x-2 p-2 border border-neutral-200 cursor-pointer hover:bg-neutral-50"
-                >
-                  <input
-                    type="checkbox"
-                    :checked="formScopes.includes(scope)"
-                    class="accent-neutral-900"
-                    @change="toggleScope(scope)"
-                  />
-                  <span class="text-neutral-800 font-medium">{{ scope }}</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
-            <button
-              type="button"
-              @click="showRoleModal = false"
-              class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              :disabled="formScopes.length === 0"
-              class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 disabled:opacity-40 cursor-pointer"
-            >
-              {{ editingRoleId ? 'Save' : 'Create' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </Teleport>
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100">
+          <button
+            type="button"
+            class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+            @click="showRoleModal = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            :disabled="formScopes.length === 0"
+            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 disabled:opacity-40 cursor-pointer"
+          >
+            {{ editingRoleId ? 'Save' : 'Create' }}
+          </button>
+        </div>
+      </form>
+    </ModalDialog>
   </div>
 </template>

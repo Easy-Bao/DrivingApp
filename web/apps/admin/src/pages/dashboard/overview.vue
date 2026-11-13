@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useTopups } from '@/features/payments/composables/useTopups'
 import { useSettlements } from '@/features/payments/composables/useSettlements'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import { formatPhp } from '@/shared/utils/format'
 
@@ -88,41 +89,36 @@ const tripTone = (status: 'Completed' | 'In Progress' | 'Dispatching') => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-          Executive Operations Overview
-        </h1>
-        <p class="text-sm text-neutral-500 mt-1">
-          Real-time Pagadian taxicle telemetry, bidding dispatch velocity, and treasury metrics.
-        </p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
+    <PageHeader
+      title="Executive Operations Overview"
+      description="Real-time Pagadian 3-wheeled TukTuk (Bao-Bao) metrics, bidding dispatch velocity, and treasury."
+    >
+      <template #actions>
         <RouterLink
           to="/trips/bidding"
-          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-neutral-200 rounded-none text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors"
+          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors"
         >
-          <Icon icon="lucide:gavel" class="w-3.5 h-3.5 text-neutral-500" />
+          <Icon icon="lucide:gavel" class="w-3.5 h-3.5 text-neutral-500" aria-hidden="true" />
           <span>Live Bidding</span>
         </RouterLink>
         <RouterLink
           to="/payments/topups"
-          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-neutral-200 rounded-none text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors"
+          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors"
         >
-          <Icon icon="lucide:wallet" class="w-3.5 h-3.5 text-neutral-500" />
+          <Icon icon="lucide:wallet" class="w-3.5 h-3.5 text-neutral-500" aria-hidden="true" />
           <span>{{ pendingTopupCount }} Pending Top-Ups</span>
         </RouterLink>
         <RouterLink
           to="/payments/settlements"
-          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-neutral-200 rounded-none text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors"
+          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors"
         >
-          <Icon icon="lucide:coins" class="w-3.5 h-3.5 text-neutral-500" />
+          <Icon icon="lucide:coins" class="w-3.5 h-3.5 text-neutral-500" aria-hidden="true" />
           <span>{{ pendingReviewCount }} Settlement Reviews</span>
         </RouterLink>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       <div
         v-for="kpi in kpis"
         :key="kpi.label"

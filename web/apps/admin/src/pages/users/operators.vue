@@ -3,6 +3,10 @@ import { computed, ref } from 'vue'
 import { Icon } from '@iconify/vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
@@ -17,7 +21,7 @@ interface OperatorAccount {
   status: 'Active' | 'Suspended'
 }
 
-const availableRoles = [
+const roleOptions = [
   'Root Operator',
   'Dispatch & Safety Supervisor',
   'Treasury & Settlements Officer',
@@ -76,27 +80,27 @@ const inviteForm = ref({
   name: '',
   email: '',
   department: 'Fleet Dispatch',
-  role: availableRoles[1]!,
+  role: roleOptions[1]!,
   mfaEnabled: true,
 })
 
 const pendingStatusTarget = ref<OperatorAccount | null>(null)
 const statusReason = ref('')
 
-const filteredUsers = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return operators.value
+const filteredOperators = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) return operators.value
   return operators.value.filter(
-    (user) =>
-      user.name.toLowerCase().includes(q) ||
-      user.email.toLowerCase().includes(q) ||
-      user.role.toLowerCase().includes(q) ||
-      user.department.toLowerCase().includes(q),
+    (operator) =>
+      operator.name.toLowerCase().includes(query) ||
+      operator.email.toLowerCase().includes(query) ||
+      operator.role.toLowerCase().includes(query) ||
+      operator.department.toLowerCase().includes(query),
   )
 })
 
 const activeCount = computed(
-  () => operators.value.filter((user) => user.status === 'Active').length,
+  () => operators.value.filter((operator) => operator.status === 'Active').length,
 )
 
 const openInviteModal = () => {
@@ -104,10 +108,14 @@ const openInviteModal = () => {
     name: '',
     email: '',
     department: 'Fleet Dispatch',
-    role: availableRoles[1]!,
+    role: roleOptions[1]!,
     mfaEnabled: true,
   }
   showInviteModal.value = true
+}
+
+function resetFilters() {
+  searchQuery.value = ''
 }
 
 const submitInvite = () => {
@@ -166,12 +174,7 @@ const confirmStatusToggle = () => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Operators</h1>
-        <p class="text-sm text-neutral-500 mt-1">Staff accounts, roles, and MFA.</p>
-      </div>
-    </div>
+    <PageHeader title="Operators" description="Staff accounts, roles, and MFA." />
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 
@@ -180,16 +183,11 @@ const confirmStatusToggle = () => {
         class="p-4 border-b border-neutral-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3"
       >
         <div class="flex flex-wrap items-center gap-2">
-          <div class="relative w-full sm:w-64">
-            <Icon
-              icon="lucide:search"
-              class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm"
-            />
-            <input
+          <div class="w-full sm:w-64">
+            <SearchField
               v-model="searchQuery"
-              type="text"
               placeholder="Search name, email, role..."
-              class="w-full pl-9 pr-3 py-1.5 bg-white border border-neutral-200 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+              aria-label="Search operators"
             />
           </div>
           <span
@@ -232,23 +230,23 @@ const confirmStatusToggle = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="user in filteredUsers"
-              :key="user.id"
+              v-for="operator in filteredOperators"
+              :key="operator.id"
               class="hover:bg-neutral-50/70 transition-colors"
             >
               <td class="py-3 px-4">
-                <div class="font-bold text-neutral-900">{{ user.name }}</div>
-                <div class="text-[11px] text-neutral-500 font-mono">{{ user.email }}</div>
+                <div class="font-bold text-neutral-900">{{ operator.name }}</div>
+                <div class="text-[11px] text-neutral-500 font-mono">{{ operator.email }}</div>
               </td>
-              <td class="py-3 px-4 text-neutral-700 font-medium">{{ user.department }}</td>
+              <td class="py-3 px-4 text-neutral-700 font-medium">{{ operator.department }}</td>
               <td class="py-3 px-4">
                 <BaseSelect
-                  :model-value="user.role"
-                  :disabled="user.id === 'OPS-001'"
+                  :model-value="operator.role"
+                  :disabled="operator.id === 'OPS-001'"
                   aria-label="Assign operator role"
                   :full-width="true"
-                  :options="availableRoles"
-                  @update:model-value="updateRole(user, $event)"
+                  :options="roleOptions"
+                  @update:model-value="updateRole(operator, $event)"
                 />
               </td>
               <td class="py-3 px-4">
@@ -256,135 +254,119 @@ const confirmStatusToggle = () => {
                   type="button"
                   class="inline-flex items-center space-x-1 px-2 py-0.5 text-[10px] font-semibold cursor-pointer border"
                   :class="
-                    user.mfaEnabled
+                    operator.mfaEnabled
                       ? 'bg-neutral-900 text-white border-neutral-900 hover:bg-neutral-800'
                       : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100'
                   "
-                  @click="toggleMfa(user)"
+                  @click="toggleMfa(operator)"
                 >
                   <Icon
-                    :icon="user.mfaEnabled ? 'lucide:shield-check' : 'lucide:shield-alert'"
+                    :icon="operator.mfaEnabled ? 'lucide:shield-check' : 'lucide:shield-alert'"
                     class="text-xs"
                   />
-                  <span>{{ user.mfaEnabled ? 'Hardware MFA' : 'Pending' }}</span>
+                  <span>{{ operator.mfaEnabled ? 'Hardware MFA' : 'Pending' }}</span>
                 </button>
               </td>
-              <td class="py-3 px-4 text-neutral-500">{{ user.lastActive }}</td>
+              <td class="py-3 px-4 text-neutral-500">{{ operator.lastActive }}</td>
               <td class="py-3 px-4">
                 <StatusBadge
-                  :label="user.status"
-                  :tone="user.status === 'Active' ? 'success' : 'danger'"
+                  :label="operator.status"
+                  :tone="operator.status === 'Active' ? 'success' : 'danger'"
                 />
               </td>
               <td class="py-3 px-4 text-right">
                 <button
-                  v-if="user.id !== 'OPS-001'"
+                  v-if="operator.id !== 'OPS-001'"
                   type="button"
                   class="text-xs font-semibold text-neutral-700 hover:text-neutral-900 cursor-pointer"
-                  @click="((statusReason = ''), (pendingStatusTarget = user))"
+                  @click="((statusReason = ''), (pendingStatusTarget = operator))"
                 >
-                  {{ user.status === 'Suspended' ? 'Reactivate' : 'Suspend' }}
+                  {{ operator.status === 'Suspended' ? 'Reactivate' : 'Suspend' }}
                 </button>
                 <span v-else class="text-[11px] font-mono text-neutral-400">Root</span>
               </td>
             </tr>
-            <tr v-if="filteredUsers.length === 0">
-              <td colspan="7" class="py-8 text-center text-xs text-neutral-500">
-                No operators match your filter.
-              </td>
-            </tr>
+            <EmptyTableRow
+              v-if="filteredOperators.length === 0"
+              :colspan="7"
+              title="No operators match your filter"
+              :show-reset="Boolean(searchQuery)"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="showInviteModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 backdrop-blur-[1px] p-4"
-        role="dialog"
-        aria-modal="true"
-        @click.self="showInviteModal = false"
-      >
-        <form
-          class="bg-white border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4"
-          @submit.prevent="submitInvite"
-        >
-          <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
-            <h3 class="text-base font-bold text-neutral-900">Invite Operator</h3>
-            <button
-              type="button"
-              aria-label="Close modal"
-              class="text-neutral-400 hover:text-neutral-700 cursor-pointer"
-              @click="showInviteModal = false"
-            >
-              <Icon icon="lucide:x" class="w-4 h-4" />
-            </button>
+    <ModalDialog
+      v-model:open="showInviteModal"
+      title="Invite Operator"
+      size="md"
+      close-label="Close modal"
+    >
+      <form class="space-y-4 text-xs" @submit.prevent="submitInvite">
+        <div class="space-y-3">
+          <div>
+            <label class="block font-semibold text-neutral-700 mb-1">Full Name</label>
+            <input
+              v-model="inviteForm.name"
+              type="text"
+              required
+              placeholder="Marco Dela Cruz"
+              class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
+            />
           </div>
+          <div>
+            <label class="block font-semibold text-neutral-700 mb-1">Work Email</label>
+            <input
+              v-model="inviteForm.email"
+              type="email"
+              required
+              placeholder="marco.delacruz@easyride.ph"
+              class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
+            />
+          </div>
+          <div>
+            <label class="block font-semibold text-neutral-700 mb-1">Department</label>
+            <input
+              v-model="inviteForm.department"
+              type="text"
+              required
+              class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
+            />
+          </div>
+          <div>
+            <label class="block font-semibold text-neutral-700 mb-1">Role</label>
+            <BaseSelect
+              v-model="inviteForm.role"
+              aria-label="Select role"
+              :full-width="true"
+              :options="roleOptions"
+            />
+          </div>
+          <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer pt-1">
+            <input v-model="inviteForm.mfaEnabled" type="checkbox" class="accent-neutral-900" />
+            <span>Require MFA on first sign-in</span>
+          </label>
+        </div>
 
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block font-semibold text-neutral-700 mb-1">Full Name</label>
-              <input
-                v-model="inviteForm.name"
-                type="text"
-                required
-                placeholder="Marco Dela Cruz"
-                class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-semibold text-neutral-700 mb-1">Work Email</label>
-              <input
-                v-model="inviteForm.email"
-                type="email"
-                required
-                placeholder="marco.delacruz@easyride.ph"
-                class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-semibold text-neutral-700 mb-1">Department</label>
-              <input
-                v-model="inviteForm.department"
-                type="text"
-                required
-                class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-semibold text-neutral-700 mb-1">Role</label>
-              <BaseSelect
-                v-model="inviteForm.role"
-                aria-label="Select role"
-                :full-width="true"
-                :options="availableRoles"
-              />
-            </div>
-            <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer pt-1">
-              <input v-model="inviteForm.mfaEnabled" type="checkbox" class="accent-neutral-900" />
-              <span>Require MFA on first sign-in</span>
-            </label>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
-            <button
-              type="button"
-              class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
-              @click="showInviteModal = false"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-            >
-              Send Invite
-            </button>
-          </div>
-        </form>
-      </div>
-    </Teleport>
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100">
+          <button
+            type="button"
+            class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+            @click="showInviteModal = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+          >
+            Send Invite
+          </button>
+        </div>
+      </form>
+    </ModalDialog>
 
     <ConfirmDialog
       :open="Boolean(pendingStatusTarget)"

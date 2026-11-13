@@ -12,7 +12,7 @@ describe('ProfilePage', () => {
       },
     })
 
-    const nameInput = wrapper.find('#admin-full-name')
+    const nameInput = wrapper.find('#profile-full-name')
     await nameInput.setValue('Carlo Reyes')
 
     await wrapper.find('form').trigger('submit')

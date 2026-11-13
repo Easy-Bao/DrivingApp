@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
 import { useDriverApplications } from '@/features/users/composables/useDriverApplications'
 
 definePage({
@@ -112,22 +113,6 @@ function openFacePhotoViewer() {
 function closeViewer() {
   activeViewerDoc.value = null
 }
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
-    if (showApproveDialog.value) showApproveDialog.value = false
-    else if (showRejectDialog.value) showRejectDialog.value = false
-    else if (activeViewerDoc.value) closeViewer()
-  }
-}
-
-onMounted(() => {
-  window.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown)
-})
 
 function openApproveDialog() {
   showApproveDialog.value = true
@@ -360,14 +345,14 @@ function goBack() {
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">Tricycle Make & Model</div>
+            <div class="text-neutral-400 text-[11px] font-medium">TukTuk / Bao-Bao Unit</div>
             <div class="font-semibold text-neutral-900 mt-0.5">
               {{ application.vehicle.year }} {{ application.vehicle.make }}
               {{ application.vehicle.model }}
             </div>
           </div>
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">Plate & Body / Sidecar No.</div>
+            <div class="text-neutral-400 text-[11px] font-medium">Plate & Body Unit No.</div>
             <div class="font-mono font-bold text-neutral-900 mt-0.5">
               {{ application.vehicle.plate }} · {{ application.vehicle.bodyNumber }}
             </div>
@@ -570,75 +555,53 @@ function goBack() {
       </button>
     </div>
 
-    <div
-      v-if="showApproveDialog && application"
-      class="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
-      @click.self="showApproveDialog = false"
+    <ModalDialog
+      :open="showApproveDialog && Boolean(application)"
+      title="Approve Driver Application"
+      :subtitle="
+        application ? `Application ${application.id} · ${application.applicant}` : undefined
+      "
+      size="md"
+      close-label="Close modal"
+      @update:open="showApproveDialog = $event"
     >
-      <div
-        class="bg-white w-full max-w-[500px] border border-neutral-300 shadow-2xl flex flex-col my-auto"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Approve Application Confirmation"
-      >
-        <div
-          class="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50"
-        >
-          <div>
-            <h3 class="font-bold text-sm text-neutral-900">Approve Driver Application</h3>
-            <p class="text-xs text-neutral-500 mt-0.5">
-              Application {{ application.id }} · {{ application.applicant }}
-            </p>
+      <div v-if="application" class="space-y-4 text-xs">
+        <p class="text-neutral-700 leading-relaxed">
+          Are you sure you want to approve this driver application? This will issue platform
+          credentials, grant taxicle dispatch privileges, and notify the driver at
+          <span class="font-mono font-bold text-neutral-900">{{ application.phone }}</span
+          >.
+        </p>
+
+        <div class="p-3 bg-neutral-50 border border-neutral-200 text-xs space-y-1">
+          <div class="font-semibold text-neutral-900 flex items-center space-x-1.5">
+            <Icon icon="lucide:check-circle" class="text-neutral-700" />
+            <span>Verified Summary</span>
           </div>
-          <button
-            type="button"
-            class="w-8 h-8 flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 border border-neutral-200 transition-colors cursor-pointer"
-            title="Close dialog (Esc)"
-            @click="showApproveDialog = false"
-          >
-            <Icon icon="lucide:x" class="text-base" />
-          </button>
+          <ul class="text-neutral-700 space-y-0.5 text-[11px] list-disc list-inside">
+            <li>
+              LTO License: {{ application.licenseNumber }} (DL Code: {{ application.licenseCodes }})
+            </li>
+            <li>
+              Unit: {{ application.vehicle.year }} {{ application.vehicle.make }}
+              {{ application.vehicle.model }} (Plate: {{ application.vehicle.plate }})
+            </li>
+            <li>TODA / Franchise: {{ application.vehicle.todaFranchise }}</li>
+            <li>
+              Location: {{ application.city }}, {{ application.barangay }} ({{
+                application.province
+              }})
+            </li>
+            <li>
+              Clearance: {{ application.clearanceType }} (Status:
+              {{ application.backgroundStatus }})
+            </li>
+          </ul>
         </div>
+      </div>
 
-        <div class="p-5 space-y-4 text-xs">
-          <p class="text-neutral-700 leading-relaxed">
-            Are you sure you want to approve this driver application? This will issue platform
-            credentials, grant taxicle dispatch privileges, and notify the driver at
-            <span class="font-mono font-bold text-neutral-900">{{ application.phone }}</span
-            >.
-          </p>
-
-          <div class="p-3 bg-neutral-50 border border-neutral-200 text-xs space-y-1">
-            <div class="font-semibold text-neutral-900 flex items-center space-x-1.5">
-              <Icon icon="lucide:check-circle" class="text-neutral-700" />
-              <span>Verified Summary</span>
-            </div>
-            <ul class="text-neutral-700 space-y-0.5 text-[11px] list-disc list-inside">
-              <li>
-                LTO License: {{ application.licenseNumber }} (DL Code:
-                {{ application.licenseCodes }})
-              </li>
-              <li>
-                Unit: {{ application.vehicle.year }} {{ application.vehicle.make }}
-                {{ application.vehicle.model }} (Plate: {{ application.vehicle.plate }})
-              </li>
-              <li>TODA / Franchise: {{ application.vehicle.todaFranchise }}</li>
-              <li>
-                Location: {{ application.city }}, {{ application.barangay }} ({{
-                  application.province
-                }})
-              </li>
-              <li>
-                Clearance: {{ application.clearanceType }} (Status:
-                {{ application.backgroundStatus }})
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div
-          class="px-5 py-3 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end space-x-2"
-        >
+      <template #footer>
+        <div class="flex items-center justify-end space-x-2">
           <button
             type="button"
             class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
@@ -654,76 +617,55 @@ function goBack() {
             Confirm & Approve Driver
           </button>
         </div>
-      </div>
-    </div>
+      </template>
+    </ModalDialog>
 
-    <div
-      v-if="showRejectDialog && application"
-      class="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
-      @click.self="showRejectDialog = false"
+    <ModalDialog
+      :open="showRejectDialog && Boolean(application)"
+      title="Reject Driver Application"
+      :subtitle="
+        application ? `Application ${application.id} · ${application.applicant}` : undefined
+      "
+      size="md"
+      close-label="Close modal"
+      @update:open="showRejectDialog = $event"
     >
-      <div
-        class="bg-white w-full max-w-[500px] border border-neutral-300 shadow-2xl flex flex-col my-auto"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Reject Application Confirmation"
-      >
-        <div
-          class="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50"
-        >
-          <div>
-            <h3 class="font-bold text-sm text-neutral-900">Reject Driver Application</h3>
-            <p class="text-xs text-neutral-500 mt-0.5">
-              Application {{ application.id }} · {{ application.applicant }}
-            </p>
-          </div>
-          <button
-            type="button"
-            class="w-8 h-8 flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 border border-neutral-200 transition-colors cursor-pointer"
-            title="Close dialog (Esc)"
-            @click="showRejectDialog = false"
-          >
-            <Icon icon="lucide:x" class="text-base" />
-          </button>
+      <div v-if="application" class="space-y-4 text-xs">
+        <p class="text-neutral-700 leading-relaxed">
+          Please specify the regulatory compliance or documentation grounds for rejecting this
+          application. This reason will be logged for regulatory audit.
+        </p>
+
+        <div class="space-y-1.5">
+          <label class="font-semibold text-neutral-800">Primary Rejection Ground</label>
+          <BaseSelect
+            v-model="rejectReason"
+            aria-label="Primary rejection ground"
+            :full-width="true"
+            :options="[
+              'Incomplete or unreadable LTO driver license scan',
+              'Expired or unverified MTOP municipal taxicle permit',
+              'TODA franchise association endorsement missing or invalid',
+              'Failed NBI or PNP criminal background screening',
+              'Mismatched vehicle registration (OR/CR) details',
+              'Other regulatory compliance deficiency',
+            ]"
+          />
         </div>
 
-        <div class="p-5 space-y-4 text-xs">
-          <p class="text-neutral-700 leading-relaxed">
-            Please specify the regulatory compliance or documentation grounds for rejecting this
-            application. This reason will be logged for regulatory audit.
-          </p>
-
-          <div class="space-y-1.5">
-            <label class="font-semibold text-neutral-800">Primary Rejection Ground</label>
-            <BaseSelect
-              v-model="rejectReason"
-              aria-label="Primary rejection ground"
-              :full-width="true"
-              :options="[
-                'Incomplete or unreadable LTO driver license scan',
-                'Expired or unverified MTOP municipal tricycle permit',
-                'TODA franchise association endorsement missing or invalid',
-                'Failed NBI or PNP criminal background screening',
-                'Mismatched vehicle registration (OR/CR) details',
-                'Other regulatory compliance deficiency',
-              ]"
-            />
-          </div>
-
-          <div class="space-y-1.5">
-            <label class="font-semibold text-neutral-800">Auditor Notes (Optional)</label>
-            <textarea
-              v-model="rejectNotes"
-              rows="3"
-              placeholder="Provide specific details or instructions for driver re-submission..."
-              class="w-full p-2 bg-neutral-50 border border-neutral-200 text-xs text-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-900"
-            />
-          </div>
+        <div class="space-y-1.5">
+          <label class="font-semibold text-neutral-800">Auditor Notes (Optional)</label>
+          <textarea
+            v-model="rejectNotes"
+            rows="3"
+            placeholder="Provide specific details or instructions for driver re-submission..."
+            class="w-full p-2 bg-neutral-50 border border-neutral-200 text-xs text-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+          />
         </div>
+      </div>
 
-        <div
-          class="px-5 py-3 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end space-x-2"
-        >
+      <template #footer>
+        <div class="flex items-center justify-end space-x-2">
           <button
             type="button"
             class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
@@ -739,231 +681,209 @@ function goBack() {
             Confirm Rejection
           </button>
         </div>
-      </div>
-    </div>
+      </template>
+    </ModalDialog>
 
-    <div
-      v-if="activeViewerDoc"
-      class="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
-      @click.self="closeViewer"
+    <ModalDialog
+      :open="Boolean(activeViewerDoc)"
+      :title="activeViewerDoc?.title ?? ''"
+      :subtitle="activeViewerDoc?.subtitle"
+      size="xl"
+      close-label="Close viewer"
+      @update:open="(open) => !open && closeViewer()"
     >
-      <div
-        class="bg-white w-full max-w-[680px] border border-neutral-300 shadow-2xl flex flex-col my-auto"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Document Viewer"
-      >
+      <div v-if="activeViewerDoc" class="space-y-4 text-xs">
         <div
-          class="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50"
+          v-if="activeViewerDoc.type === 'license'"
+          class="flex items-center space-x-2 pb-2 border-b border-neutral-100"
         >
-          <div>
-            <h3 class="font-bold text-sm text-neutral-900">{{ activeViewerDoc.title }}</h3>
-            <p class="text-xs text-neutral-500 mt-0.5">{{ activeViewerDoc.subtitle }}</p>
-          </div>
           <button
             type="button"
-            class="w-8 h-8 flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 border border-neutral-200 transition-colors cursor-pointer"
-            title="Close viewer (Esc)"
-            aria-label="Close viewer"
-            @click="closeViewer"
+            class="px-3 py-1.5 font-semibold text-xs border transition-colors cursor-pointer"
+            :class="
+              activeViewerDoc.activeSide === 'front'
+                ? 'bg-neutral-900 text-white border-neutral-900'
+                : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100'
+            "
+            @click="setLicenseSide('front')"
           >
-            <Icon icon="lucide:x" class="text-base" />
+            Front Side
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 font-semibold text-xs border transition-colors cursor-pointer"
+            :class="
+              activeViewerDoc.activeSide === 'back'
+                ? 'bg-neutral-900 text-white border-neutral-900'
+                : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100'
+            "
+            @click="setLicenseSide('back')"
+          >
+            Back Side
           </button>
         </div>
 
-        <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
-          <div
-            v-if="activeViewerDoc.type === 'license'"
-            class="flex items-center space-x-2 pb-2 border-b border-neutral-100"
-          >
-            <button
-              type="button"
-              class="px-3 py-1.5 font-semibold text-xs border transition-colors cursor-pointer"
-              :class="
-                activeViewerDoc.activeSide === 'front'
-                  ? 'bg-neutral-900 text-white border-neutral-900'
-                  : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100'
-              "
-              @click="setLicenseSide('front')"
-            >
-              Front Side
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 font-semibold text-xs border transition-colors cursor-pointer"
-              :class="
-                activeViewerDoc.activeSide === 'back'
-                  ? 'bg-neutral-900 text-white border-neutral-900'
-                  : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100'
-              "
-              @click="setLicenseSide('back')"
-            >
-              Back Side
-            </button>
+        <div
+          class="border border-neutral-200 bg-neutral-100 p-6 flex flex-col items-center justify-center min-h-[220px] overflow-hidden"
+        >
+          <div v-if="activeViewerDoc.type === 'face' && application" class="text-center">
+            <img
+              :src="application.facePhotoUrl"
+              :alt="application.applicant"
+              class="w-40 h-40 object-cover border-2 border-white shadow-md mx-auto"
+            />
+            <p class="text-xs font-bold text-neutral-900 mt-3">{{ application.applicant }}</p>
+            <p class="text-[11px] text-neutral-500 font-mono">{{ application.phone }}</p>
           </div>
 
-          <div
-            class="border border-neutral-200 bg-neutral-100 p-6 flex flex-col items-center justify-center min-h-[220px] overflow-hidden"
+          <Transition
+            v-else-if="activeViewerDoc.type === 'license' && application"
+            :name="licenseSlideDirection"
+            mode="out-in"
           >
-            <div v-if="activeViewerDoc.type === 'face' && application" class="text-center">
-              <img
-                :src="application.facePhotoUrl"
-                :alt="application.applicant"
-                class="w-40 h-40 object-cover border-2 border-white shadow-md mx-auto"
-              />
-              <p class="text-xs font-bold text-neutral-900 mt-3">{{ application.applicant }}</p>
-              <p class="text-[11px] text-neutral-500 font-mono">{{ application.phone }}</p>
+            <div
+              v-if="activeViewerDoc.activeSide === 'front'"
+              key="license-front"
+              class="w-full max-w-[480px] bg-sky-50 border-2 border-sky-300 p-4 shadow-sm relative overflow-hidden"
+            >
+              <div class="text-center pb-2 border-b border-sky-200">
+                <div class="text-[10px] uppercase font-bold text-sky-900 tracking-wider">
+                  Republic of the Philippines · Department of Transportation
+                </div>
+                <div class="text-xs font-bold text-sky-950 uppercase">
+                  Land Transportation Office
+                </div>
+                <div class="text-[10px] font-semibold text-sky-800">Driver's License</div>
+              </div>
+
+              <div class="flex items-center space-x-3 mt-3">
+                <img
+                  :src="application.facePhotoUrl"
+                  :alt="application.applicant"
+                  class="w-16 h-16 object-cover border border-sky-400 bg-sky-200 shrink-0"
+                />
+                <div class="text-xs space-y-0.5">
+                  <div class="font-bold text-neutral-900">{{ application.applicant }}</div>
+                  <div class="font-mono text-[11px] text-neutral-800">
+                    License No: {{ application.licenseNumber }}
+                  </div>
+                  <div class="text-[10px] text-neutral-600">Nationality: FILIPINO · Sex: M</div>
+                  <div class="text-[10px] text-neutral-600 font-mono">
+                    Expires: {{ application.licenseExpiry }}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="mt-3 pt-2 border-t border-sky-200 flex justify-between text-[10px] text-sky-900 font-mono"
+              >
+                <span>Authorized DL Code: {{ application.licenseCodes }}</span>
+                <span>Conditions: NONE</span>
+              </div>
             </div>
 
-            <Transition
-              v-else-if="activeViewerDoc.type === 'license' && application"
-              :name="licenseSlideDirection"
-              mode="out-in"
+            <div
+              v-else
+              key="license-back"
+              class="w-full max-w-[480px] bg-neutral-50 border-2 border-neutral-300 p-4 shadow-sm relative"
             >
-              <div
-                v-if="activeViewerDoc.activeSide === 'front'"
-                key="license-front"
-                class="w-full max-w-[480px] bg-sky-50 border-2 border-sky-300 p-4 shadow-sm relative overflow-hidden"
-              >
-                <div class="text-center pb-2 border-b border-sky-200">
-                  <div class="text-[10px] uppercase font-bold text-sky-900 tracking-wider">
-                    Republic of the Philippines · Department of Transportation
-                  </div>
-                  <div class="text-xs font-bold text-sky-950 uppercase">
-                    Land Transportation Office
-                  </div>
-                  <div class="text-[10px] font-semibold text-sky-800">Driver's License</div>
+              <div class="text-center pb-2 border-b border-neutral-200">
+                <div class="text-[10px] uppercase font-bold text-neutral-700 tracking-wider">
+                  Official LTO Security Barcode & Restriction Matrix
                 </div>
+              </div>
 
-                <div class="flex items-center space-x-3 mt-3">
-                  <img
-                    :src="application.facePhotoUrl"
-                    :alt="application.applicant"
-                    class="w-16 h-16 object-cover border border-sky-400 bg-sky-200 shrink-0"
-                  />
-                  <div class="text-xs space-y-0.5">
-                    <div class="font-bold text-neutral-900">{{ application.applicant }}</div>
-                    <div class="font-mono text-[11px] text-neutral-800">
-                      License No: {{ application.licenseNumber }}
-                    </div>
-                    <div class="text-[10px] text-neutral-600">Nationality: FILIPINO · Sex: M</div>
-                    <div class="text-[10px] text-neutral-600 font-mono">
-                      Expires: {{ application.licenseExpiry }}
-                    </div>
-                  </div>
-                </div>
-
+              <div class="mt-3 space-y-2 text-xs">
                 <div
-                  class="mt-3 pt-2 border-t border-sky-200 flex justify-between text-[10px] text-sky-900 font-mono"
+                  class="h-10 bg-neutral-900 flex items-center justify-center text-white font-mono text-xs tracking-widest"
                 >
-                  <span>Authorized DL Code: {{ application.licenseCodes }}</span>
-                  <span>Conditions: NONE</span>
+                  ||||| | |||| |||||| ||| ||||||| |||||||||| ||||
                 </div>
-              </div>
-
-              <div
-                v-else
-                key="license-back"
-                class="w-full max-w-[480px] bg-neutral-50 border-2 border-neutral-300 p-4 shadow-sm relative"
-              >
-                <div class="text-center pb-2 border-b border-neutral-200">
-                  <div class="text-[10px] uppercase font-bold text-neutral-700 tracking-wider">
-                    Official LTO Security Barcode & Restriction Matrix
+                <div class="text-[10px] text-neutral-500 font-mono text-center">
+                  *{{ application.licenseNumber }}*
+                </div>
+                <div class="p-2 bg-white border border-neutral-200 text-[11px] space-y-1">
+                  <div>
+                    <span class="text-neutral-400">Address:</span> {{ application.barangay }},
+                    {{ application.city }}, {{ application.province }}
                   </div>
-                </div>
-
-                <div class="mt-3 space-y-2 text-xs">
-                  <div
-                    class="h-10 bg-neutral-900 flex items-center justify-center text-white font-mono text-xs tracking-widest"
-                  >
-                    ||||| | |||| |||||| ||| ||||||| |||||||||| ||||
+                  <div>
+                    <span class="text-neutral-400">Emergency Contact:</span>
+                    {{ application.phone }}
                   </div>
-                  <div class="text-[10px] text-neutral-500 font-mono text-center">
-                    *{{ application.licenseNumber }}*
-                  </div>
-                  <div class="p-2 bg-white border border-neutral-200 text-[11px] space-y-1">
-                    <div>
-                      <span class="text-neutral-400">Address:</span> {{ application.barangay }},
-                      {{ application.city }}, {{ application.province }}
-                    </div>
-                    <div>
-                      <span class="text-neutral-400">Emergency Contact:</span>
-                      {{ application.phone }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Transition>
-
-            <div
-              v-else-if="activeViewerDoc.type === 'taxicle_orcr' && application"
-              class="w-full max-w-[480px] bg-amber-50/50 border-2 border-amber-300 p-4 shadow-sm"
-            >
-              <div class="text-center pb-2 border-b border-amber-200">
-                <div class="text-[10px] uppercase font-bold text-amber-900 tracking-wider">
-                  Republic of the Philippines · Land Transportation Office
-                </div>
-                <div class="text-xs font-bold text-amber-950 uppercase">
-                  Motor Vehicle Registration Document
-                </div>
-              </div>
-              <div class="grid grid-cols-2 gap-2 mt-3 text-xs">
-                <div>
-                  <span class="text-neutral-400">Plate Number:</span>
-                  <span class="font-mono font-bold">{{ application.vehicle.plate }}</span>
-                </div>
-                <div>
-                  <span class="text-neutral-400">Body / Sidecar:</span>
-                  <span class="font-bold">{{ application.vehicle.bodyNumber }}</span>
-                </div>
-                <div>
-                  <span class="text-neutral-400">Make & Model:</span>
-                  <span class="font-semibold"
-                    >{{ application.vehicle.make }} {{ application.vehicle.model }}</span
-                  >
-                </div>
-                <div>
-                  <span class="text-neutral-400">TODA Franchise:</span>
-                  <span class="font-semibold">{{ application.vehicle.todaFranchise }}</span>
                 </div>
               </div>
             </div>
+          </Transition>
 
-            <div
-              v-else-if="activeViewerDoc.type === 'clearance' && application"
-              class="w-full max-w-[480px] bg-emerald-50/50 border-2 border-emerald-300 p-4 shadow-sm text-center"
-            >
-              <Icon icon="lucide:award" class="text-4xl text-emerald-600 mx-auto mb-1" />
-              <div class="text-xs font-bold text-emerald-950 uppercase">
-                {{ application.clearanceType }}
+          <div
+            v-else-if="activeViewerDoc.type === 'taxicle_orcr' && application"
+            class="w-full max-w-[480px] bg-amber-50/50 border-2 border-amber-300 p-4 shadow-sm"
+          >
+            <div class="text-center pb-2 border-b border-amber-200">
+              <div class="text-[10px] uppercase font-bold text-amber-900 tracking-wider">
+                Republic of the Philippines · Land Transportation Office
               </div>
-              <div class="text-[11px] font-mono text-emerald-800 mt-0.5">
-                ID: {{ application.clearanceNumber }}
+              <div class="text-xs font-bold text-amber-950 uppercase">
+                3-Wheeled Taxicle Registration (OR/CR)
               </div>
-              <div class="mt-2 text-xs text-neutral-700 bg-white border border-emerald-200 p-2">
-                {{ application.backgroundNotes }}
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 text-xs">
+              <div>
+                <span class="text-neutral-400">Plate Number:</span>
+                <span class="font-mono font-bold">{{ application.vehicle.plate }}</span>
+              </div>
+              <div>
+                <span class="text-neutral-400">Body Unit:</span>
+                <span class="font-bold">{{ application.vehicle.bodyNumber }}</span>
+              </div>
+              <div>
+                <span class="text-neutral-400">Make & Model:</span>
+                <span class="font-semibold"
+                  >{{ application.vehicle.make }} {{ application.vehicle.model }}</span
+                >
+              </div>
+              <div>
+                <span class="text-neutral-400">TODA Franchise:</span>
+                <span class="font-semibold">{{ application.vehicle.todaFranchise }}</span>
               </div>
             </div>
           </div>
 
           <div
-            v-if="activeViewerDoc.metadata"
-            class="border border-neutral-200 divide-y divide-neutral-100"
+            v-else-if="activeViewerDoc.type === 'clearance' && application"
+            class="w-full max-w-[480px] bg-emerald-50/50 border-2 border-emerald-300 p-4 shadow-sm text-center"
           >
-            <div
-              v-for="(val, key) in activeViewerDoc.metadata"
-              :key="key"
-              class="px-3 py-1.5 flex justify-between text-xs"
-            >
-              <span class="text-neutral-500">{{ key }}</span>
-              <span class="font-semibold text-neutral-900 font-mono">{{ val }}</span>
+            <Icon icon="lucide:award" class="text-4xl text-emerald-600 mx-auto mb-1" />
+            <div class="text-xs font-bold text-emerald-950 uppercase">
+              {{ application.clearanceType }}
+            </div>
+            <div class="text-[11px] font-mono text-emerald-800 mt-0.5">
+              ID: {{ application.clearanceNumber }}
+            </div>
+            <div class="mt-2 text-xs text-neutral-700 bg-white border border-emerald-200 p-2">
+              {{ application.backgroundNotes }}
             </div>
           </div>
         </div>
 
         <div
-          class="px-5 py-3 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end"
+          v-if="activeViewerDoc.metadata"
+          class="border border-neutral-200 divide-y divide-neutral-100"
         >
+          <div
+            v-for="(val, key) in activeViewerDoc.metadata"
+            :key="key"
+            class="px-3 py-1.5 flex flex-col sm:flex-row sm:justify-between gap-1 text-xs"
+          >
+            <span class="text-neutral-500">{{ key }}</span>
+            <span class="font-semibold text-neutral-900 font-mono">{{ val }}</span>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="flex items-center justify-end">
           <button
             type="button"
             class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
@@ -972,7 +892,7 @@ function goBack() {
             Close Viewer
           </button>
         </div>
-      </div>
-    </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>

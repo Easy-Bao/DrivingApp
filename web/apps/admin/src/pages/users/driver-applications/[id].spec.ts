@@ -19,6 +19,7 @@ describe('DriverApplicationDetailsPage', () => {
       global: {
         stubs: {
           RouterLink: true,
+          Teleport: true,
         },
       },
     })
