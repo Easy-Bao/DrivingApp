@@ -14,7 +14,7 @@ vi.mock('vue-router', () => ({
 }))
 
 describe('DriverApplicationDetailsPage', () => {
-  it('renders driver application details, back button, Philippine taxicle info, and allows approval via modal', async () => {
+  it('renders driver application details, back button, vehicle info, and allows approval via modal', async () => {
     const wrapper = mount(DriverApplicationDetailsPage, {
       global: {
         stubs: {
@@ -29,14 +29,15 @@ describe('DriverApplicationDetailsPage', () => {
     expect(wrapper.text()).toContain('Brandon Lee')
     expect(wrapper.text()).toContain('+63 917 111 2233')
     expect(wrapper.text()).toContain('Bajaj')
-    expect(wrapper.text()).toContain('Taxicle')
+    expect(wrapper.text()).toContain('Bao-Bao')
     expect(wrapper.text()).toContain('A1')
     expect(wrapper.text()).toContain('View License')
     expect(wrapper.text()).toContain('NBI')
+    expect(wrapper.text()).not.toContain('Taxicle')
 
     const approveBtn = wrapper
       .findAll('button')
-      .find((b) => b.text().includes('Approve Driver & Issue Credentials'))
+      .find((b) => b.text().includes('Approve & Activate Driver'))
     expect(approveBtn).toBeDefined()
     if (approveBtn) {
       await approveBtn.trigger('click')
@@ -44,12 +45,12 @@ describe('DriverApplicationDetailsPage', () => {
 
       const confirmBtn = wrapper
         .findAll('button')
-        .find((b) => b.text().includes('Confirm & Approve Driver'))
+        .find((b) => b.text().includes('Confirm & Activate Driver'))
       expect(confirmBtn).toBeDefined()
       if (confirmBtn) {
         await confirmBtn.trigger('click')
         expect(wrapper.text()).toContain(
-          'Application approved. Taxicle driver credentials and dispatch access active',
+          'Application approved. Driver credentials and dispatch access active.',
         )
       }
     }

@@ -3,18 +3,21 @@ import {
   buildCsvContent,
   escapeCsvCell,
   exportToCsv,
+  formatBookingReference,
   formatBpsAsPercent,
   formatCentavos,
   formatPhp,
 } from '@/shared/utils/format'
 
 describe('format utilities', () => {
-  it('formats PHP currency and integer centavos cleanly', () => {
+  it('formats PHP currency, booking references, and integer centavos cleanly', () => {
     expect(formatPhp(1250.5)).toBe('₱1,250.50')
     expect(formatCentavos(2500)).toBe('₱25.00')
     expect(formatCentavos(0)).toBe('₱0.00')
     expect(formatBpsAsPercent(1500)).toBe('15%')
     expect(formatBpsAsPercent(1250)).toBe('12.50%')
+    expect(formatBookingReference('701629644618921')).toBe('7016…18921')
+    expect(formatBookingReference('TRP-18921')).toBe('TRP-18921')
   })
 
   it('escapes quotes, commas, and spreadsheet formulas in CSV cells', () => {

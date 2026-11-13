@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 interface SosIncident {
   id: string
@@ -71,7 +71,7 @@ const alerts = ref<SosIncident[]>([
     severity: 'High',
     status: 'Resolved',
     responderNotified: true,
-    resolutionSummary: 'CDRRMO patrol assisted taxicle at Dao Junction; rider transferred safely.',
+    resolutionSummary: 'CDRRMO patrol assisted unit at Dao Junction; rider transferred safely.',
   },
 ])
 
@@ -128,9 +128,17 @@ const confirmResolution = () => {
 
 <template>
   <div class="space-y-6">
-    <PageHeader title="SOS Alerts" description="Dispatch hotline: 911 · CDRRMO (062-925-0911)">
+    <PageHeader
+      title="SOS Alerts"
+      description="Monitor emergency alerts and coordinate rapid dispatch response."
+    >
       <template #actions>
         <div class="flex flex-wrap items-center gap-1.5">
+          <span
+            class="px-2 py-1 text-xs font-mono border border-neutral-200 bg-neutral-50 text-neutral-700"
+          >
+            911 · CDRRMO (062-925-0911)
+          </span>
           <span
             class="px-2 py-1 text-xs font-semibold tabular-nums border border-neutral-300 bg-white text-neutral-900"
           >

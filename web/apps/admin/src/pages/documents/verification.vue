@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import TablePagination from '@/shared/table/TablePagination.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 type VerificationStatus = 'Pending Review' | 'Approved' | 'Rejected'
 
@@ -71,7 +71,7 @@ const pendingDocs = ref<PendingDocument[]>([
     driverPhone: '+63 928 412 8890',
     city: 'Brgy. Tuburan',
     docType: 'MTOP Franchise Permit',
-    issuingAgency: 'Taxicle Franchising Board',
+    issuingAgency: 'Pagadian City Franchising Board',
     expiryDate: '2027-11-20',
     submittedAt: '4 hours ago',
     docImageUrl: 'mtop_permit_pagadian_4912nc.pdf',
@@ -86,7 +86,7 @@ const pendingDocs = ref<PendingDocument[]>([
     issuingAgency: 'LTO Extension Office',
     expiryDate: '2026-10-14',
     submittedAt: '5 hours ago',
-    docImageUrl: 'lto_or_cr_taxicle_9021nd.pdf',
+    docImageUrl: 'lto_or_cr_9021nd.pdf',
     hasTwoSides: true,
     frontScanUrl: 'lto_or_front_9021nd.png',
     backScanUrl: 'lto_cr_back_9021nd.png',
@@ -203,7 +203,7 @@ const pendingDocs = ref<PendingDocument[]>([
     issuingAgency: 'LTO Extension Office',
     expiryDate: '2027-06-15',
     submittedAt: '4 days ago',
-    docImageUrl: 'or_cr_taxicle_4481nd.pdf',
+    docImageUrl: 'or_cr_4481nd.pdf',
     hasTwoSides: true,
     frontScanUrl: 'lto_or_4481nd.png',
     backScanUrl: 'lto_cr_4481nd.png',
@@ -330,13 +330,22 @@ const statusTone = (status: VerificationStatus) => {
   if (status === 'Rejected') return 'danger'
   return 'info'
 }
+
+function isDocumentExpired(expiryDate: string): boolean {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const todayIso = `${year}-${month}-${day}`
+  return expiryDate < todayIso
+}
 </script>
 
 <template>
   <div class="space-y-6">
     <PageHeader
       title="Verification"
-      description="LTO licenses, MTOP permits, OR/CR, and clearances."
+      description="Review and approve updated driver documents and compliance renewals."
     />
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
@@ -396,7 +405,6 @@ const statusTone = (status: VerificationStatus) => {
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ doc.driver }}</div>
                 <div class="text-[11px] text-neutral-400 font-mono">{{ doc.driverPhone }}</div>
-                <div class="text-[10px] text-neutral-400">{{ doc.city }}</div>
               </td>
               <td class="py-3 px-4">
                 <div class="font-medium text-neutral-900">{{ doc.docType }}</div>
@@ -409,18 +417,46 @@ const statusTone = (status: VerificationStatus) => {
                 </div>
               </td>
               <td class="py-3 px-4 text-neutral-600">{{ doc.issuingAgency }}</td>
-              <td class="py-3 px-4 font-mono">{{ doc.expiryDate }}</td>
+              <td class="py-3 px-4 font-mono">
+                <div class="inline-flex items-center space-x-1.5">
+                  <span
+                    :class="
+                      isDocumentExpired(doc.expiryDate)
+                        ? 'text-red-600 font-semibold'
+                        : 'text-neutral-700'
+                    "
+                  >
+                    {{ doc.expiryDate }}
+                  </span>
+                  <span
+                    v-if="isDocumentExpired(doc.expiryDate)"
+                    class="px-1.5 py-0.5 text-[10px] font-sans font-bold uppercase tracking-wider bg-red-50 text-red-700 border border-red-200"
+                  >
+                    Expired
+                  </span>
+                </div>
+              </td>
               <td class="py-3 px-4">
                 <StatusBadge :label="doc.status" :tone="statusTone(doc.status)" />
               </td>
               <td class="py-3 px-4 text-right">
                 <button
                   type="button"
-                  class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer inline-flex items-center space-x-1"
+                  :class="
+                    doc.status === 'Pending Review'
+                      ? 'bg-neutral-900 hover:bg-neutral-800 text-white'
+                      : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-100'
+                  "
+                  class="px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer inline-flex items-center space-x-1"
                   @click="openReview(doc)"
                 >
-                  <Icon icon="lucide:scan" class="text-xs" />
-                  <span>Review Document</span>
+                  <Icon
+                    :icon="doc.status === 'Pending Review' ? 'lucide:scan' : 'lucide:eye'"
+                    class="text-xs"
+                  />
+                  <span>{{
+                    doc.status === 'Pending Review' ? 'Review Document' : 'View Document'
+                  }}</span>
                 </button>
               </td>
             </tr>
@@ -471,8 +507,21 @@ const statusTone = (status: VerificationStatus) => {
           </div>
           <div>
             <span class="text-neutral-400 text-[11px] font-medium">Expires</span>
-            <div class="font-mono font-bold text-neutral-900 mt-0.5">
-              {{ selectedDoc.expiryDate }}
+            <div class="inline-flex items-center space-x-1.5 mt-0.5">
+              <span
+                class="font-mono font-bold"
+                :class="
+                  isDocumentExpired(selectedDoc.expiryDate) ? 'text-red-600' : 'text-neutral-900'
+                "
+              >
+                {{ selectedDoc.expiryDate }}
+              </span>
+              <span
+                v-if="isDocumentExpired(selectedDoc.expiryDate)"
+                class="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-red-50 text-red-700 border border-red-200"
+              >
+                Expired
+              </span>
             </div>
           </div>
         </div>

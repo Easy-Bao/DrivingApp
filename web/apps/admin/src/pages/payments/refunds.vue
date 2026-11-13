@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import { formatPhp } from '@/shared/utils/format'
 
 interface FareAdjustmentClaim {
@@ -27,7 +27,7 @@ const claims = ref<FareAdjustmentClaim[]>([
     claimant: 'Passenger (Clarisse Joy Tagupa)',
     claimType: 'Passenger Cash Rebate',
     amountPhp: 45.0,
-    reason: 'Taxicle dropped passenger shy of Brgy. San Pedro chapel due to flooded alley.',
+    reason: 'Driver dropped passenger shy of Brgy. San Pedro chapel due to flooded alley.',
     status: 'Pending Approval',
   },
   {
@@ -115,8 +115,8 @@ const confirmDecision = () => {
     />
 
     <PageHeader
-      title="Fare Adjustments & Commission Fee Waivers"
-      description="Audit claims for passenger cash fare rebates and driver prepaid commission reversals across Pagadian City trips."
+      title="Refunds"
+      description="Review passenger fare rebates and driver commission reversals."
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">

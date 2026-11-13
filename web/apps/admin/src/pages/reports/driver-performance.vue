@@ -3,15 +3,15 @@ import { computed, ref } from 'vue'
 import ReportFilterBar, {
   type ReportFilterValues,
 } from '@/features/reports/components/ReportFilterBar.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
 import { exportToCsv } from '@/shared/utils/format'
 
 interface DriverPerformanceRow {
   driver: string
   plateNumber: string
   zoneKey: string
-  tierKey: string
+  dispatchMode: 'open-broadcast' | 'chosen-driver'
   trips: number
   rating: number
   acceptanceRate: string
@@ -24,7 +24,7 @@ const performanceList = ref<DriverPerformanceRow[]>([
     driver: 'Rodelio Cruz',
     plateNumber: 'ZDS-4821 · TODA-0412',
     zoneKey: 'poblacion',
-    tierKey: 'tuktuk-standard',
+    dispatchMode: 'open-broadcast',
     trips: 642,
     rating: 4.92,
     acceptanceRate: '98.2%',
@@ -35,7 +35,7 @@ const performanceList = ref<DriverPerformanceRow[]>([
     driver: 'Danilo Mendoza',
     plateNumber: 'ZDS-3019 · TODA-0194',
     zoneKey: 'terminal',
-    tierKey: 'tuktuk-express',
+    dispatchMode: 'chosen-driver',
     trips: 814,
     rating: 4.95,
     acceptanceRate: '99.0%',
@@ -46,7 +46,7 @@ const performanceList = ref<DriverPerformanceRow[]>([
     driver: 'Reynaldo Bautista',
     plateNumber: 'ZDS-1944 · TODA-0277',
     zoneKey: 'dao-capitol',
-    tierKey: 'tuktuk-express',
+    dispatchMode: 'open-broadcast',
     trips: 528,
     rating: 4.88,
     acceptanceRate: '95.4%',
@@ -57,7 +57,7 @@ const performanceList = ref<DriverPerformanceRow[]>([
     driver: 'Ernesto Villafuerte',
     plateNumber: 'ZDS-6120 · TODA-0318',
     zoneKey: 'santiago-port',
-    tierKey: 'ebao-pioneer',
+    dispatchMode: 'chosen-driver',
     trips: 390,
     rating: 4.65,
     acceptanceRate: '89.1%',
@@ -69,17 +69,17 @@ const performanceList = ref<DriverPerformanceRow[]>([
 const activeFilters = ref<ReportFilterValues>({
   dateRange: 'last-30-days',
   cityZone: 'all-zones',
-  vehicleTier: 'all-tiers',
+  dispatchMode: 'all-modes',
 })
 
 const filteredList = computed(() =>
   performanceList.value.filter((row) => {
     const matchesZone =
       activeFilters.value.cityZone === 'all-zones' || row.zoneKey === activeFilters.value.cityZone
-    const matchesTier =
-      activeFilters.value.vehicleTier === 'all-tiers' ||
-      row.tierKey === activeFilters.value.vehicleTier
-    return matchesZone && matchesTier
+    const matchesMode =
+      activeFilters.value.dispatchMode === 'all-modes' ||
+      row.dispatchMode === activeFilters.value.dispatchMode
+    return matchesZone && matchesMode
   }),
 )
 
@@ -88,7 +88,7 @@ const hasActiveFilters = computed(
   () =>
     activeFilters.value.dateRange !== 'last-30-days' ||
     activeFilters.value.cityZone !== 'all-zones' ||
-    activeFilters.value.vehicleTier !== 'all-tiers',
+    activeFilters.value.dispatchMode !== 'all-modes',
 )
 const resetFilters = () => filterBarRef.value?.resetFilters()
 
@@ -112,8 +112,8 @@ const handleExport = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Driver Performance &amp; QA Metrics"
-      description="Pagadian fleet reliability scores, 4.5★ incentive eligibility, and bid response compliance."
+      title="Driver Stats"
+      description="Review driver completion rates, ratings, and punctuality."
     />
 
     <ReportFilterBar
@@ -127,7 +127,7 @@ const handleExport = () => {
       <div
         class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
       >
-        <h2 class="font-bold text-sm text-neutral-900">Taxicle Service Quality Benchmarks</h2>
+        <h2 class="font-bold text-sm text-neutral-900">Service Quality Benchmarks</h2>
         <span class="text-xs text-neutral-400">Bonus threshold: &gt;= 4.5★ rating</span>
       </div>
 
@@ -169,7 +169,7 @@ const handleExport = () => {
               v-if="filteredList.length === 0"
               :colspan="6"
               title="No driver performance rows match your current filters"
-              description="Adjust the corridor zone, taxicle tier, or date window to review quality metrics."
+              description="Adjust the corridor zone, dispatch mode, or date window to review quality metrics."
               :show-reset="hasActiveFilters"
               @reset="resetFilters"
             />

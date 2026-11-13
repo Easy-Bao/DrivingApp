@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import TablePagination from '@/shared/table/TablePagination.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import { exportToCsv } from '@/shared/utils/format'
 
 type ReporterRole = 'passenger' | 'driver'
@@ -67,7 +67,7 @@ const reports = ref<SafetyReportRecord[]>([
     severity: 'critical',
     status: 'submitted',
     narrative:
-      'Passenger reported the driver operating the taxicle did not match the verified profile photo attached to TODA-0318.',
+      'Passenger reported the driver operating the unit did not match the verified profile photo attached to TODA-0318.',
     submittedAt: '18 mins ago',
   },
   {
@@ -255,7 +255,7 @@ const exportReports = () => {
   <div class="space-y-6">
     <PageHeader
       title="Safety Reports"
-      description="Passenger and driver incident moderation queue."
+      description="Review passenger and driver safety incidents and moderation actions."
     />
 
     <ToastBanner

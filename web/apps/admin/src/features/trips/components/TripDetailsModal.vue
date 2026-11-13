@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
 import { Icon } from '@iconify/vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import RouteTimeline from '@/shared/components/RouteTimeline.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import RouteTimeline from '@/shared/display/RouteTimeline.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
 import { formatPhp } from '@/shared/utils/format'
-import { tripStatusTone, type TripRecord } from '@/features/trips/composables/useTrips'
+import { useClipboardCopy } from '@/shared/utils/use-clipboard-copy'
+import { tripStatusTone, type TripRecord } from '@/features/trips/composables/use-trips'
 
 defineProps<{
   trip: TripRecord | null
@@ -15,46 +15,19 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const copied = ref(false)
-const copyToastMessage = ref<string | null>(null)
-let copyTimer: ReturnType<typeof setTimeout> | null = null
-
-const clearCopyTimer = () => {
-  if (copyTimer !== null) {
-    clearTimeout(copyTimer)
-    copyTimer = null
-  }
-}
-
-async function copyBookingId(bookingId: string) {
-  try {
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(bookingId)
-    }
-  } catch {
-    // Ignore clipboard API restrictions in non-secure test contexts.
-  }
-
-  copied.value = true
-  copyToastMessage.value = 'Copied Booking ID'
-  clearCopyTimer()
-  copyTimer = setTimeout(() => {
-    copied.value = false
-    copyToastMessage.value = null
-    copyTimer = null
-  }, 2000)
-}
+const {
+  copied,
+  toastMessage: copyToastMessage,
+  copy: copyBookingId,
+  clear,
+} = useClipboardCopy('Copied Booking ID')
 
 function handleOpenUpdate(open: boolean) {
   if (!open) {
-    clearCopyTimer()
-    copied.value = false
-    copyToastMessage.value = null
+    clear()
     emit('close')
   }
 }
-
-onBeforeUnmount(clearCopyTimer)
 </script>
 
 <template>
@@ -108,7 +81,7 @@ onBeforeUnmount(clearCopyTimer)
           </div>
         </div>
         <div>
-          <div class="text-neutral-500">Taxicle Unit</div>
+          <div class="text-neutral-500">Vehicle Unit</div>
           <div class="font-medium text-neutral-900 mt-0.5">{{ trip.vehicleModel }}</div>
           <div class="text-[11px] text-neutral-400">{{ trip.timestamp }}</div>
         </div>

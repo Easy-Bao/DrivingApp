@@ -3,8 +3,8 @@ import { computed, ref } from 'vue'
 import ReportFilterBar, {
   type ReportFilterValues,
 } from '@/features/reports/components/ReportFilterBar.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
 interface RevenueSummaryRow {
@@ -59,7 +59,7 @@ const financialSummaries = ref<RevenueSummaryRow[]>([
 const activeFilters = ref<ReportFilterValues>({
   dateRange: 'last-30-days',
   cityZone: 'all-zones',
-  vehicleTier: 'all-tiers',
+  dispatchMode: 'all-modes',
 })
 
 const filteredSummaries = computed(() =>
@@ -74,7 +74,7 @@ const hasActiveFilters = computed(
   () =>
     activeFilters.value.dateRange !== 'last-30-days' ||
     activeFilters.value.cityZone !== 'all-zones' ||
-    activeFilters.value.vehicleTier !== 'all-tiers',
+    activeFilters.value.dispatchMode !== 'all-modes',
 )
 const resetFilters = () => filterBarRef.value?.resetFilters()
 
@@ -104,8 +104,8 @@ const handleExport = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Platform Revenue &amp; Commission Reports"
-      description="Gross cash booking volume, prepaid wallet commission deductions (1500 bps baseline), and net Pagadian taxicle driver take-home totals."
+      title="Revenue"
+      description="Track platform commission, cash volume, and driver net earnings."
     />
 
     <ReportFilterBar

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import TablePagination from '@/shared/table/TablePagination.vue'
 import { exportToCsv } from '@/shared/utils/format'
 
 interface AuditLogEntry {
@@ -128,8 +128,8 @@ const exportAuditLogs = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Security Audit Trail & Operator Mutations"
-      description="Immutable log of role updates, wallet adjustments, suspension events, and runtime tariff changes."
+      title="Audit Logs"
+      description="Inspect role updates, wallet adjustments, suspensions, and tariff changes."
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">

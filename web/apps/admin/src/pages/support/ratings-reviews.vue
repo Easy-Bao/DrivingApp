@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 interface ReviewEntry {
   id: string
@@ -30,7 +30,7 @@ const reviews = ref<ReviewEntry[]>([
     subjectParty: 'Rodelio Cruz (TODA-0412)',
     rating: 5,
     comment: 'Very polite, safe speed uphill to San Jose, exact change ready.',
-    tags: ['Safe Driving', 'Polite', 'Clean Taxicle'],
+    tags: ['Safe Driving', 'Polite', 'Clean Vehicle'],
     moderationState: 'Published',
   },
   {
@@ -136,8 +136,8 @@ const confirmModeration = () => {
     />
 
     <PageHeader
-      title="Two-Sided Ratings & Review Moderation"
-      description="Audit passenger reviews for drivers (governing the 4.5★ high-rating incentive) and driver feedback for passengers."
+      title="Reviews"
+      description="Moderate passenger and driver feedback and rating eligibility."
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">

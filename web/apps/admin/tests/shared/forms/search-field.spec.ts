@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import SearchField from '@/shared/components/SearchField.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
 
 describe('SearchField', () => {
   it('emits search updates and clears query via button or Escape key', async () => {

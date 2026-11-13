@@ -51,7 +51,7 @@ function buildReceiptPreviewSvg(params: {
   <text x="58" y="536" font-family="sans-serif" font-size="12" fill="#64748b">Timestamp (PHT · UTC+8)</text>
   <text x="58" y="558" font-family="monospace" font-size="13" font-weight="600" fill="#334155">${params.timestamp}</text>
   <rect x="58" y="586" width="424" height="40" fill="#f1f5f9"/>
-  <text x="270" y="610" text-anchor="middle" font-family="monospace" font-size="11" fill="#475569">Pagadian City Taxicle Dispatch Wallet Top-Up</text>
+  <text x="270" y="610" text-anchor="middle" font-family="monospace" font-size="11" fill="#475569">Pagadian City Dispatch Wallet Top-Up</text>
 </svg>`
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
 
 describe('ModalDialog', () => {
   it('renders dialog content when open and closes via button or Escape key', async () => {

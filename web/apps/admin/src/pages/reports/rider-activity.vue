@@ -3,8 +3,8 @@ import { computed, ref } from 'vue'
 import ReportFilterBar, {
   type ReportFilterValues,
 } from '@/features/reports/components/ReportFilterBar.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
 interface RiderCohortRow {
@@ -54,7 +54,7 @@ const cohortActivity = ref<RiderCohortRow[]>([
 const activeFilters = ref<ReportFilterValues>({
   dateRange: 'last-30-days',
   cityZone: 'all-zones',
-  vehicleTier: 'all-tiers',
+  dispatchMode: 'all-modes',
 })
 
 const filteredCohorts = computed(() =>
@@ -73,7 +73,7 @@ const hasActiveFilters = computed(
   () =>
     activeFilters.value.dateRange !== 'last-30-days' ||
     activeFilters.value.cityZone !== 'all-zones' ||
-    activeFilters.value.vehicleTier !== 'all-tiers',
+    activeFilters.value.dispatchMode !== 'all-modes',
 )
 const resetFilters = () => filterBarRef.value?.resetFilters()
 
@@ -95,8 +95,8 @@ const handleExport = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Passenger Activity &amp; Cohort Analytics"
-      description="Pagadian City passenger retention segments, corridor booking cadence, and monthly PHP fare spend."
+      title="Rider Stats"
+      description="Analyze passenger cohorts, retention rates, and booking spend."
     />
 
     <ReportFilterBar

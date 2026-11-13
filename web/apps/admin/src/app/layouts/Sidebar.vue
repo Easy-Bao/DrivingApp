@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { motion, AnimatePresence } from 'motion-v'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
+import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
 import { navigationGroups, type NavGroup, type NavItem } from '@/app/navigation/menu'
 import { ROLE_PROFILES, lockAuthSession, useAuthSession } from '@/core/auth/auth-session'
 

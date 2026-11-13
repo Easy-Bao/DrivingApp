@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import TablePagination from '@/shared/table/TablePagination.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 interface RejectedDocument {
   id: string
@@ -50,7 +50,7 @@ const rejectedDocs = ref<RejectedDocument[]>([
     driver: 'Danilo Mendoza',
     driverPhone: '+63 928 412 8890',
     city: 'Brgy. Tuburan',
-    docType: 'MTOP Municipal Taxicle Permit',
+    docType: 'MTOP Municipal Permit',
     rejectionReason: 'Expired MTOP permit without stamped city treasurer official receipt',
     rejectedBy: 'Operations Lead',
     rejectedAt: '4 days ago',
@@ -175,8 +175,8 @@ const queueForReReview = (item: RejectedDocument) => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Rejected Driver Documents"
-      description="Rejected driver documents and resubmissions."
+      title="Rejected Docs"
+      description="Review declined document submissions and follow up on resubmissions."
     />
 
     <ToastBanner :message="toastMessage" tone="info" @dismiss="toastMessage = null" />

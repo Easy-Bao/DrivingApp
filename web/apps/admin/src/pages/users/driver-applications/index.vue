@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useDriverApplications } from '@/features/users/composables/useDriverApplications'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
+import { useDriverApplications } from '@/features/users/composables/use-driver-applications'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import TablePagination from '@/shared/table/TablePagination.vue'
 
 const router = useRouter()
 const { applications } = useDriverApplications()
@@ -72,8 +72,8 @@ function navigateToDetails(id: string) {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Driver Applications Queue"
-      description="Applicant qualifications, LTO licenses, and 3-wheeled Taxicle franchise permits."
+      title="Driver Applications"
+      description="Review and verify pending driver onboarding and document updates."
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
@@ -84,7 +84,7 @@ function navigateToDetails(id: string) {
           <div class="w-full sm:w-64">
             <SearchField
               v-model="searchQuery"
-              placeholder="Search applicant, plate, city..."
+              placeholder="Search applicant, plate, barangay..."
               aria-label="Search driver applications"
               @update:model-value="currentPage = 1"
             />
@@ -108,10 +108,10 @@ function navigateToDetails(id: string) {
           <thead class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100">
             <tr>
               <th class="py-3 px-4">Application ID</th>
-              <th class="py-3 px-4">Driver Applicant</th>
-              <th class="py-3 px-4">Date Applied</th>
-              <th class="py-3 px-4">City / Barangay</th>
-              <th class="py-3 px-4">3-Wheeled Unit & Body No.</th>
+              <th class="py-3 px-4">Applicant</th>
+              <th class="py-3 px-4">Submitted</th>
+              <th class="py-3 px-4">Service Area</th>
+              <th class="py-3 px-4">Vehicle &amp; Body No.</th>
               <th class="py-3 px-4">Status</th>
               <th class="py-3 px-4 text-right">Action</th>
             </tr>
@@ -157,7 +157,7 @@ function navigateToDetails(id: string) {
                   {{ application.vehicle.make }} {{ application.vehicle.model }}
                 </div>
                 <div class="text-[11px] text-neutral-400 font-mono">
-                  {{ application.vehicle.plate }} ({{ application.vehicle.bodyNumber }})
+                  {{ application.vehicle.plate }} · {{ application.vehicle.bodyNumber }}
                 </div>
               </td>
               <td class="py-3 px-4 whitespace-nowrap">
@@ -169,10 +169,17 @@ function navigateToDetails(id: string) {
               <td class="py-3 px-4 text-right whitespace-nowrap">
                 <button
                   type="button"
-                  class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs transition-colors inline-flex items-center space-x-1 cursor-pointer"
+                  class="px-3 py-1.5 font-semibold text-xs transition-colors inline-flex items-center space-x-1 cursor-pointer"
+                  :class="
+                    application.status === 'Pending Review'
+                      ? 'bg-neutral-900 hover:bg-neutral-800 text-white'
+                      : 'bg-white border border-neutral-300 text-neutral-800 hover:bg-neutral-100'
+                  "
                   @click="navigateToDetails(application.id)"
                 >
-                  <span>Review Application</span>
+                  <span>{{
+                    application.status === 'Pending Review' ? 'Review Application' : 'View Details'
+                  }}</span>
                 </button>
               </td>
             </tr>

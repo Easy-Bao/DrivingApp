@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Icon } from '@iconify/vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import router from '@/app/router'
 import { lockAuthSession } from '@/core/auth/auth-session'
 
@@ -79,7 +79,10 @@ const submitPasswordRotation = () => {
 
 <template>
   <div class="space-y-6 w-full">
-    <PageHeader title="Profile Settings" description="Credentials, hub assignment, and 2FA.">
+    <PageHeader
+      title="Profile"
+      description="Manage account details, hub assignment, and security settings."
+    >
       <template #actions>
         <button
           type="button"

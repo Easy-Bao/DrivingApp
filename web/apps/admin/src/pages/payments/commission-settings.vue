@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import { formatBpsAsPercent, formatPhp } from '@/shared/utils/format'
 
 interface CommissionTier {
@@ -18,13 +18,12 @@ interface CommissionTier {
 
 const commissionTiers = ref<CommissionTier[]>([
   {
-    id: 'standard-taxicle',
-    category: 'Standard Taxicle (TukTuk / Bao-Bao) Fleet',
+    id: 'standard-fleet',
+    category: 'Standard Fleet',
     rateBps: 1500,
     fixedBookingFeePhp: 0,
     minWalletBalancePhp: 50,
-    eligibilityRule:
-      'Default Pagadian TODA franchise three-wheeled TukTuk and Bao-Bao units upon activation.',
+    eligibilityRule: 'Default Pagadian TODA franchise Bao-Bao units upon activation.',
     settlementNote: '15% deducted from driver prepaid commission wallet on trip completion.',
   },
   {
@@ -42,8 +41,7 @@ const commissionTiers = ref<CommissionTier[]>([
     rateBps: 1000,
     fixedBookingFeePhp: 0,
     minWalletBalancePhp: 50,
-    eligibilityRule:
-      'Verified battery-electric three-wheeled Bao-Bao taxicles operating in Pagadian.',
+    eligibilityRule: 'Verified battery-electric Bao-Bao units operating in Pagadian.',
     settlementNote: '10% sustainability incentive tier stored as 1000 bps in settlement ledger.',
   },
 ])
@@ -100,8 +98,8 @@ const saveConfig = () => {
     />
 
     <PageHeader
-      title="Platform Commission & Settlement Basis-Point Rules"
-      description="Drivers collect 100% fare in cash; platform commission is automatically debited in basis points from their PHP prepaid credit wallet."
+      title="Commissions"
+      description="Configure platform commission basis points and wallet minimums."
     >
       <template #actions>
         <StatusBadge label="Cash Settlement Model" tone="neutral" />

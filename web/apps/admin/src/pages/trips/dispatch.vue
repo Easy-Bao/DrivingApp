@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 interface DispatchZone {
   name: string
@@ -127,7 +127,7 @@ const confirmDriverAssignment = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Live Dispatch"
+      title="Dispatch"
       description="Monitor zone supply, adjust surge caps, and assign trips."
     />
 
@@ -270,7 +270,7 @@ const confirmDriverAssignment = () => {
 
     <ModalDialog
       :open="Boolean(assigningDispatch)"
-      :title="assigningDispatch ? `Manual Taxicle Dispatch · ${assigningDispatch.id}` : ''"
+      :title="assigningDispatch ? `Manual Dispatch · ${assigningDispatch.id}` : ''"
       size="md"
       close-label="Close modal"
       @update:open="(open) => !open && (assigningDispatch = null)"

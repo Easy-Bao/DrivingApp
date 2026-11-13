@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 interface LostFoundRecord {
   id: string
@@ -155,8 +155,8 @@ const createLostItem = () => {
     />
 
     <PageHeader
-      title="Lost & Found Recovery Desk"
-      description="Coordinate property recovery between Pagadian City passengers and taxicle operators."
+      title="Lost Items"
+      description="Coordinate property recovery between passengers and drivers."
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
@@ -318,7 +318,7 @@ const createLostItem = () => {
           </div>
         </div>
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Assigned Taxicle Driver</label>
+          <label class="block font-medium text-neutral-700 mb-1">Assigned Driver</label>
           <BaseSelect
             v-model="newDriver"
             :full-width="true"

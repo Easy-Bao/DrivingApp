@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Icon } from '@iconify/vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import { exportToCsv } from '@/shared/utils/format'
 
 interface ScheduledReport {
@@ -25,7 +25,7 @@ const scheduledReports = ref<ScheduledReport[]>([
     name: 'Weekly Pagadian Cash Commission & Settlement Summary',
     frequency: 'Weekly',
     format: 'Excel',
-    recipients: 'treasury@pagadian-taxicle.ph, ops@pagadian-taxicle.ph',
+    recipients: 'treasury@easyride.ph, ops@easyride.ph',
     timeSchedule: 'Every Monday at 08:00 AM PHT',
     isActive: true,
   },
@@ -34,7 +34,7 @@ const scheduledReports = ref<ScheduledReport[]>([
     name: 'Daily Driver Prepaid Top-Up & QRPh Reconciliation Roster',
     frequency: 'Daily',
     format: 'CSV',
-    recipients: 'accounting@pagadian-taxicle.ph',
+    recipients: 'accounting@easyride.ph',
     timeSchedule: 'Daily at 11:59 PM PHT',
     isActive: true,
   },
@@ -43,7 +43,7 @@ const scheduledReports = ref<ScheduledReport[]>([
     name: 'Monthly LGU & TODA Franchise Dispatch Activity Audit',
     frequency: 'Monthly',
     format: 'PDF',
-    recipients: 'compliance@pagadian-taxicle.ph',
+    recipients: 'compliance@easyride.ph',
     timeSchedule: '1st day of month at 07:00 AM PHT',
     isActive: true,
   },
@@ -52,7 +52,7 @@ const scheduledReports = ref<ScheduledReport[]>([
     name: 'Weekly Driver Safety Report & Rating QA Summary',
     frequency: 'Weekly',
     format: 'CSV',
-    recipients: 'safety@pagadian-taxicle.ph',
+    recipients: 'safety@easyride.ph',
     timeSchedule: 'Every Friday at 05:00 PM PHT',
     isActive: false,
   },
@@ -61,7 +61,7 @@ const scheduledReports = ref<ScheduledReport[]>([
 const recentExports = ref([
   {
     id: 'EXP-401',
-    filename: 'pagadian_taxicle_trips_nov_week1.csv',
+    filename: 'pagadian_trips_nov_week1.csv',
     reportCategory: 'Trip Reports',
     format: 'CSV',
     size: '1.4 MB',
@@ -112,7 +112,7 @@ const openCreateModal = () => {
   newName.value = ''
   newFrequency.value = 'Weekly'
   newFormat.value = 'CSV'
-  newRecipients.value = 'ops@pagadian-taxicle.ph'
+  newRecipients.value = 'ops@easyride.ph'
   newWindow.value = 'Every Monday at 08:00 AM PHT'
   scheduleError.value = null
   showScheduleModal.value = true
@@ -147,8 +147,8 @@ const createSchedule = () => {
     />
 
     <PageHeader
-      title="Export &amp; Automated Delivery Center"
-      description="Download regional CSV ledgers or manage scheduled Pagadian City operational briefings."
+      title="Exports"
+      description="Download regional CSV reports and manage scheduled deliveries."
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">

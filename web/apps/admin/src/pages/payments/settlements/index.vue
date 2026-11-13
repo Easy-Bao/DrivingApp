@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import TablePagination from '@/shared/table/TablePagination.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import { exportToCsv, formatBpsAsPercent, formatCentavos } from '@/shared/utils/format'
 import {
   getPlatformFeeCentavos,
   getShortfallCentavos,
   useSettlements,
   type CashOutcome,
-} from '@/features/payments/composables/useSettlements'
+} from '@/features/payments/composables/use-settlements'
 
 const { settlementRecords, pendingReviewCount } = useSettlements()
 
@@ -135,8 +135,8 @@ const handleExport = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Cash Settlements"
-      description="Reconcile cash-in-hand trip outcomes, driver change records, and prepaid commission fees."
+      title="Settlements"
+      description="Reconcile cash trip outcomes and prepaid commission fees."
     />
 
     <ToastBanner :message="toastMessage" tone="success" @dismiss="toastMessage = null" />

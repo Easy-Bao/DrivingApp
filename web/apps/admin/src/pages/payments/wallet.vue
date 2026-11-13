@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import TablePagination from '@/shared/table/TablePagination.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
 interface DriverWalletRow {
@@ -202,8 +202,8 @@ const exportWalletLedger = () => {
     />
 
     <PageHeader
-      title="Prepaid Driver Wallet & Dispatch Eligibility"
-      :description="`Drivers maintain at least ${formatPhp(MINIMUM_DISPATCH_BALANCE)} prepaid commission credits to remain eligible for live bidding offers in Pagadian City.`"
+      title="Wallets"
+      :description="`Monitor driver prepaid balances and the ${formatPhp(MINIMUM_DISPATCH_BALANCE)} dispatch threshold.`"
     />
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

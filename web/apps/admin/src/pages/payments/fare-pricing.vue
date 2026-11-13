@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import { formatPhp } from '@/shared/utils/format'
 
 interface FareTierRule {
@@ -21,8 +21,8 @@ interface FareTierRule {
 
 const pricingRules = ref<FareTierRule[]>([
   {
-    id: 'tuktuk-standard',
-    tier: 'Taxicle (TukTuk / Bao-Bao) · Standard Poblacion',
+    id: 'baobao-standard',
+    tier: 'Standard Poblacion',
     corridorScope: 'Urban Poblacion & market barangays (<= 5 km)',
     baseFare: 25.0,
     perKm: 12.0,
@@ -33,8 +33,8 @@ const pricingRules = ref<FareTierRule[]>([
     highRatingDriverBonus: 1.05,
   },
   {
-    id: 'tuktuk-express',
-    tier: 'Taxicle (TukTuk / Bao-Bao) · Terminal & Uphill Express',
+    id: 'baobao-express',
+    tier: 'Terminal & Uphill Express',
     corridorScope: 'Integrated Bus Terminal, Dao Capitol & Airport Road',
     baseFare: 35.0,
     perKm: 14.0,
@@ -46,7 +46,7 @@ const pricingRules = ref<FareTierRule[]>([
   },
 ])
 
-const selectedTierId = ref<string>('tuktuk-standard')
+const selectedTierId = ref<string>('baobao-standard')
 const estimateDistanceKm = ref<number>(3.4)
 const estimateDurationMin = ref<number>(12)
 const estimateSurge = ref<number>(1.0)
@@ -111,7 +111,7 @@ const saveRuleChanges = () => {
 
 const saveInlineChanges = () => {
   toastMessage.value =
-    'Published Pagadian Taxicle (TukTuk / Bao-Bao) tariff parameters to bidding & quote calculation engine.'
+    'Published Pagadian fare tariff parameters to bidding & quote calculation engine.'
 }
 </script>
 
@@ -125,8 +125,8 @@ const saveInlineChanges = () => {
     />
 
     <PageHeader
-      title="Pagadian Taxicle Fare & Bidding Caps"
-      description="All amounts in Philippine Pesos (₱). Covers three-wheeled TukTuk and Bao-Bao units with a 2.5x maximum bidding surge cap and a 1.05x reward multiplier for drivers rated 4.5★ or higher."
+      title="Tariff Rates"
+      description="Configure base fares, distance rates, and bidding surge caps."
     >
       <template #actions>
         <StatusBadge label="PHP Active Tariff" tone="neutral" />
@@ -156,7 +156,7 @@ const saveInlineChanges = () => {
             class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100 font-semibold"
           >
             <tr>
-              <th class="py-3 px-4">Taxicle Service Tier</th>
+              <th class="py-3 px-4">Rate Tier</th>
               <th class="py-3 px-4">Base Fare (₱)</th>
               <th class="py-3 px-4">Rate / km (₱)</th>
               <th class="py-3 px-4">Rate / min (₱)</th>

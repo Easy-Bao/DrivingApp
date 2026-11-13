@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
 import { ROLE_PROFILES, loginOperator, type OperatorRole } from '@/core/auth/auth-session'
 import { sanitizeRedirectPath } from '@/app/router/guards'
 

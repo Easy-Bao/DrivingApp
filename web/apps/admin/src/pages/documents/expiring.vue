@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import TablePagination from '@/shared/table/TablePagination.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 type ExpiryStatus = 'Action Required' | 'Notice Sent' | 'Grace Period'
 
@@ -77,7 +77,7 @@ const expiringDocs = ref<ExpiringDocument[]>([
     driver: 'Jose Mari Bautista',
     driverPhone: '+63 918 665 4411',
     city: 'Brgy. Gatas',
-    docType: 'MTOP Taxicle Permit',
+    docType: 'MTOP Permit',
     expiryDate: '2026-12-15',
     daysLeft: 34,
     status: 'Notice Sent',
@@ -207,7 +207,10 @@ const statusTone = (status: ExpiryStatus) => {
 
 <template>
   <div class="space-y-6">
-    <PageHeader title="Expiring Docs" description="Renewal tracking and SMS reminders." />
+    <PageHeader
+      title="Expiring Docs"
+      description="Track upcoming document expirations and send renewal reminders."
+    />
 
     <ToastBanner :message="actionToast" tone="success" @dismiss="actionToast = null" />
 

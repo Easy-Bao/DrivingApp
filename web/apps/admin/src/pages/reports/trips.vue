@@ -3,15 +3,15 @@ import { computed, ref } from 'vue'
 import ReportFilterBar, {
   type ReportFilterValues,
 } from '@/features/reports/components/ReportFilterBar.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
 interface TripReportRow {
   date: string
   zoneKey: string
   zoneLabel: string
-  tierKey: string
+  dispatchMode: 'open-broadcast' | 'chosen-driver'
   totalRides: number
   completed: number
   cancelled: number
@@ -24,7 +24,7 @@ const tripReportData = ref<TripReportRow[]>([
     date: '2026-11-12',
     zoneKey: 'poblacion',
     zoneLabel: 'Poblacion & Agora Market',
-    tierKey: 'tuktuk-standard',
+    dispatchMode: 'open-broadcast',
     totalRides: 1480,
     completed: 1412,
     cancelled: 68,
@@ -35,7 +35,7 @@ const tripReportData = ref<TripReportRow[]>([
     date: '2026-11-12',
     zoneKey: 'terminal',
     zoneLabel: 'Integrated Bus Terminal',
-    tierKey: 'tuktuk-express',
+    dispatchMode: 'chosen-driver',
     totalRides: 960,
     completed: 918,
     cancelled: 42,
@@ -46,7 +46,7 @@ const tripReportData = ref<TripReportRow[]>([
     date: '2026-11-11',
     zoneKey: 'dao-capitol',
     zoneLabel: 'Dao Capitol & Gaisano',
-    tierKey: 'tuktuk-express',
+    dispatchMode: 'open-broadcast',
     totalRides: 1120,
     completed: 1068,
     cancelled: 52,
@@ -57,7 +57,7 @@ const tripReportData = ref<TripReportRow[]>([
     date: '2026-11-10',
     zoneKey: 'santiago-port',
     zoneLabel: 'Santiago Port & Coastal',
-    tierKey: 'ebao-pioneer',
+    dispatchMode: 'chosen-driver',
     totalRides: 690,
     completed: 662,
     cancelled: 28,
@@ -69,18 +69,18 @@ const tripReportData = ref<TripReportRow[]>([
 const activeFilters = ref<ReportFilterValues>({
   dateRange: 'last-30-days',
   cityZone: 'all-zones',
-  vehicleTier: 'all-tiers',
+  dispatchMode: 'all-modes',
 })
 
 const filteredRows = computed(() => {
   return tripReportData.value.filter((row) => {
     const matchesZone =
       activeFilters.value.cityZone === 'all-zones' || row.zoneKey === activeFilters.value.cityZone
-    const matchesTier =
-      activeFilters.value.vehicleTier === 'all-tiers' ||
-      row.tierKey === activeFilters.value.vehicleTier
+    const matchesMode =
+      activeFilters.value.dispatchMode === 'all-modes' ||
+      row.dispatchMode === activeFilters.value.dispatchMode
     const matchesDate = activeFilters.value.dateRange !== 'today' || row.date === '2026-11-12'
-    return matchesZone && matchesTier && matchesDate
+    return matchesZone && matchesMode && matchesDate
   })
 })
 
@@ -89,7 +89,7 @@ const hasActiveFilters = computed(
   () =>
     activeFilters.value.dateRange !== 'last-30-days' ||
     activeFilters.value.cityZone !== 'all-zones' ||
-    activeFilters.value.vehicleTier !== 'all-tiers',
+    activeFilters.value.dispatchMode !== 'all-modes',
 )
 const resetFilters = () => filterBarRef.value?.resetFilters()
 
@@ -113,8 +113,8 @@ const handleExport = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Trip Volume &amp; Mobility Reports"
-      description="Aggregated Pagadian City taxicle trip completions, corridor distances, and PHP booking volume."
+      title="Trips"
+      description="Analyze completed trips, routes, and gross fare volume."
     />
 
     <ReportFilterBar
@@ -175,7 +175,7 @@ const handleExport = () => {
               v-if="filteredRows.length === 0"
               :colspan="7"
               title="No trip volume rows match your current filters"
-              description="Adjust the corridor zone, taxicle tier, or date window to view trip aggregations."
+              description="Adjust the corridor zone, dispatch mode, or date window to view trip aggregations."
               :show-reset="hasActiveFilters"
               @reset="resetFilters"
             />

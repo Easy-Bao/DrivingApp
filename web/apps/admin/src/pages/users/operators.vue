@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Icon } from '@iconify/vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 interface OperatorAccount {
   id: string
@@ -174,7 +174,10 @@ const confirmStatusToggle = () => {
 
 <template>
   <div class="space-y-6">
-    <PageHeader title="Operators" description="Staff accounts, roles, and MFA." />
+    <PageHeader
+      title="Operators"
+      description="Manage admin staff accounts, role permissions, and security settings."
+    />
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 

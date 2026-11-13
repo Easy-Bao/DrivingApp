@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
 interface DriverEarningSummary {
@@ -114,8 +114,8 @@ const exportEarningsCsv = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Driver Cash Collections & Net Earnings Summary"
-      description="Direct cash fares retained by Pagadian taxicle drivers alongside prepaid commission fees debited at settlement (15% standard / 12% top-rated)."
+      title="Earnings"
+      description="Monitor driver cash collections and net earnings summaries."
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">

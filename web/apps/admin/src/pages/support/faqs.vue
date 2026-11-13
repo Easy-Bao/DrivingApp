@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 interface FaqArticle {
   id: string
@@ -22,9 +22,9 @@ const faqs = ref<FaqArticle[]>([
     id: 'FAQ-01',
     category: 'Fare Bidding',
     audience: 'Passenger',
-    question: 'How does Pagadian taxicle fare bidding work before pickup?',
+    question: 'How does Pagadian fare bidding work before pickup?',
     answer:
-      'Enter your pickup and Pagadian destination pin to view the suggested tariff floor. Nearby taxicle drivers send custom PHP bids within the 90-second session window (capped at 2.5x surge). Choose the bid you prefer to confirm pickup.',
+      'Enter your pickup and Pagadian destination pin to view the suggested tariff floor. Nearby drivers send custom PHP bids within the 90-second session window (capped at 2.5x surge). Choose the bid you prefer to confirm pickup.',
     views: 4820,
     isPublished: true,
   },
@@ -162,8 +162,8 @@ const togglePublished = (article: FaqArticle) => {
     />
 
     <PageHeader
-      title="Help Center & Operational FAQ Manager"
-      description="Manage help articles synced to the Pagadian Passenger and Driver mobile apps."
+      title="Help Center"
+      description="Manage help articles synced to the Passenger and Driver mobile apps."
     />
 
     <div

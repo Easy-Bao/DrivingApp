@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import TablePagination from '@/shared/table/TablePagination.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import { formatPhp } from '@/shared/utils/format'
 
 type DriverStatus = 'Active' | 'Low Balance (Locked)' | 'Suspended'
@@ -38,7 +38,7 @@ const drivers = ref<DriverRecord[]>([
     name: 'Rodelio Cruz',
     phone: '+63 917 440 2184',
     city: 'Brgy. San Jose',
-    vehicle: 'Bajaj RE 4S TukTuk (Plate: 1284-ND)',
+    vehicle: 'Bajaj RE 4S (Plate: 1284-ND)',
     todaZone: 'San Jose - Agora Corridor',
     trips: 1420,
     rating: 4.92,
@@ -50,7 +50,7 @@ const drivers = ref<DriverRecord[]>([
     name: 'Danilo Mendoza',
     phone: '+63 928 412 8890',
     city: 'Brgy. Tuburan',
-    vehicle: 'TVS King Deluxe TukTuk (Plate: 4912-NC)',
+    vehicle: 'TVS King Deluxe (Plate: 4912-NC)',
     todaZone: 'Tuburan - Integrated Terminal',
     trips: 890,
     rating: 4.88,
@@ -62,7 +62,7 @@ const drivers = ref<DriverRecord[]>([
     name: 'Reynaldo Garcia',
     phone: '+63 908 771 9923',
     city: 'Brgy. Balangasan',
-    vehicle: 'Bajaj Maxima Z Bao-Bao (Plate: 9021-ND)',
+    vehicle: 'Bajaj Maxima Z (Plate: 9021-ND)',
     todaZone: 'Balangasan - Capitol Complex',
     trips: 2150,
     rating: 4.95,
@@ -74,7 +74,7 @@ const drivers = ref<DriverRecord[]>([
     name: 'Javier Santos',
     phone: '+63 917 987 6543',
     city: 'Brgy. San Pedro',
-    vehicle: 'Bajaj RE FI Bao-Bao (Plate: 5519-NB)',
+    vehicle: 'Bajaj RE FI (Plate: 5519-NB)',
     todaZone: 'San Pedro - Pier Port',
     trips: 430,
     rating: 4.65,
@@ -86,7 +86,7 @@ const drivers = ref<DriverRecord[]>([
     name: 'Eduardo Santos',
     phone: '+63 919 332 4455',
     city: 'Brgy. Kawit',
-    vehicle: 'TVS King Deluxe FI TukTuk (Plate: 7712-NC)',
+    vehicle: 'TVS King Deluxe FI (Plate: 7712-NC)',
     todaZone: 'Kawit - Rotunda Hub',
     trips: 1240,
     rating: 4.91,
@@ -98,7 +98,7 @@ const drivers = ref<DriverRecord[]>([
     name: 'Maria Lourdes Ramos',
     phone: '+63 920 882 1144',
     city: 'Brgy. Santa Lucia',
-    vehicle: 'Bajaj Maxima Z Bao-Bao (Plate: 3391-ND)',
+    vehicle: 'Bajaj Maxima Z (Plate: 3391-ND)',
     todaZone: 'Santa Lucia - Commercial Core',
     trips: 780,
     rating: 4.97,
@@ -110,7 +110,7 @@ const drivers = ref<DriverRecord[]>([
     name: 'Jose Mari Bautista',
     phone: '+63 918 665 4411',
     city: 'Brgy. Gatas',
-    vehicle: 'Piaggio Ape City Bao-Bao (Plate: 8821-NC)',
+    vehicle: 'Piaggio Ape City (Plate: 8821-NC)',
     todaZone: 'Gatas - Robinson Mall Loop',
     trips: 1690,
     rating: 4.89,
@@ -122,7 +122,7 @@ const drivers = ref<DriverRecord[]>([
     name: 'Felipe Cruz',
     phone: '+63 916 445 8821',
     city: 'Brgy. Tiguma',
-    vehicle: 'Bajaj RE 4S TukTuk (Plate: 6620-NC)',
+    vehicle: 'Bajaj RE 4S (Plate: 6620-NC)',
     todaZone: 'Tiguma - Pagadian Airport',
     trips: 940,
     rating: 4.84,
@@ -134,7 +134,7 @@ const drivers = ref<DriverRecord[]>([
     name: 'Antonio Villanueva',
     phone: '+63 939 556 1209',
     city: 'Brgy. Dao',
-    vehicle: 'NWOW ERV2 Electric Bao-Bao (Plate: 1109-ND)',
+    vehicle: 'NWOW ERV2 Electric (Plate: 1109-ND)',
     todaZone: 'Dao - Provincial Hospital',
     trips: 1120,
     rating: 4.93,
@@ -146,7 +146,7 @@ const drivers = ref<DriverRecord[]>([
     name: 'Cristopher Alcantara',
     phone: '+63 921 778 2234',
     city: 'Brgy. Santiago',
-    vehicle: 'Bajaj RE 4S FI TukTuk (Plate: 9920-ND)',
+    vehicle: 'Bajaj RE 4S FI (Plate: 9920-ND)',
     todaZone: 'Santiago - Coastal Highway',
     trips: 610,
     rating: 4.79,
@@ -158,7 +158,7 @@ const drivers = ref<DriverRecord[]>([
     name: 'Nestor Macaraeg',
     phone: '+63 947 889 1120',
     city: 'Brgy. Danlugan',
-    vehicle: 'Piaggio Ape City Bao-Bao (Plate: 3310-NC)',
+    vehicle: 'Piaggio Ape City (Plate: 3310-NC)',
     todaZone: 'Danlugan - Highway West',
     trips: 1350,
     rating: 4.9,
@@ -170,7 +170,7 @@ const drivers = ref<DriverRecord[]>([
     name: 'Ernesto Manalo',
     phone: '+63 915 221 8890',
     city: 'Brgy. Bulatok',
-    vehicle: 'TVS King Duramax TukTuk (Plate: 4481-ND)',
+    vehicle: 'TVS King Duramax (Plate: 4481-ND)',
     todaZone: 'Bulatok - Mercado North',
     trips: 820,
     rating: 4.86,
@@ -258,7 +258,7 @@ const confirmStatusChange = () => {
   <div class="space-y-6">
     <PageHeader
       title="Drivers"
-      description="3-wheeled TukTuk (Bao-Bao) fleet units, TODA corridors, and wallets."
+      description="Manage active drivers, assigned vehicles, and account statuses."
     />
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
@@ -296,7 +296,7 @@ const confirmStatusChange = () => {
             to="/users/driver-applications"
             class="px-3.5 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors"
           >
-            Applications
+            Driver Applications
           </RouterLink>
         </div>
       </div>
@@ -308,7 +308,7 @@ const confirmStatusChange = () => {
               <th class="py-3 px-4">Driver</th>
               <th class="py-3 px-4">Phone</th>
               <th class="py-3 px-4">Area</th>
-              <th class="py-3 px-4">3-Wheeled Unit</th>
+              <th class="py-3 px-4">Vehicle Unit</th>
               <th class="py-3 px-4">Trips</th>
               <th class="py-3 px-4">Rating</th>
               <th class="py-3 px-4">Wallet</th>
@@ -404,7 +404,7 @@ const confirmStatusChange = () => {
             <div class="font-medium text-neutral-900 mt-0.5">{{ inspectedDriver.city }}</div>
           </div>
           <div class="sm:col-span-2">
-            <div class="text-neutral-500">3-Wheeled Taxicle &amp; Corridor</div>
+            <div class="text-neutral-500">Vehicle &amp; Corridor</div>
             <div class="font-medium text-neutral-900 mt-0.5">
               {{ inspectedDriver.vehicle }} · {{ inspectedDriver.todaZone }}
             </div>

@@ -23,10 +23,17 @@ describe('AllTripsPage', () => {
     expect(wrapper.text()).toContain('Brgy. San Jose, Pagadian City')
     expect(wrapper.text()).not.toContain('Cash + Tip')
 
+    expect(wrapper.text()).toContain('Action')
+
     const search = wrapper.find('input[type="text"]')
     await search.setValue('Reynaldo')
-    expect(wrapper.text()).toContain('701629644618919')
-    expect(wrapper.text()).not.toContain('701629644618921')
+    expect(wrapper.text()).toContain('7016…18919')
+    expect(wrapper.text()).not.toContain('7016…18921')
+
+    const inlineCopyBtn = wrapper.find('button[aria-label="Copy Booking ID 701629644618919"]')
+    expect(inlineCopyBtn.exists()).toBe(true)
+    await inlineCopyBtn.trigger('click')
+    expect(writeText).toHaveBeenCalledWith('701629644618919')
 
     const viewBtn = wrapper
       .findAll('button')

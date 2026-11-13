@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import FarePricingPage from '@/pages/payments/fare-pricing.vue'
 
 describe('FarePricingPage', () => {
-  it('simulates Taxicle (TukTuk / Bao-Bao) PHP fare floor and edits a tariff rule', async () => {
+  it('simulates Bao-Bao PHP fare floor and edits a tariff rule', async () => {
     const wrapper = mount(FarePricingPage, {
       global: {
         stubs: {
@@ -12,9 +12,10 @@ describe('FarePricingPage', () => {
       },
     })
 
-    expect(wrapper.text()).toContain('Taxicle (TukTuk / Bao-Bao) · Standard Poblacion')
+    expect(wrapper.text()).toContain('Standard Poblacion')
     expect(wrapper.text()).toContain('₱25.00')
     expect(wrapper.text()).not.toContain('USD')
+    expect(wrapper.text()).not.toContain('Taxicle')
 
     const distanceInput = wrapper.find('input[aria-label="Simulator distance in kilometers"]')
     await distanceInput.setValue('5')
@@ -28,15 +29,11 @@ describe('FarePricingPage', () => {
     expect(editBtn).toBeDefined()
     await editBtn!.trigger('click')
 
-    expect(wrapper.text()).toContain(
-      'Edit Tariff · Taxicle (TukTuk / Bao-Bao) · Standard Poblacion',
-    )
+    expect(wrapper.text()).toContain('Edit Tariff · Standard Poblacion')
 
     const saveBtn = wrapper.findAll('button').find((b) => b.text().includes('Save Tariff Rule'))
     await saveBtn!.trigger('click')
 
-    expect(wrapper.text()).toContain(
-      'Saved tariff updates for Taxicle (TukTuk / Bao-Bao) · Standard Poblacion',
-    )
+    expect(wrapper.text()).toContain('Saved tariff updates for Standard Poblacion')
   })
 })

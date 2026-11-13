@@ -21,9 +21,7 @@ describe('router security guards', () => {
     for (const item of navItems) {
       const resolved = router.resolve(item.path)
       expect(resolved.name, `Missing route for sidebar path ${item.path}`).toBeTruthy()
-      expect(resolved.name, `Sidebar path ${item.path} hit 404 fallback`).not.toBe(
-        '/[...pathMatch]',
-      )
+      expect(resolved.name, `Sidebar path ${item.path} hit 404 fallback`).not.toBe('/[...path]')
     }
   })
 
@@ -40,7 +38,7 @@ describe('router security guards', () => {
     }
 
     const unknown = router.resolve('/legacy/retired-section')
-    expect(unknown.name).toBe('/[...pathMatch]')
+    expect(unknown.name).toBe('/[...path]')
   })
 
   it('redirects root path to the executive overview route', async () => {
@@ -75,10 +73,10 @@ describe('router security guards', () => {
     expect(router.currentRoute.value.path).toBe('/dashboard/overview')
 
     await router.push('/payments/topups/bad..id')
-    expect(router.currentRoute.value.name).toBe('/[...pathMatch]')
+    expect(router.currentRoute.value.name).toBe('/[...path]')
 
     await router.push('/users/driver-applications/<script>')
-    expect(router.currentRoute.value.name).toBe('/[...pathMatch]')
+    expect(router.currentRoute.value.name).toBe('/[...path]')
   })
 
   it('enforces role-based authorization boundaries across operational roles', async () => {

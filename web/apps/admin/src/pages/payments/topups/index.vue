@@ -2,13 +2,13 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { useTopups, type TopUpRequest } from '@/features/payments/composables/useTopups'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge, { type BadgeTone } from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
+import { useTopups, type TopUpRequest } from '@/features/payments/composables/use-topups'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge, { type BadgeTone } from '@/shared/feedback/StatusBadge.vue'
+import TablePagination from '@/shared/table/TablePagination.vue'
 import { formatPhp } from '@/shared/utils/format'
 
 const router = useRouter()
@@ -82,8 +82,8 @@ function navigateToDetails(id: string) {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Driver Wallet Top-Ups"
-      description="Verify driver payment transfer receipts before crediting prepaid commission wallets."
+      title="Top-Ups"
+      description="Verify driver payment receipts before crediting prepaid wallets."
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">

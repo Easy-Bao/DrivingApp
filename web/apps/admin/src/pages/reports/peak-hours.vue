@@ -3,9 +3,9 @@ import { computed, ref } from 'vue'
 import ReportFilterBar, {
   type ReportFilterValues,
 } from '@/features/reports/components/ReportFilterBar.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
 import { exportToCsv } from '@/shared/utils/format'
 
 interface DemandWindowRow {
@@ -60,7 +60,7 @@ const hourlyDemand = ref<DemandWindowRow[]>([
 const activeFilters = ref<ReportFilterValues>({
   dateRange: 'last-30-days',
   cityZone: 'all-zones',
-  vehicleTier: 'all-tiers',
+  dispatchMode: 'all-modes',
 })
 
 const filteredDemand = computed(() =>
@@ -75,7 +75,7 @@ const hasActiveFilters = computed(
   () =>
     activeFilters.value.dateRange !== 'last-30-days' ||
     activeFilters.value.cityZone !== 'all-zones' ||
-    activeFilters.value.vehicleTier !== 'all-tiers',
+    activeFilters.value.dispatchMode !== 'all-modes',
 )
 const resetFilters = () => filterBarRef.value?.resetFilters()
 
@@ -98,8 +98,8 @@ const handleExport = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Peak Hours &amp; Pagadian Demand Heatmap"
-      description="Hourly passenger bidding request windows, surge multiplier averages (capped at 2.5x), and TODA utilization."
+      title="Peak Demand"
+      description="Monitor peak booking windows, surge levels, and utilization."
     />
 
     <ReportFilterBar
@@ -128,7 +128,7 @@ const handleExport = () => {
               <th class="py-3 px-4">Classification</th>
               <th class="py-3 px-4">Avg Surge Multiplier</th>
               <th class="py-3 px-4">Requests</th>
-              <th class="py-3 px-4 text-right">Taxicle Utilization</th>
+              <th class="py-3 px-4 text-right">Fleet Utilization</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100">

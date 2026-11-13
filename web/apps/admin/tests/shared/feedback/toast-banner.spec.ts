@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 describe('ToastBanner', () => {
   beforeEach(() => {

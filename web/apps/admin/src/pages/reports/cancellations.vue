@@ -3,9 +3,9 @@ import { computed, ref } from 'vue'
 import ReportFilterBar, {
   type ReportFilterValues,
 } from '@/features/reports/components/ReportFilterBar.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
 interface CancellationCauseRow {
@@ -43,7 +43,7 @@ const cancellationCauses = ref<CancellationCauseRow[]>([
     feeNote: 'Within Grace Period',
   },
   {
-    reason: 'Taxicle mechanical blowout en route to pickup',
+    reason: 'Vehicle mechanical blowout en route to pickup',
     zoneKey: 'santiago-port',
     count: 28,
     responsibility: 'driver_fault',
@@ -63,7 +63,7 @@ const cancellationCauses = ref<CancellationCauseRow[]>([
 const activeFilters = ref<ReportFilterValues>({
   dateRange: 'last-30-days',
   cityZone: 'all-zones',
-  vehicleTier: 'all-tiers',
+  dispatchMode: 'all-modes',
 })
 
 const filteredCauses = computed(() =>
@@ -87,7 +87,7 @@ const hasActiveFilters = computed(
   () =>
     activeFilters.value.dateRange !== 'last-30-days' ||
     activeFilters.value.cityZone !== 'all-zones' ||
-    activeFilters.value.vehicleTier !== 'all-tiers',
+    activeFilters.value.dispatchMode !== 'all-modes',
 )
 const resetFilters = () => filterBarRef.value?.resetFilters()
 
@@ -109,8 +109,8 @@ const handleExport = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Trip Cancellation Root-Cause Analysis"
-      description="Breakdown of Pagadian ride cancellations aligned with backend responsibility classifications."
+      title="Cancellations"
+      description="Inspect trip cancellation causes, responsibility, and fee rules."
     />
 
     <ReportFilterBar

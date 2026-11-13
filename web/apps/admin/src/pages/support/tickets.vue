@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import TablePagination from '@/shared/table/TablePagination.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 interface SupportTicket {
   id: string
@@ -58,7 +58,7 @@ const tickets = ref<SupportTicket[]>([
     category: 'App Account',
     priority: 'Normal',
     status: 'Open',
-    lastMessage: 'Uploaded front photo of new municipal taxicle permit sticker.',
+    lastMessage: 'Uploaded front photo of new municipal permit sticker.',
     updatedAt: '2 hours ago',
   },
   {
@@ -159,8 +159,8 @@ const submitReply = () => {
     />
 
     <PageHeader
-      title="Help Desk & Support Inbox"
-      description="Respond to Pagadian City passenger and taxicle driver inquiries, wallet escalations, and trip inquiries."
+      title="Tickets"
+      description="Respond to passenger and driver inquiries and account escalations."
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">

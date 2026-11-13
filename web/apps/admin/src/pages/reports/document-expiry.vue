@@ -3,8 +3,8 @@ import { computed, ref } from 'vue'
 import ReportFilterBar, {
   type ReportFilterValues,
 } from '@/features/reports/components/ReportFilterBar.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
 import { exportToCsv } from '@/shared/utils/format'
 
 interface ExpiryForecastRow {
@@ -59,7 +59,7 @@ const expiryForecast = ref<ExpiryForecastRow[]>([
 const activeFilters = ref<ReportFilterValues>({
   dateRange: 'last-30-days',
   cityZone: 'all-zones',
-  vehicleTier: 'all-tiers',
+  dispatchMode: 'all-modes',
 })
 
 const filteredForecast = computed(() =>
@@ -77,7 +77,7 @@ const hasActiveFilters = computed(
   () =>
     activeFilters.value.dateRange !== 'last-30-days' ||
     activeFilters.value.cityZone !== 'all-zones' ||
-    activeFilters.value.vehicleTier !== 'all-tiers',
+    activeFilters.value.dispatchMode !== 'all-modes',
 )
 const resetFilters = () => filterBarRef.value?.resetFilters()
 
@@ -100,8 +100,8 @@ const handleExport = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Fleet Document Expiry &amp; Compliance Forecast"
-      description="Quarterly projection of upcoming LTO Professional Driver License, Pagadian TODA MTOP franchise, LTO OR/CR, and insurance renewals."
+      title="Expiry Forecast"
+      description="Project upcoming driver license, permit, and insurance renewals."
     />
 
     <ReportFilterBar

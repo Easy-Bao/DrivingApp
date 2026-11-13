@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 interface ServiceZone {
   id: string
@@ -164,8 +164,8 @@ const saveZone = () => {
     />
 
     <PageHeader
-      title="Pagadian City Geofence Zones & Surge Boundaries"
-      description="Configure barangay polygon boundaries and localized bidding demand multipliers (max 2.5x server cap)."
+      title="Service Zones"
+      description="Configure geofence boundaries and localized surge multipliers."
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
@@ -198,7 +198,7 @@ const saveZone = () => {
               <th class="py-3 px-4">Centroid GPS</th>
               <th class="py-3 px-4">Surge Factor</th>
               <th class="py-3 px-4">Polygon Vertices</th>
-              <th class="py-3 px-4">Online Taxicles</th>
+              <th class="py-3 px-4">Online Drivers</th>
               <th class="py-3 px-4">Status</th>
               <th class="py-3 px-4 text-right">Action</th>
             </tr>

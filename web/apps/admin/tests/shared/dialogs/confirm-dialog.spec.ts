@@ -1,7 +1,7 @@
 import { defineComponent, ref } from 'vue'
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
+import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
 
 describe('ConfirmDialog', () => {
   it('enforces mandatory reason when configured and emits confirm', async () => {
@@ -17,7 +17,7 @@ describe('ConfirmDialog', () => {
         <ConfirmDialog
           v-model:open="open"
           v-model:reason="reason"
-          title="Suspend Taxicle Driver"
+          title="Suspend Driver"
           description="Confirm driver suspension in Pagadian dispatch."
           confirm-label="Suspend Driver"
           :require-reason="true"

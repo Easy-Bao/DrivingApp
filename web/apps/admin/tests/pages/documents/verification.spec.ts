@@ -13,7 +13,10 @@ describe('DocumentVerificationPage', () => {
     })
 
     expect(wrapper.text()).toContain('Rodelio Cruz')
-    expect(wrapper.text()).toContain('Brgy. San Jose')
+    expect(wrapper.text()).toContain('Pagadian City Franchising Board')
+    expect(wrapper.text()).toContain('Expired')
+    expect(wrapper.text()).not.toContain('Taxicle Franchising Board')
+    expect(wrapper.text()).not.toContain('Brgy. San Jose')
 
     const reviewBtn = wrapper.findAll('button').find((b) => b.text().includes('Review Document'))
     expect(reviewBtn).toBeDefined()

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 interface LegalDocument {
   id: string
@@ -24,11 +24,11 @@ const documents = ref<LegalDocument[]>([
     versionMinor: 1,
     lastUpdated: 'Nov 02, 2026',
     markdownBody:
-      '# EasyRide Pagadian Terms of Service\n\nAll fares agreed during real-time taxicle bidding are payable directly in Philippine Pesos (PHP) cash upon arrival. Standard cancellation fees (PHP 15.00) apply only outside the 3-minute grace window.',
+      '# EasyRide Pagadian Terms of Service\n\nAll fares agreed during real-time bidding are payable directly in Philippine Pesos (PHP) cash upon arrival. Standard cancellation fees (PHP 15.00) apply only outside the 3-minute grace window.',
   },
   {
     id: 'DOC-TODA-CHARTER',
-    title: 'Taxicle Driver Partner & TODA Franchise Agreement',
+    title: 'Driver Partner & TODA Franchise Agreement',
     audience: 'Driver Fleet',
     versionMajor: 1,
     versionMinor: 8,
@@ -84,8 +84,8 @@ const saveDocument = () => {
     />
 
     <PageHeader
-      title="Platform Legal Notices & Philippine Policy Texts"
-      description="Maintain live policy documents displayed inside the Passenger and Driver mobile clients under RA 10173 and LTO guidelines."
+      title="Policies"
+      description="Maintain policy documents displayed in the passenger and driver apps."
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">

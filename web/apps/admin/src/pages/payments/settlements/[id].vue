@@ -2,15 +2,15 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import { formatBpsAsPercent, formatCentavos } from '@/shared/utils/format'
 import {
   getPlatformFeeCentavos,
   getShortfallCentavos,
   useSettlements,
-} from '@/features/payments/composables/useSettlements'
+} from '@/features/payments/composables/use-settlements'
 
 definePage({
   meta: { isDetail: true },

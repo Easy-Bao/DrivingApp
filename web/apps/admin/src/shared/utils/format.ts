@@ -12,6 +12,16 @@ export function formatPhp(amount: number): string {
 }
 
 /**
+ * Middle-truncates long booking references (e.g. "701629644618921" -> "7016…18921")
+ * so tables remain scannable while preserving the prefix and trailing digits.
+ */
+export function formatBookingReference(id: string): string {
+  const trimmed = id.trim()
+  if (trimmed.length <= 11) return trimmed
+  return `${trimmed.slice(0, 4)}…${trimmed.slice(-5)}`
+}
+
+/**
  * Converts integer centavos stored by the backend into formatted PHP currency.
  */
 export function formatCentavos(centavos: number): string {

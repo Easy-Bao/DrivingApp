@@ -75,7 +75,10 @@ describe('ConsoleLayout', () => {
       .findAll('a')
       .map((anchor) => ({ text: anchor.text().trim(), href: anchor.attributes('href') }))
     expect(links).toContainEqual({ text: 'Users', href: '/users/drivers' })
-    expect(links).toContainEqual({ text: 'Applications', href: '/users/driver-applications' })
+    expect(links).toContainEqual({
+      text: 'Driver Applications',
+      href: '/users/driver-applications',
+    })
     expect(nav.find('[aria-current="page"]').text()).toBe('#APP-901')
   })
 })

@@ -2,14 +2,15 @@
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import TripDetailsModal from '@/features/trips/components/TripDetailsModal.vue'
-import { useTrips, type TripRecord, type TripStatus } from '@/features/trips/composables/useTrips'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import { useTrips, type TripRecord, type TripStatus } from '@/features/trips/composables/use-trips'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import BookingIdCell from '@/shared/display/BookingIdCell.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import TablePagination from '@/shared/table/TablePagination.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
 const { trips, tripStatusTone } = useTrips()
@@ -84,7 +85,7 @@ const handleExport = () => {
   <div class="space-y-6">
     <PageHeader
       title="All Trips"
-      description="Taxicle trip records, bidding fares, and completion status."
+      description="Monitor trip records, bidding fares, and completion status."
     />
 
     <ToastBanner :message="toastMessage" tone="success" @dismiss="toastMessage = null" />
@@ -163,7 +164,7 @@ const handleExport = () => {
               <th class="py-3 px-4">Route</th>
               <th class="py-3 px-4">Trip Fare</th>
               <th class="py-3 px-4">Status</th>
-              <th class="py-3 px-4 text-right">Details</th>
+              <th class="py-3 px-4 text-right">Action</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100">
@@ -172,8 +173,8 @@ const handleExport = () => {
               :key="trip.id"
               class="hover:bg-neutral-50/70 transition-colors"
             >
-              <td class="py-3 px-4 font-mono font-bold text-neutral-900 tabular-nums">
-                {{ trip.id }}
+              <td class="py-3 px-4 whitespace-nowrap">
+                <BookingIdCell :booking-id="trip.id" />
               </td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ trip.rider }}</div>

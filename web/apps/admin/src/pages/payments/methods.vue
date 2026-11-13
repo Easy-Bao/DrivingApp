@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 type ChannelKind = 'QRPh Wallet' | 'Corporate Bank'
 
@@ -257,8 +257,8 @@ const toggleAccountStatus = (account: CompanyCollectionAccount) => {
     />
 
     <PageHeader
-      title="Company Top-Up Collection Accounts & QRPh Channels"
-      description="Receiving QRPh codes and corporate bank accounts displayed inside the Driver app for manual prepaid credit deposits."
+      title="Channels"
+      description="Manage QRPh codes and bank accounts for driver top-ups."
     >
       <template #actions>
         <StatusBadge :label="`${activeCount} Active Channels`" tone="neutral" />

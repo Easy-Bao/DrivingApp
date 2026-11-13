@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 export interface ReportFilterValues {
   dateRange: 'today' | 'last-7-days' | 'last-30-days' | 'this-quarter'
   cityZone: string
-  vehicleTier: string
+  dispatchMode: string
 }
 
 const props = defineProps<{
@@ -21,30 +21,30 @@ const emit = defineEmits<{
 
 const dateRange = ref<ReportFilterValues['dateRange']>('last-30-days')
 const cityZone = ref('all-zones')
-const vehicleTier = ref('all-tiers')
+const dispatchMode = ref('all-modes')
 const exportToast = ref<string | null>(null)
 
 const emitFilters = () => {
   emit('change', {
     dateRange: dateRange.value,
     cityZone: cityZone.value,
-    vehicleTier: vehicleTier.value,
+    dispatchMode: dispatchMode.value,
   })
 }
 
-watch([dateRange, cityZone, vehicleTier], emitFilters, { immediate: true })
+watch([dateRange, cityZone, dispatchMode], emitFilters, { immediate: true })
 
 const hasActiveFilters = computed(
   () =>
     dateRange.value !== 'last-30-days' ||
     cityZone.value !== 'all-zones' ||
-    vehicleTier.value !== 'all-tiers',
+    dispatchMode.value !== 'all-modes',
 )
 
 const resetFilters = () => {
   dateRange.value = 'last-30-days'
   cityZone.value = 'all-zones'
-  vehicleTier.value = 'all-tiers'
+  dispatchMode.value = 'all-modes'
 }
 
 defineExpose({ resetFilters })
@@ -53,7 +53,7 @@ const triggerExport = (format: 'CSV' | 'PDF' | 'Excel') => {
   const filters: ReportFilterValues = {
     dateRange: dateRange.value,
     cityZone: cityZone.value,
-    vehicleTier: vehicleTier.value,
+    dispatchMode: dispatchMode.value,
   }
   emit('export', { format, filters })
   exportToast.value = `Prepared ${props.reportTitle} (${format}) for ${cityZone.value === 'all-zones' ? 'All Pagadian Zones' : cityZone.value}.`
@@ -116,17 +116,16 @@ const triggerExport = (format: 'CSV' | 'PDF' | 'Excel') => {
           <label
             class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1"
           >
-            Taxicle Fleet Tier
+            Dispatch Mode
           </label>
           <BaseSelect
-            v-model="vehicleTier"
+            v-model="dispatchMode"
             :full-width="true"
-            aria-label="Filter report vehicle tier"
+            aria-label="Filter report dispatch mode"
             :options="[
-              { label: 'All Taxicle Tiers', value: 'all-tiers' },
-              { label: 'Standard TukTuk', value: 'tuktuk-standard' },
-              { label: 'Express Bao-Bao', value: 'tuktuk-express' },
-              { label: 'Electric Bao-Bao Pioneer', value: 'ebao-pioneer' },
+              { label: 'All Dispatch Modes', value: 'all-modes' },
+              { label: 'Open Broadcast', value: 'open-broadcast' },
+              { label: 'Chosen Driver', value: 'chosen-driver' },
             ]"
           />
         </div>

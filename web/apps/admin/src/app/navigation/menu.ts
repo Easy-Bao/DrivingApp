@@ -31,7 +31,7 @@ export const navigationGroups: NavGroup[] = [
       { id: 'drivers', label: 'Drivers', icon: 'lucide:id-card', path: '/users/drivers' },
       {
         id: 'driver-applications',
-        label: 'Applications',
+        label: 'Driver Applications',
         icon: 'lucide:user-plus',
         path: '/users/driver-applications',
         badge: '8',

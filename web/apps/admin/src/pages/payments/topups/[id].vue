@@ -2,11 +2,11 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { useTopups } from '@/features/payments/composables/useTopups'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import { useTopups } from '@/features/payments/composables/use-topups'
+import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import { formatPhp } from '@/shared/utils/format'
 
 definePage({
@@ -132,7 +132,7 @@ function goBack() {
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">Assigned Taxicle</div>
+            <div class="text-neutral-400 text-[11px] font-medium">Assigned Vehicle</div>
             <div class="font-mono font-semibold text-neutral-900 mt-0.5">
               Plate: {{ request.vehiclePlate }}
             </div>

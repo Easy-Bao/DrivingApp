@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import TablePagination from '@/shared/table/TablePagination.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
 type LedgerEntryType =
@@ -142,8 +142,8 @@ const exportLedger = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Prepaid Commission & Top-Up Ledger"
-      description="Immutable journal of prepaid credit top-ups, per-trip basis-point deductions, and fee waivers in PHP."
+      title="Transactions"
+      description="Inspect prepaid wallet top-ups, commission debits, and fee waivers."
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">

@@ -41,7 +41,7 @@ interface TimeframeDataset {
   completionRate: string
   completionDelta: string
   series: VolumeBucket[]
-  fleetMix: BreakdownSlice[]
+  bookingMix: BreakdownSlice[]
   statusMix: StatusMetric[]
 }
 
@@ -55,43 +55,36 @@ const datasets: Record<DashboardTimeframe, TimeframeDataset> = {
     completionRate: '96.4%',
     completionDelta: '+0.8%',
     series: [
-      { label: '00–03', trips: 28, revenuePhp: 1540 },
-      { label: '03–06', trips: 34, revenuePhp: 1870 },
-      { label: '06–09', trips: 146, revenuePhp: 8760 },
-      { label: '09–12', trips: 118, revenuePhp: 7080 },
-      { label: '12–15', trips: 124, revenuePhp: 7440 },
-      { label: '15–18', trips: 168, revenuePhp: 10080 },
-      { label: '18–21', trips: 132, revenuePhp: 7920 },
-      { label: '21–24', trips: 54, revenuePhp: 3560 },
+      { label: '00–03', trips: 28, revenuePhp: 2100 },
+      { label: '03–06', trips: 34, revenuePhp: 2380 },
+      { label: '06–09', trips: 146, revenuePhp: 8030 },
+      { label: '09–12', trips: 118, revenuePhp: 7670 },
+      { label: '12–15', trips: 124, revenuePhp: 8680 },
+      { label: '15–18', trips: 168, revenuePhp: 9240 },
+      { label: '18–21', trips: 132, revenuePhp: 9900 },
+      { label: '21–24', trips: 54, revenuePhp: 4050 },
     ],
-    fleetMix: [
+    bookingMix: [
       {
-        label: 'Standard TukTuk',
-        count: 498,
-        percent: 62,
+        label: 'Open Broadcast',
+        count: 555,
+        percent: 69,
         colorHex: '#171717',
         barClass: 'bg-neutral-900',
       },
       {
-        label: 'Express Bao-Bao',
-        count: 233,
-        percent: 29,
+        label: 'Chosen Driver',
+        count: 249,
+        percent: 31,
         colorHex: '#059669',
         barClass: 'bg-emerald-600',
-      },
-      {
-        label: 'E-BaoBao Pioneer',
-        count: 73,
-        percent: 9,
-        colorHex: '#a3a3a3',
-        barClass: 'bg-neutral-400',
       },
     ],
     statusMix: [
       { label: 'Completed', count: 775, share: '96.4%', barClass: 'bg-emerald-600' },
       { label: 'In Progress', count: 14, share: '1.7%', barClass: 'bg-neutral-900' },
-      { label: 'Dispatching', count: 6, share: '0.7%', barClass: 'bg-amber-500' },
-      { label: 'Cancelled', count: 9, share: '1.1%', barClass: 'bg-rose-500' },
+      { label: 'Dispatching', count: 7, share: '0.9%', barClass: 'bg-amber-500' },
+      { label: 'Cancelled', count: 8, share: '1.0%', barClass: 'bg-rose-500' },
     ],
   },
   '7d': {
@@ -103,42 +96,35 @@ const datasets: Record<DashboardTimeframe, TimeframeDataset> = {
     completionRate: '95.8%',
     completionDelta: '+0.5%',
     series: [
-      { label: 'Mon', trips: 710, revenuePhp: 42600 },
-      { label: 'Tue', trips: 760, revenuePhp: 45600 },
+      { label: 'Mon', trips: 710, revenuePhp: 39050 },
+      { label: 'Tue', trips: 760, revenuePhp: 41800 },
       { label: 'Wed', trips: 790, revenuePhp: 47400 },
-      { label: 'Thu', trips: 815, revenuePhp: 48900 },
+      { label: 'Thu', trips: 815, revenuePhp: 52975 },
       { label: 'Fri', trips: 895, revenuePhp: 53700 },
-      { label: 'Sat', trips: 820, revenuePhp: 49200 },
-      { label: 'Sun', trips: 630, revenuePhp: 37800 },
+      { label: 'Sat', trips: 820, revenuePhp: 59040 },
+      { label: 'Sun', trips: 630, revenuePhp: 46620 },
     ],
-    fleetMix: [
+    bookingMix: [
       {
-        label: 'Standard TukTuk',
-        count: 3306,
-        percent: 61,
+        label: 'Open Broadcast',
+        count: 3523,
+        percent: 65,
         colorHex: '#171717',
         barClass: 'bg-neutral-900',
       },
       {
-        label: 'Express Bao-Bao',
-        count: 1572,
-        percent: 29,
+        label: 'Chosen Driver',
+        count: 1897,
+        percent: 35,
         colorHex: '#059669',
         barClass: 'bg-emerald-600',
-      },
-      {
-        label: 'E-BaoBao Pioneer',
-        count: 542,
-        percent: 10,
-        colorHex: '#a3a3a3',
-        barClass: 'bg-neutral-400',
       },
     ],
     statusMix: [
       { label: 'Completed', count: 5192, share: '95.8%', barClass: 'bg-emerald-600' },
-      { label: 'In Progress', count: 68, share: '1.3%', barClass: 'bg-neutral-900' },
-      { label: 'Dispatching', count: 42, share: '0.8%', barClass: 'bg-amber-500' },
-      { label: 'Cancelled', count: 118, share: '2.2%', barClass: 'bg-rose-500' },
+      { label: 'In Progress', count: 70, share: '1.3%', barClass: 'bg-neutral-900' },
+      { label: 'Dispatching', count: 44, share: '0.8%', barClass: 'bg-amber-500' },
+      { label: 'Cancelled', count: 114, share: '2.1%', barClass: 'bg-rose-500' },
     ],
   },
   '30d': {
@@ -150,32 +136,25 @@ const datasets: Record<DashboardTimeframe, TimeframeDataset> = {
     completionRate: '96.1%',
     completionDelta: '+1.1%',
     series: [
-      { label: 'Week 1', trips: 5240, revenuePhp: 314400 },
+      { label: 'Week 1', trips: 5240, revenuePhp: 303920 },
       { label: 'Week 2', trips: 5610, revenuePhp: 336600 },
-      { label: 'Week 3', trips: 5890, revenuePhp: 353400 },
+      { label: 'Week 3', trips: 5890, revenuePhp: 388740 },
       { label: 'Week 4', trips: 6100, revenuePhp: 366000 },
     ],
-    fleetMix: [
+    bookingMix: [
       {
-        label: 'Standard TukTuk',
-        count: 13704,
-        percent: 60,
+        label: 'Open Broadcast',
+        count: 14161,
+        percent: 62,
         colorHex: '#171717',
         barClass: 'bg-neutral-900',
       },
       {
-        label: 'Express Bao-Bao',
-        count: 6852,
-        percent: 30,
+        label: 'Chosen Driver',
+        count: 8679,
+        percent: 38,
         colorHex: '#059669',
         barClass: 'bg-emerald-600',
-      },
-      {
-        label: 'E-BaoBao Pioneer',
-        count: 2284,
-        percent: 10,
-        colorHex: '#a3a3a3',
-        barClass: 'bg-neutral-400',
       },
     ],
     statusMix: [
@@ -203,7 +182,7 @@ export function useOverviewMetrics(timeframe: Ref<DashboardTimeframe>) {
     const isToday = timeframe.value === 'today'
     return [
       {
-        label: isToday ? 'Active Rides' : 'Completed & Active Trips',
+        label: isToday ? 'Active Rides' : 'Total Trips',
         value: data.activeRides.toLocaleString(),
         change: data.ridesDelta,
         comparisonLabel: data.comparisonLabel,
@@ -217,7 +196,7 @@ export function useOverviewMetrics(timeframe: Ref<DashboardTimeframe>) {
         icon: 'lucide:users',
       },
       {
-        label: isToday ? 'Today Trip Revenue' : 'Period Trip Revenue',
+        label: 'Trip Revenue',
         value: formatPhp(totalRevenuePhp.value),
         change: isToday ? '+21%' : timeframe.value === '7d' ? '+12%' : '+19%',
         comparisonLabel: data.comparisonLabel,

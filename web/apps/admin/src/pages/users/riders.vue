@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import SearchField from '@/shared/components/SearchField.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
+import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import SearchField from '@/shared/forms/SearchField.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import TablePagination from '@/shared/table/TablePagination.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import { formatPhp } from '@/shared/utils/format'
 
 type RiderStanding = 'Good Standing' | 'VIP Rider' | 'Flagged (Dispute)' | 'Suspended'
@@ -174,7 +174,10 @@ const confirmStandingUpdate = () => {
 
 <template>
   <div class="space-y-6">
-    <PageHeader title="Riders" description="Passenger activity, spend, and standings." />
+    <PageHeader
+      title="Riders"
+      description="Manage passenger accounts, trip activity, and standings."
+    />
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 

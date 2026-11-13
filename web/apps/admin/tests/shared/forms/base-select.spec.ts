@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
 
 describe('BaseSelect', () => {
   it('opens a light square dropdown menu with no border radius and updates the selected value', async () => {

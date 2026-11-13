@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import BaseSelect from '@/shared/components/BaseSelect.vue'
-import ModalDialog from '@/shared/components/ModalDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import BaseSelect from '@/shared/forms/BaseSelect.vue'
+import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import { formatPhp } from '@/shared/utils/format'
 
 interface MunicipalityMarket {
@@ -136,8 +136,8 @@ const saveMunicipality = () => {
     />
 
     <PageHeader
-      title="Zamboanga del Sur Municipal Service Coverage"
-      description="Manage municipal launch status, TODA MTOP charter enforcement, and baseline PHP minimum fares."
+      title="Cities"
+      description="Manage launch status, franchise gates, and baseline minimum fares."
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
@@ -164,7 +164,7 @@ const saveMunicipality = () => {
               <th class="py-3 px-4">Market Code</th>
               <th class="py-3 px-4">City / Municipality</th>
               <th class="py-3 px-4">ZIP &amp; Coordinates</th>
-              <th class="py-3 px-4">Min Taxicle Fare</th>
+              <th class="py-3 px-4">Min Fare</th>
               <th class="py-3 px-4">TODA Charter Gate</th>
               <th class="py-3 px-4">Launch State</th>
               <th class="py-3 px-4 text-right">Action</th>

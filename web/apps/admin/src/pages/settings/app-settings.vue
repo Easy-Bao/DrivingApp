@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import StatusBadge from '@/shared/components/StatusBadge.vue'
-import ToastBanner from '@/shared/components/ToastBanner.vue'
+import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
+import PageHeader from '@/shared/layout/PageHeader.vue'
+import StatusBadge from '@/shared/feedback/StatusBadge.vue'
+import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 
 const settings = ref({
   biddingWindowSeconds: 90,
@@ -44,8 +44,8 @@ const commitSettings = () => {
     />
 
     <PageHeader
-      title="Pagadian Dispatch & Wallet Runtime Parameters"
-      description="Governs live taxicle bidding timeouts, PHP prepaid dispatch thresholds, and driver document gates."
+      title="Preferences"
+      description="Configure dispatch timeouts, wallet thresholds, and compliance gates."
     >
       <template #actions>
         <StatusBadge label="Live Bidding Architecture" tone="neutral" />
@@ -78,7 +78,7 @@ const commitSettings = () => {
               class="w-full px-3 py-1.5 bg-white border border-neutral-300 rounded-none font-mono text-xs text-neutral-900"
             />
             <p class="text-[11px] text-neutral-400 mt-0.5">
-              Duration passengers review driver taxicle offers before session expiration
+              Duration passengers review driver offers before session expiration
             </p>
           </div>
 
@@ -145,8 +145,8 @@ const commitSettings = () => {
               class="w-full px-3 py-1.5 bg-white border border-neutral-300 rounded-none font-mono text-xs text-neutral-900"
             />
             <p class="text-[11px] text-neutral-400 mt-0.5">
-              Taxicle drivers below ₱{{ settings.minWalletBalancePhp.toFixed(2) }} cannot accept new
-              cash bid requests
+              Drivers below ₱{{ settings.minWalletBalancePhp.toFixed(2) }} cannot accept new cash
+              bid requests
             </p>
           </div>
 
