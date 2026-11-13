@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { ROLE_PROFILES, lockAuthSession, useAuthSession } from '@/core/auth/auth-session'
+import { ROLE_PROFILES, lockAuthSession, useAuthSession } from '@/core'
 
 definePage({
   meta: { hideChrome: false },

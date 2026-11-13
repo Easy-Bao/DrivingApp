@@ -1,23 +1,39 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
 import PageHeader from '@/shared/layout/PageHeader.vue'
 import StatusBadge from '@/shared/feedback/StatusBadge.vue'
 import ToastBanner from '@/shared/feedback/ToastBanner.vue'
-import router from '@/app/router'
-import { lockAuthSession } from '@/core/auth/auth-session'
+import { ROLE_PROFILES, lockAuthSession, updateOperatorProfile, useAuthSession } from '@/core'
+
+const router = useRouter()
+const authSession = useAuthSession()
 
 const lockConsoleSession = () => {
   lockAuthSession()
   void router.push({ name: '/auth/login', query: { redirect: '/account/profile' } })
 }
 
-const fullName = ref('Operations Control Lead')
-const email = ref('ops@easyride.ph')
+const fullName = ref(authSession.value.operatorName)
+const email = ref(authSession.value.operatorEmail)
 const phone = ref('+63 917 801 7016')
 const regionHub = ref('Pagadian City Dispatch Hub')
 const mfaMethod = ref<'authenticator' | 'hardware_key'>('authenticator')
+
+watch(
+  () => [authSession.value.operatorName, authSession.value.operatorEmail] as const,
+  ([nextName, nextEmail]) => {
+    fullName.value = nextName
+    email.value = nextEmail
+  },
+)
+
+const roleLabel = computed(() =>
+  authSession.value.role ? ROLE_PROFILES[authSession.value.role].label : 'Session Locked',
+)
+const employeeCode = computed(() => authSession.value.userId?.toUpperCase() || 'OP-SESSION')
 
 const toastMessage = ref<string | null>(null)
 const toastTone = ref<'success' | 'warning' | 'error' | 'info'>('success')
@@ -36,9 +52,13 @@ const initials = computed(() => {
 })
 
 const saveProfile = () => {
-  if (!fullName.value.trim() || !email.value.includes('@')) {
+  const result = updateOperatorProfile({
+    operatorName: fullName.value,
+    operatorEmail: email.value,
+  })
+  if (!result.ok) {
     toastTone.value = 'error'
-    toastMessage.value = 'Enter a valid full name and email address before saving.'
+    toastMessage.value = result.error
     return
   }
   toastTone.value = 'success'
@@ -118,9 +138,9 @@ const submitPasswordRotation = () => {
         <div class="space-y-1">
           <h2 class="text-base font-bold text-neutral-900">{{ fullName }}</h2>
           <p class="text-xs text-neutral-500 font-mono">
-            {{ email }} · {{ phone }} · Employee ID: EMP-001
+            {{ email }} · {{ phone }} · Operator ID: {{ employeeCode }}
           </p>
-          <StatusBadge label="Root Access" tone="success" />
+          <StatusBadge :label="roleLabel" tone="success" />
         </div>
       </div>
 

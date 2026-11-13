@@ -5,7 +5,7 @@ import { Icon } from '@iconify/vue'
 import { motion, AnimatePresence } from 'motion-v'
 import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
 import { navigationGroups, type NavGroup, type NavItem } from '@/app/navigation/menu'
-import { ROLE_PROFILES, lockAuthSession, useAuthSession } from '@/core/auth/auth-session'
+import { ROLE_PROFILES, canRoleAccessPath, lockAuthSession, useAuthSession } from '@/core'
 
 const props = withDefaults(
   defineProps<{
@@ -246,8 +246,19 @@ function confirmSignOut() {
   void router.push({ name: '/auth/login', query: { redirect: route.fullPath } })
 }
 
+const visibleGroups = computed<NavGroup[]>(() => {
+  const role = authSession.value.role
+  if (!role) return []
+  return navigationGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => canRoleAccessPath(role, item.path)),
+    }))
+    .filter((group) => group.items.length > 0)
+})
+
 const activeItem = computed(() => {
-  const allItems = navigationGroups.flatMap((g) => g.items)
+  const allItems = visibleGroups.value.flatMap((g) => g.items)
 
   const exact = allItems.find((item) => route.path === item.path)
   if (exact) return exact
@@ -284,9 +295,9 @@ function getGroupNotificationCount(group: NavGroup): number {
 }
 
 watch(
-  () => route.path,
+  () => [route.path, visibleGroups.value] as const,
   () => {
-    for (const group of navigationGroups) {
+    for (const group of visibleGroups.value) {
       if (group.items.some((i) => isItemActive(i))) {
         expandedGroups.value[group.id] = true
       }
@@ -297,9 +308,9 @@ watch(
 
 const filteredGroups = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
-  if (!query) return navigationGroups
+  if (!query) return visibleGroups.value
 
-  return navigationGroups
+  return visibleGroups.value
     .map((group) => {
       const matchingItems = group.items.filter(
         (item) =>

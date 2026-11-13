@@ -1,8 +1,33 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ProfilePage from '@/pages/account/profile.vue'
+import { loginOperator } from '@/core/auth/auth-session'
+
+const mockPush = vi.fn()
+
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: mockPush }),
+}))
 
 describe('ProfilePage', () => {
+  it('binds displayed operator identity to the active authenticated role and locks via router', async () => {
+    loginOperator('finance_ops', '7016')
+    const wrapper = mount(ProfilePage)
+
+    expect(wrapper.text()).toContain('Clarisse Mendoza')
+    expect(wrapper.text()).toContain('treasury@easyride.ph')
+    expect(wrapper.text()).toContain('Finance Ops')
+    expect(wrapper.text()).not.toContain('Root Access')
+
+    const lockBtn = wrapper.findAll('button').find((b) => b.text().includes('Lock Session'))
+    expect(lockBtn).toBeDefined()
+    await lockBtn!.trigger('click')
+    expect(mockPush).toHaveBeenCalledWith({
+      name: '/auth/login',
+      query: { redirect: '/account/profile' },
+    })
+  })
+
   it('saves updated operator profile preferences and validates email input', async () => {
     const wrapper = mount(ProfilePage)
 

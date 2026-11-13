@@ -78,12 +78,19 @@ function createActiveSession(role: OperatorRole, now = Date.now()): AuthSession 
   }
 }
 
+function nonEmptyString(value: unknown, fallback: string): string {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback
+}
+
 function createLockedSession(previous?: Partial<AuthSession>): AuthSession {
   return {
     token: null,
     userId: null,
-    operatorName: previous?.operatorName || ROLE_PROFILES.root_operator.operatorName,
-    operatorEmail: previous?.operatorEmail || ROLE_PROFILES.root_operator.operatorEmail,
+    operatorName: nonEmptyString(previous?.operatorName, ROLE_PROFILES.root_operator.operatorName),
+    operatorEmail: nonEmptyString(
+      previous?.operatorEmail,
+      ROLE_PROFILES.root_operator.operatorEmail,
+    ),
     role: null,
     expiresAt: 0,
     locked: true,
@@ -99,6 +106,15 @@ function persistSession(session: AuthSession): void {
   }
 }
 
+function clearPersistedSession(): void {
+  if (typeof window === 'undefined' || typeof window.sessionStorage === 'undefined') return
+  try {
+    window.sessionStorage.removeItem(STORAGE_KEY)
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 function loadInitialSession(): AuthSession {
   if (typeof window === 'undefined' || typeof window.sessionStorage === 'undefined') {
     return createActiveSession('root_operator')
@@ -110,34 +126,46 @@ function loadInitialSession(): AuthSession {
       persistSession(initial)
       return initial
     }
-    const parsed = JSON.parse(raw) as Partial<AuthSession>
-    if (parsed.locked) {
-      return createLockedSession(parsed)
+    const parsed = JSON.parse(raw) as unknown
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      clearPersistedSession()
+      return createLockedSession()
+    }
+    const record = parsed as Partial<AuthSession>
+    if (record.locked === true) {
+      return createLockedSession(record)
     }
     if (
-      typeof parsed.token === 'string' &&
-      parsed.token.length >= 8 &&
-      typeof parsed.userId === 'string' &&
-      parsed.role &&
-      VALID_ROLES.has(parsed.role) &&
-      typeof parsed.expiresAt === 'number' &&
-      parsed.expiresAt > Date.now()
+      typeof record.token === 'string' &&
+      record.token.trim().length >= 8 &&
+      typeof record.userId === 'string' &&
+      record.userId.trim().length > 0 &&
+      typeof record.operatorName === 'string' &&
+      record.operatorName.trim().length > 0 &&
+      typeof record.operatorEmail === 'string' &&
+      record.operatorEmail.trim().length > 0 &&
+      typeof record.role === 'string' &&
+      VALID_ROLES.has(record.role as OperatorRole) &&
+      typeof record.expiresAt === 'number' &&
+      Number.isFinite(record.expiresAt) &&
+      record.expiresAt > Date.now()
     ) {
       return {
-        token: parsed.token,
-        userId: parsed.userId,
-        operatorName: parsed.operatorName || ROLE_PROFILES[parsed.role].operatorName,
-        operatorEmail: parsed.operatorEmail || ROLE_PROFILES[parsed.role].operatorEmail,
-        role: parsed.role,
-        expiresAt: parsed.expiresAt,
+        token: record.token.trim(),
+        userId: record.userId.trim(),
+        operatorName: record.operatorName.trim(),
+        operatorEmail: record.operatorEmail.trim(),
+        role: record.role as OperatorRole,
+        expiresAt: record.expiresAt,
         locked: false,
       }
     }
-    const expired = createLockedSession(parsed)
+    const expired = createLockedSession(record)
     persistSession(expired)
     return expired
   } catch {
-    return createActiveSession('root_operator')
+    clearPersistedSession()
+    return createLockedSession()
   }
 }
 
@@ -199,4 +227,26 @@ export function lockAuthSession(): void {
   const locked = createLockedSession(sessionState.value)
   sessionState.value = locked
   persistSession(locked)
+}
+
+export function updateOperatorProfile(patch: {
+  operatorName: string
+  operatorEmail: string
+}): { ok: true; session: AuthSession } | { ok: false; error: string } {
+  if (sessionState.value.locked || !sessionState.value.role) {
+    return { ok: false, error: 'Unlock session before updating profile.' }
+  }
+  const nextName = patch.operatorName.trim()
+  const nextEmail = patch.operatorEmail.trim()
+  if (!nextName || !nextEmail.includes('@')) {
+    return { ok: false, error: 'Enter a valid full name and email address before saving.' }
+  }
+  const updated: AuthSession = {
+    ...sessionState.value,
+    operatorName: nextName,
+    operatorEmail: nextEmail,
+  }
+  sessionState.value = updated
+  persistSession(updated)
+  return { ok: true, session: updated }
 }

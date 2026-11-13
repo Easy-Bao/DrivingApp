@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import Sidebar from '@/app/layouts/Sidebar.vue'
+import { loginOperator } from '@/core/auth/auth-session'
 
 const mockPush = vi.fn()
 
@@ -107,5 +108,31 @@ describe('Sidebar', () => {
     const lockBtn = wrapper.find('button[aria-label="Lock session"]')
     await lockBtn.trigger('click')
     expect(wrapper.text()).toContain('Lock Session?')
+  })
+
+  it('hides navigation groups and items unauthorized for the signed-in role', async () => {
+    loginOperator('finance_ops', '7016')
+    const wrapper = mount(Sidebar)
+
+    expect(wrapper.text()).toContain('Payments')
+    expect(wrapper.text()).toContain('Reports')
+    expect(wrapper.text()).not.toContain('Operators')
+    expect(wrapper.text()).not.toContain('Staff Roles')
+    expect(wrapper.text()).not.toContain('App Settings')
+    expect(wrapper.text()).not.toContain('Verification')
+
+    loginOperator('support_lead', '7016')
+    const supportWrapper = mount(Sidebar)
+    const supportToggle = supportWrapper
+      .findAll('button')
+      .find((btn) => btn.text().trim() === 'Support')
+    expect(supportToggle).toBeDefined()
+    await supportToggle!.trigger('click')
+
+    expect(supportWrapper.text()).toContain('Tickets')
+    expect(supportWrapper.text()).toContain('Safety Reports')
+    expect(supportWrapper.text()).toContain('Refunds')
+    expect(supportWrapper.text()).not.toContain('Top-Ups')
+    expect(supportWrapper.text()).not.toContain('Cities')
   })
 })
