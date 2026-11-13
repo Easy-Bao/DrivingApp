@@ -148,14 +148,6 @@ export const navigationGroups: SidebarNavGroup[] = [
         path: '/payments/earnings',
       },
       {
-        id: 'payout-requests',
-        label: 'Payout Requests',
-        icon: 'lucide:arrow-up-right',
-        path: '/payments/payout-requests',
-        badge: '5',
-        badgeClass: 'bg-blue-100 text-blue-800',
-      },
-      {
         id: 'wallet',
         label: 'Driver Wallet',
         icon: 'lucide:wallet-cards',
