@@ -8,11 +8,24 @@ import { reportsRoutes } from '@/app/router/routes/reports.routes'
 import { supportRoutes } from '@/app/router/routes/support.routes'
 import { settingsRoutes } from '@/app/router/routes/settings.routes'
 import { accountRoutes } from '@/app/router/routes/account.routes'
+import { installRouterSecurityGuards } from '@/app/router/guards'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', redirect: '/dashboard/overview' },
+    {
+      path: '/auth/login',
+      name: 'auth-login',
+      component: () => import('@/app/pages/AuthLoginPage.vue'),
+      meta: { public: true, hideChrome: true },
+    },
+    {
+      path: '/unauthorized',
+      name: 'unauthorized',
+      component: () => import('@/app/pages/UnauthorizedPage.vue'),
+      meta: { hideChrome: false },
+    },
     ...dashboardRoutes,
     ...usersRoutes,
     ...documentsRoutes,
@@ -32,5 +45,7 @@ const router = createRouter({
     return { top: 0 }
   },
 })
+
+installRouterSecurityGuards(router)
 
 export default router

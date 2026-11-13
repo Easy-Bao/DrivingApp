@@ -5,6 +5,7 @@ import { Icon } from '@iconify/vue'
 import { motion, AnimatePresence } from 'motion-v'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
 import { navigationGroups, type SidebarSubItem } from '@/app/navigation/sidebar-menu'
+import { ROLE_PROFILES, lockAuthSession, useAuthSession } from '@/core/auth/auth-session'
 
 withDefaults(
   defineProps<{
@@ -26,6 +27,22 @@ const isCollapsed = ref(false)
 const searchQuery = ref('')
 const showSignOutConfirm = ref(false)
 const signedOutNotice = ref(false)
+const authSession = useAuthSession()
+
+const activeRoleLabel = computed(() => {
+  const role = authSession.value.role
+  return role ? ROLE_PROFILES[role].label : 'Locked Session'
+})
+
+const operatorInitials = computed(() => {
+  const words = authSession.value.operatorName.trim().split(/\s+/).filter(Boolean)
+  return (
+    words
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() || '')
+      .join('') || 'OP'
+  )
+})
 
 const expandedGroups = ref<Record<string, boolean>>({
   dashboard: true,
@@ -52,9 +69,11 @@ function navigateTo(path: string) {
 }
 
 function confirmSignOut() {
+  showSignOutConfirm.value = false
   signedOutNotice.value = true
+  lockAuthSession()
   emit('closeMobile')
-  void router.push('/dashboard/overview')
+  void router.push({ name: 'auth-login', query: { redirect: route.fullPath } })
 }
 
 const activeItem = computed(() => {
@@ -140,7 +159,7 @@ const filteredGroups = computed(() => {
           <button
             v-if="mobileOpen"
             type="button"
-            class="lg:hidden rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 p-1.5 transition-colors cursor-pointer"
+            class="lg:hidden rounded-none text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 p-1.5 transition-colors cursor-pointer"
             aria-label="Close navigation menu"
             @click="emit('closeMobile')"
           >
@@ -149,7 +168,7 @@ const filteredGroups = computed(() => {
 
           <button
             type="button"
-            class="rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors flex items-center justify-center shrink-0"
+            class="rounded-none text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors flex items-center justify-center shrink-0"
             :class="isCollapsed ? 'w-10 h-10 bg-neutral-50 border border-neutral-200' : 'p-1.5'"
             :aria-label="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
             :title="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
@@ -247,7 +266,7 @@ const filteredGroups = computed(() => {
               <motion.span
                 v-if="isItemActive(item)"
                 layoutId="activeSidebarIndicator"
-                class="absolute inset-0 rounded-md bg-neutral-900"
+                class="absolute inset-0 rounded-none bg-neutral-900"
                 :transition="{ type: 'spring', stiffness: 380, damping: 30 }"
               />
 
@@ -267,7 +286,7 @@ const filteredGroups = computed(() => {
 
               <span
                 v-if="!isCollapsed && item.badge"
-                class="relative z-10 text-[10px] px-1.5 py-0.5 rounded-full font-semibold transition-colors"
+                class="relative z-10 text-[10px] px-1.5 py-0.5 rounded-none font-semibold transition-colors"
                 :class="
                   isItemActive(item)
                     ? 'bg-neutral-800 text-white'
@@ -279,7 +298,7 @@ const filteredGroups = computed(() => {
 
               <span
                 v-if="isCollapsed && item.badge"
-                class="relative z-10 absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+                class="relative z-10 absolute top-1.5 right-1.5 w-2 h-2 rounded-none"
                 :class="
                   item.id === 'sos-alerts'
                     ? 'bg-rose-500 animate-ping'
@@ -308,11 +327,13 @@ const filteredGroups = computed(() => {
           <div
             class="w-8 h-8 bg-neutral-900 text-white flex items-center justify-center font-semibold text-xs shrink-0"
           >
-            AD
+            {{ operatorInitials }}
           </div>
           <div v-if="!isCollapsed" class="flex flex-col overflow-hidden whitespace-nowrap">
-            <span class="text-xs font-semibold text-neutral-900 truncate">Admin User</span>
-            <span class="text-[11px] text-neutral-500 truncate">Super Admin</span>
+            <span class="text-xs font-semibold text-neutral-900 truncate">{{
+              authSession.operatorName
+            }}</span>
+            <span class="text-[11px] text-neutral-500 truncate">{{ activeRoleLabel }}</span>
           </div>
         </button>
 

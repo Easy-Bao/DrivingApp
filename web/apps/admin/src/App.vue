@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter, RouterView } from 'vue-router'
+import { useRoute, useRouter, RouterView } from 'vue-router'
 import AdminLayout from '@/app/layouts/AdminLayout.vue'
 
+const currentRoute = useRoute()
 const router = useRouter()
 const transitionName = ref<'slide-left' | 'slide-right' | ''>('')
 
@@ -38,7 +39,10 @@ router.beforeEach((to, from) => {
 </script>
 
 <template>
-  <AdminLayout>
+  <RouterView v-if="currentRoute.meta?.hideChrome === true" v-slot="{ Component, route }">
+    <component :is="Component" :key="route.path" />
+  </RouterView>
+  <AdminLayout v-else>
     <RouterView v-slot="{ Component, route }">
       <Transition
         :name="transitionName"

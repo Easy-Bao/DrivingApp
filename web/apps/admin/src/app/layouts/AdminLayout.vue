@@ -185,6 +185,11 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
     item: 'Audit Logs',
   },
   '/account/profile': { section: 'Account', sectionTo: '/account/profile', item: 'Profile' },
+  '/unauthorized': {
+    section: 'Security',
+    sectionTo: '/dashboard/overview',
+    item: 'Access Restricted',
+  },
 }
 
 const currentBreadcrumb = computed(() => {
@@ -294,26 +299,6 @@ const currentBreadcrumb = computed(() => {
               {{ currentBreadcrumb.item }}
             </span>
           </nav>
-        </div>
-
-        <div class="hidden sm:flex items-center gap-2 shrink-0">
-          <span
-            class="px-2.5 py-1 bg-neutral-100 border border-neutral-200 text-[11px] font-mono font-semibold text-neutral-700"
-          >
-            Pagadian · 7016
-          </span>
-          <RouterLink
-            to="/payments/topups"
-            class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-[11px] font-semibold text-amber-800 transition-colors"
-          >
-            Top-Ups
-          </RouterLink>
-          <RouterLink
-            to="/trips/sos-alerts"
-            class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-[11px] font-semibold text-rose-700 transition-colors"
-          >
-            SOS
-          </RouterLink>
         </div>
       </header>
 
