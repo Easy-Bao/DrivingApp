@@ -124,12 +124,12 @@ export const navigationGroups: SidebarNavGroup[] = [
   },
   {
     id: 'payments',
-    title: 'Payment & Wallet',
+    title: 'Payments & Wallet',
     icon: 'lucide:credit-card',
     items: [
       {
         id: 'topups',
-        label: 'Driver Top-Ups (Verify)',
+        label: 'Driver Top-Ups',
         icon: 'lucide:wallet',
         path: '/payments/topups',
         badge: '3',
@@ -235,7 +235,7 @@ export const navigationGroups: SidebarNavGroup[] = [
       },
       {
         id: 'export-center',
-        label: 'Export Center (CSV, PDF, Excel)',
+        label: 'Export Center',
         icon: 'lucide:download',
         path: '/reports/export-center',
         badge: 'Auto',
@@ -250,7 +250,7 @@ export const navigationGroups: SidebarNavGroup[] = [
     items: [
       {
         id: 'tickets-complaints',
-        label: 'Tickets / Complaints',
+        label: 'Support Tickets',
         icon: 'lucide:message-square-warning',
         path: '/support/tickets',
         badge: '3',
@@ -270,7 +270,7 @@ export const navigationGroups: SidebarNavGroup[] = [
       },
       {
         id: 'faqs-help-center',
-        label: 'FAQs / Help Center',
+        label: 'Help Center',
         icon: 'lucide:help-circle',
         path: '/support/faqs',
       },
@@ -283,13 +283,13 @@ export const navigationGroups: SidebarNavGroup[] = [
     items: [
       {
         id: 'service-areas-zones',
-        label: 'Service Areas / Zones',
+        label: 'Service Zones',
         icon: 'lucide:map',
         path: '/settings/service-zones',
       },
       {
         id: 'cities-regions',
-        label: 'Cities / Regions',
+        label: 'Operating Cities',
         icon: 'lucide:building-2',
         path: '/settings/cities',
       },
@@ -302,7 +302,7 @@ export const navigationGroups: SidebarNavGroup[] = [
       },
       {
         id: 'content-pages',
-        label: 'Content Pages (Terms, Privacy)',
+        label: 'Legal & Content',
         icon: 'lucide:file-text',
         path: '/settings/content',
       },

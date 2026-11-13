@@ -62,47 +62,42 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
   },
   '/trips/sos-alerts': { section: 'Trips', sectionTo: '/trips/all', item: 'SOS Emergency Alerts' },
   '/payments/topups': {
-    section: 'Payment & Wallet',
+    section: 'Payments & Wallet',
     sectionTo: '/payments/topups',
-    item: 'Driver Top-Ups (Verify)',
+    item: 'Driver Top-Ups',
   },
   '/payments/transactions': {
-    section: 'Payment & Wallet',
+    section: 'Payments & Wallet',
     sectionTo: '/payments/topups',
     item: 'Transactions',
   },
   '/payments/earnings': {
-    section: 'Payment & Wallet',
+    section: 'Payments & Wallet',
     sectionTo: '/payments/topups',
     item: 'Driver Earnings',
   },
-  '/payments/payout-requests': {
-    section: 'Payment & Wallet',
-    sectionTo: '/payments/topups',
-    item: 'Payout Requests',
-  },
   '/payments/wallet': {
-    section: 'Payment & Wallet',
+    section: 'Payments & Wallet',
     sectionTo: '/payments/topups',
     item: 'Driver Wallet',
   },
   '/payments/refunds': {
-    section: 'Payment & Wallet',
+    section: 'Payments & Wallet',
     sectionTo: '/payments/topups',
     item: 'Refunds',
   },
   '/payments/fare-pricing': {
-    section: 'Payment & Wallet',
+    section: 'Payments & Wallet',
     sectionTo: '/payments/topups',
     item: 'Fare & Pricing',
   },
   '/payments/commission-settings': {
-    section: 'Payment & Wallet',
+    section: 'Payments & Wallet',
     sectionTo: '/payments/topups',
     item: 'Commission Settings',
   },
   '/payments/methods': {
-    section: 'Payment & Wallet',
+    section: 'Payments & Wallet',
     sectionTo: '/payments/topups',
     item: 'Company Bank & QR',
   },
@@ -147,7 +142,7 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
   '/support/tickets': {
     section: 'Support',
     sectionTo: '/support/tickets',
-    item: 'Tickets / Complaints',
+    item: 'Support Tickets',
   },
   '/support/ratings-reviews': {
     section: 'Support',
@@ -162,17 +157,17 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
   '/support/faqs': {
     section: 'Support',
     sectionTo: '/support/tickets',
-    item: 'FAQs / Help Center',
+    item: 'Help Center',
   },
   '/settings/service-zones': {
     section: 'Settings',
     sectionTo: '/settings/service-zones',
-    item: 'Service Areas / Zones',
+    item: 'Service Zones',
   },
   '/settings/cities': {
     section: 'Settings',
     sectionTo: '/settings/service-zones',
-    item: 'Cities / Regions',
+    item: 'Operating Cities',
   },
   '/settings/taxes': { section: 'Settings', sectionTo: '/settings/service-zones', item: 'Taxes' },
   '/settings/languages': {
@@ -183,7 +178,7 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
   '/settings/content': {
     section: 'Settings',
     sectionTo: '/settings/service-zones',
-    item: 'Content Pages',
+    item: 'Legal & Content',
   },
   '/settings/app-settings': {
     section: 'Settings',
@@ -205,18 +200,9 @@ const currentBreadcrumb = computed(() => {
   if (route.path.startsWith('/payments/topups/')) {
     const id = (route.params.id as string) || 'Details'
     return {
-      section: 'Payment & Wallet',
+      section: 'Payments & Wallet',
       sectionTo: '/payments/topups',
       item: `Top-Up Request #${id}`,
-    }
-  }
-
-  if (route.path.startsWith('/payments/payout-requests/')) {
-    const id = (route.params.id as string) || 'Details'
-    return {
-      section: 'Payment & Wallet',
-      sectionTo: '/payments/payout-requests',
-      item: `Payout Withdrawal #${id}`,
     }
   }
 

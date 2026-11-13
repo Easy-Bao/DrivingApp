@@ -15,7 +15,7 @@ describe('Sidebar', () => {
     expect(wrapper.text()).toContain('Dashboard')
     expect(wrapper.text()).toContain('Users')
     expect(wrapper.text()).toContain('Trips')
-    expect(wrapper.text()).toContain('Payment & Wallet')
+    expect(wrapper.text()).toContain('Payments & Wallet')
     expect(wrapper.text()).toContain('Reports')
   })
 
