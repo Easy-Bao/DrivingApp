@@ -1,44 +1,98 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import ReportFilterBar from '@/features/reports/components/ReportFilterBar.vue'
+import { computed, ref } from 'vue'
+import ReportFilterBar, {
+  type ReportFilterValues,
+} from '@/features/reports/components/ReportFilterBar.vue'
+import StatusBadge from '@/shared/components/StatusBadge.vue'
+import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
-const cancellationCauses = ref([
+interface CancellationCauseRow {
+  reason: string
+  zoneKey: string
+  count: number
+  responsibility: 'driver_fault' | 'passenger_fault' | 'system_fault' | 'no_fault'
+  feePhp: number
+  feeNote: string
+}
+
+const cancellationCauses = ref<CancellationCauseRow[]>([
   {
-    reason: 'Driver ETA exceeded rider expectation (>10 mins)',
-    count: 482,
-    share: '38.5%',
-    initiatedBy: 'Rider',
-    feeApplicable: 'No',
+    reason: 'Driver delayed in Agora market traffic (> 6 min ETA overrun)',
+    zoneKey: 'poblacion',
+    count: 142,
+    responsibility: 'driver_fault',
+    feePhp: 0,
+    feeNote: 'Fee Waived',
   },
   {
-    reason: 'Rider no-show at pickup pin after 5 min wait',
-    count: 320,
-    share: '25.6%',
-    initiatedBy: 'Driver',
-    feeApplicable: 'Yes (₱5.00)',
+    reason: 'Passenger no-show at Integrated Bus Terminal bay after 5 min grace window',
+    zoneKey: 'terminal',
+    count: 96,
+    responsibility: 'passenger_fault',
+    feePhp: 15.0,
+    feeNote: 'Standard ₱15 Fee Applied',
   },
   {
-    reason: 'Accidental dispatch / rider changed plans',
-    count: 240,
-    share: '19.2%',
-    initiatedBy: 'Rider',
-    feeApplicable: 'Within Grace Period (₱0)',
+    reason: 'Passenger cancelled bidding session within 3-minute grace window',
+    zoneKey: 'dao-capitol',
+    count: 84,
+    responsibility: 'no_fault',
+    feePhp: 0,
+    feeNote: 'Within Grace Period',
   },
   {
-    reason: 'Driver vehicle mechanical issue / flat tire',
-    count: 120,
-    share: '9.6%',
-    initiatedBy: 'Driver',
-    feeApplicable: 'No (Auto-rematched)',
+    reason: 'Taxicle mechanical blowout en route to pickup',
+    zoneKey: 'santiago-port',
+    count: 28,
+    responsibility: 'driver_fault',
+    feePhp: 0,
+    feeNote: 'Auto-Rematched',
   },
   {
-    reason: 'No dispatch driver available within radius',
-    count: 88,
-    share: '7.1%',
-    initiatedBy: 'System Timeout',
-    feeApplicable: 'No',
+    reason: 'No driver bid submitted before 90s session countdown expiry',
+    zoneKey: 'terminal',
+    count: 34,
+    responsibility: 'system_fault',
+    feePhp: 0,
+    feeNote: 'No Charge',
   },
 ])
+
+const activeFilters = ref<ReportFilterValues>({
+  dateRange: 'last-30-days',
+  cityZone: 'all-zones',
+  vehicleTier: 'all-tiers',
+})
+
+const filteredCauses = computed(() =>
+  cancellationCauses.value.filter(
+    (row) =>
+      activeFilters.value.cityZone === 'all-zones' || row.zoneKey === activeFilters.value.cityZone,
+  ),
+)
+
+const totalCancellations = computed(() =>
+  filteredCauses.value.reduce((sum, item) => sum + item.count, 0),
+)
+
+const sharePercent = (count: number) => {
+  if (totalCancellations.value === 0) return '0.0%'
+  return `${((count / totalCancellations.value) * 100).toFixed(1)}%`
+}
+
+const handleExport = () => {
+  exportToCsv(
+    'pagadian-cancellation-analysis.csv',
+    ['Root Cause', 'Incidents', 'Share', 'Responsibility Enum', 'Fee Rule'],
+    filteredCauses.value.map((c) => [
+      c.reason,
+      String(c.count),
+      sharePercent(c.count),
+      c.responsibility,
+      `${formatPhp(c.feePhp)} (${c.feeNote})`,
+    ]),
+  )
+}
 </script>
 
 <template>
@@ -48,57 +102,66 @@ const cancellationCauses = ref([
         Trip Cancellation Root-Cause Analysis
       </h1>
       <p class="text-sm text-neutral-500 mt-1">
-        Categorical audit of cancellations across passenger, driver, and system dispatch timeouts.
+        Breakdown of Pagadian ride cancellations aligned with backend responsibility
+        classifications.
       </p>
     </div>
 
-    <ReportFilterBar report-title="Cancellation Analysis Report" />
+    <ReportFilterBar
+      report-title="Cancellation Analysis Report"
+      @change="activeFilters = $event"
+      @export="handleExport"
+    />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
         <h2 class="font-bold text-sm text-neutral-900">Cancellation Reasons Breakdown</h2>
-        <span class="text-xs text-neutral-400">Total cancellations this period: 1,250</span>
+        <span class="text-xs text-neutral-400">
+          Filtered cancellations: {{ totalCancellations.toLocaleString() }} incidents
+        </span>
       </div>
 
-      <table class="w-full text-left text-xs">
-        <thead
-          class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100 font-semibold"
-        >
-          <tr>
-            <th class="py-3 px-4">Primary Root Cause</th>
-            <th class="py-3 px-4">Incidents</th>
-            <th class="py-3 px-4">Share of Total</th>
-            <th class="py-3 px-4">Party Responsible</th>
-            <th class="py-3 px-4 text-right">Fee Rule</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-neutral-100">
-          <tr
-            v-for="c in cancellationCauses"
-            :key="c.reason"
-            class="hover:bg-neutral-50/70 transition-colors"
+      <div class="overflow-x-auto">
+        <table class="min-w-[780px] w-full text-left text-xs">
+          <thead
+            class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100 font-semibold"
           >
-            <td class="py-3 px-4 font-semibold text-neutral-900">{{ c.reason }}</td>
-            <td class="py-3 px-4 font-mono font-bold text-neutral-800">{{ c.count }}</td>
-            <td class="py-3 px-4 text-neutral-600">{{ c.share }}</td>
-            <td class="py-3 px-4">
-              <span
-                class="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                :class="
-                  c.initiatedBy === 'Rider'
-                    ? 'bg-blue-100 text-blue-800'
-                    : c.initiatedBy === 'Driver'
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-neutral-100 text-neutral-800'
-                "
-              >
-                {{ c.initiatedBy }}
-              </span>
-            </td>
-            <td class="py-3 px-4 text-right font-medium text-neutral-700">{{ c.feeApplicable }}</td>
-          </tr>
-        </tbody>
-      </table>
+            <tr>
+              <th class="py-3 px-4">Primary Root Cause</th>
+              <th class="py-3 px-4">Incidents</th>
+              <th class="py-3 px-4">Share</th>
+              <th class="py-3 px-4">Responsibility Enum</th>
+              <th class="py-3 px-4 text-right">Fee Rule (PHP)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-100">
+            <tr
+              v-for="c in filteredCauses"
+              :key="c.reason"
+              class="hover:bg-neutral-50/70 transition-colors"
+            >
+              <td class="py-3 px-4 font-semibold text-neutral-900">{{ c.reason }}</td>
+              <td class="py-3 px-4 font-mono font-bold text-neutral-800">{{ c.count }}</td>
+              <td class="py-3 px-4 font-mono text-neutral-600">{{ sharePercent(c.count) }}</td>
+              <td class="py-3 px-4">
+                <StatusBadge
+                  :label="c.responsibility"
+                  :tone="
+                    c.responsibility === 'passenger_fault'
+                      ? 'warning'
+                      : c.responsibility === 'driver_fault'
+                        ? 'danger'
+                        : 'neutral'
+                  "
+                />
+              </td>
+              <td class="py-3 px-4 text-right font-mono font-medium text-neutral-700">
+                {{ formatPhp(c.feePhp) }} · {{ c.feeNote }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
