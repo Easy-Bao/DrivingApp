@@ -224,22 +224,10 @@ export const navigationGroups: SidebarNavGroup[] = [
         path: '/reports/peak-hours',
       },
       {
-        id: 'payout-report',
-        label: 'Payout Report',
-        icon: 'lucide:file-spreadsheet',
-        path: '/reports/payouts',
-      },
-      {
         id: 'document-expiry-report',
         label: 'Document Expiry Report',
         icon: 'lucide:calendar-x',
         path: '/reports/document-expiry',
-      },
-      {
-        id: 'tax-invoice-reports',
-        label: 'Tax / Invoice Reports',
-        icon: 'lucide:receipt-text',
-        path: '/reports/tax-invoices',
       },
       {
         id: 'export-center',

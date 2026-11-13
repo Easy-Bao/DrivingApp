@@ -66,6 +66,11 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
     sectionTo: '/payments/topups',
     item: 'Driver Top-Ups',
   },
+  '/payments/settlements': {
+    section: 'Payments & Wallet',
+    sectionTo: '/payments/topups',
+    item: 'Cash Settlements',
+  },
   '/payments/transactions': {
     section: 'Payments & Wallet',
     sectionTo: '/payments/topups',
@@ -123,16 +128,10 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
     sectionTo: '/reports/trips',
     item: 'Peak Hours & Demand',
   },
-  '/reports/payouts': { section: 'Reports', sectionTo: '/reports/trips', item: 'Payout Report' },
   '/reports/document-expiry': {
     section: 'Reports',
     sectionTo: '/reports/trips',
     item: 'Document Expiry Report',
-  },
-  '/reports/tax-invoices': {
-    section: 'Reports',
-    sectionTo: '/reports/trips',
-    item: 'Tax / Invoice Reports',
   },
   '/reports/export-center': {
     section: 'Reports',
@@ -169,12 +168,6 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
     sectionTo: '/settings/service-zones',
     item: 'Operating Cities',
   },
-  '/settings/taxes': { section: 'Settings', sectionTo: '/settings/service-zones', item: 'Taxes' },
-  '/settings/languages': {
-    section: 'Settings',
-    sectionTo: '/settings/service-zones',
-    item: 'Languages',
-  },
   '/settings/content': {
     section: 'Settings',
     sectionTo: '/settings/service-zones',
@@ -203,6 +196,15 @@ const currentBreadcrumb = computed(() => {
       section: 'Payments & Wallet',
       sectionTo: '/payments/topups',
       item: `Top-Up Request #${id}`,
+    }
+  }
+
+  if (route.path.startsWith('/payments/settlements/')) {
+    const id = (route.params.id as string) || 'Details'
+    return {
+      section: 'Payments & Wallet',
+      sectionTo: '/payments/settlements',
+      item: `Cash Settlement #${id}`,
     }
   }
 
