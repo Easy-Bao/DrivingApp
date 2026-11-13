@@ -1,99 +1,238 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import TablePagination from '@/app/components/TablePagination.vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
+import StatusBadge from '@/shared/components/StatusBadge.vue'
+import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
-const transactions = ref([
+type LedgerEntryType =
+  | 'Commission Deduction'
+  | 'QRPh Wallet Top-Up'
+  | 'Bank Top-Up'
+  | 'Settlement Fee Waiver'
+
+interface WalletLedgerEntry {
+  id: string
+  referenceId: string
+  driver: string
+  type: LedgerEntryType
+  method: string
+  amountPhp: number
+  direction: 'credit' | 'debit'
+  status: 'Settled' | 'Pending Review'
+  timestamp: string
+}
+
+const transactions = ref<WalletLedgerEntry[]>([
   {
-    id: 'TXN-90812',
-    driver: 'Marcus Miller',
-    type: 'Ride Fare Credit',
-    amount: '+₱34.50',
-    fee: '-₱6.21',
-    net: '+₱28.29',
-    date: '12 mins ago',
-    status: 'Completed',
+    id: 'TXN-7016-9401',
+    referenceId: 'TRP-7016-8921',
+    driver: 'Rodelio Cruz',
+    type: 'Commission Deduction',
+    method: 'Prepaid Wallet · 1500 bps',
+    amountPhp: 12.75,
+    direction: 'debit',
+    status: 'Settled',
+    timestamp: 'Today, 09:42 AM',
   },
   {
-    id: 'TXN-90811',
-    driver: 'David Kim',
-    type: 'Driver Manual Top-Up',
-    amount: '+₱50.00',
-    fee: '₱0.00',
-    net: '+₱50.00',
-    date: '34 mins ago',
-    status: 'Verified',
+    id: 'TXN-7016-9400',
+    referenceId: 'TOP-8921',
+    driver: 'Rodelio Cruz',
+    type: 'QRPh Wallet Top-Up',
+    method: 'GCash QRPh · QR-8829104',
+    amountPhp: 200.0,
+    direction: 'credit',
+    status: 'Pending Review',
+    timestamp: 'Today, 09:34 AM',
   },
   {
-    id: 'TXN-90810',
-    driver: 'Elena Rostova',
-    type: 'Platform Commission Deduction',
-    amount: '-₱4.80',
-    fee: '₱0.00',
-    net: '-₱4.80',
-    date: '1 hour ago',
-    status: 'Completed',
+    id: 'TXN-7016-9399',
+    referenceId: 'TRP-7016-8920',
+    driver: 'Danilo Mendoza',
+    type: 'Commission Deduction',
+    method: 'Prepaid Wallet · 1500 bps',
+    amountPhp: 18.0,
+    direction: 'debit',
+    status: 'Settled',
+    timestamp: 'Today, 09:15 AM',
   },
   {
-    id: 'TXN-90809',
-    driver: 'Anthony Stark',
-    type: 'Payout Disbursement',
-    amount: '-₱420.00',
-    fee: '-₱1.50',
-    net: '-₱421.50',
-    date: 'Yesterday',
-    status: 'Processed',
+    id: 'TXN-7016-9398',
+    referenceId: 'TOP-8920',
+    driver: 'Ernesto Villafuerte',
+    type: 'Bank Top-Up',
+    method: 'BDO InstaPay · BDO-9921873',
+    amountPhp: 500.0,
+    direction: 'credit',
+    status: 'Pending Review',
+    timestamp: 'Today, 08:40 AM',
+  },
+  {
+    id: 'TXN-7016-9397',
+    referenceId: 'CAN-7016-302',
+    driver: 'Reynaldo Bautista',
+    type: 'Settlement Fee Waiver',
+    method: 'Admin Override · Credit Back',
+    amountPhp: 15.0,
+    direction: 'credit',
+    status: 'Settled',
+    timestamp: 'Yesterday, 06:10 PM',
   },
 ])
+
+const searchQuery = ref('')
+const typeFilter = ref<'All' | LedgerEntryType>('All')
+const currentPage = ref(1)
+const itemsPerPage = 10
+
+const filteredTransactions = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  return transactions.value.filter((txn) => {
+    const matchesType = typeFilter.value === 'All' || txn.type === typeFilter.value
+    const matchesSearch =
+      !q ||
+      txn.id.toLowerCase().includes(q) ||
+      txn.referenceId.toLowerCase().includes(q) ||
+      txn.driver.toLowerCase().includes(q) ||
+      txn.method.toLowerCase().includes(q)
+    return matchesType && matchesSearch
+  })
+})
+
+watch([searchQuery, typeFilter], () => {
+  currentPage.value = 1
+})
+
+const paginatedTransactions = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  return filteredTransactions.value.slice(start, start + itemsPerPage)
+})
+
+const exportLedger = () => {
+  exportToCsv(
+    'pagadian-wallet-ledger.csv',
+    ['Transaction ID', 'Reference', 'Driver', 'Type', 'Channel', 'Amount (PHP)', 'Status', 'Time'],
+    filteredTransactions.value.map((t) => [
+      t.id,
+      t.referenceId,
+      t.driver,
+      t.type,
+      t.method,
+      `${t.direction === 'debit' ? '-' : '+'}${t.amountPhp.toFixed(2)}`,
+      t.status,
+      t.timestamp,
+    ]),
+  )
+}
 </script>
 
 <template>
   <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-        Platform Transaction Ledger
-      </h1>
-      <p class="text-sm text-neutral-500 mt-1">
-        Audit log of all platform financial movements, commissions, driver wallet credits, and
-        disbursements.
-      </p>
+    <div
+      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 rounded-md p-4"
+    >
+      <div>
+        <h2 class="text-sm font-semibold text-neutral-900">
+          Prepaid Commission &amp; Top-Up Ledger
+        </h2>
+        <p class="text-xs text-neutral-500 mt-0.5">
+          Immutable journal of prepaid credit top-ups, per-trip basis-point deductions, and fee
+          waivers in PHP.
+        </p>
+      </div>
+      <button
+        type="button"
+        class="self-start sm:self-auto px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+        @click="exportLedger"
+      >
+        Export Ledger CSV
+      </button>
     </div>
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
-      <table class="w-full text-left text-xs">
-        <thead class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100">
-          <tr>
-            <th class="py-3 px-4">Transaction ID</th>
-            <th class="py-3 px-4">Driver / Beneficiary</th>
-            <th class="py-3 px-4">Type</th>
-            <th class="py-3 px-4">Gross Amount</th>
-            <th class="py-3 px-4">Platform Fee</th>
-            <th class="py-3 px-4">Net Amount</th>
-            <th class="py-3 px-4">Timestamp</th>
-            <th class="py-3 px-4">Status</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-neutral-100 text-neutral-700">
-          <tr v-for="t in transactions" :key="t.id" class="hover:bg-neutral-50/50">
-            <td class="py-3 px-4 font-mono font-bold">{{ t.id }}</td>
-            <td class="py-3 px-4 font-semibold text-neutral-900">{{ t.driver }}</td>
-            <td class="py-3 px-4">{{ t.type }}</td>
-            <td class="py-3 px-4 font-semibold">{{ t.amount }}</td>
-            <td class="py-3 px-4 text-neutral-500">{{ t.fee }}</td>
-            <td
-              class="py-3 px-4 font-bold"
-              :class="t.net.startsWith('+') ? 'text-emerald-700' : 'text-neutral-900'"
+      <div
+        class="p-4 border-b border-neutral-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+      >
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search TXN ID, reference, driver, or rail..."
+          class="w-full md:w-80 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+        />
+
+        <BaseSelect
+          v-model="typeFilter"
+          aria-label="Filter by ledger entry type"
+          :options="[
+            { label: 'All Ledger Entries', value: 'All' },
+            { label: 'Commission Deduction', value: 'Commission Deduction' },
+            { label: 'QRPh Wallet Top-Up', value: 'QRPh Wallet Top-Up' },
+            { label: 'Bank Top-Up', value: 'Bank Top-Up' },
+            { label: 'Settlement Fee Waiver', value: 'Settlement Fee Waiver' },
+          ]"
+        />
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-[800px] w-full text-left text-xs">
+          <thead
+            class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100 font-semibold"
+          >
+            <tr>
+              <th class="py-3 px-4">Transaction ID</th>
+              <th class="py-3 px-4">Driver &amp; Reference</th>
+              <th class="py-3 px-4">Entry Type &amp; Rail</th>
+              <th class="py-3 px-4">Amount (PHP)</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4 text-right">Timestamp</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-100">
+            <tr
+              v-for="txn in paginatedTransactions"
+              :key="txn.id"
+              class="hover:bg-neutral-50/70 transition-colors"
             >
-              {{ t.net }}
-            </td>
-            <td class="py-3 px-4 text-neutral-400">{{ t.date }}</td>
-            <td class="py-3 px-4">
-              <span
-                class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800"
-                >{{ t.status }}</span
+              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ txn.id }}</td>
+              <td class="py-3 px-4">
+                <div class="font-semibold text-neutral-900">{{ txn.driver }}</div>
+                <div class="text-[11px] font-mono text-neutral-500">Ref: {{ txn.referenceId }}</div>
+              </td>
+              <td class="py-3 px-4">
+                <div class="font-medium text-neutral-900">{{ txn.type }}</div>
+                <div class="text-[11px] text-neutral-500">{{ txn.method }}</div>
+              </td>
+              <td
+                class="py-3 px-4 font-mono font-bold tabular-nums"
+                :class="txn.direction === 'credit' ? 'text-emerald-700' : 'text-neutral-900'"
               >
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                {{ txn.direction === 'credit' ? '+' : '-' }}{{ formatPhp(txn.amountPhp) }}
+              </td>
+              <td class="py-3 px-4">
+                <StatusBadge
+                  :label="txn.status"
+                  :tone="txn.status === 'Settled' ? 'success' : 'warning'"
+                />
+              </td>
+              <td class="py-3 px-4 text-right text-neutral-500 font-mono text-[11px]">
+                {{ txn.timestamp }}
+              </td>
+            </tr>
+            <tr v-if="paginatedTransactions.length === 0">
+              <td colspan="6" class="py-10 px-4 text-center text-xs text-neutral-500">
+                No ledger entries match the active filters.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <TablePagination
+        v-model:current-page="currentPage"
+        :total-items="filteredTransactions.length"
+        :items-per-page="itemsPerPage"
+      />
     </div>
   </div>
 </template>
