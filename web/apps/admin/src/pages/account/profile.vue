@@ -14,7 +14,7 @@ const lockConsoleSession = () => {
 const fullName = ref('Operations Control Lead')
 const email = ref('ops@easyride.ph')
 const phone = ref('+63 917 801 7016')
-const regionHub = ref('Pagadian City Dispatch Hub (ZIP 7016)')
+const regionHub = ref('Pagadian City Dispatch Hub')
 const mfaMethod = ref<'authenticator' | 'hardware_key'>('authenticator')
 
 const toastMessage = ref<string | null>(null)
@@ -40,7 +40,7 @@ const saveProfile = () => {
     return
   }
   toastTone.value = 'success'
-  toastMessage.value = 'Administrator profile preferences updated.'
+  toastMessage.value = 'Operator profile preferences updated.'
 }
 
 const toggleMfaMethod = () => {
@@ -150,7 +150,7 @@ const submitPasswordRotation = () => {
         </div>
         <div>
           <label for="admin-phone" class="block font-semibold text-neutral-700 mb-1">
-            Operations Contact (PH)
+            Operations Contact
           </label>
           <input
             id="admin-phone"
@@ -225,7 +225,7 @@ const submitPasswordRotation = () => {
         >
           <div class="flex items-center justify-between">
             <h3 id="password-modal-title" class="text-base font-bold text-neutral-900">
-              Rotate Administrator Password
+              Rotate Account Password
             </h3>
             <button
               type="button"

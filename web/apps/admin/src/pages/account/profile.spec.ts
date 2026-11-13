@@ -16,7 +16,7 @@ describe('ProfilePage', () => {
     await nameInput.setValue('Carlo Reyes')
 
     await wrapper.find('form').trigger('submit')
-    expect(wrapper.text()).toContain('Administrator profile preferences updated.')
+    expect(wrapper.text()).toContain('Operator profile preferences updated.')
     expect(wrapper.text()).toContain('Carlo Reyes')
   })
 
@@ -35,7 +35,7 @@ describe('ProfilePage', () => {
     expect(rotateBtn).toBeDefined()
     await rotateBtn!.trigger('click')
 
-    expect(wrapper.text()).toContain('Rotate Administrator Password')
+    expect(wrapper.text()).toContain('Rotate Account Password')
 
     const passwordInputs = wrapper.findAll('input[type="password"]')
     expect(passwordInputs.length).toBe(3)

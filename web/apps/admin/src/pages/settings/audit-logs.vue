@@ -21,7 +21,7 @@ const logs = ref<AuditLogEntry[]>([
   {
     id: 'AUD-7016-8904',
     actor: 'Maria Elena Santos',
-    role: 'Super Admin',
+    role: 'Operations Lead',
     action: 'WALLET_TOPUP_VERIFIED',
     targetEntity: 'TOP-8921 (Rodelio Cruz · +₱200.00)',
     ipAddress: '103.164.28.41 (Pagadian Ops)',
@@ -55,7 +55,7 @@ const logs = ref<AuditLogEntry[]>([
   {
     id: 'AUD-7016-8901',
     actor: 'Maria Elena Santos',
-    role: 'Super Admin',
+    role: 'Operations Lead',
     action: 'QRPH_IMAGE_ROTATED',
     targetEntity: 'ACC-QR-GCASH (QRPH-PAG-8801)',
     ipAddress: '103.164.28.41 (Pagadian Ops)',
@@ -115,7 +115,7 @@ const exportAuditLogs = () => {
 <template>
   <div class="space-y-6">
     <div
-      class="bg-white border border-neutral-200 rounded-md p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div>
         <h2 class="text-sm font-semibold text-neutral-900">
@@ -126,13 +126,6 @@ const exportAuditLogs = () => {
           changes.
         </p>
       </div>
-      <button
-        type="button"
-        class="self-start sm:self-auto px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-        @click="exportAuditLogs"
-      >
-        Export Audit CSV
-      </button>
     </div>
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
@@ -146,16 +139,25 @@ const exportAuditLogs = () => {
           class="w-full md:w-80 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
         />
 
-        <BaseSelect
-          v-model="severityFilter"
-          aria-label="Filter by audit severity"
-          :options="[
-            { label: 'All Severities', value: 'All' },
-            { label: 'Critical', value: 'Critical' },
-            { label: 'Warning', value: 'Warning' },
-            { label: 'Info', value: 'Info' },
-          ]"
-        />
+        <div class="flex flex-wrap items-center gap-2">
+          <BaseSelect
+            v-model="severityFilter"
+            aria-label="Filter by audit severity"
+            :options="[
+              { label: 'All Severities', value: 'All' },
+              { label: 'Critical', value: 'Critical' },
+              { label: 'Warning', value: 'Warning' },
+              { label: 'Info', value: 'Info' },
+            ]"
+          />
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer shrink-0"
+            @click="exportAuditLogs"
+          >
+            Export CSV
+          </button>
+        </div>
       </div>
 
       <div class="overflow-x-auto">

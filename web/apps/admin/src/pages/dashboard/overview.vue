@@ -18,25 +18,25 @@ const kpis = [
     label: 'Active Rides',
     value: '142',
     change: '+14%',
-    accent: 'border-t-emerald-500',
+    accent: 'border-t-neutral-900',
   },
   {
     label: 'Online Drivers',
     value: '318',
     change: '+6%',
-    accent: 'border-t-blue-500',
+    accent: 'border-t-neutral-900',
   },
   {
     label: 'Today Revenue',
     value: formatPhp(48250),
     change: '+21%',
-    accent: 'border-t-violet-500',
+    accent: 'border-t-neutral-900',
   },
   {
     label: 'Completion Rate',
     value: '96.4%',
     change: '+0.8%',
-    accent: 'border-t-amber-500',
+    accent: 'border-t-neutral-900',
   },
 ]
 
@@ -107,16 +107,16 @@ const tripTone = (status: 'Completed' | 'In Progress' | 'Dispatching') => {
         </RouterLink>
         <RouterLink
           to="/payments/topups"
-          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-none text-xs font-semibold text-amber-900 hover:bg-amber-100 transition-colors"
+          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-neutral-200 rounded-none text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors"
         >
-          <Icon icon="lucide:wallet" class="w-3.5 h-3.5 text-amber-700" />
+          <Icon icon="lucide:wallet" class="w-3.5 h-3.5 text-neutral-500" />
           <span>{{ pendingTopupCount }} Pending Top-Ups</span>
         </RouterLink>
         <RouterLink
           to="/payments/settlements"
-          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-rose-50 border border-rose-200 rounded-none text-xs font-semibold text-rose-900 hover:bg-rose-100 transition-colors"
+          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-neutral-200 rounded-none text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors"
         >
-          <Icon icon="lucide:coins" class="w-3.5 h-3.5 text-rose-700" />
+          <Icon icon="lucide:coins" class="w-3.5 h-3.5 text-neutral-500" />
           <span>{{ pendingReviewCount }} Settlement Reviews</span>
         </RouterLink>
       </div>
@@ -133,7 +133,7 @@ const tripTone = (status: 'Completed' | 'In Progress' | 'Dispatching') => {
           kpi.label
         }}</span>
         <div class="text-3xl font-bold text-neutral-900 tabular-nums">{{ kpi.value }}</div>
-        <span class="text-xs font-semibold text-emerald-700">{{ kpi.change }} vs yesterday</span>
+        <span class="text-xs font-semibold text-neutral-500">{{ kpi.change }} vs yesterday</span>
       </div>
     </div>
 

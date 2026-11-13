@@ -46,9 +46,9 @@ describe('BaseSelect', () => {
   it('prevents opening the menu when disabled', async () => {
     const wrapper = mount(BaseSelect, {
       props: {
-        modelValue: 'Super Administrator',
+        modelValue: 'Operations Director',
         disabled: true,
-        options: ['Super Administrator', 'Dispatch & Safety Supervisor'],
+        options: ['Operations Director', 'Dispatch & Safety Supervisor'],
       },
       global: {
         stubs: {
