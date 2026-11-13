@@ -299,13 +299,7 @@ const filteredGroups = computed(() => {
               <span
                 v-if="isCollapsed && item.badge"
                 class="relative z-10 absolute top-1.5 right-1.5 w-2 h-2 rounded-none"
-                :class="
-                  item.id === 'sos-alerts'
-                    ? 'bg-rose-500 animate-ping'
-                    : item.id === 'topups'
-                      ? 'bg-amber-500'
-                      : 'bg-neutral-800'
-                "
+                :class="item.id === 'sos-alerts' ? 'bg-neutral-900' : 'bg-neutral-500'"
               />
             </button>
           </motion.div>
@@ -340,29 +334,29 @@ const filteredGroups = computed(() => {
         <button
           v-if="!isCollapsed"
           type="button"
-          class="text-neutral-400 hover:text-rose-600 p-1.5 hover:bg-rose-50 transition-colors cursor-pointer"
-          title="Sign out"
-          aria-label="Sign out"
+          class="text-neutral-400 hover:text-neutral-900 p-1.5 hover:bg-neutral-100 transition-colors cursor-pointer"
+          title="Lock session"
+          aria-label="Lock session"
           @click="showSignOutConfirm = true"
         >
-          <Icon icon="lucide:log-out" class="text-base" />
+          <Icon icon="lucide:lock" class="text-base" />
         </button>
       </div>
 
       <p
         v-if="signedOutNotice && !isCollapsed"
-        class="mt-2 px-2 py-1 text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200"
+        class="mt-2 px-2 py-1 text-[10px] font-medium bg-neutral-100 text-neutral-700 border border-neutral-200"
       >
-        Local demo session locked for review.
+        Session locked.
       </p>
     </div>
 
     <ConfirmDialog
       v-model:open="showSignOutConfirm"
-      title="End Admin Console Session?"
-      description="Signing out locks the current operator session and returns to the overview screen."
+      title="Lock Session?"
+      description="Locks your session and returns to login."
       confirm-label="Lock Session"
-      tone="rose"
+      tone="neutral"
       @confirm="confirmSignOut"
     />
   </motion.aside>

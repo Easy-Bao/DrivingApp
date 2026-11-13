@@ -15,7 +15,7 @@ describe('Sidebar', () => {
     expect(wrapper.text()).toContain('Dashboard')
     expect(wrapper.text()).toContain('Users')
     expect(wrapper.text()).toContain('Trips')
-    expect(wrapper.text()).toContain('Payments & Wallet')
+    expect(wrapper.text()).toContain('Payments')
     expect(wrapper.text()).toContain('Reports')
   })
 
@@ -25,7 +25,7 @@ describe('Sidebar', () => {
     expect(searchInput.exists()).toBe(true)
 
     await searchInput.setValue('Top-Ups')
-    expect(wrapper.text()).toContain('Driver Top-Ups')
+    expect(wrapper.text()).toContain('Top-Ups')
   })
 
   it('toggles collapse state without layout overflow', async () => {
@@ -67,8 +67,8 @@ describe('Sidebar', () => {
     await clearBtn.trigger('click')
     expect(wrapper.text()).toContain('Dashboard')
 
-    const signOutBtn = wrapper.find('button[aria-label="Sign out"]')
-    await signOutBtn.trigger('click')
-    expect(wrapper.text()).toContain('End Admin Console Session?')
+    const lockBtn = wrapper.find('button[aria-label="Lock session"]')
+    await lockBtn.trigger('click')
+    expect(wrapper.text()).toContain('Lock Session?')
   })
 })

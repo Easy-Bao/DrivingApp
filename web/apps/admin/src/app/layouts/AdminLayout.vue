@@ -20,139 +20,139 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
     sectionTo: '/dashboard/overview',
     item: 'Overview',
   },
-  '/users/drivers': { section: 'Users & Fleet', sectionTo: '/users/drivers', item: 'Drivers' },
+  '/users/drivers': { section: 'Users', sectionTo: '/users/drivers', item: 'Drivers' },
   '/users/driver-applications': {
-    section: 'Users & Fleet',
+    section: 'Users',
     sectionTo: '/users/drivers',
-    item: 'Driver Applications',
+    item: 'Applications',
   },
-  '/users/riders': { section: 'Users & Fleet', sectionTo: '/users/drivers', item: 'Riders' },
+  '/users/riders': { section: 'Users', sectionTo: '/users/drivers', item: 'Riders' },
   '/users/admin-users': {
-    section: 'Users & Fleet',
+    section: 'Users',
     sectionTo: '/users/drivers',
-    item: 'Admin Users',
+    item: 'Operators',
   },
   '/users/roles': {
-    section: 'Users & Fleet',
+    section: 'Users',
     sectionTo: '/users/drivers',
-    item: 'Staff Roles & RBAC',
+    item: 'Staff Roles',
   },
   '/documents/verification': {
     section: 'Documents',
     sectionTo: '/documents/verification',
-    item: 'Document Verification',
+    item: 'Verification',
   },
   '/documents/expiring': {
     section: 'Documents',
     sectionTo: '/documents/verification',
-    item: 'Expiring Documents',
+    item: 'Expiring Docs',
   },
   '/documents/rejected': {
     section: 'Documents',
     sectionTo: '/documents/verification',
-    item: 'Rejected Documents',
+    item: 'Rejected Docs',
   },
   '/trips/all': { section: 'Trips', sectionTo: '/trips/all', item: 'All Trips' },
-  '/trips/bidding': { section: 'Trips', sectionTo: '/trips/all', item: 'Live Bidding Monitor' },
-  '/trips/dispatch': { section: 'Trips', sectionTo: '/trips/all', item: 'Live Dispatch Radar' },
+  '/trips/bidding': { section: 'Trips', sectionTo: '/trips/all', item: 'Live Bidding' },
+  '/trips/dispatch': { section: 'Trips', sectionTo: '/trips/all', item: 'Dispatch' },
   '/trips/cancellations-disputes': {
     section: 'Trips',
     sectionTo: '/trips/all',
-    item: 'Cancellations & Disputes',
+    item: 'Disputes',
   },
-  '/trips/sos-alerts': { section: 'Trips', sectionTo: '/trips/all', item: 'SOS Emergency Alerts' },
+  '/trips/sos-alerts': { section: 'Trips', sectionTo: '/trips/all', item: 'SOS Alerts' },
   '/trips/safety-reports': { section: 'Trips', sectionTo: '/trips/all', item: 'Safety Reports' },
   '/payments/topups': {
-    section: 'Payments & Wallet',
+    section: 'Payments',
     sectionTo: '/payments/topups',
-    item: 'Driver Top-Ups',
+    item: 'Top-Ups',
   },
   '/payments/settlements': {
-    section: 'Payments & Wallet',
+    section: 'Payments',
     sectionTo: '/payments/topups',
-    item: 'Cash Settlements',
+    item: 'Settlements',
   },
   '/payments/transactions': {
-    section: 'Payments & Wallet',
+    section: 'Payments',
     sectionTo: '/payments/topups',
     item: 'Transactions',
   },
   '/payments/earnings': {
-    section: 'Payments & Wallet',
+    section: 'Payments',
     sectionTo: '/payments/topups',
-    item: 'Driver Earnings',
+    item: 'Earnings',
   },
   '/payments/wallet': {
-    section: 'Payments & Wallet',
+    section: 'Payments',
     sectionTo: '/payments/topups',
-    item: 'Driver Wallet',
+    item: 'Wallets',
   },
   '/payments/refunds': {
-    section: 'Payments & Wallet',
+    section: 'Payments',
     sectionTo: '/payments/topups',
     item: 'Refunds',
   },
   '/payments/fare-pricing': {
-    section: 'Payments & Wallet',
+    section: 'Payments',
     sectionTo: '/payments/topups',
-    item: 'Fare & Pricing',
+    item: 'Tariff Rates',
   },
   '/payments/commission-settings': {
-    section: 'Payments & Wallet',
+    section: 'Payments',
     sectionTo: '/payments/topups',
-    item: 'Commission Settings',
+    item: 'Commissions',
   },
   '/payments/methods': {
-    section: 'Payments & Wallet',
+    section: 'Payments',
     sectionTo: '/payments/topups',
-    item: 'Company Bank & QR',
+    item: 'Channels',
   },
-  '/reports/trips': { section: 'Reports', sectionTo: '/reports/trips', item: 'Trip Reports' },
-  '/reports/revenue': { section: 'Reports', sectionTo: '/reports/trips', item: 'Revenue Reports' },
+  '/reports/trips': { section: 'Reports', sectionTo: '/reports/trips', item: 'Trips' },
+  '/reports/revenue': { section: 'Reports', sectionTo: '/reports/trips', item: 'Revenue' },
   '/reports/driver-performance': {
     section: 'Reports',
     sectionTo: '/reports/trips',
-    item: 'Driver Performance',
+    item: 'Driver Stats',
   },
   '/reports/rider-activity': {
     section: 'Reports',
     sectionTo: '/reports/trips',
-    item: 'Rider Activity',
+    item: 'Rider Stats',
   },
   '/reports/cancellations': {
     section: 'Reports',
     sectionTo: '/reports/trips',
-    item: 'Cancellation Report',
+    item: 'Cancellations',
   },
   '/reports/peak-hours': {
     section: 'Reports',
     sectionTo: '/reports/trips',
-    item: 'Peak Hours & Demand',
+    item: 'Peak Demand',
   },
   '/reports/document-expiry': {
     section: 'Reports',
     sectionTo: '/reports/trips',
-    item: 'Document Expiry Report',
+    item: 'Expiry Forecast',
   },
   '/reports/export-center': {
     section: 'Reports',
     sectionTo: '/reports/trips',
-    item: 'Export Center',
+    item: 'Exports',
   },
   '/support/tickets': {
     section: 'Support',
     sectionTo: '/support/tickets',
-    item: 'Support Tickets',
+    item: 'Tickets',
   },
   '/support/ratings-reviews': {
     section: 'Support',
     sectionTo: '/support/tickets',
-    item: 'Ratings & Reviews',
+    item: 'Reviews',
   },
   '/support/lost-found': {
     section: 'Support',
     sectionTo: '/support/tickets',
-    item: 'Lost & Found',
+    item: 'Lost Items',
   },
   '/support/faqs': {
     section: 'Support',
@@ -167,17 +167,17 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
   '/settings/cities': {
     section: 'Settings',
     sectionTo: '/settings/service-zones',
-    item: 'Operating Cities',
+    item: 'Cities',
   },
   '/settings/content': {
     section: 'Settings',
     sectionTo: '/settings/service-zones',
-    item: 'Legal & Content',
+    item: 'Policies',
   },
   '/settings/app-settings': {
     section: 'Settings',
     sectionTo: '/settings/service-zones',
-    item: 'App Settings',
+    item: 'Preferences',
   },
   '/settings/audit-logs': {
     section: 'Settings',
@@ -188,7 +188,7 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
   '/unauthorized': {
     section: 'Security',
     sectionTo: '/dashboard/overview',
-    item: 'Access Restricted',
+    item: 'Restricted Access',
   },
 }
 
@@ -199,25 +199,25 @@ const currentBreadcrumb = computed(() => {
   if (route.path.startsWith('/payments/topups/')) {
     const id = (route.params.id as string) || 'Details'
     return {
-      section: 'Payments & Wallet',
+      section: 'Payments',
       sectionTo: '/payments/topups',
-      item: `Top-Up Request #${id}`,
+      item: `Top-Up #${id}`,
     }
   }
 
   if (route.path.startsWith('/payments/settlements/')) {
     const id = (route.params.id as string) || 'Details'
     return {
-      section: 'Payments & Wallet',
+      section: 'Payments',
       sectionTo: '/payments/settlements',
-      item: `Cash Settlement #${id}`,
+      item: `Settlement #${id}`,
     }
   }
 
   if (route.path.startsWith('/users/driver-applications/')) {
     const id = (route.params.id as string) || 'Details'
     return {
-      section: 'Users & Fleet',
+      section: 'Users',
       sectionTo: '/users/driver-applications',
       item: `Application #${id}`,
     }
