@@ -100,21 +100,21 @@ const tripTone = (status: 'Completed' | 'In Progress' | 'Dispatching') => {
       <div class="flex flex-wrap items-center gap-2">
         <RouterLink
           to="/trips/bidding"
-          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors"
+          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-neutral-200 rounded-none text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors"
         >
           <Icon icon="lucide:gavel" class="w-3.5 h-3.5 text-neutral-500" />
           <span>Live Bidding</span>
         </RouterLink>
         <RouterLink
           to="/payments/topups"
-          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-md text-xs font-semibold text-amber-900 hover:bg-amber-100 transition-colors"
+          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-none text-xs font-semibold text-amber-900 hover:bg-amber-100 transition-colors"
         >
           <Icon icon="lucide:wallet" class="w-3.5 h-3.5 text-amber-700" />
           <span>{{ pendingTopupCount }} Pending Top-Ups</span>
         </RouterLink>
         <RouterLink
           to="/payments/settlements"
-          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-rose-50 border border-rose-200 rounded-md text-xs font-semibold text-rose-900 hover:bg-rose-100 transition-colors"
+          class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-rose-50 border border-rose-200 rounded-none text-xs font-semibold text-rose-900 hover:bg-rose-100 transition-colors"
         >
           <Icon icon="lucide:coins" class="w-3.5 h-3.5 text-rose-700" />
           <span>{{ pendingReviewCount }} Settlement Reviews</span>
@@ -126,7 +126,7 @@ const tripTone = (status: 'Completed' | 'In Progress' | 'Dispatching') => {
       <div
         v-for="kpi in kpis"
         :key="kpi.label"
-        class="p-5 bg-white rounded-lg border border-neutral-200 border-t-2 flex flex-col gap-1"
+        class="p-5 bg-white rounded-none border border-neutral-200 border-t-2 flex flex-col gap-1"
         :class="kpi.accent"
       >
         <span class="text-xs font-medium text-neutral-500 uppercase tracking-wider">{{
@@ -138,7 +138,7 @@ const tripTone = (status: 'Completed' | 'In Progress' | 'Dispatching') => {
     </div>
 
     <div class="grid grid-cols-1 gap-6">
-      <div class="lg:col-span-2 bg-white rounded-lg border border-neutral-200 overflow-hidden">
+      <div class="lg:col-span-2 bg-white rounded-none border border-neutral-200 overflow-hidden">
         <div class="p-5 border-b border-neutral-100 flex items-center justify-between">
           <div class="flex items-center space-x-2">
             <h2 class="font-semibold text-sm text-neutral-900">Recent Trip Dispatches</h2>

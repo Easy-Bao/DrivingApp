@@ -3,6 +3,13 @@ import { computed, ref } from 'vue'
 import { Icon } from '@iconify/vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
+import router from '@/app/router'
+import { lockAuthSession } from '@/core/auth/auth-session'
+
+const lockConsoleSession = () => {
+  lockAuthSession()
+  void router.push({ name: 'auth-login', query: { redirect: '/account/profile' } })
+}
 
 const fullName = ref('Operations Control Lead')
 const email = ref('ops@easyride.ph')
@@ -73,31 +80,39 @@ const submitPasswordRotation = () => {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-          Super Administrator Account
+          Profile Settings
         </h1>
-        <p class="text-sm text-neutral-500 mt-1">
-          Manage executive credentials, regional hub assignments, and two-factor authentication.
-        </p>
+        <p class="text-sm text-neutral-500 mt-1">Credentials, hub assignment, and 2FA.</p>
       </div>
-      <button
-        type="button"
-        @click="openPasswordModal"
-        class="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-white border border-neutral-200 rounded-md text-xs font-semibold text-neutral-800 hover:bg-neutral-50 transition-colors cursor-pointer"
-      >
-        <Icon icon="lucide:key-round" class="w-4 h-4" />
-        <span>Rotate Password</span>
-      </button>
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          @click="openPasswordModal"
+          class="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-white border border-neutral-200 rounded-none text-xs font-semibold text-neutral-800 hover:bg-neutral-50 transition-colors cursor-pointer"
+        >
+          <Icon icon="lucide:key-round" class="w-4 h-4" />
+          <span>Rotate Password</span>
+        </button>
+        <button
+          type="button"
+          @click="lockConsoleSession"
+          class="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-neutral-900 text-white rounded-none text-xs font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
+        >
+          <Icon icon="lucide:lock" class="w-4 h-4" />
+          <span>Lock Session</span>
+        </button>
+      </div>
     </div>
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 
     <form
-      class="bg-white rounded-lg border border-neutral-200 p-6 space-y-6"
+      class="bg-white rounded-none border border-neutral-200 p-6 space-y-6"
       @submit.prevent="saveProfile"
     >
       <div class="flex flex-col sm:flex-row sm:items-center gap-4 border-b border-neutral-100 pb-6">
         <div
-          class="w-16 h-16 rounded-md bg-neutral-900 text-white flex items-center justify-center font-bold text-xl shrink-0"
+          class="w-16 h-16 rounded-none bg-neutral-900 text-white flex items-center justify-center font-bold text-xl shrink-0"
         >
           {{ initials }}
         </div>
@@ -106,7 +121,7 @@ const submitPasswordRotation = () => {
           <p class="text-xs text-neutral-500 font-mono">
             {{ email }} · {{ phone }} · Employee ID: EMP-001
           </p>
-          <StatusBadge label="Root Super Admin (All Permissions)" tone="success" />
+          <StatusBadge label="Root Access" tone="success" />
         </div>
       </div>
 
@@ -119,7 +134,7 @@ const submitPasswordRotation = () => {
             id="admin-full-name"
             v-model="fullName"
             type="text"
-            class="w-full px-3 py-2 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+            class="w-full px-3 py-2 bg-white border border-neutral-200 rounded-none text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
           />
         </div>
         <div>
@@ -130,7 +145,7 @@ const submitPasswordRotation = () => {
             id="admin-email"
             v-model="email"
             type="email"
-            class="w-full px-3 py-2 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+            class="w-full px-3 py-2 bg-white border border-neutral-200 rounded-none text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
           />
         </div>
         <div>
@@ -141,7 +156,7 @@ const submitPasswordRotation = () => {
             id="admin-phone"
             v-model="phone"
             type="tel"
-            class="w-full px-3 py-2 bg-white border border-neutral-200 rounded-md text-xs font-mono text-neutral-900 focus:outline-none focus:border-neutral-900"
+            class="w-full px-3 py-2 bg-white border border-neutral-200 rounded-none text-xs font-mono text-neutral-900 focus:outline-none focus:border-neutral-900"
           />
         </div>
         <div>
@@ -152,7 +167,7 @@ const submitPasswordRotation = () => {
             id="admin-hub"
             v-model="regionHub"
             type="text"
-            class="w-full px-3 py-2 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+            class="w-full px-3 py-2 bg-white border border-neutral-200 rounded-none text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
           />
         </div>
       </div>
@@ -178,7 +193,7 @@ const submitPasswordRotation = () => {
           <button
             type="button"
             @click="toggleMfaMethod"
-            class="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-md text-xs font-medium transition-colors cursor-pointer"
+            class="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-none text-xs font-medium transition-colors cursor-pointer"
           >
             Switch 2FA Factor
           </button>
@@ -188,7 +203,7 @@ const submitPasswordRotation = () => {
       <div class="flex justify-end pt-2">
         <button
           type="submit"
-          class="px-4 py-2 bg-neutral-900 text-white rounded-md text-xs font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
+          class="px-4 py-2 bg-neutral-900 text-white rounded-none text-xs font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
         >
           Save Profile Changes
         </button>
@@ -205,7 +220,7 @@ const submitPasswordRotation = () => {
         @click.self="showPasswordModal = false"
       >
         <form
-          class="bg-white rounded-lg border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4"
+          class="bg-white rounded-none border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4"
           @submit.prevent="submitPasswordRotation"
         >
           <div class="flex items-center justify-between">
@@ -229,7 +244,7 @@ const submitPasswordRotation = () => {
                 v-model="currentPassword"
                 type="password"
                 required
-                class="w-full px-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-900"
+                class="w-full px-3 py-2 border border-neutral-200 rounded-none focus:outline-none focus:border-neutral-900"
               />
             </div>
             <div>
@@ -240,7 +255,7 @@ const submitPasswordRotation = () => {
                 v-model="newPassword"
                 type="password"
                 required
-                class="w-full px-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-900"
+                class="w-full px-3 py-2 border border-neutral-200 rounded-none focus:outline-none focus:border-neutral-900"
               />
             </div>
             <div>
@@ -249,7 +264,7 @@ const submitPasswordRotation = () => {
                 v-model="confirmPassword"
                 type="password"
                 required
-                class="w-full px-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-900"
+                class="w-full px-3 py-2 border border-neutral-200 rounded-none focus:outline-none focus:border-neutral-900"
               />
             </div>
             <p v-if="passwordError" class="text-rose-600 font-medium">{{ passwordError }}</p>
@@ -259,13 +274,13 @@ const submitPasswordRotation = () => {
             <button
               type="button"
               @click="showPasswordModal = false"
-              class="px-4 py-2 bg-white border border-neutral-200 rounded-md text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+              class="px-4 py-2 bg-white border border-neutral-200 rounded-none text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              class="px-4 py-2 bg-neutral-900 text-white rounded-md text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+              class="px-4 py-2 bg-neutral-900 text-white rounded-none text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
             >
               Update Password
             </button>

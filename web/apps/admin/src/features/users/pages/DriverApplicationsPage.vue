@@ -28,7 +28,8 @@ function navigateToDetails(id: string) {
           Driver Applications Queue
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
-          Review Pagadian City, ZDS taxicle applicant qualifications, LTO licenses, and franchise permits.
+          Review Pagadian City, ZDS taxicle applicant qualifications, LTO licenses, and franchise
+          permits.
         </p>
       </div>
 
@@ -69,7 +70,9 @@ function navigateToDetails(id: string) {
               :key="app.id"
               class="hover:bg-neutral-50/50 transition-colors"
             >
-              <td class="py-3 px-4 font-mono font-bold text-neutral-900 whitespace-nowrap">{{ app.id }}</td>
+              <td class="py-3 px-4 font-mono font-bold text-neutral-900 whitespace-nowrap">
+                {{ app.id }}
+              </td>
               <td class="py-3 px-4">
                 <div class="flex items-center space-x-2.5">
                   <img
@@ -89,7 +92,9 @@ function navigateToDetails(id: string) {
               </td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ app.city }}</div>
-                <div class="text-[11px] text-neutral-500">{{ app.barangay }}, {{ app.province }}</div>
+                <div class="text-[11px] text-neutral-500">
+                  {{ app.barangay }}, {{ app.province }}
+                </div>
               </td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">
@@ -101,7 +106,7 @@ function navigateToDetails(id: string) {
               </td>
               <td class="py-3 px-4 whitespace-nowrap">
                 <span
-                  class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                  class="px-2 py-0.5 rounded-none text-[10px] font-bold"
                   :class="{
                     'bg-emerald-100 text-emerald-800': app.status === 'Approved',
                     'bg-rose-100 text-rose-800': app.status === 'Rejected',
