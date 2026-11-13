@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { useTopups } from '@/features/payments/composables/useTopups'
+import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
 import { formatPhp } from '@/shared/utils/format'
 
 definePage({
@@ -38,27 +39,6 @@ function handleRejectConfirm() {
   toastTone.value = 'warning'
   actionToast.value = `Request ${request.value.id} for ${request.value.driverName} rejected: ${rejectReason.value}`
 }
-
-function handleEscapeKey(event: KeyboardEvent) {
-  if (event.key === 'Escape' && showProofModal.value) {
-    showProofModal.value = false
-  }
-}
-
-watch(showProofModal, (isOpen) => {
-  if (typeof window === 'undefined') return
-  if (isOpen) {
-    window.addEventListener('keydown', handleEscapeKey)
-  } else {
-    window.removeEventListener('keydown', handleEscapeKey)
-  }
-})
-
-onBeforeUnmount(() => {
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('keydown', handleEscapeKey)
-  }
-})
 
 function goBack() {
   if (window.history.state && window.history.state.back) {
@@ -156,7 +136,7 @@ function goBack() {
             <div class="font-mono font-semibold text-neutral-900 mt-0.5">
               Plate: {{ request.vehiclePlate }}
             </div>
-            <div class="text-[11px] text-neutral-500">{{ request.sidecarBody }}</div>
+            <div class="text-[11px] text-neutral-500">{{ request.bodyUnit }}</div>
           </div>
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">Current Wallet Balance</div>
@@ -333,52 +313,32 @@ function goBack() {
       @confirm="handleRejectConfirm"
     />
 
-    <Teleport to="body">
-      <div
-        v-if="showProofModal && request"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="receipt-viewer-title"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-        @click.self="showProofModal = false"
-      >
-        <div class="bg-white border border-neutral-300 max-w-lg w-full p-5 space-y-4 shadow-2xl">
-          <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
-            <div>
-              <h3 id="receipt-viewer-title" class="text-sm font-bold text-neutral-900">
-                Proof of Transfer · {{ request.referenceCode }}
-              </h3>
-              <p class="text-[11px] font-mono text-neutral-500">{{ request.receiptFileName }}</p>
-            </div>
-            <button
-              type="button"
-              aria-label="Close receipt viewer"
-              class="p-1 text-neutral-400 hover:text-neutral-700 cursor-pointer"
-              @click="showProofModal = false"
-            >
-              <Icon icon="lucide:x" class="text-base" aria-hidden="true" />
-            </button>
-          </div>
-
-          <div class="bg-neutral-50 border border-neutral-200 p-3 flex justify-center">
-            <img
-              :src="request.receiptPreviewUrl"
-              :alt="`Full resolution receipt ${request.referenceCode}`"
-              class="max-h-[70vh] w-auto object-contain"
-            />
-          </div>
-
-          <div class="flex justify-end">
-            <button
-              type="button"
-              class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer"
-              @click="showProofModal = false"
-            >
-              Close Viewer
-            </button>
-          </div>
-        </div>
+    <ModalDialog
+      :open="showProofModal && Boolean(request)"
+      :title="request ? `Proof of Transfer · ${request.referenceCode}` : ''"
+      :subtitle="request?.receiptFileName"
+      size="lg"
+      @update:open="showProofModal = $event"
+    >
+      <div v-if="request" class="bg-neutral-50 border border-neutral-200 p-3 flex justify-center">
+        <img
+          :src="request.receiptPreviewUrl"
+          :alt="`Full resolution receipt ${request.referenceCode}`"
+          class="max-h-[70vh] w-auto object-contain"
+        />
       </div>
-    </Teleport>
+
+      <template #footer>
+        <div class="flex justify-end">
+          <button
+            type="button"
+            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer"
+            @click="showProofModal = false"
+          >
+            Close Viewer
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>

@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 import { exportToCsv, formatBpsAsPercent, formatCentavos } from '@/shared/utils/format'
 import {
@@ -22,21 +25,30 @@ const itemsPerPage = 10
 const toastMessage = ref<string | null>(null)
 
 const filteredSettlements = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
+  const query = searchQuery.value.trim().toLowerCase()
   return settlementRecords.value.filter((record) => {
     if (outcomeFilter.value !== 'ALL' && record.cashOutcome !== outcomeFilter.value) {
       return false
     }
-    if (!q) return true
+    if (!query) return true
     return (
-      record.id.toLowerCase().includes(q) ||
-      record.rideId.toLowerCase().includes(q) ||
-      record.driverName.toLowerCase().includes(q) ||
-      record.passengerName.toLowerCase().includes(q) ||
-      record.plateNumber.toLowerCase().includes(q)
+      record.id.toLowerCase().includes(query) ||
+      record.rideId.toLowerCase().includes(query) ||
+      record.driverName.toLowerCase().includes(query) ||
+      record.passengerName.toLowerCase().includes(query) ||
+      record.plateNumber.toLowerCase().includes(query)
     )
   })
 })
+
+const hasActiveFilters = computed(
+  () => searchQuery.value.trim().length > 0 || outcomeFilter.value !== 'ALL',
+)
+
+const resetFilters = () => {
+  searchQuery.value = ''
+  outcomeFilter.value = 'ALL'
+}
 
 watch([searchQuery, outcomeFilter], () => {
   currentPage.value = 1
@@ -122,20 +134,14 @@ const handleExport = () => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-          Cash Settlements
-        </h1>
-        <p class="text-sm text-neutral-500 mt-1">
-          Reconcile cash-in-hand trip outcomes, driver change records, and prepaid commission fees.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Cash Settlements"
+      description="Reconcile cash-in-hand trip outcomes, driver change records, and prepaid commission fees."
+    />
 
     <ToastBanner :message="toastMessage" tone="success" @dismiss="toastMessage = null" />
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <div class="bg-white border border-neutral-200 p-4">
         <div class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
           Pending Settlement Reviews
@@ -178,18 +184,12 @@ const handleExport = () => {
           <StatusBadge :label="`${filteredSettlements.length} Records`" tone="neutral" />
         </div>
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <div class="relative">
-            <Icon
-              icon="lucide:search"
-              class="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2"
-            />
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search ride ID, driver, plate..."
-              class="w-full sm:w-56 pl-8 pr-3 py-1.5 bg-white border border-neutral-200 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-900"
-            />
-          </div>
+          <SearchField
+            v-model="searchQuery"
+            placeholder="Search ride ID, driver, plate..."
+            aria-label="Search cash settlement records"
+            class="sm:w-56"
+          />
           <BaseSelect
             v-model="outcomeFilter"
             aria-label="Filter by cash outcome"
@@ -294,11 +294,14 @@ const handleExport = () => {
                 </RouterLink>
               </td>
             </tr>
-            <tr v-if="paginatedSettlements.length === 0">
-              <td colspan="7" class="px-4 py-8 text-center text-xs text-neutral-500">
-                No cash settlement records match the current filters.
-              </td>
-            </tr>
+            <EmptyTableRow
+              v-if="paginatedSettlements.length === 0"
+              :colspan="7"
+              title="No matching settlement records"
+              description="No cash settlement records match the current filters."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>

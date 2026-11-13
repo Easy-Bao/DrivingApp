@@ -127,7 +127,7 @@ const resolutionBadgeLabel = computed(() => {
 
       <div class="bg-white border border-neutral-200 p-5 space-y-3">
         <h2 class="text-sm font-semibold text-neutral-900">Cash Outcome &amp; Commission Split</h2>
-        <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div>
             <div class="text-neutral-500">Cash Collected</div>
             <div class="font-mono font-bold text-neutral-900 mt-0.5">

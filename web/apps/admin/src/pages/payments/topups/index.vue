@@ -4,6 +4,9 @@ import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { useTopups, type TopUpRequest } from '@/features/payments/composables/useTopups'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge, { type BadgeTone } from '@/shared/components/StatusBadge.vue'
 import TablePagination from '@/shared/components/TablePagination.vue'
 import { formatPhp } from '@/shared/utils/format'
@@ -19,19 +22,33 @@ const itemsPerPage = 8
 
 const filteredRequests = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
-  return topUpRequests.value.filter((req) => {
-    const matchesMethod = filterMethod.value === 'All' || req.paymentMethod === filterMethod.value
-    const matchesStatus = filterStatus.value === 'All' || req.status === filterStatus.value
+  return topUpRequests.value.filter((request) => {
+    const matchesMethod =
+      filterMethod.value === 'All' || request.paymentMethod === filterMethod.value
+    const matchesStatus = filterStatus.value === 'All' || request.status === filterStatus.value
     const matchesQuery =
       !query ||
-      req.id.toLowerCase().includes(query) ||
-      req.driverName.toLowerCase().includes(query) ||
-      req.driverPhone.toLowerCase().includes(query) ||
-      req.vehiclePlate.toLowerCase().includes(query) ||
-      req.referenceCode.toLowerCase().includes(query)
+      request.id.toLowerCase().includes(query) ||
+      request.driverName.toLowerCase().includes(query) ||
+      request.driverPhone.toLowerCase().includes(query) ||
+      request.vehiclePlate.toLowerCase().includes(query) ||
+      request.referenceCode.toLowerCase().includes(query)
     return matchesMethod && matchesStatus && matchesQuery
   })
 })
+
+const hasActiveFilters = computed(
+  () =>
+    searchQuery.value.trim().length > 0 ||
+    filterMethod.value !== 'All' ||
+    filterStatus.value !== 'All',
+)
+
+const resetFilters = () => {
+  searchQuery.value = ''
+  filterMethod.value = 'All'
+  filterStatus.value = 'All'
+}
 
 const paginatedRequests = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
@@ -39,7 +56,7 @@ const paginatedRequests = computed(() => {
 })
 
 const pendingCount = computed(
-  () => topUpRequests.value.filter((req) => req.status === 'Pending').length,
+  () => topUpRequests.value.filter((request) => request.status === 'Pending').length,
 )
 
 watch([searchQuery, filterMethod, filterStatus], () => {
@@ -64,16 +81,10 @@ function navigateToDetails(id: string) {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-          Driver Wallet Top-Ups
-        </h1>
-        <p class="text-sm text-neutral-500 mt-1">
-          Verify driver payment transfer receipts before crediting prepaid commission wallets.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Driver Wallet Top-Ups"
+      description="Verify driver payment transfer receipts before crediting prepaid commission wallets."
+    />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
@@ -89,20 +100,12 @@ function navigateToDetails(id: string) {
         </div>
 
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <div class="relative sm:w-64">
-            <Icon
-              icon="lucide:search"
-              class="absolute left-3 top-2.5 text-neutral-400 text-sm"
-              aria-hidden="true"
-            />
-            <input
-              v-model="searchQuery"
-              type="text"
-              aria-label="Search top-up requests"
-              placeholder="Search driver, +63 phone, plate, ref..."
-              class="w-full pl-9 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs focus:outline-none focus:border-neutral-900"
-            />
-          </div>
+          <SearchField
+            v-model="searchQuery"
+            aria-label="Search top-up requests"
+            placeholder="Search driver, +63 phone, plate, ref..."
+            class="sm:w-64"
+          />
 
           <BaseSelect
             v-model="filterMethod"
@@ -221,11 +224,14 @@ function navigateToDetails(id: string) {
                 </button>
               </td>
             </tr>
-            <tr v-if="paginatedRequests.length === 0">
-              <td colspan="8" class="py-10 px-4 text-center text-xs text-neutral-500">
-                No top-up requests match the selected search and filters.
-              </td>
-            </tr>
+            <EmptyTableRow
+              v-if="paginatedRequests.length === 0"
+              :colspan="8"
+              title="No matching top-up requests"
+              description="No top-up requests match the selected search and filters."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>

@@ -5,7 +5,7 @@ export interface TopUpRequest {
   driverName: string
   driverPhone: string
   vehiclePlate: string
-  sidecarBody: string
+  bodyUnit: string
   currentBalance: number
   amount: number
   paymentMethod: 'Company QR Code' | 'Company Bank Transfer'
@@ -62,7 +62,7 @@ const topUpRequests = ref<TopUpRequest[]>([
     driverName: 'Rodelio Cruz',
     driverPhone: '+63 917 440 2184',
     vehiclePlate: '1284-ND',
-    sidecarBody: 'Sidecar #084 · Poblacion TODA',
+    bodyUnit: 'Bao-Bao #084 · Poblacion TODA',
     currentBalance: 42.5,
     amount: 500.0,
     paymentMethod: 'Company QR Code',
@@ -91,7 +91,7 @@ const topUpRequests = ref<TopUpRequest[]>([
     driverName: 'Danilo Mendoza',
     driverPhone: '+63 928 412 8890',
     vehiclePlate: '3891-ZK',
-    sidecarBody: 'Sidecar #042 · San Jose TODA',
+    bodyUnit: 'Bao-Bao #042 · San Jose TODA',
     currentBalance: 18.0,
     amount: 1000.0,
     paymentMethod: 'Company Bank Transfer',
@@ -119,7 +119,7 @@ const topUpRequests = ref<TopUpRequest[]>([
     driverName: 'Edgar Tolentino',
     driverPhone: '+63 915 209 7741',
     vehiclePlate: '5190-QP',
-    sidecarBody: 'Sidecar #109 · Agora TODA',
+    bodyUnit: 'Bao-Bao #109 · Agora TODA',
     currentBalance: 0.0,
     amount: 300.0,
     paymentMethod: 'Company QR Code',
@@ -147,7 +147,7 @@ const topUpRequests = ref<TopUpRequest[]>([
     driverName: 'Junel Pineda',
     driverPhone: '+63 998 331 0912',
     vehiclePlate: '9102-AB',
-    sidecarBody: 'Sidecar #019 · Balangasan TODA',
+    bodyUnit: 'Bao-Bao #019 · Balangasan TODA',
     currentBalance: 645.0,
     amount: 500.0,
     paymentMethod: 'Company Bank Transfer',
@@ -174,7 +174,7 @@ const topUpRequests = ref<TopUpRequest[]>([
 
 export function useTopups() {
   function getRequestById(id: string): TopUpRequest | undefined {
-    return topUpRequests.value.find((r) => r.id === id)
+    return topUpRequests.value.find((request) => request.id === id)
   }
 
   function verifyAndCredit(req: TopUpRequest): void {

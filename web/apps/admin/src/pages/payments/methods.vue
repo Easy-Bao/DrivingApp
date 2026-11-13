@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
@@ -254,30 +256,21 @@ const toggleAccountStatus = (account: CompanyCollectionAccount) => {
       @dismiss="toastMessage = null"
     />
 
-    <div
-      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 p-4"
+    <PageHeader
+      title="Company Top-Up Collection Accounts & QRPh Channels"
+      description="Receiving QRPh codes and corporate bank accounts displayed inside the Driver app for manual prepaid credit deposits."
     >
-      <div>
-        <div class="flex flex-wrap items-center gap-2">
-          <h2 class="text-sm font-semibold text-neutral-900">
-            Company Top-Up Collection Accounts &amp; QRPh Channels
-          </h2>
-          <StatusBadge :label="`${activeCount} Active Channels`" tone="neutral" />
-        </div>
-        <p class="text-xs text-neutral-500 mt-0.5">
-          Receiving QRPh codes and corporate bank accounts displayed inside the Driver app for
-          manual prepaid credit deposits.
-        </p>
-      </div>
-
-      <button
-        type="button"
-        class="self-start sm:self-auto px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-none transition-colors"
-        @click="openAddModal"
-      >
-        + Add Company Account
-      </button>
-    </div>
+      <template #actions>
+        <StatusBadge :label="`${activeCount} Active Channels`" tone="neutral" />
+        <button
+          type="button"
+          class="px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-none transition-colors"
+          @click="openAddModal"
+        >
+          + Add Company Account
+        </button>
+      </template>
+    </PageHeader>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
       <div
@@ -364,284 +357,245 @@ const toggleAccountStatus = (account: CompanyCollectionAccount) => {
       </div>
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="showAddModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4"
-        @click.self="showAddModal = false"
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          class="w-full max-w-md bg-white border border-neutral-200 rounded-none p-5 space-y-4 shadow-xl"
-        >
-          <div class="border-b border-neutral-100 pb-3">
-            <h3 class="text-sm font-bold text-neutral-900">Add Company Collection Account</h3>
-            <p class="text-xs text-neutral-500 mt-0.5">
-              Publish a verified QRPh merchant wallet or Pagadian corporate bank account for driver
-              top-ups.
-            </p>
-          </div>
-
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Display Account Label</label>
-              <input
-                v-model="newLabel"
-                type="text"
-                placeholder="e.g., Landbank Pagadian Operations"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Deposit Channel Type</label>
-              <BaseSelect
-                v-model="newChannelType"
-                :full-width="true"
-                aria-label="Deposit channel type"
-                :options="[
-                  { label: 'QRPh Wallet (GCash / Maya)', value: 'QRPh Wallet' },
-                  { label: 'Corporate Bank (InstaPay / PESONet)', value: 'Corporate Bank' },
-                ]"
-              />
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">
-                Institution / Bank Name
-              </label>
-              <input
-                v-model="newInstitution"
-                type="text"
-                placeholder="e.g., Land Bank of the Philippines"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">
-                Account or Mobile Number
-              </label>
-              <input
-                v-model="newAccountNumber"
-                type="text"
-                placeholder="e.g., +63 917 ... or 0912-3456-78"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-              />
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Account Holder Name</label>
-              <input
-                v-model="newAccountHolder"
-                type="text"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">
-                Merchant Ref / Branch Location
-              </label>
-              <input
-                v-model="newBranchOrMerchantId"
-                type="text"
-                placeholder="e.g., QRPH-PAG-8805 or Brgy. Santiago"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-              />
-            </div>
-
-            <p v-if="addError" class="text-xs font-medium text-rose-700">{{ addError }}</p>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 border-t border-neutral-100 pt-3">
-            <button
-              type="button"
-              class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-              @click="showAddModal = false"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-              @click="createCompanyAccount"
-            >
-              Save Collection Account
-            </button>
-          </div>
+    <ModalDialog
+      v-model:open="showAddModal"
+      title="Add Company Collection Account"
+      subtitle="Publish a verified QRPh merchant wallet or Pagadian corporate bank account for driver top-ups."
+      size="md"
+    >
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Display Account Label</label>
+          <input
+            v-model="newLabel"
+            type="text"
+            placeholder="e.g., Landbank Pagadian Operations"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
         </div>
-      </div>
-    </Teleport>
 
-    <Teleport to="body">
-      <div
-        v-if="editingAccount"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4"
-        @click.self="editingAccount = null"
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          class="w-full max-w-md bg-white border border-neutral-200 rounded-none p-5 space-y-4 shadow-xl"
-        >
-          <div class="border-b border-neutral-100 pb-3">
-            <h3 class="text-sm font-bold text-neutral-900">
-              Edit Account Info · {{ editingAccount.id }}
-            </h3>
-          </div>
-
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Display Label</label>
-              <input
-                v-model="editLabel"
-                type="text"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Institution</label>
-              <input
-                v-model="editInstitution"
-                type="text"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Account / Wallet Number</label>
-              <input
-                v-model="editAccountNumber"
-                type="text"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Beneficiary Holder</label>
-              <input
-                v-model="editAccountHolder"
-                type="text"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Merchant Ref / Branch</label>
-              <input
-                v-model="editBranchOrMerchantId"
-                type="text"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-              />
-            </div>
-            <p v-if="editError" class="text-xs font-medium text-rose-700">{{ editError }}</p>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 border-t border-neutral-100 pt-3">
-            <button
-              type="button"
-              class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-              @click="editingAccount = null"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-              @click="saveEditedAccount"
-            >
-              Update Account Details
-            </button>
-          </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Deposit Channel Type</label>
+          <BaseSelect
+            v-model="newChannelType"
+            :full-width="true"
+            aria-label="Deposit channel type"
+            :options="[
+              { label: 'QRPh Wallet (GCash / Maya)', value: 'QRPh Wallet' },
+              { label: 'Corporate Bank (InstaPay / PESONet)', value: 'Corporate Bank' },
+            ]"
+          />
         </div>
+
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1"> Institution / Bank Name </label>
+          <input
+            v-model="newInstitution"
+            type="text"
+            placeholder="e.g., Land Bank of the Philippines"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
+        </div>
+
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1"> Account or Mobile Number </label>
+          <input
+            v-model="newAccountNumber"
+            type="text"
+            placeholder="e.g., +63 917 ... or 0912-3456-78"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+          />
+        </div>
+
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Account Holder Name</label>
+          <input
+            v-model="newAccountHolder"
+            type="text"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
+        </div>
+
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">
+            Merchant Ref / Branch Location
+          </label>
+          <input
+            v-model="newBranchOrMerchantId"
+            type="text"
+            placeholder="e.g., QRPH-PAG-8805 or Brgy. Santiago"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+          />
+        </div>
+
+        <p v-if="addError" class="text-xs font-medium text-rose-700">{{ addError }}</p>
       </div>
-    </Teleport>
 
-    <Teleport to="body">
+      <template #footer>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            @click="showAddModal = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
+            @click="createCompanyAccount"
+          >
+            Save Collection Account
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
+
+    <ModalDialog
+      :open="Boolean(editingAccount)"
+      :title="editingAccount ? `Edit Account Info · ${editingAccount.id}` : ''"
+      size="md"
+      @update:open="(open) => !open && (editingAccount = null)"
+    >
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Display Label</label>
+          <input
+            v-model="editLabel"
+            type="text"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
+        </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Institution</label>
+          <input
+            v-model="editInstitution"
+            type="text"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
+        </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Account / Wallet Number</label>
+          <input
+            v-model="editAccountNumber"
+            type="text"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+          />
+        </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Beneficiary Holder</label>
+          <input
+            v-model="editAccountHolder"
+            type="text"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+          />
+        </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Merchant Ref / Branch</label>
+          <input
+            v-model="editBranchOrMerchantId"
+            type="text"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+          />
+        </div>
+        <p v-if="editError" class="text-xs font-medium text-rose-700">{{ editError }}</p>
+      </div>
+
+      <template #footer>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            @click="editingAccount = null"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
+            @click="saveEditedAccount"
+          >
+            Update Account Details
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
+
+    <ModalDialog
+      :open="Boolean(updatingQrAccount)"
+      :title="updatingQrAccount ? `Update QR Code Image · ${updatingQrAccount.label}` : ''"
+      subtitle="Upload a new official QRPh graphic or regenerate the signed merchant code preview."
+      size="md"
+      @update:open="(open) => !open && (updatingQrAccount = null)"
+    >
       <div
-        v-if="updatingQrAccount"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4"
-        @click.self="updatingQrAccount = null"
+        class="flex flex-col items-center gap-3 bg-neutral-50 border border-neutral-200 p-4 mb-3"
       >
-        <div
-          role="dialog"
-          aria-modal="true"
-          class="w-full max-w-md bg-white border border-neutral-200 rounded-none p-5 space-y-4 shadow-xl"
-        >
-          <div class="border-b border-neutral-100 pb-3">
-            <h3 class="text-sm font-bold text-neutral-900">
-              Update QR Code Image · {{ updatingQrAccount.label }}
-            </h3>
-            <p class="text-xs text-neutral-500 mt-0.5">
-              Upload a new official QRPh graphic or regenerate the signed merchant code preview.
-            </p>
-          </div>
+        <img
+          :src="draftQrImageUrl"
+          alt="Updated QRPh preview"
+          class="w-36 h-36 object-contain bg-white border border-neutral-300"
+        />
+        <span v-if="draftQrFileName" class="text-[11px] font-mono text-neutral-600">
+          Selected: {{ draftQrFileName }}
+        </span>
+      </div>
 
-          <div class="flex flex-col items-center gap-3 bg-neutral-50 border border-neutral-200 p-4">
-            <img
-              :src="draftQrImageUrl"
-              alt="Updated QRPh preview"
-              class="w-36 h-36 object-contain bg-white border border-neutral-300"
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">
+            QRPh Merchant Code / Reference
+          </label>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input
+              v-model="draftMerchantRef"
+              type="text"
+              aria-label="QRPh Merchant Reference"
+              class="flex-1 px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
             />
-            <span v-if="draftQrFileName" class="text-[11px] font-mono text-neutral-600">
-              Selected: {{ draftQrFileName }}
-            </span>
-          </div>
-
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">
-                QRPh Merchant Code / Reference
-              </label>
-              <div class="flex gap-2">
-                <input
-                  v-model="draftMerchantRef"
-                  type="text"
-                  aria-label="QRPh Merchant Reference"
-                  class="flex-1 px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-                />
-                <button
-                  type="button"
-                  class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-800 hover:bg-neutral-50"
-                  @click="regenerateMerchantQr"
-                >
-                  Regenerate Preview
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">
-                Upload Replacement QR Image
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                class="w-full text-xs text-neutral-600 file:mr-3 file:py-1.5 file:px-3 file:border file:border-neutral-300 file:bg-white file:text-xs file:font-medium file:text-neutral-800"
-                @change="onQrFileSelected"
-              />
-            </div>
-
-            <p v-if="qrModalError" class="text-xs font-medium text-rose-700">{{ qrModalError }}</p>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 border-t border-neutral-100 pt-3">
             <button
               type="button"
-              class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-              @click="updatingQrAccount = null"
+              class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-800 hover:bg-neutral-50 shrink-0"
+              @click="regenerateMerchantQr"
             >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-              @click="saveUpdatedQrCode"
-            >
-              Publish Updated QR Code
+              Regenerate Preview
             </button>
           </div>
         </div>
+
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">
+            Upload Replacement QR Image
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            class="w-full text-xs text-neutral-600 file:mr-3 file:py-1.5 file:px-3 file:border file:border-neutral-300 file:bg-white file:text-xs file:font-medium file:text-neutral-800"
+            @change="onQrFileSelected"
+          />
+        </div>
+
+        <p v-if="qrModalError" class="text-xs font-medium text-rose-700">{{ qrModalError }}</p>
       </div>
-    </Teleport>
+
+      <template #footer>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            @click="updatingQrAccount = null"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
+            @click="saveUpdatedQrCode"
+          >
+            Publish Updated QR Code
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>

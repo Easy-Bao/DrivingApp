@@ -2,6 +2,9 @@
 import { computed, ref } from 'vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 import { formatPhp } from '@/shared/utils/format'
@@ -58,21 +61,30 @@ const dialogOpen = ref(false)
 const auditReason = ref('')
 
 const filteredClaims = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
+  const query = searchQuery.value.trim().toLowerCase()
   return claims.value.filter((item) => {
     const matchesStatus = statusFilter.value === 'All' || item.status === statusFilter.value
     const matchesSearch =
-      !q ||
-      item.id.toLowerCase().includes(q) ||
-      item.tripId.toLowerCase().includes(q) ||
-      item.claimant.toLowerCase().includes(q) ||
-      item.reason.toLowerCase().includes(q)
+      !query ||
+      item.id.toLowerCase().includes(query) ||
+      item.tripId.toLowerCase().includes(query) ||
+      item.claimant.toLowerCase().includes(query) ||
+      item.reason.toLowerCase().includes(query)
     return matchesStatus && matchesSearch
   })
 })
 
+const hasActiveFilters = computed(
+  () => searchQuery.value.trim().length > 0 || statusFilter.value !== 'All',
+)
+
+const resetFilters = () => {
+  searchQuery.value = ''
+  statusFilter.value = 'All'
+}
+
 const pendingCount = computed(
-  () => claims.value.filter((c) => c.status === 'Pending Approval').length,
+  () => claims.value.filter((claim) => claim.status === 'Pending Approval').length,
 )
 
 const openDecisionDialog = (claim: FareAdjustmentClaim, decision: 'approve' | 'decline') => {
@@ -102,29 +114,20 @@ const confirmDecision = () => {
       @dismiss="toastMessage = null"
     />
 
-    <div
-      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 p-4"
-    >
-      <div>
-        <h2 class="text-sm font-semibold text-neutral-900">
-          Fare Adjustments &amp; Commission Fee Waivers
-        </h2>
-        <p class="text-xs text-neutral-500 mt-0.5">
-          Audit claims for passenger cash fare rebates and driver prepaid commission reversals
-          across Pagadian City trips.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Fare Adjustments & Commission Fee Waivers"
+      description="Audit claims for passenger cash fare rebates and driver prepaid commission reversals across Pagadian City trips."
+    />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
         class="p-4 border-b border-neutral-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
       >
-        <input
+        <SearchField
           v-model="searchQuery"
-          type="text"
           placeholder="Search adjustment ID, trip ID, or claimant..."
-          class="w-full md:w-80 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+          aria-label="Search adjustment claims"
+          class="md:w-80"
         />
 
         <div class="flex flex-wrap items-center gap-2">
@@ -214,11 +217,14 @@ const confirmDecision = () => {
                 <span v-else class="text-neutral-400 text-xs">Finalized</span>
               </td>
             </tr>
-            <tr v-if="filteredClaims.length === 0">
-              <td colspan="6" class="py-10 px-4 text-center text-xs text-neutral-500">
-                No adjustment claims match your search or status filter.
-              </td>
-            </tr>
+            <EmptyTableRow
+              v-if="filteredClaims.length === 0"
+              :colspan="6"
+              title="No matching adjustment claims"
+              description="No adjustment claims match your search or status filter."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>

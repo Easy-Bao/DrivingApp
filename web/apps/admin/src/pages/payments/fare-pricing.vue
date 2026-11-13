@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import ModalDialog from '@/shared/components/ModalDialog.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 import { formatPhp } from '@/shared/utils/format'
@@ -19,8 +21,8 @@ interface FareTierRule {
 
 const pricingRules = ref<FareTierRule[]>([
   {
-    id: 'solo-standard',
-    tier: 'Solo Taxicle · Standard Poblacion',
+    id: 'tuktuk-standard',
+    tier: 'Taxicle (TukTuk / Bao-Bao) · Standard Poblacion',
     corridorScope: 'Urban Poblacion & market barangays (<= 5 km)',
     baseFare: 25.0,
     perKm: 12.0,
@@ -31,8 +33,8 @@ const pricingRules = ref<FareTierRule[]>([
     highRatingDriverBonus: 1.05,
   },
   {
-    id: 'solo-express',
-    tier: 'Solo Taxicle · Terminal & Uphill Express',
+    id: 'tuktuk-express',
+    tier: 'Taxicle (TukTuk / Bao-Bao) · Terminal & Uphill Express',
     corridorScope: 'Integrated Bus Terminal, Dao Capitol & Airport Road',
     baseFare: 35.0,
     perKm: 14.0,
@@ -44,7 +46,7 @@ const pricingRules = ref<FareTierRule[]>([
   },
 ])
 
-const selectedTierId = ref<string>('solo-standard')
+const selectedTierId = ref<string>('tuktuk-standard')
 const estimateDistanceKm = ref<number>(3.4)
 const estimateDurationMin = ref<number>(12)
 const estimateSurge = ref<number>(1.0)
@@ -56,7 +58,8 @@ const draftRule = ref<FareTierRule | null>(null)
 const modalError = ref<string | null>(null)
 
 const activeEstimatorTier = computed(
-  () => pricingRules.value.find((r) => r.id === selectedTierId.value) ?? pricingRules.value[0]!,
+  () =>
+    pricingRules.value.find((rule) => rule.id === selectedTierId.value) ?? pricingRules.value[0]!,
 )
 
 const estimatedFare = computed(() => {
@@ -108,7 +111,7 @@ const saveRuleChanges = () => {
 
 const saveInlineChanges = () => {
   toastMessage.value =
-    'Published Pagadian Solo Taxicle tariff parameters to bidding & quote calculation engine.'
+    'Published Pagadian Taxicle (TukTuk / Bao-Bao) tariff parameters to bidding & quote calculation engine.'
 }
 </script>
 
@@ -121,22 +124,14 @@ const saveInlineChanges = () => {
       @dismiss="toastMessage = null"
     />
 
-    <div
-      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 p-4"
+    <PageHeader
+      title="Pagadian Taxicle Fare & Bidding Caps"
+      description="All amounts in Philippine Pesos (₱). Covers three-wheeled TukTuk and Bao-Bao units with a 2.5x maximum bidding surge cap and a 1.05x reward multiplier for drivers rated 4.5★ or higher."
     >
-      <div>
-        <div class="flex flex-wrap items-center gap-2">
-          <h2 class="text-sm font-semibold text-neutral-900">
-            Pagadian Solo Taxicle Fare &amp; Bidding Caps
-          </h2>
-          <StatusBadge label="PHP Active Tariff" tone="neutral" />
-        </div>
-        <p class="text-xs text-neutral-500 mt-0.5">
-          All amounts in Philippine Pesos (₱). Server enforces a 2.5x maximum bidding surge cap and
-          a 1.05x reward multiplier for drivers rated 4.5★ or higher.
-        </p>
-      </div>
-    </div>
+      <template #actions>
+        <StatusBadge label="PHP Active Tariff" tone="neutral" />
+      </template>
+    </PageHeader>
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
@@ -318,101 +313,92 @@ const saveInlineChanges = () => {
       </div>
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="editingRule && draftRule"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4"
-        @click.self="closeEditModal"
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          class="w-full max-w-lg bg-white border border-neutral-200 rounded-none p-5 space-y-4 shadow-xl"
-        >
-          <div class="border-b border-neutral-100 pb-3">
-            <h3 class="text-sm font-bold text-neutral-900">Edit Tariff · {{ editingRule.tier }}</h3>
-            <p class="text-xs text-neutral-500 mt-0.5">{{ editingRule.corridorScope }}</p>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3 text-xs">
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Base Fare (₱)</label>
-              <input
-                v-model.number="draftRule.baseFare"
-                type="number"
-                step="1"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Rate / km (₱)</label>
-              <input
-                v-model.number="draftRule.perKm"
-                type="number"
-                step="0.5"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Rate / min (₱)</label>
-              <input
-                v-model.number="draftRule.perMinute"
-                type="number"
-                step="0.5"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Min Trip Fare (₱)</label>
-              <input
-                v-model.number="draftRule.minimumFare"
-                type="number"
-                step="1"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Cancellation Fee (₱)</label>
-              <input
-                v-model.number="draftRule.cancellationFee"
-                type="number"
-                step="1"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-              />
-            </div>
-            <div>
-              <label class="block font-medium text-neutral-700 mb-1">Max Bid Surge (x)</label>
-              <input
-                v-model.number="draftRule.maxBiddingSurgeCap"
-                type="number"
-                min="1"
-                max="2.5"
-                step="0.1"
-                class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-              />
-            </div>
-          </div>
-
-          <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
-
-          <div class="flex items-center justify-end gap-2 border-t border-neutral-100 pt-3">
-            <button
-              type="button"
-              class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-              @click="closeEditModal"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-              @click="saveRuleChanges"
-            >
-              Save Tariff Rule
-            </button>
-          </div>
+    <ModalDialog
+      :open="Boolean(editingRule && draftRule)"
+      :title="editingRule ? `Edit Tariff · ${editingRule.tier}` : ''"
+      :subtitle="editingRule?.corridorScope"
+      size="lg"
+      @update:open="(open) => !open && closeEditModal()"
+    >
+      <div v-if="draftRule" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Base Fare (₱)</label>
+          <input
+            v-model.number="draftRule.baseFare"
+            type="number"
+            step="1"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+          />
+        </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Rate / km (₱)</label>
+          <input
+            v-model.number="draftRule.perKm"
+            type="number"
+            step="0.5"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+          />
+        </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Rate / min (₱)</label>
+          <input
+            v-model.number="draftRule.perMinute"
+            type="number"
+            step="0.5"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+          />
+        </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Min Trip Fare (₱)</label>
+          <input
+            v-model.number="draftRule.minimumFare"
+            type="number"
+            step="1"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+          />
+        </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Cancellation Fee (₱)</label>
+          <input
+            v-model.number="draftRule.cancellationFee"
+            type="number"
+            step="1"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+          />
+        </div>
+        <div>
+          <label class="block font-medium text-neutral-700 mb-1">Max Bid Surge (x)</label>
+          <input
+            v-model.number="draftRule.maxBiddingSurgeCap"
+            type="number"
+            min="1"
+            max="2.5"
+            step="0.1"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+          />
         </div>
       </div>
-    </Teleport>
+
+      <p v-if="modalError" class="mt-3 text-xs font-medium text-rose-700">{{ modalError }}</p>
+
+      <template #footer>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            @click="closeEditModal"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
+            @click="saveRuleChanges"
+          >
+            Save Tariff Rule
+          </button>
+        </div>
+      </template>
+    </ModalDialog>
   </div>
 </template>

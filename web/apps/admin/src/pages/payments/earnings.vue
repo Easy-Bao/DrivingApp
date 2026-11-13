@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
@@ -63,14 +66,25 @@ const driverTakeHome = (row: DriverEarningSummary) =>
   Number((row.cashGrossPhp - platformCommission(row)).toFixed(2))
 
 const filteredEarnings = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
+  const query = searchQuery.value.trim().toLowerCase()
   return earnings.value.filter((row) => {
     const matchesStatus = walletFilter.value === 'All' || row.walletStatus === walletFilter.value
     const matchesSearch =
-      !q || row.driver.toLowerCase().includes(q) || row.plateNumber.toLowerCase().includes(q)
+      !query ||
+      row.driver.toLowerCase().includes(query) ||
+      row.plateNumber.toLowerCase().includes(query)
     return matchesStatus && matchesSearch
   })
 })
+
+const hasActiveFilters = computed(
+  () => searchQuery.value.trim().length > 0 || walletFilter.value !== 'All',
+)
+
+const resetFilters = () => {
+  searchQuery.value = ''
+  walletFilter.value = 'All'
+}
 
 const exportEarningsCsv = () => {
   exportToCsv(
@@ -84,14 +98,14 @@ const exportEarningsCsv = () => {
       'Net Take-Home (PHP)',
       'Prepaid Wallet Status',
     ],
-    filteredEarnings.value.map((r) => [
-      r.driver,
-      r.plateNumber,
-      String(r.trips),
-      r.cashGrossPhp.toFixed(2),
-      platformCommission(r).toFixed(2),
-      driverTakeHome(r).toFixed(2),
-      r.walletStatus,
+    filteredEarnings.value.map((row) => [
+      row.driver,
+      row.plateNumber,
+      String(row.trips),
+      row.cashGrossPhp.toFixed(2),
+      platformCommission(row).toFixed(2),
+      driverTakeHome(row).toFixed(2),
+      row.walletStatus,
     ]),
   )
 }
@@ -99,29 +113,20 @@ const exportEarningsCsv = () => {
 
 <template>
   <div class="space-y-6">
-    <div
-      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 p-4"
-    >
-      <div>
-        <h2 class="text-sm font-semibold text-neutral-900">
-          Driver Cash Collections &amp; Net Earnings Summary
-        </h2>
-        <p class="text-xs text-neutral-500 mt-0.5">
-          Direct cash fares retained by Pagadian taxicle drivers alongside prepaid commission fees
-          debited at settlement (15% standard / 12% top-rated).
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Driver Cash Collections & Net Earnings Summary"
+      description="Direct cash fares retained by Pagadian taxicle drivers alongside prepaid commission fees debited at settlement (15% standard / 12% top-rated)."
+    />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
         class="p-4 border-b border-neutral-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
       >
-        <input
+        <SearchField
           v-model="searchQuery"
-          type="text"
           placeholder="Search driver or TODA plate..."
-          class="w-full md:w-72 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+          aria-label="Search driver earnings"
+          class="md:w-72"
         />
 
         <div class="flex flex-wrap items-center gap-2">
@@ -194,6 +199,14 @@ const exportEarningsCsv = () => {
                 />
               </td>
             </tr>
+            <EmptyTableRow
+              v-if="filteredEarnings.length === 0"
+              :colspan="6"
+              title="No matching earnings summaries"
+              description="No driver earnings records match the current search or wallet status."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>

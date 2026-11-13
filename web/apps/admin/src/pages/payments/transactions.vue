@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import TablePagination from '@/shared/components/TablePagination.vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
+import EmptyTableRow from '@/shared/components/EmptyTableRow.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import SearchField from '@/shared/components/SearchField.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
 import { exportToCsv, formatPhp } from '@/shared/utils/format'
 
 type LedgerEntryType =
@@ -87,18 +90,27 @@ const currentPage = ref(1)
 const itemsPerPage = 10
 
 const filteredTransactions = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
+  const query = searchQuery.value.trim().toLowerCase()
   return transactions.value.filter((txn) => {
     const matchesType = typeFilter.value === 'All' || txn.type === typeFilter.value
     const matchesSearch =
-      !q ||
-      txn.id.toLowerCase().includes(q) ||
-      txn.referenceId.toLowerCase().includes(q) ||
-      txn.driver.toLowerCase().includes(q) ||
-      txn.method.toLowerCase().includes(q)
+      !query ||
+      txn.id.toLowerCase().includes(query) ||
+      txn.referenceId.toLowerCase().includes(query) ||
+      txn.driver.toLowerCase().includes(query) ||
+      txn.method.toLowerCase().includes(query)
     return matchesType && matchesSearch
   })
 })
+
+const hasActiveFilters = computed(
+  () => searchQuery.value.trim().length > 0 || typeFilter.value !== 'All',
+)
+
+const resetFilters = () => {
+  searchQuery.value = ''
+  typeFilter.value = 'All'
+}
 
 watch([searchQuery, typeFilter], () => {
   currentPage.value = 1
@@ -129,29 +141,20 @@ const exportLedger = () => {
 
 <template>
   <div class="space-y-6">
-    <div
-      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 p-4"
-    >
-      <div>
-        <h2 class="text-sm font-semibold text-neutral-900">
-          Prepaid Commission &amp; Top-Up Ledger
-        </h2>
-        <p class="text-xs text-neutral-500 mt-0.5">
-          Immutable journal of prepaid credit top-ups, per-trip basis-point deductions, and fee
-          waivers in PHP.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Prepaid Commission & Top-Up Ledger"
+      description="Immutable journal of prepaid credit top-ups, per-trip basis-point deductions, and fee waivers in PHP."
+    />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
         class="p-4 border-b border-neutral-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
       >
-        <input
+        <SearchField
           v-model="searchQuery"
-          type="text"
           placeholder="Search TXN ID, reference, driver, or rail..."
-          class="w-full md:w-80 px-3 py-1.5 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+          aria-label="Search wallet ledger transactions"
+          class="md:w-80"
         />
 
         <div class="flex flex-wrap items-center gap-2">
@@ -218,11 +221,14 @@ const exportLedger = () => {
                 {{ txn.timestamp }}
               </td>
             </tr>
-            <tr v-if="paginatedTransactions.length === 0">
-              <td colspan="6" class="py-10 px-4 text-center text-xs text-neutral-500">
-                No ledger entries match the active filters.
-              </td>
-            </tr>
+            <EmptyTableRow
+              v-if="paginatedTransactions.length === 0"
+              :colspan="6"
+              title="No matching ledger entries"
+              description="No ledger entries match the active filters."
+              :show-reset="hasActiveFilters"
+              @reset="resetFilters"
+            />
           </tbody>
         </table>
       </div>
