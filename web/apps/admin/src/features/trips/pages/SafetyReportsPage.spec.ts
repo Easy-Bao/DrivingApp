@@ -15,12 +15,22 @@ describe('SafetyReportsPage', () => {
     expect(wrapper.text()).toContain('RPT-7016-409')
     expect(wrapper.text()).toContain('Driver Identity Mismatch')
 
-    const severitySelect = wrapper.findAll('select')[0]!
-    await severitySelect.setValue('standard')
+    const severityTrigger = wrapper.find('button[aria-label="Filter safety reports by severity"]')
+    await severityTrigger.trigger('click')
+    const standardOption = wrapper
+      .findAll('[role="option"]')
+      .find((opt) => opt.text().includes('Standard'))
+    expect(standardOption).toBeDefined()
+    await standardOption!.trigger('click')
     expect(wrapper.text()).toContain('RPT-7016-407')
     expect(wrapper.text()).not.toContain('RPT-7016-409')
 
-    await severitySelect.setValue('all')
+    await severityTrigger.trigger('click')
+    const allOption = wrapper
+      .findAll('[role="option"]')
+      .find((opt) => opt.text().includes('All Severities'))
+    expect(allOption).toBeDefined()
+    await allOption!.trigger('click')
     const reviewBtn = wrapper.findAll('button').find((b) => b.text().includes('Review & Moderate'))
     expect(reviewBtn).toBeDefined()
     await reviewBtn!.trigger('click')
@@ -29,8 +39,13 @@ describe('SafetyReportsPage', () => {
 
     const textarea = wrapper.find('textarea')
     await textarea.setValue('Driver verified at TODA hub; temporary flag cleared after ID check.')
-    const modalSelect = wrapper.findAll('select')[2]!
-    await modalSelect.setValue('resolved')
+    const modalTrigger = wrapper.find('button[aria-label="Updated moderation status"]')
+    await modalTrigger.trigger('click')
+    const resolvedOption = wrapper
+      .findAll('[role="option"]')
+      .find((opt) => opt.text().includes('Resolved & Action Taken'))
+    expect(resolvedOption).toBeDefined()
+    await resolvedOption!.trigger('click')
 
     const saveBtn = wrapper.findAll('button').find((b) => b.text().includes('Save Decision'))
     await saveBtn!.trigger('click')

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
 import TablePagination from '@/app/components/TablePagination.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
@@ -282,25 +283,27 @@ const exportReports = () => {
         />
 
         <div class="flex flex-wrap items-center gap-2">
-          <select
+          <BaseSelect
             v-model="severityFilter"
-            class="px-2.5 py-1.5 border border-neutral-300 rounded-sm text-xs bg-white text-neutral-900"
-          >
-            <option value="all">All Severities</option>
-            <option value="critical">Critical</option>
-            <option value="high">High</option>
-            <option value="standard">Standard</option>
-          </select>
-          <select
+            aria-label="Filter safety reports by severity"
+            :options="[
+              { label: 'All Severities', value: 'all' },
+              { label: 'Critical', value: 'critical' },
+              { label: 'High', value: 'high' },
+              { label: 'Standard', value: 'standard' },
+            ]"
+          />
+          <BaseSelect
             v-model="statusFilter"
-            class="px-2.5 py-1.5 border border-neutral-300 rounded-sm text-xs bg-white text-neutral-900"
-          >
-            <option value="all">All Statuses</option>
-            <option value="submitted">Submitted</option>
-            <option value="under_review">Under Review</option>
-            <option value="resolved">Resolved</option>
-            <option value="dismissed">Dismissed</option>
-          </select>
+            aria-label="Filter safety reports by status"
+            :options="[
+              { label: 'All Statuses', value: 'all' },
+              { label: 'Submitted', value: 'submitted' },
+              { label: 'Under Review', value: 'under_review' },
+              { label: 'Resolved', value: 'resolved' },
+              { label: 'Dismissed', value: 'dismissed' },
+            ]"
+          />
         </div>
       </div>
 
@@ -441,15 +444,17 @@ const exportReports = () => {
               <label class="block text-xs font-medium text-neutral-700 mb-1">
                 Updated Moderation Status
               </label>
-              <select
+              <BaseSelect
                 v-model="draftStatus"
-                class="w-full px-3 py-2 border border-neutral-300 rounded-sm text-xs bg-white text-neutral-900"
-              >
-                <option value="submitted">Submitted (Unassigned)</option>
-                <option value="under_review">Under Review</option>
-                <option value="resolved">Resolved &amp; Action Taken</option>
-                <option value="dismissed">Dismiss Report</option>
-              </select>
+                aria-label="Updated moderation status"
+                :full-width="true"
+                :options="[
+                  { label: 'Submitted (Unassigned)', value: 'submitted' },
+                  { label: 'Under Review', value: 'under_review' },
+                  { label: 'Resolved & Action Taken', value: 'resolved' },
+                  { label: 'Dismiss Report', value: 'dismissed' },
+                ]"
+              />
             </div>
 
             <div>

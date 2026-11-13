@@ -61,6 +61,7 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
     item: 'Cancellations & Disputes',
   },
   '/trips/sos-alerts': { section: 'Trips', sectionTo: '/trips/all', item: 'SOS Emergency Alerts' },
+  '/trips/safety-reports': { section: 'Trips', sectionTo: '/trips/all', item: 'Safety Reports' },
   '/payments/topups': {
     section: 'Payments & Wallet',
     sectionTo: '/payments/topups',
