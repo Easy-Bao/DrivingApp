@@ -1,155 +1,146 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import BaseSelect from '@/shared/components/BaseSelect.vue'
+import ToastBanner from '@/shared/components/ToastBanner.vue'
+
+export interface ReportFilterValues {
+  dateRange: 'today' | 'last-7-days' | 'last-30-days' | 'this-quarter'
+  cityZone: string
+  vehicleTier: string
+}
 
 const props = defineProps<{
   reportTitle: string
 }>()
 
 const emit = defineEmits<{
-  (e: 'export', format: 'CSV' | 'PDF' | 'Excel'): void
+  (e: 'change', filters: ReportFilterValues): void
+  (e: 'export', payload: { format: 'CSV' | 'PDF' | 'Excel'; filters: ReportFilterValues }): void
 }>()
 
-const dateRange = ref('last-30-days')
+const dateRange = ref<ReportFilterValues['dateRange']>('last-30-days')
 const cityZone = ref('all-zones')
-const vehicleType = ref('all-tiers')
-
+const vehicleTier = ref('all-tiers')
 const exportToast = ref<string | null>(null)
 
-function triggerExport(format: 'CSV' | 'PDF' | 'Excel') {
-  emit('export', format)
-  exportToast.value = `Exporting ${props.reportTitle} as ${format} (Filters: ${dateRange.value}, ${cityZone.value}, ${vehicleType.value}). Generating file...`
-  setTimeout(() => {
-    exportToast.value = null
-  }, 4000)
+const emitFilters = () => {
+  emit('change', {
+    dateRange: dateRange.value,
+    cityZone: cityZone.value,
+    vehicleTier: vehicleTier.value,
+  })
+}
+
+watch([dateRange, cityZone, vehicleTier], emitFilters, { immediate: true })
+
+const triggerExport = (format: 'CSV' | 'PDF' | 'Excel') => {
+  const filters: ReportFilterValues = {
+    dateRange: dateRange.value,
+    cityZone: cityZone.value,
+    vehicleTier: vehicleTier.value,
+  }
+  emit('export', { format, filters })
+  exportToast.value = `Prepared ${props.reportTitle} (${format}) for ${cityZone.value === 'all-zones' ? 'All Pagadian Zones' : cityZone.value}.`
 }
 </script>
 
 <template>
   <div class="space-y-3">
-    <!-- Filter Bar Card -->
+    <ToastBanner
+      v-if="exportToast"
+      :message="exportToast"
+      tone="info"
+      @dismiss="exportToast = null"
+    />
+
     <div
-      class="bg-white border border-neutral-200 p-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+      class="bg-white border border-neutral-200 p-4 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4"
     >
-      <!-- Filters: Date Range, City / Zone, Driver / Vehicle Type -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
-        <!-- Date Range Filter -->
         <div>
           <label
             class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1"
           >
             Date Range
           </label>
-          <div class="relative">
-            <Icon
-              icon="lucide:calendar"
-              class="absolute left-2.5 top-2.5 text-neutral-400 text-xs"
-            />
-            <select
-              v-model="dateRange"
-              class="w-full pl-7 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs text-neutral-800 font-medium focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
-            >
-              <option value="today">Today</option>
-              <option value="last-7-days">Last 7 Days</option>
-              <option value="last-30-days">Last 30 Days</option>
-              <option value="this-quarter">This Quarter</option>
-              <option value="year-to-date">Year to Date (YTD)</option>
-            </select>
-          </div>
+          <BaseSelect
+            v-model="dateRange"
+            :full-width="true"
+            aria-label="Filter report date range"
+            :options="[
+              { label: 'Today (PHT)', value: 'today' },
+              { label: 'Last 7 Days', value: 'last-7-days' },
+              { label: 'Last 30 Days', value: 'last-30-days' },
+              { label: 'This Quarter', value: 'this-quarter' },
+            ]"
+          />
         </div>
 
-        <!-- City / Zone Filter -->
         <div>
           <label
             class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1"
           >
-            City / Operating Zone
+            Pagadian Operating Zone
           </label>
-          <div class="relative">
-            <Icon
-              icon="lucide:map-pin"
-              class="absolute left-2.5 top-2.5 text-neutral-400 text-xs"
-            />
-            <select
-              v-model="cityZone"
-              class="w-full pl-7 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs text-neutral-800 font-medium focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
-            >
-              <option value="all-zones">All Operating Zones</option>
-              <option value="downtown-central">Downtown Central</option>
-              <option value="airport-corridor">Airport Express Corridor</option>
-              <option value="west-valley">West Valley University</option>
-              <option value="north-hills">North Residential Hills</option>
-            </select>
-          </div>
+          <BaseSelect
+            v-model="cityZone"
+            :full-width="true"
+            aria-label="Filter report operating zone"
+            :options="[
+              { label: 'All Pagadian Zones', value: 'all-zones' },
+              { label: 'Poblacion & Agora Market', value: 'poblacion' },
+              { label: 'Integrated Bus Terminal', value: 'terminal' },
+              { label: 'Dao Capitol & Gaisano', value: 'dao-capitol' },
+              { label: 'Santiago Port & Coastal', value: 'santiago-port' },
+            ]"
+          />
         </div>
 
-        <!-- Driver / Vehicle Type Filter -->
         <div>
           <label
             class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1"
           >
-            Driver / Vehicle Class
+            Taxicle Fleet Tier
           </label>
-          <div class="relative">
-            <Icon icon="lucide:car" class="absolute left-2.5 top-2.5 text-neutral-400 text-xs" />
-            <select
-              v-model="vehicleType"
-              class="w-full pl-7 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 text-xs text-neutral-800 font-medium focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
-            >
-              <option value="all-tiers">All Vehicle Types & Fleets</option>
-              <option value="economy">Economy Sedan</option>
-              <option value="comfort">Comfort</option>
-              <option value="xl-family">XL Family</option>
-              <option value="executive-black">Executive Chauffeur</option>
-              <option value="ev-only">100% Electric Vehicle (EV)</option>
-            </select>
-          </div>
+          <BaseSelect
+            v-model="vehicleTier"
+            :full-width="true"
+            aria-label="Filter report vehicle tier"
+            :options="[
+              { label: 'All Taxicle Tiers', value: 'all-tiers' },
+              { label: 'Solo Taxicle · Standard', value: 'solo-standard' },
+              { label: 'Solo Taxicle · Express', value: 'solo-express' },
+              { label: 'Electric Tricycle', value: 'etrike' },
+            ]"
+          />
         </div>
       </div>
 
-      <!-- Export Actions (CSV, PDF, Excel) -->
       <div
-        class="flex items-center space-x-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-neutral-100"
+        class="flex flex-wrap items-center gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-neutral-100"
       >
         <button
           type="button"
-          class="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold transition-colors flex items-center space-x-1.5"
+          class="px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded-none text-xs font-semibold transition-colors inline-flex items-center gap-1.5"
           @click="triggerExport('CSV')"
         >
-          <Icon icon="lucide:file-text" class="text-neutral-500" />
-          <span>CSV</span>
+          <Icon icon="lucide:file-text" class="text-neutral-500 h-3.5 w-3.5" aria-hidden="true" />
+          <span>Download CSV</span>
         </button>
         <button
           type="button"
-          class="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold transition-colors flex items-center space-x-1.5"
-          @click="triggerExport('PDF')"
-        >
-          <Icon icon="lucide:file-down" class="text-rose-600" />
-          <span>PDF</span>
-        </button>
-        <button
-          type="button"
-          class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors flex items-center space-x-1.5"
+          class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors inline-flex items-center gap-1.5"
           @click="triggerExport('Excel')"
         >
-          <Icon icon="lucide:file-spreadsheet" class="text-emerald-400" />
-          <span>Excel</span>
+          <Icon
+            icon="lucide:file-spreadsheet"
+            class="text-emerald-400 h-3.5 w-3.5"
+            aria-hidden="true"
+          />
+          <span>Export Spreadsheet</span>
         </button>
       </div>
-    </div>
-
-    <!-- Export Notification Toast -->
-    <div
-      v-if="exportToast"
-      class="p-3.5 bg-neutral-900 text-white text-xs font-medium flex items-center justify-between shadow-lg"
-    >
-      <div class="flex items-center space-x-2">
-        <Icon icon="lucide:download-cloud" class="text-emerald-400 text-base animate-bounce" />
-        <span>{{ exportToast }}</span>
-      </div>
-      <button type="button" @click="exportToast = null">
-        <Icon icon="lucide:x" />
-      </button>
     </div>
   </div>
 </template>
