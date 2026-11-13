@@ -6,7 +6,7 @@ import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import ToastBanner from '@/shared/components/ToastBanner.vue'
 
-interface AdminOperator {
+interface OperatorAccount {
   id: string
   name: string
   email: string
@@ -18,35 +18,35 @@ interface AdminOperator {
 }
 
 const availableRoles = [
-  'Super Administrator',
+  'Root Operator',
   'Dispatch & Safety Supervisor',
   'Treasury & Settlements Officer',
   'Trust & Safety Lead',
 ]
 
-const adminUsers = ref<AdminOperator[]>([
+const operators = ref<OperatorAccount[]>([
   {
-    id: 'ADM-001',
+    id: 'OPS-001',
     name: 'Operations Control Lead',
     email: 'ops@easyride.ph',
-    role: 'Super Administrator',
+    role: 'Root Operator',
     department: 'Executive Operations',
     mfaEnabled: true,
     lastActive: 'Active now',
     status: 'Active',
   },
   {
-    id: 'ADM-002',
+    id: 'OPS-002',
     name: 'Marisol Lim',
     email: 'marisol.lim@easyride.ph',
     role: 'Dispatch & Safety Supervisor',
-    department: 'Pagadian Fleet Dispatch',
+    department: 'Fleet Dispatch',
     mfaEnabled: true,
     lastActive: '12 mins ago',
     status: 'Active',
   },
   {
-    id: 'ADM-003',
+    id: 'OPS-003',
     name: 'Rafael Bautista',
     email: 'rafael.bautista@easyride.ph',
     role: 'Treasury & Settlements Officer',
@@ -56,7 +56,7 @@ const adminUsers = ref<AdminOperator[]>([
     status: 'Active',
   },
   {
-    id: 'ADM-004',
+    id: 'OPS-004',
     name: 'Kristine Villanueva',
     email: 'kristine.v@easyride.ph',
     role: 'Trust & Safety Lead',
@@ -75,18 +75,18 @@ const showInviteModal = ref(false)
 const inviteForm = ref({
   name: '',
   email: '',
-  department: 'Pagadian Fleet Dispatch',
+  department: 'Fleet Dispatch',
   role: availableRoles[1]!,
   mfaEnabled: true,
 })
 
-const pendingStatusTarget = ref<AdminOperator | null>(null)
+const pendingStatusTarget = ref<OperatorAccount | null>(null)
 const statusReason = ref('')
 
 const filteredUsers = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return adminUsers.value
-  return adminUsers.value.filter(
+  if (!q) return operators.value
+  return operators.value.filter(
     (user) =>
       user.name.toLowerCase().includes(q) ||
       user.email.toLowerCase().includes(q) ||
@@ -96,14 +96,14 @@ const filteredUsers = computed(() => {
 })
 
 const activeCount = computed(
-  () => adminUsers.value.filter((user) => user.status === 'Active').length,
+  () => operators.value.filter((user) => user.status === 'Active').length,
 )
 
 const openInviteModal = () => {
   inviteForm.value = {
     name: '',
     email: '',
-    department: 'Pagadian Fleet Dispatch',
+    department: 'Fleet Dispatch',
     role: availableRoles[1]!,
     mfaEnabled: true,
   }
@@ -113,12 +113,12 @@ const openInviteModal = () => {
 const submitInvite = () => {
   if (!inviteForm.value.name.trim() || !inviteForm.value.email.includes('@')) {
     toastTone.value = 'error'
-    toastMessage.value = 'Provide valid operator name and work email address.'
+    toastMessage.value = 'Valid name and work email required.'
     return
   }
-  const nextNumber = adminUsers.value.length + 1
-  adminUsers.value.push({
-    id: `ADM-${String(nextNumber).padStart(3, '0')}`,
+  const nextNumber = operators.value.length + 1
+  operators.value.push({
+    id: `OPS-${String(nextNumber).padStart(3, '0')}`,
     name: inviteForm.value.name.trim(),
     email: inviteForm.value.email.trim().toLowerCase(),
     role: inviteForm.value.role,
@@ -129,21 +129,21 @@ const submitInvite = () => {
   })
   showInviteModal.value = false
   toastTone.value = 'success'
-  toastMessage.value = `Provisioned operator account for ${inviteForm.value.name.trim()}.`
+  toastMessage.value = `Invited ${inviteForm.value.name.trim()}.`
 }
 
-const updateRole = (operator: AdminOperator, newRole: string) => {
+const updateRole = (operator: OperatorAccount, newRole: string) => {
   operator.role = newRole
   toastTone.value = 'success'
-  toastMessage.value = `${operator.name} reassigned to ${newRole}.`
+  toastMessage.value = `${operator.name} assigned to ${newRole}.`
 }
 
-const toggleMfa = (operator: AdminOperator) => {
+const toggleMfa = (operator: OperatorAccount) => {
   operator.mfaEnabled = !operator.mfaEnabled
   toastTone.value = operator.mfaEnabled ? 'success' : 'warning'
   toastMessage.value = operator.mfaEnabled
-    ? `Hardware MFA enforced for ${operator.name}.`
-    : `Hardware MFA reset requested for ${operator.name}.`
+    ? `MFA enabled for ${operator.name}.`
+    : `MFA reset for ${operator.name}.`
 }
 
 const confirmStatusToggle = () => {
@@ -152,12 +152,12 @@ const confirmStatusToggle = () => {
   if (target.status === 'Suspended') {
     target.status = 'Active'
     toastTone.value = 'success'
-    toastMessage.value = `${target.name} restored to Active operator status.`
+    toastMessage.value = `${target.name} restored.`
   } else {
     if (!statusReason.value.trim()) return
     target.status = 'Suspended'
     toastTone.value = 'warning'
-    toastMessage.value = `${target.name} session suspended (${statusReason.value.trim()}).`
+    toastMessage.value = `${target.name} suspended.`
   }
   pendingStatusTarget.value = null
   statusReason.value = ''
@@ -166,52 +166,52 @@ const confirmStatusToggle = () => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-          Admin Users &amp; Operators
-        </h1>
-        <p class="text-sm text-neutral-500 mt-1">
-          Manage Pagadian operations staff accounts, RBAC role assignments, and MFA enforcement.
-        </p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <RouterLink
-          to="/users/roles"
-          class="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 rounded-md text-xs font-semibold transition-colors"
-        >
-          Roles &amp; RBAC Matrix →
-        </RouterLink>
-        <button
-          type="button"
-          @click="openInviteModal"
-          class="px-3.5 py-2 bg-neutral-900 text-white hover:bg-neutral-800 rounded-md text-xs font-semibold transition-colors cursor-pointer"
-        >
-          + Add Operator
-        </button>
+        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Operators</h1>
+        <p class="text-sm text-neutral-500 mt-1">Staff accounts, roles, and MFA.</p>
       </div>
     </div>
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 
-    <div class="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
-        class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+        class="p-4 border-b border-neutral-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3"
       >
-        <h2 class="font-bold text-sm text-neutral-900">
-          Active Staff Administrators ({{ activeCount }})
-        </h2>
-        <div class="relative w-full sm:w-64">
-          <Icon
-            icon="lucide:search"
-            class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm"
-          />
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search staff name, email, role..."
-            class="w-full pl-9 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
-          />
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="relative w-full sm:w-64">
+            <Icon
+              icon="lucide:search"
+              class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm"
+            />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search name, email, role..."
+              class="w-full pl-9 pr-3 py-1.5 bg-white border border-neutral-200 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+            />
+          </div>
+          <span
+            class="px-2.5 py-1.5 bg-neutral-50 border border-neutral-300 text-xs font-semibold tabular-nums text-neutral-800"
+          >
+            Active: {{ activeCount }}
+          </span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <RouterLink
+            to="/users/roles"
+            class="px-3.5 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-900 text-xs font-semibold transition-colors"
+          >
+            Staff Roles
+          </RouterLink>
+          <button
+            type="button"
+            class="px-3.5 py-1.5 bg-neutral-900 text-white hover:bg-neutral-800 text-xs font-semibold transition-colors cursor-pointer"
+            @click="openInviteModal"
+          >
+            + Invite
+          </button>
         </div>
       </div>
 
@@ -223,11 +223,11 @@ const confirmStatusToggle = () => {
             <tr>
               <th class="py-3 px-4">Operator</th>
               <th class="py-3 px-4">Department</th>
-              <th class="py-3 px-4">Assigned Role</th>
-              <th class="py-3 px-4">MFA Security</th>
-              <th class="py-3 px-4">Last Activity</th>
+              <th class="py-3 px-4">Role</th>
+              <th class="py-3 px-4">MFA</th>
+              <th class="py-3 px-4">Activity</th>
               <th class="py-3 px-4">Status</th>
-              <th class="py-3 px-4 text-right">Actions</th>
+              <th class="py-3 px-4 text-right">Action</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100">
@@ -244,7 +244,7 @@ const confirmStatusToggle = () => {
               <td class="py-3 px-4">
                 <BaseSelect
                   :model-value="user.role"
-                  :disabled="user.id === 'ADM-001'"
+                  :disabled="user.id === 'OPS-001'"
                   aria-label="Assign operator role"
                   :full-width="true"
                   :options="availableRoles"
@@ -254,19 +254,19 @@ const confirmStatusToggle = () => {
               <td class="py-3 px-4">
                 <button
                   type="button"
-                  @click="toggleMfa(user)"
-                  class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold cursor-pointer"
+                  class="inline-flex items-center space-x-1 px-2 py-0.5 text-[10px] font-semibold cursor-pointer border"
                   :class="
                     user.mfaEnabled
-                      ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                      : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                      ? 'bg-neutral-900 text-white border-neutral-900 hover:bg-neutral-800'
+                      : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100'
                   "
+                  @click="toggleMfa(user)"
                 >
                   <Icon
                     :icon="user.mfaEnabled ? 'lucide:shield-check' : 'lucide:shield-alert'"
                     class="text-xs"
                   />
-                  <span>{{ user.mfaEnabled ? 'Hardware MFA' : 'MFA Pending' }}</span>
+                  <span>{{ user.mfaEnabled ? 'Hardware MFA' : 'Pending' }}</span>
                 </button>
               </td>
               <td class="py-3 px-4 text-neutral-500">{{ user.lastActive }}</td>
@@ -278,24 +278,19 @@ const confirmStatusToggle = () => {
               </td>
               <td class="py-3 px-4 text-right">
                 <button
-                  v-if="user.id !== 'ADM-001'"
+                  v-if="user.id !== 'OPS-001'"
                   type="button"
+                  class="text-xs font-semibold text-neutral-700 hover:text-neutral-900 cursor-pointer"
                   @click="((statusReason = ''), (pendingStatusTarget = user))"
-                  class="text-xs font-semibold cursor-pointer"
-                  :class="
-                    user.status === 'Suspended'
-                      ? 'text-emerald-700 hover:text-emerald-900'
-                      : 'text-rose-600 hover:text-rose-800'
-                  "
                 >
                   {{ user.status === 'Suspended' ? 'Reactivate' : 'Suspend' }}
                 </button>
-                <span v-else class="text-[11px] font-mono text-neutral-400">Primary Root</span>
+                <span v-else class="text-[11px] font-mono text-neutral-400">Root</span>
               </td>
             </tr>
             <tr v-if="filteredUsers.length === 0">
               <td colspan="7" class="py-8 text-center text-xs text-neutral-500">
-                No staff operators match your search filter.
+                No operators match your filter.
               </td>
             </tr>
           </tbody>
@@ -312,16 +307,16 @@ const confirmStatusToggle = () => {
         @click.self="showInviteModal = false"
       >
         <form
-          class="bg-white rounded-lg border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4"
+          class="bg-white border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4"
           @submit.prevent="submitInvite"
         >
           <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
-            <h3 class="text-base font-bold text-neutral-900">Provision Staff Operator</h3>
+            <h3 class="text-base font-bold text-neutral-900">Invite Operator</h3>
             <button
               type="button"
               aria-label="Close modal"
-              @click="showInviteModal = false"
               class="text-neutral-400 hover:text-neutral-700 cursor-pointer"
+              @click="showInviteModal = false"
             >
               <Icon icon="lucide:x" class="w-4 h-4" />
             </button>
@@ -334,20 +329,18 @@ const confirmStatusToggle = () => {
                 v-model="inviteForm.name"
                 type="text"
                 required
-                placeholder="e.g. Marco Dela Cruz"
-                class="w-full px-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-900"
+                placeholder="Marco Dela Cruz"
+                class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
               />
             </div>
             <div>
-              <label class="block font-semibold text-neutral-700 mb-1"
-                >Work Email (@easyride.ph)</label
-              >
+              <label class="block font-semibold text-neutral-700 mb-1">Work Email</label>
               <input
                 v-model="inviteForm.email"
                 type="email"
                 required
                 placeholder="marco.delacruz@easyride.ph"
-                class="w-full px-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-900"
+                class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
               />
             </div>
             <div>
@@ -356,37 +349,37 @@ const confirmStatusToggle = () => {
                 v-model="inviteForm.department"
                 type="text"
                 required
-                class="w-full px-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-900"
+                class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
               />
             </div>
             <div>
-              <label class="block font-semibold text-neutral-700 mb-1">RBAC Role</label>
+              <label class="block font-semibold text-neutral-700 mb-1">Role</label>
               <BaseSelect
                 v-model="inviteForm.role"
-                aria-label="Select RBAC role"
+                aria-label="Select role"
                 :full-width="true"
                 :options="availableRoles"
               />
             </div>
             <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer pt-1">
               <input v-model="inviteForm.mfaEnabled" type="checkbox" class="accent-neutral-900" />
-              <span>Require hardware FIDO2 / TOTP on first sign-in</span>
+              <span>Require MFA on first sign-in</span>
             </label>
           </div>
 
           <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
             <button
               type="button"
+              class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
               @click="showInviteModal = false"
-              class="px-4 py-2 bg-white border border-neutral-200 rounded-md text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              class="px-4 py-2 bg-neutral-900 text-white rounded-md text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+              class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
             >
-              Send Operator Invite
+              Send Invite
             </button>
           </div>
         </form>
@@ -396,23 +389,17 @@ const confirmStatusToggle = () => {
     <ConfirmDialog
       :open="Boolean(pendingStatusTarget)"
       v-model:reason="statusReason"
-      :title="
-        pendingStatusTarget?.status === 'Suspended'
-          ? 'Restore Operator Access'
-          : 'Suspend Operator Access'
-      "
+      :title="pendingStatusTarget?.status === 'Suspended' ? 'Restore Operator' : 'Suspend Operator'"
       :description="
         pendingStatusTarget?.status === 'Suspended'
-          ? `Re-enable console authentication for ${pendingStatusTarget?.name}.`
-          : `Immediately revoke console session tokens for ${pendingStatusTarget?.name}.`
+          ? `Restore console access for ${pendingStatusTarget?.name}.`
+          : `Revoke console session access for ${pendingStatusTarget?.name}.`
       "
-      :confirm-label="
-        pendingStatusTarget?.status === 'Suspended' ? 'Restore Operator' : 'Suspend Operator'
-      "
-      :tone="pendingStatusTarget?.status === 'Suspended' ? 'emerald' : 'rose'"
+      :confirm-label="pendingStatusTarget?.status === 'Suspended' ? 'Restore' : 'Suspend'"
+      tone="neutral"
       :require-reason="pendingStatusTarget?.status !== 'Suspended'"
-      reason-label="Audit justification (mandatory)"
-      reason-placeholder="Specify access revocation reason or staff transition..."
+      reason-label="Reason"
+      reason-placeholder="Enter access change reason..."
       @cancel="pendingStatusTarget = null"
       @confirm="confirmStatusToggle"
     />

@@ -39,10 +39,10 @@ export const navigationGroups: SidebarNavGroup[] = [
       },
       { id: 'riders', label: 'Riders', icon: 'lucide:user', path: '/users/riders' },
       {
-        id: 'admin-users',
+        id: 'operators',
         label: 'Operators',
         icon: 'lucide:user-cog',
-        path: '/users/admin-users',
+        path: '/users/operators',
       },
       {
         id: 'roles',

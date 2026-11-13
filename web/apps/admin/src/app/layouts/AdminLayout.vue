@@ -27,7 +27,7 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
     item: 'Applications',
   },
   '/users/riders': { section: 'Users', sectionTo: '/users/drivers', item: 'Riders' },
-  '/users/admin-users': {
+  '/users/operators': {
     section: 'Users',
     sectionTo: '/users/drivers',
     item: 'Operators',
@@ -192,47 +192,42 @@ const routeMap: Record<string, { section: string; sectionTo: string; item: strin
   },
 }
 
-const currentBreadcrumb = computed(() => {
+interface BreadcrumbItem {
+  label: string
+  to?: string
+}
+
+const breadcrumbs = computed<BreadcrumbItem[]>(() => {
   const match = routeMap[route.path]
-  if (match) return match
-
-  if (route.path.startsWith('/payments/topups/')) {
-    const id = (route.params.id as string) || 'Details'
-    return {
-      section: 'Payments',
-      sectionTo: '/payments/topups',
-      item: `Top-Up #${id}`,
+  if (match) {
+    if (match.item === match.section) {
+      return [{ label: match.section }]
     }
-  }
-
-  if (route.path.startsWith('/payments/settlements/')) {
-    const id = (route.params.id as string) || 'Details'
-    return {
-      section: 'Payments',
-      sectionTo: '/payments/settlements',
-      item: `Settlement #${id}`,
-    }
-  }
-
-  if (route.path.startsWith('/users/driver-applications/')) {
-    const id = (route.params.id as string) || 'Details'
-    return {
-      section: 'Users',
-      sectionTo: '/users/driver-applications',
-      item: `Application #${id}`,
-    }
+    return [{ label: match.section, to: match.sectionTo }, { label: match.item }]
   }
 
   const parts = route.path.split('/').filter(Boolean)
+  if (parts.length >= 3) {
+    const parentPath = `/${parts[0]}/${parts[1]}`
+    const parentMatch = routeMap[parentPath]
+    const detailId = (route.params.id as string) || parts.slice(2).join('/')
+    if (parentMatch) {
+      return [
+        { label: parentMatch.section, to: parentMatch.sectionTo },
+        { label: parentMatch.item, to: parentPath },
+        { label: `#${detailId}` },
+      ]
+    }
+  }
+
   const sec = parts[0] ? parts[0].charAt(0).toUpperCase() + parts[0].slice(1) : 'Dashboard'
   const itm = parts[1]
     ? parts[1].replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
     : 'Overview'
-  return {
-    section: sec,
-    sectionTo: `/${parts[0] || 'dashboard/overview'}`,
-    item: itm,
+  if (sec === itm) {
+    return [{ label: sec }]
   }
+  return [{ label: sec, to: `/${parts[0] || 'dashboard/overview'}` }, { label: itm }]
 })
 </script>
 
@@ -265,39 +260,29 @@ const currentBreadcrumb = computed(() => {
             <RouterLink
               to="/dashboard/overview"
               class="text-neutral-400 hover:text-neutral-900 transition-colors flex items-center shrink-0"
-              title="Dashboard Overview"
-              aria-label="Dashboard Overview"
+              title="Overview"
+              aria-label="Overview"
             >
               <Icon icon="lucide:home" class="text-sm" aria-hidden="true" />
             </RouterLink>
 
-            <Icon
-              icon="lucide:chevron-right"
-              class="text-[11px] text-neutral-300 shrink-0"
-              aria-hidden="true"
-            />
-
-            <RouterLink
-              :to="currentBreadcrumb.sectionTo"
-              class="font-semibold text-neutral-500 hover:text-neutral-900 transition-colors truncate"
-            >
-              {{ currentBreadcrumb.section }}
-            </RouterLink>
-
-            <Icon
-              v-if="currentBreadcrumb.item !== currentBreadcrumb.section"
-              icon="lucide:chevron-right"
-              class="text-[11px] text-neutral-300 shrink-0"
-              aria-hidden="true"
-            />
-
-            <span
-              v-if="currentBreadcrumb.item !== currentBreadcrumb.section"
-              class="font-bold text-neutral-900 truncate"
-              aria-current="page"
-            >
-              {{ currentBreadcrumb.item }}
-            </span>
+            <template v-for="(crumb, index) in breadcrumbs" :key="crumb.label + index">
+              <Icon
+                icon="lucide:chevron-right"
+                class="text-[11px] text-neutral-300 shrink-0"
+                aria-hidden="true"
+              />
+              <RouterLink
+                v-if="crumb.to && index < breadcrumbs.length - 1"
+                :to="crumb.to"
+                class="font-semibold text-neutral-500 hover:text-neutral-900 transition-colors truncate"
+              >
+                {{ crumb.label }}
+              </RouterLink>
+              <span v-else class="font-bold text-neutral-900 truncate" aria-current="page">
+                {{ crumb.label }}
+              </span>
+            </template>
           </nav>
         </div>
       </header>

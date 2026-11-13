@@ -105,7 +105,7 @@ describe('router security guards', () => {
     await router.push('/documents/verification')
     expect(router.currentRoute.value.name).toBe('documents-verification')
 
-    await router.push('/users/admin-users')
+    await router.push('/users/operators')
     expect(router.currentRoute.value.name).toBe('unauthorized')
   })
 })

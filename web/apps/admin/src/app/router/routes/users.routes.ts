@@ -24,9 +24,9 @@ export const usersRoutes: RouteRecordRaw[] = [
     component: () => import('@/features/users/pages/RidersPage.vue'),
   },
   {
-    path: '/users/admin-users',
-    name: 'users-admin-users',
-    component: () => import('@/features/users/pages/AdminUsersPage.vue'),
+    path: '/users/operators',
+    name: 'users-operators',
+    component: () => import('@/features/users/pages/OperatorsPage.vue'),
   },
   {
     path: '/users/roles',
