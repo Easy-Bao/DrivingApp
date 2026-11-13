@@ -22,7 +22,7 @@ interface LiveDispatchItem {
   zone: string
 }
 
-const availablePagadianDrivers = [
+const availableDrivers = [
   'Rodelio Cruz (1284-ND)',
   'Danilo Mendoza (4912-NC)',
   'Reynaldo Garcia (9021-ND)',
@@ -94,7 +94,7 @@ const toastMessage = ref<string | null>(null)
 const editingZone = ref<DispatchZone | null>(null)
 const selectedSurge = ref('1.0x')
 const assigningDispatch = ref<LiveDispatchItem | null>(null)
-const selectedDriver = ref(availablePagadianDrivers[0]!)
+const selectedDriver = ref(availableDrivers[0]!)
 
 const openSurgeModal = (zone: DispatchZone) => {
   editingZone.value = zone
@@ -110,7 +110,7 @@ const applySurgeOverride = () => {
 
 const openAssignModal = (dispatch: LiveDispatchItem) => {
   assigningDispatch.value = dispatch
-  selectedDriver.value = availablePagadianDrivers[0]!
+  selectedDriver.value = availableDrivers[0]!
 }
 
 const confirmDriverAssignment = () => {
@@ -126,12 +126,9 @@ const confirmDriverAssignment = () => {
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-        Real-Time Dispatch Radar
-      </h1>
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">Live Dispatch</h1>
       <p class="text-sm text-neutral-500 mt-1">
-        Monitor Pagadian TODA zone supply density, adjust temporary surge caps, and manually assign
-        unserved trips.
+        Monitor zone supply, adjust surge caps, and assign trips.
       </p>
     </div>
 
@@ -141,17 +138,17 @@ const confirmDriverAssignment = () => {
       <div
         v-for="zone in activeZones"
         :key="zone.name"
-        class="bg-white rounded-lg p-4 border border-neutral-200 space-y-3"
+        class="bg-white p-4 border border-neutral-200 space-y-3"
       >
         <div class="flex items-center justify-between gap-2">
           <span class="font-bold text-xs text-neutral-900 truncate">{{ zone.name }}</span>
           <button
             type="button"
             @click="openSurgeModal(zone)"
-            class="px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors"
+            class="px-2 py-0.5 text-[10px] font-bold cursor-pointer transition-colors"
             :class="
               zone.surge !== '1.0x'
-                ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                ? 'bg-neutral-900 text-white hover:bg-neutral-800'
                 : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
             "
           >
@@ -179,10 +176,14 @@ const confirmDriverAssignment = () => {
       </div>
     </div>
 
-    <div class="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
-        <h2 class="font-bold text-sm text-neutral-900">Active Real-Time Dispatches</h2>
-        <span class="text-xs text-neutral-400">Pagadian TODA live telemetry stream</span>
+        <h2 class="font-bold text-sm text-neutral-900">Active Dispatches</h2>
+        <span
+          class="px-2.5 py-1 bg-neutral-50 border border-neutral-300 text-[11px] font-semibold text-neutral-800 tabular-nums"
+        >
+          Live: {{ liveDispatches.length }}
+        </span>
       </div>
 
       <div class="overflow-x-auto">
@@ -193,8 +194,8 @@ const confirmDriverAssignment = () => {
             <tr>
               <th class="py-3 px-4">Dispatch ID</th>
               <th class="py-3 px-4">Passenger</th>
-              <th class="py-3 px-4">Matched Driver</th>
-              <th class="py-3 px-4">Pagadian Zone</th>
+              <th class="py-3 px-4">Driver</th>
+              <th class="py-3 px-4">Zone</th>
               <th class="py-3 px-4">Pickup ETA</th>
               <th class="py-3 px-4">Status</th>
               <th class="py-3 px-4 text-right">Action</th>
@@ -221,7 +222,7 @@ const confirmDriverAssignment = () => {
                 <button
                   type="button"
                   @click="openAssignModal(d)"
-                  class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer"
+                  class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
                 >
                   {{ d.driver === 'Unassigned' ? 'Assign Driver' : 'Reassign' }}
                 </button>
@@ -241,7 +242,7 @@ const confirmDriverAssignment = () => {
         @click.self="editingZone = null"
       >
         <form
-          class="bg-white rounded-lg border border-neutral-200 shadow-2xl w-full max-w-sm p-6 space-y-4"
+          class="bg-white border border-neutral-200 shadow-2xl w-full max-w-sm p-6 space-y-4"
           @submit.prevent="applySurgeOverride"
         >
           <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
@@ -269,13 +270,13 @@ const confirmDriverAssignment = () => {
             <button
               type="button"
               @click="editingZone = null"
-              class="px-3.5 py-1.5 bg-white border border-neutral-200 rounded-md text-xs font-semibold text-neutral-700 cursor-pointer"
+              class="px-3.5 py-1.5 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              class="px-3.5 py-1.5 bg-neutral-900 text-white rounded-md text-xs font-semibold cursor-pointer"
+              class="px-3.5 py-1.5 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
             >
               Apply Surge
             </button>
@@ -293,7 +294,7 @@ const confirmDriverAssignment = () => {
         @click.self="assigningDispatch = null"
       >
         <form
-          class="bg-white rounded-lg border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4"
+          class="bg-white border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4"
           @submit.prevent="confirmDriverAssignment"
         >
           <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
@@ -315,25 +316,25 @@ const confirmDriverAssignment = () => {
                 assigningDispatch.zone
               }})
             </div>
-            <label class="block text-neutral-500 pt-1">Select Active Pagadian Taxicle Unit</label>
+            <label class="block text-neutral-500 pt-1">Select Driver Unit</label>
             <BaseSelect
               v-model="selectedDriver"
               aria-label="Select replacement driver"
               :full-width="true"
-              :options="availablePagadianDrivers"
+              :options="availableDrivers"
             />
           </div>
           <div class="flex items-center justify-end gap-2 pt-2">
             <button
               type="button"
               @click="assigningDispatch = null"
-              class="px-3.5 py-1.5 bg-white border border-neutral-200 rounded-md text-xs font-semibold text-neutral-700 cursor-pointer"
+              class="px-3.5 py-1.5 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              class="px-3.5 py-1.5 bg-neutral-900 text-white rounded-md text-xs font-semibold cursor-pointer"
+              class="px-3.5 py-1.5 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
             >
               Dispatch Driver
             </button>

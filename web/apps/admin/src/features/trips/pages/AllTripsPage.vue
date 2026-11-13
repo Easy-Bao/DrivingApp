@@ -182,54 +182,41 @@ const handleExport = () => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-          Trip Registry &amp; History
-        </h1>
-        <p class="text-sm text-neutral-500 mt-1">
-          Complete log of Pagadian Solo Taxicle rides, bidding fares, routes, and cash settlement
-          statuses.
-        </p>
-      </div>
-      <button
-        type="button"
-        @click="handleExport"
-        class="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-white border border-neutral-200 rounded-md text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
-      >
-        <Icon icon="lucide:download" class="w-4 h-4" />
-        <span>Export CSV</span>
-      </button>
+    <div>
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">All Trips</h1>
+      <p class="text-sm text-neutral-500 mt-1">
+        Taxicle trip records, bidding fares, and settlement status.
+      </p>
     </div>
 
     <ToastBanner :message="toastMessage" tone="success" @dismiss="toastMessage = null" />
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="bg-white rounded-lg p-4 border border-neutral-200">
-        <span class="text-xs text-neutral-500 font-medium">Completed Sample</span>
+      <div class="bg-white p-4 border border-neutral-200">
+        <span class="text-xs text-neutral-500 font-medium">Completed</span>
         <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
           {{ trips.filter((t) => t.status === 'Completed').length }}
         </div>
       </div>
-      <div class="bg-white rounded-lg p-4 border border-neutral-200">
-        <span class="text-xs text-neutral-500 font-medium">Active / Dispatching</span>
-        <div class="text-xl font-bold tabular-nums text-emerald-600 mt-1">
+      <div class="bg-white p-4 border border-neutral-200">
+        <span class="text-xs text-neutral-500 font-medium">Active</span>
+        <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
           {{ trips.filter((t) => t.status === 'In Progress' || t.status === 'Dispatching').length }}
         </div>
       </div>
-      <div class="bg-white rounded-lg p-4 border border-neutral-200">
-        <span class="text-xs text-neutral-500 font-medium">Avg Agreed Fare</span>
+      <div class="bg-white p-4 border border-neutral-200">
+        <span class="text-xs text-neutral-500 font-medium">Avg Fare</span>
         <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
           {{ formatPhp(averageFare) }}
         </div>
       </div>
-      <div class="bg-white rounded-lg p-4 border border-neutral-200">
-        <span class="text-xs text-neutral-500 font-medium">Platform Completion</span>
-        <div class="text-xl font-bold tabular-nums text-blue-600 mt-1">96.4%</div>
+      <div class="bg-white p-4 border border-neutral-200">
+        <span class="text-xs text-neutral-500 font-medium">Completion Rate</span>
+        <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">96.4%</div>
       </div>
     </div>
 
-    <div class="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
         class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
       >
@@ -242,20 +229,30 @@ const handleExport = () => {
             v-model="searchQuery"
             type="text"
             placeholder="Search trip ID, rider, driver, barangay..."
-            class="w-full pl-9 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+            class="w-full pl-9 pr-3 py-1.5 bg-white border border-neutral-200 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
           />
         </div>
-        <BaseSelect
-          v-model="filterStatus"
-          aria-label="Filter trips by status"
-          :options="[
-            { label: 'All Statuses', value: 'all' },
-            { label: 'Completed', value: 'Completed' },
-            { label: 'In Progress', value: 'In Progress' },
-            { label: 'Dispatching', value: 'Dispatching' },
-            { label: 'Cancelled', value: 'Cancelled' },
-          ]"
-        />
+        <div class="flex items-center gap-2">
+          <BaseSelect
+            v-model="filterStatus"
+            aria-label="Filter trips by status"
+            :options="[
+              { label: 'All Statuses', value: 'all' },
+              { label: 'Completed', value: 'Completed' },
+              { label: 'In Progress', value: 'In Progress' },
+              { label: 'Dispatching', value: 'Dispatching' },
+              { label: 'Cancelled', value: 'Cancelled' },
+            ]"
+          />
+          <button
+            type="button"
+            @click="handleExport"
+            class="inline-flex items-center justify-center space-x-1.5 px-3 py-1.5 bg-white border border-neutral-300 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
+          >
+            <Icon icon="lucide:download" class="w-3.5 h-3.5" />
+            <span>Export</span>
+          </button>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
@@ -267,8 +264,8 @@ const handleExport = () => {
               <th class="py-3 px-4">Trip ID</th>
               <th class="py-3 px-4">Passenger</th>
               <th class="py-3 px-4">Driver &amp; Unit</th>
-              <th class="py-3 px-4">Pagadian Route</th>
-              <th class="py-3 px-4">Agreed Fare</th>
+              <th class="py-3 px-4">Route</th>
+              <th class="py-3 px-4">Fare</th>
               <th class="py-3 px-4">Status</th>
               <th class="py-3 px-4 text-right">Details</th>
             </tr>
@@ -335,9 +332,7 @@ const handleExport = () => {
         aria-modal="true"
         @click.self="selectedTrip = null"
       >
-        <div
-          class="bg-white rounded-lg border border-neutral-200 shadow-2xl w-full max-w-lg p-6 space-y-4"
-        >
+        <div class="bg-white border border-neutral-200 shadow-2xl w-full max-w-lg p-6 space-y-4">
           <div class="flex items-start justify-between border-b border-neutral-100 pb-3">
             <div>
               <span class="font-mono text-[11px] text-neutral-400">{{
@@ -358,16 +353,16 @@ const handleExport = () => {
           </div>
 
           <div class="space-y-3 text-xs">
-            <div class="p-3 bg-neutral-50 border border-neutral-200 rounded-md space-y-2">
+            <div class="p-3 bg-neutral-50 border border-neutral-200 space-y-2">
               <div class="flex items-start space-x-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 mt-1 shrink-0" />
+                <span class="w-2 h-2 bg-emerald-600 mt-1 shrink-0" />
                 <div>
-                  <div class="text-[11px] text-neutral-500">Pickup Barangay</div>
+                  <div class="text-[11px] text-neutral-500">Pickup</div>
                   <div class="font-semibold text-neutral-900">{{ selectedTrip.pickup }}</div>
                 </div>
               </div>
               <div class="flex items-start space-x-2">
-                <span class="w-2 h-2 rounded-full bg-neutral-900 mt-1 shrink-0" />
+                <span class="w-2 h-2 bg-neutral-900 mt-1 shrink-0" />
                 <div>
                   <div class="text-[11px] text-neutral-500">Dropoff Destination</div>
                   <div class="font-semibold text-neutral-900">{{ selectedTrip.dropoff }}</div>
@@ -395,7 +390,7 @@ const handleExport = () => {
                 </div>
               </div>
               <div>
-                <div class="text-neutral-500">Agreed Fare (15% Commission)</div>
+                <div class="text-neutral-500">Fare</div>
                 <div class="font-mono font-bold text-neutral-900">
                   {{ formatPhp(selectedTrip.fare) }} ({{ selectedTrip.paymentMethod }})
                 </div>
@@ -407,14 +402,14 @@ const handleExport = () => {
             <RouterLink
               to="/payments/settlements"
               @click="selectedTrip = null"
-              class="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-md text-xs font-semibold"
+              class="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold"
             >
-              Inspect Cash Settlements
+              Settlements
             </RouterLink>
             <button
               type="button"
               @click="selectedTrip = null"
-              class="px-4 py-2 bg-neutral-900 text-white rounded-md text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+              class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
             >
               Close
             </button>

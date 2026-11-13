@@ -14,7 +14,7 @@ type CancellationResponsibility =
   | 'no_fault'
   | 'safety_related'
   | 'pending_review'
-  | 'admin_override'
+  | 'operator_override'
 
 interface CancellationCase {
   id: string
@@ -25,11 +25,7 @@ interface CancellationCase {
   responsibility: CancellationResponsibility
   cancellationFee: number
   feeChargedTo: string
-  disputeStatus:
-    | 'Under Admin Review'
-    | 'Resolved (Fee Upheld)'
-    | 'Fee Waived & Overridden'
-    | 'Closed'
+  disputeStatus: 'Under Review' | 'Resolved (Fee Upheld)' | 'Fee Waived & Overridden' | 'Closed'
   timestamp: string
 }
 
@@ -43,7 +39,7 @@ const cancellations = ref<CancellationCase[]>([
     responsibility: 'pending_review',
     cancellationFee: 15.0,
     feeChargedTo: 'Passenger',
-    disputeStatus: 'Under Admin Review',
+    disputeStatus: 'Under Review',
     timestamp: '2 hours ago',
   },
   {
@@ -73,13 +69,13 @@ const cancellations = ref<CancellationCase[]>([
 ])
 
 const searchQuery = ref('')
-const statusFilter = ref<'ALL' | 'Under Admin Review' | 'RESOLVED'>('ALL')
+const statusFilter = ref<'ALL' | 'Under Review' | 'RESOLVED'>('ALL')
 const currentPage = ref(1)
 const itemsPerPage = 10
 const toastMessage = ref<string | null>(null)
 
 const reviewingCase = ref<CancellationCase | null>(null)
-const overrideResponsibility = ref<CancellationResponsibility>('admin_override')
+const overrideResponsibility = ref<CancellationResponsibility>('operator_override')
 const shouldWaiveFee = ref(true)
 const auditNote = ref('')
 
@@ -90,19 +86,16 @@ const responsibilityLabels: Record<CancellationResponsibility, string> = {
   no_fault: 'No Fault (Mutual)',
   safety_related: 'Safety Related',
   pending_review: 'Pending Review',
-  admin_override: 'Admin Override',
+  operator_override: 'Operator Override',
 }
 
 const filteredCases = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   return cancellations.value.filter((item) => {
-    if (
-      statusFilter.value === 'Under Admin Review' &&
-      item.disputeStatus !== 'Under Admin Review'
-    ) {
+    if (statusFilter.value === 'Under Review' && item.disputeStatus !== 'Under Review') {
       return false
     }
-    if (statusFilter.value === 'RESOLVED' && item.disputeStatus === 'Under Admin Review') {
+    if (statusFilter.value === 'RESOLVED' && item.disputeStatus === 'Under Review') {
       return false
     }
     if (!q) return true
@@ -152,24 +145,18 @@ const applyResolution = () => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-          Cancellations &amp; Dispute Audits
-        </h1>
-        <p class="text-sm text-neutral-500 mt-1">
-          Assess Pagadian ride cancellations, override fault responsibility, and waive contested
-          penalty fees.
-        </p>
-      </div>
-      <span class="px-3 py-1.5 bg-neutral-100 rounded-md text-neutral-800 text-xs font-semibold">
-        Cancellation Rate: 3.6%
-      </span>
+    <div>
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
+        Cancellations &amp; Disputes
+      </h1>
+      <p class="text-sm text-neutral-500 mt-1">
+        Review ride cancellations, fault responsibility, and penalty fees.
+      </p>
     </div>
 
     <ToastBanner :message="toastMessage" tone="success" @dismiss="toastMessage = null" />
 
-    <div class="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
         class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
       >
@@ -183,7 +170,7 @@ const applyResolution = () => {
               v-model="searchQuery"
               type="text"
               placeholder="Search trip ID, initiated by, route..."
-              class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+              class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
             />
           </div>
           <BaseSelect
@@ -191,12 +178,16 @@ const applyResolution = () => {
             aria-label="Filter disputes by status"
             :options="[
               { label: 'All Disputes', value: 'ALL' },
-              { label: 'Under Admin Review', value: 'Under Admin Review' },
+              { label: 'Under Review', value: 'Under Review' },
               { label: 'Resolved Cases', value: 'RESOLVED' },
             ]"
           />
         </div>
-        <span class="text-xs text-neutral-400">2-minute post-dispatch grace period active</span>
+        <span
+          class="px-2.5 py-1 bg-neutral-50 border border-neutral-300 text-[11px] font-semibold text-neutral-800 tabular-nums self-start sm:self-auto"
+        >
+          Rate: 3.6% · 2m grace
+        </span>
       </div>
 
       <div class="overflow-x-auto">
@@ -251,7 +242,7 @@ const applyResolution = () => {
                 <StatusBadge
                   :label="c.disputeStatus"
                   :tone="
-                    c.disputeStatus === 'Under Admin Review'
+                    c.disputeStatus === 'Under Review'
                       ? 'warning'
                       : c.disputeStatus.includes('Waived')
                         ? 'info'
@@ -263,9 +254,9 @@ const applyResolution = () => {
                 <button
                   type="button"
                   @click="openResolutionModal(c)"
-                  class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer"
+                  class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
                 >
-                  {{ c.disputeStatus === 'Under Admin Review' ? 'Review & Override' : 'Re-Audit' }}
+                  {{ c.disputeStatus === 'Under Review' ? 'Review' : 'Edit' }}
                 </button>
               </td>
             </tr>
@@ -294,7 +285,7 @@ const applyResolution = () => {
         @click.self="reviewingCase = null"
       >
         <form
-          class="bg-white rounded-lg border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4"
+          class="bg-white border border-neutral-200 shadow-2xl w-full max-w-md p-6 space-y-4"
           @submit.prevent="applyResolution"
         >
           <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
@@ -314,7 +305,7 @@ const applyResolution = () => {
           <div class="space-y-3 text-xs">
             <div>
               <label class="block font-semibold text-neutral-700 mb-1">
-                Fault Classification (server enum)
+                Fault Classification
               </label>
               <BaseSelect
                 v-model="overrideResponsibility"
@@ -326,7 +317,7 @@ const applyResolution = () => {
                   { label: 'Passenger Fault', value: 'passenger_fault' },
                   { label: 'System Fault', value: 'system_fault' },
                   { label: 'Safety Related', value: 'safety_related' },
-                  { label: 'Admin Override', value: 'admin_override' },
+                  { label: 'Operator Override', value: 'operator_override' },
                 ]"
               />
             </div>
@@ -335,15 +326,13 @@ const applyResolution = () => {
               <span>Waive cancellation fee ({{ formatPhp(reviewingCase.cancellationFee) }})</span>
             </label>
             <div>
-              <label class="block font-semibold text-neutral-700 mb-1">
-                Audit Rationale (mandatory)
-              </label>
+              <label class="block font-semibold text-neutral-700 mb-1"> Reason </label>
               <textarea
                 v-model="auditNote"
                 rows="3"
                 required
                 placeholder="Explain GPS evidence or operator call verification..."
-                class="w-full px-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-900"
+                class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
               />
             </div>
           </div>
@@ -352,14 +341,14 @@ const applyResolution = () => {
             <button
               type="button"
               @click="reviewingCase = null"
-              class="px-4 py-2 bg-white border border-neutral-200 rounded-md text-xs font-semibold text-neutral-700 cursor-pointer"
+              class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               :disabled="!auditNote.trim()"
-              class="px-4 py-2 bg-neutral-900 text-white rounded-md text-xs font-semibold hover:bg-neutral-800 disabled:opacity-40 cursor-pointer"
+              class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 disabled:opacity-40 cursor-pointer"
             >
               Save Determination
             </button>

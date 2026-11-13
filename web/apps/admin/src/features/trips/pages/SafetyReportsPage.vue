@@ -245,33 +245,14 @@ const exportReports = () => {
       @dismiss="toastMessage = null"
     />
 
-    <div
-      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border border-neutral-200 rounded-md p-4"
-    >
-      <div>
-        <div class="flex items-center gap-2">
-          <h2 class="text-sm font-semibold text-neutral-900">Safety &amp; Incident Reports</h2>
-          <StatusBadge
-            v-if="criticalOpenCount > 0"
-            :label="`${criticalOpenCount} Critical Pending`"
-            tone="danger"
-          />
-        </div>
-        <p class="text-xs text-neutral-500 mt-0.5">
-          Structured passenger and driver incident filings aligned with the backend ride report
-          moderation workflow.
-        </p>
-      </div>
-      <button
-        type="button"
-        class="self-start sm:self-auto px-3 py-1.5 bg-white border border-neutral-300 rounded-sm text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-        @click="exportReports"
-      >
-        Export Filtered CSV
-      </button>
+    <div>
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
+        Safety Reports
+      </h1>
+      <p class="text-sm text-neutral-500 mt-1">Passenger and driver incident moderation queue.</p>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-md overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
         class="p-4 border-b border-neutral-200 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
       >
@@ -279,10 +260,16 @@ const exportReports = () => {
           v-model="searchQuery"
           type="text"
           placeholder="Search report ID, trip ID, reporter, driver, or category..."
-          class="w-full md:max-w-sm px-3 py-1.5 border border-neutral-300 rounded-sm text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+          class="w-full md:max-w-sm px-3 py-1.5 border border-neutral-300 text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
         />
 
         <div class="flex flex-wrap items-center gap-2">
+          <span
+            v-if="criticalOpenCount > 0"
+            class="px-2.5 py-1 bg-neutral-50 border border-neutral-300 text-[11px] font-semibold text-neutral-800 tabular-nums"
+          >
+            Critical: {{ criticalOpenCount }}
+          </span>
           <BaseSelect
             v-model="severityFilter"
             aria-label="Filter safety reports by severity"
@@ -304,6 +291,13 @@ const exportReports = () => {
               { label: 'Dismissed', value: 'dismissed' },
             ]"
           />
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-white border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+            @click="exportReports"
+          >
+            Export
+          </button>
         </div>
       </div>
 
@@ -364,7 +358,7 @@ const exportReports = () => {
               <td class="py-3.5 px-4 text-right">
                 <button
                   type="button"
-                  class="px-3 py-1 bg-neutral-900 text-white rounded-sm text-xs font-medium hover:bg-neutral-800"
+                  class="px-3 py-1 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800"
                   @click="openModerationModal(item)"
                 >
                   Review &amp; Moderate
@@ -396,7 +390,7 @@ const exportReports = () => {
         <div
           role="dialog"
           aria-modal="true"
-          class="w-full max-w-lg rounded-md bg-white border border-neutral-200 p-5 space-y-4 shadow-xl"
+          class="w-full max-w-lg bg-white border border-neutral-200 p-5 space-y-4 shadow-xl"
         >
           <div class="flex items-start justify-between border-b border-neutral-100 pb-3">
             <div>
@@ -414,9 +408,7 @@ const exportReports = () => {
           </div>
 
           <div class="space-y-3 text-xs">
-            <div
-              class="grid grid-cols-2 gap-3 rounded-sm bg-neutral-50 border border-neutral-200 p-3"
-            >
+            <div class="grid grid-cols-2 gap-3 bg-neutral-50 border border-neutral-200 p-3">
               <div>
                 <div class="text-neutral-500">Filed By ({{ inspectedReport.reporterRole }})</div>
                 <div class="font-semibold text-neutral-900 mt-0.5">
@@ -435,7 +427,7 @@ const exportReports = () => {
 
             <div>
               <div class="text-neutral-500 font-medium mb-1">Incident Narrative</div>
-              <div class="rounded-sm border border-neutral-200 bg-white p-3 text-neutral-800">
+              <div class="border border-neutral-200 bg-white p-3 text-neutral-800">
                 {{ inspectedReport.narrative }}
               </div>
             </div>
@@ -465,7 +457,7 @@ const exportReports = () => {
                 v-model="moderationNote"
                 rows="3"
                 placeholder="Record evidence review, suspension outcome, or passenger callback note..."
-                class="w-full px-3 py-2 border border-neutral-300 rounded-sm text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+                class="w-full px-3 py-2 border border-neutral-300 text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
               />
             </div>
 
@@ -475,14 +467,14 @@ const exportReports = () => {
           <div class="flex items-center justify-end gap-2 border-t border-neutral-100 pt-3">
             <button
               type="button"
-              class="px-3 py-1.5 border border-neutral-300 rounded-sm text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+              class="px-3 py-1.5 border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
               @click="closeModerationModal"
             >
               Cancel
             </button>
             <button
               type="button"
-              class="px-3 py-1.5 bg-neutral-900 text-white rounded-sm text-xs font-medium hover:bg-neutral-800"
+              class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800"
               @click="saveModerationDecision"
             >
               Save Decision

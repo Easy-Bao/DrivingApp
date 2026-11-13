@@ -255,28 +255,11 @@ function confirmExpireSession() {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-          Live Bidding &amp; Offer Sessions
-        </h1>
-        <p class="text-sm text-neutral-500 mt-1">
-          Monitor active passenger fare offers, tips, targeted requests, and driver bid matching in
-          Pagadian City.
-        </p>
-      </div>
-      <div class="flex items-center gap-2">
-        <span
-          class="px-3 py-1.5 bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800"
-        >
-          {{ openSessionCount }} Open Bidding
-        </span>
-        <span
-          class="px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800"
-        >
-          Match Rate: {{ acceptanceRate }}
-        </span>
-      </div>
+    <div>
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
+        Bidding Sessions
+      </h1>
+      <p class="text-sm text-neutral-500 mt-1">Active passenger offers and driver bids.</p>
     </div>
 
     <ToastBanner :message="toastMessage" tone="info" @dismiss="toastMessage = null" />
@@ -300,7 +283,17 @@ function confirmExpireSession() {
           />
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <span
+            class="px-2.5 py-1 bg-neutral-50 border border-neutral-300 text-[11px] font-semibold text-neutral-800 tabular-nums"
+          >
+            Open: {{ openSessionCount }}
+          </span>
+          <span
+            class="px-2.5 py-1 bg-neutral-50 border border-neutral-300 text-[11px] font-semibold text-neutral-800 tabular-nums"
+          >
+            Match: {{ acceptanceRate }}
+          </span>
           <BaseSelect
             v-model="statusFilter"
             aria-label="Filter by session status"
@@ -324,7 +317,7 @@ function confirmExpireSession() {
             <tr>
               <th class="py-3 px-4">Session / Ref</th>
               <th class="py-3 px-4">Passenger</th>
-              <th class="py-3 px-4">Pagadian Route</th>
+              <th class="py-3 px-4">Route</th>
               <th class="py-3 px-4">Estimate vs Offer</th>
               <th class="py-3 px-4">Dispatch Mode</th>
               <th class="py-3 px-4">Status</th>
@@ -386,7 +379,7 @@ function confirmExpireSession() {
                   <button
                     v-if="session.status === 'open'"
                     type="button"
-                    class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-semibold text-[11px] transition-colors cursor-pointer"
+                    class="px-2.5 py-1 bg-white hover:bg-neutral-50 border border-neutral-300 text-neutral-800 font-semibold text-[11px] transition-colors cursor-pointer"
                     @click="promptExpireSession(session)"
                   >
                     Close Bid
