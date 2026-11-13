@@ -99,8 +99,8 @@ function openFacePhotoViewer() {
     type: 'face',
     metadata: {
       Applicant: application.value.applicant,
-      'Mobile Number (PH)': application.value.phone,
-      'City & Barangay': `${application.value.city}, ${application.value.barangay} (${application.value.province})`,
+      Phone: application.value.phone,
+      Location: `${application.value.city}, ${application.value.barangay}`,
     },
   }
 }
@@ -204,12 +204,7 @@ function goBack() {
 
         <div class="flex items-center space-x-2">
           <span
-            class="px-3 py-1.5 text-xs font-semibold border flex items-center space-x-1.5"
-            :class="
-              application.backgroundStatus === 'Passed'
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                : 'bg-amber-50 text-amber-700 border-amber-200'
-            "
+            class="px-3 py-1.5 text-xs font-semibold border border-neutral-300 bg-neutral-50 text-neutral-800 flex items-center space-x-1.5"
           >
             <Icon
               :icon="
@@ -273,22 +268,22 @@ function goBack() {
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs pt-1">
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">City & Barangay</div>
+            <div class="text-neutral-400 text-[11px] font-medium">Location</div>
             <div class="font-semibold text-neutral-900 mt-0.5">
               {{ application.city }} · {{ application.barangay }}
             </div>
           </div>
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">Contact Phone (PH Mobile)</div>
+            <div class="text-neutral-400 text-[11px] font-medium">Phone</div>
             <div class="font-mono font-semibold text-neutral-900 mt-0.5">
               {{ application.phone }}
             </div>
           </div>
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">Driver Face Verification</div>
-            <div class="text-emerald-700 font-semibold mt-0.5 flex items-center space-x-1">
+            <div class="text-neutral-400 text-[11px] font-medium">Identity Check</div>
+            <div class="text-neutral-800 font-semibold mt-0.5 flex items-center space-x-1">
               <Icon icon="lucide:check-circle" class="text-xs" />
-              <span>Biometric Photo Verified</span>
+              <span>Photo Verified</span>
             </div>
           </div>
         </div>
@@ -543,7 +538,7 @@ function goBack() {
         <div v-if="application.status === 'Pending Review'" class="flex items-center space-x-3">
           <button
             type="button"
-            class="px-4 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition-colors cursor-pointer"
+            class="px-4 py-2 border border-neutral-300 text-neutral-800 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
             @click="openRejectDialog"
           >
             Reject Application
@@ -609,12 +604,12 @@ function goBack() {
             >.
           </p>
 
-          <div class="p-3 bg-emerald-50 border border-emerald-200 text-xs space-y-1">
-            <div class="font-semibold text-emerald-900 flex items-center space-x-1.5">
-              <Icon icon="lucide:check-circle" class="text-emerald-700" />
-              <span>Verified Qualifications Summary</span>
+          <div class="p-3 bg-neutral-50 border border-neutral-200 text-xs space-y-1">
+            <div class="font-semibold text-neutral-900 flex items-center space-x-1.5">
+              <Icon icon="lucide:check-circle" class="text-neutral-700" />
+              <span>Verified Summary</span>
             </div>
-            <ul class="text-emerald-800 space-y-0.5 text-[11px] list-disc list-inside">
+            <ul class="text-neutral-700 space-y-0.5 text-[11px] list-disc list-inside">
               <li>
                 LTO License: {{ application.licenseNumber }} (DL Code:
                 {{ application.licenseCodes }})

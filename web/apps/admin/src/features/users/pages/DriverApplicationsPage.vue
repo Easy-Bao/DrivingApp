@@ -22,32 +22,22 @@ function navigateToDetails(id: string) {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-          Driver Applications Queue
-        </h1>
-        <p class="text-sm text-neutral-500 mt-1">
-          Review Pagadian City, ZDS taxicle applicant qualifications, LTO licenses, and franchise
-          permits.
-        </p>
-      </div>
-
-      <div class="flex items-center space-x-3">
-        <span
-          class="px-3 py-1.5 bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800"
-        >
-          {{ applications.filter((a) => a.status === 'Pending Review').length }} Pending
-          Applications
-        </span>
-      </div>
+    <div>
+      <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
+        Driver Applications Queue
+      </h1>
+      <p class="text-sm text-neutral-500 mt-1">
+        Applicant qualifications, LTO licenses, and franchise permits.
+      </p>
     </div>
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
-      <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
-        <h2 class="font-bold text-sm text-neutral-900">Taxicle Driver Onboarding Queue</h2>
-        <span class="text-xs text-neutral-400">
-          Pagadian City, ZDS · Local franchise & regulatory validation
+      <div class="p-4 border-b border-neutral-100 flex items-center justify-between gap-3">
+        <h2 class="font-bold text-sm text-neutral-900">Onboarding Queue</h2>
+        <span
+          class="px-2.5 py-1.5 bg-neutral-50 border border-neutral-300 text-xs font-semibold tabular-nums text-neutral-800"
+        >
+          Pending: {{ applications.filter((a) => a.status === 'Pending Review').length }}
         </span>
       </div>
 
