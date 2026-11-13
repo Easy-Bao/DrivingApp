@@ -14,32 +14,37 @@ vi.mock('vue-router', () => ({
 }))
 
 describe('TopupDetailsPage', () => {
-  it('renders topup request details, internal back button, and allows credit approval', async () => {
+  it('renders localized topup details with receipt preview image and approval workflow', async () => {
     const wrapper = mount(TopupDetailsPage, {
       global: {
         stubs: {
           RouterLink: true,
+          Teleport: { template: '<div><slot /></div>' },
         },
       },
     })
 
-    // Assert internal back button exists inside page
     expect(wrapper.text()).toContain('Back')
-
-    // Assert request details are displayed
     expect(wrapper.text()).toContain('Top-Up Request TOP-8921')
-    expect(wrapper.text()).toContain('Marcus Miller')
-    expect(wrapper.text()).toContain('₱50.00')
-    expect(wrapper.text()).toContain('Company QR Code')
+    expect(wrapper.text()).toContain('Rodelio Cruz')
+    expect(wrapper.text()).toContain('+63 917 440 2184')
+    expect(wrapper.text()).toContain('₱500.00')
+    expect(wrapper.text()).toContain('GCash QRPh')
 
-    // Assert approve action button is present and click approves it
+    const proofImg = wrapper.find('img')
+    expect(proofImg.exists()).toBe(true)
+    expect(proofImg.attributes('src')).toContain('data:image/svg+xml')
+
+    const enlargeBtn = wrapper.findAll('button').find((b) => b.text().includes('Enlarge'))
+    expect(enlargeBtn).toBeDefined()
+    await enlargeBtn?.trigger('click')
+    expect(wrapper.text()).toContain('Proof of Transfer · GC-90281944210')
+
     const approveBtn = wrapper
       .findAll('button')
       .find((b) => b.text().includes('Approve & Credit Wallet'))
     expect(approveBtn).toBeDefined()
-    if (approveBtn) {
-      await approveBtn.trigger('click')
-      expect(wrapper.text()).toContain('Successfully verified TOP-8921')
-    }
+    await approveBtn?.trigger('click')
+    expect(wrapper.text()).toContain('Successfully verified TOP-8921')
   })
 })
