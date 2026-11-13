@@ -34,8 +34,21 @@ const showSignOutConfirm = ref(false)
 const signedOutNotice = ref(false)
 const authSession = useAuthSession()
 
+interface FlyoutItem {
+  id: string
+  label: string
+  icon: string
+  badge?: string | number
+  isActive?: boolean
+  onSelect: () => void
+}
+
 interface FlyoutState {
-  group: SidebarNavGroup
+  id: string
+  title: string
+  activeItemLabel?: string | null
+  metaText?: string
+  items: FlyoutItem[]
   top: number
   left: number
 }
@@ -69,8 +82,61 @@ const openGroupFlyout = (group: SidebarNavGroup, event: Event) => {
     typeof window !== 'undefined'
       ? Math.max(8, window.innerHeight - estimatedHeight - 12)
       : rect.top
+  const current = isGroupActive(group) ? activeItem.value : null
+  const numericCount = getGroupNotificationCount(group)
   activeFlyout.value = {
-    group,
+    id: group.id,
+    title: group.title,
+    activeItemLabel: current?.label ?? null,
+    metaText: numericCount > 0 ? String(numericCount) : undefined,
+    items: group.items.map((item) => ({
+      id: item.id,
+      label: item.label,
+      icon: item.icon,
+      badge: item.badge,
+      isActive: isItemActive(item),
+      onSelect: () => navigateTo(item.path),
+    })),
+    top: Math.min(rect.top, maxTop),
+    left: rect.right + 4,
+  }
+}
+
+const openProfileFlyout = (event: Event) => {
+  if (!isCollapsed.value) return
+  clearFlyoutTimer()
+  collapsedTooltip.value = null
+  const target = event.currentTarget as HTMLElement | null
+  if (!target) return
+  const rect = target.getBoundingClientRect()
+  const estimatedHeight = 44 + 2 * 36
+  const maxTop =
+    typeof window !== 'undefined'
+      ? Math.max(8, window.innerHeight - estimatedHeight - 12)
+      : rect.top
+  activeFlyout.value = {
+    id: 'profile',
+    title: authSession.value.operatorName,
+    activeItemLabel: activeRoleLabel.value,
+    items: [
+      {
+        id: 'profile',
+        label: 'Profile',
+        icon: 'lucide:user',
+        isActive: route.path.startsWith('/account/profile'),
+        onSelect: () => navigateTo('/account/profile'),
+      },
+      {
+        id: 'lock-session',
+        label: 'Lock Session',
+        icon: 'lucide:lock',
+        isActive: false,
+        onSelect: () => {
+          activeFlyout.value = null
+          showSignOutConfirm.value = true
+        },
+      },
+    ],
     top: Math.min(rect.top, maxTop),
     left: rect.right + 4,
   }
@@ -360,13 +426,13 @@ const filteredGroups = computed(() => {
           <button
             type="button"
             :aria-label="group.title"
-            :aria-expanded="activeFlyout?.group.id === group.id"
+            :aria-expanded="activeFlyout?.id === group.id"
             aria-haspopup="menu"
             class="relative w-11 h-11 flex items-center justify-center transition-colors cursor-pointer"
             :class="
               isGroupActive(group)
                 ? 'bg-neutral-900 text-white'
-                : activeFlyout?.group.id === group.id
+                : activeFlyout?.id === group.id
                   ? 'bg-neutral-100 text-neutral-900'
                   : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
             "
@@ -443,17 +509,19 @@ const filteredGroups = computed(() => {
 
     <div class="shrink-0 p-3 border-t border-neutral-200 bg-neutral-50/50">
       <div
-        class="flex items-center p-2 hover:bg-neutral-100 transition-colors"
-        :class="isCollapsed ? 'justify-center' : 'justify-between'"
+        class="flex items-center p-2 transition-colors"
+        :class="isCollapsed ? 'justify-center' : 'justify-between hover:bg-neutral-100'"
       >
         <button
           type="button"
           class="flex items-center space-x-3 overflow-hidden text-left focus:outline-none cursor-pointer"
           aria-label="Profile"
-          @mouseenter="showButtonTooltip('Profile', $event)"
-          @mouseleave="hideButtonTooltip"
-          @focus="showButtonTooltip('Profile', $event)"
-          @blur="hideButtonTooltip"
+          :aria-expanded="isCollapsed ? activeFlyout?.id === 'profile' : undefined"
+          :aria-haspopup="isCollapsed ? 'menu' : undefined"
+          @mouseenter="isCollapsed ? openProfileFlyout($event) : undefined"
+          @mouseleave="isCollapsed ? scheduleCloseFlyout() : undefined"
+          @focus="isCollapsed ? openProfileFlyout($event) : undefined"
+          @blur="isCollapsed ? scheduleCloseFlyout() : undefined"
           @click="navigateTo('/account/profile')"
         >
           <div
@@ -503,7 +571,7 @@ const filteredGroups = computed(() => {
         v-if="isCollapsed && activeFlyout"
         data-test="collapsed-flyout"
         role="menu"
-        :aria-label="activeFlyout.group.title"
+        :aria-label="activeFlyout.title"
         class="fixed z-50 w-56 bg-white border border-neutral-300 shadow-lg"
         :style="{ top: `${activeFlyout.top}px`, left: `${activeFlyout.left}px` }"
         @mouseenter="cancelCloseFlyout"
@@ -512,46 +580,44 @@ const filteredGroups = computed(() => {
         <div
           class="bg-neutral-900 text-white px-3 py-2 flex items-center justify-between gap-2 text-xs font-semibold"
         >
-          <span>{{ activeFlyout.group.title }}</span>
+          <span class="truncate">{{ activeFlyout.title }}</span>
           <span
-            v-if="isGroupActive(activeFlyout.group) && activeItem"
+            v-if="activeFlyout.activeItemLabel"
             class="text-[10px] font-medium text-neutral-300 truncate max-w-[110px]"
           >
-            {{ activeItem.label }}
+            {{ activeFlyout.activeItemLabel }}
           </span>
           <span v-else class="text-[10px] font-mono text-neutral-300">
-            {{ activeFlyout.group.items.length }}
+            {{ activeFlyout.metaText ?? activeFlyout.items.length }}
           </span>
         </div>
         <div class="p-1 space-y-0.5 max-h-72 overflow-y-auto">
           <button
-            v-for="item in activeFlyout.group.items"
+            v-for="item in activeFlyout.items"
             :key="item.id"
             type="button"
             role="menuitem"
-            :aria-current="isItemActive(item) ? 'page' : undefined"
+            :aria-current="item.isActive ? 'page' : undefined"
             class="w-full px-2.5 py-2 text-left text-xs font-medium flex items-center justify-between gap-2 transition-colors cursor-pointer"
             :class="
-              isItemActive(item)
+              item.isActive
                 ? 'bg-neutral-900 text-white font-semibold'
                 : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
             "
-            @click="navigateTo(item.path)"
+            @click="item.onSelect()"
           >
             <span class="flex items-center gap-2 min-w-0">
               <Icon
                 :icon="item.icon"
                 class="text-sm shrink-0"
-                :class="isItemActive(item) ? 'text-white' : 'text-neutral-500'"
+                :class="item.isActive ? 'text-white' : 'text-neutral-500'"
               />
               <span class="truncate">{{ item.label }}</span>
             </span>
             <span
               v-if="item.badge"
               class="px-1.5 py-0.5 text-[10px] font-semibold shrink-0"
-              :class="
-                isItemActive(item) ? 'bg-white text-neutral-900' : 'bg-neutral-900 text-white'
-              "
+              :class="item.isActive ? 'bg-white text-neutral-900' : 'bg-neutral-900 text-white'"
             >
               {{ item.badge }}
             </span>

@@ -75,6 +75,20 @@ describe('Sidebar', () => {
     expect(flyout.text()).toContain('Trips')
     expect(flyout.text()).toContain('SOS Alerts')
     expect(flyout.text()).toContain('Live Bidding')
+
+    const profileBtn = wrapper.find('button[aria-label="Profile"]')
+    await profileBtn.trigger('mouseenter')
+    const profileFlyout = wrapper.find('[data-test="collapsed-flyout"]')
+    expect(profileFlyout.exists()).toBe(true)
+    expect(profileFlyout.text()).toContain('Profile')
+    expect(profileFlyout.text()).toContain('Lock Session')
+
+    const lockOption = profileFlyout
+      .findAll('button[role="menuitem"]')
+      .find((btn) => btn.text().includes('Lock Session'))
+    expect(lockOption).toBeDefined()
+    await lockOption!.trigger('click')
+    expect(wrapper.text()).toContain('Lock Session?')
   })
 
   it('renders line indent border on expanded child groups', () => {

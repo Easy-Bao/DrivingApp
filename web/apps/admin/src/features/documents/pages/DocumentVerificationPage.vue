@@ -27,12 +27,12 @@ interface PendingDocument {
 
 function makeDocPreviewSvg(title: string, holder: string, agency: string, docId: string): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="520" height="240" viewBox="0 0 520 240">
-    <rect width="520" height="240" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
-    <rect width="520" height="44" rx="10" fill="#0f172a"/>
+    <rect width="520" height="240" rx="0" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+    <rect width="520" height="44" rx="0" fill="#0f172a"/>
     <rect y="34" width="520" height="10" fill="#0f172a"/>
     <text x="20" y="27" fill="#ffffff" font-family="sans-serif" font-size="12" font-weight="700">${agency}</text>
     <text x="500" y="27" text-anchor="end" fill="#94a3b8" font-family="monospace" font-size="11">${docId}</text>
-    <rect x="20" y="64" width="84" height="106" rx="6" fill="#e2e8f0" stroke="#cbd5e1"/>
+    <rect x="20" y="64" width="84" height="106" rx="0" fill="#e2e8f0" stroke="#cbd5e1"/>
     <circle cx="62" cy="100" r="18" fill="#94a3b8"/>
     <path d="M32 152c0-18 14-28 30-28s30 10 30 28" fill="#94a3b8"/>
     <text x="124" y="84" fill="#64748b" font-family="sans-serif" font-size="10">DOCUMENT CLASSIFICATION</text>
@@ -50,7 +50,7 @@ const pendingDocs = ref<PendingDocument[]>([
     id: 'DOC-901',
     driver: 'Rodelio Cruz',
     driverPhone: '+63 917 440 2184',
-    city: 'Pagadian City (Brgy. San Jose)',
+    city: 'Brgy. San Jose',
     docType: 'LTO Professional Driver License',
     issuingAgency: 'LTO Region IX — Pagadian District',
     expiryDate: '2029-08-15',
@@ -65,9 +65,9 @@ const pendingDocs = ref<PendingDocument[]>([
     id: 'DOC-902',
     driver: 'Danilo Mendoza',
     driverPhone: '+63 928 412 8890',
-    city: 'Pagadian City (Brgy. Tuburan)',
-    docType: 'Taxicle MTOP & TODA Franchise Permit',
-    issuingAgency: 'Pagadian City Tricycle Franchising Board',
+    city: 'Brgy. Tuburan',
+    docType: 'MTOP Franchise Permit',
+    issuingAgency: 'Tricycle Franchising Board',
     expiryDate: '2027-11-20',
     submittedAt: '4 hours ago',
     docImageUrl: 'mtop_permit_pagadian_4912nc.pdf',
@@ -77,9 +77,9 @@ const pendingDocs = ref<PendingDocument[]>([
     id: 'DOC-903',
     driver: 'Reynaldo Garcia',
     driverPhone: '+63 908 771 9923',
-    city: 'Pagadian City (Brgy. Balangasan)',
-    docType: 'LTO Official Receipt & Registration (OR/CR)',
-    issuingAgency: 'LTO Pagadian City Extension Office',
+    city: 'Brgy. Balangasan',
+    docType: 'LTO OR/CR Registration',
+    issuingAgency: 'LTO Extension Office',
     expiryDate: '2026-10-14',
     submittedAt: '5 hours ago',
     docImageUrl: 'lto_or_cr_taxicle_9021nd.pdf',
@@ -92,9 +92,9 @@ const pendingDocs = ref<PendingDocument[]>([
     id: 'DOC-904',
     driver: 'Eduardo Santos',
     driverPhone: '+63 919 332 4455',
-    city: 'Pagadian City (Brgy. Kawit)',
-    docType: 'NBI National Criminal Clearance',
-    issuingAgency: 'NBI Pagadian City District Office',
+    city: 'Brgy. Kawit',
+    docType: 'NBI Clearance',
+    issuingAgency: 'NBI District Office',
     expiryDate: '2027-02-18',
     submittedAt: '6 hours ago',
     docImageUrl: 'nbi_clearance_eduardo_santos.pdf',
@@ -104,9 +104,9 @@ const pendingDocs = ref<PendingDocument[]>([
     id: 'DOC-905',
     driver: 'Maria Lourdes Ramos',
     driverPhone: '+63 920 882 1144',
-    city: 'Pagadian City (Brgy. Santa Lucia)',
+    city: 'Brgy. Santa Lucia',
     docType: 'LTO Professional Driver License',
-    issuingAgency: 'LTO Region IX — Pagadian District',
+    issuingAgency: 'LTO Region IX',
     expiryDate: '2029-03-22',
     submittedAt: '1 day ago',
     docImageUrl: 'lto_license_front_maria_ramos.png',
@@ -119,9 +119,9 @@ const pendingDocs = ref<PendingDocument[]>([
     id: 'DOC-906',
     driver: 'Jose Mari Bautista',
     driverPhone: '+63 918 665 4411',
-    city: 'Pagadian City (Brgy. Gatas)',
-    docType: 'Taxicle Compulsory TPL Insurance Policy',
-    issuingAgency: 'Standard Insurance — Pagadian Branch',
+    city: 'Brgy. Gatas',
+    docType: 'Compulsory TPL Insurance',
+    issuingAgency: 'Standard Insurance',
     expiryDate: '2027-05-10',
     submittedAt: '1 day ago',
     docImageUrl: 'tpl_insurance_cert_pagadian_8821.pdf',
@@ -131,9 +131,9 @@ const pendingDocs = ref<PendingDocument[]>([
     id: 'DOC-907',
     driver: 'Javier Santos',
     driverPhone: '+63 917 987 6543',
-    city: 'Pagadian City (Brgy. San Pedro)',
-    docType: 'PNP National Police Clearance',
-    issuingAgency: 'Pagadian City Police Station',
+    city: 'Brgy. San Pedro',
+    docType: 'PNP Police Clearance',
+    issuingAgency: 'PNP Police Station',
     expiryDate: '2026-12-08',
     submittedAt: '1 day ago',
     docImageUrl: 'pnp_clearance_javier_santos.pdf',
@@ -143,9 +143,9 @@ const pendingDocs = ref<PendingDocument[]>([
     id: 'DOC-908',
     driver: 'Felipe Cruz',
     driverPhone: '+63 916 445 8821',
-    city: 'Pagadian City (Brgy. Tiguma)',
-    docType: 'Taxicle Annual Roadworthiness Inspection',
-    issuingAgency: 'LTO Motor Vehicle Inspection Center (ZDS)',
+    city: 'Brgy. Tiguma',
+    docType: 'Roadworthiness Inspection',
+    issuingAgency: 'LTO Inspection Center',
     expiryDate: '2027-04-19',
     submittedAt: '2 days ago',
     docImageUrl: 'lto_mvir_inspection_cert_6620nc.pdf',
@@ -155,9 +155,9 @@ const pendingDocs = ref<PendingDocument[]>([
     id: 'DOC-909',
     driver: 'Antonio Villanueva',
     driverPhone: '+63 939 556 1209',
-    city: 'Pagadian City (Brgy. Dao)',
-    docType: 'TODA Operating Franchise Endorsement',
-    issuingAgency: 'Dao - Provincial Hospital TODA',
+    city: 'Brgy. Dao',
+    docType: 'TODA Franchise Endorsement',
+    issuingAgency: 'Dao TODA',
     expiryDate: '2028-09-04',
     submittedAt: '2 days ago',
     docImageUrl: 'toda_franchise_endorsement_1109nd.pdf',
@@ -167,9 +167,9 @@ const pendingDocs = ref<PendingDocument[]>([
     id: 'DOC-910',
     driver: 'Cristopher Alcantara',
     driverPhone: '+63 921 778 2234',
-    city: 'Pagadian City (Brgy. Santiago)',
+    city: 'Brgy. Santiago',
     docType: 'LTO Professional Driver License',
-    issuingAgency: 'LTO Region IX — Pagadian District',
+    issuingAgency: 'LTO Region IX',
     expiryDate: '2031-02-17',
     submittedAt: '3 days ago',
     docImageUrl: 'lto_license_front_cristopher.png',
@@ -182,8 +182,8 @@ const pendingDocs = ref<PendingDocument[]>([
     id: 'DOC-911',
     driver: 'Nestor Macaraeg',
     driverPhone: '+63 947 889 1120',
-    city: 'Pagadian City (Brgy. Danlugan)',
-    docType: 'Barangay Commercial Driver Clearance',
+    city: 'Brgy. Danlugan',
+    docType: 'Barangay Driver Clearance',
     issuingAgency: 'Barangay Danlugan Office',
     expiryDate: '2027-01-20',
     submittedAt: '3 days ago',
@@ -194,9 +194,9 @@ const pendingDocs = ref<PendingDocument[]>([
     id: 'DOC-912',
     driver: 'Ernesto Manalo',
     driverPhone: '+63 915 221 8890',
-    city: 'Pagadian City (Brgy. Bulatok)',
-    docType: 'LTO Official Receipt & Registration (OR/CR)',
-    issuingAgency: 'LTO Pagadian City Extension Office',
+    city: 'Brgy. Bulatok',
+    docType: 'LTO OR/CR Registration',
+    issuingAgency: 'LTO Extension Office',
     expiryDate: '2027-06-15',
     submittedAt: '4 days ago',
     docImageUrl: 'or_cr_taxicle_4481nd.pdf',
@@ -332,31 +332,22 @@ const statusTone = (status: VerificationStatus) => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
-          Driver Document Verification Queue
+          Verification
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
-          Verify Pagadian LTO licenses, MTOP tricycle permits, OR/CR registrations, and NBI
-          clearances.
+          LTO licenses, MTOP permits, OR/CR, and clearances.
         </p>
-      </div>
-      <div class="flex items-center space-x-2">
-        <span
-          class="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-md text-xs font-semibold text-blue-800"
-        >
-          {{ pendingDocs.filter((d) => d.status === 'Pending Review').length }} Pending
-          Verifications
-        </span>
       </div>
     </div>
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 
-    <div class="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+    <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
-        class="p-4 border-b border-neutral-100 flex flex-col md:flex-row md:items-center justify-between gap-3"
+        class="p-4 border-b border-neutral-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3"
       >
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <div class="relative w-full sm:w-64">
@@ -367,23 +358,25 @@ const statusTone = (status: VerificationStatus) => {
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Search doc ID, driver, barangay..."
-              class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+              placeholder="Search doc ID, driver..."
+              class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
             />
           </div>
           <BaseSelect
             v-model="statusFilter"
             aria-label="Filter documents by verification status"
             :options="[
-              { label: 'All Statuses', value: 'ALL' },
+              { label: 'All', value: 'ALL' },
               { label: 'Pending Review', value: 'Pending Review' },
               { label: 'Approved', value: 'Approved' },
               { label: 'Rejected', value: 'Rejected' },
             ]"
           />
         </div>
-        <span class="text-xs text-neutral-400">
-          LTO, NBI, and Pagadian City TRU compliance standards
+        <span
+          class="px-2.5 py-1.5 bg-neutral-50 border border-neutral-300 text-xs font-semibold tabular-nums text-neutral-800"
+        >
+          Pending: {{ pendingDocs.filter((d) => d.status === 'Pending Review').length }}
         </span>
       </div>
 
@@ -393,13 +386,13 @@ const statusTone = (status: VerificationStatus) => {
             class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100 font-semibold"
           >
             <tr>
-              <th class="py-3 px-4">Document ID</th>
-              <th class="py-3 px-4">Driver &amp; Contact</th>
-              <th class="py-3 px-4">Document Type</th>
-              <th class="py-3 px-4">Issuing Authority</th>
-              <th class="py-3 px-4">Expiry Date</th>
+              <th class="py-3 px-4">ID</th>
+              <th class="py-3 px-4">Driver</th>
+              <th class="py-3 px-4">Document</th>
+              <th class="py-3 px-4">Authority</th>
+              <th class="py-3 px-4">Expires</th>
               <th class="py-3 px-4">Status</th>
-              <th class="py-3 px-4 text-right">Actions</th>
+              <th class="py-3 px-4 text-right">Action</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100">
@@ -418,10 +411,10 @@ const statusTone = (status: VerificationStatus) => {
                 <div class="font-medium text-neutral-900">{{ doc.docType }}</div>
                 <div
                   v-if="doc.hasTwoSides"
-                  class="text-[10px] text-emerald-600 font-semibold flex items-center space-x-1 mt-0.5"
+                  class="text-[10px] text-neutral-500 font-semibold flex items-center space-x-1 mt-0.5"
                 >
                   <Icon icon="lucide:layers" class="text-xs" />
-                  <span>2-Sided (Front &amp; Back)</span>
+                  <span>2-Sided</span>
                 </div>
               </td>
               <td class="py-3 px-4 text-neutral-600">{{ doc.issuingAgency }}</td>
@@ -432,7 +425,7 @@ const statusTone = (status: VerificationStatus) => {
               <td class="py-3 px-4 text-right">
                 <button
                   type="button"
-                  class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer inline-flex items-center space-x-1"
+                  class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer inline-flex items-center space-x-1"
                   @click="openReview(doc)"
                 >
                   <Icon icon="lucide:scan" class="text-xs" />
@@ -463,7 +456,7 @@ const statusTone = (status: VerificationStatus) => {
         @click.self="closeReview"
       >
         <div
-          class="bg-white rounded-lg w-full max-w-[680px] shadow-2xl border border-neutral-200 flex flex-col my-auto overflow-hidden"
+          class="bg-white w-full max-w-[680px] shadow-2xl border border-neutral-200 flex flex-col my-auto overflow-hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Document Verification Modal"
@@ -472,16 +465,16 @@ const statusTone = (status: VerificationStatus) => {
             class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50"
           >
             <div>
-              <h3 class="font-bold text-base text-neutral-900">Audit Document Submission</h3>
+              <h3 class="font-bold text-base text-neutral-900">Review Submission</h3>
               <div class="flex items-center space-x-2 text-xs text-neutral-500 mt-0.5">
                 <span class="font-mono font-bold text-neutral-800">{{ selectedDoc.id }}</span>
                 <span>·</span>
-                <span>Submitted {{ selectedDoc.submittedAt }}</span>
+                <span>{{ selectedDoc.submittedAt }}</span>
               </div>
             </div>
             <button
               type="button"
-              class="w-8 h-8 flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 rounded-md border border-neutral-200 transition-colors cursor-pointer"
+              class="w-8 h-8 flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 border border-neutral-200 transition-colors cursor-pointer"
               title="Close modal (Esc)"
               aria-label="Close modal"
               @click="closeReview"
@@ -492,27 +485,25 @@ const statusTone = (status: VerificationStatus) => {
 
           <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
             <div
-              class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-neutral-50 rounded-md border border-neutral-200"
+              class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-neutral-50 border border-neutral-200"
             >
               <div>
-                <span class="text-neutral-400 text-[11px] font-medium">Driver Applicant</span>
+                <span class="text-neutral-400 text-[11px] font-medium">Driver</span>
                 <div class="font-bold text-neutral-900 mt-0.5">{{ selectedDoc.driver }}</div>
                 <div class="text-[11px] font-mono text-neutral-600">
                   {{ selectedDoc.driverPhone }}
                 </div>
               </div>
               <div>
-                <span class="text-neutral-400 text-[11px] font-medium">Operating City / TODA</span>
+                <span class="text-neutral-400 text-[11px] font-medium">Area</span>
                 <div class="font-semibold text-neutral-900 mt-0.5">{{ selectedDoc.city }}</div>
               </div>
               <div>
-                <span class="text-neutral-400 text-[11px] font-medium"
-                  >Document Classification</span
-                >
+                <span class="text-neutral-400 text-[11px] font-medium">Document</span>
                 <div class="font-semibold text-neutral-900 mt-0.5">{{ selectedDoc.docType }}</div>
               </div>
               <div>
-                <span class="text-neutral-400 text-[11px] font-medium">Expiration Date</span>
+                <span class="text-neutral-400 text-[11px] font-medium">Expires</span>
                 <div class="font-mono font-bold text-neutral-900 mt-0.5">
                   {{ selectedDoc.expiryDate }}
                 </div>
@@ -522,7 +513,7 @@ const statusTone = (status: VerificationStatus) => {
             <div v-if="selectedDoc.hasTwoSides" class="flex items-center space-x-2 pt-1">
               <button
                 type="button"
-                class="px-3 py-1.5 rounded-md text-xs font-semibold border transition-colors cursor-pointer"
+                class="px-3 py-1.5 text-xs font-semibold border transition-colors cursor-pointer"
                 :class="
                   activeSide === 'front'
                     ? 'bg-neutral-900 text-white border-neutral-900'
@@ -530,11 +521,11 @@ const statusTone = (status: VerificationStatus) => {
                 "
                 @click="activeSide = 'front'"
               >
-                Front Side Scan
+                Front
               </button>
               <button
                 type="button"
-                class="px-3 py-1.5 rounded-md text-xs font-semibold border transition-colors cursor-pointer"
+                class="px-3 py-1.5 text-xs font-semibold border transition-colors cursor-pointer"
                 :class="
                   activeSide === 'back'
                     ? 'bg-neutral-900 text-white border-neutral-900'
@@ -542,21 +533,20 @@ const statusTone = (status: VerificationStatus) => {
                 "
                 @click="activeSide = 'back'"
               >
-                Back Side Scan
+                Back
               </button>
             </div>
 
-            <div class="p-3 bg-neutral-100 rounded-md border border-neutral-200 space-y-2">
+            <div class="p-3 bg-neutral-100 border border-neutral-200 space-y-2">
               <img
                 :src="activePreviewDataUrl"
                 :alt="`${selectedDoc.docType} scan for ${selectedDoc.driver}`"
-                class="w-full rounded border border-neutral-300 bg-white object-contain max-h-56"
+                class="w-full border border-neutral-300 bg-white object-contain max-h-56"
               />
               <div
                 class="flex items-center justify-between text-[11px] font-mono text-neutral-600 px-1"
               >
                 <span>
-                  File:
                   {{
                     selectedDoc.hasTwoSides
                       ? activeSide === 'front'
@@ -565,48 +555,41 @@ const statusTone = (status: VerificationStatus) => {
                       : selectedDoc.docImageUrl
                   }}
                 </span>
-                <span class="text-emerald-700 font-semibold">sha256 verified</span>
+                <span class="text-neutral-700 font-semibold">sha256 ok</span>
               </div>
             </div>
 
-            <div class="border border-neutral-200 rounded-md p-3 bg-neutral-50/50 space-y-2">
-              <div class="font-bold text-neutral-900 text-xs">
-                Official Compliance Verification Checklist (all required to approve)
-              </div>
+            <div class="border border-neutral-200 p-3 bg-neutral-50/50 space-y-2">
+              <div class="font-bold text-neutral-900 text-xs">Checklist</div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer">
                   <input v-model="checks.clearScan" type="checkbox" class="accent-neutral-900" />
-                  <span>Legible high-resolution submission</span>
+                  <span>Legible scan</span>
                 </label>
                 <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer">
                   <input v-model="checks.sealVerified" type="checkbox" class="accent-neutral-900" />
-                  <span>Agency watermark / QR code valid</span>
+                  <span>Valid seal / QR</span>
                 </label>
                 <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer">
                   <input v-model="checks.nameMatches" type="checkbox" class="accent-neutral-900" />
-                  <span>Name matches driver identity</span>
+                  <span>Name matches profile</span>
                 </label>
                 <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer">
                   <input v-model="checks.validExpiry" type="checkbox" class="accent-neutral-900" />
-                  <span>Active validity (&gt; 6 months period)</span>
+                  <span>Valid expiry</span>
                 </label>
               </div>
             </div>
 
-            <div
-              v-if="isRejecting"
-              class="p-3 bg-rose-50 border border-rose-200 rounded-md space-y-2"
-            >
-              <div class="font-bold text-rose-900 text-xs">
-                Specify Regulatory Rejection Grounds (mandatory)
-              </div>
+            <div v-if="isRejecting" class="p-3 bg-neutral-50 border border-neutral-300 space-y-2">
+              <div class="font-bold text-neutral-900 text-xs">Rejection Reason</div>
               <BaseSelect
                 v-model="rejectionReason"
                 aria-label="Regulatory rejection ground"
-                placeholder="-- Select Rejection Ground --"
+                placeholder="Select reason"
                 :full-width="true"
                 :options="[
-                  { label: '-- Select Rejection Ground --', value: '' },
+                  { label: 'Select reason', value: '' },
                   'Image blurred or unreadable official seal',
                   'Document expired or near expiration (< 60 days)',
                   'Applicant identity does not match LTO / TRU records',
@@ -622,17 +605,17 @@ const statusTone = (status: VerificationStatus) => {
           >
             <button
               type="button"
-              class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 rounded-md text-xs font-semibold transition-colors cursor-pointer"
+              class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
               @click="closeReview"
             >
-              Cancel &amp; Exit
+              Cancel
             </button>
 
             <div class="flex items-center space-x-2">
               <button
                 v-if="!isRejecting"
                 type="button"
-                class="px-4 py-2 border border-rose-300 text-rose-700 hover:bg-rose-50 rounded-md text-xs font-semibold transition-colors cursor-pointer"
+                class="px-4 py-2 border border-neutral-300 text-neutral-800 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
                 @click="isRejecting = true"
               >
                 Reject Document
@@ -641,7 +624,7 @@ const statusTone = (status: VerificationStatus) => {
                 v-else
                 type="button"
                 :disabled="!rejectionReason.trim()"
-                class="px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-40 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer"
+                class="px-4 py-2 bg-neutral-800 hover:bg-neutral-900 disabled:opacity-40 text-white text-xs font-semibold transition-colors cursor-pointer"
                 @click="verifyDoc('Rejected')"
               >
                 Confirm Rejection
@@ -650,7 +633,7 @@ const statusTone = (status: VerificationStatus) => {
               <button
                 type="button"
                 :disabled="!allChecksPassed"
-                class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer"
+                class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 text-white text-xs font-semibold transition-colors cursor-pointer"
                 @click="verifyDoc('Approved')"
               >
                 Approve &amp; Validate
