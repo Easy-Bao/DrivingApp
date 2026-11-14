@@ -1,152 +1,101 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
-import { formatBpsAsPercent, formatPhp } from '@/shared/utils/format'
+import { formatBpsAsPercent, formatCentavos, ModalDialog, PageHeader, ToastBanner } from '@/shared'
+import type { ToastTone } from '@/shared'
+import { useCommissionTiers } from '@/features/payments'
+import type { CommissionTier } from '@/features/payments'
 
-interface CommissionTier {
-  id: string
-  category: string
-  rateBps: number
-  fixedBookingFeePhp: number
-  minWalletBalancePhp: number
-  eligibilityRule: string
-  settlementNote: string
-}
+const { tiers, saveCommissionTier } = useCommissionTiers()
 
-const commissionTiers = ref<CommissionTier[]>([
-  {
-    id: 'standard-fleet',
-    category: 'Standard Fleet',
-    rateBps: 1500,
-    fixedBookingFeePhp: 0,
-    minWalletBalancePhp: 50,
-    eligibilityRule: 'Default Pagadian TODA franchise Bao-Bao units upon activation.',
-    settlementNote: '15% deducted from driver prepaid commission wallet on trip completion.',
-  },
-  {
-    id: 'top-rated-incentive',
-    category: 'Top-Rated Service Tier (>= 4.85★)',
-    rateBps: 1200,
-    fixedBookingFeePhp: 0,
-    minWalletBalancePhp: 50,
-    eligibilityRule: 'Maintains >= 4.85★ rating and >= 95% acceptance over trailing 30 days.',
-    settlementNote: 'Discounted 12% commission rate automatically awarded weekly.',
-  },
-  {
-    id: 'ebao-pioneer',
-    category: 'Electric Bao-Bao Pioneer Program',
-    rateBps: 1000,
-    fixedBookingFeePhp: 0,
-    minWalletBalancePhp: 50,
-    eligibilityRule: 'Verified battery-electric Bao-Bao units operating in Pagadian.',
-    settlementNote: '10% sustainability incentive tier stored as 1000 bps in settlement ledger.',
-  },
-])
-
-const editingTier = ref<CommissionTier | null>(null)
-const draftBps = ref<number>(1500)
-const draftBookingFee = ref<number>(0)
-const draftMinWallet = ref<number>(50)
-const draftRuleText = ref<string>('')
-const modalError = ref<string | null>(null)
 const toastMessage = ref<string | null>(null)
+const toastTone = ref<ToastTone>('success')
+const showEditModal = ref(false)
+const activeTier = ref<CommissionTier | null>(null)
+const draftRateBps = ref(1500)
+const draftFixedFeePhp = ref(0)
+const draftMinWalletPhp = ref(50)
+const draftEligibilityRule = ref('')
+const modalError = ref<string | null>(null)
 
-const openConfigModal = (tier: CommissionTier) => {
-  editingTier.value = tier
-  draftBps.value = tier.rateBps
-  draftBookingFee.value = tier.fixedBookingFeePhp
-  draftMinWallet.value = tier.minWalletBalancePhp
-  draftRuleText.value = tier.eligibilityRule
+function openEditModal(tier: CommissionTier) {
+  activeTier.value = tier
+  draftRateBps.value = tier.rateBps
+  draftFixedFeePhp.value = tier.fixedBookingFeeCentavos / 100
+  draftMinWalletPhp.value = tier.minWalletBalanceCentavos / 100
+  draftEligibilityRule.value = tier.eligibilityRule
   modalError.value = null
+  showEditModal.value = true
 }
 
-const closeConfigModal = () => {
-  editingTier.value = null
-  modalError.value = null
-}
-
-const saveConfig = () => {
-  if (!editingTier.value) return
-  if (draftBps.value < 100 || draftBps.value > 3500) {
-    modalError.value = 'Commission rate must stay between 100 bps (1.0%) and 3500 bps (35.0%).'
+function submitTierUpdate() {
+  if (!activeTier.value) return
+  const result = saveCommissionTier(activeTier.value.id, {
+    rateBps: Number(draftRateBps.value),
+    fixedBookingFeeCentavos: Math.round(Number(draftFixedFeePhp.value) * 100),
+    minWalletBalanceCentavos: Math.round(Number(draftMinWalletPhp.value) * 100),
+    eligibilityRule: draftEligibilityRule.value,
+  })
+  if (!result.ok) {
+    modalError.value = result.error
     return
   }
-  if (draftMinWallet.value < 0 || draftBookingFee.value < 0) {
-    modalError.value = 'Fee and wallet threshold values cannot be negative.'
-    return
-  }
-  editingTier.value.rateBps = draftBps.value
-  editingTier.value.fixedBookingFeePhp = draftBookingFee.value
-  editingTier.value.minWalletBalancePhp = draftMinWallet.value
-  editingTier.value.eligibilityRule =
-    draftRuleText.value.trim() || editingTier.value.eligibilityRule
-  toastMessage.value = `Updated ${editingTier.value.category} to ${formatBpsAsPercent(draftBps.value)} (${draftBps.value} bps).`
-  closeConfigModal()
+  showEditModal.value = false
+  toastMessage.value = result.message ?? `Updated ${activeTier.value.category}`
+  toastTone.value = 'success'
 }
 </script>
 
 <template>
   <div class="space-y-6">
-    <ToastBanner
-      v-if="toastMessage"
-      :message="toastMessage"
-      tone="success"
-      @dismiss="toastMessage = null"
-    />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 
     <PageHeader
-      title="Commissions"
-      description="Configure platform commission basis points and wallet minimums."
-    >
-      <template #actions>
-        <StatusBadge label="Cash Settlement Model" tone="neutral" />
-        <span class="text-xs font-mono text-neutral-500">Default Split: 1500 bps (15.0%)</span>
-      </template>
-    </PageHeader>
+      title="Commission Settings"
+      description="Configure Bao-Bao platform commission basis points (bps), booking fees, and prepaid wallet minimums."
+    />
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div
-        v-for="tier in commissionTiers"
+        v-for="tier in tiers"
         :key="tier.id"
-        class="bg-white border border-neutral-200 p-6 flex flex-col justify-between space-y-5"
+        class="bg-white border border-neutral-200 p-5 flex flex-col justify-between space-y-4"
       >
-        <div>
-          <div class="flex items-center justify-between gap-2">
-            <h3 class="font-bold text-neutral-900 text-sm">{{ tier.category }}</h3>
-            <span class="font-mono text-[11px] text-neutral-500">{{ tier.rateBps }} bps</span>
+        <div class="space-y-3">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h2 class="text-sm font-bold text-neutral-900">{{ tier.category }}</h2>
+              <p class="text-[11px] font-mono text-neutral-500 mt-0.5">{{ tier.rateBps }} bps</p>
+            </div>
+            <span class="text-lg font-extrabold font-mono text-neutral-900">
+              {{ formatBpsAsPercent(tier.rateBps) }}
+            </span>
           </div>
 
-          <div class="text-3xl font-bold font-mono text-neutral-900 my-4 tabular-nums">
-            {{ formatBpsAsPercent(tier.rateBps) }}
-            <span class="text-xs font-sans font-normal text-neutral-500">per trip</span>
+          <div class="grid grid-cols-2 gap-3 text-xs border-y border-neutral-100 py-3">
+            <div>
+              <div class="text-neutral-500">Fixed Booking Fee</div>
+              <div class="font-mono font-semibold text-neutral-900 mt-0.5">
+                {{ formatCentavos(tier.fixedBookingFeeCentavos) }}
+              </div>
+            </div>
+            <div>
+              <div class="text-neutral-500">Min Dispatch Wallet</div>
+              <div class="font-mono font-semibold text-neutral-900 mt-0.5">
+                {{ formatCentavos(tier.minWalletBalanceCentavos) }}
+              </div>
+            </div>
           </div>
 
-          <p class="text-xs text-neutral-600 mb-4">{{ tier.eligibilityRule }}</p>
-
-          <div class="space-y-2 border-t border-neutral-100 pt-3 text-xs text-neutral-600">
-            <div class="flex justify-between">
-              <span>Fixed Booking Fee:</span>
-              <span class="font-mono font-bold text-neutral-900">
-                {{ formatPhp(tier.fixedBookingFeePhp) }}
-              </span>
-            </div>
-            <div class="flex justify-between">
-              <span>Min Dispatch Wallet:</span>
-              <span class="font-mono font-bold text-neutral-900">
-                {{ formatPhp(tier.minWalletBalancePhp) }}
-              </span>
-            </div>
-            <p class="text-[11px] text-neutral-400 pt-1">{{ tier.settlementNote }}</p>
+          <div class="text-xs space-y-1.5">
+            <p class="text-neutral-700 leading-relaxed">{{ tier.eligibilityRule }}</p>
+            <p class="text-[11px] text-neutral-500">{{ tier.settlementNote }}</p>
           </div>
         </div>
 
         <button
           type="button"
-          class="w-full py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-medium transition-colors"
-          @click="openConfigModal(tier)"
+          class="w-full py-2 border border-neutral-300 bg-white text-neutral-900 text-xs font-semibold hover:bg-neutral-50 cursor-pointer"
+          @click="openEditModal(tier)"
         >
           Configure Rate &amp; Threshold
         </button>
@@ -154,78 +103,83 @@ const saveConfig = () => {
     </div>
 
     <ModalDialog
-      :open="Boolean(editingTier)"
-      :title="editingTier ? `Configure Commission · ${editingTier.category}` : ''"
-      subtitle="100 bps equals 1.00% deduction against finalized trip fare."
+      v-model:open="showEditModal"
+      :title="activeTier ? `Configure ${activeTier.category}` : 'Configure Commission Tier'"
+      subtitle="Rates are persisted as integer basis points (100 bps = 1%) to eliminate rounding drift."
       size="md"
-      @update:open="(open) => !open && closeConfigModal()"
     >
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">
-            Commission Rate (Basis Points)
+          <label for="commission-bps" class="block font-medium text-neutral-700 mb-1">
+            Commission Rate (Basis Points · 100–3500 bps)
           </label>
           <input
-            v-model.number="draftBps"
+            id="commission-bps"
+            v-model.number="draftRateBps"
             type="number"
             min="100"
             max="3500"
-            step="50"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
           />
-          <span class="text-[11px] text-neutral-500 font-mono">
-            Effective cut: {{ formatBpsAsPercent(draftBps) }}
-          </span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block font-medium text-neutral-700 mb-1"> Fixed Booking Fee (₱) </label>
+            <label for="commission-fixed-fee" class="block font-medium text-neutral-700 mb-1">
+              Fixed Booking Fee (PHP)
+            </label>
             <input
-              v-model.number="draftBookingFee"
+              id="commission-fixed-fee"
+              v-model.number="draftFixedFeePhp"
               type="number"
               min="0"
-              step="1"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+              step="0.5"
+              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
             />
           </div>
           <div>
-            <label class="block font-medium text-neutral-700 mb-1"> Min Dispatch Wallet (₱) </label>
+            <label for="commission-min-wallet" class="block font-medium text-neutral-700 mb-1">
+              Min Dispatch Wallet (PHP)
+            </label>
             <input
-              v-model.number="draftMinWallet"
+              id="commission-min-wallet"
+              v-model.number="draftMinWalletPhp"
               type="number"
               min="0"
               step="10"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
             />
           </div>
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Qualifying Rule</label>
+          <label for="commission-eligibility" class="block font-medium text-neutral-700 mb-1">
+            Eligibility Rule
+          </label>
           <textarea
-            v-model="draftRuleText"
+            id="commission-eligibility"
+            v-model="draftEligibilityRule"
             rows="2"
             class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
           />
         </div>
 
-        <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
+        <p v-if="modalError" class="text-rose-700 font-medium">{{ modalError }}</p>
       </div>
 
       <template #footer>
         <div class="flex items-center justify-end gap-2">
           <button
             type="button"
-            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-            @click="closeConfigModal"
+            class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+            @click="showEditModal = false"
           >
             Cancel
           </button>
           <button
             type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-            @click="saveConfig"
+            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+            @click="submitTierUpdate"
           >
             Save Commission Config
           </button>

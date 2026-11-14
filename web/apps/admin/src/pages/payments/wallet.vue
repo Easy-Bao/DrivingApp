@@ -1,109 +1,55 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import TablePagination from '@/shared/table/TablePagination.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
-import { exportToCsv, formatPhp } from '@/shared/utils/format'
+import { RouterLink } from 'vue-router'
+import {
+  BaseSelect,
+  ConfirmDialog,
+  EmptyTableRow,
+  exportToCsv,
+  formatCentavos,
+  ModalDialog,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  TablePagination,
+  ToastBanner,
+  useDataTable,
+} from '@/shared'
+import type { ToastTone } from '@/shared'
+import { useWalletAccounts } from '@/features/payments'
+import type { DriverWalletRow } from '@/features/payments'
 
-interface DriverWalletRow {
-  driverId: string
-  driver: string
-  phone: string
-  plateNumber: string
-  balance: number
-  totalTopups: number
-  totalCommissionPaid: number
-  lastTopupAt: string
-}
-
-const MINIMUM_DISPATCH_BALANCE = 50
-
-const driverWallets = ref<DriverWalletRow[]>([
-  {
-    driverId: 'DRV-7016-101',
-    driver: 'Rodelio Cruz',
-    phone: '+63 917 482 1903',
-    plateNumber: 'ZDS-4821 · TODA-0412',
-    balance: 18.5,
-    totalTopups: 1450,
-    totalCommissionPaid: 1431.5,
-    lastTopupAt: '4 days ago',
-  },
-  {
-    driverId: 'DRV-7016-102',
-    driver: 'Danilo Mendoza',
-    phone: '+63 918 654 2219',
-    plateNumber: 'ZDS-3019 · TODA-0194',
-    balance: 312.75,
-    totalTopups: 3800,
-    totalCommissionPaid: 3487.25,
-    lastTopupAt: 'Yesterday',
-  },
-  {
-    driverId: 'DRV-7016-103',
-    driver: 'Reynaldo Bautista',
-    phone: '+63 917 773 8810',
-    plateNumber: 'ZDS-1944 · TODA-0277',
-    balance: 42.0,
-    totalTopups: 2150,
-    totalCommissionPaid: 2108.0,
-    lastTopupAt: '3 days ago',
-  },
-  {
-    driverId: 'DRV-7016-104',
-    driver: 'Ernesto Villafuerte',
-    phone: '+63 928 914 5532',
-    plateNumber: 'ZDS-6120 · TODA-0318',
-    balance: 195.0,
-    totalTopups: 2700,
-    totalCommissionPaid: 2505.0,
-    lastTopupAt: 'Today, 08:15 AM',
-  },
-  {
-    driverId: 'DRV-7016-105',
-    driver: 'Arnel Cabug',
-    phone: '+63 919 331 0745',
-    plateNumber: 'ZDS-4402 · TODA-0122',
-    balance: 12.0,
-    totalTopups: 950,
-    totalCommissionPaid: 938.0,
-    lastTopupAt: '6 days ago',
-  },
-])
+const { wallets, minDispatchBalanceCentavos, adjustDriverWallet } = useWalletAccounts()
 
 const searchQuery = ref('')
 const eligibilityFilter = ref<'All' | 'Eligible' | 'Locked'>('All')
-const currentPage = ref(1)
-const itemsPerPage = 8
-
 const toastMessage = ref<string | null>(null)
-const adjustingWallet = ref<DriverWalletRow | null>(null)
-const adjustmentType = ref<'credit' | 'debit'>('credit')
-const adjustmentAmount = ref<number>(100)
-const confirmAdjustOpen = ref(false)
-const adjustReason = ref('')
+const toastTone = ref<ToastTone>('success')
+
+const showAdjustModal = ref(false)
+const showAuditConfirm = ref(false)
+const targetWallet = ref<DriverWalletRow | null>(null)
+const adjustDirection = ref<'credit' | 'debit'>('credit')
+const adjustAmountPhp = ref('100')
+const adjustNote = ref('')
+const modalError = ref<string | null>(null)
 
 const filteredWallets = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
-  return driverWallets.value.filter((wallet) => {
-    const isEligible = wallet.balance >= MINIMUM_DISPATCH_BALANCE
-    const matchesStatus =
+  const threshold = minDispatchBalanceCentavos.value
+  return wallets.value.filter((wallet) => {
+    const matchesQuery =
+      !query ||
+      wallet.driver.toLowerCase().includes(query) ||
+      wallet.driverId.toLowerCase().includes(query) ||
+      wallet.phone.toLowerCase().includes(query) ||
+      wallet.plateNumber.toLowerCase().includes(query)
+    const isEligible = wallet.balanceCentavos >= threshold
+    const matchesEligibility =
       eligibilityFilter.value === 'All' ||
       (eligibilityFilter.value === 'Eligible' && isEligible) ||
       (eligibilityFilter.value === 'Locked' && !isEligible)
-    const matchesSearch =
-      !query ||
-      wallet.driverId.toLowerCase().includes(query) ||
-      wallet.driver.toLowerCase().includes(query) ||
-      wallet.phone.toLowerCase().includes(query) ||
-      wallet.plateNumber.toLowerCase().includes(query)
-    return matchesStatus && matchesSearch
+    return matchesQuery && matchesEligibility
   })
 })
 
@@ -111,82 +57,98 @@ const hasActiveFilters = computed(
   () => searchQuery.value.trim().length > 0 || eligibilityFilter.value !== 'All',
 )
 
-const resetFilters = () => {
+const { currentPage, itemsPerPage, paginatedItems, resetPage } = useDataTable(filteredWallets, {
+  initialPageSize: 10,
+})
+
+watch([searchQuery, eligibilityFilter], resetPage)
+
+const totalLiabilityCentavos = computed(() =>
+  wallets.value.reduce((sum, wallet) => sum + wallet.balanceCentavos, 0),
+)
+const dispatchLockedCount = computed(
+  () =>
+    wallets.value.filter((wallet) => wallet.balanceCentavos < minDispatchBalanceCentavos.value)
+      .length,
+)
+const totalCommissionCollectedCentavos = computed(() =>
+  wallets.value.reduce((sum, wallet) => sum + wallet.totalCommissionPaidCentavos, 0),
+)
+
+function showToast(message: string, tone: ToastTone = 'success') {
+  toastMessage.value = message
+  toastTone.value = tone
+}
+
+function resetFilters() {
   searchQuery.value = ''
   eligibilityFilter.value = 'All'
 }
 
-watch([searchQuery, eligibilityFilter], () => {
-  currentPage.value = 1
-})
-
-const paginatedWallets = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredWallets.value.slice(start, start + itemsPerPage)
-})
-
-const totalLiability = computed(() =>
-  driverWallets.value.reduce((sum, wallet) => sum + wallet.balance, 0),
-)
-
-const dispatchLockedCount = computed(
-  () => driverWallets.value.filter((wallet) => wallet.balance < MINIMUM_DISPATCH_BALANCE).length,
-)
-
-const totalCommissionCollected = computed(() =>
-  driverWallets.value.reduce((sum, wallet) => sum + wallet.totalCommissionPaid, 0),
-)
-
-const triggerTopupPrompt = (wallet: DriverWalletRow) => {
-  toastMessage.value = `Sent GCash/Maya QRPh top-up reminder via SMS & app push to ${wallet.driver} (${wallet.phone}).`
+function openAdjustModal(wallet: DriverWalletRow) {
+  targetWallet.value = wallet
+  adjustDirection.value = 'credit'
+  adjustAmountPhp.value = '100'
+  adjustNote.value = ''
+  modalError.value = null
+  showAdjustModal.value = true
 }
 
-const openAdjustModal = (wallet: DriverWalletRow) => {
-  adjustingWallet.value = wallet
-  adjustmentType.value = 'credit'
-  adjustmentAmount.value = 100
-  adjustReason.value = ''
-}
-
-const closeAdjustModal = () => {
-  adjustingWallet.value = null
-  confirmAdjustOpen.value = false
-}
-
-const requestAdjustmentConfirm = () => {
-  if (!adjustingWallet.value || adjustmentAmount.value <= 0) return
-  confirmAdjustOpen.value = true
-}
-
-const applyWalletAdjustment = () => {
-  if (!adjustingWallet.value || !adjustReason.value.trim()) return
-  const delta = adjustmentType.value === 'credit' ? adjustmentAmount.value : -adjustmentAmount.value
-  adjustingWallet.value.balance = Math.max(
-    0,
-    Number((adjustingWallet.value.balance + delta).toFixed(2)),
-  )
-  if (delta > 0) {
-    adjustingWallet.value.totalTopups = Number(
-      (adjustingWallet.value.totalTopups + delta).toFixed(2),
-    )
-    adjustingWallet.value.lastTopupAt = 'Just now (Operator Credit)'
+function proceedToAuditConfirmation() {
+  const amountCentavos = Math.round(Number(adjustAmountPhp.value) * 100)
+  if (!Number.isFinite(amountCentavos) || amountCentavos <= 0) {
+    modalError.value = 'Enter a valid PHP adjustment amount greater than zero.'
+    return
   }
-  toastMessage.value = `${adjustmentType.value === 'credit' ? 'Credited' : 'Debited'} ${formatPhp(adjustmentAmount.value)} for ${adjustingWallet.value.driver}. New balance: ${formatPhp(adjustingWallet.value.balance)}.`
-  closeAdjustModal()
+  modalError.value = null
+  showAdjustModal.value = false
+  showAuditConfirm.value = true
 }
 
-const exportWalletLedger = () => {
+function submitWalletAdjustment() {
+  if (!targetWallet.value) return
+  const amountCentavos = Math.round(Number(adjustAmountPhp.value) * 100)
+  const result = adjustDriverWallet(targetWallet.value.driverId, {
+    direction: adjustDirection.value,
+    amountCentavos,
+    reason: adjustNote.value,
+  })
+  if (!result.ok) {
+    showToast(result.error, 'warning')
+    return
+  }
+  showAuditConfirm.value = false
+  adjustNote.value = ''
+  showToast(result.message ?? `Adjusted wallet for ${targetWallet.value.driver}`)
+}
+
+function triggerTopupPrompt(wallet: DriverWalletRow) {
+  showToast(`Queued SMS/in-app low-wallet reminder for ${wallet.driver} (${wallet.phone}).`, 'info')
+}
+
+function exportWalletLedger() {
+  const threshold = minDispatchBalanceCentavos.value
   exportToCsv(
-    'pagadian-driver-wallets.csv',
-    ['Driver ID', 'Driver', 'Phone', 'Plate', 'Balance (PHP)', 'Total Top-Ups', 'Eligibility'],
+    'easyride-driver-wallets',
+    [
+      'Driver ID',
+      'Driver',
+      'Phone',
+      'Plate / TODA',
+      'Balance PHP',
+      'Total Top-Ups PHP',
+      'Commission Deducted PHP',
+      'Standing',
+    ],
     filteredWallets.value.map((wallet) => [
       wallet.driverId,
       wallet.driver,
       wallet.phone,
       wallet.plateNumber,
-      wallet.balance.toFixed(2),
-      wallet.totalTopups.toFixed(2),
-      wallet.balance >= MINIMUM_DISPATCH_BALANCE ? 'Dispatch Eligible' : 'Dispatch Locked',
+      (wallet.balanceCentavos / 100).toFixed(2),
+      (wallet.totalTopupsCentavos / 100).toFixed(2),
+      (wallet.totalCommissionPaidCentavos / 100).toFixed(2),
+      wallet.balanceCentavos >= threshold ? 'Dispatch Eligible' : 'Dispatch Locked',
     ]),
   )
 }
@@ -194,28 +156,23 @@ const exportWalletLedger = () => {
 
 <template>
   <div class="space-y-6">
-    <ToastBanner
-      v-if="toastMessage"
-      :message="toastMessage"
-      tone="success"
-      @dismiss="toastMessage = null"
-    />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 
     <PageHeader
       title="Wallets"
-      :description="`Monitor driver prepaid balances and the ${formatPhp(MINIMUM_DISPATCH_BALANCE)} dispatch threshold.`"
+      :description="`Monitor driver prepaid balances and the ${formatCentavos(minDispatchBalanceCentavos)} dispatch threshold.`"
     />
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Fleet Prepaid Credit Liability</span>
-        <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
-          {{ formatPhp(totalLiability) }}
+        <div class="text-xl font-bold font-mono tabular-nums text-neutral-900 mt-1">
+          {{ formatCentavos(totalLiabilityCentavos) }}
         </div>
       </div>
       <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">
-          Dispatch Locked (&lt; {{ formatPhp(MINIMUM_DISPATCH_BALANCE) }} min)
+          Dispatch Locked (&lt; {{ formatCentavos(minDispatchBalanceCentavos) }} min)
         </span>
         <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
           {{ dispatchLockedCount }} Drivers
@@ -223,14 +180,14 @@ const exportWalletLedger = () => {
       </div>
       <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Platform Commission Collected</span>
-        <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
-          {{ formatPhp(totalCommissionCollected) }}
+        <div class="text-xl font-bold font-mono tabular-nums text-neutral-900 mt-1">
+          {{ formatCentavos(totalCommissionCollectedCentavos) }}
         </div>
       </div>
       <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Minimum Top-Up Increment</span>
-        <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
-          {{ formatPhp(50) }}
+        <div class="text-xl font-bold font-mono tabular-nums text-neutral-900 mt-1">
+          {{ formatCentavos(5000) }}
         </div>
       </div>
     </div>
@@ -252,10 +209,24 @@ const exportWalletLedger = () => {
             aria-label="Filter by dispatch eligibility"
             :options="[
               { label: 'All Eligibility States', value: 'All' },
-              { label: 'Dispatch Eligible (>= ₱50)', value: 'Eligible' },
-              { label: 'Dispatch Locked (< ₱50)', value: 'Locked' },
+              {
+                label: `Dispatch Eligible (>= ${formatCentavos(minDispatchBalanceCentavos)})`,
+                value: 'Eligible',
+              },
+              {
+                label: `Dispatch Locked (< ${formatCentavos(minDispatchBalanceCentavos)})`,
+                value: 'Locked',
+              },
             ]"
           />
+          <button
+            v-if="hasActiveFilters"
+            type="button"
+            class="px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+            @click="resetFilters"
+          >
+            Reset
+          </button>
           <button
             type="button"
             class="px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
@@ -289,7 +260,7 @@ const exportWalletLedger = () => {
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="wallet in paginatedWallets"
+              v-for="wallet in paginatedItems"
               :key="wallet.driverId"
               class="hover:bg-neutral-50/70 transition-colors"
             >
@@ -307,38 +278,40 @@ const exportWalletLedger = () => {
               </td>
               <td class="py-3 px-4">
                 <span class="font-mono font-bold text-sm tabular-nums text-neutral-900">
-                  {{ formatPhp(wallet.balance) }}
+                  {{ formatCentavos(wallet.balanceCentavos) }}
                 </span>
               </td>
               <td class="py-3 px-4 font-mono tabular-nums text-neutral-700">
-                {{ formatPhp(wallet.totalTopups) }}
+                {{ formatCentavos(wallet.totalTopupsCentavos) }}
               </td>
               <td class="py-3 px-4 font-mono tabular-nums text-neutral-700">
-                {{ formatPhp(wallet.totalCommissionPaid) }}
+                {{ formatCentavos(wallet.totalCommissionPaidCentavos) }}
               </td>
               <td class="py-3 px-4">
                 <StatusBadge
                   :label="
-                    wallet.balance >= MINIMUM_DISPATCH_BALANCE
+                    wallet.balanceCentavos >= minDispatchBalanceCentavos
                       ? 'Dispatch Eligible'
                       : 'Dispatch Locked'
                   "
-                  :tone="wallet.balance >= MINIMUM_DISPATCH_BALANCE ? 'success' : 'danger'"
+                  :tone="
+                    wallet.balanceCentavos >= minDispatchBalanceCentavos ? 'success' : 'danger'
+                  "
                 />
               </td>
               <td class="py-3 px-4 text-right whitespace-nowrap">
                 <div class="inline-flex items-center gap-2">
                   <button
                     type="button"
-                    class="px-2.5 py-1 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50"
+                    class="px-2.5 py-1 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50 cursor-pointer"
                     @click="openAdjustModal(wallet)"
                   >
                     Adjust Credit
                   </button>
                   <button
-                    v-if="wallet.balance < MINIMUM_DISPATCH_BALANCE"
+                    v-if="wallet.balanceCentavos < minDispatchBalanceCentavos"
                     type="button"
-                    class="px-2.5 py-1 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
+                    class="px-2.5 py-1 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800 cursor-pointer"
                     @click="triggerTopupPrompt(wallet)"
                   >
                     Remind Top-Up
@@ -347,10 +320,10 @@ const exportWalletLedger = () => {
               </td>
             </tr>
             <EmptyTableRow
-              v-if="paginatedWallets.length === 0"
+              v-if="paginatedItems.length === 0"
               :colspan="7"
               title="No matching driver wallets"
-              description="No driver wallets match the active filters."
+              description="No prepaid driver wallet accounts match the selected filter criteria."
               :show-reset="hasActiveFilters"
               @reset="resetFilters"
             />
@@ -366,56 +339,53 @@ const exportWalletLedger = () => {
     </div>
 
     <ModalDialog
-      :open="Boolean(adjustingWallet) && !confirmAdjustOpen"
-      :title="adjustingWallet ? `Manual Wallet Adjustment · ${adjustingWallet.driver}` : ''"
-      :subtitle="
-        adjustingWallet
-          ? `Current prepaid balance: ${formatPhp(adjustingWallet.balance)} (${adjustingWallet.driverId})`
-          : ''
-      "
-      size="md"
-      @update:open="(open) => !open && closeAdjustModal()"
+      v-model:open="showAdjustModal"
+      :title="targetWallet ? `Adjust Prepaid Wallet · ${targetWallet.driver}` : 'Adjust Wallet'"
+      subtitle="Specify credit or debit amount in PHP before logging a mandatory audit trail note."
+      size="sm"
     >
       <div class="space-y-3 text-xs">
         <div>
           <label class="block font-medium text-neutral-700 mb-1">Adjustment Direction</label>
           <BaseSelect
-            v-model="adjustmentType"
+            v-model="adjustDirection"
             :full-width="true"
-            aria-label="Adjustment direction"
+            aria-label="Wallet adjustment direction"
             :options="[
-              { label: 'Credit Wallet (+ Add Funds)', value: 'credit' },
-              { label: 'Debit Wallet (- Deduct Correction)', value: 'debit' },
+              { label: 'Credit Prepaid Wallet (+)', value: 'credit' },
+              { label: 'Debit Prepaid Wallet (-)', value: 'debit' },
             ]"
           />
         </div>
-
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Amount (PHP)</label>
+          <label for="wallet-adjustment-amount" class="block font-medium text-neutral-700 mb-1">
+            Amount (PHP)
+          </label>
           <input
-            v-model.number="adjustmentAmount"
+            id="wallet-adjustment-amount"
+            v-model="adjustAmountPhp"
             type="number"
             min="1"
-            step="10"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-mono bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+            step="0.01"
+            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
           />
         </div>
+        <p v-if="modalError" class="text-rose-700 font-medium">{{ modalError }}</p>
       </div>
 
       <template #footer>
         <div class="flex items-center justify-end gap-2">
           <button
             type="button"
-            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-            @click="closeAdjustModal"
+            class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+            @click="showAdjustModal = false"
           >
             Cancel
           </button>
           <button
             type="button"
-            :disabled="!adjustmentAmount || adjustmentAmount <= 0"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800 disabled:opacity-40"
-            @click="requestAdjustmentConfirm"
+            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+            @click="proceedToAuditConfirmation"
           >
             Continue to Audit Note
           </button>
@@ -424,17 +394,16 @@ const exportWalletLedger = () => {
     </ModalDialog>
 
     <ConfirmDialog
-      v-model:open="confirmAdjustOpen"
-      v-model:reason="adjustReason"
-      :title="`Confirm Wallet ${adjustmentType === 'credit' ? 'Credit' : 'Debit'} · ${formatPhp(adjustmentAmount)}`"
-      :description="`Apply a manual ${adjustmentType} adjustment to ${adjustingWallet?.driver ?? 'driver'}'s prepaid commission ledger.`"
+      v-model:open="showAuditConfirm"
+      v-model:reason="adjustNote"
+      :title="`Confirm Wallet ${adjustDirection === 'credit' ? 'Credit' : 'Debit'}`"
+      :description="`Record an immutable ledger adjustment for ${targetWallet?.driver ?? 'driver'}.`"
       confirm-label="Apply Adjustment"
-      :tone="adjustmentType === 'credit' ? 'emerald' : 'rose'"
+      :tone="adjustDirection === 'debit' ? 'rose' : 'neutral'"
       :require-reason="true"
       reason-label="Mandatory Ledger Audit Note"
-      reason-placeholder="e.g., Manual fee reversal after cancellation dispute review..."
-      @confirm="applyWalletAdjustment"
-      @cancel="confirmAdjustOpen = false"
+      reason-placeholder="e.g., Operator reserve credit for TODA orientation."
+      @confirm="submitWalletAdjustment"
     />
   </div>
 </template>

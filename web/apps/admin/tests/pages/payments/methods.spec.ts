@@ -1,8 +1,15 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { resetSettingsForTesting } from '@/features/settings'
+import { resetPaymentsForTesting } from '@/features/payments'
 import PaymentMethodsPage from '@/pages/payments/methods.vue'
 
 describe('PaymentMethodsPage', () => {
+  beforeEach(() => {
+    resetSettingsForTesting()
+    resetPaymentsForTesting()
+  })
+
   it('supports adding a company account, editing details, and updating a QRPh image', async () => {
     const wrapper = mount(PaymentMethodsPage)
 
@@ -46,6 +53,19 @@ describe('PaymentMethodsPage', () => {
     expect(qrBtn).toBeDefined()
     await qrBtn!.trigger('click')
     expect(wrapper.text()).toContain('Update QR Code Image ·')
+
+    const fileInput = wrapper.find('input[aria-label="Upload QR code image"]')
+    const invalidFile = new File(['bad-binary'], 'payload.exe', {
+      type: 'application/x-msdownload',
+    })
+    Object.defineProperty(fileInput.element, 'files', {
+      value: [invalidFile],
+      configurable: true,
+    })
+    await fileInput.trigger('change')
+    expect(wrapper.find('[role="dialog"]').text()).toContain(
+      'Upload a valid PNG, JPEG, WebP, or SVG QR image.',
+    )
 
     const refInput = wrapper.find('input[aria-label="QRPh Merchant Reference"]')
     await refInput.setValue('QRPH-PAG-9001')

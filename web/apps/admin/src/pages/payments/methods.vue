@@ -1,107 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
+import { BaseSelect, ModalDialog, PageHeader, StatusBadge, ToastBanner } from '@/shared'
+import type { ToastTone } from '@/shared'
+import { buildQrSvg, useCollectionAccounts, validateQrUploadFile } from '@/features/payments'
+import type { ChannelKind, CompanyCollectionAccount } from '@/features/payments'
 
-type ChannelKind = 'QRPh Wallet' | 'Corporate Bank'
-
-interface CompanyCollectionAccount {
-  id: string
-  label: string
-  channelType: ChannelKind
-  institution: string
-  accountNumber: string
-  accountHolder: string
-  branchOrMerchantId: string
-  qrPreviewUrl: string
-  qrUpdatedAt: string
-  isActive: boolean
-}
-
-const buildQrSvg = (merchantCode: string, accentHex: string) => {
-  const safeCode = merchantCode.replace(/[<>&"']/g, '')
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
-  <rect width="180" height="180" fill="#ffffff"/>
-  <rect x="8" y="8" width="164" height="164" fill="#ffffff" stroke="#e5e5e5" stroke-width="2"/>
-  <rect x="20" y="20" width="38" height="38" fill="none" stroke="${accentHex}" stroke-width="6"/>
-  <rect x="31" y="31" width="16" height="16" fill="#171717"/>
-  <rect x="122" y="20" width="38" height="38" fill="none" stroke="${accentHex}" stroke-width="6"/>
-  <rect x="133" y="31" width="16" height="16" fill="#171717"/>
-  <rect x="20" y="122" width="38" height="38" fill="none" stroke="${accentHex}" stroke-width="6"/>
-  <rect x="31" y="133" width="16" height="16" fill="#171717"/>
-  <rect x="74" y="24" width="10" height="10" fill="#171717"/>
-  <rect x="92" y="24" width="14" height="10" fill="${accentHex}"/>
-  <rect x="74" y="42" width="30" height="10" fill="#171717"/>
-  <rect x="24" y="74" width="14" height="12" fill="#171717"/>
-  <rect x="46" y="74" width="18" height="12" fill="${accentHex}"/>
-  <rect x="74" y="74" width="32" height="32" fill="#171717"/>
-  <rect x="82" y="82" width="16" height="16" fill="#ffffff"/>
-  <rect x="116" y="74" width="16" height="12" fill="#171717"/>
-  <rect x="140" y="74" width="16" height="12" fill="${accentHex}"/>
-  <rect x="74" y="120" width="22" height="12" fill="${accentHex}"/>
-  <rect x="106" y="120" width="20" height="12" fill="#171717"/>
-  <rect x="136" y="120" width="18" height="26" fill="#171717"/>
-  <rect x="74" y="140" width="44" height="12" fill="#171717"/>
-  <text x="90" y="168" font-family="monospace" font-size="9" font-weight="bold" fill="#171717" text-anchor="middle">${safeCode}</text>
-</svg>`
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
-}
-
-const accounts = ref<CompanyCollectionAccount[]>([
-  {
-    id: 'ACC-QR-GCASH',
-    label: 'GCash QRPh · Pagadian Dispatch Treasury',
-    channelType: 'QRPh Wallet',
-    institution: 'GCash Business (QRPh)',
-    accountNumber: '+63 917 701 6001',
-    accountHolder: 'EasyRide Mobility Services ZDS Corp.',
-    branchOrMerchantId: 'QRPH-PAG-8801',
-    qrPreviewUrl: buildQrSvg('QRPH-PAG-8801', '#007dfe'),
-    qrUpdatedAt: 'Updated Nov 01, 2026',
-    isActive: true,
-  },
-  {
-    id: 'ACC-QR-MAYA',
-    label: 'Maya QRPh · Instant Fleet Wallet',
-    channelType: 'QRPh Wallet',
-    institution: 'Maya Philippines (QRPh)',
-    accountNumber: '+63 928 701 6002',
-    accountHolder: 'EasyRide Mobility Services ZDS Corp.',
-    branchOrMerchantId: 'MAYA-PAG-8802',
-    qrPreviewUrl: buildQrSvg('MAYA-PAG-8802', '#059669'),
-    qrUpdatedAt: 'Updated Nov 04, 2026',
-    isActive: true,
-  },
-  {
-    id: 'ACC-BANK-BDO',
-    label: 'BDO Unibank · Pagadian Rizal Ave Branch',
-    channelType: 'Corporate Bank',
-    institution: 'BDO Unibank Inc.',
-    accountNumber: '0074-8029-4410',
-    accountHolder: 'EasyRide Mobility Services ZDS Corp.',
-    branchOrMerchantId: 'InstaPay / PESONet · Brgy. Santiago',
-    qrPreviewUrl: '',
-    qrUpdatedAt: 'Bank Transfer Only',
-    isActive: true,
-  },
-  {
-    id: 'ACC-BANK-BPI',
-    label: 'BPI · Pagadian Pajares Corporate Settlement',
-    channelType: 'Corporate Bank',
-    institution: 'Bank of the Philippine Islands',
-    accountNumber: '8491-0023-77',
-    accountHolder: 'EasyRide Mobility Services ZDS Corp.',
-    branchOrMerchantId: 'InstaPay Enabled · Pagadian (7016)',
-    qrPreviewUrl: '',
-    qrUpdatedAt: 'Standby Channel',
-    isActive: false,
-  },
-])
+const { accounts, createAccount, updateAccount, rotateQrCode, toggleAccountActive } =
+  useCollectionAccounts()
 
 const toastMessage = ref<string | null>(null)
+const toastTone = ref<ToastTone>('success')
+const modalError = ref<string | null>(null)
 
 const showAddModal = ref(false)
 const newLabel = ref('')
@@ -110,169 +19,172 @@ const newInstitution = ref('')
 const newAccountNumber = ref('')
 const newAccountHolder = ref('EasyRide Mobility Services ZDS Corp.')
 const newBranchOrMerchantId = ref('')
-const addError = ref<string | null>(null)
 
-const editingAccount = ref<CompanyCollectionAccount | null>(null)
+const showEditModal = ref(false)
+const editAccountId = ref('')
 const editLabel = ref('')
 const editInstitution = ref('')
 const editAccountNumber = ref('')
 const editAccountHolder = ref('')
 const editBranchOrMerchantId = ref('')
-const editError = ref<string | null>(null)
 
-const updatingQrAccount = ref<CompanyCollectionAccount | null>(null)
-const draftMerchantRef = ref('')
-const draftQrImageUrl = ref('')
-const draftQrFileName = ref('')
-const qrModalError = ref<string | null>(null)
+const showQrModal = ref(false)
+const qrTargetId = ref('')
+const qrTargetLabel = ref('')
+const qrMerchantReference = ref('')
+const qrPreviewDraftUrl = ref('')
+const qrUploadFileName = ref('')
 
-const activeCount = computed(() => accounts.value.filter((a) => a.isActive).length)
+const activeChannelCount = computed(
+  () => accounts.value.filter((account) => account.isActive).length,
+)
 
-const openAddModal = () => {
+function showToast(message: string, tone: ToastTone = 'success') {
+  toastMessage.value = message
+  toastTone.value = tone
+}
+
+function openAddModal() {
   newLabel.value = ''
   newChannelType.value = 'QRPh Wallet'
   newInstitution.value = ''
   newAccountNumber.value = ''
   newAccountHolder.value = 'EasyRide Mobility Services ZDS Corp.'
   newBranchOrMerchantId.value = ''
-  addError.value = null
+  modalError.value = null
   showAddModal.value = true
 }
 
-const createCompanyAccount = () => {
-  if (
-    !newLabel.value.trim() ||
-    !newInstitution.value.trim() ||
-    !newAccountNumber.value.trim() ||
-    !newAccountHolder.value.trim()
-  ) {
-    addError.value = 'Fill in account label, institution, account number, and holder name.'
+function submitNewAccount() {
+  const result = createAccount({
+    label: newLabel.value,
+    channelType: newChannelType.value,
+    institution: newInstitution.value,
+    accountNumber: newAccountNumber.value,
+    accountHolder: newAccountHolder.value,
+    branchOrMerchantId: newBranchOrMerchantId.value,
+  })
+  if (!result.ok) {
+    modalError.value = result.error
     return
   }
-  const code = newBranchOrMerchantId.value.trim() || `PAG-${accounts.value.length + 8801}`
-  const isQr = newChannelType.value === 'QRPh Wallet'
-  accounts.value.unshift({
-    id: `ACC-${Date.now().toString().slice(-4)}`,
-    label: newLabel.value.trim(),
-    channelType: newChannelType.value,
-    institution: newInstitution.value.trim(),
-    accountNumber: newAccountNumber.value.trim(),
-    accountHolder: newAccountHolder.value.trim(),
-    branchOrMerchantId: code,
-    qrPreviewUrl: isQr ? buildQrSvg(code, '#171717') : '',
-    qrUpdatedAt: isQr ? 'Uploaded Just Now' : 'Bank Transfer Only',
-    isActive: true,
-  })
-  toastMessage.value = `Added company collection account: ${newLabel.value.trim()}.`
   showAddModal.value = false
+  showToast(result.message ?? 'Added collection channel')
 }
 
-const openEditModal = (account: CompanyCollectionAccount) => {
-  editingAccount.value = account
+function openEditModal(account: CompanyCollectionAccount) {
+  editAccountId.value = account.id
   editLabel.value = account.label
   editInstitution.value = account.institution
   editAccountNumber.value = account.accountNumber
   editAccountHolder.value = account.accountHolder
   editBranchOrMerchantId.value = account.branchOrMerchantId
-  editError.value = null
+  modalError.value = null
+  showEditModal.value = true
 }
 
-const saveEditedAccount = () => {
-  if (!editingAccount.value) return
-  if (!editLabel.value.trim() || !editInstitution.value.trim() || !editAccountNumber.value.trim()) {
-    editError.value = 'Account label, institution, and account number are required.'
+function submitAccountEdit() {
+  const result = updateAccount(editAccountId.value, {
+    label: editLabel.value,
+    institution: editInstitution.value,
+    accountNumber: editAccountNumber.value,
+    accountHolder: editAccountHolder.value,
+    branchOrMerchantId: editBranchOrMerchantId.value,
+  })
+  if (!result.ok) {
+    modalError.value = result.error
     return
   }
-  editingAccount.value.label = editLabel.value.trim()
-  editingAccount.value.institution = editInstitution.value.trim()
-  editingAccount.value.accountNumber = editAccountNumber.value.trim()
-  editingAccount.value.accountHolder = editAccountHolder.value.trim()
-  editingAccount.value.branchOrMerchantId = editBranchOrMerchantId.value.trim()
-  toastMessage.value = `Updated account details for ${editingAccount.value.label}.`
-  editingAccount.value = null
+  showEditModal.value = false
+  showToast(result.message ?? 'Updated account details')
 }
 
-const openUpdateQrModal = (account: CompanyCollectionAccount) => {
-  updatingQrAccount.value = account
-  draftMerchantRef.value = account.branchOrMerchantId
-  draftQrImageUrl.value = account.qrPreviewUrl || buildQrSvg(account.branchOrMerchantId, '#171717')
-  draftQrFileName.value = ''
-  qrModalError.value = null
+function openUpdateQrModal(account: CompanyCollectionAccount) {
+  qrTargetId.value = account.id
+  qrTargetLabel.value = account.label
+  qrMerchantReference.value = account.branchOrMerchantId
+  qrPreviewDraftUrl.value =
+    account.qrPreviewUrl || buildQrSvg(account.branchOrMerchantId, '#171717')
+  qrUploadFileName.value = ''
+  modalError.value = null
+  showQrModal.value = true
 }
 
-const onQrFileSelected = (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
+function regenerateQrPreview() {
+  const code = qrMerchantReference.value.trim() || 'QRPH-PAGADIAN'
+  qrPreviewDraftUrl.value = buildQrSvg(code, '#171717')
+}
+
+function handleQrFileUpload(event: Event) {
+  const input = event.target as HTMLInputElement | null
+  const file = input?.files?.[0]
   if (!file) return
-  draftQrFileName.value = file.name
-  if (typeof FileReader !== 'undefined') {
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        draftQrImageUrl.value = reader.result
-      }
+
+  const validationError = validateQrUploadFile(file)
+  if (validationError) {
+    modalError.value = validationError
+    qrUploadFileName.value = ''
+    if (input) input.value = ''
+    return
+  }
+
+  modalError.value = null
+  qrUploadFileName.value = file.name
+  const reader = new FileReader()
+  reader.onload = () => {
+    if (typeof reader.result === 'string') {
+      qrPreviewDraftUrl.value = reader.result
     }
-    reader.readAsDataURL(file)
   }
+  reader.readAsDataURL(file)
 }
 
-const regenerateMerchantQr = () => {
-  const refCode = draftMerchantRef.value.trim()
-  if (!refCode) {
-    qrModalError.value = 'Enter a QRPh Merchant Reference before regenerating preview.'
+function publishQrUpdate() {
+  const result = rotateQrCode(qrTargetId.value, {
+    branchOrMerchantId: qrMerchantReference.value,
+    previewDataUrl: qrPreviewDraftUrl.value,
+  })
+  if (!result.ok) {
+    modalError.value = result.error
     return
   }
-  qrModalError.value = null
-  draftQrFileName.value = `${refCode.toLowerCase()}_qrph.svg`
-  draftQrImageUrl.value = buildQrSvg(refCode, '#059669')
+  showQrModal.value = false
+  showToast(result.message ?? 'Updated QRPh collection image')
 }
 
-const saveUpdatedQrCode = () => {
-  if (!updatingQrAccount.value) return
-  if (!draftMerchantRef.value.trim()) {
-    qrModalError.value = 'Merchant reference identifier is required.'
-    return
+function toggleAccountStatus(account: CompanyCollectionAccount) {
+  const result = toggleAccountActive(account.id)
+  if (result.ok) {
+    showToast(result.message ?? 'Updated channel status', 'info')
   }
-  updatingQrAccount.value.branchOrMerchantId = draftMerchantRef.value.trim()
-  updatingQrAccount.value.qrPreviewUrl =
-    draftQrImageUrl.value || buildQrSvg(draftMerchantRef.value.trim(), '#059669')
-  updatingQrAccount.value.qrUpdatedAt = 'Rotated Just Now'
-  toastMessage.value = `Updated QRPh collection image for ${updatingQrAccount.value.label} (${draftMerchantRef.value.trim()}).`
-  updatingQrAccount.value = null
-}
-
-const toggleAccountStatus = (account: CompanyCollectionAccount) => {
-  account.isActive = !account.isActive
-  toastMessage.value = `${account.label} is now ${account.isActive ? 'Active for Driver Top-Ups' : 'Paused'}.`
 }
 </script>
 
 <template>
   <div class="space-y-6">
-    <ToastBanner
-      v-if="toastMessage"
-      :message="toastMessage"
-      tone="success"
-      @dismiss="toastMessage = null"
-    />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 
     <PageHeader
-      title="Channels"
-      description="Manage QRPh codes and bank accounts for driver top-ups."
+      title="Company Payment Channels"
+      description="Manage verified QRPh merchant codes and corporate bank depository accounts used for driver wallet top-ups."
     >
       <template #actions>
-        <StatusBadge :label="`${activeCount} Active Channels`" tone="neutral" />
-        <button
-          type="button"
-          class="px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-none transition-colors"
-          @click="openAddModal"
-        >
-          + Add Company Account
-        </button>
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-mono text-neutral-500">
+            {{ activeChannelCount }} Active / {{ accounts.length }} Total
+          </span>
+          <button
+            type="button"
+            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+            @click="openAddModal"
+          >
+            + Add Company Account
+          </button>
+        </div>
       </template>
     </PageHeader>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div
         v-for="account in accounts"
         :key="account.id"
@@ -331,7 +243,7 @@ const toggleAccountStatus = (account: CompanyCollectionAccount) => {
           <div class="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50"
+              class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50 cursor-pointer"
               @click="openEditModal(account)"
             >
               Edit Account Info
@@ -339,7 +251,7 @@ const toggleAccountStatus = (account: CompanyCollectionAccount) => {
             <button
               v-if="account.channelType === 'QRPh Wallet'"
               type="button"
-              class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50"
+              class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50 cursor-pointer"
               @click="openUpdateQrModal(account)"
             >
               Update QR Code Image
@@ -388,7 +300,7 @@ const toggleAccountStatus = (account: CompanyCollectionAccount) => {
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1"> Institution / Bank Name </label>
+          <label class="block font-medium text-neutral-700 mb-1">Financial Institution</label>
           <input
             v-model="newInstitution"
             type="text"
@@ -397,18 +309,29 @@ const toggleAccountStatus = (account: CompanyCollectionAccount) => {
           />
         </div>
 
-        <div>
-          <label class="block font-medium text-neutral-700 mb-1"> Account or Mobile Number </label>
-          <input
-            v-model="newAccountNumber"
-            type="text"
-            placeholder="e.g., +63 917 ... or 0912-3456-78"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-          />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-neutral-700 mb-1">Account / Mobile Number</label>
+            <input
+              v-model="newAccountNumber"
+              type="text"
+              placeholder="e.g., +63 917 701 6005"
+              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+            />
+          </div>
+          <div>
+            <label class="block font-medium text-neutral-700 mb-1">Merchant / Branch Code</label>
+            <input
+              v-model="newBranchOrMerchantId"
+              type="text"
+              placeholder="e.g., QRPH-PAG-8805"
+              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+            />
+          </div>
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Account Holder Name</label>
+          <label class="block font-medium text-neutral-700 mb-1">Beneficiary Account Holder</label>
           <input
             v-model="newAccountHolder"
             type="text"
@@ -416,34 +339,22 @@ const toggleAccountStatus = (account: CompanyCollectionAccount) => {
           />
         </div>
 
-        <div>
-          <label class="block font-medium text-neutral-700 mb-1">
-            Merchant Ref / Branch Location
-          </label>
-          <input
-            v-model="newBranchOrMerchantId"
-            type="text"
-            placeholder="e.g., QRPH-PAG-8805 or Brgy. Santiago"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-          />
-        </div>
-
-        <p v-if="addError" class="text-xs font-medium text-rose-700">{{ addError }}</p>
+        <p v-if="modalError" class="text-rose-700 font-medium">{{ modalError }}</p>
       </div>
 
       <template #footer>
         <div class="flex items-center justify-end gap-2">
           <button
             type="button"
-            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
             @click="showAddModal = false"
           >
             Cancel
           </button>
           <button
             type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-            @click="createCompanyAccount"
+            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+            @click="submitNewAccount"
           >
             Save Collection Account
           </button>
@@ -452,14 +363,14 @@ const toggleAccountStatus = (account: CompanyCollectionAccount) => {
     </ModalDialog>
 
     <ModalDialog
-      :open="Boolean(editingAccount)"
-      :title="editingAccount ? `Edit Account Info · ${editingAccount.id}` : ''"
+      v-model:open="showEditModal"
+      :title="`Edit Account Info · ${editLabel}`"
+      subtitle="Update institutional account numbers or beneficiary details visible inside the driver app."
       size="md"
-      @update:open="(open) => !open && (editingAccount = null)"
     >
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Display Label</label>
+          <label class="block font-medium text-neutral-700 mb-1">Display Account Label</label>
           <input
             v-model="editLabel"
             type="text"
@@ -467,53 +378,55 @@ const toggleAccountStatus = (account: CompanyCollectionAccount) => {
           />
         </div>
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Institution</label>
+          <label class="block font-medium text-neutral-700 mb-1">Financial Institution</label>
           <input
             v-model="editInstitution"
             type="text"
             class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
           />
         </div>
-        <div>
-          <label class="block font-medium text-neutral-700 mb-1">Account / Wallet Number</label>
-          <input
-            v-model="editAccountNumber"
-            type="text"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-          />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-neutral-700 mb-1">Account / Wallet Number</label>
+            <input
+              v-model="editAccountNumber"
+              type="text"
+              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+            />
+          </div>
+          <div>
+            <label class="block font-medium text-neutral-700 mb-1">Merchant / Branch Ref</label>
+            <input
+              v-model="editBranchOrMerchantId"
+              type="text"
+              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+            />
+          </div>
         </div>
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Beneficiary Holder</label>
+          <label class="block font-medium text-neutral-700 mb-1">Beneficiary Account Holder</label>
           <input
             v-model="editAccountHolder"
             type="text"
             class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
           />
         </div>
-        <div>
-          <label class="block font-medium text-neutral-700 mb-1">Merchant Ref / Branch</label>
-          <input
-            v-model="editBranchOrMerchantId"
-            type="text"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-          />
-        </div>
-        <p v-if="editError" class="text-xs font-medium text-rose-700">{{ editError }}</p>
+        <p v-if="modalError" class="text-rose-700 font-medium">{{ modalError }}</p>
       </div>
 
       <template #footer>
         <div class="flex items-center justify-end gap-2">
           <button
             type="button"
-            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-            @click="editingAccount = null"
+            class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+            @click="showEditModal = false"
           >
             Cancel
           </button>
           <button
             type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-            @click="saveEditedAccount"
+            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+            @click="submitAccountEdit"
           >
             Update Account Details
           </button>
@@ -522,75 +435,70 @@ const toggleAccountStatus = (account: CompanyCollectionAccount) => {
     </ModalDialog>
 
     <ModalDialog
-      :open="Boolean(updatingQrAccount)"
-      :title="updatingQrAccount ? `Update QR Code Image · ${updatingQrAccount.label}` : ''"
-      subtitle="Upload a new official QRPh graphic or regenerate the signed merchant code preview."
+      v-model:open="showQrModal"
+      :title="`Update QR Code Image · ${qrTargetLabel}`"
+      subtitle="Upload a verified PNG, JPEG, WebP, or SVG merchant QR code or regenerate preview from merchant ID."
       size="md"
-      @update:open="(open) => !open && (updatingQrAccount = null)"
     >
-      <div
-        class="flex flex-col items-center gap-3 bg-neutral-50 border border-neutral-200 p-4 mb-3"
-      >
-        <img
-          :src="draftQrImageUrl"
-          alt="Updated QRPh preview"
-          class="w-36 h-36 object-contain bg-white border border-neutral-300"
-        />
-        <span v-if="draftQrFileName" class="text-[11px] font-mono text-neutral-600">
-          Selected: {{ draftQrFileName }}
-        </span>
-      </div>
+      <div class="space-y-4 text-xs">
+        <div class="flex items-center gap-4">
+          <img
+            :src="qrPreviewDraftUrl"
+            :alt="`Preview QR for ${qrTargetLabel}`"
+            class="w-24 h-24 object-contain border border-neutral-200 bg-white shrink-0"
+          />
+          <div class="space-y-2 flex-1">
+            <div>
+              <label class="block font-medium text-neutral-700 mb-1">QRPh Merchant Reference</label>
+              <div class="flex gap-2">
+                <input
+                  v-model="qrMerchantReference"
+                  aria-label="QRPh Merchant Reference"
+                  type="text"
+                  class="flex-1 px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+                />
+                <button
+                  type="button"
+                  class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-800 font-medium hover:bg-neutral-50 cursor-pointer"
+                  @click="regenerateQrPreview"
+                >
+                  Regenerate Preview
+                </button>
+              </div>
+            </div>
 
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block font-medium text-neutral-700 mb-1">
-            QRPh Merchant Code / Reference
-          </label>
-          <div class="flex flex-col sm:flex-row gap-2">
-            <input
-              v-model="draftMerchantRef"
-              type="text"
-              aria-label="QRPh Merchant Reference"
-              class="flex-1 px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
-            />
-            <button
-              type="button"
-              class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-800 hover:bg-neutral-50 shrink-0"
-              @click="regenerateMerchantQr"
-            >
-              Regenerate Preview
-            </button>
+            <div>
+              <label class="block font-medium text-neutral-700 mb-1">Upload QR Image File</label>
+              <input
+                type="file"
+                aria-label="Upload QR code image"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                class="block w-full text-xs text-neutral-600"
+                @change="handleQrFileUpload"
+              />
+              <span v-if="qrUploadFileName" class="text-[11px] font-mono text-neutral-500">
+                Selected: {{ qrUploadFileName }}
+              </span>
+            </div>
           </div>
         </div>
 
-        <div>
-          <label class="block font-medium text-neutral-700 mb-1">
-            Upload Replacement QR Image
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            class="w-full text-xs text-neutral-600 file:mr-3 file:py-1.5 file:px-3 file:border file:border-neutral-300 file:bg-white file:text-xs file:font-medium file:text-neutral-800"
-            @change="onQrFileSelected"
-          />
-        </div>
-
-        <p v-if="qrModalError" class="text-xs font-medium text-rose-700">{{ qrModalError }}</p>
+        <p v-if="modalError" class="text-rose-700 font-medium">{{ modalError }}</p>
       </div>
 
       <template #footer>
         <div class="flex items-center justify-end gap-2">
           <button
             type="button"
-            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-            @click="updatingQrAccount = null"
+            class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+            @click="showQrModal = false"
           >
             Cancel
           </button>
           <button
             type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-            @click="saveUpdatedQrCode"
+            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+            @click="publishQrUpdate"
           >
             Publish Updated QR Code
           </button>

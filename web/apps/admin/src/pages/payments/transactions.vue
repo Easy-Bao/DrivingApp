@@ -1,105 +1,35 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import TablePagination from '@/shared/table/TablePagination.vue'
-import { exportToCsv, formatPhp } from '@/shared/utils/format'
+import {
+  BaseSelect,
+  EmptyTableRow,
+  exportToCsv,
+  formatCentavos,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  TablePagination,
+  useDataTable,
+} from '@/shared'
+import { useWalletTransactions } from '@/features/payments'
+import type { LedgerEntryType } from '@/features/payments'
 
-type LedgerEntryType =
-  | 'Commission Deduction'
-  | 'QRPh Wallet Top-Up'
-  | 'Bank Top-Up'
-  | 'Settlement Fee Waiver'
-
-interface WalletLedgerEntry {
-  id: string
-  referenceId: string
-  driver: string
-  type: LedgerEntryType
-  method: string
-  amountPhp: number
-  direction: 'credit' | 'debit'
-  status: 'Settled' | 'Pending Review'
-  timestamp: string
-}
-
-const transactions = ref<WalletLedgerEntry[]>([
-  {
-    id: 'TXN-7016-9401',
-    referenceId: 'TRP-7016-8921',
-    driver: 'Rodelio Cruz',
-    type: 'Commission Deduction',
-    method: 'Prepaid Wallet · 1500 bps',
-    amountPhp: 12.75,
-    direction: 'debit',
-    status: 'Settled',
-    timestamp: 'Today, 09:42 AM',
-  },
-  {
-    id: 'TXN-7016-9400',
-    referenceId: 'TOP-8921',
-    driver: 'Rodelio Cruz',
-    type: 'QRPh Wallet Top-Up',
-    method: 'GCash QRPh · QR-8829104',
-    amountPhp: 200.0,
-    direction: 'credit',
-    status: 'Pending Review',
-    timestamp: 'Today, 09:34 AM',
-  },
-  {
-    id: 'TXN-7016-9399',
-    referenceId: 'TRP-7016-8920',
-    driver: 'Danilo Mendoza',
-    type: 'Commission Deduction',
-    method: 'Prepaid Wallet · 1500 bps',
-    amountPhp: 18.0,
-    direction: 'debit',
-    status: 'Settled',
-    timestamp: 'Today, 09:15 AM',
-  },
-  {
-    id: 'TXN-7016-9398',
-    referenceId: 'TOP-8920',
-    driver: 'Ernesto Villafuerte',
-    type: 'Bank Top-Up',
-    method: 'BDO InstaPay · BDO-9921873',
-    amountPhp: 500.0,
-    direction: 'credit',
-    status: 'Pending Review',
-    timestamp: 'Today, 08:40 AM',
-  },
-  {
-    id: 'TXN-7016-9397',
-    referenceId: 'CAN-7016-302',
-    driver: 'Reynaldo Bautista',
-    type: 'Settlement Fee Waiver',
-    method: 'Operator Override · Credit Back',
-    amountPhp: 15.0,
-    direction: 'credit',
-    status: 'Settled',
-    timestamp: 'Yesterday, 06:10 PM',
-  },
-])
+const { transactions } = useWalletTransactions()
 
 const searchQuery = ref('')
 const typeFilter = ref<'All' | LedgerEntryType>('All')
-const currentPage = ref(1)
-const itemsPerPage = 10
 
 const filteredTransactions = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
-  return transactions.value.filter((txn) => {
-    const matchesType = typeFilter.value === 'All' || txn.type === typeFilter.value
-    const matchesSearch =
+  return transactions.value.filter((entry) => {
+    const matchesQuery =
       !query ||
-      txn.id.toLowerCase().includes(query) ||
-      txn.referenceId.toLowerCase().includes(query) ||
-      txn.driver.toLowerCase().includes(query) ||
-      txn.method.toLowerCase().includes(query)
-    return matchesType && matchesSearch
+      entry.id.toLowerCase().includes(query) ||
+      entry.referenceId.toLowerCase().includes(query) ||
+      entry.driver.toLowerCase().includes(query) ||
+      entry.method.toLowerCase().includes(query)
+    const matchesType = typeFilter.value === 'All' || entry.type === typeFilter.value
+    return matchesQuery && matchesType
   })
 })
 
@@ -107,33 +37,37 @@ const hasActiveFilters = computed(
   () => searchQuery.value.trim().length > 0 || typeFilter.value !== 'All',
 )
 
-const resetFilters = () => {
+const { currentPage, itemsPerPage, paginatedItems, resetPage } = useDataTable(
+  filteredTransactions,
+  {
+    initialPageSize: 10,
+  },
+)
+
+watch([searchQuery, typeFilter], resetPage)
+
+function resetFilters() {
   searchQuery.value = ''
   typeFilter.value = 'All'
 }
 
-watch([searchQuery, typeFilter], () => {
-  currentPage.value = 1
-})
+function formatSignedCentavos(direction: 'credit' | 'debit', amountCentavos: number): string {
+  return `${direction === 'credit' ? '+' : '-'}${formatCentavos(amountCentavos)}`
+}
 
-const paginatedTransactions = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredTransactions.value.slice(start, start + itemsPerPage)
-})
-
-const exportLedger = () => {
+function exportTransactionsCsv() {
   exportToCsv(
-    'pagadian-wallet-ledger.csv',
-    ['Transaction ID', 'Reference', 'Driver', 'Type', 'Channel', 'Amount (PHP)', 'Status', 'Time'],
-    filteredTransactions.value.map((t) => [
-      t.id,
-      t.referenceId,
-      t.driver,
-      t.type,
-      t.method,
-      `${t.direction === 'debit' ? '-' : '+'}${t.amountPhp.toFixed(2)}`,
-      t.status,
-      t.timestamp,
+    'easyride-wallet-ledger-transactions',
+    ['Entry ID', 'Reference ID', 'Driver', 'Type', 'Method', 'Signed PHP', 'Status', 'Timestamp'],
+    filteredTransactions.value.map((entry) => [
+      entry.id,
+      entry.referenceId,
+      entry.driver,
+      entry.type,
+      entry.method,
+      `${entry.direction === 'credit' ? '+' : '-'}${(entry.amountCentavos / 100).toFixed(2)}`,
+      entry.status,
+      entry.timestamp,
     ]),
   )
 }
@@ -142,8 +76,8 @@ const exportLedger = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Transactions"
-      description="Inspect prepaid wallet top-ups, commission debits, and fee waivers."
+      title="Transactions Ledger"
+      description="Inspect every prepaid driver commission deduction, QRPh top-up settlement, and operator override."
     />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
@@ -152,7 +86,7 @@ const exportLedger = () => {
       >
         <SearchField
           v-model="searchQuery"
-          placeholder="Search TXN ID, reference, driver, or rail..."
+          placeholder="Search entry ID, reference, driver, or rail..."
           aria-label="Search wallet ledger transactions"
           class="md:w-80"
         />
@@ -162,17 +96,26 @@ const exportLedger = () => {
             v-model="typeFilter"
             aria-label="Filter by ledger entry type"
             :options="[
-              { label: 'All Ledger Entries', value: 'All' },
+              { label: 'All Ledger Types', value: 'All' },
               { label: 'Commission Deduction', value: 'Commission Deduction' },
               { label: 'QRPh Wallet Top-Up', value: 'QRPh Wallet Top-Up' },
               { label: 'Bank Top-Up', value: 'Bank Top-Up' },
               { label: 'Settlement Fee Waiver', value: 'Settlement Fee Waiver' },
+              { label: 'Operator Wallet Adjustment', value: 'Operator Wallet Adjustment' },
             ]"
           />
           <button
+            v-if="hasActiveFilters"
             type="button"
-            class="px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer shrink-0"
-            @click="exportLedger"
+            class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+            @click="resetFilters"
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+            @click="exportTransactionsCsv"
           >
             Export CSV
           </button>
@@ -180,52 +123,52 @@ const exportLedger = () => {
       </div>
 
       <div class="overflow-x-auto">
-        <table class="min-w-[800px] w-full text-left text-xs">
+        <table class="min-w-[880px] w-full text-left text-xs">
           <thead
             class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100 font-semibold"
           >
             <tr>
-              <th class="py-3 px-4">Transaction ID</th>
-              <th class="py-3 px-4">Driver &amp; Reference</th>
-              <th class="py-3 px-4">Entry Type &amp; Rail</th>
-              <th class="py-3 px-4">Amount (PHP)</th>
+              <th class="py-3 px-4">Ledger ID</th>
+              <th class="py-3 px-4">Reference</th>
+              <th class="py-3 px-4">Driver</th>
+              <th class="py-3 px-4">Type &amp; Rail</th>
+              <th class="py-3 px-4">Amount</th>
               <th class="py-3 px-4">Status</th>
-              <th class="py-3 px-4 text-right">Timestamp</th>
+              <th class="py-3 px-4">Timestamp</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="txn in paginatedTransactions"
-              :key="txn.id"
+              v-for="entry in paginatedItems"
+              :key="entry.id"
               class="hover:bg-neutral-50/70 transition-colors"
             >
-              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ txn.id }}</td>
+              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ entry.id }}</td>
+              <td class="py-3 px-4 font-mono text-neutral-700">{{ entry.referenceId }}</td>
+              <td class="py-3 px-4 font-semibold text-neutral-900">{{ entry.driver }}</td>
               <td class="py-3 px-4">
-                <div class="font-semibold text-neutral-900">{{ txn.driver }}</div>
-                <div class="text-[11px] font-mono text-neutral-500">Ref: {{ txn.referenceId }}</div>
+                <div class="font-medium text-neutral-900">{{ entry.type }}</div>
+                <div class="text-[11px] font-mono text-neutral-500">{{ entry.method }}</div>
               </td>
-              <td class="py-3 px-4">
-                <div class="font-medium text-neutral-900">{{ txn.type }}</div>
-                <div class="text-[11px] text-neutral-500">{{ txn.method }}</div>
-              </td>
-              <td class="py-3 px-4 font-mono font-bold tabular-nums text-neutral-900">
-                {{ txn.direction === 'credit' ? '+' : '-' }}{{ formatPhp(txn.amountPhp) }}
+              <td
+                class="py-3 px-4 font-mono font-bold tabular-nums"
+                :class="entry.direction === 'credit' ? 'text-emerald-700' : 'text-neutral-900'"
+              >
+                {{ formatSignedCentavos(entry.direction, entry.amountCentavos) }}
               </td>
               <td class="py-3 px-4">
                 <StatusBadge
-                  :label="txn.status"
-                  :tone="txn.status === 'Settled' ? 'success' : 'warning'"
+                  :label="entry.status"
+                  :tone="entry.status === 'Settled' ? 'success' : 'warning'"
                 />
               </td>
-              <td class="py-3 px-4 text-right text-neutral-500 font-mono text-[11px]">
-                {{ txn.timestamp }}
-              </td>
+              <td class="py-3 px-4 text-neutral-500">{{ entry.timestamp }}</td>
             </tr>
             <EmptyTableRow
-              v-if="paginatedTransactions.length === 0"
-              :colspan="6"
-              title="No matching ledger entries"
-              description="No ledger entries match the active filters."
+              v-if="paginatedItems.length === 0"
+              :colspan="7"
+              title="No matching ledger transactions"
+              description="No ledger entries match the current search or transaction filter."
               :show-reset="hasActiveFilters"
               @reset="resetFilters"
             />

@@ -1,5 +1,7 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { resetSettingsForTesting } from '@/features/settings'
+import { resetPaymentsForTesting, useTopups } from '@/features/payments'
 import TopupDetailsPage from '@/pages/payments/topups/[id].vue'
 
 vi.mock('vue-router', () => ({
@@ -14,8 +16,14 @@ vi.mock('vue-router', () => ({
 }))
 
 describe('TopupDetailsPage', () => {
-  it('renders localized topup details with receipt preview image and approval workflow', async () => {
+  beforeEach(() => {
+    resetSettingsForTesting()
+    resetPaymentsForTesting()
+  })
+
+  it('renders localized topup details with receipt preview image and idempotent approval workflow', async () => {
     const wrapper = mount(TopupDetailsPage)
+    const { verifyAndCredit, getRequestById } = useTopups()
 
     expect(wrapper.text()).toContain('Back')
     expect(wrapper.text()).toContain('Top-Up Request TOP-8921')
@@ -39,5 +47,11 @@ describe('TopupDetailsPage', () => {
     expect(approveBtn).toBeDefined()
     await approveBtn?.trigger('click')
     expect(wrapper.text()).toContain('Successfully verified TOP-8921')
+
+    expect(
+      wrapper.findAll('button').find((b) => b.text().includes('Approve & Credit Wallet')),
+    ).toBeUndefined()
+    expect(verifyAndCredit('TOP-8921')).toBe(false)
+    expect(getRequestById('TOP-8921')?.currentBalanceCentavos).toBe(54250)
   })
 })

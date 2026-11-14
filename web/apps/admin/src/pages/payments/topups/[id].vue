@@ -1,103 +1,119 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { useTopups } from '@/features/payments/composables/use-topups'
-import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
-import { formatPhp } from '@/shared/utils/format'
+import {
+  ConfirmDialog,
+  formatCentavos,
+  ModalDialog,
+  StatusBadge,
+  ToastBanner,
+  useSafeBack,
+  useSafeRouteParam,
+} from '@/shared'
+import type { ToastTone } from '@/shared'
+import { useTopups } from '@/features/payments'
 
 definePage({
   meta: { isDetail: true },
 })
 
-const route = useRoute()
-const router = useRouter()
-const { getRequestById, verifyAndCredit, rejectRequest } = useTopups()
+const requestId = useSafeRouteParam('id')
+const goBack = useSafeBack('/payments/topups')
+const { getRequestById, minDispatchBalanceCentavos, verifyAndCredit, rejectRequest } = useTopups()
 
-const requestId = computed(() => (route.params.id as string) || '')
-const request = computed(() => getRequestById(requestId.value))
+const request = computed(() => (requestId.value ? getRequestById(requestId.value) : undefined))
 
-const actionToast = ref<string | null>(null)
-const toastTone = ref<'success' | 'warning' | 'info'>('info')
-const showRejectDialog = ref(false)
-const rejectReason = ref('')
+const toastMessage = ref<string | null>(null)
+const toastTone = ref<ToastTone>('success')
 const showProofModal = ref(false)
+const showRejectConfirm = ref(false)
+const rejectReason = ref('')
 
-function handleApprove() {
-  if (!request.value) return
-  verifyAndCredit(request.value)
-  toastTone.value = 'success'
-  actionToast.value = `Successfully verified ${request.value.id}. Credited ${formatPhp(request.value.amount)} to ${request.value.driverName}'s prepaid wallet.`
+function showToast(message: string, tone: ToastTone = 'success') {
+  toastMessage.value = message
+  toastTone.value = tone
 }
 
-function handleRejectConfirm() {
-  if (!request.value) return
-  rejectRequest(request.value, rejectReason.value)
-  toastTone.value = 'warning'
-  actionToast.value = `Request ${request.value.id} for ${request.value.driverName} rejected: ${rejectReason.value}`
+function statusTone(status: 'Pending' | 'Verified' | 'Rejected') {
+  if (status === 'Verified') return 'success'
+  if (status === 'Pending') return 'warning'
+  return 'danger'
 }
 
-function goBack() {
-  if (window.history.state && window.history.state.back) {
-    router.back()
-  } else {
-    void router.push('/payments/topups')
+function approveAndCredit() {
+  if (!request.value) return
+  const ok = verifyAndCredit(request.value.id)
+  if (!ok) {
+    showToast(`${request.value.id} was already processed.`, 'warning')
+    return
   }
+  showToast(
+    `Successfully verified ${request.value.id} and credited ${formatCentavos(request.value.amountCentavos)} to ${request.value.driverName}'s wallet.`,
+  )
+}
+
+function submitRejection() {
+  if (!request.value) return
+  const ok = rejectRequest(request.value.id, rejectReason.value)
+  if (!ok) {
+    showToast('Provide a clear rejection reason before declining proof.', 'warning')
+    return
+  }
+  showRejectConfirm.value = false
+  rejectReason.value = ''
+  showToast(`Rejected ${request.value.id} and notified ${request.value.driverName}.`, 'warning')
 }
 </script>
 
 <template>
-  <div class="space-y-6 w-full">
-    <div>
+  <div class="space-y-6">
+    <div v-if="!request" class="bg-white border border-neutral-200 p-8 text-center space-y-3">
+      <h1 class="text-lg font-bold text-neutral-900">Top-Up Request Not Found</h1>
+      <p class="text-xs text-neutral-500">
+        The requested top-up verification record does not exist or has a malformed reference.
+      </p>
       <button
         type="button"
-        class="inline-flex items-center space-x-2 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 px-3 py-1.5 transition-colors group cursor-pointer"
+        class="px-4 py-2 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
         @click="goBack"
       >
-        <Icon
-          icon="lucide:arrow-left"
-          class="text-sm text-neutral-500 group-hover:text-neutral-900 transition-transform group-hover:-translate-x-0.5"
-          aria-hidden="true"
-        />
-        <span>Back</span>
+        Back to Top-Up Queue
       </button>
     </div>
 
-    <ToastBanner :message="actionToast" :tone="toastTone" @dismiss="actionToast = null" />
-
-    <div v-if="request" class="space-y-6">
+    <template v-else>
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div class="flex items-center space-x-3">
-            <h1 class="text-2xl font-bold tabular-nums text-neutral-900 tracking-tight">
+          <button
+            type="button"
+            class="inline-flex items-center space-x-1.5 text-xs font-medium text-neutral-500 hover:text-neutral-900 mb-2 cursor-pointer"
+            @click="goBack"
+          >
+            <Icon icon="lucide:arrow-left" class="text-sm" aria-hidden="true" />
+            <span>Back</span>
+          </button>
+          <div class="flex flex-wrap items-center gap-3">
+            <h1 class="text-2xl font-bold tracking-tight text-neutral-900">
               Top-Up Request {{ request.id }}
             </h1>
-            <StatusBadge
-              :label="request.status"
-              :tone="
-                request.status === 'Verified'
-                  ? 'success'
-                  : request.status === 'Rejected'
-                    ? 'danger'
-                    : 'warning'
-              "
-            />
+            <StatusBadge :label="request.status" :tone="statusTone(request.status)" />
           </div>
-          <p class="text-sm text-neutral-500 mt-1">
-            Submitted {{ request.submittedAt }} via Driver App ({{ request.channelProvider }}).
+          <p class="text-xs text-neutral-500 mt-1">
+            Submitted {{ request.submittedAt }} · Reference {{ request.referenceCode }}
           </p>
         </div>
 
-        <div class="sm:text-right">
-          <div class="text-xs text-neutral-400 uppercase font-semibold">Requested Amount</div>
+        <div class="text-left sm:text-right">
+          <div class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+            Requested Credit
+          </div>
           <div class="text-3xl font-extrabold text-neutral-900 mt-0.5 font-mono tabular-nums">
-            {{ formatPhp(request.amount) }}
+            {{ formatCentavos(request.amountCentavos) }}
           </div>
         </div>
       </div>
+
+      <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div
@@ -117,14 +133,14 @@ function goBack() {
           <span
             class="px-2.5 py-1 text-xs font-semibold w-fit"
             :class="
-              request.currentBalance < 50
+              request.currentBalanceCentavos < minDispatchBalanceCentavos
                 ? 'bg-neutral-100 text-neutral-900 border border-neutral-300'
                 : 'bg-neutral-50 text-neutral-700 border border-neutral-200'
             "
           >
             {{
-              request.currentBalance < 50
-                ? 'Below Dispatch Threshold (< ₱50.00 min)'
+              request.currentBalanceCentavos < minDispatchBalanceCentavos
+                ? `Below Dispatch Threshold (< ${formatCentavos(minDispatchBalanceCentavos)} min)`
                 : 'Dispatch Eligible'
             }}
           </span>
@@ -141,15 +157,16 @@ function goBack() {
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">Current Wallet Balance</div>
             <div class="font-mono font-bold mt-0.5 tabular-nums text-neutral-900">
-              {{ formatPhp(request.currentBalance) }}
+              {{ formatCentavos(request.currentBalanceCentavos) }}
             </div>
           </div>
           <div>
             <div class="text-neutral-400 text-[11px] font-medium">Balance After Approval</div>
             <div class="font-mono font-bold text-neutral-900 mt-0.5 tabular-nums">
               {{
-                formatPhp(
-                  request.currentBalance + (request.status === 'Pending' ? request.amount : 0),
+                formatCentavos(
+                  request.currentBalanceCentavos +
+                    (request.status === 'Pending' ? request.amountCentavos : 0),
                 )
               }}
             </div>
@@ -220,6 +237,26 @@ function goBack() {
               Rejection Reason: {{ request.rejectionReason }}
             </p>
           </div>
+
+          <div
+            v-if="request.status === 'Pending'"
+            class="pt-4 border-t border-neutral-100 flex flex-wrap items-center justify-end gap-3"
+          >
+            <button
+              type="button"
+              class="px-4 py-2 border border-neutral-300 bg-white text-neutral-800 text-xs font-semibold hover:bg-neutral-50 cursor-pointer"
+              @click="showRejectConfirm = true"
+            >
+              Reject Proof
+            </button>
+            <button
+              type="button"
+              class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+              @click="approveAndCredit"
+            >
+              Approve &amp; Credit Wallet
+            </button>
+          </div>
         </div>
 
         <div class="bg-white border border-neutral-200 p-5 flex flex-col justify-between space-y-4">
@@ -254,91 +291,42 @@ function goBack() {
         </div>
       </div>
 
-      <div
-        class="bg-white border border-neutral-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      <ModalDialog
+        v-model:open="showProofModal"
+        :title="`Proof of Transfer · ${request.referenceCode}`"
+        :subtitle="`${request.channelProvider} · Uploaded by ${request.driverName}`"
+        size="lg"
       >
-        <div class="text-xs text-neutral-500">
-          <span v-if="request.status === 'Pending'">
-            Verify transfer reference and receipt picture before confirming credit release.
-          </span>
-          <span v-else-if="request.status === 'Verified'" class="text-neutral-900 font-semibold">
-            This request has already been verified and credited.
-          </span>
-          <span v-else class="text-neutral-700 font-semibold">
-            This request has been rejected and closed.
-          </span>
+        <div class="bg-neutral-50 border border-neutral-200 p-4 flex justify-center">
+          <img
+            :src="request.receiptPreviewUrl"
+            :alt="`Full receipt preview ${request.referenceCode}`"
+            class="max-h-[460px] w-auto object-contain bg-white"
+          />
         </div>
-
-        <div v-if="request.status === 'Pending'" class="flex items-center space-x-3 shrink-0">
+        <template #footer>
           <button
             type="button"
-            class="px-4 py-2 border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 text-xs font-semibold transition-colors cursor-pointer"
-            @click="showRejectDialog = true"
-          >
-            Reject Request
-          </button>
-          <button
-            type="button"
-            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
-            @click="handleApprove"
-          >
-            Approve &amp; Credit Wallet ({{ formatPhp(request.amount) }})
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div v-else class="bg-white border border-neutral-200 p-8 text-center text-xs text-neutral-500">
-      <p class="font-semibold text-neutral-900">Request Not Found</p>
-      <p class="mt-1">No top-up request matches ID {{ requestId }}.</p>
-      <button
-        type="button"
-        class="mt-4 px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
-        @click="goBack"
-      >
-        Back to List
-      </button>
-    </div>
-
-    <ConfirmDialog
-      v-model:open="showRejectDialog"
-      v-model:reason="rejectReason"
-      title="Reject Top-Up Request"
-      description="Provide a clear reason so the driver can re-upload a valid GCash or bank transfer proof."
-      confirm-label="Confirm Reject"
-      tone="rose"
-      :require-reason="true"
-      reason-label="Rejection Reason"
-      reason-placeholder="e.g., Reference code not found in BDO statement or blurry amount"
-      @confirm="handleRejectConfirm"
-    />
-
-    <ModalDialog
-      :open="showProofModal && Boolean(request)"
-      :title="request ? `Proof of Transfer · ${request.referenceCode}` : ''"
-      :subtitle="request?.receiptFileName"
-      size="lg"
-      @update:open="showProofModal = $event"
-    >
-      <div v-if="request" class="bg-neutral-50 border border-neutral-200 p-3 flex justify-center">
-        <img
-          :src="request.receiptPreviewUrl"
-          :alt="`Full resolution receipt ${request.referenceCode}`"
-          class="max-h-[70vh] w-auto object-contain"
-        />
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end">
-          <button
-            type="button"
-            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer"
+            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
             @click="showProofModal = false"
           >
-            Close Viewer
+            Close Preview
           </button>
-        </div>
-      </template>
-    </ModalDialog>
+        </template>
+      </ModalDialog>
+
+      <ConfirmDialog
+        v-model:open="showRejectConfirm"
+        v-model:reason="rejectReason"
+        :title="`Reject Top-Up ${request.id}`"
+        description="Provide the exact reason why this deposit slip cannot be reconciled so the driver can re-upload valid proof."
+        confirm-label="Confirm Rejection"
+        tone="rose"
+        :require-reason="true"
+        reason-label="Rejection Reason (Required)"
+        reason-placeholder="e.g., Transaction reference not found on GCash merchant statement."
+        @confirm="submitRejection"
+      />
+    </template>
   </div>
 </template>

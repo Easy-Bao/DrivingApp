@@ -1,76 +1,48 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
-import { formatPhp } from '@/shared/utils/format'
+import { computed, ref, watch } from 'vue'
+import {
+  BaseSelect,
+  ConfirmDialog,
+  EmptyTableRow,
+  formatCentavos,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  TablePagination,
+  ToastBanner,
+  useDataTable,
+} from '@/shared'
+import type { ToastTone } from '@/shared'
+import { useRefundClaims } from '@/features/payments'
+import type { AdjustmentClaimStatus, FareAdjustmentClaim } from '@/features/payments'
 
-interface FareAdjustmentClaim {
-  id: string
-  tripId: string
-  claimant: string
-  claimType: 'Passenger Cash Rebate' | 'Driver Commission Waiver'
-  amountPhp: number
-  reason: string
-  status: 'Pending Approval' | 'Approved & Credited' | 'Declined'
-  resolutionNote?: string
-}
-
-const claims = ref<FareAdjustmentClaim[]>([
-  {
-    id: 'ADJ-7016-501',
-    tripId: 'TRP-7016-8918',
-    claimant: 'Passenger (Clarisse Joy Tagupa)',
-    claimType: 'Passenger Cash Rebate',
-    amountPhp: 45.0,
-    reason: 'Driver dropped passenger shy of Brgy. San Pedro chapel due to flooded alley.',
-    status: 'Pending Approval',
-  },
-  {
-    id: 'ADJ-7016-502',
-    tripId: 'TRP-7016-8912',
-    claimant: 'Driver (Reynaldo Bautista)',
-    claimType: 'Driver Commission Waiver',
-    amountPhp: 15.0,
-    reason: 'GPS geofence dropped early near Dao Provincial Capitol; reverse duplicate 15% debit.',
-    status: 'Pending Approval',
-  },
-  {
-    id: 'ADJ-7016-503',
-    tripId: 'TRP-7016-8884',
-    claimant: 'Passenger (Rafael Dominguiano)',
-    claimType: 'Passenger Cash Rebate',
-    amountPhp: 30.0,
-    reason: 'Duplicate cancellation charge triggered during network timeout.',
-    status: 'Approved & Credited',
-    resolutionNote: 'Verified duplicate billing event; issued PHP 30.00 promo credit.',
-  },
-])
+const { claims, resolveClaim } = useRefundClaims()
 
 const searchQuery = ref('')
-const statusFilter = ref<'All' | FareAdjustmentClaim['status']>('All')
+const statusFilter = ref<'All' | AdjustmentClaimStatus>('All')
 const toastMessage = ref<string | null>(null)
+const toastTone = ref<ToastTone>('success')
 
-const pendingClaim = ref<FareAdjustmentClaim | null>(null)
-const pendingAction = ref<'approve' | 'decline'>('approve')
-const dialogOpen = ref(false)
-const auditReason = ref('')
+const showResolveConfirm = ref(false)
+const selectedClaim = ref<FareAdjustmentClaim | null>(null)
+const decisionMode = ref<'approve' | 'decline'>('approve')
+const resolutionNote = ref('')
+
+const pendingCount = computed(
+  () => claims.value.filter((claim) => claim.status === 'Pending Approval').length,
+)
 
 const filteredClaims = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
-  return claims.value.filter((item) => {
-    const matchesStatus = statusFilter.value === 'All' || item.status === statusFilter.value
-    const matchesSearch =
+  return claims.value.filter((claim) => {
+    const matchesQuery =
       !query ||
-      item.id.toLowerCase().includes(query) ||
-      item.tripId.toLowerCase().includes(query) ||
-      item.claimant.toLowerCase().includes(query) ||
-      item.reason.toLowerCase().includes(query)
-    return matchesStatus && matchesSearch
+      claim.id.toLowerCase().includes(query) ||
+      claim.tripId.toLowerCase().includes(query) ||
+      claim.claimant.toLowerCase().includes(query) ||
+      claim.reason.toLowerCase().includes(query)
+    const matchesStatus = statusFilter.value === 'All' || claim.status === statusFilter.value
+    return matchesQuery && matchesStatus
   })
 })
 
@@ -78,46 +50,61 @@ const hasActiveFilters = computed(
   () => searchQuery.value.trim().length > 0 || statusFilter.value !== 'All',
 )
 
-const resetFilters = () => {
+const { currentPage, itemsPerPage, paginatedItems, resetPage } = useDataTable(filteredClaims, {
+  initialPageSize: 10,
+})
+
+watch([searchQuery, statusFilter], resetPage)
+
+function resetFilters() {
   searchQuery.value = ''
   statusFilter.value = 'All'
 }
 
-const pendingCount = computed(
-  () => claims.value.filter((claim) => claim.status === 'Pending Approval').length,
-)
-
-const openDecisionDialog = (claim: FareAdjustmentClaim, decision: 'approve' | 'decline') => {
-  pendingClaim.value = claim
-  pendingAction.value = decision
-  auditReason.value = ''
-  dialogOpen.value = true
+function statusTone(status: AdjustmentClaimStatus) {
+  if (status === 'Approved & Credited') return 'success'
+  if (status === 'Pending Approval') return 'warning'
+  return 'danger'
 }
 
-const confirmDecision = () => {
-  if (!pendingClaim.value || !auditReason.value.trim()) return
-  pendingClaim.value.status = pendingAction.value === 'approve' ? 'Approved & Credited' : 'Declined'
-  pendingClaim.value.resolutionNote = auditReason.value.trim()
-  toastMessage.value = `${pendingClaim.value.id} marked ${pendingClaim.value.status}.`
-  dialogOpen.value = false
-  pendingClaim.value = null
-  auditReason.value = ''
+function openDecisionDialog(claim: FareAdjustmentClaim, mode: 'approve' | 'decline') {
+  selectedClaim.value = claim
+  decisionMode.value = mode
+  resolutionNote.value = ''
+  showResolveConfirm.value = true
+}
+
+function submitDecision() {
+  if (!selectedClaim.value) return
+  const result = resolveClaim(selectedClaim.value.id, decisionMode.value, resolutionNote.value)
+  if (!result.ok) {
+    toastMessage.value = result.error
+    toastTone.value = 'warning'
+    return
+  }
+  showResolveConfirm.value = false
+  resolutionNote.value = ''
+  toastMessage.value = result.message ?? `Updated ${selectedClaim.value.id}`
+  toastTone.value = decisionMode.value === 'approve' ? 'success' : 'warning'
 }
 </script>
 
 <template>
   <div class="space-y-6">
-    <ToastBanner
-      v-if="toastMessage"
-      :message="toastMessage"
-      tone="success"
-      @dismiss="toastMessage = null"
-    />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 
     <PageHeader
-      title="Refunds"
-      description="Review passenger fare rebates and driver commission reversals."
-    />
+      title="Refunds & Fare Adjustments"
+      description="Adjudicate passenger cash rebates, duplicate cancellation fees, and prepaid driver commission waivers."
+    >
+      <template #actions>
+        <div
+          class="inline-flex items-center border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-900"
+        >
+          {{ pendingCount }} Pending Review
+        </div>
+      </template>
+    </PageHeader>
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
@@ -125,13 +112,12 @@ const confirmDecision = () => {
       >
         <SearchField
           v-model="searchQuery"
-          placeholder="Search adjustment ID, trip ID, or claimant..."
-          aria-label="Search adjustment claims"
+          placeholder="Search claim ID, trip ID, claimant..."
+          aria-label="Search fare adjustment claims"
           class="md:w-80"
         />
 
         <div class="flex flex-wrap items-center gap-2">
-          <StatusBadge :label="`${pendingCount} Pending Review`" tone="neutral" />
           <BaseSelect
             v-model="statusFilter"
             aria-label="Filter by claim status"
@@ -142,114 +128,121 @@ const confirmDecision = () => {
               { label: 'Declined', value: 'Declined' },
             ]"
           />
+          <button
+            v-if="hasActiveFilters"
+            type="button"
+            class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+            @click="resetFilters"
+          >
+            Reset
+          </button>
         </div>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="min-w-[820px] w-full text-left text-xs">
+        <table class="min-w-[880px] w-full text-left text-xs">
           <thead
             class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100 font-semibold"
           >
             <tr>
-              <th class="py-3 px-4">Claim ID &amp; Trip</th>
+              <th class="py-3 px-4">Claim &amp; Trip</th>
               <th class="py-3 px-4">Claimant &amp; Type</th>
-              <th class="py-3 px-4">Amount (PHP)</th>
-              <th class="py-3 px-4">Dispute Justification</th>
+              <th class="py-3 px-4">Amount</th>
+              <th class="py-3 px-4">Justification</th>
               <th class="py-3 px-4">Status</th>
               <th class="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100">
             <tr
-              v-for="item in filteredClaims"
-              :key="item.id"
+              v-for="claim in paginatedItems"
+              :key="claim.id"
               class="hover:bg-neutral-50/70 transition-colors"
             >
-              <td class="py-3.5 px-4">
-                <div class="font-mono font-bold text-neutral-900">{{ item.id }}</div>
-                <div class="text-[11px] font-mono text-neutral-500">{{ item.tripId }}</div>
+              <td class="py-3 px-4">
+                <div class="font-mono font-bold text-neutral-900">{{ claim.id }}</div>
+                <div class="text-[11px] font-mono text-neutral-500">{{ claim.tripId }}</div>
               </td>
-              <td class="py-3.5 px-4">
-                <div class="font-semibold text-neutral-900">{{ item.claimant }}</div>
-                <div class="text-[11px] text-neutral-500">{{ item.claimType }}</div>
+              <td class="py-3 px-4">
+                <div class="font-semibold text-neutral-900">{{ claim.claimant }}</div>
+                <div class="text-[11px] text-neutral-500">{{ claim.claimType }}</div>
               </td>
-              <td class="py-3.5 px-4 font-mono font-bold text-neutral-900 tabular-nums">
-                {{ formatPhp(item.amountPhp) }}
+              <td class="py-3 px-4 font-mono font-bold tabular-nums text-neutral-900">
+                {{ formatCentavos(claim.amountCentavos) }}
               </td>
-              <td class="py-3.5 px-4 text-neutral-600 max-w-sm">
-                <div>{{ item.reason }}</div>
-                <div v-if="item.resolutionNote" class="text-[11px] text-neutral-500 mt-1 italic">
-                  Note: {{ item.resolutionNote }}
-                </div>
+              <td class="py-3 px-4 max-w-sm">
+                <p class="text-neutral-700 leading-snug">{{ claim.reason }}</p>
+                <p
+                  v-if="claim.resolutionNote"
+                  class="text-[11px] font-medium text-neutral-500 mt-1"
+                >
+                  Resolution: {{ claim.resolutionNote }}
+                </p>
               </td>
-              <td class="py-3.5 px-4">
-                <StatusBadge
-                  :label="item.status"
-                  :tone="
-                    item.status === 'Approved & Credited'
-                      ? 'success'
-                      : item.status === 'Declined'
-                        ? 'danger'
-                        : 'warning'
-                  "
-                />
+              <td class="py-3 px-4">
+                <StatusBadge :label="claim.status" :tone="statusTone(claim.status)" />
               </td>
-              <td class="py-3.5 px-4 text-right whitespace-nowrap">
+              <td class="py-3 px-4 text-right whitespace-nowrap">
                 <div
-                  v-if="item.status === 'Pending Approval'"
+                  v-if="claim.status === 'Pending Approval'"
                   class="inline-flex items-center gap-2"
                 >
                   <button
                     type="button"
-                    class="px-2.5 py-1 border border-neutral-300 bg-white text-neutral-700 rounded-none text-xs font-medium hover:bg-neutral-50"
-                    @click="openDecisionDialog(item, 'decline')"
+                    class="px-2.5 py-1 border border-neutral-300 bg-white text-neutral-800 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+                    @click="openDecisionDialog(claim, 'decline')"
                   >
                     Decline
                   </button>
                   <button
                     type="button"
-                    class="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold"
-                    @click="openDecisionDialog(item, 'approve')"
+                    class="px-2.5 py-1 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+                    @click="openDecisionDialog(claim, 'approve')"
                   >
                     Approve &amp; Credit
                   </button>
                 </div>
-                <span v-else class="text-neutral-400 text-xs">Finalized</span>
+                <span v-else class="text-[11px] text-neutral-400">Resolved</span>
               </td>
             </tr>
             <EmptyTableRow
-              v-if="filteredClaims.length === 0"
+              v-if="paginatedItems.length === 0"
               :colspan="6"
               title="No matching adjustment claims"
-              description="No adjustment claims match your search or status filter."
+              description="No refund or fee waiver claims match your current filter."
               :show-reset="hasActiveFilters"
               @reset="resetFilters"
             />
           </tbody>
         </table>
       </div>
+
+      <TablePagination
+        v-model:current-page="currentPage"
+        :total-items="filteredClaims.length"
+        :items-per-page="itemsPerPage"
+      />
     </div>
 
     <ConfirmDialog
-      v-model:open="dialogOpen"
-      v-model:reason="auditReason"
+      v-model:open="showResolveConfirm"
+      v-model:reason="resolutionNote"
       :title="
-        pendingAction === 'approve'
-          ? `Approve Adjustment · ${pendingClaim?.id ?? ''}`
-          : `Decline Claim · ${pendingClaim?.id ?? ''}`
+        decisionMode === 'approve'
+          ? `Approve Adjustment · ${selectedClaim?.id ?? ''}`
+          : `Decline Adjustment · ${selectedClaim?.id ?? ''}`
       "
       :description="
-        pendingAction === 'approve'
-          ? `Confirm release of ${formatPhp(pendingClaim?.amountPhp ?? 0)} for ${pendingClaim?.claimant ?? ''}.`
-          : `Document why adjustment claim ${pendingClaim?.id ?? ''} is being declined.`
+        decisionMode === 'approve'
+          ? `Approve ${formatCentavos(selectedClaim?.amountCentavos ?? 0)} for ${selectedClaim?.claimant ?? ''}?`
+          : `Decline claim ${selectedClaim?.id ?? ''} and notify claimant.`
       "
-      :confirm-label="pendingAction === 'approve' ? 'Approve Credit' : 'Decline Claim'"
-      :tone="pendingAction === 'approve' ? 'emerald' : 'rose'"
+      :confirm-label="decisionMode === 'approve' ? 'Approve Credit' : 'Confirm Decline'"
+      :tone="decisionMode === 'approve' ? 'neutral' : 'rose'"
       :require-reason="true"
-      reason-label="Mandatory Finance Audit Note"
-      reason-placeholder="Enter reference verification or trip log finding..."
-      @confirm="confirmDecision"
-      @cancel="dialogOpen = false"
+      reason-label="Mandatory Audit Justification"
+      reason-placeholder="Enter GPS verification or dispatch investigation note..."
+      @confirm="submitDecision"
     />
   </div>
 </template>
