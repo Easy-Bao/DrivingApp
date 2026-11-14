@@ -1,80 +1,27 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import TablePagination from '@/shared/table/TablePagination.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
-import { formatPhp } from '@/shared/utils/format'
+import { computed, ref } from 'vue'
+import {
+  useCancellationDisputes,
+  type CancellationCase,
+  type CancellationResponsibility,
+} from '@/features/trips'
+import {
+  BaseSelect,
+  EmptyTableRow,
+  ModalDialog,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  TablePagination,
+  ToastBanner,
+  formatCentavos,
+  useDataTable,
+} from '@/shared'
 
-type CancellationResponsibility =
-  | 'passenger_fault'
-  | 'driver_fault'
-  | 'system_fault'
-  | 'no_fault'
-  | 'safety_related'
-  | 'pending_review'
-  | 'operator_override'
-
-interface CancellationCase {
-  id: string
-  tripId: string
-  cancelledBy: string
-  route: string
-  reason: string
-  responsibility: CancellationResponsibility
-  cancellationFee: number
-  feeChargedTo: string
-  disputeStatus: 'Under Review' | 'Resolved (Fee Upheld)' | 'Fee Waived & Overridden' | 'Closed'
-  timestamp: string
-}
-
-const cancellations = ref<CancellationCase[]>([
-  {
-    id: 'CAN-7016-301',
-    tripId: 'TRP-7016-8917',
-    cancelledBy: 'Passenger (Kristine Joy Navarro)',
-    route: 'Brgy. Santa Lucia -> Pagadian Rotunda',
-    reason: 'Driver delayed at Agora traffic junction beyond 6 mins',
-    responsibility: 'pending_review',
-    cancellationFee: 15.0,
-    feeChargedTo: 'Passenger',
-    disputeStatus: 'Under Review',
-    timestamp: '2 hours ago',
-  },
-  {
-    id: 'CAN-7016-302',
-    tripId: 'TRP-7016-8894',
-    cancelledBy: 'Driver (Javier Santos · 5519-NB)',
-    route: 'Pagadian Pier Port -> Brgy. Gatas',
-    reason: 'Passenger did not appear at pickup point after 5-min timer',
-    responsibility: 'passenger_fault',
-    cancellationFee: 15.0,
-    feeChargedTo: 'Passenger (Credited Driver)',
-    disputeStatus: 'Resolved (Fee Upheld)',
-    timestamp: '5 hours ago',
-  },
-  {
-    id: 'CAN-7016-303',
-    tripId: 'TRP-7016-8871',
-    cancelledBy: 'System Timeout',
-    route: 'Brgy. Tuburan -> ZDS Medical Center',
-    reason: 'No bidding acceptance within 90-second dispatch window',
-    responsibility: 'system_fault',
-    cancellationFee: 0.0,
-    feeChargedTo: 'None (System Waived)',
-    disputeStatus: 'Closed',
-    timestamp: 'Yesterday',
-  },
-])
+const { disputes, responsibilityLabels, resolveDispute } = useCancellationDisputes()
 
 const searchQuery = ref('')
 const statusFilter = ref<'ALL' | 'Under Review' | 'RESOLVED'>('ALL')
-const currentPage = ref(1)
-const itemsPerPage = 10
 const toastMessage = ref<string | null>(null)
 
 const reviewingCase = ref<CancellationCase | null>(null)
@@ -82,19 +29,13 @@ const overrideResponsibility = ref<CancellationResponsibility>('operator_overrid
 const shouldWaiveFee = ref(true)
 const auditNote = ref('')
 
-const responsibilityLabels: Record<CancellationResponsibility, string> = {
-  passenger_fault: 'Passenger Fault',
-  driver_fault: 'Driver Fault',
-  system_fault: 'System Fault',
-  no_fault: 'No Fault (Mutual)',
-  safety_related: 'Safety Related',
-  pending_review: 'Pending Review',
-  operator_override: 'Operator Override',
-}
+const openReviewCount = computed(
+  () => disputes.value.filter((item) => item.disputeStatus === 'Under Review').length,
+)
 
 const filteredCases = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
-  return cancellations.value.filter((item) => {
+  return disputes.value.filter((item) => {
     if (statusFilter.value === 'Under Review' && item.disputeStatus !== 'Under Review') {
       return false
     }
@@ -111,21 +52,20 @@ const filteredCases = computed(() => {
   })
 })
 
-watch([searchQuery, statusFilter], () => {
-  currentPage.value = 1
-})
-
 const hasActiveFilters = computed(() => searchQuery.value !== '' || statusFilter.value !== 'ALL')
 
 function resetFilters() {
   searchQuery.value = ''
   statusFilter.value = 'ALL'
-  currentPage.value = 1
 }
 
-const paginatedCases = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredCases.value.slice(start, start + itemsPerPage)
+const {
+  currentPage,
+  itemsPerPage,
+  paginatedItems: paginatedCases,
+} = useDataTable(filteredCases, {
+  initialPageSize: 10,
+  resetDeps: [searchQuery, statusFilter],
 })
 
 const openResolutionModal = (item: CancellationCase) => {
@@ -138,18 +78,18 @@ const openResolutionModal = (item: CancellationCase) => {
 
 const applyResolution = () => {
   const target = reviewingCase.value
-  if (!target || !auditNote.value.trim()) return
-
-  target.responsibility = overrideResponsibility.value
-  if (shouldWaiveFee.value) {
-    target.cancellationFee = 0
-    target.feeChargedTo = `Waived (${auditNote.value.trim()})`
-    target.disputeStatus = 'Fee Waived & Overridden'
-  } else {
-    target.disputeStatus = 'Resolved (Fee Upheld)'
+  if (!target) return
+  const result = resolveDispute(target.id, {
+    responsibility: overrideResponsibility.value,
+    waiveFee: shouldWaiveFee.value,
+    auditNote: auditNote.value,
+  })
+  if (!result.ok) {
+    toastMessage.value = result.error
+    return
   }
 
-  toastMessage.value = `${target.tripId} responsibility set to ${responsibilityLabels[target.responsibility]}.`
+  toastMessage.value = `${target.tripId} responsibility set to ${responsibilityLabels[overrideResponsibility.value]}.`
   reviewingCase.value = null
 }
 </script>
@@ -188,7 +128,7 @@ const applyResolution = () => {
         <span
           class="px-2.5 py-1 bg-neutral-50 border border-neutral-300 text-[11px] font-semibold text-neutral-800 tabular-nums self-start sm:self-auto"
         >
-          Rate: 3.6% · 2m grace
+          Open: {{ openReviewCount }} · Total: {{ disputes.length }}
         </span>
       </div>
 
@@ -236,7 +176,7 @@ const applyResolution = () => {
               </td>
               <td class="py-3 px-4">
                 <span class="font-mono font-bold text-neutral-900">
-                  {{ formatPhp(dispute.cancellationFee) }}
+                  {{ formatCentavos(dispute.cancellationFeeCentavos) }}
                 </span>
                 <div class="text-[11px] text-neutral-400">{{ dispute.feeChargedTo }}</div>
               </td>
@@ -307,7 +247,9 @@ const applyResolution = () => {
           </div>
           <label class="flex items-center space-x-2 text-neutral-800 cursor-pointer">
             <input v-model="shouldWaiveFee" type="checkbox" class="accent-neutral-900" />
-            <span>Waive cancellation fee ({{ formatPhp(reviewingCase.cancellationFee) }})</span>
+            <span>
+              Waive cancellation fee ({{ formatCentavos(reviewingCase.cancellationFeeCentavos) }})
+            </span>
           </label>
           <div>
             <label class="block font-semibold text-neutral-700 mb-1"> Reason </label>

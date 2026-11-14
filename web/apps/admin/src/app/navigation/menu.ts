@@ -34,7 +34,6 @@ export const navigationGroups: NavGroup[] = [
         label: 'Driver Applications',
         icon: 'lucide:user-plus',
         path: '/users/driver-applications',
-        badge: '8',
         badgeClass: 'bg-neutral-100 text-neutral-700',
       },
       { id: 'riders', label: 'Riders', icon: 'lucide:user', path: '/users/riders' },
@@ -62,7 +61,6 @@ export const navigationGroups: NavGroup[] = [
         label: 'Verification',
         icon: 'lucide:file-badge',
         path: '/documents/verification',
-        badge: '12',
         badgeClass: 'bg-neutral-100 text-neutral-700',
       },
       {
@@ -70,7 +68,6 @@ export const navigationGroups: NavGroup[] = [
         label: 'Expiring Docs',
         icon: 'lucide:file-clock',
         path: '/documents/expiring',
-        badge: '4',
         badgeClass: 'bg-neutral-100 text-neutral-700',
       },
       {
@@ -117,7 +114,6 @@ export const navigationGroups: NavGroup[] = [
         label: 'SOS Alerts',
         icon: 'lucide:siren',
         path: '/trips/sos-alerts',
-        badge: '2',
         badgeClass: 'bg-neutral-900 text-white font-semibold',
       },
       {
@@ -125,7 +121,6 @@ export const navigationGroups: NavGroup[] = [
         label: 'Safety Reports',
         icon: 'lucide:shield-alert',
         path: '/trips/safety-reports',
-        badge: '2',
         badgeClass: 'bg-neutral-100 text-neutral-700',
       },
     ],
@@ -140,7 +135,6 @@ export const navigationGroups: NavGroup[] = [
         label: 'Top-Ups',
         icon: 'lucide:wallet',
         path: '/payments/topups',
-        badge: '3',
         badgeClass: 'bg-neutral-100 text-neutral-700 font-semibold',
       },
       {
@@ -148,7 +142,6 @@ export const navigationGroups: NavGroup[] = [
         label: 'Settlements',
         icon: 'lucide:coins',
         path: '/payments/settlements',
-        badge: '3',
         badgeClass: 'bg-neutral-100 text-neutral-700 font-semibold',
       },
       {

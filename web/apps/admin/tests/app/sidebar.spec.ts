@@ -2,6 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import Sidebar from '@/app/layouts/Sidebar.vue'
 import { loginOperator } from '@/core/auth/auth-session'
+import { resetDocumentsForTesting } from '@/features/documents'
+import { resetPaymentsForTesting } from '@/features/payments'
+import { resetSettingsForTesting } from '@/features/settings'
+import { resetTripsForTesting, useSosAlerts } from '@/features/trips'
+import { resetUsersForTesting } from '@/features/users'
 
 const mockPush = vi.fn()
 
@@ -13,6 +18,11 @@ vi.mock('vue-router', () => ({
 describe('Sidebar', () => {
   beforeEach(() => {
     mockPush.mockClear()
+    resetSettingsForTesting()
+    resetUsersForTesting()
+    resetDocumentsForTesting()
+    resetPaymentsForTesting()
+    resetTripsForTesting()
   })
   it('renders branding and core navigation sections', () => {
     const wrapper = mount(Sidebar)
@@ -134,5 +144,19 @@ describe('Sidebar', () => {
     expect(supportWrapper.text()).toContain('Refunds')
     expect(supportWrapper.text()).not.toContain('Top-Ups')
     expect(supportWrapper.text()).not.toContain('Cities')
+  })
+
+  it('reactively updates sidebar notification badges when underlying operational stores change', async () => {
+    const wrapper = mount(Sidebar)
+    const { resolveAlert } = useSosAlerts()
+
+    const sosItemBefore = wrapper.findAll('button').find((btn) => btn.text().includes('SOS Alerts'))
+    expect(sosItemBefore?.text()).toContain('2')
+
+    expect(resolveAlert('SOS-7016-104', 'Resolved by dispatch').ok).toBe(true)
+    await wrapper.vm.$nextTick()
+
+    const sosItemAfter = wrapper.findAll('button').find((btn) => btn.text().includes('SOS Alerts'))
+    expect(sosItemAfter?.text()).toContain('1')
   })
 })

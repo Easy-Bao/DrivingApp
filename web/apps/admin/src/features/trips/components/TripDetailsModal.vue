@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import RouteTimeline from '@/shared/display/RouteTimeline.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import { formatPhp } from '@/shared/utils/format'
-import { useClipboardCopy } from '@/shared/utils/use-clipboard-copy'
-import { tripStatusTone, type TripRecord } from '@/features/trips/composables/use-trips'
+import { tripStatusTone } from '@/features/trips/composables/use-trips'
+import type { TripRecord } from '@/features/trips/types'
+import {
+  FloatingToast,
+  ModalDialog,
+  RouteTimeline,
+  StatusBadge,
+  formatCentavos,
+  useClipboardCopy,
+} from '@/shared'
 
 defineProps<{
   trip: TripRecord | null
@@ -75,9 +79,11 @@ function handleOpenUpdate(open: boolean) {
         </div>
         <div>
           <div class="text-neutral-500">Assigned Driver</div>
-          <div class="font-semibold text-neutral-900 mt-0.5">{{ trip.driver }}</div>
+          <div class="font-semibold text-neutral-900 mt-0.5">
+            {{ trip.driver ?? 'Unassigned' }}
+          </div>
           <div class="font-mono text-neutral-500">
-            {{ trip.plateNumber }} · {{ trip.driverPhone }}
+            {{ trip.plateNumber ?? 'Pending' }} · {{ trip.driverPhone ?? '—' }}
           </div>
         </div>
         <div>
@@ -88,13 +94,13 @@ function handleOpenUpdate(open: boolean) {
         <div>
           <div class="text-neutral-500">Distance / Duration</div>
           <div class="font-mono font-semibold text-neutral-900 mt-0.5 tabular-nums">
-            {{ trip.distanceKm }} km · {{ trip.duration }}
+            {{ trip.distanceKm }} km · {{ trip.duration ?? '—' }}
           </div>
         </div>
         <div>
           <div class="text-neutral-500">Trip Fare</div>
           <div class="font-mono font-bold text-sm text-neutral-900 mt-0.5 tabular-nums">
-            {{ formatPhp(trip.fare) }}
+            {{ formatCentavos(trip.fareCentavos) }}
           </div>
         </div>
       </div>
@@ -120,15 +126,5 @@ function handleOpenUpdate(open: boolean) {
     </template>
   </ModalDialog>
 
-  <Teleport to="body">
-    <div
-      v-if="copyToastMessage"
-      role="status"
-      aria-live="polite"
-      class="fixed bottom-4 right-4 z-[60] bg-neutral-900 text-white border border-neutral-800 px-3 py-2 text-xs font-medium shadow-lg inline-flex items-center gap-2"
-    >
-      <Icon icon="lucide:check" class="h-3.5 w-3.5 text-emerald-400 shrink-0" aria-hidden="true" />
-      <span>{{ copyToastMessage }}</span>
-    </div>
-  </Teleport>
+  <FloatingToast :message="copyToastMessage" />
 </template>

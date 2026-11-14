@@ -1,24 +1,32 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { Icon } from '@iconify/vue'
-import TripDetailsModal from '@/features/trips/components/TripDetailsModal.vue'
-import { useTrips, type TripRecord, type TripStatus } from '@/features/trips/composables/use-trips'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import BookingIdCell from '@/shared/display/BookingIdCell.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import TablePagination from '@/shared/table/TablePagination.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
-import { exportToCsv, formatPhp } from '@/shared/utils/format'
+import { TripDetailsModal, useTrips, type TripRecord, type TripStatus } from '@/features/trips'
+import {
+  BaseSelect,
+  BookingIdCell,
+  EmptyTableRow,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  TablePagination,
+  ToastBanner,
+  exportToCsv,
+  formatCentavos,
+  useDataTable,
+} from '@/shared'
 
-const { trips, tripStatusTone } = useTrips()
+const {
+  trips,
+  completedCount,
+  activeCount,
+  averageFareCentavos,
+  completionRateLabel,
+  tripStatusTone,
+} = useTrips()
 
 const searchQuery = ref('')
 const filterStatus = ref<'all' | TripStatus>('all')
-const currentPage = ref(1)
-const itemsPerPage = 8
 const selectedTrip = ref<TripRecord | null>(null)
 const toastMessage = ref<string | null>(null)
 
@@ -27,7 +35,6 @@ const hasActiveFilters = computed(() => searchQuery.value !== '' || filterStatus
 function resetFilters() {
   searchQuery.value = ''
   filterStatus.value = 'all'
-  currentPage.value = 1
 }
 
 const filteredTrips = computed(() => {
@@ -40,26 +47,21 @@ const filteredTrips = computed(() => {
     return (
       trip.id.toLowerCase().includes(query) ||
       trip.rider.toLowerCase().includes(query) ||
-      trip.driver.toLowerCase().includes(query) ||
+      (trip.driver ?? 'unassigned').toLowerCase().includes(query) ||
       trip.pickup.toLowerCase().includes(query) ||
       trip.dropoff.toLowerCase().includes(query) ||
-      trip.plateNumber.toLowerCase().includes(query)
+      (trip.plateNumber ?? 'pending').toLowerCase().includes(query)
     )
   })
 })
 
-watch([searchQuery, filterStatus], () => {
-  currentPage.value = 1
-})
-
-const paginatedTrips = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredTrips.value.slice(start, start + itemsPerPage)
-})
-
-const averageFare = computed(() => {
-  if (trips.value.length === 0) return 0
-  return trips.value.reduce((sum, trip) => sum + trip.fare, 0) / trips.value.length
+const {
+  currentPage,
+  itemsPerPage,
+  paginatedItems: paginatedTrips,
+} = useDataTable(filteredTrips, {
+  initialPageSize: 8,
+  resetDeps: [searchQuery, filterStatus],
 })
 
 const handleExport = () => {
@@ -69,11 +71,11 @@ const handleExport = () => {
     filteredTrips.value.map((trip) => [
       trip.id,
       trip.rider,
-      trip.driver,
-      trip.plateNumber,
+      trip.driver ?? 'Unassigned',
+      trip.plateNumber ?? 'Pending',
       trip.pickup,
       trip.dropoff,
-      formatPhp(trip.fare),
+      formatCentavos(trip.fareCentavos),
       trip.status,
     ]),
   )
@@ -94,27 +96,26 @@ const handleExport = () => {
       <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Completed</span>
         <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
-          {{ trips.filter((trip) => trip.status === 'Completed').length }}
+          {{ completedCount }}
         </div>
       </div>
       <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Active</span>
         <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
-          {{
-            trips.filter((trip) => trip.status === 'In Progress' || trip.status === 'Dispatching')
-              .length
-          }}
+          {{ activeCount }}
         </div>
       </div>
       <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Avg Fare</span>
         <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
-          {{ formatPhp(averageFare) }}
+          {{ formatCentavos(averageFareCentavos) }}
         </div>
       </div>
       <div class="bg-white p-4 border border-neutral-200">
         <span class="text-xs text-neutral-500 font-medium">Completion Rate</span>
-        <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">96.4%</div>
+        <div class="text-xl font-bold tabular-nums text-neutral-900 mt-1">
+          {{ completionRateLabel }}
+        </div>
       </div>
     </div>
 
@@ -181,9 +182,9 @@ const handleExport = () => {
                 <div class="text-[11px] font-mono text-neutral-400">{{ trip.riderPhone }}</div>
               </td>
               <td class="py-3 px-4">
-                <div class="font-medium text-neutral-800">{{ trip.driver }}</div>
+                <div class="font-medium text-neutral-800">{{ trip.driver ?? 'Unassigned' }}</div>
                 <div class="text-[11px] text-neutral-400">
-                  {{ trip.vehicleModel }} ({{ trip.plateNumber }})
+                  {{ trip.vehicleModel }} ({{ trip.plateNumber ?? 'Pending' }})
                 </div>
               </td>
               <td class="py-3 px-4 max-w-xs truncate">
@@ -191,7 +192,7 @@ const handleExport = () => {
                 <div class="truncate text-[11px] text-neutral-400">→ {{ trip.dropoff }}</div>
               </td>
               <td class="py-3 px-4 font-mono font-bold text-neutral-900 tabular-nums">
-                {{ formatPhp(trip.fare) }}
+                {{ formatCentavos(trip.fareCentavos) }}
               </td>
               <td class="py-3 px-4">
                 <StatusBadge :label="trip.status" :tone="tripStatusTone(trip.status)" />

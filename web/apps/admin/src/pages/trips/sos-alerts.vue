@@ -1,93 +1,18 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
+import { SosLocationModal, useSosAlerts, type SosIncident } from '@/features/trips'
+import { ConfirmDialog, PageHeader, StatusBadge, ToastBanner } from '@/shared'
 
-interface SosIncident {
-  id: string
-  tripId: string
-  triggeredBy: string
-  driverName: string
-  driverPhone: string
-  driverPlate: string
-  riderName: string
-  riderPhone: string
-  corridor: string
-  coords: string
-  timeTriggered: string
-  severity: 'Critical' | 'High'
-  status: 'Active' | 'Resolved'
-  responderNotified: boolean
-  resolutionSummary?: string
-}
-
-const alerts = ref<SosIncident[]>([
-  {
-    id: 'SOS-7016-104',
-    tripId: 'TRP-7016-8921',
-    triggeredBy: 'Passenger · Althea Mae Villanueva',
-    driverName: 'Rodelio Cruz',
-    driverPhone: '+63 917 482 1903',
-    driverPlate: 'ZDS-4821 · TODA-0412',
-    riderName: 'Althea Mae Villanueva',
-    riderPhone: '+63 917 842 9103',
-    corridor: 'Brgy. Santiago Rotunda, Pagadian',
-    coords: '7.8257° N, 123.4370° E',
-    timeTriggered: '2m ago',
-    severity: 'Critical',
-    status: 'Active',
-    responderNotified: false,
-  },
-  {
-    id: 'SOS-7016-103',
-    tripId: 'TRP-7016-8905',
-    triggeredBy: 'Driver · Danilo Mendoza',
-    driverName: 'Danilo Mendoza',
-    driverPhone: '+63 918 654 2219',
-    driverPlate: 'ZDS-3019 · TODA-0194',
-    riderName: 'Maricar Santos',
-    riderPhone: '+63 928 519 4402',
-    corridor: 'Bus Terminal Gate, Brgy. Bulatok',
-    coords: '7.8342° N, 123.4285° E',
-    timeTriggered: '14m ago',
-    severity: 'High',
-    status: 'Active',
-    responderNotified: true,
-  },
-  {
-    id: 'SOS-7016-102',
-    tripId: 'TRP-7016-8840',
-    triggeredBy: 'Passenger · Kevin Lloyd Tan',
-    driverName: 'Reynaldo Bautista',
-    driverPhone: '+63 917 773 8810',
-    driverPlate: 'ZDS-1944 · TODA-0277',
-    riderName: 'Kevin Lloyd Tan',
-    riderPhone: '+63 927 310 6621',
-    corridor: 'Dao Capitol Junction, Pagadian',
-    coords: '7.8391° N, 123.4418° E',
-    timeTriggered: '4h ago',
-    severity: 'High',
-    status: 'Resolved',
-    responderNotified: true,
-    resolutionSummary: 'CDRRMO patrol assisted unit at Dao Junction; rider transferred safely.',
-  },
-])
+const { alerts, activeAlertsCount, resolvedAlertsCount, notifyResponders, resolveAlert } =
+  useSosAlerts()
 
 const statusFilter = ref<'all' | 'Active' | 'Resolved'>('all')
 const toastMessage = ref<string | null>(null)
 const resolvingAlert = ref<SosIncident | null>(null)
 const resolveModalOpen = ref(false)
 const resolutionNote = ref('')
-
-const activeAlertsCount = computed(
-  () => alerts.value.filter((alert) => alert.status === 'Active').length,
-)
-
-const resolvedAlertsCount = computed(
-  () => alerts.value.filter((alert) => alert.status === 'Resolved').length,
-)
+const locationAlert = ref<SosIncident | null>(null)
+let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 const filterTabs = computed(() => [
   { key: 'all' as const, label: 'All', count: alerts.value.length },
@@ -100,13 +25,30 @@ const filteredAlerts = computed(() => {
   return alerts.value.filter((alert) => alert.status === statusFilter.value)
 })
 
-const notifyResponders = (alert: SosIncident) => {
-  alert.responderNotified = true
-  toastMessage.value = `Escalated ${alert.id} to 911.`
+function showToast(message: string) {
+  toastMessage.value = message
+  if (toastTimer !== null) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toastMessage.value = null
+    toastTimer = null
+  }, 3500)
 }
 
-const logContactAttempt = (role: 'Driver' | 'Rider', phone: string) => {
-  toastMessage.value = `Calling ${role} · ${phone}`
+onBeforeUnmount(() => {
+  if (toastTimer !== null) clearTimeout(toastTimer)
+})
+
+const handleNotifyResponders = (alert: SosIncident) => {
+  const result = notifyResponders(alert.id)
+  if (!result.ok) {
+    showToast(result.error)
+    return
+  }
+  showToast(`Escalated ${alert.id} to 911.`)
+}
+
+const logContactAttempt = (role: 'Driver' | 'Passenger', phone: string) => {
+  showToast(`Calling ${role} · ${phone}`)
 }
 
 const openResolveDialog = (alert: SosIncident) => {
@@ -116,10 +58,14 @@ const openResolveDialog = (alert: SosIncident) => {
 }
 
 const confirmResolution = () => {
-  if (!resolvingAlert.value || !resolutionNote.value.trim()) return
-  resolvingAlert.value.status = 'Resolved'
-  resolvingAlert.value.resolutionSummary = resolutionNote.value.trim()
-  toastMessage.value = `${resolvingAlert.value.id} resolved.`
+  if (!resolvingAlert.value) return
+  const targetId = resolvingAlert.value.id
+  const result = resolveAlert(targetId, resolutionNote.value)
+  if (!result.ok) {
+    showToast(result.error)
+    return
+  }
+  showToast(`${targetId} resolved.`)
   resolveModalOpen.value = false
   resolvingAlert.value = null
   resolutionNote.value = ''
@@ -206,10 +152,17 @@ const confirmResolution = () => {
 
           <div class="flex flex-wrap items-center gap-2">
             <button
+              type="button"
+              class="px-3 py-1.5 bg-white border border-neutral-300 text-neutral-700 text-xs font-medium hover:bg-neutral-50 transition-colors cursor-pointer"
+              @click="locationAlert = alert"
+            >
+              View Map
+            </button>
+            <button
               v-if="alert.status === 'Active' && !alert.responderNotified"
               type="button"
               class="px-3 py-1.5 bg-white border border-neutral-900 text-neutral-900 text-xs font-medium hover:bg-neutral-100 transition-colors cursor-pointer"
-              @click="notifyResponders(alert)"
+              @click="handleNotifyResponders(alert)"
             >
               Notify 911
             </button>
@@ -223,9 +176,9 @@ const confirmResolution = () => {
             <button
               type="button"
               class="px-3 py-1.5 bg-white border border-neutral-300 text-neutral-700 text-xs font-medium hover:bg-neutral-50 transition-colors cursor-pointer"
-              @click="logContactAttempt('Rider', alert.riderPhone)"
+              @click="logContactAttempt('Passenger', alert.riderPhone)"
             >
-              Call Rider
+              Call Passenger
             </button>
             <button
               v-if="alert.status === 'Active'"
@@ -256,7 +209,7 @@ const confirmResolution = () => {
           <div>
             <div class="text-[11px] text-neutral-500 uppercase tracking-wider mb-1">Contacts</div>
             <div class="text-neutral-700 font-mono">Driver: {{ alert.driverPhone }}</div>
-            <div class="text-neutral-700 font-mono mt-0.5">Rider: {{ alert.riderPhone }}</div>
+            <div class="text-neutral-700 font-mono mt-0.5">Passenger: {{ alert.riderPhone }}</div>
           </div>
         </div>
 
@@ -281,5 +234,7 @@ const confirmResolution = () => {
       reason-placeholder="Brief response and handoff summary..."
       @confirm="confirmResolution"
     />
+
+    <SosLocationModal :incident="locationAlert" @close="locationAlert = null" />
   </div>
 </template>

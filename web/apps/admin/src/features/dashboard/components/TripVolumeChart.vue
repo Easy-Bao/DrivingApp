@@ -1,24 +1,30 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { MotionConfig, motion } from 'motion-v'
-import type { VolumeBucket } from '@/features/dashboard/composables/use-overview-metrics'
-import { formatPhp } from '@/shared/utils/format'
+import {
+  buildBarSlots,
+  buildFlatBaselinePath,
+  buildGridTicks,
+  buildTrendPath,
+  computeNiceMaxValue,
+  findPeakBucketIndex,
+} from '@/features/dashboard/domain/chart-geometry'
+import type { ChartMetric, VolumeBucket } from '@/features/dashboard/types'
+import { SegmentedToggle, formatPhp } from '@/shared'
 
 const props = defineProps<{
-  series: VolumeBucket[]
+  series: readonly VolumeBucket[]
   totalTrips: number
   totalRevenuePhp: number
 }>()
 
-type ChartMetric = 'trips' | 'revenue'
-
 const activeMetric = ref<ChartMetric>('trips')
 const selectedIndex = ref<number | null>(null)
 
-const metricOptions: { label: string; value: ChartMetric }[] = [
+const metricOptions = [
   { label: 'Trips', value: 'trips' },
   { label: 'Trip Fare', value: 'revenue' },
-]
+] as const
 
 watch(
   () => props.series,
@@ -27,16 +33,7 @@ watch(
   },
 )
 
-const peakIndex = computed(() => {
-  if (props.series.length === 0) return 0
-  return props.series.reduce((best, item, index, all) => {
-    const candidate = activeMetric.value === 'trips' ? item.trips : item.revenuePhp
-    const currentBest =
-      activeMetric.value === 'trips' ? (all[best]?.trips ?? -1) : (all[best]?.revenuePhp ?? -1)
-    return candidate > currentBest ? index : best
-  }, 0)
-})
-
+const peakIndex = computed(() => findPeakBucketIndex(props.series, activeMetric.value))
 const highlightedIndex = computed(() => selectedIndex.value ?? peakIndex.value)
 const highlightedBucket = computed(() => props.series[highlightedIndex.value] ?? null)
 
@@ -56,89 +53,43 @@ const plotWidth = chartWidth - padLeft - padRight
 const plotHeight = chartHeight - padTop - padBottom
 const baselineY = padTop + plotHeight
 
-const maxValue = computed(() => {
-  const values = props.series.map((bucket) =>
-    activeMetric.value === 'trips' ? bucket.trips : bucket.revenuePhp,
-  )
-  const rawMax = Math.max(1, ...values)
-  const magnitude = Math.pow(10, Math.floor(Math.log10(rawMax)))
-  return Math.ceil((rawMax * 1.15) / magnitude) * magnitude
-})
+const maxValue = computed(() => computeNiceMaxValue(props.series, activeMetric.value))
 
 const gridTicks = computed(() =>
-  [0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
-    const val = Math.round(maxValue.value * ratio)
-    const y = padTop + plotHeight * (1 - ratio)
-    const label =
-      activeMetric.value === 'revenue'
-        ? val >= 1000
-          ? `₱${Math.round(val / 1000)}k`
-          : `₱${val}`
-        : val >= 1000
-          ? `${(val / 1000).toFixed(1)}k`
-          : String(val)
-    return { index, y, label }
-  }),
+  buildGridTicks(maxValue.value, activeMetric.value, padTop, plotHeight),
 )
 
-const barSlots = computed(() => {
-  const count = Math.max(1, props.series.length)
-  const step = plotWidth / count
-  const barWidth = Math.min(44, step * 0.56)
+const styledBarSlots = computed(() => {
   const isTrips = activeMetric.value === 'trips'
+  const slots = buildBarSlots(
+    props.series,
+    activeMetric.value,
+    highlightedIndex.value,
+    maxValue.value,
+    { padLeft, padTop, plotWidth, plotHeight },
+  )
 
-  return props.series.map((bucket, index) => {
-    const metricVal = isTrips ? bucket.trips : bucket.revenuePhp
-    const ratio = Math.max(0, metricVal / maxValue.value)
-    const scaleY = Math.max(2 / plotHeight, ratio)
-    const barHeight = scaleY * plotHeight
-    const x = padLeft + step * index + (step - barWidth) / 2
-    const y = padTop + plotHeight - barHeight
-    const centerX = x + barWidth / 2
-    const isHighlighted = index === highlightedIndex.value
-    const barFill = isHighlighted
+  return slots.map((slot) => ({
+    ...slot,
+    barFill: slot.isHighlighted
       ? isTrips
         ? '#171717'
         : '#059669'
       : isTrips
         ? '#d4d4d4'
-        : '#a7f3d0'
-    const dotFill = isHighlighted
+        : '#a7f3d0',
+    dotFill: slot.isHighlighted
       ? isTrips
         ? '#059669'
         : '#171717'
       : isTrips
         ? '#10b981'
-        : '#059669'
-
-    return {
-      ...bucket,
-      index,
-      x,
-      y,
-      barWidth,
-      barHeight,
-      scaleY,
-      centerX,
-      barFill,
-      dotFill,
-      isHighlighted,
-    }
-  })
+        : '#059669',
+  }))
 })
 
-const trendPathD = computed(() =>
-  barSlots.value
-    .map((slot, index) => `${index === 0 ? 'M' : 'L'} ${slot.centerX} ${slot.y}`)
-    .join(' '),
-)
-
-const flatBaselinePathD = computed(() =>
-  barSlots.value
-    .map((slot, index) => `${index === 0 ? 'M' : 'L'} ${slot.centerX} ${baselineY}`)
-    .join(' '),
-)
-
+const trendPathD = computed(() => buildTrendPath(styledBarSlots.value))
+const flatBaselinePathD = computed(() => buildFlatBaselinePath(styledBarSlots.value, baselineY))
 const trendStrokeColor = computed(() => (activeMetric.value === 'trips' ? '#10b981' : '#171717'))
 </script>
 
@@ -154,34 +105,11 @@ const trendStrokeColor = computed(() => (activeMetric.value === 'trips' ? '#10b9
           </p>
         </div>
 
-        <div
-          class="inline-flex border border-neutral-200 bg-neutral-50 self-start sm:self-auto"
-          role="group"
+        <SegmentedToggle
+          v-model="activeMetric"
           aria-label="Chart metric"
-        >
-          <button
-            v-for="option in metricOptions"
-            :key="option.value"
-            type="button"
-            :aria-pressed="activeMetric === option.value"
-            class="relative px-2.5 py-1 text-xs font-semibold transition-colors cursor-pointer"
-            :class="
-              activeMetric === option.value
-                ? 'text-white'
-                : 'text-neutral-600 hover:text-neutral-900'
-            "
-            @click="activeMetric = option.value"
-          >
-            <motion.span
-              v-if="activeMetric === option.value"
-              layoutId="tripVolumeMetricIndicator"
-              class="absolute inset-0 rounded-none bg-neutral-900"
-              :transition="{ type: 'spring', stiffness: 420, damping: 34 }"
-              aria-hidden="true"
-            />
-            <span class="relative z-10">{{ option.label }}</span>
-          </button>
-        </div>
+          :options="metricOptions"
+        />
       </div>
 
       <motion.div
@@ -246,7 +174,7 @@ const trendStrokeColor = computed(() => (activeMetric.value === 'trips' ? '#10b9
           </g>
 
           <motion.path
-            v-if="barSlots.length > 1"
+            v-if="styledBarSlots.length > 1"
             :key="`trend-${seriesKey}`"
             :initial="{ d: flatBaselinePathD, opacity: 0 }"
             :animate="{ d: trendPathD, opacity: 1, stroke: trendStrokeColor }"
@@ -261,7 +189,7 @@ const trendStrokeColor = computed(() => (activeMetric.value === 'trips' ? '#10b9
           />
 
           <g
-            v-for="slot in barSlots"
+            v-for="slot in styledBarSlots"
             :key="`${seriesKey}-${slot.label}`"
             class="cursor-pointer focus:outline-none"
             tabindex="0"

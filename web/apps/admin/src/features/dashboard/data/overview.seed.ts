@@ -1,0 +1,87 @@
+import type { DashboardDataset, DashboardTimeframe } from '@/features/dashboard/types'
+
+export const DASHBOARD_DATASETS: Record<DashboardTimeframe, DashboardDataset> = {
+  today: {
+    comparisonLabel: 'vs yesterday',
+    activeRides: 142,
+    ridesDelta: '+18%',
+    activeDrivers: 284,
+    driverDelta: '+12%',
+    completionRate: '96.4%',
+    completionDelta: '+1.8%',
+    revenueDelta: '+21%',
+    series: [
+      { label: '06–09', trips: 140, revenuePhp: 7700 },
+      { label: '09–12', trips: 185, revenuePhp: 11470 },
+      { label: '12–15', trips: 210, revenuePhp: 11550 },
+      { label: '15–18', trips: 260, revenuePhp: 15600 },
+      { label: '18–21', trips: 195, revenuePhp: 12675 },
+      { label: '21–00', trips: 80, revenuePhp: 5200 },
+    ],
+    bookingMix: [
+      { key: 'broadcast', label: 'Open Broadcast', count: 728, percent: 68 },
+      { key: 'targeted', label: 'Chosen Driver', count: 342, percent: 32 },
+    ],
+    statusMix: [
+      { key: 'completed', label: 'Completed', count: 1031, share: '96.4%' },
+      { key: 'in_progress', label: 'In Progress', count: 18, share: '1.7%' },
+      { key: 'dispatching', label: 'Dispatching', count: 10, share: '0.9%' },
+      { key: 'cancelled', label: 'Cancelled', count: 11, share: '1.0%' },
+    ],
+  },
+  '7d': {
+    comparisonLabel: 'vs prior 7 days',
+    activeRides: 5420,
+    ridesDelta: '+14%',
+    activeDrivers: 318,
+    driverDelta: '+6%',
+    completionRate: '95.8%',
+    completionDelta: '+0.9%',
+    revenueDelta: '+12%',
+    series: [
+      { label: 'Mon', trips: 710, revenuePhp: 41180 },
+      { label: 'Tue', trips: 760, revenuePhp: 44080 },
+      { label: 'Wed', trips: 790, revenuePhp: 47400 },
+      { label: 'Thu', trips: 815, revenuePhp: 52975 },
+      { label: 'Fri', trips: 895, revenuePhp: 53700 },
+      { label: 'Sat', trips: 820, revenuePhp: 59040 },
+      { label: 'Sun', trips: 630, revenuePhp: 46620 },
+    ],
+    bookingMix: [
+      { key: 'broadcast', label: 'Open Broadcast', count: 3523, percent: 65 },
+      { key: 'targeted', label: 'Chosen Driver', count: 1897, percent: 35 },
+    ],
+    statusMix: [
+      { key: 'completed', label: 'Completed', count: 5192, share: '95.8%' },
+      { key: 'in_progress', label: 'In Progress', count: 70, share: '1.3%' },
+      { key: 'dispatching', label: 'Dispatching', count: 44, share: '0.8%' },
+      { key: 'cancelled', label: 'Cancelled', count: 114, share: '2.1%' },
+    ],
+  },
+  '30d': {
+    comparisonLabel: 'vs prior 30 days',
+    activeRides: 22840,
+    ridesDelta: '+18%',
+    activeDrivers: 364,
+    driverDelta: '+8%',
+    completionRate: '96.1%',
+    completionDelta: '+1.1%',
+    revenueDelta: '+19%',
+    series: [
+      { label: 'Week 1', trips: 5240, revenuePhp: 303920 },
+      { label: 'Week 2', trips: 5610, revenuePhp: 336600 },
+      { label: 'Week 3', trips: 5890, revenuePhp: 388740 },
+      { label: 'Week 4', trips: 6100, revenuePhp: 366000 },
+    ],
+    bookingMix: [
+      { key: 'broadcast', label: 'Open Broadcast', count: 14161, percent: 62 },
+      { key: 'targeted', label: 'Chosen Driver', count: 8679, percent: 38 },
+    ],
+    statusMix: [
+      { key: 'completed', label: 'Completed', count: 21949, share: '96.1%' },
+      { key: 'in_progress', label: 'In Progress', count: 142, share: '0.6%' },
+      { key: 'dispatching', label: 'Dispatching', count: 58, share: '0.3%' },
+      { key: 'cancelled', label: 'Cancelled', count: 691, share: '3.0%' },
+    ],
+  },
+}

@@ -1,183 +1,31 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge, { type BadgeTone } from '@/shared/feedback/StatusBadge.vue'
-import TablePagination from '@/shared/table/TablePagination.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
-import { formatPhp } from '@/shared/utils/format'
+import { computed, onBeforeUnmount, ref } from 'vue'
+import { useBiddingSessions, type BidSession, type BidSessionStatus } from '@/features/trips'
+import {
+  BaseSelect,
+  ConfirmDialog,
+  EmptyTableRow,
+  ModalDialog,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  TablePagination,
+  ToastBanner,
+  formatCentavos,
+  useDataTable,
+} from '@/shared'
 
-type BidSessionStatus = 'open' | 'accepted' | 'cancelled' | 'expired' | 'declined'
-
-interface BidOffer {
-  id: string
-  driverName: string
-  plate: string
-  bodyUnit: string
-  driverRating: number
-  etaMinutes: number
-  status: 'pending' | 'accepted' | 'declined' | 'expired'
-}
-
-interface BidSession {
-  id: string
-  bookingRef: string
-  passenger: string
-  passengerPhone: string
-  pickup: string
-  dropoff: string
-  systemEstimate: number
-  passengerOffer: number
-  tipAmount: number
-  requestMode: 'Broadcast' | 'Targeted Driver'
-  status: BidSessionStatus
-  expiresIn: string
-  createdAt: string
-  note: string
-  offers: BidOffer[]
-}
-
-const sessions = ref<BidSession[]>([
-  {
-    id: 'BID-3041',
-    bookingRef: '70160941200841',
-    passenger: 'Clarisse Abella',
-    passengerPhone: '+63 917 440 2184',
-    pickup: 'Agora Public Market Gate 2, Brgy. Santiago',
-    dropoff: 'Zamboanga del Sur Medical Center, Brgy. Dao',
-    systemEstimate: 45,
-    passengerOffer: 60,
-    tipAmount: 20,
-    requestMode: 'Broadcast',
-    status: 'open',
-    expiresIn: '01:18 left',
-    createdAt: '2 mins ago',
-    note: 'Carrying groceries, near loading bay beside pharmacy.',
-    offers: [
-      {
-        id: 'OFR-901',
-        driverName: 'Danilo Mendoza',
-        plate: '3891-ZK',
-        bodyUnit: 'Bao-Bao #042',
-        driverRating: 4.92,
-        etaMinutes: 3,
-        status: 'pending',
-      },
-      {
-        id: 'OFR-902',
-        driverName: 'Edgar Tolentino',
-        plate: '5190-QP',
-        bodyUnit: 'Bao-Bao #109',
-        driverRating: 4.78,
-        etaMinutes: 5,
-        status: 'pending',
-      },
-    ],
-  },
-  {
-    id: 'BID-3040',
-    bookingRef: '70160941200839',
-    passenger: 'Marco Villanueva',
-    passengerPhone: '+63 928 715 3390',
-    pickup: 'Pagadian City Integrated Bus Terminal, Bulatok',
-    dropoff: 'Gaisano Capital Pagadian, Brgy. San Pedro',
-    systemEstimate: 50,
-    passengerOffer: 65,
-    tipAmount: 10,
-    requestMode: 'Broadcast',
-    status: 'accepted',
-    expiresIn: 'Matched',
-    createdAt: '9 mins ago',
-    note: 'Solo ride with small backpack.',
-    offers: [
-      {
-        id: 'OFR-898',
-        driverName: 'Brandon Lee',
-        plate: '1284-ND',
-        bodyUnit: 'Bao-Bao #084',
-        driverRating: 4.95,
-        etaMinutes: 2,
-        status: 'accepted',
-      },
-    ],
-  },
-  {
-    id: 'BID-3039',
-    bookingRef: '70160941200832',
-    passenger: 'Grace Cabading',
-    passengerPhone: '+63 915 209 7741',
-    pickup: 'Plaza Luzon Oval, Brgy. Gatas',
-    dropoff: 'Brgy. Tuburan Barangay Hall',
-    systemEstimate: 30,
-    passengerOffer: 30,
-    tipAmount: 0,
-    requestMode: 'Targeted Driver',
-    status: 'declined',
-    expiresIn: 'Closed',
-    createdAt: '18 mins ago',
-    note: '',
-    offers: [
-      {
-        id: 'OFR-895',
-        driverName: 'Rodelio Cruz',
-        plate: '9102-AB',
-        bodyUnit: 'Bao-Bao #019',
-        driverRating: 4.61,
-        etaMinutes: 4,
-        status: 'declined',
-      },
-    ],
-  },
-  {
-    id: 'BID-3038',
-    bookingRef: '70160941200825',
-    passenger: 'Junel Pineda',
-    passengerPhone: '+63 998 331 0912',
-    pickup: 'Western Mindanao State U External, Tiguma',
-    dropoff: 'Pagadian Commercial Wharf, Kawit',
-    systemEstimate: 55,
-    passengerOffer: 55,
-    tipAmount: 0,
-    requestMode: 'Broadcast',
-    status: 'expired',
-    expiresIn: 'Timed out',
-    createdAt: '31 mins ago',
-    note: 'Waiting by main highway shed.',
-    offers: [],
-  },
-  {
-    id: 'BID-3037',
-    bookingRef: '70160941200818',
-    passenger: 'Liza Bantilan',
-    passengerPhone: '+63 917 889 4412',
-    pickup: 'Robinsons Supermarket Entrance, San Francisco',
-    dropoff: 'Brgy. Balangasan Rotonda',
-    systemEstimate: 35,
-    passengerOffer: 45,
-    tipAmount: 10,
-    requestMode: 'Broadcast',
-    status: 'cancelled',
-    expiresIn: 'Rider cancelled',
-    createdAt: '44 mins ago',
-    note: 'Cancelled after getting local pickup.',
-    offers: [],
-  },
-])
+const { sessions, openSessionCount, acceptanceRateLabel, bidSessionStatusTone, expireSession } =
+  useBiddingSessions()
 
 const searchQuery = ref('')
 const statusFilter = ref<'all' | BidSessionStatus>('all')
-const currentPage = ref(1)
-const itemsPerPage = 5
 const inspectedSession = ref<BidSession | null>(null)
 const pendingExpireSession = ref<BidSession | null>(null)
 const showExpireDialog = ref(false)
 const expireReason = ref('')
 const toastMessage = ref<string | null>(null)
-let toastTimer: number | undefined
+let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 const filteredSessions = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
@@ -194,49 +42,26 @@ const filteredSessions = computed(() => {
   })
 })
 
-const paginatedSessions = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredSessions.value.slice(start, start + itemsPerPage)
-})
-
-const openSessionCount = computed(
-  () => sessions.value.filter((session) => session.status === 'open').length,
-)
-
-const acceptanceRate = computed(() => {
-  const accepted = sessions.value.filter((session) => session.status === 'accepted').length
-  if (sessions.value.length === 0) return '0%'
-  return `${Math.round((accepted / sessions.value.length) * 100)}%`
-})
-
-watch([searchQuery, statusFilter], () => {
-  currentPage.value = 1
+const {
+  currentPage,
+  itemsPerPage,
+  paginatedItems: paginatedSessions,
+} = useDataTable(filteredSessions, {
+  initialPageSize: 5,
+  resetDeps: [searchQuery, statusFilter],
 })
 
 onBeforeUnmount(() => {
-  if (toastTimer) window.clearTimeout(toastTimer)
+  if (toastTimer !== null) clearTimeout(toastTimer)
 })
 
 function showToast(msg: string) {
   toastMessage.value = msg
-  if (toastTimer) window.clearTimeout(toastTimer)
-  toastTimer = window.setTimeout(() => {
+  if (toastTimer !== null) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
     toastMessage.value = null
+    toastTimer = null
   }, 4000)
-}
-
-function statusTone(status: BidSessionStatus): BadgeTone {
-  switch (status) {
-    case 'open':
-      return 'warning'
-    case 'accepted':
-      return 'success'
-    case 'declined':
-    case 'cancelled':
-      return 'danger'
-    default:
-      return 'neutral'
-  }
 }
 
 const hasActiveFilters = computed(() => searchQuery.value !== '' || statusFilter.value !== 'all')
@@ -244,7 +69,6 @@ const hasActiveFilters = computed(() => searchQuery.value !== '' || statusFilter
 function resetFilters() {
   searchQuery.value = ''
   statusFilter.value = 'all'
-  currentPage.value = 1
 }
 
 function promptExpireSession(session: BidSession) {
@@ -254,13 +78,16 @@ function promptExpireSession(session: BidSession) {
 }
 
 function confirmExpireSession() {
-  if (!pendingExpireSession.value) return
-  pendingExpireSession.value.status = 'expired'
-  pendingExpireSession.value.expiresIn = 'Closed by Ops'
-  showToast(
-    `Bid session ${pendingExpireSession.value.id} (${pendingExpireSession.value.bookingRef}) closed manually.`,
-  )
+  const target = pendingExpireSession.value
+  if (!target) return
+  const result = expireSession(target.id, expireReason.value)
+  if (!result.ok) {
+    showToast(result.error)
+    return
+  }
+  showToast(`Bid session ${target.id} (${target.bookingRef}) closed manually.`)
   pendingExpireSession.value = null
+  showExpireDialog.value = false
 }
 </script>
 
@@ -294,7 +121,7 @@ function confirmExpireSession() {
           <span
             class="px-2.5 py-1 bg-neutral-50 border border-neutral-300 text-[11px] font-semibold text-neutral-800 tabular-nums"
           >
-            Match: {{ acceptanceRate }}
+            Match: {{ acceptanceRateLabel }}
           </span>
           <BaseSelect
             v-model="statusFilter"
@@ -348,12 +175,12 @@ function confirmExpireSession() {
               </td>
               <td class="py-3 px-4 tabular-nums">
                 <div class="font-bold text-neutral-900">
-                  {{ formatPhp(session.passengerOffer + session.tipAmount) }}
+                  {{ formatCentavos(session.passengerOfferCentavos + session.tipAmountCentavos) }}
                 </div>
                 <div class="text-[11px] text-neutral-500">
-                  Base est. {{ formatPhp(session.systemEstimate) }}
-                  <span v-if="session.tipAmount > 0" class="text-emerald-700 font-semibold">
-                    (+{{ formatPhp(session.tipAmount) }} tip)
+                  Base est. {{ formatCentavos(session.systemEstimateCentavos) }}
+                  <span v-if="session.tipAmountCentavos > 0" class="text-emerald-700 font-semibold">
+                    (+{{ formatCentavos(session.tipAmountCentavos) }} tip)
                   </span>
                 </div>
               </td>
@@ -366,7 +193,7 @@ function confirmExpireSession() {
               <td class="py-3 px-4">
                 <StatusBadge
                   :label="session.status.toUpperCase()"
-                  :tone="statusTone(session.status)"
+                  :tone="bidSessionStatusTone(session.status)"
                 />
               </td>
               <td class="py-3 px-4 text-right whitespace-nowrap">
@@ -426,13 +253,17 @@ function confirmExpireSession() {
           <div>
             <div class="text-neutral-500">System Fare Estimate</div>
             <div class="font-bold font-mono text-neutral-900">
-              {{ formatPhp(inspectedSession.systemEstimate) }}
+              {{ formatCentavos(inspectedSession.systemEstimateCentavos) }}
             </div>
           </div>
           <div>
             <div class="text-neutral-500">Passenger Total Bid</div>
             <div class="font-bold font-mono text-emerald-700">
-              {{ formatPhp(inspectedSession.passengerOffer + inspectedSession.tipAmount) }}
+              {{
+                formatCentavos(
+                  inspectedSession.passengerOfferCentavos + inspectedSession.tipAmountCentavos,
+                )
+              }}
             </div>
           </div>
           <div v-if="inspectedSession.note" class="sm:col-span-2">

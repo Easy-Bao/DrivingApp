@@ -3,9 +3,17 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { motion, AnimatePresence } from 'motion-v'
-import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
+import SidebarCollapsedFlyout, {
+  type FlyoutState,
+  type TooltipState,
+} from '@/app/layouts/SidebarCollapsedFlyout.vue'
 import { navigationGroups, type NavGroup, type NavItem } from '@/app/navigation/menu'
 import { ROLE_PROFILES, canRoleAccessPath, lockAuthSession, useAuthSession } from '@/core'
+import { useExpiringDocuments, useVerificationDocuments } from '@/features/documents'
+import { useSettlements, useTopups } from '@/features/payments'
+import { useSafetyReports, useSosAlerts } from '@/features/trips'
+import { useDriverApplications } from '@/features/users'
+import { ConfirmDialog, useEscapeKey } from '@/shared'
 
 const props = withDefaults(
   defineProps<{
@@ -31,30 +39,33 @@ const showSignOutConfirm = ref(false)
 const signedOutNotice = ref(false)
 const authSession = useAuthSession()
 
-interface FlyoutItem {
-  id: string
-  label: string
-  icon: string
-  badge?: string | number
-  isActive?: boolean
-  onSelect: () => void
-}
+const { applications } = useDriverApplications()
+const { pendingDocs } = useVerificationDocuments()
+const { expiringDocs } = useExpiringDocuments()
+const { pendingTopups } = useTopups()
+const { pendingSettlements } = useSettlements()
+const { activeAlertsCount } = useSosAlerts()
+const { openReportCount } = useSafetyReports()
 
-interface FlyoutState {
-  id: string
-  title: string
-  activeItemLabel?: string | null
-  metaText?: string
-  items: FlyoutItem[]
-  top: number
-  left: number
-}
+const dynamicBadges = computed<Record<string, string | undefined>>(() => {
+  const pendingApps = applications.value.filter((app) => app.status === 'Pending Review').length
+  const docsCount = pendingDocs.value.length
+  const expiringCount = expiringDocs.value.length
+  const sosCount = activeAlertsCount.value
+  const safetyCount = openReportCount.value
+  const topupsCount = pendingTopups.value.length
+  const settlementsCount = pendingSettlements.value.length
 
-interface TooltipState {
-  label: string
-  top: number
-  left: number
-}
+  return {
+    'driver-applications': pendingApps > 0 ? String(pendingApps) : undefined,
+    'document-verification': docsCount > 0 ? String(docsCount) : undefined,
+    'expiring-documents': expiringCount > 0 ? String(expiringCount) : undefined,
+    'sos-alerts': sosCount > 0 ? String(sosCount) : undefined,
+    'safety-reports': safetyCount > 0 ? String(safetyCount) : undefined,
+    topups: topupsCount > 0 ? String(topupsCount) : undefined,
+    settlements: settlementsCount > 0 ? String(settlementsCount) : undefined,
+  }
+})
 
 const activeFlyout = ref<FlyoutState | null>(null)
 const collapsedTooltip = ref<TooltipState | null>(null)
@@ -66,6 +77,18 @@ const clearFlyoutTimer = () => {
     flyoutCloseTimer = null
   }
 }
+
+useEscapeKey(
+  () => Boolean(activeFlyout.value),
+  () => {
+    activeFlyout.value = null
+    collapsedTooltip.value = null
+  },
+)
+
+onBeforeUnmount(() => {
+  clearFlyoutTimer()
+})
 
 const openGroupFlyout = (group: NavGroup, event: Event) => {
   if (!effectivelyCollapsed.value) return
@@ -167,33 +190,6 @@ const hideButtonTooltip = () => {
   collapsedTooltip.value = null
 }
 
-function handleFlyoutEscape(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
-    activeFlyout.value = null
-    collapsedTooltip.value = null
-  }
-}
-
-watch(
-  activeFlyout,
-  (flyout) => {
-    if (typeof window === 'undefined') return
-    if (flyout) {
-      window.addEventListener('keydown', handleFlyoutEscape)
-    } else {
-      window.removeEventListener('keydown', handleFlyoutEscape)
-    }
-  },
-  { immediate: true },
-)
-
-onBeforeUnmount(() => {
-  clearFlyoutTimer()
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('keydown', handleFlyoutEscape)
-  }
-})
-
 const activeRoleLabel = computed(() => {
   const role = authSession.value.role
   return role ? ROLE_PROFILES[role].label : 'Locked'
@@ -252,7 +248,14 @@ const visibleGroups = computed<NavGroup[]>(() => {
   return navigationGroups
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => canRoleAccessPath(role, item.path)),
+      items: group.items
+        .filter((item) => canRoleAccessPath(role, item.path))
+        .map((item) => {
+          if (item.id in dynamicBadges.value) {
+            return { ...item, badge: dynamicBadges.value[item.id] }
+          }
+          return item
+        }),
     }))
     .filter((group) => group.items.length > 0)
 })
@@ -566,9 +569,9 @@ const filteredGroups = computed(() => {
             {{ operatorInitials }}
           </div>
           <div v-if="!effectivelyCollapsed" class="flex flex-col overflow-hidden whitespace-nowrap">
-            <span class="text-xs font-semibold text-neutral-900 truncate">{{
-              authSession.operatorName
-            }}</span>
+            <span class="text-xs font-semibold text-neutral-900 truncate">
+              {{ authSession.operatorName }}
+            </span>
             <span class="text-[11px] text-neutral-500 truncate">{{ activeRoleLabel }}</span>
           </div>
         </button>
@@ -602,74 +605,12 @@ const filteredGroups = computed(() => {
       @confirm="confirmSignOut"
     />
 
-    <Teleport to="body">
-      <div
-        v-if="effectivelyCollapsed && activeFlyout"
-        data-test="collapsed-flyout"
-        role="menu"
-        :aria-label="activeFlyout.title"
-        class="fixed z-50 w-56 bg-white border border-neutral-300 shadow-lg"
-        :style="{ top: `${activeFlyout.top}px`, left: `${activeFlyout.left}px` }"
-        @mouseenter="cancelCloseFlyout"
-        @mouseleave="scheduleCloseFlyout"
-      >
-        <div
-          class="bg-neutral-900 text-white px-3 py-2 flex items-center justify-between gap-2 text-xs font-semibold"
-        >
-          <span class="truncate">{{ activeFlyout.title }}</span>
-          <span
-            v-if="activeFlyout.activeItemLabel"
-            class="text-[10px] font-medium text-neutral-300 truncate max-w-[110px]"
-          >
-            {{ activeFlyout.activeItemLabel }}
-          </span>
-          <span v-else class="text-[10px] font-mono text-neutral-300">
-            {{ activeFlyout.metaText ?? activeFlyout.items.length }}
-          </span>
-        </div>
-        <div class="p-1 space-y-0.5 max-h-72 overflow-y-auto">
-          <button
-            v-for="item in activeFlyout.items"
-            :key="item.id"
-            type="button"
-            role="menuitem"
-            :aria-current="item.isActive ? 'page' : undefined"
-            class="w-full px-2.5 py-2 text-left text-xs font-medium flex items-center justify-between gap-2 transition-colors cursor-pointer"
-            :class="
-              item.isActive
-                ? 'bg-neutral-900 text-white font-semibold'
-                : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
-            "
-            @click="item.onSelect()"
-          >
-            <span class="flex items-center gap-2 min-w-0">
-              <Icon
-                :icon="item.icon"
-                class="text-sm shrink-0"
-                :class="item.isActive ? 'text-white' : 'text-neutral-500'"
-              />
-              <span class="truncate">{{ item.label }}</span>
-            </span>
-            <span
-              v-if="item.badge"
-              class="px-1.5 py-0.5 text-[10px] font-semibold shrink-0"
-              :class="item.isActive ? 'bg-white text-neutral-900' : 'bg-neutral-900 text-white'"
-            >
-              {{ item.badge }}
-            </span>
-          </button>
-        </div>
-      </div>
-
-      <div
-        v-if="effectivelyCollapsed && collapsedTooltip && !activeFlyout"
-        data-test="collapsed-tooltip"
-        role="tooltip"
-        class="fixed z-50 -translate-y-1/2 bg-neutral-900 text-white px-2.5 py-1.5 text-xs font-medium pointer-events-none shadow-sm"
-        :style="{ top: `${collapsedTooltip.top}px`, left: `${collapsedTooltip.left}px` }"
-      >
-        {{ collapsedTooltip.label }}
-      </div>
-    </Teleport>
+    <SidebarCollapsedFlyout
+      :collapsed="effectivelyCollapsed"
+      :active-flyout="activeFlyout"
+      :collapsed-tooltip="collapsedTooltip"
+      @cancel-close="cancelCloseFlyout"
+      @schedule-close="scheduleCloseFlyout"
+    />
   </motion.aside>
 </template>

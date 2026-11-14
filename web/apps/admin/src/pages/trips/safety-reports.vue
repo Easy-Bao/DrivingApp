@@ -1,127 +1,37 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import TablePagination from '@/shared/table/TablePagination.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
-import { exportToCsv } from '@/shared/utils/format'
+import { computed, ref } from 'vue'
+import {
+  SAFETY_CATEGORY_LABELS,
+  useSafetyReports,
+  type ReportSeverity,
+  type ReportStatus,
+  type SafetyReportRecord,
+} from '@/features/trips'
+import {
+  BaseSelect,
+  EmptyTableRow,
+  ModalDialog,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  TablePagination,
+  ToastBanner,
+  exportToCsv,
+  useDataTable,
+} from '@/shared'
 
-type ReporterRole = 'passenger' | 'driver'
-type ReportCategory =
-  | 'unsafe_driving'
-  | 'fare_dispute'
-  | 'driver_identity_mismatch'
-  | 'vehicle_mismatch'
-  | 'harassment'
-  | 'threat_or_violence'
-  | 'route_issue'
-  | 'fraud'
-  | 'accident'
-  | 'other'
-type ReportSeverity = 'standard' | 'high' | 'critical'
-type ReportStatus = 'submitted' | 'under_review' | 'resolved' | 'dismissed'
-
-interface SafetyReportRecord {
-  id: string
-  tripId: string
-  reporterRole: ReporterRole
-  reporterName: string
-  reporterPhone: string
-  reportedParty: string
-  corridor: string
-  category: ReportCategory
-  severity: ReportSeverity
-  status: ReportStatus
-  narrative: string
-  moderationNote?: string
-  submittedAt: string
-}
-
-const categoryLabels: Record<ReportCategory, string> = {
-  unsafe_driving: 'Unsafe Driving',
-  fare_dispute: 'Fare Dispute',
-  driver_identity_mismatch: 'Driver Identity Mismatch',
-  vehicle_mismatch: 'Vehicle / Plate Mismatch',
-  harassment: 'Harassment',
-  threat_or_violence: 'Threat or Violence',
-  route_issue: 'Route Deviation',
-  fraud: 'Suspected Fraud',
-  accident: 'Traffic Accident',
-  other: 'Other Safety Concern',
-}
-
-const reports = ref<SafetyReportRecord[]>([
-  {
-    id: 'RPT-7016-409',
-    tripId: 'TRP-7016-8918',
-    reporterRole: 'passenger',
-    reporterName: 'Clarisse Joy Tagupa',
-    reporterPhone: '+63 917 611 4320',
-    reportedParty: 'Ernesto Villafuerte (ZDS-6120 · TODA-0318)',
-    corridor: 'Pagadian Public Market (Agora) -> Brgy. San Pedro',
-    category: 'driver_identity_mismatch',
-    severity: 'critical',
-    status: 'submitted',
-    narrative:
-      'Passenger reported the driver operating the unit did not match the verified profile photo attached to TODA-0318.',
-    submittedAt: '18 mins ago',
-  },
-  {
-    id: 'RPT-7016-408',
-    tripId: 'TRP-7016-8914',
-    reporterRole: 'passenger',
-    reporterName: 'Jayson Lim',
-    reporterPhone: '+63 928 409 1185',
-    reportedParty: 'Arnel Cabug (ZDS-4402 · TODA-0122)',
-    corridor: 'Gaisano Capital Pagadian -> Brgy. Tuburan',
-    category: 'unsafe_driving',
-    severity: 'high',
-    status: 'under_review',
-    narrative: 'Overtook along the downhill Rizal Ave bend while speeding in wet road conditions.',
-    moderationNote: 'Requested telemetry speed log from trip session.',
-    submittedAt: '1 hour ago',
-  },
-  {
-    id: 'RPT-7016-407',
-    tripId: 'TRP-7016-8899',
-    reporterRole: 'driver',
-    reporterName: 'Danilo Mendoza',
-    reporterPhone: '+63 918 654 2219',
-    reportedParty: 'Passenger (Rafael Dominguiano)',
-    corridor: 'Integrated Bus Terminal -> Brgy. Tiguma',
-    category: 'fare_dispute',
-    severity: 'standard',
-    status: 'submitted',
-    narrative:
-      'Passenger contested agreed ₱115.00 winning bid fare upon drop-off and attempted to pay ₱80.00 only.',
-    submittedAt: '3 hours ago',
-  },
-  {
-    id: 'RPT-7016-406',
-    tripId: 'TRP-7016-8872',
-    reporterRole: 'passenger',
-    reporterName: 'Mae Ann Sabellano',
-    reporterPhone: '+63 917 905 2241',
-    reportedParty: 'Lito Evangelista (ZDS-1988 · TODA-0501)',
-    corridor: 'Dao Medical Center -> Brgy. Buenavista',
-    category: 'harassment',
-    severity: 'critical',
-    status: 'resolved',
-    narrative: 'Inappropriate verbal remarks during evening trip along provincial road.',
-    moderationNote: 'Driver account suspended pending mandatory safety hearing.',
-    submittedAt: 'Yesterday, 07:45 PM',
-  },
-])
+const {
+  reports,
+  criticalOpenCount,
+  safetySeverityTone,
+  safetyStatusTone,
+  formatSafetyStatusLabel,
+  moderateReport,
+} = useSafetyReports()
 
 const searchQuery = ref('')
 const severityFilter = ref<'all' | ReportSeverity>('all')
 const statusFilter = ref<'all' | ReportStatus>('all')
-const currentPage = ref(1)
-const itemsPerPage = 10
 
 const inspectedReport = ref<SafetyReportRecord | null>(null)
 const draftStatus = ref<ReportStatus>('under_review')
@@ -140,13 +50,9 @@ const filteredReports = computed(() => {
       item.tripId.toLowerCase().includes(query) ||
       item.reporterName.toLowerCase().includes(query) ||
       item.reportedParty.toLowerCase().includes(query) ||
-      categoryLabels[item.category].toLowerCase().includes(query)
+      SAFETY_CATEGORY_LABELS[item.category].toLowerCase().includes(query)
     return matchesSeverity && matchesStatus && matchesSearch
   })
-})
-
-watch([searchQuery, severityFilter, statusFilter], () => {
-  currentPage.value = 1
 })
 
 const hasActiveFilters = computed(
@@ -157,48 +63,16 @@ function resetFilters() {
   searchQuery.value = ''
   severityFilter.value = 'all'
   statusFilter.value = 'all'
-  currentPage.value = 1
 }
 
-const paginatedReports = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredReports.value.slice(start, start + itemsPerPage)
+const {
+  currentPage,
+  itemsPerPage,
+  paginatedItems: paginatedReports,
+} = useDataTable(filteredReports, {
+  initialPageSize: 10,
+  resetDeps: [searchQuery, severityFilter, statusFilter],
 })
-
-const criticalOpenCount = computed(
-  () =>
-    reports.value.filter(
-      (item) =>
-        item.severity === 'critical' &&
-        (item.status === 'submitted' || item.status === 'under_review'),
-    ).length,
-)
-
-const severityTone = (severity: ReportSeverity) => {
-  if (severity === 'critical') return 'danger'
-  if (severity === 'high') return 'warning'
-  return 'neutral'
-}
-
-const statusTone = (status: ReportStatus) => {
-  if (status === 'resolved') return 'success'
-  if (status === 'under_review') return 'warning'
-  if (status === 'submitted') return 'danger'
-  return 'neutral'
-}
-
-const formatStatusLabel = (status: ReportStatus) => {
-  switch (status) {
-    case 'submitted':
-      return 'Submitted'
-    case 'under_review':
-      return 'Under Review'
-    case 'resolved':
-      return 'Resolved'
-    case 'dismissed':
-      return 'Dismissed'
-  }
-}
 
 const openModerationModal = (report: SafetyReportRecord) => {
   inspectedReport.value = report
@@ -214,13 +88,16 @@ const closeModerationModal = () => {
 
 const saveModerationDecision = () => {
   if (!inspectedReport.value) return
-  if (!moderationNote.value.trim()) {
-    modalError.value = 'Enter an internal safety investigation note before saving.'
+  const targetId = inspectedReport.value.id
+  const result = moderateReport(targetId, {
+    status: draftStatus.value,
+    moderationNote: moderationNote.value,
+  })
+  if (!result.ok) {
+    modalError.value = result.error
     return
   }
-  inspectedReport.value.status = draftStatus.value
-  inspectedReport.value.moderationNote = moderationNote.value.trim()
-  toastMessage.value = `${inspectedReport.value.id} updated to ${formatStatusLabel(draftStatus.value)}.`
+  toastMessage.value = `${targetId} updated to ${formatSafetyStatusLabel(draftStatus.value)}.`
   closeModerationModal()
 }
 
@@ -243,7 +120,7 @@ const exportReports = () => {
       report.reporterRole,
       report.reporterName,
       report.reportedParty,
-      categoryLabels[report.category],
+      SAFETY_CATEGORY_LABELS[report.category],
       report.severity,
       report.status,
     ]),
@@ -352,7 +229,7 @@ const exportReports = () => {
               </td>
               <td class="py-3.5 px-4">
                 <div class="font-semibold text-neutral-900">
-                  {{ categoryLabels[item.category] }}
+                  {{ SAFETY_CATEGORY_LABELS[item.category] }}
                 </div>
                 <div class="text-[11px] text-neutral-600">{{ item.reportedParty }}</div>
                 <div class="text-[11px] text-neutral-400">{{ item.corridor }}</div>
@@ -360,19 +237,19 @@ const exportReports = () => {
               <td class="py-3.5 px-4">
                 <StatusBadge
                   :label="item.severity.toUpperCase()"
-                  :tone="severityTone(item.severity)"
+                  :tone="safetySeverityTone(item.severity)"
                 />
               </td>
               <td class="py-3.5 px-4">
                 <StatusBadge
-                  :label="formatStatusLabel(item.status)"
-                  :tone="statusTone(item.status)"
+                  :label="formatSafetyStatusLabel(item.status)"
+                  :tone="safetyStatusTone(item.status)"
                 />
               </td>
               <td class="py-3.5 px-4 text-right">
                 <button
                   type="button"
-                  class="px-3 py-1 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800"
+                  class="px-3 py-1 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
                   @click="openModerationModal(item)"
                 >
                   Review &amp; Moderate
@@ -402,7 +279,7 @@ const exportReports = () => {
       :title="inspectedReport ? `Safety Report Moderation · ${inspectedReport.id}` : ''"
       :subtitle="
         inspectedReport
-          ? `${categoryLabels[inspectedReport.category]} · Trip ${inspectedReport.tripId}`
+          ? `${SAFETY_CATEGORY_LABELS[inspectedReport.category]} · Trip ${inspectedReport.tripId}`
           : undefined
       "
       size="lg"
@@ -413,7 +290,7 @@ const exportReports = () => {
         <StatusBadge
           v-if="inspectedReport"
           :label="inspectedReport.severity.toUpperCase()"
-          :tone="severityTone(inspectedReport.severity)"
+          :tone="safetySeverityTone(inspectedReport.severity)"
         />
       </template>
 

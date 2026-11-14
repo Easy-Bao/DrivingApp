@@ -1,36 +1,45 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { Icon } from '@iconify/vue'
 import { MotionConfig, motion } from 'motion-v'
-import FleetDistributionCard from '@/features/dashboard/components/FleetDistributionCard.vue'
-import TripVolumeChart from '@/features/dashboard/components/TripVolumeChart.vue'
 import {
+  FleetDistributionCard,
+  TripVolumeChart,
   useOverviewMetrics,
+  type DashboardKpiKey,
   type DashboardTimeframe,
-} from '@/features/dashboard/composables/use-overview-metrics'
-import TripDetailsModal from '@/features/trips/components/TripDetailsModal.vue'
-import { useTrips, type TripRecord, type TripStatus } from '@/features/trips/composables/use-trips'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import BookingIdCell from '@/shared/display/BookingIdCell.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import TablePagination from '@/shared/table/TablePagination.vue'
-import { formatPhp } from '@/shared/utils/format'
+} from '@/features/dashboard'
+import { TripDetailsModal, useTrips, type TripRecord, type TripStatus } from '@/features/trips'
+import {
+  BaseSelect,
+  BookingIdCell,
+  EmptyTableRow,
+  PageHeader,
+  SegmentedToggle,
+  StatusBadge,
+  TablePagination,
+  formatCentavos,
+  useDataTable,
+} from '@/shared'
 
 const timeframe = ref<DashboardTimeframe>('today')
 const { activeDataset, totalTrips, totalRevenuePhp, kpis } = useOverviewMetrics(timeframe)
 
-const timeframeOptions: { label: string; value: DashboardTimeframe }[] = [
+const KPI_ICONS: Record<DashboardKpiKey, string> = {
+  rides: 'lucide:navigation',
+  drivers: 'lucide:users',
+  revenue: 'lucide:banknote',
+  completion: 'lucide:check-circle-2',
+}
+
+const timeframeOptions = [
   { label: 'Today', value: 'today' },
   { label: '7 Days', value: '7d' },
   { label: '30 Days', value: '30d' },
-]
+] as const
 
 const { trips, tripStatusTone } = useTrips()
 const statusFilter = ref<'all' | TripStatus>('all')
-const currentPage = ref(1)
-const itemsPerPage = 5
 const selectedTrip = ref<TripRecord | null>(null)
 
 const filteredTrips = computed(() => {
@@ -38,13 +47,13 @@ const filteredTrips = computed(() => {
   return trips.value.filter((trip) => trip.status === statusFilter.value)
 })
 
-watch(statusFilter, () => {
-  currentPage.value = 1
-})
-
-const paginatedTrips = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredTrips.value.slice(start, start + itemsPerPage)
+const {
+  currentPage,
+  itemsPerPage,
+  paginatedItems: paginatedTrips,
+} = useDataTable(filteredTrips, {
+  initialPageSize: 5,
+  resetDeps: [statusFilter],
 })
 </script>
 
@@ -56,34 +65,11 @@ const paginatedTrips = computed(() => {
         description="Monitor dispatch volume, fleet activity, and trip fare performance."
       >
         <template #actions>
-          <div
-            class="inline-flex border border-neutral-200 bg-white"
-            role="group"
+          <SegmentedToggle
+            v-model="timeframe"
             aria-label="Dashboard timeframe"
-          >
-            <button
-              v-for="option in timeframeOptions"
-              :key="option.value"
-              type="button"
-              :aria-pressed="timeframe === option.value"
-              class="relative px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
-              :class="
-                timeframe === option.value
-                  ? 'text-white'
-                  : 'text-neutral-600 hover:text-neutral-900'
-              "
-              @click="timeframe = option.value"
-            >
-              <motion.span
-                v-if="timeframe === option.value"
-                layoutId="overviewTimeframeIndicator"
-                class="absolute inset-0 rounded-none bg-neutral-900"
-                :transition="{ type: 'spring', stiffness: 420, damping: 34 }"
-                aria-hidden="true"
-              />
-              <span class="relative z-10">{{ option.label }}</span>
-            </button>
-          </div>
+            :options="timeframeOptions"
+          />
         </template>
       </PageHeader>
 
@@ -97,7 +83,11 @@ const paginatedTrips = computed(() => {
             <span class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
               {{ kpi.label }}
             </span>
-            <Icon :icon="kpi.icon" class="h-4 w-4 text-neutral-400 shrink-0" aria-hidden="true" />
+            <Icon
+              :icon="KPI_ICONS[kpi.key]"
+              class="h-4 w-4 text-neutral-400 shrink-0"
+              aria-hidden="true"
+            />
           </div>
           <motion.div
             :key="`${timeframe}-${kpi.value}`"
@@ -187,12 +177,12 @@ const paginatedTrips = computed(() => {
                   <BookingIdCell :booking-id="trip.id" />
                 </td>
                 <td class="py-3.5 px-4 font-medium text-neutral-900">{{ trip.rider }}</td>
-                <td class="py-3.5 px-4">{{ trip.driver }}</td>
+                <td class="py-3.5 px-4">{{ trip.driver ?? 'Unassigned' }}</td>
                 <td class="py-3.5 px-4 text-neutral-500 max-w-xs truncate">
                   {{ trip.pickup }} → {{ trip.dropoff }}
                 </td>
                 <td class="py-3.5 px-4 font-mono font-semibold text-neutral-900 tabular-nums">
-                  {{ formatPhp(trip.fare) }}
+                  {{ formatCentavos(trip.fareCentavos) }}
                 </td>
                 <td class="py-3.5 px-4">
                   <StatusBadge :label="trip.status" :tone="tripStatusTone(trip.status)" />

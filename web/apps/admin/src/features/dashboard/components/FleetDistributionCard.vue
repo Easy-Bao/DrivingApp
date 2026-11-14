@@ -1,41 +1,36 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { MotionConfig, motion } from 'motion-v'
+import { buildDonutSegments } from '@/features/dashboard/domain/chart-geometry'
 import type {
-  BreakdownSlice,
+  BookingSlice,
+  BookingSliceKey,
   StatusMetric,
-} from '@/features/dashboard/composables/use-overview-metrics'
+  StatusOutcomeKey,
+} from '@/features/dashboard/types'
 
 const props = defineProps<{
   totalTrips: number
-  bookingMix: BreakdownSlice[]
-  statusMix: StatusMetric[]
+  bookingMix: readonly BookingSlice[]
+  statusMix: readonly StatusMetric[]
 }>()
+
+const BOOKING_STYLES: Record<BookingSliceKey, { colorHex: string; barClass: string }> = {
+  broadcast: { colorHex: '#171717', barClass: 'bg-neutral-900' },
+  targeted: { colorHex: '#059669', barClass: 'bg-emerald-600' },
+}
+
+const STATUS_BAR_CLASSES: Record<StatusOutcomeKey, string> = {
+  completed: 'bg-emerald-600',
+  in_progress: 'bg-neutral-900',
+  dispatching: 'bg-amber-500',
+  cancelled: 'bg-rose-500',
+}
 
 const circumference = 2 * Math.PI * 36
 const emptyDashArray = `0.00 ${circumference.toFixed(2)}`
 
-const ringSegments = computed(() => {
-  const total = Math.max(
-    1,
-    props.bookingMix.reduce((sum, slice) => sum + slice.count, 0),
-  )
-
-  return props.bookingMix.reduce<Array<BreakdownSlice & { dashArray: string; dashOffset: number }>>(
-    (acc, slice) => {
-      const prevLength = acc.reduce((sum, prev) => sum + (prev.count / total) * circumference, 0)
-      const segLength = (slice.count / total) * circumference
-      const remainder = Math.max(0, circumference - segLength)
-      acc.push({
-        ...slice,
-        dashArray: `${segLength.toFixed(2)} ${remainder.toFixed(2)}`,
-        dashOffset: Number((-prevLength).toFixed(2)),
-      })
-      return acc
-    },
-    [],
-  )
-})
+const ringSegments = computed(() => buildDonutSegments(props.bookingMix, circumference))
 </script>
 
 <template>
@@ -58,7 +53,7 @@ const ringSegments = computed(() => {
                 cy="48"
                 r="36"
                 fill="none"
-                :stroke="seg.colorHex"
+                :stroke="BOOKING_STYLES[seg.key].colorHex"
                 stroke-width="10"
                 :initial="{ strokeDasharray: emptyDashArray, strokeDashoffset: 0 }"
                 :animate="{
@@ -89,7 +84,7 @@ const ringSegments = computed(() => {
               class="flex items-center justify-between gap-2"
             >
               <div class="flex items-center gap-2 min-w-0">
-                <span class="w-2.5 h-2.5 shrink-0" :class="mode.barClass" />
+                <span class="w-2.5 h-2.5 shrink-0" :class="BOOKING_STYLES[mode.key].barClass" />
                 <div class="min-w-0">
                   <div class="text-neutral-700 font-medium truncate">{{ mode.label }}</div>
                   <div class="text-[11px] text-neutral-400 tabular-nums">
@@ -123,7 +118,7 @@ const ringSegments = computed(() => {
             :initial="{ width: '0%' }"
             :animate="{ width: item.share }"
             :transition="{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }"
-            :class="item.barClass"
+            :class="STATUS_BAR_CLASSES[item.key]"
           />
         </div>
 
@@ -134,7 +129,7 @@ const ringSegments = computed(() => {
             class="flex items-center justify-between gap-2"
           >
             <span class="text-neutral-600 flex items-center gap-1.5 min-w-0">
-              <span class="w-2 h-2 shrink-0" :class="item.barClass" />
+              <span class="w-2 h-2 shrink-0" :class="STATUS_BAR_CLASSES[item.key]" />
               <span class="truncate">{{ item.label }}</span>
             </span>
             <motion.span
