@@ -1,57 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
+import { useLegalPolicies, type LegalDocument } from '@/features/settings'
+import { ModalDialog, PageHeader, StatusBadge, ToastBanner } from '@/shared'
 
-interface LegalDocument {
-  id: string
-  title: string
-  audience: 'Passenger & Driver' | 'Driver Fleet' | 'All Platform Users'
-  versionMajor: number
-  versionMinor: number
-  lastUpdated: string
-  markdownBody: string
-}
-
-const documents = ref<LegalDocument[]>([
-  {
-    id: 'DOC-TOS-PH',
-    title: 'Passenger Terms of Service (Pagadian City Operations)',
-    audience: 'Passenger & Driver',
-    versionMajor: 2,
-    versionMinor: 1,
-    lastUpdated: 'Nov 02, 2026',
-    markdownBody:
-      '# EasyRide Pagadian Terms of Service\n\nAll fares agreed during real-time bidding are payable directly in Philippine Pesos (PHP) cash upon arrival. Standard cancellation fees (PHP 15.00) apply only outside the 3-minute grace window.',
-  },
-  {
-    id: 'DOC-TODA-CHARTER',
-    title: 'Driver Partner & TODA Franchise Agreement',
-    audience: 'Driver Fleet',
-    versionMajor: 1,
-    versionMinor: 8,
-    lastUpdated: 'Oct 28, 2026',
-    markdownBody:
-      '# Driver Partner Charter\n\nDrivers must maintain an active LTO Professional License, Pagadian TODA MTOP franchise permit, and at least PHP 50.00 in prepaid commission credits to receive bid requests.',
-  },
-  {
-    id: 'DOC-DPA-10173',
-    title: 'Data Privacy Act (RA 10173) Location & KYC Notice',
-    audience: 'All Platform Users',
-    versionMajor: 1,
-    versionMinor: 4,
-    lastUpdated: 'Oct 15, 2026',
-    markdownBody:
-      '# Philippine Data Privacy Act Compliance\n\nGPS telemetry, emergency SOS coordinates, and government license images are processed exclusively for dispatch safety, identity verification, and settlement auditing.',
-  },
-])
+const { documents, publishDocument } = useLegalPolicies()
 
 const editingDoc = ref<LegalDocument | null>(null)
 const draftTitle = ref('')
 const draftBody = ref('')
 const bumpMinor = ref(true)
+const modalError = ref<string | null>(null)
 const toastMessage = ref<string | null>(null)
 
 const openEditor = (doc: LegalDocument) => {
@@ -59,18 +17,23 @@ const openEditor = (doc: LegalDocument) => {
   draftTitle.value = doc.title
   draftBody.value = doc.markdownBody
   bumpMinor.value = true
+  modalError.value = null
 }
 
 const saveDocument = () => {
-  if (!editingDoc.value || !draftTitle.value.trim() || !draftBody.value.trim()) return
-  editingDoc.value.title = draftTitle.value.trim()
-  editingDoc.value.markdownBody = draftBody.value.trim()
-  if (bumpMinor.value) {
-    editingDoc.value.versionMinor += 1
+  if (!editingDoc.value) return
+  const result = publishDocument(editingDoc.value.id, {
+    title: draftTitle.value,
+    markdownBody: draftBody.value,
+    bumpMinor: bumpMinor.value,
+  })
+  if (!result.ok) {
+    modalError.value = result.error
+    return
   }
-  editingDoc.value.lastUpdated = 'Updated Just Now'
-  toastMessage.value = `Published ${editingDoc.value.id} v${editingDoc.value.versionMajor}.${editingDoc.value.versionMinor}.`
+  toastMessage.value = result.message ?? 'Published policy revision.'
   editingDoc.value = null
+  modalError.value = null
 }
 </script>
 
@@ -97,7 +60,7 @@ const saveDocument = () => {
             <tr>
               <th class="py-3 px-4">Document Code</th>
               <th class="py-3 px-4">Title</th>
-              <th class="py-3 px-4">Scope</th>
+              <th class="py-3 px-4">Audience</th>
               <th class="py-3 px-4">Version</th>
               <th class="py-3 px-4">Last Revised</th>
               <th class="py-3 px-4 text-right">Action</th>
@@ -121,7 +84,7 @@ const saveDocument = () => {
               <td class="py-3.5 px-4 text-right">
                 <button
                   type="button"
-                  class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold"
+                  class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold cursor-pointer"
                   @click="openEditor(doc)"
                 >
                   Edit Policy Text
@@ -150,8 +113,11 @@ const saveDocument = () => {
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Document Heading</label>
+          <label for="policy-title" class="block font-medium text-neutral-700 mb-1">
+            Document Heading
+          </label>
           <input
+            id="policy-title"
             v-model="draftTitle"
             type="text"
             class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
@@ -159,8 +125,11 @@ const saveDocument = () => {
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Policy Content</label>
+          <label for="policy-body" class="block font-medium text-neutral-700 mb-1">
+            Policy Content
+          </label>
           <textarea
+            id="policy-body"
             v-model="draftBody"
             rows="7"
             class="w-full px-3 py-2 border border-neutral-300 rounded-none font-mono text-xs bg-white text-neutral-900"
@@ -175,6 +144,8 @@ const saveDocument = () => {
           />
           Increment minor revision number (requires app acceptance on next launch)
         </label>
+
+        <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
       </div>
 
       <template #footer>

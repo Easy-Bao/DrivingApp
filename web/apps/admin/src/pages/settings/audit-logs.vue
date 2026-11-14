@@ -1,78 +1,22 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import TablePagination from '@/shared/table/TablePagination.vue'
-import { exportToCsv } from '@/shared/utils/format'
+import { useAuditLogs, type AuditLogEntry, type AuditSeverity } from '@/features/settings'
+import {
+  BaseSelect,
+  EmptyTableRow,
+  ModalDialog,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  TablePagination,
+  exportToCsv,
+  useDataTable,
+} from '@/shared'
 
-interface AuditLogEntry {
-  id: string
-  actor: string
-  role: string
-  action: string
-  targetEntity: string
-  ipAddress: string
-  severity: 'Critical' | 'Warning' | 'Info'
-  timestamp: string
-  payloadDiff: string
-}
-
-const logs = ref<AuditLogEntry[]>([
-  {
-    id: 'AUD-7016-8904',
-    actor: 'Maria Elena Santos',
-    role: 'Operations Lead',
-    action: 'WALLET_TOPUP_VERIFIED',
-    targetEntity: 'TOP-8921 (Rodelio Cruz · +₱200.00)',
-    ipAddress: '103.164.28.41 (Pagadian Ops)',
-    severity: 'Info',
-    timestamp: 'Today, 09:45 AM PHT',
-    payloadDiff: '{"status": "Verified", "wallet_balance_php": 218.5, "ref": "QR-TXN-8829104"}',
-  },
-  {
-    id: 'AUD-7016-8903',
-    actor: 'Carlo Reyes',
-    role: 'Safety & Compliance Officer',
-    action: 'DRIVER_SUSPENDED',
-    targetEntity: 'DRV-7016-501 (Lito Evangelista)',
-    ipAddress: '103.164.28.44 (Pagadian Ops)',
-    severity: 'Critical',
-    timestamp: 'Today, 08:20 AM PHT',
-    payloadDiff:
-      '{"status": "Suspended", "report_id": "RPT-7016-406", "reason": "Pending safety hearing"}',
-  },
-  {
-    id: 'AUD-7016-8902',
-    actor: 'Lorna Dela Cruz',
-    role: 'Finance Lead',
-    action: 'SURGE_OVERRIDE_UPDATED',
-    targetEntity: 'ZN-PAG-02 (Integrated Bus Terminal)',
-    ipAddress: '103.164.28.50 (Pagadian Ops)',
-    severity: 'Warning',
-    timestamp: 'Yesterday, 06:15 PM PHT',
-    payloadDiff: '{"previous_surge": "1.4x", "new_surge": "1.8x", "ceiling": "2.5x"}',
-  },
-  {
-    id: 'AUD-7016-8901',
-    actor: 'Maria Elena Santos',
-    role: 'Operations Lead',
-    action: 'QRPH_IMAGE_ROTATED',
-    targetEntity: 'ACC-QR-GCASH (QRPH-PAG-8801)',
-    ipAddress: '103.164.28.41 (Pagadian Ops)',
-    severity: 'Info',
-    timestamp: 'Nov 09, 2026 · 04:05 PM PHT',
-    payloadDiff: '{"channel": "GCash Business (QRPh)", "merchant_code": "QRPH-PAG-8801"}',
-  },
-])
+const { logs } = useAuditLogs()
 
 const searchQuery = ref('')
-const severityFilter = ref<'All' | AuditLogEntry['severity']>('All')
-const currentPage = ref(1)
-const itemsPerPage = 10
+const severityFilter = ref<'All' | AuditSeverity>('All')
 const inspectedLog = ref<AuditLogEntry | null>(null)
 
 const filteredLogs = computed(() => {
@@ -98,14 +42,14 @@ const resetFilters = () => {
   severityFilter.value = 'All'
 }
 
-watch([searchQuery, severityFilter], () => {
-  currentPage.value = 1
-})
+const {
+  currentPage,
+  itemsPerPage,
+  paginatedItems: paginatedLogs,
+  resetPage,
+} = useDataTable(filteredLogs, { initialPageSize: 10 })
 
-const paginatedLogs = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredLogs.value.slice(start, start + itemsPerPage)
-})
+watch([searchQuery, severityFilter], resetPage)
 
 const exportAuditLogs = () => {
   exportToCsv(

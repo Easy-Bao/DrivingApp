@@ -50,11 +50,28 @@ Object.defineProperty(HTMLAnchorElement.prototype, 'click', {
   configurable: true,
 })
 
+const objectUrlCreateSpy = vi.fn(() => 'blob:mock-object-url')
+const objectUrlRevokeSpy = vi.fn()
+const originalCreateObjectURL = URL.createObjectURL
+const originalRevokeObjectURL = URL.revokeObjectURL
+
 beforeEach(() => {
   window.sessionStorage.clear()
   restoreDefaultDemoSession()
   scrollToSpy.mockClear()
   anchorClickSpy.mockClear()
+  objectUrlCreateSpy.mockClear()
+  objectUrlRevokeSpy.mockClear()
+  Object.defineProperty(URL, 'createObjectURL', {
+    value: objectUrlCreateSpy,
+    writable: true,
+    configurable: true,
+  })
+  Object.defineProperty(URL, 'revokeObjectURL', {
+    value: objectUrlRevokeSpy,
+    writable: true,
+    configurable: true,
+  })
   clipboardWriteText.mockReset()
   clipboardWriteText.mockResolvedValue(undefined)
   Object.defineProperty(navigator, 'clipboard', {
@@ -67,5 +84,15 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
+  Object.defineProperty(URL, 'createObjectURL', {
+    value: originalCreateObjectURL,
+    writable: true,
+    configurable: true,
+  })
+  Object.defineProperty(URL, 'revokeObjectURL', {
+    value: originalRevokeObjectURL,
+    writable: true,
+    configurable: true,
+  })
   vi.restoreAllMocks()
 })

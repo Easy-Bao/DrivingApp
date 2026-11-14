@@ -1,81 +1,32 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
-import { formatPhp } from '@/shared/utils/format'
+import { useCities, type MunicipalityMarket, type MunicipalityStatus } from '@/features/settings'
+import {
+  BaseSelect,
+  ModalDialog,
+  PageHeader,
+  StatusBadge,
+  ToastBanner,
+  formatCentavos,
+} from '@/shared'
 
-interface MunicipalityMarket {
-  id: string
-  municipality: string
-  province: string
-  zipCode: string
-  centerCoords: string
-  minFarePhp: number
-  requireTodaMtop: boolean
-  status: 'Active Launch Market' | 'Pilot Rollout' | 'Planned Expansion'
-}
-
-const cities = ref<MunicipalityMarket[]>([
-  {
-    id: 'MKT-ZDS-7016',
-    municipality: 'Pagadian City',
-    province: 'Zamboanga del Sur',
-    zipCode: '7016',
-    centerCoords: '7.8257° N, 123.4370° E',
-    minFarePhp: 25.0,
-    requireTodaMtop: true,
-    status: 'Active Launch Market',
-  },
-  {
-    id: 'MKT-ZDS-7017',
-    municipality: 'Labangan',
-    province: 'Zamboanga del Sur',
-    zipCode: '7017',
-    centerCoords: '7.8594° N, 123.5042° E',
-    minFarePhp: 30.0,
-    requireTodaMtop: true,
-    status: 'Pilot Rollout',
-  },
-  {
-    id: 'MKT-ZDS-7019',
-    municipality: 'Tukuran',
-    province: 'Zamboanga del Sur',
-    zipCode: '7019',
-    centerCoords: '7.8492° N, 123.5880° E',
-    minFarePhp: 35.0,
-    requireTodaMtop: true,
-    status: 'Planned Expansion',
-  },
-  {
-    id: 'MKT-ZDS-7015',
-    municipality: 'Dumalinao',
-    province: 'Zamboanga del Sur',
-    zipCode: '7015',
-    centerCoords: '7.8130° N, 123.3680° E',
-    minFarePhp: 30.0,
-    requireTodaMtop: true,
-    status: 'Planned Expansion',
-  },
-])
+const { cities, saveMunicipality: commitMunicipality } = useCities()
 
 const toastMessage = ref<string | null>(null)
 const showModal = ref(false)
 const editingMarketId = ref<string | null>(null)
 const draftName = ref('')
 const draftZip = ref('')
-const draftMinFare = ref(25)
+const draftMinFarePhp = ref(25)
 const draftRequireToda = ref(true)
-const draftStatus = ref<MunicipalityMarket['status']>('Pilot Rollout')
+const draftStatus = ref<MunicipalityStatus>('Pilot Rollout')
 const modalError = ref<string | null>(null)
 
 const openCreateModal = () => {
   editingMarketId.value = null
   draftName.value = ''
   draftZip.value = '70'
-  draftMinFare.value = 30
+  draftMinFarePhp.value = 30
   draftRequireToda.value = true
   draftStatus.value = 'Planned Expansion'
   modalError.value = null
@@ -86,7 +37,7 @@ const openEditModal = (city: MunicipalityMarket) => {
   editingMarketId.value = city.id
   draftName.value = city.municipality
   draftZip.value = city.zipCode
-  draftMinFare.value = city.minFarePhp
+  draftMinFarePhp.value = city.minFareCentavos / 100
   draftRequireToda.value = city.requireTodaMtop
   draftStatus.value = city.status
   modalError.value = null
@@ -94,34 +45,21 @@ const openEditModal = (city: MunicipalityMarket) => {
 }
 
 const saveMunicipality = () => {
-  if (!draftName.value.trim() || !draftZip.value.trim()) {
-    modalError.value = 'Enter municipality name and Philippine postal code.'
+  const minFareCentavos = Number.isFinite(draftMinFarePhp.value)
+    ? Math.round(draftMinFarePhp.value * 100)
+    : -1
+  const result = commitMunicipality(editingMarketId.value, {
+    municipality: draftName.value,
+    zipCode: draftZip.value,
+    minFareCentavos,
+    requireTodaMtop: draftRequireToda.value,
+    status: draftStatus.value,
+  })
+  if (!result.ok) {
+    modalError.value = result.error
     return
   }
-  if (editingMarketId.value) {
-    const existing = cities.value.find((city) => city.id === editingMarketId.value)
-    if (existing) {
-      existing.municipality = draftName.value.trim()
-      existing.zipCode = draftZip.value.trim()
-      existing.minFarePhp = draftMinFare.value
-      existing.requireTodaMtop = draftRequireToda.value
-      existing.status = draftStatus.value
-      toastMessage.value = `Updated municipal market rules for ${existing.municipality}.`
-    }
-  } else {
-    const code = `MKT-ZDS-${draftZip.value.trim()}`
-    cities.value.push({
-      id: code,
-      municipality: draftName.value.trim(),
-      province: 'Zamboanga del Sur',
-      zipCode: draftZip.value.trim(),
-      centerCoords: '7.83° N, 123.44° E',
-      minFarePhp: draftMinFare.value,
-      requireTodaMtop: draftRequireToda.value,
-      status: draftStatus.value,
-    })
-    toastMessage.value = `Registered regional municipality ${draftName.value.trim()} (${code}).`
-  }
+  toastMessage.value = result.message ?? 'Saved municipal market settings.'
   showModal.value = false
 }
 </script>
@@ -185,7 +123,7 @@ const saveMunicipality = () => {
                 ZIP {{ city.zipCode }} · {{ city.centerCoords }}
               </td>
               <td class="py-3.5 px-4 font-mono font-semibold text-neutral-900">
-                {{ formatPhp(city.minFarePhp) }}
+                {{ formatCentavos(city.minFareCentavos) }}
               </td>
               <td class="py-3.5 px-4">
                 <StatusBadge
@@ -232,16 +170,20 @@ const saveMunicipality = () => {
       <div class="space-y-3 text-xs">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div class="sm:col-span-2">
-            <label class="block font-medium text-neutral-700 mb-1">Municipality Name</label>
+            <label for="city-name" class="block font-medium text-neutral-700 mb-1">
+              Municipality Name
+            </label>
             <input
+              id="city-name"
               v-model="draftName"
               type="text"
               class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
             />
           </div>
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">ZIP Code</label>
+            <label for="city-zip" class="block font-medium text-neutral-700 mb-1">ZIP Code</label>
             <input
+              id="city-zip"
               v-model="draftZip"
               type="text"
               class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
@@ -250,9 +192,12 @@ const saveMunicipality = () => {
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Min Base Fare (PHP)</label>
+          <label for="city-min-fare" class="block font-medium text-neutral-700 mb-1">
+            Min Base Fare (PHP)
+          </label>
           <input
-            v-model.number="draftMinFare"
+            id="city-min-fare"
+            v-model.number="draftMinFarePhp"
             type="number"
             min="15"
             step="5"

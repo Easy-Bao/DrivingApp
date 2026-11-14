@@ -1,66 +1,23 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
+import {
+  usePlatformConfig,
+  useServiceZones,
+  type ServiceZone,
+  type ServiceZoneStatus,
+} from '@/features/settings'
+import {
+  BaseSelect,
+  EmptyTableRow,
+  ModalDialog,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  ToastBanner,
+} from '@/shared'
 
-interface ServiceZone {
-  id: string
-  name: string
-  barangaysCovered: string
-  centerCoords: string
-  surgeFactor: number
-  polygonPoints: number
-  activeDrivers: number
-  status: 'Active' | 'Monitoring' | 'Paused'
-}
-
-const zones = ref<ServiceZone[]>([
-  {
-    id: 'ZN-PAG-01',
-    name: 'Poblacion & Agora Market Core',
-    barangaysCovered: 'San Jose, San Francisco, Gatas, Santiago, Santo Nino',
-    centerCoords: '7.8257° N, 123.4370° E',
-    surgeFactor: 1.4,
-    polygonPoints: 18,
-    activeDrivers: 64,
-    status: 'Active',
-  },
-  {
-    id: 'ZN-PAG-02',
-    name: 'Integrated Bus Terminal & Bulatok',
-    barangaysCovered: 'Bulatok, Tawagan Sur, San Pedro',
-    centerCoords: '7.8342° N, 123.4285° E',
-    surgeFactor: 1.8,
-    polygonPoints: 14,
-    activeDrivers: 39,
-    status: 'Active',
-  },
-  {
-    id: 'ZN-PAG-03',
-    name: 'Dao Capitol & Gaisano Corridor',
-    barangaysCovered: 'Dao, Tuburan, Tiguma, Balangasan',
-    centerCoords: '7.8391° N, 123.4418° E',
-    surgeFactor: 1.2,
-    polygonPoints: 16,
-    activeDrivers: 45,
-    status: 'Active',
-  },
-  {
-    id: 'ZN-PAG-04',
-    name: 'Santiago Wharf & Coastal Belt',
-    barangaysCovered: 'Santiago, Santa Lucia, Kawit',
-    centerCoords: '7.8211° N, 123.4404° E',
-    surgeFactor: 1.5,
-    polygonPoints: 12,
-    activeDrivers: 22,
-    status: 'Monitoring',
-  },
-])
+const { config } = usePlatformConfig()
+const { zones, saveServiceZone } = useServiceZones()
 
 const searchQuery = ref('')
 const toastMessage = ref<string | null>(null)
@@ -72,7 +29,7 @@ const draftBarangays = ref('')
 const draftCoords = ref('7.8257° N, 123.4370° E')
 const draftSurge = ref(1.0)
 const draftPoints = ref(12)
-const draftStatus = ref<ServiceZone['status']>('Active')
+const draftStatus = ref<ServiceZoneStatus>('Active')
 const modalError = ref<string | null>(null)
 
 const filteredZones = computed(() => {
@@ -117,39 +74,19 @@ const openEditZone = (zone: ServiceZone) => {
 }
 
 const saveZone = () => {
-  if (!draftName.value.trim() || !draftBarangays.value.trim()) {
-    modalError.value = 'Provide zone title and covered Pagadian barangays.'
+  const result = saveServiceZone(editingZoneId.value, {
+    name: draftName.value,
+    barangaysCovered: draftBarangays.value,
+    centerCoords: draftCoords.value,
+    surgeFactor: draftSurge.value,
+    polygonPoints: draftPoints.value,
+    status: draftStatus.value,
+  })
+  if (!result.ok) {
+    modalError.value = result.error
     return
   }
-  if (draftSurge.value < 1 || draftSurge.value > 2.5) {
-    modalError.value = 'Zone surge multiplier must remain between 1.0x and 2.5x.'
-    return
-  }
-  if (editingZoneId.value) {
-    const existing = zones.value.find((zone) => zone.id === editingZoneId.value)
-    if (existing) {
-      existing.name = draftName.value.trim()
-      existing.barangaysCovered = draftBarangays.value.trim()
-      existing.centerCoords = draftCoords.value.trim()
-      existing.surgeFactor = Number(draftSurge.value.toFixed(1))
-      existing.polygonPoints = draftPoints.value
-      existing.status = draftStatus.value
-      toastMessage.value = `Updated geofence zone ${existing.name} (${existing.surgeFactor.toFixed(1)}x cap).`
-    }
-  } else {
-    const nextId = `ZN-PAG-0${zones.value.length + 1}`
-    zones.value.unshift({
-      id: nextId,
-      name: draftName.value.trim(),
-      barangaysCovered: draftBarangays.value.trim(),
-      centerCoords: draftCoords.value.trim() || '7.8257° N, 123.4370° E',
-      surgeFactor: Number(draftSurge.value.toFixed(1)),
-      polygonPoints: draftPoints.value,
-      activeDrivers: 0,
-      status: draftStatus.value,
-    })
-    toastMessage.value = `Created geofence zone ${nextId}: ${draftName.value.trim()}.`
-  }
+  toastMessage.value = result.message ?? 'Saved service zone.'
   showModal.value = false
 }
 </script>
@@ -266,18 +203,20 @@ const saveZone = () => {
     >
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Zone Name</label>
+          <label for="zone-name" class="block font-medium text-neutral-700 mb-1">Zone Name</label>
           <input
+            id="zone-name"
             v-model="draftName"
             type="text"
             class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
           />
         </div>
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">
+          <label for="zone-barangays" class="block font-medium text-neutral-700 mb-1">
             Covered Barangays / Landmarks
           </label>
           <input
+            id="zone-barangays"
             v-model="draftBarangays"
             type="text"
             class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
@@ -285,19 +224,25 @@ const saveZone = () => {
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Surge (1.0x–2.5x)</label>
+            <label for="zone-surge" class="block font-medium text-neutral-700 mb-1">
+              Surge (1.0x–{{ config.maxBiddingSurgeCap.toFixed(1) }}x)
+            </label>
             <input
+              id="zone-surge"
               v-model.number="draftSurge"
               type="number"
               min="1"
-              max="2.5"
+              :max="config.maxBiddingSurgeCap"
               step="0.1"
               class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
             />
           </div>
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Polygon Vertices</label>
+            <label for="zone-points" class="block font-medium text-neutral-700 mb-1">
+              Polygon Vertices
+            </label>
             <input
+              id="zone-points"
               v-model.number="draftPoints"
               type="number"
               min="4"
@@ -306,8 +251,11 @@ const saveZone = () => {
           </div>
         </div>
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Center Coordinates</label>
+          <label for="zone-coords" class="block font-medium text-neutral-700 mb-1">
+            Center Coordinates
+          </label>
           <input
+            id="zone-coords"
             v-model="draftCoords"
             type="text"
             class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
