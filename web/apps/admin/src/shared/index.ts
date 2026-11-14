@@ -28,6 +28,7 @@ export {
 export {
   buildCsvContent,
   escapeCsvCell,
+  escapeXml,
   exportToCsv,
   formatBookingReference,
   formatBpsAsPercent,

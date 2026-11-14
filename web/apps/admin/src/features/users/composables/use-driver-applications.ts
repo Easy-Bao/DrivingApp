@@ -1,743 +1,93 @@
-import { ref } from 'vue'
+import { ref, type Ref } from 'vue'
+import { useAuditLogs } from '@/features/settings'
+import { SEED_DRIVER_APPLICATIONS } from '@/features/users/data/users.seed'
+import type { DriverApplication, UserActionResult } from '@/features/users/types'
 
-export interface DriverApplication {
-  id: string
-  applicant: string
-  email: string
-  phone: string
-  appliedDate: string
-  appliedTime: string
-  city: string
-  province: string
-  barangay: string
-  facePhotoUrl: string
-  licenseNumber: string
-  licenseType: string
-  licenseExpiry: string
-  licenseCodes: string
-  licenseFrontDoc: string
-  licenseBackDoc: string
-  vehicle: {
-    type: string
-    make: string
-    model: string
-    year: number
-    plate: string
-    color: string
-    bodyNumber: string
-    todaFranchise: string
-    mtopNumber: string
-    engineNumber: string
-    chassisNumber: string
-    orNumber: string
-    crNumber: string
-    orDoc: string
-    crDoc: string
-    insurancePolicy: string
-    inspectionDoc: string
-  }
-  backgroundStatus: 'Passed' | 'Pending' | 'Review Required'
-  clearanceType: string
-  clearanceNumber: string
-  clearanceDoc: string
-  backgroundProvider: string
-  backgroundNotes: string
-  rejectionReason?: string
-  status: 'Pending Review' | 'Approved' | 'Rejected'
+function cloneApplications(source: readonly DriverApplication[]): DriverApplication[] {
+  return source.map((item) => ({
+    ...item,
+    vehicle: { ...item.vehicle },
+  }))
 }
 
-const applications = ref<DriverApplication[]>([
-  {
-    id: 'APP-901',
-    applicant: 'Brandon Lee',
-    email: 'brandon.lee@pagadian.ph',
-    phone: '+63 917 111 2233',
-    appliedDate: '2026-11-11',
-    appliedTime: '2 hours ago',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. San Jose',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N01-19-091245',
-    licenseType: 'Professional',
-    licenseExpiry: '2029-08-15',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_brandon_lee.png',
-    licenseBackDoc: 'lto_license_back_brandon_lee.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'Bajaj',
-      model: 'RE 4S',
-      year: 2024,
-      plate: '1284-ND',
-      color: 'Midnight Silver',
-      bodyNumber: 'Bao-Bao #084',
-      todaFranchise: 'Pagadian Central TODA (#PAG-2024-0102)',
-      mtopNumber: 'MTOP-2024-PAG-0912',
-      engineNumber: 'ENG-RE4S-992104',
-      chassisNumber: 'CHS-PH2024-88192',
-      orNumber: 'OR-LTO-2026-99120',
-      crNumber: 'CR-LTO-2024-88102',
-      orDoc: 'lto_official_receipt_1284nd.pdf',
-      crDoc: 'lto_cert_registration_1284nd.pdf',
-      insurancePolicy: 'Malayan #PH-88192-M',
-      inspectionDoc: 'pagadian_city_mvir_cert_2026.pdf',
-    },
-    backgroundStatus: 'Passed',
-    clearanceType: 'NBI Clearance',
-    clearanceNumber: 'NBI-2026-091823',
-    clearanceDoc: 'nbi_clearance_brandon_lee.pdf',
-    backgroundProvider: 'National Bureau of Investigation (NBI)',
-    backgroundNotes: 'No derogatory record found. LTO license and MTOP franchise verified.',
-    status: 'Pending Review',
-  },
-  {
-    id: 'APP-902',
-    applicant: 'Gregorio Pascua',
-    email: 'gregorio.pascua@pagadian.ph',
-    phone: '+63 928 412 8891',
-    appliedDate: '2026-11-11',
-    appliedTime: '4 hours ago',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. Tuburan',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N02-18-048219',
-    licenseType: 'Professional',
-    licenseExpiry: '2028-11-20',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_gregorio.png',
-    licenseBackDoc: 'lto_license_back_gregorio.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'TVS',
-      model: 'King Deluxe',
-      year: 2023,
-      plate: '4915-NC',
-      color: 'Royal Blue',
-      bodyNumber: 'Bao-Bao #142',
-      todaFranchise: 'Tuburan Transport TODA (#PAG-2023-1102)',
-      mtopNumber: 'MTOP-2023-PAG-4410',
-      engineNumber: 'ENG-BRK175-440192',
-      chassisNumber: 'CHS-KW2023-99104',
-      orNumber: 'OR-LTO-2025-44102',
-      crNumber: 'CR-LTO-2023-99182',
-      orDoc: 'lto_or_4915nc.pdf',
-      crDoc: 'lto_cr_4915nc.pdf',
-      insurancePolicy: 'Pioneer #PN-44012-P',
-      inspectionDoc: 'pagadian_tru_roadworthiness_2026.pdf',
-    },
-    backgroundStatus: 'Passed',
-    clearanceType: 'PNP Clearance',
-    clearanceNumber: 'PNP-ZDS-2026-440912',
-    clearanceDoc: 'pnp_clearance_gregorio.pdf',
-    backgroundProvider: 'Philippine National Police (PNP)',
-    backgroundNotes: 'No derogatory record found. Active TODA franchise confirmed.',
-    status: 'Pending Review',
-  },
-  {
-    id: 'APP-903',
-    applicant: 'Romulo Navarro',
-    email: 'romulo.navarro@pagadian.ph',
-    phone: '+63 908 771 9924',
-    appliedDate: '2026-11-11',
-    appliedTime: '6 hours ago',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. Balangasan',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N03-17-091204',
-    licenseType: 'Professional',
-    licenseExpiry: '2027-04-12',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_romulo.png',
-    licenseBackDoc: 'lto_license_back_romulo.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'Bajaj',
-      model: 'RE FI',
-      year: 2022,
-      plate: '9024-ND',
-      color: 'Ruby Red',
-      bodyNumber: 'Bao-Bao #019',
-      todaFranchise: 'Balangasan Operators TODA (#PAG-2024-0341)',
-      mtopNumber: 'MTOP-2024-PAG-3310',
-      engineNumber: 'ENG-BAJ205-990142',
-      chassisNumber: 'CHS-BJ2022-33019',
-      orNumber: 'OR-LTO-2025-99014',
-      crNumber: 'CR-LTO-2022-33019',
-      orDoc: 'lto_or_9024nd.pdf',
-      crDoc: 'lto_cr_9024nd.pdf',
-      insurancePolicy: 'Mercantile #MC-99014-R',
-      inspectionDoc: 'pagadian_safety_inspection_2026.pdf',
-    },
-    backgroundStatus: 'Passed',
-    clearanceType: 'NBI Clearance',
-    clearanceNumber: 'NBI-2026-081923',
-    clearanceDoc: 'nbi_clearance_romulo.pdf',
-    backgroundProvider: 'National Bureau of Investigation (NBI)',
-    backgroundNotes: 'No derogatory record found. Clean driving and franchise history.',
-    status: 'Pending Review',
-  },
-  {
-    id: 'APP-904',
-    applicant: 'Eduardo Santos',
-    email: 'eduardo.santos@pagadian.ph',
-    phone: '+63 919 332 4455',
-    appliedDate: '2026-11-10',
-    appliedTime: 'Yesterday',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. San Pedro',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N04-20-001923',
-    licenseType: 'Professional',
-    licenseExpiry: '2030-01-30',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_eduardo.png',
-    licenseBackDoc: 'lto_license_back_eduardo.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'TVS',
-      model: 'King Deluxe FI',
-      year: 2024,
-      plate: '7712-NC',
-      color: 'Emerald Green',
-      bodyNumber: 'Bao-Bao #205',
-      todaFranchise: 'San Pedro TODA (#PAG-2023-0512)',
-      mtopNumber: 'MTOP-2023-PAG-8821',
-      engineNumber: 'ENG-TVS200-881023',
-      chassisNumber: 'CHS-TVS2024-11029',
-      orNumber: 'OR-LTO-2026-88102',
-      crNumber: 'CR-LTO-2024-11029',
-      orDoc: 'lto_or_7712nc.pdf',
-      crDoc: 'lto_cr_7712nc.pdf',
-      insurancePolicy: 'Alpha #ALP-88102-S',
-      inspectionDoc: 'pagadian_city_mvir_2026.pdf',
-    },
-    backgroundStatus: 'Passed',
-    clearanceType: 'NBI Clearance',
-    clearanceNumber: 'NBI-2026-119203',
-    clearanceDoc: 'nbi_clearance_eduardo.pdf',
-    backgroundProvider: 'National Bureau of Investigation (NBI)',
-    backgroundNotes: 'No derogatory record found. All compliance documents verified.',
-    status: 'Approved',
-  },
-  {
-    id: 'APP-905',
-    applicant: 'Maricel Dominguez',
-    email: 'maricel.dominguez@pagadian.ph',
-    phone: '+63 920 882 1149',
-    appliedDate: '2026-11-10',
-    appliedTime: 'Yesterday',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. Kawit',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N07-16-099120',
-    licenseType: 'Professional',
-    licenseExpiry: '2027-09-18',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_maricel.png',
-    licenseBackDoc: 'lto_license_back_maricel.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'Bajaj',
-      model: 'Maxima Z',
-      year: 2023,
-      plate: '3398-ND',
-      color: 'Sunflower Yellow',
-      bodyNumber: 'Bao-Bao #077',
-      todaFranchise: 'Kawit Port TODA (#PAG-2024-0144)',
-      mtopNumber: 'MTOP-2024-PAG-2291',
-      engineNumber: 'ENG-BJ236-771029',
-      chassisNumber: 'CHS-BJ2023-77102',
-      orNumber: 'OR-LTO-2025-77102',
-      crNumber: 'CR-LTO-2023-77102',
-      orDoc: 'lto_or_3398nd.pdf',
-      crDoc: 'lto_cr_3398nd.pdf',
-      insurancePolicy: 'Standard #STD-77102-L',
-      inspectionDoc: 'pagadian_safety_inspection_2026.pdf',
-    },
-    backgroundStatus: 'Passed',
-    clearanceType: 'NBI Clearance',
-    clearanceNumber: 'NBI-2026-771029',
-    clearanceDoc: 'nbi_clearance_maricel.pdf',
-    backgroundProvider: 'National Bureau of Investigation (NBI)',
-    backgroundNotes: 'No derogatory record found. LTO license and MTOP franchise verified.',
-    status: 'Pending Review',
-  },
-  {
-    id: 'APP-906',
-    applicant: 'Arnel Magno',
-    email: 'arnel.magno@pagadian.ph',
-    phone: '+63 918 665 4419',
-    appliedDate: '2026-11-09',
-    appliedTime: '2 days ago',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. Santa Lucia',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N11-15-081290',
-    licenseType: 'Professional',
-    licenseExpiry: '2026-12-05',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_arnel.png',
-    licenseBackDoc: 'lto_license_back_arnel.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'Piaggio',
-      model: 'Ape City',
-      year: 2021,
-      plate: '8829-NC',
-      color: 'Matte Gunmetal',
-      bodyNumber: 'Bao-Bao #312',
-      todaFranchise: 'Santa Lucia TODA (#PAG-2024-0288)',
-      mtopNumber: 'MTOP-2024-PAG-1102',
-      engineNumber: 'ENG-KW175-110294',
-      chassisNumber: 'CHS-KW2021-11029',
-      orNumber: 'OR-LTO-2025-11029',
-      crNumber: 'CR-LTO-2021-11029',
-      orDoc: 'lto_or_8829nc.pdf',
-      crDoc: 'lto_cr_8829nc.pdf',
-      insurancePolicy: 'FPG #FPG-11029-J',
-      inspectionDoc: 'pagadian_safety_inspection_2026.pdf',
-    },
-    backgroundStatus: 'Passed',
-    clearanceType: 'NBI Clearance',
-    clearanceNumber: 'NBI-2026-110294',
-    clearanceDoc: 'nbi_clearance_arnel.pdf',
-    backgroundProvider: 'National Bureau of Investigation (NBI)',
-    backgroundNotes: 'No derogatory record found. License expires within 30 days.',
-    status: 'Pending Review',
-  },
-  {
-    id: 'APP-907',
-    applicant: 'Ramon Valderama',
-    email: 'ramon.valderama@pagadian.ph',
-    phone: '+63 927 334 9912',
-    appliedDate: '2026-11-09',
-    appliedTime: '2 days ago',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. Gatas',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N01-21-008819',
-    licenseType: 'Professional',
-    licenseExpiry: '2031-03-14',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_ramon.png',
-    licenseBackDoc: 'lto_license_back_ramon.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'NWOW',
-      model: 'ERV2 Electric',
-      year: 2023,
-      plate: '5524-NB',
-      color: 'Pearl White',
-      bodyNumber: 'Bao-Bao #098',
-      todaFranchise: 'Gatas Commercial TODA (#PAG-2024-0418)',
-      mtopNumber: 'MTOP-2024-PAG-5510',
-      engineNumber: 'ENG-HD150-551029',
-      chassisNumber: 'CHS-HD2023-55102',
-      orNumber: 'OR-LTO-2026-55102',
-      crNumber: 'CR-LTO-2023-55102',
-      orDoc: 'lto_or_5524nb.pdf',
-      crDoc: 'lto_cr_5524nb.pdf',
-      insurancePolicy: 'Stronghold #STR-55102-R',
-      inspectionDoc: 'pagadian_safety_inspection_2026.pdf',
-    },
-    backgroundStatus: 'Review Required',
-    clearanceType: 'PNP Clearance',
-    clearanceNumber: 'PNP-ZDS-2026-551029',
-    clearanceDoc: 'pnp_clearance_ramon.pdf',
-    backgroundProvider: 'Philippine National Police (PNP)',
-    backgroundNotes: 'Duplicate name match flagged; manual clearance confirmation required.',
-    status: 'Pending Review',
-  },
-  {
-    id: 'APP-908',
-    applicant: 'Wilfredo Tolentino',
-    email: 'wilfredo.tolentino@pagadian.ph',
-    phone: '+63 916 445 8829',
-    appliedDate: '2026-11-08',
-    appliedTime: '3 days ago',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. Tiguma',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N01-18-091823',
-    licenseType: 'Professional',
-    licenseExpiry: '2028-08-22',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_wilfredo.png',
-    licenseBackDoc: 'lto_license_back_wilfredo.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'Bajaj',
-      model: 'RE 4S',
-      year: 2022,
-      plate: '6624-NC',
-      color: 'Scarlet Red',
-      bodyNumber: 'Bao-Bao #155',
-      todaFranchise: 'Tiguma Highway TODA (#PAG-2024-0219)',
-      mtopNumber: 'MTOP-2024-PAG-9912',
-      engineNumber: 'ENG-BJ198-662019',
-      chassisNumber: 'CHS-BJ2022-66201',
-      orNumber: 'OR-LTO-2025-66201',
-      crNumber: 'CR-LTO-2022-66201',
-      orDoc: 'lto_or_6624nc.pdf',
-      crDoc: 'lto_cr_6624nc.pdf',
-      insurancePolicy: 'Mercantile #MC-66201-F',
-      inspectionDoc: 'pagadian_safety_inspection_2026.pdf',
-    },
-    backgroundStatus: 'Passed',
-    clearanceType: 'NBI Clearance',
-    clearanceNumber: 'NBI-2026-662019',
-    clearanceDoc: 'nbi_clearance_wilfredo.pdf',
-    backgroundProvider: 'National Bureau of Investigation (NBI)',
-    backgroundNotes: 'No derogatory record found. LTO license and MTOP franchise verified.',
-    status: 'Pending Review',
-  },
-  {
-    id: 'APP-909',
-    applicant: 'Benigno Velasco',
-    email: 'benigno.velasco@pagadian.ph',
-    phone: '+63 939 556 1218',
-    appliedDate: '2026-11-08',
-    appliedTime: '3 days ago',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. Dao',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N02-19-033102',
-    licenseType: 'Professional',
-    licenseExpiry: '2029-06-11',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_benigno.png',
-    licenseBackDoc: 'lto_license_back_benigno.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'TVS',
-      model: 'King Duramax',
-      year: 2024,
-      plate: '1119-ND',
-      color: 'Forest Green',
-      bodyNumber: 'Bao-Bao #043',
-      todaFranchise: 'Dao Terminal TODA (#PAG-2024-0331)',
-      mtopNumber: 'MTOP-2024-PAG-7714',
-      engineNumber: 'ENG-KW175-771402',
-      chassisNumber: 'CHS-KW2024-77140',
-      orNumber: 'OR-LTO-2026-77140',
-      crNumber: 'CR-LTO-2024-77140',
-      orDoc: 'lto_or_1119nd.pdf',
-      crDoc: 'lto_cr_1119nd.pdf',
-      insurancePolicy: 'Pioneer #PN-77140-A',
-      inspectionDoc: 'pagadian_safety_inspection_2026.pdf',
-    },
-    backgroundStatus: 'Passed',
-    clearanceType: 'NBI Clearance',
-    clearanceNumber: 'NBI-2026-771402',
-    clearanceDoc: 'nbi_clearance_benigno.pdf',
-    backgroundProvider: 'National Bureau of Investigation (NBI)',
-    backgroundNotes: 'No derogatory record found. LTO license and MTOP franchise verified.',
-    status: 'Pending Review',
-  },
-  {
-    id: 'APP-910',
-    applicant: 'Leonardo Castaneda',
-    email: 'leonardo.castaneda@pagadian.ph',
-    phone: '+63 921 778 2245',
-    appliedDate: '2026-11-07',
-    appliedTime: '4 days ago',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. Santiago',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N03-20-081923',
-    licenseType: 'Professional',
-    licenseExpiry: '2030-10-09',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_leonardo.png',
-    licenseBackDoc: 'lto_license_back_leonardo.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'Bajaj',
-      model: 'RE 4S FI',
-      year: 2023,
-      plate: '9925-ND',
-      color: 'Gloss Black',
-      bodyNumber: 'Bao-Bao #288',
-      todaFranchise: 'Santiago TODA (#PAG-2024-0199)',
-      mtopNumber: 'MTOP-2024-PAG-6621',
-      engineNumber: 'ENG-BJ198-662109',
-      chassisNumber: 'CHS-BJ2023-66210',
-      orNumber: 'OR-LTO-2026-66210',
-      crNumber: 'CR-LTO-2023-66210',
-      orDoc: 'lto_or_9925nd.pdf',
-      crDoc: 'lto_cr_9925nd.pdf',
-      insurancePolicy: 'Alpha #ALP-66210-C',
-      inspectionDoc: 'pagadian_safety_inspection_2026.pdf',
-    },
-    backgroundStatus: 'Passed',
-    clearanceType: 'NBI Clearance',
-    clearanceNumber: 'NBI-2026-662109',
-    clearanceDoc: 'nbi_clearance_leonardo.pdf',
-    backgroundProvider: 'National Bureau of Investigation (NBI)',
-    backgroundNotes: 'No derogatory record found. LTO license and MTOP franchise verified.',
-    status: 'Pending Review',
-  },
-  {
-    id: 'APP-911',
-    applicant: 'Rodolfo Manalo',
-    email: 'rodolfo.manalo@pagadian.ph',
-    phone: '+63 928 901 3344',
-    appliedDate: '2026-11-06',
-    appliedTime: '5 days ago',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. Danlugan',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N04-18-099124',
-    licenseType: 'Professional',
-    licenseExpiry: '2028-04-19',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_rodolfo.png',
-    licenseBackDoc: 'lto_license_back_rodolfo.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'Piaggio',
-      model: 'Ape City',
-      year: 2022,
-      plate: '3310-NC',
-      color: 'Navy Blue',
-      bodyNumber: 'Bao-Bao #109',
-      todaFranchise: 'Danlugan TODA (#PAG-2024-0442)',
-      mtopNumber: 'MTOP-2024-PAG-8812',
-      engineNumber: 'ENG-HD125-881204',
-      chassisNumber: 'CHS-HD2022-88120',
-      orNumber: 'OR-LTO-2025-88120',
-      crNumber: 'CR-LTO-2022-88120',
-      orDoc: 'lto_or_3310nc.pdf',
-      crDoc: 'lto_cr_3310nc.pdf',
-      insurancePolicy: 'Standard #STD-88120-R',
-      inspectionDoc: 'pagadian_safety_inspection_2026.pdf',
-    },
-    backgroundStatus: 'Passed',
-    clearanceType: 'NBI Clearance',
-    clearanceNumber: 'NBI-2026-881204',
-    clearanceDoc: 'nbi_clearance_rodolfo.pdf',
-    backgroundProvider: 'National Bureau of Investigation (NBI)',
-    backgroundNotes: 'No derogatory record found. LTO license and MTOP franchise verified.',
-    status: 'Pending Review',
-  },
-  {
-    id: 'APP-912',
-    applicant: 'Noel Macaraig',
-    email: 'noel.macaraig@pagadian.ph',
-    phone: '+63 919 778 1199',
-    appliedDate: '2026-11-05',
-    appliedTime: '6 days ago',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. Bulatok',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N01-19-044192',
-    licenseType: 'Professional',
-    licenseExpiry: '2029-07-28',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_noel.png',
-    licenseBackDoc: 'lto_license_back_noel.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'TVS',
-      model: 'King Deluxe',
-      year: 2023,
-      plate: '4488-ND',
-      color: 'Burgundy Red',
-      bodyNumber: 'Bao-Bao #072',
-      todaFranchise: 'Bulatok TODA (#PAG-2024-0612)',
-      mtopNumber: 'MTOP-2024-PAG-3320',
-      engineNumber: 'ENG-TVS200-332019',
-      chassisNumber: 'CHS-TVS2023-33201',
-      orNumber: 'OR-LTO-2026-33201',
-      crNumber: 'CR-LTO-2023-33201',
-      orDoc: 'lto_or_4488nd.pdf',
-      crDoc: 'lto_cr_4488nd.pdf',
-      insurancePolicy: 'FPG #FPG-33201-N',
-      inspectionDoc: 'pagadian_safety_inspection_2026.pdf',
-    },
-    backgroundStatus: 'Passed',
-    clearanceType: 'PNP Clearance',
-    clearanceNumber: 'PNP-ZDS-2026-332019',
-    clearanceDoc: 'pnp_clearance_noel.pdf',
-    backgroundProvider: 'Philippine National Police (PNP)',
-    backgroundNotes: 'No derogatory record found. Clean PNP clearance verified.',
-    status: 'Pending Review',
-  },
-  {
-    id: 'APP-913',
-    applicant: 'Jeffrey Soriano',
-    email: 'jeffrey.soriano@pagadian.ph',
-    phone: '+63 915 223 9988',
-    appliedDate: '2026-11-04',
-    appliedTime: '1 week ago',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. Dumagoc',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1521119989659-a83eee488004?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N02-21-018293',
-    licenseType: 'Professional',
-    licenseExpiry: '2031-11-03',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_jeffrey.png',
-    licenseBackDoc: 'lto_license_back_jeffrey.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'NWOW',
-      model: 'ERV2 Electric',
-      year: 2024,
-      plate: '8830-NC',
-      color: 'Solar Yellow',
-      bodyNumber: 'Bao-Bao #189',
-      todaFranchise: 'Dumagoc Operators TODA (#PAG-2024-0271)',
-      mtopNumber: 'MTOP-2024-PAG-4409',
-      engineNumber: 'ENG-KW175-440912',
-      chassisNumber: 'CHS-KW2024-44091',
-      orNumber: 'OR-LTO-2026-44091',
-      crNumber: 'CR-LTO-2024-44091',
-      orDoc: 'lto_or_8830nc.pdf',
-      crDoc: 'lto_cr_8830nc.pdf',
-      insurancePolicy: 'Pioneer #PN-44091-J',
-      inspectionDoc: 'pagadian_safety_inspection_2026.pdf',
-    },
-    backgroundStatus: 'Passed',
-    clearanceType: 'NBI Clearance',
-    clearanceNumber: 'NBI-2026-440912',
-    clearanceDoc: 'nbi_clearance_jeffrey.pdf',
-    backgroundProvider: 'National Bureau of Investigation (NBI)',
-    backgroundNotes: 'No derogatory record found. LTO license and MTOP franchise verified.',
-    status: 'Pending Review',
-  },
-  {
-    id: 'APP-914',
-    applicant: 'Ernesto Dimaculangan',
-    email: 'ernesto.dimaculangan@pagadian.ph',
-    phone: '+63 930 112 7766',
-    appliedDate: '2026-11-03',
-    appliedTime: '1 week ago',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. Lenienza',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N04-19-091823',
-    licenseType: 'Professional',
-    licenseExpiry: '2029-02-14',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_ernesto.png',
-    licenseBackDoc: 'lto_license_back_ernesto.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'Bajaj',
-      model: 'Maxima Z',
-      year: 2024,
-      plate: '1920-ND',
-      color: 'Flame Orange',
-      bodyNumber: 'Bao-Bao #063',
-      todaFranchise: 'Lenienza TODA (#PAG-2024-0315)',
-      mtopNumber: 'MTOP-2024-PAG-1194',
-      engineNumber: 'ENG-BJ200-192019',
-      chassisNumber: 'CHS-BJ2024-19201',
-      orNumber: 'OR-LTO-2026-19201',
-      crNumber: 'CR-LTO-2024-19201',
-      orDoc: 'lto_or_1920nd.pdf',
-      crDoc: 'lto_cr_1920nd.pdf',
-      insurancePolicy: 'Commonwealth #COM-1920-A',
-      inspectionDoc: 'pagadian_safety_inspection_2026.pdf',
-    },
-    backgroundStatus: 'Passed',
-    clearanceType: 'NBI Clearance',
-    clearanceNumber: 'NBI-2026-192019',
-    clearanceDoc: 'nbi_clearance_ernesto.pdf',
-    backgroundProvider: 'National Bureau of Investigation (NBI)',
-    backgroundNotes: 'No derogatory record found. LTO license and MTOP franchise verified.',
-    status: 'Pending Review',
-  },
-  {
-    id: 'APP-915',
-    applicant: 'Vicente Legaspi',
-    email: 'vicente.legaspi@pagadian.ph',
-    phone: '+63 917 882 4433',
-    appliedDate: '2026-11-02',
-    appliedTime: '1 week ago',
-    city: 'Pagadian City',
-    province: 'ZDS',
-    barangay: 'Brgy. White Beach',
-    facePhotoUrl:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80',
-    licenseNumber: 'N11-15-088192',
-    licenseType: 'Professional',
-    licenseExpiry: '2026-05-10',
-    licenseCodes: 'A1',
-    licenseFrontDoc: 'lto_license_front_vicente.png',
-    licenseBackDoc: 'lto_license_back_vicente.png',
-    vehicle: {
-      type: 'Bao-Bao',
-      make: 'Piaggio',
-      model: 'Ape City',
-      year: 2020,
-      plate: '7721-NA',
-      color: 'Midnight Black',
-      bodyNumber: 'Bao-Bao #091',
-      todaFranchise: 'White Beach Seaside TODA (#PAG-2024-0176)',
-      mtopNumber: 'MTOP-2024-PAG-5501',
-      engineNumber: 'ENG-HD150-772102',
-      chassisNumber: 'CHS-HD2020-77210',
-      orNumber: 'OR-LTO-2024-77210',
-      crNumber: 'CR-LTO-2020-77210',
-      orDoc: 'lto_or_7721na.pdf',
-      crDoc: 'lto_cr_7721na.pdf',
-      insurancePolicy: 'Alpha #ALP-7721-D',
-      inspectionDoc: 'pagadian_safety_inspection_2026.pdf',
-    },
-    backgroundStatus: 'Passed',
-    clearanceType: 'NBI Clearance',
-    clearanceNumber: 'NBI-2026-772102',
-    clearanceDoc: 'nbi_clearance_vicente.pdf',
-    backgroundProvider: 'National Bureau of Investigation (NBI)',
-    backgroundNotes: 'No derogatory record found. Submitted driver license expired.',
-    rejectionReason: 'Submitted LTO driver license expired; upload renewed card.',
-    status: 'Rejected',
-  },
-])
+const applications: Ref<DriverApplication[]> = ref(cloneApplications(SEED_DRIVER_APPLICATIONS))
 
+export function resetDriverApplicationsForTesting(): void {
+  applications.value = cloneApplications(SEED_DRIVER_APPLICATIONS)
+}
+
+/**
+ * Manages driver onboarding applications, validation guards, and audit logging.
+ */
 export function useDriverApplications() {
+  const { appendAuditLog } = useAuditLogs()
+
   function getApplicationById(id: string): DriverApplication | undefined {
-    return applications.value.find((a) => a.id === id)
+    return applications.value.find((app) => app.id === id)
   }
 
-  function approveApplication(app: DriverApplication): void {
-    app.rejectionReason = undefined
-    app.status = 'Approved'
+  function approveApplication(id: string): UserActionResult {
+    const target = getApplicationById(id)
+    if (!target) {
+      return { ok: false, error: `Application ${id} was not found.` }
+    }
+    if (target.status !== 'Pending Review') {
+      return {
+        ok: false,
+        error: `Application ${target.id} is already ${target.status.toLowerCase()}.`,
+      }
+    }
+
+    target.status = 'Approved'
+    target.rejectionReason = undefined
+
+    appendAuditLog({
+      action: 'DRIVER_APPLICATION_APPROVED',
+      targetEntity: `${target.id} · ${target.applicant}`,
+      payload: {
+        plate: target.vehicle.plate,
+        model: `${target.vehicle.year} ${target.vehicle.make} ${target.vehicle.model}`,
+      },
+      severity: 'Info',
+    })
+
+    return {
+      ok: true,
+      message: `${target.id} approved. Driver account for ${target.applicant} is now active.`,
+    }
   }
 
-  function rejectApplication(app: DriverApplication, reason?: string): void {
-    app.rejectionReason = reason?.trim() || undefined
-    app.status = 'Rejected'
+  function rejectApplication(id: string, reason: string): UserActionResult {
+    const trimmed = reason.trim()
+    if (!trimmed) {
+      return { ok: false, error: 'Rejection reason is required.' }
+    }
+
+    const target = getApplicationById(id)
+    if (!target) {
+      return { ok: false, error: `Application ${id} was not found.` }
+    }
+    if (target.status !== 'Pending Review') {
+      return {
+        ok: false,
+        error: `Application ${target.id} is already ${target.status.toLowerCase()}.`,
+      }
+    }
+
+    target.status = 'Rejected'
+    target.rejectionReason = trimmed
+
+    appendAuditLog({
+      action: 'DRIVER_APPLICATION_REJECTED',
+      targetEntity: `${target.id} · ${target.applicant}`,
+      payload: { reason: trimmed },
+      severity: 'Warning',
+    })
+
+    return {
+      ok: true,
+      message: `${target.id} rejected (${trimmed}).`,
+    }
   }
 
   return {

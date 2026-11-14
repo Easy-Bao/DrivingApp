@@ -1,173 +1,129 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Icon } from '@iconify/vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
+import { computed, reactive, ref } from 'vue'
+import {
+  BaseSelect,
+  ConfirmDialog,
+  EmptyTableRow,
+  ModalDialog,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  TablePagination,
+  ToastBanner,
+  useDataTable,
+  type ToastTone,
+} from '@/shared'
+import { useOperators, type OperatorAccount } from '@/features/users'
 
-interface OperatorAccount {
-  id: string
-  name: string
-  email: string
-  role: string
-  department: string
-  mfaEnabled: boolean
-  lastActive: string
-  status: 'Active' | 'Suspended'
-}
-
-const roleOptions = [
-  'Root Operator',
-  'Dispatch & Safety Supervisor',
-  'Treasury & Settlements Officer',
-  'Trust & Safety Lead',
-]
-
-const operators = ref<OperatorAccount[]>([
-  {
-    id: 'OPS-001',
-    name: 'Operations Control Lead',
-    email: 'ops@easyride.ph',
-    role: 'Root Operator',
-    department: 'Executive Operations',
-    mfaEnabled: true,
-    lastActive: 'Active now',
-    status: 'Active',
-  },
-  {
-    id: 'OPS-002',
-    name: 'Marisol Lim',
-    email: 'marisol.lim@easyride.ph',
-    role: 'Dispatch & Safety Supervisor',
-    department: 'Fleet Dispatch',
-    mfaEnabled: true,
-    lastActive: '12 mins ago',
-    status: 'Active',
-  },
-  {
-    id: 'OPS-003',
-    name: 'Rafael Bautista',
-    email: 'rafael.bautista@easyride.ph',
-    role: 'Treasury & Settlements Officer',
-    department: 'Treasury & Wallet QA',
-    mfaEnabled: true,
-    lastActive: '1 hour ago',
-    status: 'Active',
-  },
-  {
-    id: 'OPS-004',
-    name: 'Kristine Villanueva',
-    email: 'kristine.v@easyride.ph',
-    role: 'Trust & Safety Lead',
-    department: 'Compliance & Support',
-    mfaEnabled: false,
-    lastActive: 'Yesterday',
-    status: 'Active',
-  },
-])
+const {
+  operators,
+  roleOptions,
+  inviteOperator,
+  updateOperatorRole,
+  toggleOperatorMfa,
+  suspendOperator,
+  reactivateOperator,
+} = useOperators()
 
 const searchQuery = ref('')
+const roleFilter = ref('ALL')
 const toastMessage = ref<string | null>(null)
-const toastTone = ref<'success' | 'warning' | 'error'>('success')
+const toastTone = ref<ToastTone>('success')
 
 const showInviteModal = ref(false)
-const inviteForm = ref({
+const inviteForm = reactive({
   name: '',
   email: '',
-  department: 'Fleet Dispatch',
-  role: roleOptions[1]!,
-  mfaEnabled: true,
+  role: roleOptions[1] ?? roleOptions[0]!,
 })
-
-const pendingStatusTarget = ref<OperatorAccount | null>(null)
+const pendingToggleStatus = ref<OperatorAccount | null>(null)
 const statusReason = ref('')
 
 const filteredOperators = computed(() => {
-  const query = searchQuery.value.trim().toLowerCase()
-  if (!query) return operators.value
-  return operators.value.filter(
-    (operator) =>
-      operator.name.toLowerCase().includes(query) ||
-      operator.email.toLowerCase().includes(query) ||
-      operator.role.toLowerCase().includes(query) ||
-      operator.department.toLowerCase().includes(query),
-  )
+  const q = searchQuery.value.trim().toLowerCase()
+  return operators.value.filter((op) => {
+    if (roleFilter.value !== 'ALL' && op.role !== roleFilter.value) return false
+    if (!q) return true
+    return (
+      op.id.toLowerCase().includes(q) ||
+      op.name.toLowerCase().includes(q) ||
+      op.email.toLowerCase().includes(q) ||
+      op.role.toLowerCase().includes(q)
+    )
+  })
 })
 
-const activeCount = computed(
-  () => operators.value.filter((operator) => operator.status === 'Active').length,
+const hasActiveFilters = computed(() =>
+  Boolean(searchQuery.value.trim() || roleFilter.value !== 'ALL'),
 )
 
-const openInviteModal = () => {
-  inviteForm.value = {
-    name: '',
-    email: '',
-    department: 'Fleet Dispatch',
-    role: roleOptions[1]!,
-    mfaEnabled: true,
-  }
-  showInviteModal.value = true
-}
+const { currentPage, itemsPerPage, paginatedItems } = useDataTable(filteredOperators, {
+  initialPageSize: 8,
+  resetDeps: [searchQuery, roleFilter],
+})
 
 function resetFilters() {
   searchQuery.value = ''
+  roleFilter.value = 'ALL'
 }
 
-const submitInvite = () => {
-  if (!inviteForm.value.name.trim() || !inviteForm.value.email.includes('@')) {
+function submitInvite() {
+  const result = inviteOperator({
+    name: inviteForm.name,
+    email: inviteForm.email,
+    role: inviteForm.role,
+  })
+  if (!result.ok) {
     toastTone.value = 'error'
-    toastMessage.value = 'Valid name and work email required.'
+    toastMessage.value = result.error
     return
   }
-  const nextNumber = operators.value.length + 1
-  operators.value.push({
-    id: `OPS-${String(nextNumber).padStart(3, '0')}`,
-    name: inviteForm.value.name.trim(),
-    email: inviteForm.value.email.trim().toLowerCase(),
-    role: inviteForm.value.role,
-    department: inviteForm.value.department.trim() || 'Operations Support',
-    mfaEnabled: inviteForm.value.mfaEnabled,
-    lastActive: 'Invite sent',
-    status: 'Active',
-  })
+  toastTone.value = 'success'
+  toastMessage.value = result.message
+  inviteForm.name = ''
+  inviteForm.email = ''
   showInviteModal.value = false
-  toastTone.value = 'success'
-  toastMessage.value = `Invited ${inviteForm.value.name.trim()}.`
 }
 
-const updateRole = (operator: OperatorAccount, newRole: string) => {
-  operator.role = newRole
-  toastTone.value = 'success'
-  toastMessage.value = `${operator.name} assigned to ${newRole}.`
-}
-
-const toggleMfa = (operator: OperatorAccount) => {
-  operator.mfaEnabled = !operator.mfaEnabled
-  toastTone.value = operator.mfaEnabled ? 'success' : 'warning'
-  toastMessage.value = operator.mfaEnabled
-    ? `MFA enabled for ${operator.name}.`
-    : `MFA reset for ${operator.name}.`
-}
-
-const confirmStatusToggle = () => {
-  const target = pendingStatusTarget.value
-  if (!target) return
-  if (target.status === 'Suspended') {
-    target.status = 'Active'
-    toastTone.value = 'success'
-    toastMessage.value = `${target.name} restored.`
-  } else {
-    if (!statusReason.value.trim()) return
-    target.status = 'Suspended'
-    toastTone.value = 'warning'
-    toastMessage.value = `${target.name} suspended.`
+function handleRoleChange(id: string, nextRole: string) {
+  const result = updateOperatorRole(id, nextRole)
+  if (!result.ok) {
+    toastTone.value = 'error'
+    toastMessage.value = result.error
+    return
   }
-  pendingStatusTarget.value = null
+  toastTone.value = 'info'
+  toastMessage.value = result.message
+}
+
+function handleToggleMfa(id: string) {
+  const result = toggleOperatorMfa(id)
+  if (!result.ok) {
+    toastTone.value = 'error'
+    toastMessage.value = result.error
+    return
+  }
+  toastTone.value = 'warning'
+  toastMessage.value = result.message
+}
+
+function confirmOperatorStatus() {
+  const target = pendingToggleStatus.value
+  if (!target) return
+
+  const result =
+    target.status === 'Suspended'
+      ? reactivateOperator(target.id)
+      : suspendOperator(target.id, statusReason.value)
+
+  if (!result.ok) {
+    toastTone.value = 'error'
+    toastMessage.value = result.error
+    return
+  }
+  toastTone.value = target.status === 'Suspended' ? 'success' : 'warning'
+  toastMessage.value = result.message
+  pendingToggleStatus.value = null
   statusReason.value = ''
 }
 </script>
@@ -177,15 +133,25 @@ const confirmStatusToggle = () => {
     <PageHeader
       title="Operators"
       description="Manage admin staff accounts, role permissions, and security settings."
-    />
+    >
+      <template #actions>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer"
+          @click="showInviteModal = true"
+        >
+          + Invite Operator
+        </button>
+      </template>
+    </PageHeader>
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
-        class="p-4 border-b border-neutral-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3"
+        class="p-4 border-b border-neutral-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
       >
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <div class="w-full sm:w-64">
             <SearchField
               v-model="searchQuery"
@@ -193,177 +159,157 @@ const confirmStatusToggle = () => {
               aria-label="Search operators"
             />
           </div>
-          <span
-            class="px-2.5 py-1.5 bg-neutral-50 border border-neutral-300 text-xs font-semibold tabular-nums text-neutral-800"
-          >
-            Active: {{ activeCount }}
-          </span>
+          <BaseSelect
+            v-model="roleFilter"
+            aria-label="Filter operators by role"
+            :options="[
+              { label: 'All Roles', value: 'ALL' },
+              ...roleOptions.map((role) => ({ label: role, value: role })),
+            ]"
+          />
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <RouterLink
-            to="/users/roles"
-            class="px-3.5 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-900 text-xs font-semibold transition-colors"
-          >
-            Staff Roles
-          </RouterLink>
-          <button
-            type="button"
-            class="px-3.5 py-1.5 bg-neutral-900 text-white hover:bg-neutral-800 text-xs font-semibold transition-colors cursor-pointer"
-            @click="openInviteModal"
-          >
-            + Invite
-          </button>
-        </div>
+        <span
+          class="px-2.5 py-1.5 bg-neutral-50 border border-neutral-300 text-xs font-semibold text-neutral-800 tabular-nums self-start md:self-auto"
+        >
+          Staff Accounts: {{ filteredOperators.length }}
+        </span>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="w-full min-w-[840px] text-left text-xs">
-          <thead
-            class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100 font-semibold"
-          >
+        <table class="w-full min-w-[820px] text-left text-xs">
+          <thead class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100">
             <tr>
+              <th class="py-3 px-4">ID</th>
               <th class="py-3 px-4">Operator</th>
-              <th class="py-3 px-4">Department</th>
-              <th class="py-3 px-4">Role</th>
+              <th class="py-3 px-4">Assigned Role</th>
               <th class="py-3 px-4">MFA</th>
-              <th class="py-3 px-4">Activity</th>
+              <th class="py-3 px-4">Last Active</th>
               <th class="py-3 px-4">Status</th>
               <th class="py-3 px-4 text-right">Action</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-neutral-100">
-            <tr
-              v-for="operator in filteredOperators"
-              :key="operator.id"
-              class="hover:bg-neutral-50/70 transition-colors"
-            >
+          <tbody class="divide-y divide-neutral-100 text-neutral-700">
+            <tr v-for="op in paginatedItems" :key="op.id" class="hover:bg-neutral-50/50">
+              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ op.id }}</td>
               <td class="py-3 px-4">
-                <div class="font-bold text-neutral-900">{{ operator.name }}</div>
-                <div class="text-[11px] text-neutral-500 font-mono">{{ operator.email }}</div>
+                <div class="font-semibold text-neutral-900">{{ op.name }}</div>
+                <div class="text-[11px] font-mono text-neutral-400">{{ op.email }}</div>
               </td>
-              <td class="py-3 px-4 text-neutral-700 font-medium">{{ operator.department }}</td>
               <td class="py-3 px-4">
                 <BaseSelect
-                  :model-value="operator.role"
-                  :disabled="operator.id === 'OPS-001'"
-                  aria-label="Assign operator role"
-                  :full-width="true"
-                  :options="roleOptions"
-                  @update:model-value="updateRole(operator, $event)"
+                  :model-value="op.role"
+                  :disabled="op.id === 'OPS-001'"
+                  :aria-label="`Assigned role for ${op.name}`"
+                  :options="roleOptions.map((role) => ({ label: role, value: role }))"
+                  @update:model-value="handleRoleChange(op.id, $event)"
                 />
               </td>
               <td class="py-3 px-4">
                 <button
                   type="button"
-                  class="inline-flex items-center space-x-1 px-2 py-0.5 text-[10px] font-semibold cursor-pointer border"
+                  :disabled="op.id === 'OPS-001'"
+                  class="px-2 py-1 text-[11px] font-semibold border cursor-pointer disabled:opacity-50"
                   :class="
-                    operator.mfaEnabled
-                      ? 'bg-neutral-900 text-white border-neutral-900 hover:bg-neutral-800'
-                      : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100'
+                    op.mfaEnabled
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
                   "
-                  @click="toggleMfa(operator)"
+                  @click="handleToggleMfa(op.id)"
                 >
-                  <Icon
-                    :icon="operator.mfaEnabled ? 'lucide:shield-check' : 'lucide:shield-alert'"
-                    class="text-xs"
-                  />
-                  <span>{{ operator.mfaEnabled ? 'Hardware MFA' : 'Pending' }}</span>
+                  {{ op.mfaEnabled ? '2FA Enabled' : '2FA Disabled' }}
                 </button>
               </td>
-              <td class="py-3 px-4 text-neutral-500">{{ operator.lastActive }}</td>
+              <td class="py-3 px-4 text-neutral-500">{{ op.lastActive }}</td>
               <td class="py-3 px-4">
                 <StatusBadge
-                  :label="operator.status"
-                  :tone="operator.status === 'Active' ? 'success' : 'danger'"
+                  :label="op.status"
+                  :tone="op.status === 'Active' ? 'success' : 'danger'"
                 />
               </td>
               <td class="py-3 px-4 text-right">
                 <button
-                  v-if="operator.id !== 'OPS-001'"
                   type="button"
-                  class="text-xs font-semibold text-neutral-700 hover:text-neutral-900 cursor-pointer"
-                  @click="((statusReason = ''), (pendingStatusTarget = operator))"
+                  :disabled="op.id === 'OPS-001'"
+                  class="text-xs font-semibold cursor-pointer disabled:opacity-40"
+                  :class="op.status === 'Suspended' ? 'text-emerald-700' : 'text-rose-700'"
+                  @click="((statusReason = ''), (pendingToggleStatus = op))"
                 >
-                  {{ operator.status === 'Suspended' ? 'Reactivate' : 'Suspend' }}
+                  {{ op.status === 'Suspended' ? 'Reactivate' : 'Suspend' }}
                 </button>
-                <span v-else class="text-[11px] font-mono text-neutral-400">Root</span>
               </td>
             </tr>
             <EmptyTableRow
-              v-if="filteredOperators.length === 0"
+              v-if="paginatedItems.length === 0"
               :colspan="7"
-              title="No operators match your filter"
-              :show-reset="Boolean(searchQuery)"
+              title="No matching operators"
+              :show-reset="hasActiveFilters"
               @reset="resetFilters"
             />
           </tbody>
         </table>
       </div>
+
+      <TablePagination
+        v-model:current-page="currentPage"
+        :total-items="filteredOperators.length"
+        :items-per-page="itemsPerPage"
+      />
     </div>
 
     <ModalDialog
-      v-model:open="showInviteModal"
-      title="Invite Operator"
+      :open="showInviteModal"
+      title="Invite Staff Operator"
+      subtitle="Provision admin console access with hardware or TOTP 2FA enabled."
       size="md"
       close-label="Close modal"
+      @update:open="showInviteModal = $event"
     >
       <form class="space-y-4 text-xs" @submit.prevent="submitInvite">
-        <div class="space-y-3">
-          <div>
-            <label class="block font-semibold text-neutral-700 mb-1">Full Name</label>
-            <input
-              v-model="inviteForm.name"
-              type="text"
-              required
-              placeholder="Marco Dela Cruz"
-              class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
-            />
-          </div>
-          <div>
-            <label class="block font-semibold text-neutral-700 mb-1">Work Email</label>
-            <input
-              v-model="inviteForm.email"
-              type="email"
-              required
-              placeholder="marco.delacruz@easyride.ph"
-              class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
-            />
-          </div>
-          <div>
-            <label class="block font-semibold text-neutral-700 mb-1">Department</label>
-            <input
-              v-model="inviteForm.department"
-              type="text"
-              required
-              class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
-            />
-          </div>
-          <div>
-            <label class="block font-semibold text-neutral-700 mb-1">Role</label>
-            <BaseSelect
-              v-model="inviteForm.role"
-              aria-label="Select role"
-              :full-width="true"
-              :options="roleOptions"
-            />
-          </div>
-          <label class="flex items-center space-x-2 text-neutral-700 cursor-pointer pt-1">
-            <input v-model="inviteForm.mfaEnabled" type="checkbox" class="accent-neutral-900" />
-            <span>Require MFA on first sign-in</span>
+        <div>
+          <label class="block text-[11px] font-semibold text-neutral-500 uppercase mb-1">
+            Full Name
           </label>
+          <input
+            v-model="inviteForm.name"
+            type="text"
+            required
+            placeholder="e.g. Lorraine Bautista"
+            class="w-full px-3 py-2 border border-neutral-300 text-xs focus:outline-none focus:border-neutral-900"
+          />
         </div>
-
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100">
+        <div>
+          <label class="block text-[11px] font-semibold text-neutral-500 uppercase mb-1">
+            Corporate Email
+          </label>
+          <input
+            v-model="inviteForm.email"
+            type="email"
+            required
+            placeholder="operator@pagadian.ph"
+            class="w-full px-3 py-2 border border-neutral-300 text-xs focus:outline-none focus:border-neutral-900"
+          />
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-neutral-500 uppercase mb-1">
+            Console Role
+          </label>
+          <BaseSelect
+            v-model="inviteForm.role"
+            aria-label="Console Role"
+            :options="roleOptions.map((role) => ({ label: role, value: role }))"
+          />
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t border-neutral-100">
           <button
             type="button"
-            class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+            class="px-4 py-2 border border-neutral-300 text-neutral-700 text-xs font-semibold cursor-pointer"
             @click="showInviteModal = false"
           >
             Cancel
           </button>
           <button
             type="submit"
-            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
           >
             Send Invite
           </button>
@@ -372,21 +318,24 @@ const confirmStatusToggle = () => {
     </ModalDialog>
 
     <ConfirmDialog
-      :open="Boolean(pendingStatusTarget)"
       v-model:reason="statusReason"
-      :title="pendingStatusTarget?.status === 'Suspended' ? 'Restore Operator' : 'Suspend Operator'"
-      :description="
-        pendingStatusTarget?.status === 'Suspended'
-          ? `Restore console access for ${pendingStatusTarget?.name}.`
-          : `Revoke console session access for ${pendingStatusTarget?.name}.`
+      :open="Boolean(pendingToggleStatus)"
+      :title="
+        pendingToggleStatus?.status === 'Suspended' ? 'Reactivate Operator' : 'Suspend Operator'
       "
-      :confirm-label="pendingStatusTarget?.status === 'Suspended' ? 'Restore' : 'Suspend'"
-      tone="neutral"
-      :require-reason="pendingStatusTarget?.status !== 'Suspended'"
-      reason-label="Reason"
-      reason-placeholder="Enter access change reason..."
-      @cancel="pendingStatusTarget = null"
-      @confirm="confirmStatusToggle"
+      :description="
+        pendingToggleStatus
+          ? pendingToggleStatus.status === 'Suspended'
+            ? `Restore console sign-in access for ${pendingToggleStatus.name}.`
+            : `Revoke console sign-in access for ${pendingToggleStatus.name}.`
+          : ''
+      "
+      :tone="pendingToggleStatus?.status === 'Suspended' ? 'emerald' : 'rose'"
+      :confirm-label="
+        pendingToggleStatus?.status === 'Suspended' ? 'Reactivate Operator' : 'Suspend Operator'
+      "
+      @update:open="!$event && (pendingToggleStatus = null)"
+      @confirm="confirmOperatorStatus"
     />
   </div>
 </template>

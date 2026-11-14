@@ -1,4 +1,18 @@
 const FORMULA_PREFIX_RE = /^[=+\-@\t\r]/
+const XML_ESCAPE_MAP: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&apos;',
+}
+
+/**
+ * Escapes XML special characters so untrusted strings cannot inject SVG markup.
+ */
+export function escapeXml(value: string): string {
+  return value.replace(/[&<>"']/g, (ch) => XML_ESCAPE_MAP[ch] ?? ch)
+}
 
 /**
  * Formats a Peso numeric amount using Philippine locale separators.

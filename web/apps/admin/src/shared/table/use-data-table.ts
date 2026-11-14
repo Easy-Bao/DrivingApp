@@ -1,7 +1,8 @@
-import { computed, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
+import { computed, ref, toValue, watch, type MaybeRefOrGetter, type WatchSource } from 'vue'
 
 export interface UseDataTableOptions {
   initialPageSize?: number
+  resetDeps?: readonly WatchSource[]
 }
 
 function normalizePositiveInt(value: number, fallback: number): number {
@@ -53,6 +54,10 @@ export function useDataTable<T>(
 
   function resetPage(): void {
     requestedPage.value = 1
+  }
+
+  if (options.resetDeps && options.resetDeps.length > 0) {
+    watch([...options.resetDeps], resetPage)
   }
 
   return {

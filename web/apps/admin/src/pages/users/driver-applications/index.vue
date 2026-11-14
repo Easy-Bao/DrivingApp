@@ -1,21 +1,23 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useDriverApplications } from '@/features/users/composables/use-driver-applications'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import TablePagination from '@/shared/table/TablePagination.vue'
+import {
+  BaseSelect,
+  EmptyTableRow,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  TablePagination,
+  useDataTable,
+  type BadgeTone,
+} from '@/shared'
+import { useDriverApplications, type DriverApplication } from '@/features/users'
 
 const router = useRouter()
 const { applications } = useDriverApplications()
 
 const searchQuery = ref('')
 const statusFilter = ref<'ALL' | 'Pending Review' | 'Approved' | 'Rejected'>('ALL')
-const currentPage = ref(1)
-const itemsPerPage = 10
 
 const statusOptions = [
   { label: 'All Statuses', value: 'ALL' },
@@ -47,18 +49,23 @@ const pendingCount = computed(
 
 const hasActiveFilters = computed(() => searchQuery.value !== '' || statusFilter.value !== 'ALL')
 
-const paginatedApplications = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredApplications.value.slice(start, start + itemsPerPage)
+const {
+  currentPage,
+  itemsPerPage,
+  paginatedItems: paginatedApplications,
+  resetPage,
+} = useDataTable(filteredApplications, {
+  initialPageSize: 10,
+  resetDeps: [searchQuery, statusFilter],
 })
 
 function resetFilters() {
   searchQuery.value = ''
   statusFilter.value = 'ALL'
-  currentPage.value = 1
+  resetPage()
 }
 
-function getStatusTone(status: 'Pending Review' | 'Approved' | 'Rejected') {
+function getStatusTone(status: DriverApplication['status']): BadgeTone {
   if (status === 'Approved') return 'success'
   if (status === 'Rejected') return 'danger'
   return 'warning'

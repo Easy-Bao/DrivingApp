@@ -1,106 +1,28 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import TablePagination from '@/shared/table/TablePagination.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
-import { formatPhp } from '@/shared/utils/format'
+import { computed, ref } from 'vue'
+import {
+  BaseSelect,
+  ConfirmDialog,
+  EmptyTableRow,
+  ModalDialog,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  TablePagination,
+  ToastBanner,
+  formatCentavos,
+  useDataTable,
+  type BadgeTone,
+  type ToastTone,
+} from '@/shared'
+import { useRiders, type RiderRecord, type RiderStanding } from '@/features/users'
 
-type RiderStanding = 'Good Standing' | 'VIP Rider' | 'Flagged (Dispute)' | 'Suspended'
-
-interface RiderRecord {
-  id: string
-  name: string
-  phone: string
-  barangay: string
-  totalTrips: number
-  lifetimeSpend: number
-  rating: number
-  standing: RiderStanding
-  notes: string
-}
+const { riders, suspendRider, reinstateRider } = useRiders()
 
 const searchQuery = ref('')
 const standingFilter = ref<'ALL' | RiderStanding>('ALL')
-const currentPage = ref(1)
-const itemsPerPage = 10
 const toastMessage = ref<string | null>(null)
-const toastTone = ref<'success' | 'warning' | 'info'>('success')
-
-const riders = ref<RiderRecord[]>([
-  {
-    id: 'RDR-201',
-    name: 'Althea Mae Villanueva',
-    phone: '+63 935 812 4091',
-    barangay: 'Brgy. San Pedro',
-    totalTrips: 84,
-    lifetimeSpend: 4680.0,
-    rating: 4.98,
-    standing: 'VIP Rider',
-    notes: 'Frequent commuter on Agora Market - Capitol route.',
-  },
-  {
-    id: 'RDR-202',
-    name: 'Carlo Magno Ocampo',
-    phone: '+63 917 650 3182',
-    barangay: 'Brgy. Gatas',
-    totalTrips: 32,
-    lifetimeSpend: 1790.5,
-    rating: 4.85,
-    standing: 'Good Standing',
-    notes: 'Verified passenger profile, zero no-show penalties.',
-  },
-  {
-    id: 'RDR-203',
-    name: 'Jessa Mae Lim',
-    phone: '+63 926 301 7742',
-    barangay: 'Brgy. Balangasan',
-    totalTrips: 119,
-    lifetimeSpend: 6840.0,
-    rating: 5.0,
-    standing: 'VIP Rider',
-    notes: 'Consistent 5-star ratings and regular driver tipper.',
-  },
-  {
-    id: 'RDR-204',
-    name: 'Mark Anthony Reyes',
-    phone: '+63 945 204 8810',
-    barangay: 'Santiago District',
-    totalTrips: 12,
-    lifetimeSpend: 695.0,
-    rating: 4.2,
-    standing: 'Flagged (Dispute)',
-    notes: 'Under review for one reported partial cash settlement dispute.',
-  },
-  {
-    id: 'RDR-205',
-    name: 'Kristine Joy Navarro',
-    phone: '+63 998 411 6620',
-    barangay: 'Brgy. Santa Lucia',
-    totalTrips: 46,
-    lifetimeSpend: 2540.0,
-    rating: 4.91,
-    standing: 'Good Standing',
-    notes: 'Verified mobile number and emergency contact configured.',
-  },
-  {
-    id: 'RDR-206',
-    name: 'Jericho Dalisay',
-    phone: '+63 915 702 3319',
-    barangay: 'Brgy. Tuburan',
-    totalTrips: 27,
-    lifetimeSpend: 1485.0,
-    rating: 4.78,
-    standing: 'Good Standing',
-    notes: 'Regular Integrated Bus Terminal feeder trips.',
-  },
-])
-
+const toastTone = ref<ToastTone>('info')
 const inspectedRider = ref<RiderRecord | null>(null)
 const pendingStatusRider = ref<RiderRecord | null>(null)
 const statusReason = ref('')
@@ -125,48 +47,44 @@ const hasActiveFilters = computed(() =>
   Boolean(searchQuery.value.trim() || standingFilter.value !== 'ALL'),
 )
 
+const { currentPage, itemsPerPage, paginatedItems } = useDataTable(filteredRiders, {
+  initialPageSize: 8,
+  resetDeps: [searchQuery, standingFilter],
+})
+
 function resetFilters() {
   searchQuery.value = ''
   standingFilter.value = 'ALL'
 }
 
-watch([searchQuery, standingFilter], () => {
-  currentPage.value = 1
-})
-
-const paginatedRiders = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredRiders.value.slice(start, start + itemsPerPage)
-})
-
-const standingTone = (standing: RiderStanding) => {
+function standingTone(standing: RiderStanding): BadgeTone {
   if (standing === 'VIP Rider' || standing === 'Good Standing') return 'success'
   if (standing === 'Flagged (Dispute)') return 'warning'
   return 'danger'
 }
 
-const openStandingDialog = (rider: RiderRecord) => {
+function openStandingDialog(rider: RiderRecord) {
   statusReason.value = ''
   pendingStatusRider.value = rider
 }
 
-const confirmStandingUpdate = () => {
+function confirmStandingUpdate() {
   const target = pendingStatusRider.value
   if (!target) return
 
-  if (target.standing === 'Suspended') {
-    target.standing = 'Good Standing'
-    target.notes = 'Account reinstated after trust and safety verification.'
-    toastTone.value = 'success'
-    toastMessage.value = `${target.name} restored to Good Standing.`
-  } else {
-    if (!statusReason.value.trim()) return
-    target.standing = 'Suspended'
-    target.notes = `Suspended: ${statusReason.value.trim()}`
-    toastTone.value = 'warning'
-    toastMessage.value = `${target.name} suspended from booking new rides.`
+  const result =
+    target.standing === 'Suspended'
+      ? reinstateRider(target.id)
+      : suspendRider(target.id, statusReason.value)
+
+  if (!result.ok) {
+    toastTone.value = 'error'
+    toastMessage.value = result.error
+    return
   }
 
+  toastTone.value = target.standing === 'Suspended' ? 'warning' : 'success'
+  toastMessage.value = result.message
   pendingStatusRider.value = null
   statusReason.value = ''
 }
@@ -228,14 +146,14 @@ const confirmStandingUpdate = () => {
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100 text-neutral-700">
-            <tr v-for="rider in paginatedRiders" :key="rider.id" class="hover:bg-neutral-50/50">
+            <tr v-for="rider in paginatedItems" :key="rider.id" class="hover:bg-neutral-50/50">
               <td class="py-3 px-4 font-mono font-bold">{{ rider.id }}</td>
               <td class="py-3 px-4 font-semibold text-neutral-900">{{ rider.name }}</td>
               <td class="py-3 px-4 font-mono">{{ rider.phone }}</td>
               <td class="py-3 px-4">{{ rider.barangay }}</td>
               <td class="py-3 px-4 font-mono tabular-nums">{{ rider.totalTrips }}</td>
               <td class="py-3 px-4 font-mono font-semibold text-neutral-900">
-                {{ formatPhp(rider.lifetimeSpend) }}
+                {{ formatCentavos(rider.lifetimeSpendCentavos) }}
               </td>
               <td class="py-3 px-4 font-bold text-neutral-900 tabular-nums">
                 ★ {{ rider.rating.toFixed(2) }}
@@ -261,9 +179,9 @@ const confirmStandingUpdate = () => {
               </td>
             </tr>
             <EmptyTableRow
-              v-if="paginatedRiders.length === 0"
+              v-if="paginatedItems.length === 0"
               :colspan="9"
-              title="No riders match your filters"
+              title="No matching riders"
               :show-reset="hasActiveFilters"
               @reset="resetFilters"
             />
@@ -280,76 +198,67 @@ const confirmStandingUpdate = () => {
 
     <ModalDialog
       :open="Boolean(inspectedRider)"
-      :title="inspectedRider?.name ?? ''"
-      :subtitle="inspectedRider?.id"
+      :title="inspectedRider ? `Passenger Details · ${inspectedRider.id}` : ''"
+      :subtitle="inspectedRider ? `${inspectedRider.name} · ${inspectedRider.barangay}` : undefined"
       size="md"
       close-label="Close modal"
-      @close="inspectedRider = null"
+      @update:open="!$event && (inspectedRider = null)"
     >
-      <div v-if="inspectedRider" class="space-y-2.5 text-xs">
-        <div class="flex justify-between gap-2">
-          <span class="text-neutral-500">Phone</span>
-          <span class="font-mono font-semibold text-neutral-900">{{ inspectedRider.phone }}</span>
+      <div v-if="inspectedRider" class="space-y-4 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <div class="text-[11px] text-neutral-500">Phone</div>
+            <div class="font-mono font-semibold text-neutral-900">{{ inspectedRider.phone }}</div>
+          </div>
+          <div>
+            <div class="text-[11px] text-neutral-500">Lifetime Spend</div>
+            <div class="font-mono font-bold text-neutral-900">
+              {{ formatCentavos(inspectedRider.lifetimeSpendCentavos) }}
+            </div>
+          </div>
         </div>
-        <div class="flex justify-between gap-2">
-          <span class="text-neutral-500">Area</span>
-          <span class="font-medium text-neutral-900">{{ inspectedRider.barangay }}</span>
-        </div>
-        <div class="flex justify-between gap-2">
-          <span class="text-neutral-500">Trips</span>
-          <span class="font-mono font-semibold text-neutral-900">{{
-            inspectedRider.totalTrips
-          }}</span>
-        </div>
-        <div class="flex justify-between gap-2">
-          <span class="text-neutral-500">Spend</span>
-          <span class="font-mono font-semibold text-neutral-900">
-            {{ formatPhp(inspectedRider.lifetimeSpend) }}
-          </span>
-        </div>
-        <div class="pt-2 border-t border-neutral-100 text-neutral-600 leading-relaxed">
-          <span class="font-semibold text-neutral-800 block mb-1">Trust &amp; Safety Notes</span>
-          {{ inspectedRider.notes }}
+        <div class="p-3 bg-neutral-50 border border-neutral-200 space-y-1">
+          <div class="text-[11px] font-semibold uppercase text-neutral-500">
+            Trust &amp; Safety Notes
+          </div>
+          <p class="text-neutral-700 leading-relaxed">{{ inspectedRider.notes }}</p>
         </div>
       </div>
 
       <template #footer>
-        <RouterLink
-          to="/payments/settlements"
-          class="px-3.5 py-2 bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-800 text-xs font-semibold"
-          @click="inspectedRider = null"
-        >
-          Settlements
-        </RouterLink>
-        <button
-          type="button"
-          class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-          @click="inspectedRider = null"
-        >
-          Close
-        </button>
+        <div class="flex justify-end">
+          <button
+            type="button"
+            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
+            @click="inspectedRider = null"
+          >
+            Done
+          </button>
+        </div>
       </template>
     </ModalDialog>
 
     <ConfirmDialog
-      :open="Boolean(pendingStatusRider)"
       v-model:reason="statusReason"
+      :open="Boolean(pendingStatusRider)"
       :title="
         pendingStatusRider?.standing === 'Suspended' ? 'Reinstate Passenger' : 'Suspend Passenger'
       "
       :description="
-        pendingStatusRider?.standing === 'Suspended'
-          ? `Restore ${pendingStatusRider?.name} to book rides again.`
-          : `Prevent ${pendingStatusRider?.name} from requesting trips during investigation.`
+        pendingStatusRider
+          ? pendingStatusRider.standing === 'Suspended'
+            ? `Restore booking privileges for ${pendingStatusRider.name}.`
+            : `Suspend ${pendingStatusRider.name} (${pendingStatusRider.id}) from booking new rides.`
+          : ''
       "
+      :tone="pendingStatusRider?.standing === 'Suspended' ? 'emerald' : 'rose'"
       :confirm-label="
         pendingStatusRider?.standing === 'Suspended' ? 'Reinstate Passenger' : 'Suspend Passenger'
       "
-      tone="neutral"
       :require-reason="pendingStatusRider?.standing !== 'Suspended'"
-      reason-label="Reason"
-      reason-placeholder="Enter dispute or safety reason..."
-      @cancel="pendingStatusRider = null"
+      reason-label="Trust &amp; Safety Justification"
+      reason-placeholder="Enter dispute reference or suspension justification..."
+      @update:open="!$event && (pendingStatusRider = null)"
       @confirm="confirmStandingUpdate"
     />
   </div>

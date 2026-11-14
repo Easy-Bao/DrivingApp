@@ -1,14 +1,6 @@
-const XML_ESCAPE_MAP: Record<string, string> = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
-}
+import { escapeXml } from '@/shared'
 
-export function escapeXml(value: string): string {
-  return value.replace(/[&<>"']/g, (ch) => XML_ESCAPE_MAP[ch] ?? ch)
-}
+export { escapeXml }
 
 export function buildReceiptPreviewSvg(params: {
   provider: string

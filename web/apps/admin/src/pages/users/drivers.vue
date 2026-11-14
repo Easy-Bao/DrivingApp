@@ -1,201 +1,46 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import TablePagination from '@/shared/table/TablePagination.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
-import { formatPhp } from '@/shared/utils/format'
+import { computed, ref } from 'vue'
+import {
+  BaseSelect,
+  ConfirmDialog,
+  EmptyTableRow,
+  ModalDialog,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  TablePagination,
+  ToastBanner,
+  formatCentavos,
+  useDataTable,
+  type BadgeTone,
+  type ToastTone,
+} from '@/shared'
+import { useDrivers, type DriverRecord, type DriverStatus } from '@/features/users'
 
-type DriverStatus = 'Active' | 'Low Balance (Locked)' | 'Suspended'
-
-interface DriverRecord {
-  id: string
-  name: string
-  phone: string
-  city: string
-  vehicle: string
-  todaZone: string
-  trips: number
-  rating: number
-  walletBalance: number
-  status: DriverStatus
-  suspensionReason?: string
-}
+const { drivers, getEffectiveDriverStatus, suspendDriver, reactivateDriver } = useDrivers()
 
 const searchQuery = ref('')
 const statusFilter = ref<'ALL' | DriverStatus>('ALL')
 const toastMessage = ref<string | null>(null)
-const toastTone = ref<'success' | 'warning' | 'info'>('success')
-
-const drivers = ref<DriverRecord[]>([
-  {
-    id: 'DRV-101',
-    name: 'Rodelio Cruz',
-    phone: '+63 917 440 2184',
-    city: 'Brgy. San Jose',
-    vehicle: 'Bajaj RE 4S (Plate: 1284-ND)',
-    todaZone: 'San Jose - Agora Corridor',
-    trips: 1420,
-    rating: 4.92,
-    walletBalance: 420.5,
-    status: 'Active',
-  },
-  {
-    id: 'DRV-102',
-    name: 'Danilo Mendoza',
-    phone: '+63 928 412 8890',
-    city: 'Brgy. Tuburan',
-    vehicle: 'TVS King Deluxe (Plate: 4912-NC)',
-    todaZone: 'Tuburan - Integrated Terminal',
-    trips: 890,
-    rating: 4.88,
-    walletBalance: 185.0,
-    status: 'Active',
-  },
-  {
-    id: 'DRV-103',
-    name: 'Reynaldo Garcia',
-    phone: '+63 908 771 9923',
-    city: 'Brgy. Balangasan',
-    vehicle: 'Bajaj Maxima Z (Plate: 9021-ND)',
-    todaZone: 'Balangasan - Capitol Complex',
-    trips: 2150,
-    rating: 4.95,
-    walletBalance: 880.0,
-    status: 'Active',
-  },
-  {
-    id: 'DRV-104',
-    name: 'Javier Santos',
-    phone: '+63 917 987 6543',
-    city: 'Brgy. San Pedro',
-    vehicle: 'Bajaj RE FI (Plate: 5519-NB)',
-    todaZone: 'San Pedro - Pier Port',
-    trips: 430,
-    rating: 4.65,
-    walletBalance: 15.5,
-    status: 'Low Balance (Locked)',
-  },
-  {
-    id: 'DRV-105',
-    name: 'Eduardo Santos',
-    phone: '+63 919 332 4455',
-    city: 'Brgy. Kawit',
-    vehicle: 'TVS King Deluxe FI (Plate: 7712-NC)',
-    todaZone: 'Kawit - Rotunda Hub',
-    trips: 1240,
-    rating: 4.91,
-    walletBalance: 650.0,
-    status: 'Active',
-  },
-  {
-    id: 'DRV-106',
-    name: 'Maria Lourdes Ramos',
-    phone: '+63 920 882 1144',
-    city: 'Brgy. Santa Lucia',
-    vehicle: 'Bajaj Maxima Z (Plate: 3391-ND)',
-    todaZone: 'Santa Lucia - Commercial Core',
-    trips: 780,
-    rating: 4.97,
-    walletBalance: 1105.5,
-    status: 'Active',
-  },
-  {
-    id: 'DRV-107',
-    name: 'Jose Mari Bautista',
-    phone: '+63 918 665 4411',
-    city: 'Brgy. Gatas',
-    vehicle: 'Piaggio Ape City (Plate: 8821-NC)',
-    todaZone: 'Gatas - Robinson Mall Loop',
-    trips: 1690,
-    rating: 4.89,
-    walletBalance: 520.0,
-    status: 'Active',
-  },
-  {
-    id: 'DRV-108',
-    name: 'Felipe Cruz',
-    phone: '+63 916 445 8821',
-    city: 'Brgy. Tiguma',
-    vehicle: 'Bajaj RE 4S (Plate: 6620-NC)',
-    todaZone: 'Tiguma - Pagadian Airport',
-    trips: 940,
-    rating: 4.84,
-    walletBalance: 340.0,
-    status: 'Active',
-  },
-  {
-    id: 'DRV-109',
-    name: 'Antonio Villanueva',
-    phone: '+63 939 556 1209',
-    city: 'Brgy. Dao',
-    vehicle: 'NWOW ERV2 Electric (Plate: 1109-ND)',
-    todaZone: 'Dao - Provincial Hospital',
-    trips: 1120,
-    rating: 4.93,
-    walletBalance: 785.0,
-    status: 'Active',
-  },
-  {
-    id: 'DRV-110',
-    name: 'Cristopher Alcantara',
-    phone: '+63 921 778 2234',
-    city: 'Brgy. Santiago',
-    vehicle: 'Bajaj RE 4S FI (Plate: 9920-ND)',
-    todaZone: 'Santiago - Coastal Highway',
-    trips: 610,
-    rating: 4.79,
-    walletBalance: 180.0,
-    status: 'Active',
-  },
-  {
-    id: 'DRV-111',
-    name: 'Nestor Macaraeg',
-    phone: '+63 947 889 1120',
-    city: 'Brgy. Danlugan',
-    vehicle: 'Piaggio Ape City (Plate: 3310-NC)',
-    todaZone: 'Danlugan - Highway West',
-    trips: 1350,
-    rating: 4.9,
-    walletBalance: 460.0,
-    status: 'Active',
-  },
-  {
-    id: 'DRV-112',
-    name: 'Ernesto Manalo',
-    phone: '+63 915 221 8890',
-    city: 'Brgy. Bulatok',
-    vehicle: 'TVS King Duramax (Plate: 4481-ND)',
-    todaZone: 'Bulatok - Mercado North',
-    trips: 820,
-    rating: 4.86,
-    walletBalance: 295.0,
-    status: 'Active',
-  },
-])
-
+const toastTone = ref<ToastTone>('info')
 const inspectedDriver = ref<DriverRecord | null>(null)
-const pendingStatusTarget = ref<DriverRecord | null>(null)
-const suspendReason = ref('')
+const pendingStatusDriver = ref<DriverRecord | null>(null)
+const statusReason = ref('')
 
 const filteredDrivers = computed(() => {
-  const query = searchQuery.value.trim().toLowerCase()
+  const q = searchQuery.value.trim().toLowerCase()
   return drivers.value.filter((driver) => {
-    if (statusFilter.value !== 'ALL' && driver.status !== statusFilter.value) {
+    const liveStatus = getEffectiveDriverStatus(driver)
+    if (statusFilter.value !== 'ALL' && liveStatus !== statusFilter.value) {
       return false
     }
-    if (!query) return true
+    if (!q) return true
     return (
-      driver.id.toLowerCase().includes(query) ||
-      driver.name.toLowerCase().includes(query) ||
-      driver.phone.toLowerCase().includes(query) ||
-      driver.vehicle.toLowerCase().includes(query) ||
-      driver.city.toLowerCase().includes(query)
+      driver.id.toLowerCase().includes(q) ||
+      driver.name.toLowerCase().includes(q) ||
+      driver.phone.toLowerCase().includes(q) ||
+      driver.vehicle.toLowerCase().includes(q) ||
+      driver.todaZone.toLowerCase().includes(q)
     )
   })
 })
@@ -204,53 +49,46 @@ const hasActiveFilters = computed(() =>
   Boolean(searchQuery.value.trim() || statusFilter.value !== 'ALL'),
 )
 
+const { currentPage, itemsPerPage, paginatedItems } = useDataTable(filteredDrivers, {
+  initialPageSize: 8,
+  resetDeps: [searchQuery, statusFilter],
+})
+
 function resetFilters() {
   searchQuery.value = ''
   statusFilter.value = 'ALL'
 }
 
-watch([searchQuery, statusFilter], () => {
-  currentPage.value = 1
-})
-
-const currentPage = ref(1)
-const itemsPerPage = 10
-
-const paginatedDrivers = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredDrivers.value.slice(start, start + itemsPerPage)
-})
-
-const driverTone = (status: DriverStatus) => {
+function statusTone(status: DriverStatus): BadgeTone {
   if (status === 'Active') return 'success'
   if (status === 'Low Balance (Locked)') return 'warning'
   return 'danger'
 }
 
-const openStatusDialog = (driver: DriverRecord) => {
-  suspendReason.value = ''
-  pendingStatusTarget.value = driver
+function openStatusDialog(driver: DriverRecord) {
+  statusReason.value = ''
+  pendingStatusDriver.value = driver
 }
 
-const confirmStatusChange = () => {
-  const target = pendingStatusTarget.value
+function confirmStatusUpdate() {
+  const target = pendingStatusDriver.value
   if (!target) return
 
-  if (target.status === 'Suspended') {
-    target.status = target.walletBalance < 50 ? 'Low Balance (Locked)' : 'Active'
-    target.suspensionReason = undefined
-    toastTone.value = 'success'
-    toastMessage.value = `${target.name} restored to ${target.status}.`
-  } else {
-    if (!suspendReason.value.trim()) return
-    target.status = 'Suspended'
-    target.suspensionReason = suspendReason.value.trim()
-    toastTone.value = 'warning'
-    toastMessage.value = `${target.name} suspended from dispatch queues.`
+  const result =
+    target.status === 'Suspended'
+      ? reactivateDriver(target.id)
+      : suspendDriver(target.id, statusReason.value)
+
+  if (!result.ok) {
+    toastTone.value = 'error'
+    toastMessage.value = result.error
+    return
   }
 
-  pendingStatusTarget.value = null
-  suspendReason.value = ''
+  toastTone.value = target.status === 'Suspended' ? 'warning' : 'success'
+  toastMessage.value = result.message
+  pendingStatusDriver.value = null
+  statusReason.value = ''
 }
 </script>
 
@@ -265,13 +103,13 @@ const confirmStatusChange = () => {
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
-        class="p-4 border-b border-neutral-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3"
+        class="p-4 border-b border-neutral-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
       >
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <div class="w-full sm:w-72">
+          <div class="w-full sm:w-64">
             <SearchField
               v-model="searchQuery"
-              placeholder="Search name, phone, plate..."
+              placeholder="Search driver, plate, TODA..."
               aria-label="Search drivers"
             />
           </div>
@@ -279,36 +117,29 @@ const confirmStatusChange = () => {
             v-model="statusFilter"
             aria-label="Filter drivers by status"
             :options="[
-              { label: 'All', value: 'ALL' },
+              { label: 'All Statuses', value: 'ALL' },
               { label: 'Active', value: 'Active' },
               { label: 'Low Balance (Locked)', value: 'Low Balance (Locked)' },
               { label: 'Suspended', value: 'Suspended' },
             ]"
           />
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <span
-            class="px-2.5 py-1.5 bg-neutral-50 border border-neutral-300 text-xs font-semibold text-neutral-800 tabular-nums"
-          >
-            Drivers: {{ filteredDrivers.length }}
-          </span>
-          <RouterLink
-            to="/users/driver-applications"
-            class="px-3.5 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors"
-          >
-            Driver Applications
-          </RouterLink>
-        </div>
+
+        <span
+          class="px-2.5 py-1.5 bg-neutral-50 border border-neutral-300 text-xs font-semibold text-neutral-800 tabular-nums self-start md:self-auto"
+        >
+          Drivers: {{ filteredDrivers.length }}
+        </span>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="w-full min-w-[920px] text-left text-xs">
+        <table class="w-full min-w-[880px] text-left text-xs">
           <thead class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100">
             <tr>
+              <th class="py-3 px-4">ID</th>
               <th class="py-3 px-4">Driver</th>
-              <th class="py-3 px-4">Phone</th>
-              <th class="py-3 px-4">Area</th>
-              <th class="py-3 px-4">Vehicle Unit</th>
+              <th class="py-3 px-4">Vehicle &amp; Plate</th>
+              <th class="py-3 px-4">TODA Corridor</th>
               <th class="py-3 px-4">Trips</th>
               <th class="py-3 px-4">Rating</th>
               <th class="py-3 px-4">Wallet</th>
@@ -317,30 +148,26 @@ const confirmStatusChange = () => {
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100 text-neutral-700">
-            <tr
-              v-for="driver in paginatedDrivers"
-              :key="driver.id"
-              class="hover:bg-neutral-50/50 transition-colors"
-            >
+            <tr v-for="driver in paginatedItems" :key="driver.id" class="hover:bg-neutral-50/50">
+              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ driver.id }}</td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ driver.name }}</div>
-                <div class="text-[11px] font-mono text-neutral-400">{{ driver.id }}</div>
+                <div class="text-[11px] font-mono text-neutral-400">{{ driver.phone }}</div>
               </td>
-              <td class="py-3 px-4 font-mono text-neutral-600">{{ driver.phone }}</td>
-              <td class="py-3 px-4">{{ driver.city }}</td>
-              <td class="py-3 px-4 text-neutral-700">{{ driver.vehicle }}</td>
+              <td class="py-3 px-4 font-medium text-neutral-800">{{ driver.vehicle }}</td>
+              <td class="py-3 px-4 text-neutral-600">{{ driver.todaZone }}</td>
               <td class="py-3 px-4 font-mono tabular-nums">{{ driver.trips }}</td>
-              <td class="py-3 px-4 font-semibold text-neutral-900 tabular-nums">
+              <td class="py-3 px-4 font-bold text-neutral-900 tabular-nums">
                 ★ {{ driver.rating.toFixed(2) }}
               </td>
-              <td
-                class="py-3 px-4 font-mono font-medium tabular-nums"
-                :class="driver.walletBalance < 50 ? 'text-rose-700 font-bold' : 'text-neutral-800'"
-              >
-                {{ formatPhp(driver.walletBalance) }}
+              <td class="py-3 px-4 font-mono font-semibold text-neutral-900 tabular-nums">
+                {{ formatCentavos(driver.walletBalanceCentavos) }}
               </td>
               <td class="py-3 px-4">
-                <StatusBadge :label="driver.status" :tone="driverTone(driver.status)" />
+                <StatusBadge
+                  :label="getEffectiveDriverStatus(driver)"
+                  :tone="statusTone(getEffectiveDriverStatus(driver))"
+                />
               </td>
               <td class="py-3 px-4 text-right space-x-2 whitespace-nowrap">
                 <button
@@ -350,15 +177,14 @@ const confirmStatusChange = () => {
                 >
                   Inspect
                 </button>
-                <RouterLink
-                  to="/payments/topups"
-                  class="text-xs text-neutral-600 hover:text-neutral-900 font-medium"
-                >
-                  Top Up
-                </RouterLink>
                 <button
                   type="button"
-                  class="text-xs text-neutral-700 hover:text-neutral-900 font-medium cursor-pointer"
+                  class="text-xs font-medium cursor-pointer"
+                  :class="
+                    driver.status === 'Suspended'
+                      ? 'text-emerald-700 hover:text-emerald-900'
+                      : 'text-rose-700 hover:text-rose-900'
+                  "
                   @click="openStatusDialog(driver)"
                 >
                   {{ driver.status === 'Suspended' ? 'Reactivate' : 'Suspend' }}
@@ -366,9 +192,9 @@ const confirmStatusChange = () => {
               </td>
             </tr>
             <EmptyTableRow
-              v-if="paginatedDrivers.length === 0"
+              v-if="paginatedItems.length === 0"
               :colspan="9"
-              title="No drivers match your filters"
+              title="No matching drivers"
               :show-reset="hasActiveFilters"
               @reset="resetFilters"
             />
@@ -385,93 +211,72 @@ const confirmStatusChange = () => {
 
     <ModalDialog
       :open="Boolean(inspectedDriver)"
-      :title="inspectedDriver?.name ?? ''"
-      :subtitle="inspectedDriver?.id"
-      size="lg"
+      :title="inspectedDriver ? `Driver Profile · ${inspectedDriver.id}` : ''"
+      :subtitle="inspectedDriver ? `${inspectedDriver.name} · ${inspectedDriver.city}` : undefined"
+      size="md"
       close-label="Close modal"
-      @close="inspectedDriver = null"
+      @update:open="!$event && (inspectedDriver = null)"
     >
-      <div v-if="inspectedDriver" class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div>
-            <div class="text-neutral-500">Phone</div>
-            <div class="font-mono font-semibold text-neutral-900 mt-0.5">
-              {{ inspectedDriver.phone }}
-            </div>
-          </div>
-          <div>
-            <div class="text-neutral-500">Area</div>
-            <div class="font-medium text-neutral-900 mt-0.5">{{ inspectedDriver.city }}</div>
-          </div>
-          <div class="sm:col-span-2">
-            <div class="text-neutral-500">Vehicle &amp; Corridor</div>
-            <div class="font-medium text-neutral-900 mt-0.5">
-              {{ inspectedDriver.vehicle }} · {{ inspectedDriver.todaZone }}
-            </div>
-          </div>
-          <div>
-            <div class="text-neutral-500">Wallet</div>
-            <div
-              class="font-mono font-bold mt-0.5"
-              :class="inspectedDriver.walletBalance < 50 ? 'text-rose-700' : 'text-neutral-900'"
-            >
-              {{ formatPhp(inspectedDriver.walletBalance) }}
-              <span v-if="inspectedDriver.walletBalance < 50" class="text-[11px] font-sans">
-                (&lt; ₱50)
-              </span>
-            </div>
-          </div>
-          <div>
-            <div class="text-neutral-500">Trips &amp; Rating</div>
-            <div class="font-mono font-semibold text-neutral-900 mt-0.5">
-              {{ inspectedDriver.trips }} · ★ {{ inspectedDriver.rating.toFixed(2) }}
-            </div>
+      <div v-if="inspectedDriver" class="grid grid-cols-2 gap-3 text-xs">
+        <div>
+          <div class="text-[11px] text-neutral-500">Phone</div>
+          <div class="font-mono font-semibold text-neutral-900">{{ inspectedDriver.phone }}</div>
+        </div>
+        <div>
+          <div class="text-[11px] text-neutral-500">Wallet Balance</div>
+          <div class="font-mono font-bold text-neutral-900">
+            {{ formatCentavos(inspectedDriver.walletBalanceCentavos) }}
           </div>
         </div>
-
+        <div class="col-span-2">
+          <div class="text-[11px] text-neutral-500">Assigned Vehicle</div>
+          <div class="font-semibold text-neutral-900">{{ inspectedDriver.vehicle }}</div>
+        </div>
+        <div class="col-span-2">
+          <div class="text-[11px] text-neutral-500">TODA Corridor</div>
+          <div class="text-neutral-800">{{ inspectedDriver.todaZone }}</div>
+        </div>
         <div
           v-if="inspectedDriver.suspensionReason"
-          class="p-3 bg-neutral-50 border border-neutral-300 text-xs text-neutral-800"
+          class="col-span-2 p-2.5 bg-rose-50 border border-rose-200 text-rose-800"
         >
-          <span class="font-semibold">Suspension Note:</span>
-          {{ inspectedDriver.suspensionReason }}
+          <span class="font-semibold">Suspension Note:</span> {{ inspectedDriver.suspensionReason }}
         </div>
       </div>
 
       <template #footer>
-        <RouterLink
-          to="/payments/topups"
-          class="px-4 py-2 bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-800 text-xs font-semibold transition-colors"
-          @click="inspectedDriver = null"
-        >
-          Top-Ups
-        </RouterLink>
-        <button
-          type="button"
-          class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-          @click="inspectedDriver = null"
-        >
-          Close
-        </button>
+        <div class="flex justify-end">
+          <button
+            type="button"
+            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
+            @click="inspectedDriver = null"
+          >
+            Done
+          </button>
+        </div>
       </template>
     </ModalDialog>
 
     <ConfirmDialog
-      :open="Boolean(pendingStatusTarget)"
-      v-model:reason="suspendReason"
-      :title="pendingStatusTarget?.status === 'Suspended' ? 'Reactivate Driver' : 'Suspend Driver'"
+      v-model:reason="statusReason"
+      :open="Boolean(pendingStatusDriver)"
+      :title="pendingStatusDriver?.status === 'Suspended' ? 'Reactivate Driver' : 'Suspend Driver'"
       :description="
-        pendingStatusTarget?.status === 'Suspended'
-          ? `Restore ${pendingStatusTarget?.name} to dispatch queues.`
-          : `Suspend ${pendingStatusTarget?.name} from bidding and trip assignments.`
+        pendingStatusDriver
+          ? pendingStatusDriver.status === 'Suspended'
+            ? `Restore dispatch eligibility for ${pendingStatusDriver.name} (${pendingStatusDriver.id}).`
+            : `Suspend ${pendingStatusDriver.name} (${pendingStatusDriver.id}) from receiving new dispatches.`
+          : ''
       "
-      :confirm-label="pendingStatusTarget?.status === 'Suspended' ? 'Reactivate' : 'Suspend Driver'"
-      tone="neutral"
-      :require-reason="pendingStatusTarget?.status !== 'Suspended'"
-      reason-label="Reason"
-      reason-placeholder="Enter compliance or safety reason..."
-      @cancel="pendingStatusTarget = null"
-      @confirm="confirmStatusChange"
+      :tone="pendingStatusDriver?.status === 'Suspended' ? 'emerald' : 'rose'"
+      :confirm-label="
+        pendingStatusDriver?.status === 'Suspended' ? 'Reactivate Driver' : 'Suspend Driver'
+      "
+      :require-reason="pendingStatusDriver?.status !== 'Suspended'"
+      reason-label="Suspension Reason"
+      reason-placeholder="Enter compliance or conduct justification..."
+      @update:open="!$event && (pendingStatusDriver = null)"
+      @confirm="confirmStatusUpdate"
     />
   </div>
 </template>

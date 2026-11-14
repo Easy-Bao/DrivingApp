@@ -1,270 +1,155 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import TablePagination from '@/shared/table/TablePagination.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
+import { computed, ref } from 'vue'
+import {
+  BaseSelect,
+  EmptyTableRow,
+  ModalDialog,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  TablePagination,
+  ToastBanner,
+  useDataTable,
+  type ToastTone,
+} from '@/shared'
+import { useRejectedDocuments, type RejectedDocument } from '@/features/documents'
 
-interface RejectedDocument {
-  id: string
-  driver: string
-  driverPhone: string
-  city: string
-  docType: string
-  rejectionReason: string
-  rejectedBy: string
-  rejectedAt: string
-  resubmitted: boolean
-  reopened?: boolean
-}
-
-const rejectedDocs = ref<RejectedDocument[]>([
-  {
-    id: 'REJ-401',
-    driver: 'Javier Santos',
-    driverPhone: '+63 917 987 6543',
-    city: 'Brgy. San Pedro',
-    docType: 'LTO Driver License Back Photo',
-    rejectionReason: 'Reverse barcode scan blurred; LTO restriction codes unreadable',
-    rejectedBy: 'Marisol Lim',
-    rejectedAt: 'Yesterday 14:20',
-    resubmitted: false,
-  },
-  {
-    id: 'REJ-402',
-    driver: 'Rodelio Cruz',
-    driverPhone: '+63 917 440 2184',
-    city: 'Brgy. San Jose',
-    docType: 'CTPL Insurance Certificate',
-    rejectionReason: 'Policyholder name does not match applicant identity on LTO OR/CR',
-    rejectedBy: 'Operations Lead',
-    rejectedAt: '3 days ago',
-    resubmitted: true,
-  },
-  {
-    id: 'REJ-403',
-    driver: 'Danilo Mendoza',
-    driverPhone: '+63 928 412 8890',
-    city: 'Brgy. Tuburan',
-    docType: 'MTOP Municipal Permit',
-    rejectionReason: 'Expired MTOP permit without stamped city treasurer official receipt',
-    rejectedBy: 'Operations Lead',
-    rejectedAt: '4 days ago',
-    resubmitted: true,
-  },
-  {
-    id: 'REJ-404',
-    driver: 'Reynaldo Garcia',
-    driverPhone: '+63 908 771 9923',
-    city: 'Brgy. Balangasan',
-    docType: 'PNP National Police Clearance',
-    rejectionReason: 'Document expired; issuance date exceeds 6 months validity',
-    rejectedBy: 'Marisol Lim',
-    rejectedAt: '5 days ago',
-    resubmitted: true,
-  },
-  {
-    id: 'REJ-405',
-    driver: 'Eduardo Santos',
-    driverPhone: '+63 919 332 4455',
-    city: 'Brgy. Kawit',
-    docType: 'LTO Certificate of Registration',
-    rejectionReason: 'Chassis number illegible on mobile camera photograph',
-    rejectedBy: 'Operations Lead',
-    rejectedAt: '6 days ago',
-    resubmitted: true,
-  },
-  {
-    id: 'REJ-406',
-    driver: 'Felipe Cruz',
-    driverPhone: '+63 916 445 8821',
-    city: 'Brgy. Tiguma',
-    docType: 'Barangay Driver Clearance',
-    rejectionReason: 'Barangay clearance jurisdiction differs from assigned TODA zone',
-    rejectedBy: 'Marisol Lim',
-    rejectedAt: '1 week ago',
-    resubmitted: false,
-  },
-  {
-    id: 'REJ-407',
-    driver: 'Antonio Villanueva',
-    driverPhone: '+63 939 556 1209',
-    city: 'Brgy. Dao',
-    docType: 'LTO Driver License Front Side',
-    rejectionReason: 'Flash glare obscuring birthdate and driver license number',
-    rejectedBy: 'Operations Lead',
-    rejectedAt: '10 days ago',
-    resubmitted: true,
-  },
-  {
-    id: 'REJ-408',
-    driver: 'Cristopher Alcantara',
-    driverPhone: '+63 921 778 2234',
-    city: 'Brgy. Santiago',
-    docType: 'Annual Inspection Certificate',
-    rejectionReason: 'Inspection report missing official MVIC verifier signature',
-    rejectedBy: 'Operations Lead',
-    rejectedAt: '12 days ago',
-    resubmitted: true,
-  },
-  {
-    id: 'REJ-409',
-    driver: 'Nestor Macaraeg',
-    driverPhone: '+63 947 889 1120',
-    city: 'Brgy. Danlugan',
-    docType: 'NBI National Criminal Clearance',
-    rejectionReason: 'Clearance QR code not scannable; re-upload required',
-    rejectedBy: 'Marisol Lim',
-    rejectedAt: '2 weeks ago',
-    resubmitted: false,
-  },
-])
+const { rejectedDocs, queueForReReview } = useRejectedDocuments()
 
 const searchQuery = ref('')
 const resubmissionFilter = ref<'ALL' | 'RESUBMITTED' | 'AWAITING'>('ALL')
-const currentPage = ref(1)
-const itemsPerPage = 10
-const inspectedRejected = ref<RejectedDocument | null>(null)
+const inspectingDoc = ref<RejectedDocument | null>(null)
 const toastMessage = ref<string | null>(null)
+const toastTone = ref<ToastTone>('success')
 
-const filteredRejectedDocs = computed(() => {
-  const query = searchQuery.value.trim().toLowerCase()
-  return rejectedDocs.value.filter((item) => {
-    if (resubmissionFilter.value === 'RESUBMITTED' && !item.resubmitted) return false
-    if (resubmissionFilter.value === 'AWAITING' && item.resubmitted) return false
-    if (!query) return true
+const filteredRejected = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  return rejectedDocs.value.filter((doc) => {
+    if (resubmissionFilter.value === 'RESUBMITTED' && !doc.resubmitted) return false
+    if (resubmissionFilter.value === 'AWAITING' && doc.resubmitted) return false
+    if (!q) return true
     return (
-      item.id.toLowerCase().includes(query) ||
-      item.driver.toLowerCase().includes(query) ||
-      item.docType.toLowerCase().includes(query) ||
-      item.rejectionReason.toLowerCase().includes(query)
+      doc.id.toLowerCase().includes(q) ||
+      doc.driver.toLowerCase().includes(q) ||
+      doc.docType.toLowerCase().includes(q) ||
+      doc.rejectionReason.toLowerCase().includes(q)
     )
   })
 })
 
-watch([searchQuery, resubmissionFilter], () => {
-  currentPage.value = 1
-})
-
-const hasActiveFilters = computed(
-  () => searchQuery.value !== '' || resubmissionFilter.value !== 'ALL',
+const hasActiveFilters = computed(() =>
+  Boolean(searchQuery.value.trim() || resubmissionFilter.value !== 'ALL'),
 )
+
+const { currentPage, itemsPerPage, paginatedItems } = useDataTable(filteredRejected, {
+  initialPageSize: 10,
+  resetDeps: [searchQuery, resubmissionFilter],
+})
 
 function resetFilters() {
   searchQuery.value = ''
   resubmissionFilter.value = 'ALL'
-  currentPage.value = 1
 }
 
-const paginatedRejectedDocs = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredRejectedDocs.value.slice(start, start + itemsPerPage)
-})
-
-const queueForReReview = (item: RejectedDocument) => {
-  item.reopened = true
-  inspectedRejected.value = null
-  toastMessage.value = `${item.id} (${item.driver}) moved back to active verification queue.`
+function handleReopen(id: string) {
+  const result = queueForReReview(id)
+  if (!result.ok) {
+    toastTone.value = 'error'
+    toastMessage.value = result.error
+    return
+  }
+  toastTone.value = 'success'
+  toastMessage.value = result.message
+  inspectingDoc.value = null
 }
 </script>
 
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Rejected Docs"
-      description="Review declined document submissions and follow up on resubmissions."
+      title="Rejected Documents"
+      description="Inspect declined compliance files and re-open resubmitted scans for verification."
     />
 
-    <ToastBanner :message="toastMessage" tone="info" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div
-        class="p-4 border-b border-neutral-100 flex flex-col md:flex-row md:items-center justify-between gap-3"
+        class="p-4 border-b border-neutral-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
       >
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <div class="w-full sm:w-64">
             <SearchField
               v-model="searchQuery"
-              placeholder="Search log ID, driver, reason..."
+              placeholder="Search ID, driver, reason..."
               aria-label="Search rejected documents"
             />
           </div>
           <BaseSelect
             v-model="resubmissionFilter"
-            aria-label="Filter by resubmission status"
+            aria-label="Filter rejected documents"
             :options="[
-              { label: 'All Submissions', value: 'ALL' },
-              { label: 'Resubmitted Ready', value: 'RESUBMITTED' },
-              { label: 'Awaiting Driver Upload', value: 'AWAITING' },
+              { label: 'All Rejections', value: 'ALL' },
+              { label: 'Resubmitted Only', value: 'RESUBMITTED' },
+              { label: 'Awaiting Driver Re-upload', value: 'AWAITING' },
             ]"
           />
         </div>
-        <span class="text-xs text-neutral-400">Maintained for legal compliance audits</span>
+        <span
+          class="px-2.5 py-1.5 bg-neutral-50 border border-neutral-300 text-xs font-semibold text-neutral-800 tabular-nums self-start md:self-auto"
+        >
+          Rejected: {{ filteredRejected.length }}
+        </span>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="w-full min-w-[840px] text-left text-xs">
-          <thead
-            class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100 font-semibold"
-          >
+        <table class="w-full min-w-[820px] text-left text-xs">
+          <thead class="bg-neutral-50 text-neutral-500 uppercase border-b border-neutral-100">
             <tr>
-              <th class="py-3 px-4">Log ID</th>
+              <th class="py-3 px-4">ID</th>
               <th class="py-3 px-4">Driver</th>
               <th class="py-3 px-4">Document</th>
-              <th class="py-3 px-4">Rejection Grounds</th>
-              <th class="py-3 px-4">Auditor</th>
-              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4">Rejection Reason</th>
+              <th class="py-3 px-4">Rejected By</th>
+              <th class="py-3 px-4">Resubmitted</th>
               <th class="py-3 px-4 text-right">Action</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-neutral-100">
-            <tr
-              v-for="item in paginatedRejectedDocs"
-              :key="item.id"
-              class="hover:bg-neutral-50/70 transition-colors"
-            >
-              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ item.id }}</td>
+          <tbody class="divide-y divide-neutral-100 text-neutral-700">
+            <tr v-for="doc in paginatedItems" :key="doc.id" class="hover:bg-neutral-50/50">
+              <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ doc.id }}</td>
               <td class="py-3 px-4">
-                <div class="font-semibold text-neutral-900">{{ item.driver }}</div>
-                <div class="text-[11px] text-neutral-400 font-mono">{{ item.driverPhone }}</div>
-                <div class="text-[10px] text-neutral-400">{{ item.city }}</div>
+                <div class="font-semibold text-neutral-900">{{ doc.driver }}</div>
+                <div class="text-[11px] font-mono text-neutral-400">{{ doc.driverPhone }}</div>
               </td>
-              <td class="py-3 px-4 font-medium text-neutral-800">{{ item.docType }}</td>
-              <td class="py-3 px-4 text-neutral-600 max-w-[240px]">{{ item.rejectionReason }}</td>
-              <td class="py-3 px-4 text-neutral-500">
-                <div>{{ item.rejectedBy }}</div>
-                <div class="font-mono text-[10px] text-neutral-400">{{ item.rejectedAt }}</div>
+              <td class="py-3 px-4 font-medium text-neutral-900">{{ doc.docType }}</td>
+              <td class="py-3 px-4 max-w-xs truncate text-neutral-600">
+                {{ doc.rejectionReason }}
               </td>
-              <td class="py-3 px-4 whitespace-nowrap">
+              <td class="py-3 px-4">
+                <div>{{ doc.rejectedBy }}</div>
+                <div class="text-[11px] text-neutral-400">{{ doc.rejectedAt }}</div>
+              </td>
+              <td class="py-3 px-4">
                 <StatusBadge
-                  :label="
-                    item.reopened
-                      ? 'Queued for Re-Review'
-                      : item.resubmitted
-                        ? 'Resubmitted'
-                        : 'Awaiting Upload'
-                  "
-                  :tone="item.reopened ? 'success' : item.resubmitted ? 'info' : 'danger'"
+                  :label="doc.resubmitted ? 'Resubmitted' : 'Awaiting Upload'"
+                  :tone="doc.resubmitted ? 'info' : 'neutral'"
                 />
               </td>
-              <td class="py-3 px-4 text-right whitespace-nowrap">
+              <td class="py-3 px-4 text-right">
                 <button
                   type="button"
-                  @click="inspectedRejected = item"
-                  class="text-xs font-semibold text-neutral-800 hover:text-neutral-900 cursor-pointer"
+                  class="px-3 py-1.5 border border-neutral-300 bg-white hover:bg-neutral-50 text-neutral-900 text-xs font-semibold cursor-pointer"
+                  @click="inspectingDoc = doc"
                 >
                   Inspect
                 </button>
               </td>
             </tr>
             <EmptyTableRow
-              v-if="paginatedRejectedDocs.length === 0"
+              v-if="paginatedItems.length === 0"
               :colspan="7"
-              title="No rejected document logs match the filter"
+              title="No matching rejected documents"
               :show-reset="hasActiveFilters"
               @reset="resetFilters"
             />
@@ -274,49 +159,50 @@ const queueForReReview = (item: RejectedDocument) => {
 
       <TablePagination
         v-model:current-page="currentPage"
-        :total-items="filteredRejectedDocs.length"
+        :total-items="filteredRejected.length"
         :items-per-page="itemsPerPage"
       />
     </div>
 
     <ModalDialog
-      :open="Boolean(inspectedRejected)"
-      :title="inspectedRejected?.docType ?? ''"
-      :subtitle="inspectedRejected?.id"
+      :open="Boolean(inspectingDoc)"
+      :title="inspectingDoc ? `Rejection Details · ${inspectingDoc.id}` : ''"
+      :subtitle="inspectingDoc ? `${inspectingDoc.driver} · ${inspectingDoc.docType}` : undefined"
       size="md"
       close-label="Close modal"
-      @update:open="(open) => !open && (inspectedRejected = null)"
+      @update:open="!$event && (inspectingDoc = null)"
     >
-      <div v-if="inspectedRejected" class="space-y-2.5 text-xs">
-        <div>
-          <span class="text-neutral-500">Applicant:</span>
-          <span class="font-semibold text-neutral-900 ml-1">{{ inspectedRejected.driver }}</span>
-          <span class="font-mono text-neutral-500 ml-1">({{ inspectedRejected.driverPhone }})</span>
+      <div v-if="inspectingDoc" class="space-y-3 text-xs">
+        <div class="p-3 bg-neutral-50 border border-neutral-200 space-y-1">
+          <div class="text-[11px] font-semibold uppercase text-neutral-500">Rejection Reason</div>
+          <p class="text-neutral-900 font-medium">{{ inspectingDoc.rejectionReason }}</p>
         </div>
-        <div>
-          <span class="text-neutral-500">Location:</span>
-          <span class="text-neutral-800 ml-1">{{ inspectedRejected.city }}</span>
-        </div>
-        <div class="p-3 bg-neutral-50 border border-neutral-300 text-neutral-800">
-          <div class="font-semibold mb-1">Recorded Rejection Grounds</div>
-          <p>{{ inspectedRejected.rejectionReason }}</p>
+        <div class="grid grid-cols-2 gap-3 bg-neutral-50 border border-neutral-200 p-3">
+          <div>
+            <div class="text-[11px] text-neutral-500">Reviewed By</div>
+            <div class="font-semibold text-neutral-900">{{ inspectingDoc.rejectedBy }}</div>
+          </div>
+          <div>
+            <div class="text-[11px] text-neutral-500">Timestamp</div>
+            <div class="font-semibold text-neutral-900">{{ inspectingDoc.rejectedAt }}</div>
+          </div>
         </div>
       </div>
 
       <template #footer>
-        <div class="flex flex-wrap items-center justify-end gap-2">
+        <div class="flex items-center justify-end gap-2">
           <button
             type="button"
-            class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
-            @click="inspectedRejected = null"
+            class="px-3 py-2 border border-neutral-300 text-neutral-700 text-xs font-semibold cursor-pointer"
+            @click="inspectingDoc = null"
           >
             Close
           </button>
           <button
-            v-if="inspectedRejected?.resubmitted && !inspectedRejected?.reopened"
+            v-if="inspectingDoc"
             type="button"
-            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-            @click="queueForReReview(inspectedRejected)"
+            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer"
+            @click="handleReopen(inspectingDoc.id)"
           >
             Re-Open for Verification
           </button>

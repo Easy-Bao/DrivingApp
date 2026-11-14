@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { resetSettingsForTesting } from '@/features/settings'
+import { resetDocumentsForTesting } from '@/features/documents'
 import DocumentVerificationPage from '@/pages/documents/verification.vue'
 
 describe('DocumentVerificationPage', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-11-13T10:00:00Z'))
+    resetSettingsForTesting()
+    resetDocumentsForTesting()
   })
 
   it('requires all four compliance checkboxes before enabling approval', async () => {
