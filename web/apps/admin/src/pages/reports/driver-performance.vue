@@ -26,7 +26,7 @@ const handleExport = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Driver Stats"
+      title="Performance"
       description="Review driver completion rates, ratings, and punctuality."
     />
 

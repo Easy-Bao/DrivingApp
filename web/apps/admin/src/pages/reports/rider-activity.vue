@@ -27,7 +27,7 @@ const handleExport = () => {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Rider Stats"
+      title="Activity"
       description="Analyze passenger cohorts, retention rates, and booking spend."
     />
 

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Icon } from '@iconify/vue'
 import { BaseSelect, ModalDialog } from '@/shared'
 import type { DriverApplication } from '@/features/users/types'
 
@@ -52,7 +51,7 @@ function submitReject() {
     title="Approve Driver Application"
     :subtitle="application ? `Application ${application.id} · ${application.applicant}` : undefined"
     size="md"
-    close-label="Close modal"
+    close-label="Close"
     @update:open="emit('update:showApprove', $event)"
   >
     <div v-if="application" class="space-y-4 text-xs">
@@ -64,10 +63,7 @@ function submitReject() {
       </p>
 
       <div class="p-3 bg-neutral-50 border border-neutral-200 text-xs space-y-1">
-        <div class="font-semibold text-neutral-900 flex items-center space-x-1.5">
-          <Icon icon="lucide:check-circle" class="text-neutral-700" />
-          <span>Verification Summary</span>
-        </div>
+        <div class="font-semibold text-neutral-900">Summary</div>
         <ul class="text-neutral-700 space-y-0.5 text-[11px] list-disc list-inside">
           <li>
             LTO License: {{ application.licenseNumber }} (Code {{ application.licenseCodes }})
@@ -111,7 +107,7 @@ function submitReject() {
     title="Reject Driver Application"
     :subtitle="application ? `Application ${application.id} · ${application.applicant}` : undefined"
     size="md"
-    close-label="Close modal"
+    close-label="Close"
     @update:open="emit('update:showReject', $event)"
   >
     <div v-if="application" class="space-y-4 text-xs">
@@ -122,18 +118,18 @@ function submitReject() {
 
       <div>
         <label class="block text-[11px] font-semibold uppercase text-neutral-500 mb-1.5">
-          Primary Rejection Reason
+          Reason
         </label>
         <BaseSelect
           v-model="selectedReason"
-          aria-label="Primary Rejection Reason"
+          aria-label="Reason"
           :options="REJECTION_REASON_OPTIONS.map((item) => ({ label: item, value: item }))"
         />
       </div>
 
       <div>
         <label class="block text-[11px] font-semibold uppercase text-neutral-500 mb-1.5">
-          Reviewer Notes (Optional)
+          Notes (Optional)
         </label>
         <textarea
           v-model="notes"

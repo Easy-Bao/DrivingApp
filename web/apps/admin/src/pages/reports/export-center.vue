@@ -66,7 +66,7 @@ function openCreateModal() {
   newName.value = ''
   newFrequency.value = 'Weekly'
   newFormat.value = 'CSV'
-  newRecipients.value = 'ops@easyride.ph'
+  newRecipients.value = 'admin@easyride.ph'
   newWindow.value = 'Every Monday at 08:00 AM PHT'
   scheduleError.value = null
   showScheduleModal.value = true
@@ -191,7 +191,7 @@ function submitSchedule() {
               v-if="scheduledReports.length === 0"
               :colspan="6"
               title="No automated report schedules configured"
-              description="Create a schedule to dispatch automated Pagadian City operational briefings."
+              description="Create a schedule to send automated briefings."
               :show-reset="false"
             />
           </tbody>

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
 import { StatusBadge, type BadgeTone } from '@/shared'
 import type { DriverApplication } from '@/features/users/types'
 
@@ -102,17 +101,6 @@ const emit = defineEmits<{
             </div>
           </div>
         </div>
-
-        <button
-          type="button"
-          class="w-full p-3 bg-neutral-50 border border-neutral-200 flex items-center justify-between text-xs hover:border-neutral-400 transition-colors cursor-pointer text-left"
-          @click="emit('openLicense')"
-        >
-          <span class="font-mono text-neutral-700 truncate pr-3">{{
-            application.licenseFrontDoc
-          }}</span>
-          <span class="font-semibold text-neutral-900 shrink-0 hover:underline">View Scan</span>
-        </button>
       </div>
 
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
@@ -231,7 +219,7 @@ const emit = defineEmits<{
               class="px-2.5 py-1 text-xs font-semibold bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200 cursor-pointer transition-colors"
               @click="emit('openClearance')"
             >
-              View Clearance Certificate
+              View Certificate
             </button>
           </div>
 
@@ -261,26 +249,10 @@ const emit = defineEmits<{
           </div>
 
           <div class="p-3 bg-neutral-50 border border-neutral-200 text-xs">
-            <div class="font-semibold text-neutral-900 flex items-center gap-1.5">
-              <Icon icon="lucide:file-text" class="text-neutral-600" />
-              <span>Remarks</span>
-            </div>
+            <div class="font-semibold text-neutral-900">Remarks</div>
             <p class="text-neutral-600 mt-1 leading-relaxed">{{ application.backgroundNotes }}</p>
           </div>
         </div>
-
-        <button
-          type="button"
-          class="w-full p-3 bg-neutral-50 border border-neutral-200 flex items-center justify-between text-xs hover:border-neutral-400 transition-colors cursor-pointer text-left"
-          @click="emit('openClearance')"
-        >
-          <span class="font-mono text-neutral-700 truncate pr-3">{{
-            application.clearanceDoc
-          }}</span>
-          <span class="font-semibold text-neutral-900 shrink-0 hover:underline">
-            View Certificate
-          </span>
-        </button>
       </div>
     </div>
   </div>

@@ -14,7 +14,7 @@ describe('users/operators page', () => {
     const wrapper = mount(OperatorsPage)
     const { logs } = useAuditLogs()
 
-    expect(wrapper.text()).toContain('OPS-001')
+    expect(wrapper.text()).toContain('ADM-001')
 
     const inviteBtn = wrapper.findAll('button').find((b) => b.text().includes('Invite Operator'))
     expect(inviteBtn).toBeDefined()

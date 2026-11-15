@@ -224,7 +224,7 @@ const applyResolution = () => {
       :open="Boolean(reviewingCase)"
       :title="reviewingCase ? `Responsibility Override · ${reviewingCase.tripId}` : ''"
       size="md"
-      close-label="Close modal"
+      close-label="Close"
       @update:open="(open) => !open && (reviewingCase = null)"
     >
       <form v-if="reviewingCase" class="space-y-4 text-xs" @submit.prevent="applyResolution">

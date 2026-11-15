@@ -123,17 +123,17 @@ describe('Sidebar', () => {
   })
 
   it('hides navigation groups and items unauthorized for the signed-in role', async () => {
-    loginOperator('finance_ops', '7016')
+    loginOperator('finance', '7016')
     const wrapper = mount(Sidebar)
 
     expect(wrapper.text()).toContain('Payments')
     expect(wrapper.text()).toContain('Reports')
     expect(wrapper.text()).not.toContain('Operators')
-    expect(wrapper.text()).not.toContain('Staff Roles')
+    expect(wrapper.text()).not.toContain('Roles')
     expect(wrapper.text()).not.toContain('App Settings')
     expect(wrapper.text()).not.toContain('Verification')
 
-    loginOperator('support_lead', '7016')
+    loginOperator('support', '7016')
     const supportWrapper = mount(Sidebar)
     const supportToggle = supportWrapper
       .findAll('button')

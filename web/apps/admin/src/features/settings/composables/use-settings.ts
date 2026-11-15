@@ -39,11 +39,9 @@ let auditSequence = 8905
 
 function resolveActiveOperator(): { actor: string; role: string } {
   const session = getAuthSession()
-  const roleLabel = session.role
-    ? ROLE_PROFILES[session.role].label
-    : ROLE_PROFILES.root_operator.label
+  const roleLabel = session.role ? ROLE_PROFILES[session.role].label : ROLE_PROFILES.admin.label
   return {
-    actor: session.operatorName || ROLE_PROFILES.root_operator.operatorName,
+    actor: session.operatorName || ROLE_PROFILES.admin.operatorName,
     role: roleLabel,
   }
 }
@@ -56,7 +54,7 @@ function appendAuditEntry(input: AppendAuditLogInput): AuditLogEntry {
     role,
     action: input.action,
     targetEntity: input.targetEntity,
-    ipAddress: '103.164.28.41 (Pagadian Ops)',
+    ipAddress: '103.164.28.41',
     severity: input.severity,
     timestamp: 'Just Now · PHT',
     payloadDiff: JSON.stringify(input.payload),
@@ -107,7 +105,7 @@ export function usePlatformConfig() {
     platformConfig.value = normalized
     appendAuditEntry({
       action: 'RUNTIME_CONFIG_UPDATED',
-      targetEntity: 'Platform Preferences · Pagadian City',
+      targetEntity: 'Platform Preferences',
       severity: 'Warning',
       payload: {
         reason: trimmedReason,

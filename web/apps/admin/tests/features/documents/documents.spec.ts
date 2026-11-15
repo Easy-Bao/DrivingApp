@@ -49,7 +49,7 @@ describe('features/documents domain & composables', () => {
   })
 
   it('enforces state guards, updates rejected queue on rejection, and logs audit events', () => {
-    loginOperator('fleet_ops', '7016')
+    loginOperator('fleet', '7016')
     const { pendingDocs, verifyDocument, rejectDocument } = useVerificationDocuments()
     const { rejectedDocs } = useRejectedDocuments()
     const { logs } = useAuditLogs()

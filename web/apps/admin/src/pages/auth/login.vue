@@ -12,16 +12,16 @@ definePage({
 const route = useRoute()
 const router = useRouter()
 
-const selectedRole = ref<OperatorRole>('root_operator')
+const selectedRole = ref<OperatorRole>('admin')
 const securityPin = ref('7016')
 const showPin = ref(false)
 const errorMessage = ref('')
 
 const roleOptions = [
-  { label: 'Root Operator', value: 'root_operator' as OperatorRole },
-  { label: 'Fleet Ops', value: 'fleet_ops' as OperatorRole },
-  { label: 'Finance Ops', value: 'finance_ops' as OperatorRole },
-  { label: 'Support Lead', value: 'support_lead' as OperatorRole },
+  { label: 'Admin', value: 'admin' as OperatorRole },
+  { label: 'Fleet', value: 'fleet' as OperatorRole },
+  { label: 'Finance', value: 'finance' as OperatorRole },
+  { label: 'Support', value: 'support' as OperatorRole },
 ]
 
 const activeProfile = computed(() => ROLE_PROFILES[selectedRole.value])
@@ -51,11 +51,9 @@ function submitSignIn() {
             ER
           </div>
           <div>
-            <h1 class="text-base font-bold text-neutral-900 tracking-tight">EasyRide Operations</h1>
-            <p class="text-[11px] text-neutral-500">Pagadian City · 7016</p>
+            <h1 class="text-base font-bold text-neutral-900 tracking-tight">EasyRide Admin</h1>
           </div>
         </div>
-        <Icon icon="lucide:shield-check" class="text-xl text-neutral-800" aria-hidden="true" />
       </div>
 
       <form class="p-5 sm:p-6 space-y-4 text-xs" @submit.prevent="submitSignIn">

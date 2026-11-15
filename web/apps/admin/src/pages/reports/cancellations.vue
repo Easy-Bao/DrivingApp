@@ -59,7 +59,7 @@ const handleExport = () => {
               <th class="py-3 px-4">Primary Root Cause</th>
               <th class="py-3 px-4">Incidents</th>
               <th class="py-3 px-4">Share</th>
-              <th class="py-3 px-4">Responsibility Enum</th>
+              <th class="py-3 px-4">Responsibility</th>
               <th class="py-3 px-4 text-right">Fee Rule (PHP)</th>
             </tr>
           </thead>

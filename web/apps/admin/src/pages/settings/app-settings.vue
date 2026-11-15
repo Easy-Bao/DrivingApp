@@ -60,7 +60,7 @@ const commitSettings = () => {
     validationError.value = result.error
     return
   }
-  toastMessage.value = `Saved Pagadian runtime configuration (${formatCentavos(config.value.minWalletBalanceCentavos)} min wallet, ${config.value.maxBiddingSurgeCap}x surge cap).`
+  toastMessage.value = `Saved platform configuration (${formatCentavos(config.value.minWalletBalanceCentavos)} min wallet, ${config.value.maxBiddingSurgeCap}x surge cap).`
   confirmOpen.value = false
   auditReason.value = ''
   validationError.value = null
@@ -71,7 +71,7 @@ const handleResetDefaults = () => {
   draft.value = clonePlatformConfig(DEFAULT_PLATFORM_CONFIG)
   minWalletPhp.value = DEFAULT_PLATFORM_CONFIG.minWalletBalanceCentavos / 100
   validationError.value = null
-  toastMessage.value = 'Restored default Pagadian platform configuration.'
+  toastMessage.value = 'Restored default platform configuration.'
 }
 </script>
 
@@ -281,12 +281,12 @@ const handleResetDefaults = () => {
       v-model:open="confirmOpen"
       v-model:reason="auditReason"
       title="Publish Runtime Configuration Changes"
-      description="Changes apply immediately to active Pagadian City bidding sessions and prepaid dispatch checks."
+      description="Changes apply immediately to active bidding sessions and prepaid dispatch checks."
       confirm-label="Apply Runtime Settings"
       tone="emerald"
       :require-reason="true"
       reason-label="Mandatory Change Control Note"
-      reason-placeholder="e.g., Adjusted peak surge threshold per Pagadian TODA weekly review..."
+      reason-placeholder="e.g., Adjusted peak surge threshold per weekly review..."
       @confirm="commitSettings"
       @cancel="confirmOpen = false"
     />

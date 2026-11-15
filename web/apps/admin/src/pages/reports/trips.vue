@@ -32,7 +32,7 @@ const handleExport = () => {
 
     <ReportFilterBar
       ref="filterBarRef"
-      report-title="Pagadian Trip Volume Report"
+      report-title="Trip Volume Report"
       @change="activeFilters = $event"
       @export="handleExport"
     />
@@ -54,7 +54,7 @@ const handleExport = () => {
           >
             <tr>
               <th class="py-3 px-4">Date</th>
-              <th class="py-3 px-4">Pagadian Corridor</th>
+              <th class="py-3 px-4">Corridor</th>
               <th class="py-3 px-4">Total Requested</th>
               <th class="py-3 px-4">Completed Rides</th>
               <th class="py-3 px-4">Cancelled Rides</th>

@@ -239,7 +239,7 @@ const handleTogglePublished = (article: FaqArticle) => {
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Question Heading</label>
+          <label class="block font-medium text-neutral-700 mb-1">Question</label>
           <input
             v-model="draftQuestion"
             type="text"
@@ -249,7 +249,7 @@ const handleTogglePublished = (article: FaqArticle) => {
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Answer Copy</label>
+          <label class="block font-medium text-neutral-700 mb-1">Answer</label>
           <textarea
             v-model="draftAnswer"
             rows="4"

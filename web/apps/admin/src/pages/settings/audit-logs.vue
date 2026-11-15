@@ -53,7 +53,7 @@ watch([searchQuery, severityFilter], resetPage)
 
 const exportAuditLogs = () => {
   exportToCsv(
-    'pagadian-admin-audit-logs.csv',
+    'admin-audit-logs.csv',
     ['Event ID', 'Timestamp', 'Operator', 'Role', 'Action', 'Target', 'Severity', 'IP'],
     filteredLogs.value.map((log) => [
       log.id,

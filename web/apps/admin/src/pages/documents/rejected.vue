@@ -67,7 +67,7 @@ function handleReopen(id: string) {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Rejected Documents"
+      title="Rejected"
       description="Inspect declined compliance files and re-open resubmitted scans for verification."
     />
 
@@ -169,7 +169,7 @@ function handleReopen(id: string) {
       :title="inspectingDoc ? `Rejection Details · ${inspectingDoc.id}` : ''"
       :subtitle="inspectingDoc ? `${inspectingDoc.driver} · ${inspectingDoc.docType}` : undefined"
       size="md"
-      close-label="Close modal"
+      close-label="Close"
       @update:open="!$event && (inspectingDoc = null)"
     >
       <div v-if="inspectingDoc" class="space-y-3 text-xs">

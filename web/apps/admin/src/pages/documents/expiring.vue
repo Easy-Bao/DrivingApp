@@ -85,7 +85,7 @@ function handleBroadcastCritical() {
 <template>
   <div class="space-y-6">
     <PageHeader
-      title="Expiring Documents"
+      title="Expiring"
       description="Monitor upcoming regulatory document expirations and send driver renewal reminders."
     >
       <template #actions>

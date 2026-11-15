@@ -39,7 +39,7 @@ function handleOpenUpdate(open: boolean) {
     :open="Boolean(trip)"
     title="Trip Details"
     size="lg"
-    close-label="Close modal"
+    close-label="Close"
     @update:open="handleOpenUpdate"
   >
     <template v-if="trip" #header-meta>

@@ -104,7 +104,7 @@ export function useTripReports() {
 
   function exportTripRows(rowsToExport: readonly TripReportRow[]): void {
     exportToCsv(
-      'pagadian-trip-volume-report.csv',
+      'trip-volume-report.csv',
       ['Date', 'Zone', 'Requested', 'Completed', 'Cancelled', 'Distance (km)', 'Gross (PHP)'],
       rowsToExport.map((row) => [
         row.date,
@@ -130,7 +130,7 @@ export function useRevenueReports() {
 
   function exportRevenueRows(rowsToExport: readonly RevenueSummaryRow[]): void {
     exportToCsv(
-      'pagadian-revenue-commission-report.csv',
+      'revenue-commission-report.csv',
       [
         'Period',
         'Corridor',
@@ -165,7 +165,7 @@ export function useDriverPerformanceReports() {
 
   function exportPerformanceRows(rowsToExport: readonly DriverPerformanceRow[]): void {
     exportToCsv(
-      'pagadian-driver-performance.csv',
+      'driver-performance.csv',
       ['Driver', 'Plate', 'Trips', 'Rating', 'Acceptance', 'Cancellation', 'Punctuality'],
       rowsToExport.map((metric) => [
         metric.driver,
@@ -195,7 +195,7 @@ export function useRiderCohortReports() {
 
   function exportCohortRows(rowsToExport: readonly RiderCohortRow[]): void {
     exportToCsv(
-      'pagadian-passenger-cohorts.csv',
+      'passenger-cohorts.csv',
       [
         'Cohort Segment',
         'Primary Zone',
@@ -257,8 +257,8 @@ export function useCancellationReports() {
   function exportCauseRows(rowsToExport: readonly CancellationCauseRow[]): void {
     const total = rowsToExport.reduce((sum, row) => sum + row.count, 0)
     exportToCsv(
-      'pagadian-cancellation-analysis.csv',
-      ['Root Cause', 'Incidents', 'Share', 'Responsibility Enum', 'Fee Rule'],
+      'cancellation-analysis.csv',
+      ['Root Cause', 'Incidents', 'Share', 'Responsibility', 'Fee Rule'],
       rowsToExport.map((cause) => [
         cause.reason,
         String(cause.count),
@@ -285,7 +285,7 @@ export function usePeakHoursReports() {
 
   function exportDemandRows(rowsToExport: readonly DemandWindowRow[]): void {
     exportToCsv(
-      'pagadian-peak-hours-demand.csv',
+      'peak-hours-demand.csv',
       ['Time Window', 'Corridor', 'Classification', 'Surge Multiplier', 'Requests', 'Utilization'],
       rowsToExport.map((demand) => [
         demand.timeWindow,
@@ -319,7 +319,7 @@ export function useDocumentExpiryReports() {
 
   function exportForecastRows(rowsToExport: readonly ExpiryForecastRow[]): void {
     exportToCsv(
-      'pagadian-document-expiry-forecast.csv',
+      'document-expiry-forecast.csv',
       [
         'Month',
         'LTO Licenses',

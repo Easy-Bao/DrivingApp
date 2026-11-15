@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Icon } from '@iconify/vue'
 import { ModalDialog } from '@/shared'
 import { buildDocumentPreviewSvg } from '@/features/documents'
 
@@ -49,7 +48,7 @@ const previewSrc = computed(() => {
     title: props.document.title,
     subtitle: props.document.subtitle,
     holder: props.applicantName,
-    authority: 'Pagadian City Compliance File',
+    authority: 'Compliance Document',
     plateOrRef: displayedFilename.value,
     side:
       props.document.category === 'license'
@@ -67,7 +66,7 @@ const previewSrc = computed(() => {
     :title="document?.title ?? ''"
     :subtitle="document?.subtitle"
     size="lg"
-    close-label="Close modal"
+    close-label="Close"
     @update:open="!$event && emit('close')"
   >
     <div v-if="document" class="space-y-4">
@@ -108,7 +107,7 @@ const previewSrc = computed(() => {
         v-else
         class="flex items-center justify-between gap-2 text-xs text-neutral-600 bg-neutral-50 border border-neutral-200 px-3 py-2"
       >
-        <span class="font-medium">Submitted File Reference</span>
+        <span class="font-medium">File</span>
         <span class="font-mono font-semibold text-neutral-900 truncate">{{
           displayedFilename
         }}</span>
@@ -122,10 +121,6 @@ const previewSrc = computed(() => {
           :alt="`${document.title} preview for ${applicantName}`"
           class="max-h-72 object-contain border border-neutral-200 bg-white shadow-xs"
         />
-        <div class="mt-2 inline-flex items-center gap-1.5 text-[11px] text-neutral-500 font-medium">
-          <Icon icon="lucide:shield-check" class="text-emerald-700" />
-          <span>Encrypted compliance scan · {{ displayedFilename }}</span>
-        </div>
       </div>
 
       <div

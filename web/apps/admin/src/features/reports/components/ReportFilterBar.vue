@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Icon } from '@iconify/vue'
 import {
   DEFAULT_REPORT_FILTERS,
   hasCustomReportFilters,
@@ -47,7 +46,7 @@ defineExpose({ resetFilters })
 const triggerExport = () => {
   const filters = { ...currentFilters.value }
   emit('export', { format: 'CSV', filters })
-  const zoneLabel = cityZone.value === 'all-zones' ? 'All Pagadian Zones' : cityZone.value
+  const zoneLabel = cityZone.value === 'all-zones' ? 'All Zones' : cityZone.value
   exportToast.value = `Prepared ${props.reportTitle} (CSV) for ${zoneLabel}.`
 }
 </script>
@@ -88,14 +87,14 @@ const triggerExport = () => {
           <label
             class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1"
           >
-            Pagadian Operating Zone
+            Zone
           </label>
           <BaseSelect
             v-model="cityZone"
             :full-width="true"
             aria-label="Filter report operating zone"
             :options="[
-              { label: 'All Pagadian Zones', value: 'all-zones' },
+              { label: 'All Zones', value: 'all-zones' },
               { label: 'Poblacion & Agora Market', value: 'poblacion' },
               { label: 'Integrated Bus Terminal', value: 'terminal' },
               { label: 'Dao Capitol & Gaisano', value: 'dao-capitol' },
@@ -136,11 +135,10 @@ const triggerExport = () => {
         </button>
         <button
           type="button"
-          class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+          class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors cursor-pointer"
           @click="triggerExport"
         >
-          <Icon icon="lucide:file-text" class="text-emerald-400 h-3.5 w-3.5" aria-hidden="true" />
-          <span>Download CSV</span>
+          Download CSV
         </button>
       </div>
     </div>

@@ -170,7 +170,7 @@ const confirmDriverAssignment = () => {
       :open="Boolean(editingZone)"
       title="Zone Surge Multiplier"
       size="sm"
-      close-label="Close modal"
+      close-label="Close"
       @update:open="(open) => !open && (editingZone = null)"
     >
       <form v-if="editingZone" class="space-y-4 text-xs" @submit.prevent="applySurgeOverride">
@@ -206,7 +206,7 @@ const confirmDriverAssignment = () => {
       :open="Boolean(assigningDispatch)"
       :title="assigningDispatch ? `Manual Dispatch · ${assigningDispatch.id}` : ''"
       size="md"
-      close-label="Close modal"
+      close-label="Close"
       @update:open="(open) => !open && (assigningDispatch = null)"
     >
       <form

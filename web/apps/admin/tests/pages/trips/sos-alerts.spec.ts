@@ -53,12 +53,12 @@ describe('SosAlertsPage', () => {
     await viewMapBtn!.trigger('click')
 
     expect(wrapper.text()).toContain('SOS-7016-104')
-    expect(wrapper.text()).toContain('Live Map Here')
+    expect(wrapper.text()).toContain('Live Map')
     expect(wrapper.text()).toContain('7.8257° N, 123.4370° E')
 
     const copyCoordsBtn = wrapper
       .findAll('button')
-      .find((button) => button.text().includes('Copy Coords'))
+      .find((button) => button.text().includes('Copy Coordinates'))
     expect(copyCoordsBtn).toBeDefined()
     await copyCoordsBtn!.trigger('click')
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('7.8257, 123.4370')

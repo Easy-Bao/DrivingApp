@@ -72,7 +72,7 @@ describe('DriverApplicationDetailsPage', () => {
 
     const closeModalBtn = wrapper
       .findAll('button')
-      .find((b) => b.attributes('aria-label') === 'Close modal')
+      .find((b) => b.attributes('aria-label') === 'Close')
     await closeModalBtn?.trigger('click')
 
     const rejectBtn = wrapper.findAll('button').find((b) => b.text().includes('Reject Application'))

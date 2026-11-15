@@ -70,7 +70,7 @@ describe('reports feature stores', () => {
       name: ' ',
       frequency: 'Weekly',
       format: 'CSV',
-      recipients: 'ops@easyride.ph',
+      recipients: 'admin@easyride.ph',
     })
     expect(badTitle.ok).toBe(false)
 

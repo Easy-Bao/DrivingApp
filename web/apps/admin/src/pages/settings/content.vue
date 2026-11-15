@@ -87,7 +87,7 @@ const saveDocument = () => {
                   class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold cursor-pointer"
                   @click="openEditor(doc)"
                 >
-                  Edit Policy Text
+                  Edit Policy
                 </button>
               </td>
             </tr>
@@ -113,9 +113,7 @@ const saveDocument = () => {
 
       <div class="space-y-3 text-xs">
         <div>
-          <label for="policy-title" class="block font-medium text-neutral-700 mb-1">
-            Document Heading
-          </label>
+          <label for="policy-title" class="block font-medium text-neutral-700 mb-1"> Title </label>
           <input
             id="policy-title"
             v-model="draftTitle"

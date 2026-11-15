@@ -14,7 +14,7 @@ describe('router security guards', () => {
     restoreDefaultDemoSession()
   })
 
-  it('resolves every sidebar navigation item path to a valid named route for root_operator', () => {
+  it('resolves every sidebar navigation item path to a valid named route for admin', () => {
     const navItems = navigationGroups.flatMap((group) => group.items)
     expect(navItems.length).toBeGreaterThan(20)
 
@@ -80,7 +80,7 @@ describe('router security guards', () => {
   })
 
   it('enforces role-based authorization boundaries across operational roles', async () => {
-    const fin = loginOperator('finance_ops', '7016')
+    const fin = loginOperator('finance', '7016')
     expect(fin.ok).toBe(true)
 
     await router.push('/payments/topups')
@@ -90,7 +90,7 @@ describe('router security guards', () => {
     expect(router.currentRoute.value.name).toBe('/unauthorized')
     expect(router.currentRoute.value.query.from).toBe('/settings/app-settings')
 
-    const support = loginOperator('support_lead', '7016')
+    const support = loginOperator('support', '7016')
     expect(support.ok).toBe(true)
 
     await router.push('/trips/safety-reports')
@@ -99,7 +99,7 @@ describe('router security guards', () => {
     await router.push('/payments/topups')
     expect(router.currentRoute.value.name).toBe('/unauthorized')
 
-    const fleet = loginOperator('fleet_ops', '7016')
+    const fleet = loginOperator('fleet', '7016')
     expect(fleet.ok).toBe(true)
 
     await router.push('/documents/verification')

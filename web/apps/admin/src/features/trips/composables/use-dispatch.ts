@@ -82,7 +82,7 @@ export function useBiddingSessions() {
     }
 
     target.status = 'expired'
-    target.expiresIn = 'Closed by Ops'
+    target.expiresIn = 'Closed'
     for (const offer of target.offers) {
       if (offer.status === 'pending') {
         offer.status = 'expired'

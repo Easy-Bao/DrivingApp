@@ -25,7 +25,7 @@ function handleOpenUpdate(open: boolean) {
   }
 }
 
-function copyCoords(incident: SosIncident) {
+function copyCoordinates(incident: SosIncident) {
   void copy(`${incident.latitude.toFixed(4)}, ${incident.longitude.toFixed(4)}`)
 }
 </script>
@@ -36,7 +36,7 @@ function copyCoords(incident: SosIncident) {
     :title="incident ? `Incident Location · ${incident.id}` : ''"
     :subtitle="incident ? `${incident.tripId} · ${incident.corridor}` : undefined"
     size="lg"
-    close-label="Close location view"
+    close-label="Close"
     @update:open="handleOpenUpdate"
   >
     <template v-if="incident" #header-meta>
@@ -49,10 +49,10 @@ function copyCoords(incident: SosIncident) {
     <div v-if="incident" class="space-y-4 text-xs">
       <div
         class="h-64 border border-dashed border-neutral-300 bg-neutral-50 flex flex-col items-center justify-center gap-2 text-center p-6"
-        data-test="sos-live-map-container"
+        data-test="sos-map"
       >
         <Icon icon="lucide:map-pin" class="h-6 w-6 text-neutral-700" aria-hidden="true" />
-        <div class="text-sm font-semibold text-neutral-900">Live Map Here</div>
+        <div class="text-sm font-semibold text-neutral-900">Live Map</div>
         <div class="font-mono text-xs text-neutral-600">{{ incident.coords }}</div>
         <div class="text-[11px] text-neutral-500">{{ incident.corridor }}</div>
       </div>
@@ -71,14 +71,14 @@ function copyCoords(incident: SosIncident) {
           <button
             type="button"
             class="mt-1 inline-flex items-center gap-1 text-neutral-700 hover:text-neutral-900 font-semibold cursor-pointer"
-            @click="copyCoords(incident)"
+            @click="copyCoordinates(incident)"
           >
             <Icon
               :icon="copied ? 'lucide:check' : 'lucide:copy'"
               class="h-3.5 w-3.5"
               aria-hidden="true"
             />
-            <span>Copy Coords</span>
+            <span>Copy Coordinates</span>
           </button>
         </div>
       </div>

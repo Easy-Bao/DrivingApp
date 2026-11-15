@@ -67,7 +67,7 @@ function exportEarningsCsv() {
   exportToCsv(
     'easyride-driver-earnings',
     [
-      'Summary ID',
+      'ID',
       'Driver',
       'Plate / TODA',
       'Trips',
@@ -126,7 +126,7 @@ function exportEarningsCsv() {
       >
         <SearchField
           v-model="searchQuery"
-          placeholder="Search driver, summary ID, or plate..."
+          placeholder="Search driver, ID, or plate..."
           aria-label="Search driver earnings"
           class="md:w-80"
         />

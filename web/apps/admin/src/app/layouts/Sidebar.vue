@@ -354,7 +354,7 @@ const filteredGroups = computed(() => {
         >
           <div class="flex flex-col overflow-hidden whitespace-nowrap">
             <span class="font-bold text-sm text-neutral-900 leading-tight">EasyRide</span>
-            <span class="text-[11px] text-neutral-500 font-medium">Pagadian Ops</span>
+            <span class="text-[11px] text-neutral-500 font-medium">Admin</span>
           </div>
         </div>
 

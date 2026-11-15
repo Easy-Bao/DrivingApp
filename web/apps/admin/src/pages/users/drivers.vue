@@ -214,7 +214,7 @@ function confirmStatusUpdate() {
       :title="inspectedDriver ? `Driver Profile · ${inspectedDriver.id}` : ''"
       :subtitle="inspectedDriver ? `${inspectedDriver.name} · ${inspectedDriver.city}` : undefined"
       size="md"
-      close-label="Close modal"
+      close-label="Close"
       @update:open="!$event && (inspectedDriver = null)"
     >
       <div v-if="inspectedDriver" class="grid grid-cols-2 gap-3 text-xs">

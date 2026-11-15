@@ -119,7 +119,7 @@ export const INITIAL_TOPUP_REQUESTS: readonly TopUpRequest[] = [
       provider: 'BPI Online · Fund Transfer',
       amountCentavos: 50000,
       reference: 'BPI-REF-6620192',
-      recipient: 'BPI EasyRide Ops · ****1809',
+      recipient: 'BPI EasyRide · ****1809',
       sender: 'Junel Pineda · 0998-331-0912',
       timestamp: '2026-11-13 08:22:10 PHT',
       accent: '#991b1b',

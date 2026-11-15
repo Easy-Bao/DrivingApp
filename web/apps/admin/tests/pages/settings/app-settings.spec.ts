@@ -50,7 +50,7 @@ describe('settings/app-settings page', () => {
     await confirmBtn!.trigger('click')
 
     expect(config.value.minWalletBalanceCentavos).toBe(8000)
-    expect(wrapper.text()).toContain('Saved Pagadian runtime configuration')
+    expect(wrapper.text()).toContain('Saved platform configuration')
     expect(logs.value[0]?.action).toBe('RUNTIME_CONFIG_UPDATED')
   })
 

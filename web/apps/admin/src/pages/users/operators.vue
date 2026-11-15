@@ -198,7 +198,7 @@ function confirmOperatorStatus() {
               <td class="py-3 px-4">
                 <BaseSelect
                   :model-value="op.role"
-                  :disabled="op.id === 'OPS-001'"
+                  :disabled="op.id === 'ADM-001'"
                   :aria-label="`Assigned role for ${op.name}`"
                   :options="roleOptions.map((role) => ({ label: role, value: role }))"
                   @update:model-value="handleRoleChange(op.id, $event)"
@@ -207,7 +207,7 @@ function confirmOperatorStatus() {
               <td class="py-3 px-4">
                 <button
                   type="button"
-                  :disabled="op.id === 'OPS-001'"
+                  :disabled="op.id === 'ADM-001'"
                   class="px-2 py-1 text-[11px] font-semibold border cursor-pointer disabled:opacity-50"
                   :class="
                     op.mfaEnabled
@@ -229,7 +229,7 @@ function confirmOperatorStatus() {
               <td class="py-3 px-4 text-right">
                 <button
                   type="button"
-                  :disabled="op.id === 'OPS-001'"
+                  :disabled="op.id === 'ADM-001'"
                   class="text-xs font-semibold cursor-pointer disabled:opacity-40"
                   :class="op.status === 'Suspended' ? 'text-emerald-700' : 'text-rose-700'"
                   @click="((statusReason = ''), (pendingToggleStatus = op))"
@@ -261,7 +261,7 @@ function confirmOperatorStatus() {
       title="Invite Staff Operator"
       subtitle="Provision admin console access with hardware or TOTP 2FA enabled."
       size="md"
-      close-label="Close modal"
+      close-label="Close"
       @update:open="showInviteModal = $event"
     >
       <form class="space-y-4 text-xs" @submit.prevent="submitInvite">
@@ -285,7 +285,7 @@ function confirmOperatorStatus() {
             v-model="inviteForm.email"
             type="email"
             required
-            placeholder="operator@pagadian.ph"
+            placeholder="operator@easyride.ph"
             class="w-full px-3 py-2 border border-neutral-300 text-xs focus:outline-none focus:border-neutral-900"
           />
         </div>

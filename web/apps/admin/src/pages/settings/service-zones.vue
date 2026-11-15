@@ -111,7 +111,7 @@ const saveZone = () => {
       >
         <SearchField
           v-model="searchQuery"
-          placeholder="Search zone ID, corridor, or Pagadian barangay..."
+          placeholder="Search zone ID, corridor, or barangay..."
           aria-label="Search geofence zones"
           class="sm:max-w-sm"
         />

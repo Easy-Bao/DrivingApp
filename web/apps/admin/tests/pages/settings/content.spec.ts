@@ -16,7 +16,7 @@ describe('settings/content page', () => {
 
     await wrapper
       .findAll('button')
-      .find((b) => b.text().includes('Edit Policy Text'))!
+      .find((b) => b.text().includes('Edit Policy'))!
       .trigger('click')
 
     await wrapper.find('#policy-title').setValue('')

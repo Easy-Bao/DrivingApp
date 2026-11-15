@@ -208,7 +208,7 @@ function submitRejection() {
             </div>
 
             <div>
-              <div class="text-neutral-400 text-[11px] font-medium">Proof Reference / TXN Code</div>
+              <div class="text-neutral-400 text-[11px] font-medium">Reference Code</div>
               <div class="font-mono font-bold text-neutral-900 mt-0.5">
                 {{ request.referenceCode }}
               </div>
@@ -261,7 +261,7 @@ function submitRejection() {
 
         <div class="bg-white border border-neutral-200 p-5 flex flex-col justify-between space-y-4">
           <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
-            <h2 class="font-bold text-sm text-neutral-900">Uploaded Proof Receipt</h2>
+            <h2 class="font-bold text-sm text-neutral-900">Receipt</h2>
             <button
               type="button"
               class="text-xs font-semibold text-neutral-900 hover:underline inline-flex items-center gap-1 cursor-pointer"
@@ -272,22 +272,13 @@ function submitRejection() {
             </button>
           </div>
 
-          <button
-            type="button"
-            class="group relative border border-neutral-200 bg-neutral-50 p-2 hover:border-neutral-400 transition-colors cursor-pointer text-left"
-            @click="showProofModal = true"
-          >
+          <div class="border border-neutral-200 bg-neutral-50 p-2">
             <img
               :src="request.receiptPreviewUrl"
               :alt="`Payment proof receipt ${request.referenceCode} uploaded by ${request.driverName}`"
               class="w-full h-56 object-contain bg-white"
             />
-            <span
-              class="mt-2 block text-[11px] font-mono text-center text-neutral-500 group-hover:text-neutral-900"
-            >
-              Click to inspect full-resolution receipt
-            </span>
-          </button>
+          </div>
         </div>
       </div>
 
@@ -310,7 +301,7 @@ function submitRejection() {
             class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
             @click="showProofModal = false"
           >
-            Close Preview
+            Close
           </button>
         </template>
       </ModalDialog>

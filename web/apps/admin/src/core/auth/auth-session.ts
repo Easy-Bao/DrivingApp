@@ -1,6 +1,6 @@
 import { readonly, ref } from 'vue'
 
-export type OperatorRole = 'root_operator' | 'fleet_ops' | 'finance_ops' | 'support_lead'
+export type OperatorRole = 'admin' | 'fleet' | 'finance' | 'support'
 
 export interface AuthSession {
   token: string | null
@@ -22,48 +22,43 @@ export interface RoleProfile {
 }
 
 export const ROLE_PROFILES: Record<OperatorRole, RoleProfile> = {
-  root_operator: {
-    role: 'root_operator',
-    label: 'Root Operator',
-    operatorName: 'Operations Lead',
-    operatorEmail: 'ops@easyride.ph',
-    userId: 'OP-001',
+  admin: {
+    role: 'admin',
+    label: 'Admin',
+    operatorName: 'System Admin',
+    operatorEmail: 'admin@easyride.ph',
+    userId: 'ADM-001',
     scopeSummary: 'All routes, operators, ledger, dispatch, and settings.',
   },
-  fleet_ops: {
-    role: 'fleet_ops',
-    label: 'Fleet Ops',
+  fleet: {
+    role: 'fleet',
+    label: 'Fleet',
     operatorName: 'Ramon Villanueva',
     operatorEmail: 'dispatch@easyride.ph',
-    userId: 'OP-002',
+    userId: 'ADM-002',
     scopeSummary: 'Trips, live dispatch, documents, zones, and safety.',
   },
-  finance_ops: {
-    role: 'finance_ops',
-    label: 'Finance Ops',
+  finance: {
+    role: 'finance',
+    label: 'Finance',
     operatorName: 'Clarisse Mendoza',
     operatorEmail: 'treasury@easyride.ph',
-    userId: 'OP-003',
+    userId: 'ADM-003',
     scopeSummary: 'Top-ups, settlements, tariffs, commissions, and reports.',
   },
-  support_lead: {
-    role: 'support_lead',
-    label: 'Support Lead',
+  support: {
+    role: 'support',
+    label: 'Support',
     operatorName: 'Marisol Lim',
     operatorEmail: 'safety@easyride.ph',
-    userId: 'OP-004',
+    userId: 'ADM-004',
     scopeSummary: 'Tickets, disputes, safety reports, and refunds.',
   },
 }
 
 const STORAGE_KEY = 'easyride_console_session_v1'
 const SESSION_DURATION_MS = 8 * 60 * 60 * 1000
-const VALID_ROLES = new Set<OperatorRole>([
-  'root_operator',
-  'fleet_ops',
-  'finance_ops',
-  'support_lead',
-])
+const VALID_ROLES = new Set<OperatorRole>(['admin', 'fleet', 'finance', 'support'])
 
 function createActiveSession(role: OperatorRole, now = Date.now()): AuthSession {
   const profile = ROLE_PROFILES[role]
@@ -86,11 +81,8 @@ function createLockedSession(previous?: Partial<AuthSession>): AuthSession {
   return {
     token: null,
     userId: null,
-    operatorName: nonEmptyString(previous?.operatorName, ROLE_PROFILES.root_operator.operatorName),
-    operatorEmail: nonEmptyString(
-      previous?.operatorEmail,
-      ROLE_PROFILES.root_operator.operatorEmail,
-    ),
+    operatorName: nonEmptyString(previous?.operatorName, ROLE_PROFILES.admin.operatorName),
+    operatorEmail: nonEmptyString(previous?.operatorEmail, ROLE_PROFILES.admin.operatorEmail),
     role: null,
     expiresAt: 0,
     locked: true,
@@ -117,12 +109,12 @@ function clearPersistedSession(): void {
 
 function loadInitialSession(): AuthSession {
   if (typeof window === 'undefined' || typeof window.sessionStorage === 'undefined') {
-    return createActiveSession('root_operator')
+    return createActiveSession('admin')
   }
   try {
     const raw = window.sessionStorage.getItem(STORAGE_KEY)
     if (!raw) {
-      const initial = createActiveSession('root_operator')
+      const initial = createActiveSession('admin')
       persistSession(initial)
       return initial
     }
@@ -218,7 +210,7 @@ export function setAuthSessionForTesting(session: Partial<AuthSession>): void {
 }
 
 export function restoreDefaultDemoSession(): void {
-  const next = createActiveSession('root_operator')
+  const next = createActiveSession('admin')
   sessionState.value = next
   persistSession(next)
 }

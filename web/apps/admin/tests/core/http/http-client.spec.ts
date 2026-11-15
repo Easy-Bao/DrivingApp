@@ -5,7 +5,7 @@ import { HttpClientError, httpClient } from '@/core/http/http-client'
 
 describe('httpClient', () => {
   it('resolves relative endpoints against env.apiBaseUrl and handles 204 No Content safely', async () => {
-    loginOperator('root_operator', '7016')
+    loginOperator('admin', '7016')
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
     vi.stubGlobal('fetch', fetchMock)
 
@@ -37,7 +37,7 @@ describe('httpClient', () => {
   })
 
   it('locks the active operator session when the API responds with 401 Unauthorized', async () => {
-    loginOperator('finance_ops', '7016')
+    loginOperator('finance', '7016')
     expect(isSessionAuthenticated()).toBe(true)
 
     const fetchMock = vi.fn().mockResolvedValue(

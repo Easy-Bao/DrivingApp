@@ -255,9 +255,7 @@ const submitReply = () => {
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">
-            Operator Reply &amp; Resolution Message
-          </label>
+          <label class="block font-medium text-neutral-700 mb-1"> Reply </label>
           <textarea
             v-model="draftReply"
             rows="3"

@@ -103,7 +103,7 @@ const saveModerationDecision = () => {
 
 const exportReports = () => {
   exportToCsv(
-    'pagadian-safety-reports.csv',
+    'safety-reports.csv',
     [
       'Report ID',
       'Trip ID',
@@ -283,7 +283,7 @@ const exportReports = () => {
           : undefined
       "
       size="lg"
-      close-label="Close modal"
+      close-label="Close"
       @update:open="(open) => !open && closeModerationModal()"
     >
       <template #header-meta>

@@ -261,7 +261,7 @@ function rejectCurrent() {
       :title="inspectingDoc ? `Compliance Review · ${inspectingDoc.id}` : ''"
       :subtitle="inspectingDoc ? `${inspectingDoc.driver} · ${inspectingDoc.docType}` : undefined"
       size="lg"
-      close-label="Close modal"
+      close-label="Close"
       @update:open="!$event && closeReview()"
     >
       <div v-if="inspectingDoc" class="space-y-4 text-xs">

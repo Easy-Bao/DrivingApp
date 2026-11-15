@@ -24,7 +24,7 @@ describe('LoginPage', () => {
   it('rejects invalid security PINs and blocks unsafe open redirects on sign in', async () => {
     const wrapper = mount(LoginPage)
 
-    expect(wrapper.text()).toContain('EasyRide Operations')
+    expect(wrapper.text()).toContain('EasyRide Admin')
 
     const pinInput = wrapper.find('input[placeholder*="4+ digit PIN"]')
     await pinInput.setValue('12')
@@ -38,7 +38,7 @@ describe('LoginPage', () => {
     await wrapper.find('form').trigger('submit')
 
     expect(isSessionAuthenticated()).toBe(true)
-    expect(getAuthSession().role).toBe('root_operator')
+    expect(getAuthSession().role).toBe('admin')
     expect(mockReplace).toHaveBeenCalledWith('/dashboard/overview')
   })
 

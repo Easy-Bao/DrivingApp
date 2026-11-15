@@ -11,12 +11,12 @@ vi.mock('vue-router', () => ({
 
 describe('ProfilePage', () => {
   it('binds displayed operator identity to the active authenticated role and locks via router', async () => {
-    loginOperator('finance_ops', '7016')
+    loginOperator('finance', '7016')
     const wrapper = mount(ProfilePage)
 
     expect(wrapper.text()).toContain('Clarisse Mendoza')
     expect(wrapper.text()).toContain('treasury@easyride.ph')
-    expect(wrapper.text()).toContain('Finance Ops')
+    expect(wrapper.text()).toContain('Finance')
     expect(wrapper.text()).not.toContain('Root Access')
 
     const lockBtn = wrapper.findAll('button').find((b) => b.text().includes('Lock Session'))

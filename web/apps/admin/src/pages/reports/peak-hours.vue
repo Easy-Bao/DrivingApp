@@ -54,7 +54,7 @@ const handleExport = () => {
           >
             <tr>
               <th class="py-3 px-4">Time Window</th>
-              <th class="py-3 px-4">Pagadian Corridor</th>
+              <th class="py-3 px-4">Corridor</th>
               <th class="py-3 px-4">Classification</th>
               <th class="py-3 px-4">Avg Surge Multiplier</th>
               <th class="py-3 px-4">Requests</th>

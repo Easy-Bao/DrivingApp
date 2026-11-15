@@ -8,7 +8,7 @@ const mockPush = vi.fn()
 const mockRoute = reactive({
   query: {
     from: '/settings/app-settings',
-    required: 'root_operator,fleet_ops',
+    required: 'admin,fleet',
   } as Record<string, string>,
 })
 
@@ -21,16 +21,16 @@ vi.mock('vue-router', () => ({
 describe('UnauthorizedPage', () => {
   beforeEach(() => {
     mockPush.mockClear()
-    mockRoute.query = { from: '/settings/app-settings', required: 'root_operator,fleet_ops' }
-    loginOperator('finance_ops', '7016')
+    mockRoute.query = { from: '/settings/app-settings', required: 'admin,fleet' }
+    loginOperator('finance', '7016')
   })
 
   it('displays blocked role labels and locks session when switching role', async () => {
     const wrapper = mount(UnauthorizedPage)
 
     expect(wrapper.text()).toContain('Restricted Access')
-    expect(wrapper.text()).toContain('Finance Ops')
-    expect(wrapper.text()).toContain('Root Operator, Fleet Ops')
+    expect(wrapper.text()).toContain('Finance')
+    expect(wrapper.text()).toContain('Admin, Fleet')
     expect(wrapper.find('a[href="/dashboard/overview"]').text()).toContain('Overview')
 
     const switchBtn = wrapper.findAll('button').find((b) => b.text().includes('Switch Role'))

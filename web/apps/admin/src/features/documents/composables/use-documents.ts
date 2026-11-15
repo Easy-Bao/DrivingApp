@@ -93,7 +93,7 @@ export function useVerificationDocuments() {
       city: doc.city,
       docType: doc.docType,
       rejectionReason: trimmedReason,
-      rejectedBy: session.operatorName || 'Operations Control Lead',
+      rejectedBy: session.operatorName || 'System Admin',
       rejectedAt: 'Just now',
       resubmitted: false,
     }

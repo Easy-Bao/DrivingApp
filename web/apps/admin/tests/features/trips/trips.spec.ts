@@ -41,7 +41,7 @@ describe('trips feature stores & state guards', () => {
 
     const updated = sessions.value.find((item) => item.id === 'BID-3041')!
     expect(updated.status).toBe('expired')
-    expect(updated.expiresIn).toBe('Closed by Ops')
+    expect(updated.expiresIn).toBe('Closed')
     expect(updated.offers.every((offer) => offer.status === 'expired')).toBe(true)
     expect(logs.value[0]!.action).toBe('BID_SESSION_EXPIRED')
   })

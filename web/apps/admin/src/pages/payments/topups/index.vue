@@ -170,7 +170,7 @@ function exportRequestsCsv() {
               <th class="py-3 px-4">Prepaid Balance</th>
               <th class="py-3 px-4">Top-Up Amount</th>
               <th class="py-3 px-4">Payment Channel</th>
-              <th class="py-3 px-4">Reference &amp; Proof</th>
+              <th class="py-3 px-4">Reference</th>
               <th class="py-3 px-4">Status</th>
               <th class="py-3 px-4 text-right">Action</th>
             </tr>
@@ -212,12 +212,6 @@ function exportRequestsCsv() {
               <td class="py-3 px-4">
                 <div class="font-mono text-[11px] font-semibold text-neutral-800">
                   {{ req.referenceCode }}
-                </div>
-                <div
-                  class="inline-flex items-center gap-1 text-[11px] text-neutral-600 font-medium mt-0.5"
-                >
-                  <Icon icon="lucide:image" class="text-xs" aria-hidden="true" />
-                  <span>Receipt Image</span>
                 </div>
               </td>
               <td class="py-3 px-4">

@@ -23,7 +23,7 @@ describe('PaymentMethodsPage', () => {
 
     const addDialog = wrapper.find('[role="dialog"]')
     await addDialog
-      .find('input[placeholder*="Landbank Pagadian Operations"]')
+      .find('input[placeholder*="Landbank Business Account"]')
       .setValue('Landbank Pagadian Express')
     await addDialog
       .find('input[placeholder*="Land Bank of the Philippines"]')
@@ -38,10 +38,10 @@ describe('PaymentMethodsPage', () => {
     await saveAccountBtn!.trigger('click')
     expect(wrapper.text()).toContain('Landbank Pagadian Express')
 
-    const editBtn = wrapper.findAll('button').find((b) => b.text().includes('Edit Account Info'))
+    const editBtn = wrapper.findAll('button').find((b) => b.text().includes('Edit Account'))
     expect(editBtn).toBeDefined()
     await editBtn!.trigger('click')
-    expect(wrapper.text()).toContain('Edit Account Info ·')
+    expect(wrapper.text()).toContain('Edit Account ·')
     const saveEditBtn = wrapper
       .findAll('button')
       .find((b) => b.text().includes('Update Account Details'))

@@ -302,10 +302,10 @@ export const SEED_EXPIRY_FORECAST: readonly ExpiryForecastRow[] = [
 export const SEED_SCHEDULED_REPORTS: readonly ScheduledReport[] = [
   {
     id: 'SCH-01',
-    name: 'Weekly Pagadian Cash Commission & Settlement Summary',
+    name: 'Weekly Cash Commission & Settlement Summary',
     frequency: 'Weekly',
     format: 'Excel',
-    recipients: 'treasury@easyride.ph, ops@easyride.ph',
+    recipients: 'treasury@easyride.ph, admin@easyride.ph',
     timeSchedule: 'Every Monday at 08:00 AM PHT',
     isActive: true,
   },

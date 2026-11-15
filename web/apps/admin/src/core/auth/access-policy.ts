@@ -6,30 +6,30 @@ export interface RoutePolicyRule {
 }
 
 export const ROUTE_ACCESS_POLICY: readonly RoutePolicyRule[] = [
-  { prefix: '/users/operators', roles: ['root_operator'] },
-  { prefix: '/users/roles', roles: ['root_operator'] },
-  { prefix: '/settings/content', roles: ['root_operator'] },
-  { prefix: '/settings/app-settings', roles: ['root_operator'] },
-  { prefix: '/settings/audit-logs', roles: ['root_operator'] },
-  { prefix: '/settings/service-zones', roles: ['root_operator', 'fleet_ops'] },
-  { prefix: '/settings/cities', roles: ['root_operator', 'fleet_ops'] },
-  { prefix: '/documents', roles: ['root_operator', 'fleet_ops'] },
-  { prefix: '/payments/refunds', roles: ['root_operator', 'finance_ops', 'support_lead'] },
-  { prefix: '/payments', roles: ['root_operator', 'finance_ops'] },
-  { prefix: '/trips', roles: ['root_operator', 'fleet_ops', 'support_lead'] },
-  { prefix: '/users', roles: ['root_operator', 'fleet_ops', 'support_lead'] },
-  { prefix: '/support', roles: ['root_operator', 'support_lead', 'fleet_ops'] },
+  { prefix: '/users/operators', roles: ['admin'] },
+  { prefix: '/users/roles', roles: ['admin'] },
+  { prefix: '/settings/content', roles: ['admin'] },
+  { prefix: '/settings/app-settings', roles: ['admin'] },
+  { prefix: '/settings/audit-logs', roles: ['admin'] },
+  { prefix: '/settings/service-zones', roles: ['admin', 'fleet'] },
+  { prefix: '/settings/cities', roles: ['admin', 'fleet'] },
+  { prefix: '/documents', roles: ['admin', 'fleet'] },
+  { prefix: '/payments/refunds', roles: ['admin', 'finance', 'support'] },
+  { prefix: '/payments', roles: ['admin', 'finance'] },
+  { prefix: '/trips', roles: ['admin', 'fleet', 'support'] },
+  { prefix: '/users', roles: ['admin', 'fleet', 'support'] },
+  { prefix: '/support', roles: ['admin', 'support', 'fleet'] },
   {
     prefix: '/reports',
-    roles: ['root_operator', 'fleet_ops', 'finance_ops', 'support_lead'],
+    roles: ['admin', 'fleet', 'finance', 'support'],
   },
   {
     prefix: '/dashboard',
-    roles: ['root_operator', 'fleet_ops', 'finance_ops', 'support_lead'],
+    roles: ['admin', 'fleet', 'finance', 'support'],
   },
   {
     prefix: '/account',
-    roles: ['root_operator', 'fleet_ops', 'finance_ops', 'support_lead'],
+    roles: ['admin', 'fleet', 'finance', 'support'],
   },
 ]
 
@@ -75,7 +75,7 @@ export function getAllowedRolesForPath(
     return matchedRule.roles
   }
 
-  return ['root_operator']
+  return ['admin']
 }
 
 export function canRoleAccessPath(

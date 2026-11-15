@@ -52,7 +52,7 @@ describe('features/settings domain & composables', () => {
   })
 
   it('commits valid runtime config changes and records an audit log for the active operator', () => {
-    loginOperator('finance_ops', '7016')
+    loginOperator('finance', '7016')
     const { config, commitConfig, resetToDefaults } = usePlatformConfig()
     const { logs } = useAuditLogs()
     const initialCount = logs.value.length

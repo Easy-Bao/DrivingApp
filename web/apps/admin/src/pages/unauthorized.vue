@@ -22,7 +22,7 @@ const requestedPath = computed(() => {
 })
 
 const requiredRoles = computed(() => {
-  const raw = typeof route.query.required === 'string' ? route.query.required : 'root_operator'
+  const raw = typeof route.query.required === 'string' ? route.query.required : 'admin'
   return raw
     .split(',')
     .map((key) => {

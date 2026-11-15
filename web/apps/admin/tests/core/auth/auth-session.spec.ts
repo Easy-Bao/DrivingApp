@@ -18,7 +18,7 @@ describe('auth session security', () => {
       JSON.stringify({
         token: 'short',
         userId: 'op-root',
-        role: 'root_operator',
+        role: 'admin',
         operatorName: 12345,
         operatorEmail: null,
         expiresAt: Date.now() + 60_000,
@@ -35,14 +35,14 @@ describe('auth session security', () => {
   it('validates passcodes, signs in active roles, and locks the session on sign out', async () => {
     const auth = await import('@/core/auth/auth-session')
 
-    expect(auth.loginOperator('finance_ops', '999')).toEqual({
+    expect(auth.loginOperator('finance', '999')).toEqual({
       ok: false,
       error: 'PIN must be at least 4 characters.',
     })
 
-    const signedIn = auth.loginOperator('finance_ops', '7016')
+    const signedIn = auth.loginOperator('finance', '7016')
     expect(signedIn.ok).toBe(true)
-    expect(auth.getAuthSession().role).toBe('finance_ops')
+    expect(auth.getAuthSession().role).toBe('finance')
     expect(auth.getAuthSession().operatorName).toBe('Clarisse Mendoza')
     expect(auth.isSessionAuthenticated()).toBe(true)
 

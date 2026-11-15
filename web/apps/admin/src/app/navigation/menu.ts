@@ -45,7 +45,7 @@ export const navigationGroups: NavGroup[] = [
       },
       {
         id: 'roles',
-        label: 'Staff Roles',
+        label: 'Roles',
         icon: 'lucide:shield-check',
         path: '/users/roles',
       },
@@ -65,14 +65,14 @@ export const navigationGroups: NavGroup[] = [
       },
       {
         id: 'expiring-documents',
-        label: 'Expiring Docs',
+        label: 'Expiring',
         icon: 'lucide:file-clock',
         path: '/documents/expiring',
         badgeClass: 'bg-neutral-100 text-neutral-700',
       },
       {
         id: 'rejected-documents',
-        label: 'Rejected Docs',
+        label: 'Rejected',
         icon: 'lucide:file-x',
         path: '/documents/rejected',
       },
@@ -202,13 +202,13 @@ export const navigationGroups: NavGroup[] = [
       },
       {
         id: 'driver-performance',
-        label: 'Driver Stats',
+        label: 'Performance',
         icon: 'lucide:award',
         path: '/reports/driver-performance',
       },
       {
         id: 'rider-activity',
-        label: 'Rider Stats',
+        label: 'Activity',
         icon: 'lucide:activity',
         path: '/reports/rider-activity',
       },

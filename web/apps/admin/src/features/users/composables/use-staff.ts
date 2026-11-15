@@ -34,10 +34,10 @@ export function resetStaffForTesting(): void {
 }
 
 function inferDepartment(role: string): string {
-  if (role.includes('Dispatch')) return 'Fleet Dispatch'
-  if (role.includes('Treasury')) return 'Treasury & Wallet QA'
-  if (role.includes('Trust') || role.includes('Support')) return 'Compliance & Support'
-  return 'Executive Operations'
+  if (role.includes('Fleet') || role.includes('Dispatch')) return 'Fleet'
+  if (role.includes('Finance') || role.includes('Treasury')) return 'Finance'
+  if (role.includes('Support') || role.includes('Trust')) return 'Support'
+  return 'Administration'
 }
 
 /**
@@ -59,7 +59,7 @@ export function useOperators() {
     }
 
     const nextNum = operators.value.length + 1
-    const newId = `OPS-${String(nextNum).padStart(3, '0')}`
+    const newId = `ADM-${String(nextNum).padStart(3, '0')}`
     const created: OperatorAccount = {
       id: newId,
       name,
@@ -83,8 +83,8 @@ export function useOperators() {
   }
 
   function updateOperatorRole(id: string, role: string): UserActionResult {
-    if (id === 'OPS-001') {
-      return { ok: false, error: 'Root operator account role cannot be modified.' }
+    if (id === 'ADM-001') {
+      return { ok: false, error: 'Primary admin account role cannot be modified.' }
     }
     const target = operators.value.find((op) => op.id === id)
     if (!target) {
@@ -110,8 +110,8 @@ export function useOperators() {
   }
 
   function toggleOperatorMfa(id: string): UserActionResult {
-    if (id === 'OPS-001') {
-      return { ok: false, error: 'Root operator account MFA enforcement cannot be disabled.' }
+    if (id === 'ADM-001') {
+      return { ok: false, error: 'Primary admin account MFA enforcement cannot be disabled.' }
     }
     const target = operators.value.find((op) => op.id === id)
     if (!target) {
@@ -134,8 +134,8 @@ export function useOperators() {
   }
 
   function suspendOperator(id: string, reason?: string): UserActionResult {
-    if (id === 'OPS-001') {
-      return { ok: false, error: 'Root operator account cannot be suspended.' }
+    if (id === 'ADM-001') {
+      return { ok: false, error: 'Primary admin account cannot be suspended.' }
     }
     const target = operators.value.find((op) => op.id === id)
     if (!target) {

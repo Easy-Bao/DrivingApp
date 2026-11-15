@@ -57,10 +57,7 @@ function submitRole() {
 
 <template>
   <div class="space-y-6">
-    <PageHeader
-      title="Roles &amp; Access"
-      description="Manage RBAC permission groups and staff scopes."
-    >
+    <PageHeader title="Roles" description="Manage RBAC permission groups and staff scopes.">
       <template #actions>
         <button
           type="button"
@@ -122,7 +119,7 @@ function submitRole() {
       :title="editingRoleId ? 'Edit Role Permissions' : 'Create New Role'"
       subtitle="Select console capabilities granted to operators holding this role."
       size="md"
-      close-label="Close modal"
+      close-label="Close"
       @update:open="showRoleModal = $event"
     >
       <form class="space-y-4 text-xs" @submit.prevent="submitRole">

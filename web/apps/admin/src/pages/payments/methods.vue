@@ -216,7 +216,7 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
                 <span class="font-medium text-neutral-800">{{ account.accountHolder }}</span>
               </div>
               <div>
-                <span class="text-neutral-400 block">Merchant Ref / Branch</span>
+                <span class="text-neutral-400 block">Reference / Branch</span>
                 <span class="font-mono text-neutral-700">{{ account.branchOrMerchantId }}</span>
               </div>
             </div>
@@ -246,7 +246,7 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
               class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50 cursor-pointer"
               @click="openEditModal(account)"
             >
-              Edit Account Info
+              Edit Account
             </button>
             <button
               v-if="account.channelType === 'QRPh Wallet'"
@@ -272,7 +272,7 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
     <ModalDialog
       v-model:open="showAddModal"
       title="Add Company Collection Account"
-      subtitle="Publish a verified QRPh merchant wallet or Pagadian corporate bank account for driver top-ups."
+      subtitle="Publish a verified QRPh merchant wallet or corporate bank account for driver top-ups."
       size="md"
     >
       <div class="space-y-3 text-xs">
@@ -281,7 +281,7 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
           <input
             v-model="newLabel"
             type="text"
-            placeholder="e.g., Landbank Pagadian Operations"
+            placeholder="e.g., Landbank Business Account"
             class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
           />
         </div>
@@ -364,7 +364,7 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
 
     <ModalDialog
       v-model:open="showEditModal"
-      :title="`Edit Account Info · ${editLabel}`"
+      :title="`Edit Account · ${editLabel}`"
       subtitle="Update institutional account numbers or beneficiary details visible inside the driver app."
       size="md"
     >
@@ -395,7 +395,7 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
             />
           </div>
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Merchant / Branch Ref</label>
+            <label class="block font-medium text-neutral-700 mb-1">Reference / Branch</label>
             <input
               v-model="editBranchOrMerchantId"
               type="text"

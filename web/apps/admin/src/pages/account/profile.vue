@@ -19,7 +19,7 @@ const lockConsoleSession = () => {
 const fullName = ref(authSession.value.operatorName)
 const email = ref(authSession.value.operatorEmail)
 const phone = ref('+63 917 801 7016')
-const regionHub = ref('Pagadian City Dispatch Hub')
+const regionHub = ref('Main Hub')
 const mfaMethod = ref<'authenticator' | 'hardware_key'>('authenticator')
 
 watch(
@@ -169,7 +169,7 @@ const submitPasswordRotation = () => {
         </div>
         <div>
           <label for="profile-phone" class="block font-semibold text-neutral-700 mb-1">
-            Operations Contact
+            Contact
           </label>
           <input
             id="profile-phone"
@@ -179,9 +179,7 @@ const submitPasswordRotation = () => {
           />
         </div>
         <div>
-          <label for="profile-hub" class="block font-semibold text-neutral-700 mb-1">
-            Assigned Operations Hub
-          </label>
+          <label for="profile-hub" class="block font-semibold text-neutral-700 mb-1"> Hub </label>
           <input
             id="profile-hub"
             v-model="regionHub"
@@ -233,7 +231,7 @@ const submitPasswordRotation = () => {
       v-model:open="showPasswordModal"
       title="Rotate Account Password"
       size="md"
-      close-label="Close modal"
+      close-label="Close"
     >
       <form class="space-y-4 text-xs" @submit.prevent="submitPasswordRotation">
         <div class="space-y-3">

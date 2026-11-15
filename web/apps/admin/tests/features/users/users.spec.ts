@@ -38,7 +38,7 @@ describe('features/users domain & composables', () => {
   })
 
   it('enforces pending-only transitions and audit trails for driver applications', () => {
-    loginOperator('fleet_ops', '7016')
+    loginOperator('fleet', '7016')
     const { applications, approveApplication, rejectApplication } = useDriverApplications()
     const { logs } = useAuditLogs()
 
@@ -103,21 +103,21 @@ describe('features/users domain & composables', () => {
     const { roles, saveRole } = useRoles()
     const { logs } = useAuditLogs()
 
-    const rootUpdate = updateOperatorRole('OPS-001', 'Support Lead')
+    const rootUpdate = updateOperatorRole('ADM-001', 'Support')
     expect(rootUpdate.ok).toBe(false)
-    const rootSuspend = suspendOperator('OPS-001')
+    const rootSuspend = suspendOperator('ADM-001')
     expect(rootSuspend.ok).toBe(false)
 
     const invite = inviteOperator({
       name: 'Marco Dizon',
       email: 'marco.dizon@pagadian.ph',
-      role: 'Support Lead',
+      role: 'Support',
     })
     expect(invite.ok).toBe(true)
     expect(operators.value.some((op) => op.email === 'marco.dizon@pagadian.ph')).toBe(true)
     expect(logs.value[0]?.action).toBe('OPERATOR_INVITED')
 
-    expect(toggleOperatorMfa('OPS-002').ok).toBe(true)
+    expect(toggleOperatorMfa('ADM-002').ok).toBe(true)
     expect(logs.value[0]?.action).toBe('OPERATOR_MFA_UPDATED')
 
     const saved = saveRole({

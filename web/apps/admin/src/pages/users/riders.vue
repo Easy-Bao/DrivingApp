@@ -201,7 +201,7 @@ function confirmStandingUpdate() {
       :title="inspectedRider ? `Passenger Details · ${inspectedRider.id}` : ''"
       :subtitle="inspectedRider ? `${inspectedRider.name} · ${inspectedRider.barangay}` : undefined"
       size="md"
-      close-label="Close modal"
+      close-label="Close"
       @update:open="!$event && (inspectedRider = null)"
     >
       <div v-if="inspectedRider" class="space-y-4 text-xs">
