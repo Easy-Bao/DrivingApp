@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maps/maps.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_availability_error_panel.dart';
 
 void main() {

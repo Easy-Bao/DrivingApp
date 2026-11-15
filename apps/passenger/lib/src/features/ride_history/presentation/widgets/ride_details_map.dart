@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart' hide Route;
 import 'package:maps/maps.dart';
+import 'package:material_ui/material_ui.dart' hide Route;
 
 class const RideDetailsMap({
   super.key,

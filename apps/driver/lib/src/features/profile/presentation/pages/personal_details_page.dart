@@ -1,5 +1,5 @@
 import 'package:driver/src/features/profile/presentation/widgets/account_details_form.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class const PersonalDetailsPage({super.key, this.onBack})
     extends StatelessWidget {

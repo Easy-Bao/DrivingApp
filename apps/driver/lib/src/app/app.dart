@@ -8,7 +8,7 @@ import 'package:driver/src/core/location/location_access_cubit.dart';
 import 'package:driver/src/core/location/location_access_state.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
@@ -91,15 +91,21 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           ),
         ),
       ],
-      child: ModularApp.router(
+      child: MaterialApp.router(
+        routerConfig: Modular.routerConfig,
         theme: AppTheme.main,
         debugShowCheckedModeBanner: false,
         title: 'EasyRide Driver',
-        builder: (context, child) =>
-            BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
-              builder: (context, locationState) =>
-                  _buildRouteWithLocationOverlay(context, child, locationState),
-            ),
+        // Keep legacy Material Theme/Localizations available to dependencies
+        // (such as go_router 17, go_transitions, skeletonizer, and fl_chart)
+        // until they adopt package:material_ui.
+        // ignore: deprecated_member_use
+        builder: (context, child) => MaterialUiCompatibilityBridge(
+          child: BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
+            builder: (context, locationState) =>
+                _buildRouteWithLocationOverlay(context, child, locationState),
+          ),
+        ),
       ),
     );
   }

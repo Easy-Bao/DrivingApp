@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Booking pages are siblings of the stateful shell, so a route observer
 /// attached only to the home branch cannot see their pop or removal. The home

@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/app/navigation/app_routes.dart';
 import 'package:passenger/src/core/location/location_access_cubit.dart';
 import 'package:passenger/src/core/location/location_access_state.dart';
@@ -48,44 +48,49 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           },
         ),
       ],
-      child: ModularApp.router(
+      child: MaterialApp.router(
+        routerConfig: Modular.routerConfig,
         theme: AppTheme.main,
         debugShowCheckedModeBanner: false,
         title: 'EasyRide Passenger',
-        builder: (context, child) =>
-            BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
-              builder: (context, locationState) => MultiBlocListener(
-                listeners: [
-                  BlocListener<SessionBloc, SessionState>(
-                    listenWhen: (_, current) =>
-                        current is GuestSession || current is SessionFailure,
-                    listener: (context, _) {
-                      BlocProvider.of<BookingDraftCubit>(context).clear();
-                      unawaited(
-                        BlocProvider.of<TrackDriverCubit>(context)
-                            .resetTracking(),
+        // Keep legacy Material Theme/Localizations available to dependencies
+        // (such as go_router 17, go_transitions, and skeletonizer) until they
+        // adopt package:material_ui.
+        // ignore: deprecated_member_use
+        builder: (context, child) => MaterialUiCompatibilityBridge(
+          child: BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
+            builder: (context, locationState) => MultiBlocListener(
+              listeners: [
+                BlocListener<SessionBloc, SessionState>(
+                  listenWhen: (_, current) =>
+                      current is GuestSession || current is SessionFailure,
+                  listener: (context, _) {
+                    BlocProvider.of<BookingDraftCubit>(context).clear();
+                    unawaited(
+                      BlocProvider.of<TrackDriverCubit>(context)
+                          .resetTracking(),
+                    );
+                    try {
+                      Modular.get<BookingBloc>().add(
+                        const CancelBookingEvent(),
                       );
-                      try {
-                        Modular.get<BookingBloc>().add(
-                          const CancelBookingEvent(),
-                        );
-                      } catch (_) {}
-                      try {
-                        unawaited(
-                          Modular.get<BackgroundTelemetry>()
-                              .stopRideTelemetry(),
-                        );
-                      } catch (_) {}
-                    },
-                  ),
-                ],
-                child: _buildRouteWithLocationOverlay(
-                  context,
-                  child,
-                  locationState,
+                    } catch (_) {}
+                    try {
+                      unawaited(
+                        Modular.get<BackgroundTelemetry>().stopRideTelemetry(),
+                      );
+                    } catch (_) {}
+                  },
                 ),
+              ],
+              child: _buildRouteWithLocationOverlay(
+                context,
+                child,
+                locationState,
               ),
             ),
+          ),
+        ),
       ),
     );
   }

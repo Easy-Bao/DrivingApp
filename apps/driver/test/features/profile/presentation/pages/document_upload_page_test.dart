@@ -5,7 +5,7 @@ import 'package:driver/src/features/profile/domain/entities/driver_document.dart
 import 'package:driver/src/features/profile/domain/repositories/document_repository.dart';
 import 'package:driver/src/features/profile/presentation/bloc/document_upload/document_upload_cubit.dart';
 import 'package:driver/src/features/profile/presentation/pages/document_upload_page.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';

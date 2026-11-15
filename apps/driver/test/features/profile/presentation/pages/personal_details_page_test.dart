@@ -5,7 +5,7 @@ import 'package:driver/src/features/profile/domain/entities/account_snapshot.dar
 import 'package:driver/src/features/profile/presentation/pages/personal_details_page.dart';
 import 'package:driver/src/features/profile/domain/repositories/profile_repository.dart';
 import 'package:foundation/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -3,7 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/ride_history/presentation/pages/trip_detail_page.dart';
 import 'package:driver/src/core/session/session_store.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _RideRepository extends Mock implements RideRepository {}

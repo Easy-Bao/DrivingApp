@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Displays a participant-authorized picture without exposing storage URLs.
 class ChatPicture extends StatefulWidget {

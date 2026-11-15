@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/settings/settings_routes.dart';
 import 'package:shared_pages/shared_pages.dart';
 

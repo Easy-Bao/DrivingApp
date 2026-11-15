@@ -1,5 +1,5 @@
 import 'package:design_system/src/tokens/status_colors.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 @immutable
 class const AppSemanticColors({

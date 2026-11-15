@@ -1,7 +1,7 @@
 import 'dart:developer' as developer;
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Technical details remain in internal logs while framework error widgets
 /// render a stable, presentation-safe message.

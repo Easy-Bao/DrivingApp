@@ -4,7 +4,7 @@ import 'package:driver/src/features/performance/presentation/bloc/performance_cu
 import 'package:driver/src/features/performance/domain/entities/performance_stats.dart';
 import 'package:driver/src/features/performance/domain/repositories/performance_repository.dart';
 import 'package:driver/src/features/performance/presentation/pages/performance_page.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';

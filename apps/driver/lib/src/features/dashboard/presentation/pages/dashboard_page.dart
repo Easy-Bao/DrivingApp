@@ -19,7 +19,7 @@ import 'package:driver/src/core/location/location_access_cubit.dart';
 import 'package:driver/src/core/location/location_access_state.dart';
 import 'package:driver/src/core/notifications/incoming_request_alert.dart';
 import 'package:driver/src/core/formatters/value_formatters.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';

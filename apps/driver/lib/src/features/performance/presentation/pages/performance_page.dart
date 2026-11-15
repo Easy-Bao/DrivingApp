@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:driver/src/features/performance/presentation/bloc/performance_cubit.dart';
 import 'package:driver/src/features/performance/presentation/bloc/performance_state.dart';
 import 'package:driver/src/features/performance/domain/entities/performance_stats.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';

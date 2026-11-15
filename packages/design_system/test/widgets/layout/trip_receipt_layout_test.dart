@@ -1,5 +1,5 @@
 import 'package:design_system/design_system.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -26,8 +26,8 @@ void main() {
             ),
           ),
         );
-      final toolbar = tester.getRect(find.byType(AppBar));
-      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+        final toolbar = tester.getRect(find.byType(AppBar));
+        expect(find.byIcon(Icons.arrow_back), findsOneWidget);
         final title = tester.getRect(find.text(date));
         expect(title.center.dx, closeTo(toolbar.center.dx, 0.5));
         expect(title.center.dy, closeTo(toolbar.center.dy, 0.5));

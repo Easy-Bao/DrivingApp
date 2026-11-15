@@ -2,7 +2,7 @@ import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/earnings/domain/entities/earnings_summary.dart';
 import 'package:driver/src/features/earnings/presentation/bloc/earnings_cubit.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:skeletonizer/skeletonizer.dart';

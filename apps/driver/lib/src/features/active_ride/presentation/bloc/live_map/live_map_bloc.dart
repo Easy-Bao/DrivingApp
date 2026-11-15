@@ -5,7 +5,7 @@ import 'dart:developer' as dev;
 import 'dart:typed_data';
 
 import 'package:bloc_concurrency/bloc_concurrency.dart';
-import 'package:flutter/material.dart' show Color, EdgeInsets;
+import 'package:material_ui/material_ui.dart' show Color, EdgeInsets;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rxdart/rxdart.dart';
 

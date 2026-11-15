@@ -1,5 +1,5 @@
 import 'package:animations/animations.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_transitions/go_transitions.dart';
 import 'package:design_system/src/transitions/page_transition.dart';
 

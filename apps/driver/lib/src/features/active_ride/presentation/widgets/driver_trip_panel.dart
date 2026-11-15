@@ -2,7 +2,7 @@ import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/ride_confirmation_slider.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/ride_passenger_row.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:foundation/foundation.dart';
 
 class const DriverTripPanel({

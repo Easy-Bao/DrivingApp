@@ -5,7 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:design_system/design_system.dart'
     show AppPalette, AppStatusColors;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 

@@ -7,7 +7,7 @@ import 'package:driver/src/features/earnings/presentation/bloc/earnings_cubit.da
 import 'package:driver/src/features/earnings/presentation/pages/earnings_page.dart';
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';

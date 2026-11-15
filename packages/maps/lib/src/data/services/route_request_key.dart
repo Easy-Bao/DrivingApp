@@ -11,16 +11,16 @@ class RouteRequestKey extends Equatable {
     required this.preference,
     required this.profile,
     required List<({double latitude, double longitude})> excludePoints,
-  })  : originLatitude = _coordinateKey(originLatitude),
-        originLongitude = _coordinateKey(originLongitude),
-        destinationLatitude = _coordinateKey(destinationLatitude),
-        destinationLongitude = _coordinateKey(destinationLongitude),
-        excludePoints = excludePoints
-            .map(
-              (point) =>
-                  '${_coordinateKey(point.latitude)},${_coordinateKey(point.longitude)}',
-            )
-            .join(';');
+  }) : originLatitude = _coordinateKey(originLatitude),
+       originLongitude = _coordinateKey(originLongitude),
+       destinationLatitude = _coordinateKey(destinationLatitude),
+       destinationLongitude = _coordinateKey(destinationLongitude),
+       excludePoints = excludePoints
+           .map(
+             (point) =>
+                 '${_coordinateKey(point.latitude)},${_coordinateKey(point.longitude)}',
+           )
+           .join(';');
 
   final String originLatitude;
   final String originLongitude;

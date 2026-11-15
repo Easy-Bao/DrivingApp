@@ -1,5 +1,5 @@
 import 'package:design_system/design_system.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class InboxEmptyState extends StatelessWidget {
   const InboxEmptyState({super.key, this.isGuest = false});

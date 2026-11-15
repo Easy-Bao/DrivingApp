@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/app/navigation/floating_tab_bar.dart';
 import 'package:passenger/src/app/navigation/navigation_shell.dart';
 import 'package:passenger/src/features/auth/domain/entities/session.dart';

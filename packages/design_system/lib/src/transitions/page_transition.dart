@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_transitions/go_transitions.dart';
 
 class CustomPageTransition({this.fromRight = true, super.settings, super.child})

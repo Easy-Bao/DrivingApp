@@ -5,7 +5,7 @@ import 'package:design_system/src/theme/typography.dart';
 import 'package:design_system/src/tokens/palette.dart';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 abstract final class AppTheme {

@@ -3,11 +3,11 @@ import 'dart:ui' as ui;
 
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/app/app.dart';
 import 'package:passenger/src/app/dependencies.dart';
 import 'package:passenger/src/app/navigation/navigation_observer.dart';

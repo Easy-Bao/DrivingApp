@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:design_system/src/theme/semantic_colors.dart';
 
 extension DesignSystemContext on BuildContext {

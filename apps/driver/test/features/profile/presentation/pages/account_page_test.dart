@@ -4,7 +4,7 @@ import 'package:driver/src/features/profile/presentation/bloc/account/account_cu
 import 'package:driver/src/features/profile/presentation/pages/account_page.dart';
 import 'package:driver/src/features/profile/domain/entities/account_snapshot.dart';
 import 'package:driver/src/features/profile/domain/repositories/profile_repository.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';

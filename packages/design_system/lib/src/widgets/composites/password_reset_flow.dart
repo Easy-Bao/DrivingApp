@@ -4,7 +4,7 @@ import 'package:design_system/src/theme/theme_context.dart';
 import 'package:design_system/src/tokens/spacing.dart';
 import 'package:design_system/src/widgets/inputs/verification_code_field.dart';
 import 'package:design_system/src/widgets/layout/auth_layout.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
 class AppPasswordResetFlow extends StatefulWidget {

@@ -4,7 +4,7 @@ import 'package:design_system/src/tokens/size.dart';
 import 'package:design_system/src/tokens/spacing.dart';
 import 'package:design_system/src/widgets/navigation/swipe_tab_indicator.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 typedef AppTabIconBuilder = Widget Function(
   BuildContext context,

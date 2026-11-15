@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// The active tab owns the full capsule at an exact page position. During a
 /// swipe, each participating capsule keeps its tab allocation, fades with its

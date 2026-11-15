@@ -1,6 +1,6 @@
 import 'package:design_system/src/tokens/palette.dart';
 import 'package:design_system/src/tokens/status_colors.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 abstract final class AppColorScheme {
   static const main = ColorScheme(

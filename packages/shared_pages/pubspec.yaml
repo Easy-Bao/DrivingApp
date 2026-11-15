@@ -4,12 +4,13 @@ version: 0.1.0
 publish_to: none
 
 environment:
-  sdk: '>=3.13.0 <4.0.0'
-  flutter: '>=3.47.2'
+  sdk: '>=3.14.0 <4.0.0'
+  flutter: '>=3.50.0'
 
 dependencies:
   flutter:
     sdk: flutter
+  material_ui: ^1.11.0
   flutter_lucide: ^1.8.2
   design_system:
     path: ../design_system

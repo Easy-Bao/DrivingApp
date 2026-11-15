@@ -7,7 +7,7 @@ import 'dart:async';
 import 'package:driver/src/core/config/env_config.dart';
 import 'package:driver/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';

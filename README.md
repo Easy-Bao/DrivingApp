@@ -28,7 +28,7 @@ This is the Melos-based monorepo for the EasyRide booking application. It houses
 
 ### 1. Use the pinned Flutter toolchain
 
-This workspace targets Flutter 3.47.2 stable, which bundles Dart 3.13.2.
+This workspace targets Flutter 3.50.0 stable, which bundles Dart 3.14.0.
 Verify the active SDK before bootstrapping:
 
 ```bash

@@ -39,10 +39,7 @@ void main() {
     expect(await Future.wait([first, second]), everyElement(isNotEmpty));
     expect(apiClient.nearbyCallCount, 1);
 
-    await MapProvider.getNearbyPOIs(
-      latitude: latitude,
-      longitude: longitude,
-    );
+    await MapProvider.getNearbyPOIs(latitude: latitude, longitude: longitude);
     expect(apiClient.nearbyCallCount, 1);
   });
 
@@ -51,10 +48,7 @@ void main() {
     const longitude = 20.654321;
 
     MapProvider.clearLookupCaches();
-    await MapProvider.getNearbyPOIs(
-      latitude: latitude,
-      longitude: longitude,
-    );
+    await MapProvider.getNearbyPOIs(latitude: latitude, longitude: longitude);
 
     expect(apiClient.nearbyCallCount, 2);
   });
