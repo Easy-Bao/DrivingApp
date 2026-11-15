@@ -11,6 +11,7 @@ import { navigationGroups, type NavGroup, type NavItem } from '@/app/navigation/
 import { ROLE_PROFILES, canRoleAccessPath, lockAuthSession, useAuthSession } from '@/core'
 import { useExpiringDocuments, useVerificationDocuments } from '@/features/documents'
 import { useSettlements, useTopups } from '@/features/payments'
+import { useSupportTickets } from '@/features/support'
 import { useSafetyReports, useSosAlerts } from '@/features/trips'
 import { useDriverApplications } from '@/features/users'
 import { ConfirmDialog, useEscapeKey } from '@/shared'
@@ -44,6 +45,7 @@ const { pendingDocs } = useVerificationDocuments()
 const { expiringDocs } = useExpiringDocuments()
 const { pendingTopups } = useTopups()
 const { pendingSettlements } = useSettlements()
+const { openTicketCount } = useSupportTickets()
 const { activeAlertsCount } = useSosAlerts()
 const { openReportCount } = useSafetyReports()
 
@@ -55,6 +57,7 @@ const dynamicBadges = computed<Record<string, string | undefined>>(() => {
   const safetyCount = openReportCount.value
   const topupsCount = pendingTopups.value.length
   const settlementsCount = pendingSettlements.value.length
+  const ticketCount = openTicketCount.value
 
   return {
     'driver-applications': pendingApps > 0 ? String(pendingApps) : undefined,
@@ -64,6 +67,7 @@ const dynamicBadges = computed<Record<string, string | undefined>>(() => {
     'safety-reports': safetyCount > 0 ? String(safetyCount) : undefined,
     topups: topupsCount > 0 ? String(topupsCount) : undefined,
     settlements: settlementsCount > 0 ? String(settlementsCount) : undefined,
+    'tickets-complaints': ticketCount > 0 ? String(ticketCount) : undefined,
   }
 })
 

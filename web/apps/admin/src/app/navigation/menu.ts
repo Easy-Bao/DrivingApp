@@ -250,7 +250,6 @@ export const navigationGroups: NavGroup[] = [
         label: 'Tickets',
         icon: 'lucide:message-square-warning',
         path: '/support/tickets',
-        badge: '3',
         badgeClass: 'bg-neutral-100 text-neutral-700',
       },
       {

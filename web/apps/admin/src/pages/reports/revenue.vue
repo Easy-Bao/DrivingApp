@@ -1,103 +1,25 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ReportFilterBar, {
+import {
+  ReportFilterBar,
+  createDefaultReportFilters,
+  hasCustomReportFilters,
+  useRevenueReports,
   type ReportFilterValues,
-} from '@/features/reports/components/ReportFilterBar.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import { exportToCsv, formatPhp } from '@/shared/utils/format'
+} from '@/features/reports'
+import { EmptyTableRow, PageHeader, formatCentavos } from '@/shared'
 
-interface RevenueSummaryRow {
-  period: string
-  zoneKey: string
-  zoneLabel: string
-  grossVolumePhp: number
-  platformCommissionPhp: number
-  driverTakeHomePhp: number
-  effectiveCutPercent: string
-}
+const { filterRevenueRows, exportRevenueRows } = useRevenueReports()
 
-const financialSummaries = ref<RevenueSummaryRow[]>([
-  {
-    period: 'November 2026 (MTD)',
-    zoneKey: 'poblacion',
-    zoneLabel: 'Poblacion & Agora Market',
-    grossVolumePhp: 1124500,
-    platformCommissionPhp: 168675,
-    driverTakeHomePhp: 955825,
-    effectiveCutPercent: '15.0%',
-  },
-  {
-    period: 'October 2026',
-    zoneKey: 'terminal',
-    zoneLabel: 'Integrated Bus Terminal',
-    grossVolumePhp: 1480200,
-    platformCommissionPhp: 222030,
-    driverTakeHomePhp: 1258170,
-    effectiveCutPercent: '15.0%',
-  },
-  {
-    period: 'October 2026',
-    zoneKey: 'dao-capitol',
-    zoneLabel: 'Dao Capitol & Gaisano',
-    grossVolumePhp: 1360000,
-    platformCommissionPhp: 204000,
-    driverTakeHomePhp: 1156000,
-    effectiveCutPercent: '15.0%',
-  },
-  {
-    period: 'September 2026',
-    zoneKey: 'santiago-port',
-    zoneLabel: 'Santiago Port & Coastal',
-    grossVolumePhp: 790400,
-    platformCommissionPhp: 102752,
-    driverTakeHomePhp: 687648,
-    effectiveCutPercent: '13.0%',
-  },
-])
-
-const activeFilters = ref<ReportFilterValues>({
-  dateRange: 'last-30-days',
-  cityZone: 'all-zones',
-  dispatchMode: 'all-modes',
-})
-
-const filteredSummaries = computed(() =>
-  financialSummaries.value.filter(
-    (row) =>
-      activeFilters.value.cityZone === 'all-zones' || row.zoneKey === activeFilters.value.cityZone,
-  ),
-)
+const activeFilters = ref<ReportFilterValues>(createDefaultReportFilters())
+const filteredSummaries = computed(() => filterRevenueRows(activeFilters.value))
 
 const filterBarRef = ref<InstanceType<typeof ReportFilterBar> | null>(null)
-const hasActiveFilters = computed(
-  () =>
-    activeFilters.value.dateRange !== 'last-30-days' ||
-    activeFilters.value.cityZone !== 'all-zones' ||
-    activeFilters.value.dispatchMode !== 'all-modes',
-)
+const hasActiveFilters = computed(() => hasCustomReportFilters(activeFilters.value))
 const resetFilters = () => filterBarRef.value?.resetFilters()
 
 const handleExport = () => {
-  exportToCsv(
-    'pagadian-revenue-commission-report.csv',
-    [
-      'Period',
-      'Corridor',
-      'Gross Bookings (PHP)',
-      'Platform Commission (PHP)',
-      'Driver Cash Take-Home (PHP)',
-      'Effective Cut',
-    ],
-    filteredSummaries.value.map((summary) => [
-      summary.period,
-      summary.zoneLabel,
-      summary.grossVolumePhp.toFixed(2),
-      summary.platformCommissionPhp.toFixed(2),
-      summary.driverTakeHomePhp.toFixed(2),
-      summary.effectiveCutPercent,
-    ]),
-  )
+  exportRevenueRows(filteredSummaries.value)
 }
 </script>
 
@@ -146,13 +68,13 @@ const handleExport = () => {
               <td class="py-3 px-4 font-bold text-neutral-900">{{ summary.period }}</td>
               <td class="py-3 px-4 text-neutral-700">{{ summary.zoneLabel }}</td>
               <td class="py-3 px-4 font-mono font-semibold text-neutral-900 tabular-nums">
-                {{ formatPhp(summary.grossVolumePhp) }}
+                {{ formatCentavos(summary.grossVolumeCentavos) }}
               </td>
               <td class="py-3 px-4 font-mono font-bold text-emerald-700 tabular-nums">
-                {{ formatPhp(summary.platformCommissionPhp) }}
+                {{ formatCentavos(summary.platformCommissionCentavos) }}
               </td>
               <td class="py-3 px-4 font-mono text-neutral-700 tabular-nums">
-                {{ formatPhp(summary.driverTakeHomePhp) }}
+                {{ formatCentavos(summary.driverTakeHomeCentavos) }}
               </td>
               <td class="py-3 px-4 text-right font-mono font-bold text-neutral-900">
                 {{ summary.effectiveCutPercent }}

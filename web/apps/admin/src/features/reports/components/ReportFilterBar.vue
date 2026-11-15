@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
-
-export interface ReportFilterValues {
-  dateRange: 'today' | 'last-7-days' | 'last-30-days' | 'this-quarter'
-  cityZone: string
-  dispatchMode: string
-}
+import {
+  DEFAULT_REPORT_FILTERS,
+  hasCustomReportFilters,
+} from '@/features/reports/composables/use-reports'
+import type {
+  ReportDateRange,
+  ReportDispatchModeFilter,
+  ReportFilterValues,
+} from '@/features/reports/types'
+import { BaseSelect, ToastBanner } from '@/shared'
 
 const props = defineProps<{
   reportTitle: string
@@ -16,47 +18,37 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'change', filters: ReportFilterValues): void
-  (e: 'export', payload: { format: 'CSV' | 'PDF' | 'Excel'; filters: ReportFilterValues }): void
+  (e: 'export', payload: { format: 'CSV'; filters: ReportFilterValues }): void
 }>()
 
-const dateRange = ref<ReportFilterValues['dateRange']>('last-30-days')
-const cityZone = ref('all-zones')
-const dispatchMode = ref('all-modes')
+const dateRange = ref<ReportDateRange>(DEFAULT_REPORT_FILTERS.dateRange)
+const cityZone = ref(DEFAULT_REPORT_FILTERS.cityZone)
+const dispatchMode = ref<ReportDispatchModeFilter>(DEFAULT_REPORT_FILTERS.dispatchMode)
 const exportToast = ref<string | null>(null)
 
-const emitFilters = () => {
-  emit('change', {
-    dateRange: dateRange.value,
-    cityZone: cityZone.value,
-    dispatchMode: dispatchMode.value,
-  })
-}
+const currentFilters = computed<ReportFilterValues>(() => ({
+  dateRange: dateRange.value,
+  cityZone: cityZone.value,
+  dispatchMode: dispatchMode.value,
+}))
 
-watch([dateRange, cityZone, dispatchMode], emitFilters, { immediate: true })
+watch(currentFilters, (filters) => emit('change', filters), { immediate: true })
 
-const hasActiveFilters = computed(
-  () =>
-    dateRange.value !== 'last-30-days' ||
-    cityZone.value !== 'all-zones' ||
-    dispatchMode.value !== 'all-modes',
-)
+const hasActiveFilters = computed(() => hasCustomReportFilters(currentFilters.value))
 
 const resetFilters = () => {
-  dateRange.value = 'last-30-days'
-  cityZone.value = 'all-zones'
-  dispatchMode.value = 'all-modes'
+  dateRange.value = DEFAULT_REPORT_FILTERS.dateRange
+  cityZone.value = DEFAULT_REPORT_FILTERS.cityZone
+  dispatchMode.value = DEFAULT_REPORT_FILTERS.dispatchMode
 }
 
 defineExpose({ resetFilters })
 
-const triggerExport = (format: 'CSV' | 'PDF' | 'Excel') => {
-  const filters: ReportFilterValues = {
-    dateRange: dateRange.value,
-    cityZone: cityZone.value,
-    dispatchMode: dispatchMode.value,
-  }
-  emit('export', { format, filters })
-  exportToast.value = `Prepared ${props.reportTitle} (${format}) for ${cityZone.value === 'all-zones' ? 'All Pagadian Zones' : cityZone.value}.`
+const triggerExport = () => {
+  const filters = { ...currentFilters.value }
+  emit('export', { format: 'CSV', filters })
+  const zoneLabel = cityZone.value === 'all-zones' ? 'All Pagadian Zones' : cityZone.value
+  exportToast.value = `Prepared ${props.reportTitle} (CSV) for ${zoneLabel}.`
 }
 </script>
 
@@ -144,23 +136,11 @@ const triggerExport = (format: 'CSV' | 'PDF' | 'Excel') => {
         </button>
         <button
           type="button"
-          class="px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded-none text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer"
-          @click="triggerExport('CSV')"
+          class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+          @click="triggerExport"
         >
-          <Icon icon="lucide:file-text" class="text-neutral-500 h-3.5 w-3.5" aria-hidden="true" />
+          <Icon icon="lucide:file-text" class="text-emerald-400 h-3.5 w-3.5" aria-hidden="true" />
           <span>Download CSV</span>
-        </button>
-        <button
-          type="button"
-          class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors inline-flex items-center gap-1.5"
-          @click="triggerExport('Excel')"
-        >
-          <Icon
-            icon="lucide:file-spreadsheet"
-            class="text-emerald-400 h-3.5 w-3.5"
-            aria-hidden="true"
-          />
-          <span>Export Spreadsheet</span>
         </button>
       </div>
     </div>

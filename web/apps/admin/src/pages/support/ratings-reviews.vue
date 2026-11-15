@@ -1,76 +1,26 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
+import {
+  useReviewModeration,
+  type ReviewDirection,
+  type ReviewEntry,
+  type ReviewModerationState,
+} from '@/features/support'
+import {
+  BaseSelect,
+  ConfirmDialog,
+  EmptyTableRow,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  ToastBanner,
+} from '@/shared'
 
-interface ReviewEntry {
-  id: string
-  tripId: string
-  direction: 'Driver Review' | 'Passenger Review'
-  author: string
-  subjectParty: string
-  rating: number
-  comment: string
-  tags: string[]
-  moderationState: 'Published' | 'Flagged for Review' | 'Hidden by Moderator'
-  moderationReason?: string
-}
-
-const reviews = ref<ReviewEntry[]>([
-  {
-    id: 'REV-7016-901',
-    tripId: 'TRP-7016-8921',
-    direction: 'Driver Review',
-    author: 'Althea Mae Villanueva',
-    subjectParty: 'Rodelio Cruz (TODA-0412)',
-    rating: 5,
-    comment: 'Very polite, safe speed uphill to San Jose, exact change ready.',
-    tags: ['Safe Driving', 'Polite', 'Clean Vehicle'],
-    moderationState: 'Published',
-  },
-  {
-    id: 'REV-7016-900',
-    tripId: 'TRP-7016-8918',
-    direction: 'Driver Review',
-    author: 'Clarisse Joy Tagupa',
-    subjectParty: 'Ernesto Villafuerte (TODA-0318)',
-    rating: 2,
-    comment: 'Rude argument when dropping off along Rizal Ave; needs coaching.',
-    tags: ['Communication Issue'],
-    moderationState: 'Flagged for Review',
-  },
-  {
-    id: 'REV-7016-899',
-    tripId: 'TRP-7016-8910',
-    direction: 'Passenger Review',
-    author: 'Danilo Mendoza',
-    subjectParty: 'Maricar Santos (Passenger)',
-    rating: 5,
-    comment: 'Passenger waited right outside Integrated Terminal North Gate on time.',
-    tags: ['Punctual', 'Clear Pickup Pin'],
-    moderationState: 'Published',
-  },
-  {
-    id: 'REV-7016-898',
-    tripId: 'TRP-7016-8892',
-    direction: 'Passenger Review',
-    author: 'Reynaldo Bautista',
-    subjectParty: 'Kevin Lloyd Tan (Passenger)',
-    rating: 4,
-    comment: 'Smooth trip to Dao Medical Center.',
-    tags: ['Respectful'],
-    moderationState: 'Published',
-  },
-])
+const { reviews, moderateReview } = useReviewModeration()
 
 const searchQuery = ref('')
-const directionFilter = ref<'All' | ReviewEntry['direction']>('All')
-const stateFilter = ref<'All' | ReviewEntry['moderationState']>('All')
+const directionFilter = ref<'All' | ReviewDirection>('All')
+const stateFilter = ref<'All' | ReviewModerationState>('All')
 const toastMessage = ref<string | null>(null)
 
 const targetReview = ref<ReviewEntry | null>(null)
@@ -115,11 +65,14 @@ const openModerationConfirm = (entry: ReviewEntry, action: 'hide' | 'approve') =
 }
 
 const confirmModeration = () => {
-  if (!targetReview.value || !moderationReason.value.trim()) return
-  targetReview.value.moderationState =
-    pendingAction.value === 'hide' ? 'Hidden by Moderator' : 'Published'
-  targetReview.value.moderationReason = moderationReason.value.trim()
-  toastMessage.value = `${targetReview.value.id} updated to ${targetReview.value.moderationState}.`
+  const target = targetReview.value
+  if (!target) return
+  const result = moderateReview(target.id, pendingAction.value, moderationReason.value)
+  if (!result.ok) {
+    toastMessage.value = result.error
+    return
+  }
+  toastMessage.value = `${target.id} updated to ${target.moderationState}.`
   dialogOpen.value = false
   targetReview.value = null
   moderationReason.value = ''

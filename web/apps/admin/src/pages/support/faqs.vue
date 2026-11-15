@@ -1,73 +1,30 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
+import {
+  useFaqArticles,
+  type FaqArticle,
+  type FaqAudience,
+  type FaqCategory,
+} from '@/features/support'
+import {
+  BaseSelect,
+  ModalDialog,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  ToastBanner,
+} from '@/shared'
 
-interface FaqArticle {
-  id: string
-  category: 'Fare Bidding' | 'Driver Top-Ups' | 'Safety & SOS' | 'Documents & TODA'
-  audience: 'Passenger' | 'Driver'
-  question: string
-  answer: string
-  views: number
-  isPublished: boolean
-}
+const { faqs, saveFaq, togglePublished } = useFaqArticles()
 
-const faqs = ref<FaqArticle[]>([
-  {
-    id: 'FAQ-01',
-    category: 'Fare Bidding',
-    audience: 'Passenger',
-    question: 'How does Pagadian fare bidding work before pickup?',
-    answer:
-      'Enter your pickup and Pagadian destination pin to view the suggested tariff floor. Nearby drivers send custom PHP bids within the 90-second session window (capped at 2.5x surge). Choose the bid you prefer to confirm pickup.',
-    views: 4820,
-    isPublished: true,
-  },
-  {
-    id: 'FAQ-02',
-    category: 'Driver Top-Ups',
-    audience: 'Driver',
-    question: 'Why must I maintain at least ₱50.00 in my prepaid driver wallet?',
-    answer:
-      'Passengers pay 100% of the trip fare directly in cash upon drop-off. A minimum ₱50.00 balance ensures the 15% commission deduction can clear automatically without locking you out of dispatch.',
-    views: 3690,
-    isPublished: true,
-  },
-  {
-    id: 'FAQ-03',
-    category: 'Driver Top-Ups',
-    audience: 'Driver',
-    question: 'How do I submit a GCash or Maya QRPh top-up receipt?',
-    answer:
-      'Open Wallet -> Top-Up Credits, transfer PHP to an active EasyRide Pagadian QRPh merchant code or BDO/BPI account, and upload your screenshot receipt plus reference number for operations approval.',
-    views: 2910,
-    isPublished: true,
-  },
-  {
-    id: 'FAQ-04',
-    category: 'Safety & SOS',
-    audience: 'Passenger',
-    question: 'What happens when the in-ride SOS button is pressed?',
-    answer:
-      'Live GPS coordinates inside Pagadian City are broadcast immediately to the EasyRide Emergency Desk alongside direct escalation lines to National 911 and Pagadian CDRRMO (062-925-0911).',
-    views: 1540,
-    isPublished: true,
-  },
-])
-
-const audienceFilter = ref<'All' | FaqArticle['audience']>('All')
+const audienceFilter = ref<'All' | FaqAudience>('All')
 const searchQuery = ref('')
 const toastMessage = ref<string | null>(null)
 
 const showEditorModal = ref(false)
 const editingId = ref<string | null>(null)
-const draftCategory = ref<FaqArticle['category']>('Fare Bidding')
-const draftAudience = ref<FaqArticle['audience']>('Passenger')
+const draftCategory = ref<FaqCategory>('Fare Bidding')
+const draftAudience = ref<FaqAudience>('Passenger')
 const draftQuestion = ref('')
 const draftAnswer = ref('')
 const editorError = ref<string | null>(null)
@@ -115,39 +72,34 @@ const openEditFaq = (article: FaqArticle) => {
 }
 
 const saveFaqArticle = () => {
-  if (!draftQuestion.value.trim() || !draftAnswer.value.trim()) {
-    editorError.value = 'Enter both a question heading and helpful answer text.'
+  const previousCount = faqs.value.length
+  const result = saveFaq({
+    id: editingId.value ?? undefined,
+    category: draftCategory.value,
+    audience: draftAudience.value,
+    question: draftQuestion.value,
+    answer: draftAnswer.value,
+  })
+  if (!result.ok) {
+    editorError.value = result.error
     return
   }
 
   if (editingId.value) {
-    const target = faqs.value.find((faq) => faq.id === editingId.value)
-    if (target) {
-      target.category = draftCategory.value
-      target.audience = draftAudience.value
-      target.question = draftQuestion.value.trim()
-      target.answer = draftAnswer.value.trim()
-      toastMessage.value = `Updated FAQ article ${target.id}.`
-    }
-  } else {
-    const nextId = `FAQ-0${faqs.value.length + 1}`
-    faqs.value.unshift({
-      id: nextId,
-      category: draftCategory.value,
-      audience: draftAudience.value,
-      question: draftQuestion.value.trim(),
-      answer: draftAnswer.value.trim(),
-      views: 0,
-      isPublished: true,
-    })
-    toastMessage.value = `Published new Help Center article ${nextId}.`
+    toastMessage.value = `Updated FAQ article ${editingId.value}.`
+  } else if (faqs.value.length > previousCount) {
+    toastMessage.value = `Published new Help Center article ${faqs.value[0]?.id ?? ''}.`
   }
 
   showEditorModal.value = false
 }
 
-const togglePublished = (article: FaqArticle) => {
-  article.isPublished = !article.isPublished
+const handleTogglePublished = (article: FaqArticle) => {
+  const result = togglePublished(article.id)
+  if (!result.ok) {
+    toastMessage.value = result.error
+    return
+  }
   toastMessage.value = `${article.id} is now ${article.isPublished ? 'Published in apps' : 'Draft (Hidden)'}.`
 }
 </script>
@@ -227,7 +179,7 @@ const togglePublished = (article: FaqArticle) => {
             <button
               type="button"
               class="px-3 py-1 border border-neutral-300 bg-white text-neutral-700 rounded-none text-xs font-medium hover:bg-neutral-50"
-              @click="togglePublished(faq)"
+              @click="handleTogglePublished(faq)"
             >
               {{ faq.isPublished ? 'Unpublish' : 'Publish' }}
             </button>
@@ -291,6 +243,7 @@ const togglePublished = (article: FaqArticle) => {
           <input
             v-model="draftQuestion"
             type="text"
+            aria-label="FAQ question heading"
             class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
           />
         </div>

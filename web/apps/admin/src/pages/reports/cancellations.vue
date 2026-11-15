@@ -1,108 +1,28 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ReportFilterBar, {
+import {
+  ReportFilterBar,
+  createDefaultReportFilters,
+  hasCustomReportFilters,
+  useCancellationReports,
   type ReportFilterValues,
-} from '@/features/reports/components/ReportFilterBar.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import { exportToCsv, formatPhp } from '@/shared/utils/format'
+} from '@/features/reports'
+import { EmptyTableRow, PageHeader, StatusBadge, formatCentavos } from '@/shared'
 
-interface CancellationCauseRow {
-  reason: string
-  zoneKey: string
-  count: number
-  responsibility: 'driver_fault' | 'passenger_fault' | 'system_fault' | 'no_fault'
-  feePhp: number
-  feeNote: string
-}
+const { filterCauseRows, sharePercent, exportCauseRows } = useCancellationReports()
 
-const cancellationCauses = ref<CancellationCauseRow[]>([
-  {
-    reason: 'Driver delayed in Agora market traffic (> 6 min ETA overrun)',
-    zoneKey: 'poblacion',
-    count: 142,
-    responsibility: 'driver_fault',
-    feePhp: 0,
-    feeNote: 'Fee Waived',
-  },
-  {
-    reason: 'Passenger no-show at Integrated Bus Terminal bay after 5 min grace window',
-    zoneKey: 'terminal',
-    count: 96,
-    responsibility: 'passenger_fault',
-    feePhp: 15.0,
-    feeNote: 'Standard ₱15 Fee Applied',
-  },
-  {
-    reason: 'Passenger cancelled bidding session within 3-minute grace window',
-    zoneKey: 'dao-capitol',
-    count: 84,
-    responsibility: 'no_fault',
-    feePhp: 0,
-    feeNote: 'Within Grace Period',
-  },
-  {
-    reason: 'Vehicle mechanical blowout en route to pickup',
-    zoneKey: 'santiago-port',
-    count: 28,
-    responsibility: 'driver_fault',
-    feePhp: 0,
-    feeNote: 'Auto-Rematched',
-  },
-  {
-    reason: 'No driver bid submitted before 90s session countdown expiry',
-    zoneKey: 'terminal',
-    count: 34,
-    responsibility: 'system_fault',
-    feePhp: 0,
-    feeNote: 'No Charge',
-  },
-])
-
-const activeFilters = ref<ReportFilterValues>({
-  dateRange: 'last-30-days',
-  cityZone: 'all-zones',
-  dispatchMode: 'all-modes',
-})
-
-const filteredCauses = computed(() =>
-  cancellationCauses.value.filter(
-    (row) =>
-      activeFilters.value.cityZone === 'all-zones' || row.zoneKey === activeFilters.value.cityZone,
-  ),
-)
-
+const activeFilters = ref<ReportFilterValues>(createDefaultReportFilters())
+const filteredCauses = computed(() => filterCauseRows(activeFilters.value))
 const totalCancellations = computed(() =>
   filteredCauses.value.reduce((sum, item) => sum + item.count, 0),
 )
 
-const sharePercent = (count: number) => {
-  if (totalCancellations.value === 0) return '0.0%'
-  return `${((count / totalCancellations.value) * 100).toFixed(1)}%`
-}
-
 const filterBarRef = ref<InstanceType<typeof ReportFilterBar> | null>(null)
-const hasActiveFilters = computed(
-  () =>
-    activeFilters.value.dateRange !== 'last-30-days' ||
-    activeFilters.value.cityZone !== 'all-zones' ||
-    activeFilters.value.dispatchMode !== 'all-modes',
-)
+const hasActiveFilters = computed(() => hasCustomReportFilters(activeFilters.value))
 const resetFilters = () => filterBarRef.value?.resetFilters()
 
 const handleExport = () => {
-  exportToCsv(
-    'pagadian-cancellation-analysis.csv',
-    ['Root Cause', 'Incidents', 'Share', 'Responsibility Enum', 'Fee Rule'],
-    filteredCauses.value.map((cause) => [
-      cause.reason,
-      String(cause.count),
-      sharePercent(cause.count),
-      cause.responsibility,
-      `${formatPhp(cause.feePhp)} (${cause.feeNote})`,
-    ]),
-  )
+  exportCauseRows(filteredCauses.value)
 }
 </script>
 
@@ -146,12 +66,14 @@ const handleExport = () => {
           <tbody class="divide-y divide-neutral-100">
             <tr
               v-for="cause in filteredCauses"
-              :key="cause.reason"
+              :key="`${cause.zoneKey}-${cause.reason}`"
               class="hover:bg-neutral-50/70 transition-colors"
             >
               <td class="py-3 px-4 font-semibold text-neutral-900">{{ cause.reason }}</td>
               <td class="py-3 px-4 font-mono font-bold text-neutral-800">{{ cause.count }}</td>
-              <td class="py-3 px-4 font-mono text-neutral-600">{{ sharePercent(cause.count) }}</td>
+              <td class="py-3 px-4 font-mono text-neutral-600">
+                {{ sharePercent(cause.count, totalCancellations) }}
+              </td>
               <td class="py-3 px-4">
                 <StatusBadge
                   :label="cause.responsibility"
@@ -165,7 +87,7 @@ const handleExport = () => {
                 />
               </td>
               <td class="py-3 px-4 text-right font-mono font-medium text-neutral-700">
-                {{ formatPhp(cause.feePhp) }} · {{ cause.feeNote }}
+                {{ formatCentavos(cause.feeCentavos) }} · {{ cause.feeNote }}
               </td>
             </tr>
             <EmptyTableRow

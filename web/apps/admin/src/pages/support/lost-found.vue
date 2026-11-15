@@ -1,65 +1,20 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import ConfirmDialog from '@/shared/dialogs/ConfirmDialog.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
+import { useLostAndFound, type LostFoundRecord, type LostFoundStatus } from '@/features/support'
+import {
+  BaseSelect,
+  ConfirmDialog,
+  EmptyTableRow,
+  ModalDialog,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  ToastBanner,
+} from '@/shared'
 
-interface LostFoundRecord {
-  id: string
-  itemDescription: string
-  reportedBy: string
-  contactPhone: string
-  driver: string
-  driverPhone: string
-  tripId: string
-  corridor: string
-  status: 'Searching Driver' | 'Driver Confirmed Found' | 'Returned to Owner'
-  handoffNote?: string
-}
+const { lostItems, driverRosterOptions, createLostItem, confirmReturn } = useLostAndFound()
 
-const lostItems = ref<LostFoundRecord[]>([
-  {
-    id: 'LF-7016-801',
-    itemDescription: 'Blue insulated tumblers and school ID sling pouch',
-    reportedBy: 'Althea Mae Villanueva',
-    contactPhone: '+63 917 842 9103',
-    driver: 'Rodelio Cruz (ZDS-4821)',
-    driverPhone: '+63 917 482 1903',
-    tripId: 'TRP-7016-8921',
-    corridor: 'Pagadian Public Market (Agora) -> Brgy. San Jose',
-    status: 'Driver Confirmed Found',
-  },
-  {
-    id: 'LF-7016-802',
-    itemDescription: 'Black foldable umbrella and BDO passbook folder',
-    reportedBy: 'Rafael Dominguiano',
-    contactPhone: '+63 928 519 4402',
-    driver: 'Danilo Mendoza (ZDS-3019)',
-    driverPhone: '+63 918 654 2219',
-    tripId: 'TRP-7016-8910',
-    corridor: 'Gaisano Capital Pagadian -> Brgy. Tiguma',
-    status: 'Searching Driver',
-  },
-  {
-    id: 'LF-7016-800',
-    itemDescription: 'Android smartphone left in rear passenger seat',
-    reportedBy: 'Kevin Lloyd Tan',
-    contactPhone: '+63 927 310 6621',
-    driver: 'Reynaldo Bautista (ZDS-1944)',
-    driverPhone: '+63 917 773 8810',
-    tripId: 'TRP-7016-8840',
-    corridor: 'Integrated Bus Terminal -> Dao Capitol',
-    status: 'Returned to Owner',
-    handoffNote: 'Claimed at Pagadian TODA dispatch desk near Santiago Terminal with valid ID.',
-  },
-])
-
-const statusFilter = ref<'All' | LostFoundRecord['status']>('All')
+const statusFilter = ref<'All' | LostFoundStatus>('All')
 const searchQuery = ref('')
 const toastMessage = ref<string | null>(null)
 
@@ -70,9 +25,9 @@ const returnNote = ref('')
 const showLogModal = ref(false)
 const newDescription = ref('')
 const newReporter = ref('')
-const newReporterPhone = ref('+63 9')
+const newReporterPhone = ref('+63 917 ')
 const newTripId = ref('TRP-7016-')
-const newDriver = ref('Rodelio Cruz (ZDS-4821)')
+const newDriver = ref(driverRosterOptions[0] ?? 'Rodelio Cruz (ZDS-4821)')
 const logError = ref<string | null>(null)
 
 const filteredItems = computed(() => {
@@ -105,11 +60,15 @@ const openReturnDialog = (item: LostFoundRecord) => {
   returnDialogOpen.value = true
 }
 
-const confirmReturn = () => {
-  if (!returningItem.value || !returnNote.value.trim()) return
-  returningItem.value.status = 'Returned to Owner'
-  returningItem.value.handoffNote = returnNote.value.trim()
-  toastMessage.value = `${returningItem.value.id} closed as Returned to Owner.`
+const submitReturn = () => {
+  const target = returningItem.value
+  if (!target) return
+  const result = confirmReturn(target.id, returnNote.value)
+  if (!result.ok) {
+    toastMessage.value = result.error
+    return
+  }
+  toastMessage.value = `${target.id} closed as Returned to Owner.`
   returnDialogOpen.value = false
   returningItem.value = null
   returnNote.value = ''
@@ -120,27 +79,25 @@ const openLogModal = () => {
   newReporter.value = ''
   newReporterPhone.value = '+63 917 '
   newTripId.value = 'TRP-7016-'
+  newDriver.value = driverRosterOptions[0] ?? 'Rodelio Cruz (ZDS-4821)'
   logError.value = null
   showLogModal.value = true
 }
 
-const createLostItem = () => {
-  if (!newDescription.value.trim() || !newReporter.value.trim() || !newReporterPhone.value.trim()) {
-    logError.value = 'Provide item description, claimant name, and +63 phone number.'
+const submitLostItem = () => {
+  const reporter = newReporter.value.trim()
+  const result = createLostItem({
+    itemDescription: newDescription.value,
+    reportedBy: newReporter.value,
+    contactPhone: newReporterPhone.value,
+    tripId: newTripId.value,
+    driver: newDriver.value,
+  })
+  if (!result.ok) {
+    logError.value = result.error
     return
   }
-  lostItems.value.unshift({
-    id: `LF-7016-${803 + lostItems.value.length}`,
-    itemDescription: newDescription.value.trim(),
-    reportedBy: newReporter.value.trim(),
-    contactPhone: newReporterPhone.value.trim(),
-    driver: newDriver.value,
-    driverPhone: '+63 917 482 1903',
-    tripId: newTripId.value.trim(),
-    corridor: 'Pagadian City Service Zone',
-    status: 'Searching Driver',
-  })
-  toastMessage.value = `Logged lost item report for ${newReporter.value.trim()}.`
+  toastMessage.value = `Logged lost item report for ${reporter}.`
   showLogModal.value = false
 }
 </script>
@@ -276,7 +233,7 @@ const createLostItem = () => {
       :require-reason="true"
       reason-label="Handoff Location & Claimant Verification Note"
       reason-placeholder="e.g., Claimed by owner at Agora TODA terminal booth; ID sighted..."
-      @confirm="confirmReturn"
+      @confirm="submitReturn"
       @cancel="returnDialogOpen = false"
     />
 
@@ -323,11 +280,7 @@ const createLostItem = () => {
             v-model="newDriver"
             :full-width="true"
             aria-label="Select driver"
-            :options="[
-              'Rodelio Cruz (ZDS-4821)',
-              'Danilo Mendoza (ZDS-3019)',
-              'Reynaldo Bautista (ZDS-1944)',
-            ]"
+            :options="[...driverRosterOptions]"
           />
         </div>
         <p v-if="logError" class="text-xs font-medium text-rose-700">{{ logError }}</p>
@@ -345,7 +298,7 @@ const createLostItem = () => {
           <button
             type="button"
             class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-            @click="createLostItem"
+            @click="submitLostItem"
           >
             Submit Report
           </button>

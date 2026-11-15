@@ -1,99 +1,25 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ReportFilterBar, {
+import {
+  ReportFilterBar,
+  createDefaultReportFilters,
+  hasCustomReportFilters,
+  useDocumentExpiryReports,
   type ReportFilterValues,
-} from '@/features/reports/components/ReportFilterBar.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import { exportToCsv } from '@/shared/utils/format'
+} from '@/features/reports'
+import { EmptyTableRow, PageHeader } from '@/shared'
 
-interface ExpiryForecastRow {
-  month: string
-  zoneKey: string
-  ltoLicensesExpiring: number
-  todaMtopExpiring: number
-  orCrExpiring: number
-  insuranceExpiring: number
-  complianceRate: string
-}
+const { filterForecastRows, totalAudits, exportForecastRows } = useDocumentExpiryReports()
 
-const expiryForecast = ref<ExpiryForecastRow[]>([
-  {
-    month: 'November 2026',
-    zoneKey: 'poblacion',
-    ltoLicensesExpiring: 6,
-    todaMtopExpiring: 9,
-    orCrExpiring: 11,
-    insuranceExpiring: 8,
-    complianceRate: '98.1%',
-  },
-  {
-    month: 'December 2026',
-    zoneKey: 'terminal',
-    ltoLicensesExpiring: 9,
-    todaMtopExpiring: 14,
-    orCrExpiring: 15,
-    insuranceExpiring: 12,
-    complianceRate: '97.5%',
-  },
-  {
-    month: 'January 2027',
-    zoneKey: 'dao-capitol',
-    ltoLicensesExpiring: 5,
-    todaMtopExpiring: 7,
-    orCrExpiring: 8,
-    insuranceExpiring: 6,
-    complianceRate: '98.8%',
-  },
-  {
-    month: 'February 2027',
-    zoneKey: 'santiago-port',
-    ltoLicensesExpiring: 4,
-    todaMtopExpiring: 6,
-    orCrExpiring: 7,
-    insuranceExpiring: 5,
-    complianceRate: '99.2%',
-  },
-])
-
-const activeFilters = ref<ReportFilterValues>({
-  dateRange: 'last-30-days',
-  cityZone: 'all-zones',
-  dispatchMode: 'all-modes',
-})
-
-const filteredForecast = computed(() =>
-  expiryForecast.value.filter(
-    (row) =>
-      activeFilters.value.cityZone === 'all-zones' || row.zoneKey === activeFilters.value.cityZone,
-  ),
-)
-
-const totalAudits = (row: ExpiryForecastRow) =>
-  row.ltoLicensesExpiring + row.todaMtopExpiring + row.orCrExpiring + row.insuranceExpiring
+const activeFilters = ref<ReportFilterValues>(createDefaultReportFilters())
+const filteredForecast = computed(() => filterForecastRows(activeFilters.value))
 
 const filterBarRef = ref<InstanceType<typeof ReportFilterBar> | null>(null)
-const hasActiveFilters = computed(
-  () =>
-    activeFilters.value.dateRange !== 'last-30-days' ||
-    activeFilters.value.cityZone !== 'all-zones' ||
-    activeFilters.value.dispatchMode !== 'all-modes',
-)
+const hasActiveFilters = computed(() => hasCustomReportFilters(activeFilters.value))
 const resetFilters = () => filterBarRef.value?.resetFilters()
 
 const handleExport = () => {
-  exportToCsv(
-    'pagadian-document-expiry-forecast.csv',
-    ['Month', 'LTO Licenses', 'TODA MTOP Franchises', 'LTO OR/CR', 'Insurance', 'Compliance Rate'],
-    filteredForecast.value.map((forecast) => [
-      forecast.month,
-      String(forecast.ltoLicensesExpiring),
-      String(forecast.todaMtopExpiring),
-      String(forecast.orCrExpiring),
-      String(forecast.insuranceExpiring),
-      forecast.complianceRate,
-    ]),
-  )
+  exportForecastRows(filteredForecast.value)
 }
 </script>
 
@@ -147,7 +73,7 @@ const handleExport = () => {
           <tbody class="divide-y divide-neutral-100">
             <tr
               v-for="forecast in filteredForecast"
-              :key="forecast.month"
+              :key="`${forecast.month}-${forecast.zoneKey}`"
               class="hover:bg-neutral-50/70 transition-colors"
             >
               <td class="py-3 px-4 font-bold text-neutral-900">{{ forecast.month }}</td>

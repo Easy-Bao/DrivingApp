@@ -5,6 +5,7 @@ import { loginOperator } from '@/core/auth/auth-session'
 import { resetDocumentsForTesting } from '@/features/documents'
 import { resetPaymentsForTesting } from '@/features/payments'
 import { resetSettingsForTesting } from '@/features/settings'
+import { resetSupportForTesting, useSupportTickets } from '@/features/support'
 import { resetTripsForTesting, useSosAlerts } from '@/features/trips'
 import { resetUsersForTesting } from '@/features/users'
 
@@ -23,6 +24,7 @@ describe('Sidebar', () => {
     resetDocumentsForTesting()
     resetPaymentsForTesting()
     resetTripsForTesting()
+    resetSupportForTesting()
   })
   it('renders branding and core navigation sections', () => {
     const wrapper = mount(Sidebar)
@@ -158,5 +160,23 @@ describe('Sidebar', () => {
 
     const sosItemAfter = wrapper.findAll('button').find((btn) => btn.text().includes('SOS Alerts'))
     expect(sosItemAfter?.text()).toContain('1')
+
+    const { replyToTicket } = useSupportTickets()
+    const supportToggle = wrapper.findAll('button').find((btn) => btn.text().trim() === 'Support')
+    await supportToggle?.trigger('click')
+
+    const ticketsBefore = wrapper.findAll('button').find((btn) => btn.text().includes('Tickets'))
+    expect(ticketsBefore?.text()).toContain('3')
+
+    expect(
+      replyToTicket('TCK-7016-204', {
+        status: 'Resolved',
+        reply: 'Approved QRPh deposit and unlocked dispatch.',
+      }).ok,
+    ).toBe(true)
+    await wrapper.vm.$nextTick()
+
+    const ticketsAfter = wrapper.findAll('button').find((btn) => btn.text().includes('Tickets'))
+    expect(ticketsAfter?.text()).toContain('2')
   })
 })

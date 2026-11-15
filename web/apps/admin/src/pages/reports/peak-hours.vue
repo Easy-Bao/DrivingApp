@@ -1,97 +1,25 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ReportFilterBar, {
+import {
+  ReportFilterBar,
+  createDefaultReportFilters,
+  hasCustomReportFilters,
+  usePeakHoursReports,
   type ReportFilterValues,
-} from '@/features/reports/components/ReportFilterBar.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import { exportToCsv } from '@/shared/utils/format'
+} from '@/features/reports'
+import { EmptyTableRow, PageHeader, StatusBadge } from '@/shared'
 
-interface DemandWindowRow {
-  timeWindow: string
-  zoneKey: string
-  corridorLabel: string
-  period: string
-  avgSurge: number
-  rideRequests: number
-  driverUtilization: string
-}
+const { maxSurgeCapLabel, filterDemandRows, exportDemandRows } = usePeakHoursReports()
 
-const hourlyDemand = ref<DemandWindowRow[]>([
-  {
-    timeWindow: '06:30 - 09:00 PHT',
-    zoneKey: 'poblacion',
-    corridorLabel: 'Poblacion & Agora Market',
-    period: 'Morning Market & School Rush',
-    avgSurge: 1.4,
-    rideRequests: 680,
-    driverUtilization: '96.2%',
-  },
-  {
-    timeWindow: '11:30 - 13:30 PHT',
-    zoneKey: 'dao-capitol',
-    corridorLabel: 'Dao Capitol & Gaisano',
-    period: 'Provincial Office & Midday Commerce',
-    avgSurge: 1.1,
-    rideRequests: 420,
-    driverUtilization: '78.4%',
-  },
-  {
-    timeWindow: '16:30 - 19:00 PHT',
-    zoneKey: 'terminal',
-    corridorLabel: 'Integrated Bus Terminal',
-    period: 'Evening Bus Arrival & Commute Peak',
-    avgSurge: 1.8,
-    rideRequests: 840,
-    driverUtilization: '98.5%',
-  },
-  {
-    timeWindow: '19:30 - 22:00 PHT',
-    zoneKey: 'santiago-port',
-    corridorLabel: 'Santiago Port & Coastal',
-    period: 'Coastal Ferry & Boulevard Evening Peak',
-    avgSurge: 1.5,
-    rideRequests: 390,
-    driverUtilization: '91.0%',
-  },
-])
-
-const activeFilters = ref<ReportFilterValues>({
-  dateRange: 'last-30-days',
-  cityZone: 'all-zones',
-  dispatchMode: 'all-modes',
-})
-
-const filteredDemand = computed(() =>
-  hourlyDemand.value.filter(
-    (row) =>
-      activeFilters.value.cityZone === 'all-zones' || row.zoneKey === activeFilters.value.cityZone,
-  ),
-)
+const activeFilters = ref<ReportFilterValues>(createDefaultReportFilters())
+const filteredDemand = computed(() => filterDemandRows(activeFilters.value))
 
 const filterBarRef = ref<InstanceType<typeof ReportFilterBar> | null>(null)
-const hasActiveFilters = computed(
-  () =>
-    activeFilters.value.dateRange !== 'last-30-days' ||
-    activeFilters.value.cityZone !== 'all-zones' ||
-    activeFilters.value.dispatchMode !== 'all-modes',
-)
+const hasActiveFilters = computed(() => hasCustomReportFilters(activeFilters.value))
 const resetFilters = () => filterBarRef.value?.resetFilters()
 
 const handleExport = () => {
-  exportToCsv(
-    'pagadian-peak-hours-demand.csv',
-    ['Time Window', 'Corridor', 'Classification', 'Surge Multiplier', 'Requests', 'Utilization'],
-    filteredDemand.value.map((demand) => [
-      demand.timeWindow,
-      demand.corridorLabel,
-      demand.period,
-      `${demand.avgSurge.toFixed(2)}x`,
-      String(demand.rideRequests),
-      demand.driverUtilization,
-    ]),
-  )
+  exportDemandRows(filteredDemand.value)
 }
 </script>
 
@@ -114,7 +42,9 @@ const handleExport = () => {
         class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
       >
         <h2 class="font-bold text-sm text-neutral-900">Demand Curves by Operational Window</h2>
-        <span class="text-xs text-neutral-400">Hard server surge ceiling: 2.50x</span>
+        <span class="text-xs text-neutral-400">
+          Hard server surge ceiling: {{ maxSurgeCapLabel }}
+        </span>
       </div>
 
       <div class="overflow-x-auto">
@@ -134,7 +64,7 @@ const handleExport = () => {
           <tbody class="divide-y divide-neutral-100">
             <tr
               v-for="demand in filteredDemand"
-              :key="demand.timeWindow"
+              :key="`${demand.timeWindow}-${demand.zoneKey}`"
               class="hover:bg-neutral-50/70 transition-colors"
             >
               <td class="py-3 px-4 font-mono font-bold text-neutral-900">

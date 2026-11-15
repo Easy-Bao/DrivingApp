@@ -1,114 +1,68 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeUnmount, ref } from 'vue'
 import { Icon } from '@iconify/vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
-import { exportToCsv } from '@/shared/utils/format'
+import {
+  useExportCenter,
+  type GeneratedExportRecord,
+  type ScheduledExportFormat,
+  type ScheduledReport,
+} from '@/features/reports'
+import {
+  BaseSelect,
+  EmptyTableRow,
+  ModalDialog,
+  PageHeader,
+  StatusBadge,
+  ToastBanner,
+} from '@/shared'
 
-interface ScheduledReport {
-  id: string
-  name: string
-  frequency: 'Daily' | 'Weekly' | 'Monthly'
-  format: 'CSV' | 'PDF' | 'Excel'
-  recipients: string
-  timeSchedule: string
-  isActive: boolean
-}
-
-const scheduledReports = ref<ScheduledReport[]>([
-  {
-    id: 'SCH-01',
-    name: 'Weekly Pagadian Cash Commission & Settlement Summary',
-    frequency: 'Weekly',
-    format: 'Excel',
-    recipients: 'treasury@easyride.ph, ops@easyride.ph',
-    timeSchedule: 'Every Monday at 08:00 AM PHT',
-    isActive: true,
-  },
-  {
-    id: 'SCH-02',
-    name: 'Daily Driver Prepaid Top-Up & QRPh Reconciliation Roster',
-    frequency: 'Daily',
-    format: 'CSV',
-    recipients: 'accounting@easyride.ph',
-    timeSchedule: 'Daily at 11:59 PM PHT',
-    isActive: true,
-  },
-  {
-    id: 'SCH-03',
-    name: 'Monthly LGU & TODA Franchise Dispatch Activity Audit',
-    frequency: 'Monthly',
-    format: 'PDF',
-    recipients: 'compliance@easyride.ph',
-    timeSchedule: '1st day of month at 07:00 AM PHT',
-    isActive: true,
-  },
-  {
-    id: 'SCH-04',
-    name: 'Weekly Driver Safety Report & Rating QA Summary',
-    frequency: 'Weekly',
-    format: 'CSV',
-    recipients: 'safety@easyride.ph',
-    timeSchedule: 'Every Friday at 05:00 PM PHT',
-    isActive: false,
-  },
-])
-
-const recentExports = ref([
-  {
-    id: 'EXP-401',
-    filename: 'pagadian_trips_nov_week1.csv',
-    reportCategory: 'Trip Reports',
-    format: 'CSV',
-    size: '1.4 MB',
-    generatedAt: '12 minutes ago',
-  },
-  {
-    id: 'EXP-402',
-    filename: 'pagadian_commission_settlements_oct.csv',
-    reportCategory: 'Revenue Reports',
-    format: 'Excel',
-    size: '980 KB',
-    generatedAt: '2 hours ago',
-  },
-  {
-    id: 'EXP-403',
-    filename: 'toda_document_expiry_forecast.csv',
-    reportCategory: 'Document Expiry Report',
-    format: 'PDF',
-    size: '1.1 MB',
-    generatedAt: 'Yesterday',
-  },
-])
+const {
+  scheduledReports,
+  recentExports,
+  activeScheduleCount,
+  toggleSchedule,
+  createSchedule,
+  downloadGeneratedExport,
+} = useExportCenter()
 
 const actionToast = ref<string | null>(null)
 const showScheduleModal = ref(false)
 const newName = ref('')
 const newFrequency = ref<ScheduledReport['frequency']>('Weekly')
-const newFormat = ref<ScheduledReport['format']>('CSV')
+const newFormat = ref<ScheduledExportFormat>('CSV')
 const newRecipients = ref('')
 const newWindow = ref('Every Monday at 08:00 AM PHT')
 const scheduleError = ref<string | null>(null)
+let toastTimer: ReturnType<typeof setTimeout> | null = null
 
-const toggleSchedule = (sch: ScheduledReport) => {
-  sch.isActive = !sch.isActive
-  actionToast.value = `Schedule "${sch.name}" is now ${sch.isActive ? 'Active' : 'Paused'}.`
+onBeforeUnmount(() => {
+  if (toastTimer !== null) clearTimeout(toastTimer)
+})
+
+function showToast(msg: string) {
+  actionToast.value = msg
+  if (toastTimer !== null) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    actionToast.value = null
+    toastTimer = null
+  }, 4000)
 }
 
-const downloadFile = (filename: string, category: string) => {
-  exportToCsv(
-    filename.replace(/\.(xlsx|pdf)$/i, '.csv'),
-    ['Filename', 'Report Category', 'Generated Region', 'Currency'],
-    [[filename, category, 'Pagadian City, Zamboanga del Sur', 'PHP']],
-  )
-  actionToast.value = `Downloaded snapshot export for ${filename}.`
+function handleToggleSchedule(schedule: ScheduledReport) {
+  const result = toggleSchedule(schedule.id)
+  if (!result.ok) {
+    showToast(result.error)
+    return
+  }
+  showToast(`Schedule "${schedule.name}" is now ${schedule.isActive ? 'Active' : 'Paused'}.`)
 }
 
-const openCreateModal = () => {
+function handleDownloadExport(record: GeneratedExportRecord) {
+  downloadGeneratedExport(record)
+  showToast(`Downloaded CSV export ${record.filename}.`)
+}
+
+function openCreateModal() {
   newName.value = ''
   newFrequency.value = 'Weekly'
   newFormat.value = 'CSV'
@@ -118,21 +72,19 @@ const openCreateModal = () => {
   showScheduleModal.value = true
 }
 
-const createSchedule = () => {
-  if (!newName.value.trim() || !newRecipients.value.trim()) {
-    scheduleError.value = 'Enter a schedule title and at least one recipient email.'
-    return
-  }
-  scheduledReports.value.unshift({
-    id: `SCH-0${scheduledReports.value.length + 1}`,
-    name: newName.value.trim(),
+function submitSchedule() {
+  const result = createSchedule({
+    name: newName.value,
     frequency: newFrequency.value,
     format: newFormat.value,
-    recipients: newRecipients.value.trim(),
-    timeSchedule: newWindow.value.trim() || 'Daily at 08:00 AM PHT',
-    isActive: true,
+    recipients: newRecipients.value,
+    timeSchedule: newWindow.value,
   })
-  actionToast.value = `Created scheduled export: ${newName.value.trim()}.`
+  if (!result.ok) {
+    scheduleError.value = result.error
+    return
+  }
+  showToast(`Created scheduled export: ${newName.value.trim()}.`)
   showScheduleModal.value = false
 }
 </script>
@@ -162,10 +114,7 @@ const createSchedule = () => {
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <StatusBadge
-            :label="`${scheduledReports.filter((schedule) => schedule.isActive).length} Active Schedules`"
-            tone="neutral"
-          />
+          <StatusBadge :label="`${activeScheduleCount} Active Schedules`" tone="neutral" />
           <button
             type="button"
             class="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors cursor-pointer shrink-0"
@@ -232,7 +181,7 @@ const createSchedule = () => {
                       ? 'bg-neutral-900 hover:bg-neutral-800 text-white'
                       : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-600'
                   "
-                  @click="toggleSchedule(schedule)"
+                  @click="handleToggleSchedule(schedule)"
                 >
                   {{ schedule.isActive ? 'Active (Auto-Email)' : 'Paused' }}
                 </button>
@@ -280,13 +229,7 @@ const createSchedule = () => {
             >
               <td class="py-3 px-4 font-mono font-medium text-neutral-900 flex items-center gap-2">
                 <Icon
-                  :icon="
-                    exportItem.format === 'CSV'
-                      ? 'lucide:file-text'
-                      : exportItem.format === 'PDF'
-                        ? 'lucide:file-down'
-                        : 'lucide:file-spreadsheet'
-                  "
+                  icon="lucide:file-text"
                   class="text-neutral-500 text-base shrink-0"
                   aria-hidden="true"
                 />
@@ -308,7 +251,7 @@ const createSchedule = () => {
                 <button
                   type="button"
                   class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors cursor-pointer"
-                  @click="downloadFile(exportItem.filename, exportItem.reportCategory)"
+                  @click="handleDownloadExport(exportItem)"
                 >
                   Download
                 </button>
@@ -399,7 +342,7 @@ const createSchedule = () => {
           <button
             type="button"
             class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800 cursor-pointer"
-            @click="createSchedule"
+            @click="submitSchedule"
           >
             Save Schedule
           </button>

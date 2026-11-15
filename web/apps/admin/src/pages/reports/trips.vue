@@ -1,112 +1,25 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ReportFilterBar, {
+import {
+  ReportFilterBar,
+  createDefaultReportFilters,
+  hasCustomReportFilters,
+  useTripReports,
   type ReportFilterValues,
-} from '@/features/reports/components/ReportFilterBar.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import { exportToCsv, formatPhp } from '@/shared/utils/format'
+} from '@/features/reports'
+import { EmptyTableRow, PageHeader, formatCentavos } from '@/shared'
 
-interface TripReportRow {
-  date: string
-  zoneKey: string
-  zoneLabel: string
-  dispatchMode: 'open-broadcast' | 'chosen-driver'
-  totalRides: number
-  completed: number
-  cancelled: number
-  totalKm: number
-  grossVolumePhp: number
-}
+const { filterTripRows, exportTripRows } = useTripReports()
 
-const tripReportData = ref<TripReportRow[]>([
-  {
-    date: '2026-11-12',
-    zoneKey: 'poblacion',
-    zoneLabel: 'Poblacion & Agora Market',
-    dispatchMode: 'open-broadcast',
-    totalRides: 1480,
-    completed: 1412,
-    cancelled: 68,
-    totalKm: 4120,
-    grossVolumePhp: 88940,
-  },
-  {
-    date: '2026-11-12',
-    zoneKey: 'terminal',
-    zoneLabel: 'Integrated Bus Terminal',
-    dispatchMode: 'chosen-driver',
-    totalRides: 960,
-    completed: 918,
-    cancelled: 42,
-    totalKm: 3840,
-    grossVolumePhp: 94550,
-  },
-  {
-    date: '2026-11-11',
-    zoneKey: 'dao-capitol',
-    zoneLabel: 'Dao Capitol & Gaisano',
-    dispatchMode: 'open-broadcast',
-    totalRides: 1120,
-    completed: 1068,
-    cancelled: 52,
-    totalKm: 3910,
-    grossVolumePhp: 92800,
-  },
-  {
-    date: '2026-11-10',
-    zoneKey: 'santiago-port',
-    zoneLabel: 'Santiago Port & Coastal',
-    dispatchMode: 'chosen-driver',
-    totalRides: 690,
-    completed: 662,
-    cancelled: 28,
-    totalKm: 1950,
-    grossVolumePhp: 38240,
-  },
-])
-
-const activeFilters = ref<ReportFilterValues>({
-  dateRange: 'last-30-days',
-  cityZone: 'all-zones',
-  dispatchMode: 'all-modes',
-})
-
-const filteredRows = computed(() => {
-  return tripReportData.value.filter((row) => {
-    const matchesZone =
-      activeFilters.value.cityZone === 'all-zones' || row.zoneKey === activeFilters.value.cityZone
-    const matchesMode =
-      activeFilters.value.dispatchMode === 'all-modes' ||
-      row.dispatchMode === activeFilters.value.dispatchMode
-    const matchesDate = activeFilters.value.dateRange !== 'today' || row.date === '2026-11-12'
-    return matchesZone && matchesMode && matchesDate
-  })
-})
+const activeFilters = ref<ReportFilterValues>(createDefaultReportFilters())
+const filteredRows = computed(() => filterTripRows(activeFilters.value))
 
 const filterBarRef = ref<InstanceType<typeof ReportFilterBar> | null>(null)
-const hasActiveFilters = computed(
-  () =>
-    activeFilters.value.dateRange !== 'last-30-days' ||
-    activeFilters.value.cityZone !== 'all-zones' ||
-    activeFilters.value.dispatchMode !== 'all-modes',
-)
+const hasActiveFilters = computed(() => hasCustomReportFilters(activeFilters.value))
 const resetFilters = () => filterBarRef.value?.resetFilters()
 
 const handleExport = () => {
-  exportToCsv(
-    'pagadian-trip-volume-report.csv',
-    ['Date', 'Zone', 'Requested', 'Completed', 'Cancelled', 'Distance (km)', 'Gross (PHP)'],
-    filteredRows.value.map((row) => [
-      row.date,
-      row.zoneLabel,
-      String(row.totalRides),
-      String(row.completed),
-      String(row.cancelled),
-      String(row.totalKm),
-      row.grossVolumePhp.toFixed(2),
-    ]),
-  )
+  exportTripRows(filteredRows.value)
 }
 </script>
 
@@ -168,7 +81,7 @@ const handleExport = () => {
                 {{ row.totalKm.toLocaleString() }} km
               </td>
               <td class="py-3 px-4 text-right font-mono font-bold text-neutral-900 tabular-nums">
-                {{ formatPhp(row.grossVolumePhp) }}
+                {{ formatCentavos(row.grossVolumeCentavos) }}
               </td>
             </tr>
             <EmptyTableRow

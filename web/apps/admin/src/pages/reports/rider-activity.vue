@@ -1,94 +1,26 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ReportFilterBar, {
+import {
+  ReportFilterBar,
+  createDefaultReportFilters,
+  hasCustomReportFilters,
+  useRiderCohortReports,
   type ReportFilterValues,
-} from '@/features/reports/components/ReportFilterBar.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import { exportToCsv, formatPhp } from '@/shared/utils/format'
+} from '@/features/reports'
+import { EmptyTableRow, PageHeader, formatCentavos } from '@/shared'
 
-interface RiderCohortRow {
-  cohort: string
-  zoneKey: string
-  corridorFocus: string
-  ridersCount: number
-  retentionRate: string
-  avgMonthlySpendPhp: number
-}
+const { filterCohortRows, totalCohortRiders, exportCohortRows } = useRiderCohortReports()
 
-const cohortActivity = ref<RiderCohortRow[]>([
-  {
-    cohort: 'Daily Poblacion & Office Commuters (12+ rides/mo)',
-    zoneKey: 'poblacion',
-    corridorFocus: 'Poblacion & Agora Market',
-    ridersCount: 1840,
-    retentionRate: '94.2%',
-    avgMonthlySpendPhp: 780,
-  },
-  {
-    cohort: 'Integrated Bus Terminal Travelers (5-11 rides/mo)',
-    zoneKey: 'terminal',
-    corridorFocus: 'Integrated Bus Terminal',
-    ridersCount: 2620,
-    retentionRate: '86.5%',
-    avgMonthlySpendPhp: 540,
-  },
-  {
-    cohort: 'College & Senior High Students (4-10 rides/mo)',
-    zoneKey: 'dao-capitol',
-    corridorFocus: 'Dao Capitol & Gaisano',
-    ridersCount: 3190,
-    retentionRate: '88.1%',
-    avgMonthlySpendPhp: 365,
-  },
-  {
-    cohort: 'Weekend Coastal & Market Riders (1-3 rides/mo)',
-    zoneKey: 'santiago-port',
-    corridorFocus: 'Santiago Port & Coastal',
-    ridersCount: 1410,
-    retentionRate: '64.8%',
-    avgMonthlySpendPhp: 195,
-  },
-])
-
-const activeFilters = ref<ReportFilterValues>({
-  dateRange: 'last-30-days',
-  cityZone: 'all-zones',
-  dispatchMode: 'all-modes',
-})
-
-const filteredCohorts = computed(() =>
-  cohortActivity.value.filter(
-    (row) =>
-      activeFilters.value.cityZone === 'all-zones' || row.zoneKey === activeFilters.value.cityZone,
-  ),
-)
-
-const totalActiveRiders = computed(() =>
-  filteredCohorts.value.reduce((sum, row) => sum + row.ridersCount, 0),
-)
+const activeFilters = ref<ReportFilterValues>(createDefaultReportFilters())
+const filteredCohorts = computed(() => filterCohortRows(activeFilters.value))
+const totalActiveRiders = computed(() => totalCohortRiders(filteredCohorts.value))
 
 const filterBarRef = ref<InstanceType<typeof ReportFilterBar> | null>(null)
-const hasActiveFilters = computed(
-  () =>
-    activeFilters.value.dateRange !== 'last-30-days' ||
-    activeFilters.value.cityZone !== 'all-zones' ||
-    activeFilters.value.dispatchMode !== 'all-modes',
-)
+const hasActiveFilters = computed(() => hasCustomReportFilters(activeFilters.value))
 const resetFilters = () => filterBarRef.value?.resetFilters()
 
 const handleExport = () => {
-  exportToCsv(
-    'pagadian-passenger-cohorts.csv',
-    ['Cohort Segment', 'Primary Zone', 'Active Passengers', '30-Day Retention', 'Avg Spend (PHP)'],
-    filteredCohorts.value.map((cohort) => [
-      cohort.cohort,
-      cohort.corridorFocus,
-      String(cohort.ridersCount),
-      cohort.retentionRate,
-      cohort.avgMonthlySpendPhp.toFixed(2),
-    ]),
-  )
+  exportCohortRows(filteredCohorts.value)
 }
 </script>
 
@@ -142,7 +74,7 @@ const handleExport = () => {
               </td>
               <td class="py-3 px-4 text-emerald-700 font-semibold">{{ cohort.retentionRate }}</td>
               <td class="py-3 px-4 text-right font-mono font-bold text-neutral-900 tabular-nums">
-                {{ formatPhp(cohort.avgMonthlySpendPhp) }}
+                {{ formatCentavos(cohort.avgMonthlySpendCentavos) }}
               </td>
             </tr>
             <EmptyTableRow

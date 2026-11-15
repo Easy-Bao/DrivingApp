@@ -1,91 +1,29 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import SearchField from '@/shared/forms/SearchField.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import TablePagination from '@/shared/table/TablePagination.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
+import { useSupportTickets, type SupportTicket, type TicketStatus } from '@/features/support'
+import {
+  BaseSelect,
+  EmptyTableRow,
+  ModalDialog,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+  TablePagination,
+  ToastBanner,
+  useDataTable,
+} from '@/shared'
 
-interface SupportTicket {
-  id: string
-  user: string
-  phone: string
-  role: 'Passenger' | 'Driver'
-  subject: string
-  category: 'QRPh Top-Up' | 'Fare Dispute' | 'App Account' | 'Safety Escalation'
-  priority: 'High' | 'Normal'
-  status: 'Open' | 'In Review' | 'Resolved'
-  lastMessage: string
-  operatorReply?: string
-  updatedAt: string
-}
-
-const tickets = ref<SupportTicket[]>([
-  {
-    id: 'TCK-7016-204',
-    user: 'Rodelio Cruz',
-    phone: '+63 917 482 1903',
-    role: 'Driver',
-    subject: 'Uploaded GCash QRPh receipt for ₱200 awaiting dispatch unlock',
-    category: 'QRPh Top-Up',
-    priority: 'High',
-    status: 'Open',
-    lastMessage: 'Submitted screenshot QR-8829104 12 minutes ago; wallet balance is ₱18.50.',
-    updatedAt: '12 mins ago',
-  },
-  {
-    id: 'TCK-7016-203',
-    user: 'Kristine Joy Navarro',
-    phone: '+63 918 220 3944',
-    role: 'Passenger',
-    subject: 'Cancellation fee charged during rainy delay at Agora Market',
-    category: 'Fare Dispute',
-    priority: 'Normal',
-    status: 'In Review',
-    lastMessage: 'Driver could not enter flooded side street near stall row B.',
-    operatorReply: 'Checking dispatch telemetry timestamps before waiving ₱15.00 fee.',
-    updatedAt: '48 mins ago',
-  },
-  {
-    id: 'TCK-7016-202',
-    user: 'Danilo Mendoza',
-    phone: '+63 918 654 2219',
-    role: 'Driver',
-    subject: 'Renewed Pagadian TODA MTOP permit ready for review',
-    category: 'App Account',
-    priority: 'Normal',
-    status: 'Open',
-    lastMessage: 'Uploaded front photo of new municipal permit sticker.',
-    updatedAt: '2 hours ago',
-  },
-  {
-    id: 'TCK-7016-201',
-    user: 'Althea Mae Villanueva',
-    phone: '+63 917 842 9103',
-    role: 'Passenger',
-    subject: 'Receipt confirmation for morning bid trip TRP-7016-8921',
-    category: 'Fare Dispute',
-    priority: 'Normal',
-    status: 'Resolved',
-    lastMessage: 'Needed digital trip summary for school reimbursement.',
-    operatorReply: 'Sent verified PHP trip receipt to passenger registered email.',
-    updatedAt: 'Yesterday',
-  },
-])
+const { tickets, openTicketCount, replyToTicket } = useSupportTickets()
 
 const searchQuery = ref('')
-const statusFilter = ref<'All' | SupportTicket['status']>('All')
-const currentPage = ref(1)
-const itemsPerPage = 8
+const statusFilter = ref<'All' | TicketStatus>('All')
 
 const inspectedTicket = ref<SupportTicket | null>(null)
-const draftStatus = ref<SupportTicket['status']>('Resolved')
+const draftStatus = ref<TicketStatus>('Resolved')
 const draftReply = ref('')
 const modalError = ref<string | null>(null)
 const toastMessage = ref<string | null>(null)
+let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 const filteredTickets = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
@@ -101,10 +39,6 @@ const filteredTickets = computed(() => {
   })
 })
 
-const activeInquiryCount = computed(
-  () => tickets.value.filter((ticket) => ticket.status !== 'Resolved').length,
-)
-
 const hasActiveFilters = computed(
   () => searchQuery.value.trim().length > 0 || statusFilter.value !== 'All',
 )
@@ -114,14 +48,27 @@ const resetFilters = () => {
   statusFilter.value = 'All'
 }
 
-watch([searchQuery, statusFilter], () => {
-  currentPage.value = 1
+const {
+  currentPage,
+  itemsPerPage,
+  paginatedItems: paginatedTickets,
+} = useDataTable(filteredTickets, {
+  initialPageSize: 8,
+  resetDeps: [searchQuery, statusFilter],
 })
 
-const paginatedTickets = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredTickets.value.slice(start, start + itemsPerPage)
+onBeforeUnmount(() => {
+  if (toastTimer !== null) clearTimeout(toastTimer)
 })
+
+function showToast(msg: string) {
+  toastMessage.value = msg
+  if (toastTimer !== null) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toastMessage.value = null
+    toastTimer = null
+  }, 4000)
+}
 
 const openTicketModal = (ticket: SupportTicket) => {
   inspectedTicket.value = ticket
@@ -137,14 +84,17 @@ const closeTicketModal = () => {
 
 const submitReply = () => {
   if (!inspectedTicket.value) return
-  if (!draftReply.value.trim()) {
-    modalError.value = 'Enter an operator response before updating this ticket.'
+  const ticketId = inspectedTicket.value.id
+  const nextStatus = draftStatus.value
+  const result = replyToTicket(ticketId, {
+    status: nextStatus,
+    reply: draftReply.value,
+  })
+  if (!result.ok) {
+    modalError.value = result.error
     return
   }
-  inspectedTicket.value.operatorReply = draftReply.value.trim()
-  inspectedTicket.value.status = draftStatus.value
-  inspectedTicket.value.updatedAt = 'Just now'
-  toastMessage.value = `${inspectedTicket.value.id} updated (${draftStatus.value}) with operator reply.`
+  showToast(`${ticketId} updated (${nextStatus}) with operator reply.`)
   closeTicketModal()
 }
 </script>
@@ -175,7 +125,7 @@ const submitReply = () => {
         />
 
         <div class="flex flex-wrap items-center gap-2">
-          <StatusBadge :label="`${activeInquiryCount} Active Inquiries`" tone="neutral" />
+          <StatusBadge :label="`${openTicketCount} Active Inquiries`" tone="neutral" />
           <BaseSelect
             v-model="statusFilter"
             aria-label="Filter by ticket status"

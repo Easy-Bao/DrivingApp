@@ -1,111 +1,25 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ReportFilterBar, {
+import {
+  ReportFilterBar,
+  createDefaultReportFilters,
+  hasCustomReportFilters,
+  useDriverPerformanceReports,
   type ReportFilterValues,
-} from '@/features/reports/components/ReportFilterBar.vue'
-import EmptyTableRow from '@/shared/table/EmptyTableRow.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import { exportToCsv } from '@/shared/utils/format'
+} from '@/features/reports'
+import { EmptyTableRow, PageHeader } from '@/shared'
 
-interface DriverPerformanceRow {
-  driver: string
-  plateNumber: string
-  zoneKey: string
-  dispatchMode: 'open-broadcast' | 'chosen-driver'
-  trips: number
-  rating: number
-  acceptanceRate: string
-  cancellationRate: string
-  onTimeRate: string
-}
+const { filterPerformanceRows, exportPerformanceRows } = useDriverPerformanceReports()
 
-const performanceList = ref<DriverPerformanceRow[]>([
-  {
-    driver: 'Rodelio Cruz',
-    plateNumber: 'ZDS-4821 · TODA-0412',
-    zoneKey: 'poblacion',
-    dispatchMode: 'open-broadcast',
-    trips: 642,
-    rating: 4.92,
-    acceptanceRate: '98.2%',
-    cancellationRate: '0.8%',
-    onTimeRate: '99.1%',
-  },
-  {
-    driver: 'Danilo Mendoza',
-    plateNumber: 'ZDS-3019 · TODA-0194',
-    zoneKey: 'terminal',
-    dispatchMode: 'chosen-driver',
-    trips: 814,
-    rating: 4.95,
-    acceptanceRate: '99.0%',
-    cancellationRate: '0.5%',
-    onTimeRate: '99.5%',
-  },
-  {
-    driver: 'Reynaldo Bautista',
-    plateNumber: 'ZDS-1944 · TODA-0277',
-    zoneKey: 'dao-capitol',
-    dispatchMode: 'open-broadcast',
-    trips: 528,
-    rating: 4.88,
-    acceptanceRate: '95.4%',
-    cancellationRate: '1.4%',
-    onTimeRate: '97.8%',
-  },
-  {
-    driver: 'Ernesto Villafuerte',
-    plateNumber: 'ZDS-6120 · TODA-0318',
-    zoneKey: 'santiago-port',
-    dispatchMode: 'chosen-driver',
-    trips: 390,
-    rating: 4.65,
-    acceptanceRate: '89.1%',
-    cancellationRate: '3.6%',
-    onTimeRate: '93.2%',
-  },
-])
-
-const activeFilters = ref<ReportFilterValues>({
-  dateRange: 'last-30-days',
-  cityZone: 'all-zones',
-  dispatchMode: 'all-modes',
-})
-
-const filteredList = computed(() =>
-  performanceList.value.filter((row) => {
-    const matchesZone =
-      activeFilters.value.cityZone === 'all-zones' || row.zoneKey === activeFilters.value.cityZone
-    const matchesMode =
-      activeFilters.value.dispatchMode === 'all-modes' ||
-      row.dispatchMode === activeFilters.value.dispatchMode
-    return matchesZone && matchesMode
-  }),
-)
+const activeFilters = ref<ReportFilterValues>(createDefaultReportFilters())
+const filteredList = computed(() => filterPerformanceRows(activeFilters.value))
 
 const filterBarRef = ref<InstanceType<typeof ReportFilterBar> | null>(null)
-const hasActiveFilters = computed(
-  () =>
-    activeFilters.value.dateRange !== 'last-30-days' ||
-    activeFilters.value.cityZone !== 'all-zones' ||
-    activeFilters.value.dispatchMode !== 'all-modes',
-)
+const hasActiveFilters = computed(() => hasCustomReportFilters(activeFilters.value))
 const resetFilters = () => filterBarRef.value?.resetFilters()
 
 const handleExport = () => {
-  exportToCsv(
-    'pagadian-driver-performance.csv',
-    ['Driver', 'Plate', 'Trips', 'Rating', 'Acceptance', 'Cancellation', 'Punctuality'],
-    filteredList.value.map((metric) => [
-      metric.driver,
-      metric.plateNumber,
-      String(metric.trips),
-      String(metric.rating),
-      metric.acceptanceRate,
-      metric.cancellationRate,
-      metric.onTimeRate,
-    ]),
-  )
+  exportPerformanceRows(filteredList.value)
 }
 </script>
 
