@@ -217,23 +217,6 @@ RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, picku
     passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at;
 
--- name: GetPendingBidOffer :one
-SELECT id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare, status, created_at
-FROM bid_offers
-WHERE session_id = $1
-  AND driver_id = $2
-  AND status = 'pending'
-LIMIT 1;
-
--- name: RejectBidOffer :one
-UPDATE bid_offers
-SET status = 'rejected'
-WHERE id = $1
-  AND status = 'pending'
-RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare, status, created_at;
-
 -- name: CancelPendingBidOffer :one
 UPDATE bid_offers
 SET status = 'rejected'

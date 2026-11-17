@@ -119,18 +119,6 @@ LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
 WHERE ride.bid_session_id = $1
 LIMIT 1;
 
--- name: AssignRideFromAcceptance :one
-UPDATE rides
-SET status = 'assigned',
-    driver_id = $2,
-    driver_name = $3,
-    vehicle_type = $4,
-    plate_number = $5,
-    driver_rating = $6
-WHERE id = $1
-  AND status = 'requested'
-RETURNING *;
-
 -- name: AcceptRideFromRequest :one
 UPDATE rides
 SET status = 'accepted',

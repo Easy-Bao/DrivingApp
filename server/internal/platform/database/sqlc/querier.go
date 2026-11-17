@@ -12,7 +12,6 @@ import (
 
 type Querier interface {
 	AcceptRideFromRequest(ctx context.Context, arg AcceptRideFromRequestParams) (Ride, error)
-	AssignRideFromAcceptance(ctx context.Context, arg AssignRideFromAcceptanceParams) (Ride, error)
 	CancelBidSession(ctx context.Context, arg CancelBidSessionParams) (BidSession, error)
 	CancelPendingBidOffer(ctx context.Context, arg CancelPendingBidOfferParams) (BidOffer, error)
 	CompleteRide(ctx context.Context, arg CompleteRideParams) (Ride, error)
@@ -61,7 +60,6 @@ type Querier interface {
 	GetPassengerProfileByUserID(ctx context.Context, userID int32) (GetPassengerProfileByUserIDRow, error)
 	GetPassengerProfileByUserIDFull(ctx context.Context, userID int32) (PassengerProfile, error)
 	GetPassengerReviewByRide(ctx context.Context, rideID int32) (PassengerReview, error)
-	GetPendingBidOffer(ctx context.Context, arg GetPendingBidOfferParams) (BidOffer, error)
 	GetPrivateObjectByStorageKey(ctx context.Context, storageKey string) (GetPrivateObjectByStorageKeyRow, error)
 	GetReviewByRide(ctx context.Context, rideID pgtype.Int4) (Review, error)
 	GetRideByBidSessionID(ctx context.Context, bidSessionID pgtype.Int4) (GetRideByBidSessionIDRow, error)
@@ -107,7 +105,6 @@ type Querier interface {
 	MarkRidePassengerNoShow(ctx context.Context, arg MarkRidePassengerNoShowParams) (Ride, error)
 	MarkRideSettlementOutcome(ctx context.Context, arg MarkRideSettlementOutcomeParams) (RideSettlement, error)
 	MarkUserVerified(ctx context.Context, id int32) (int64, error)
-	RejectBidOffer(ctx context.Context, id int32) (BidOffer, error)
 	RejectDriverPendingBidOffers(ctx context.Context, arg RejectDriverPendingBidOffersParams) ([]RejectDriverPendingBidOffersRow, error)
 	RejectOtherPendingBidOffers(ctx context.Context, arg RejectOtherPendingBidOffersParams) ([]BidOffer, error)
 	ReviewDriverDocument(ctx context.Context, arg ReviewDriverDocumentParams) (DriverDocument, error)

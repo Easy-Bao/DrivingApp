@@ -404,38 +404,6 @@ func (q *Queries) GetOnlineDriverProfileForBidding(ctx context.Context, arg GetO
 	return i, err
 }
 
-const getPendingBidOffer = `-- name: GetPendingBidOffer :one
-SELECT id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare, status, created_at
-FROM bid_offers
-WHERE session_id = $1
-  AND driver_id = $2
-  AND status = 'pending'
-LIMIT 1
-`
-
-type GetPendingBidOfferParams struct {
-	SessionID int32 `db:"session_id"`
-	DriverID  int32 `db:"driver_id"`
-}
-
-func (q *Queries) GetPendingBidOffer(ctx context.Context, arg GetPendingBidOfferParams) (BidOffer, error) {
-	row := q.db.QueryRow(ctx, getPendingBidOffer, arg.SessionID, arg.DriverID)
-	var i BidOffer
-	err := row.Scan(
-		&i.ID,
-		&i.SessionID,
-		&i.DriverID,
-		&i.DriverName,
-		&i.PlateNumber,
-		&i.VehicleType,
-		&i.ProposedFare,
-		&i.Status,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const hasActiveBidSession = `-- name: HasActiveBidSession :one
 SELECT EXISTS (
     SELECT 1
@@ -815,30 +783,4 @@ func (q *Queries) LockUserForBidSession(ctx context.Context, id int32) (int32, e
 	var id_2 int32
 	err := row.Scan(&id_2)
 	return id_2, err
-}
-
-const rejectBidOffer = `-- name: RejectBidOffer :one
-UPDATE bid_offers
-SET status = 'rejected'
-WHERE id = $1
-  AND status = 'pending'
-RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare, status, created_at
-`
-
-func (q *Queries) RejectBidOffer(ctx context.Context, id int32) (BidOffer, error) {
-	row := q.db.QueryRow(ctx, rejectBidOffer, id)
-	var i BidOffer
-	err := row.Scan(
-		&i.ID,
-		&i.SessionID,
-		&i.DriverID,
-		&i.DriverName,
-		&i.PlateNumber,
-		&i.VehicleType,
-		&i.ProposedFare,
-		&i.Status,
-		&i.CreatedAt,
-	)
-	return i, err
 }
