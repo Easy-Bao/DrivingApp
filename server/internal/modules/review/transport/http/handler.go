@@ -34,9 +34,8 @@ func (handler *Handler) DriverReviews(writer http.ResponseWriter, request *http.
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	driverID, err := strconv.Atoi(chi.URLParam(request, "id"))
-	if err != nil || driverID <= 0 {
-		response.Error(writer, http.StatusBadRequest, "invalid driver id")
+	driverID, ok := positivePathID(writer, request, "invalid driver id")
+	if !ok {
 		return
 	}
 	scope := "driver-reviews:" + strconv.Itoa(driverID)
@@ -80,9 +79,8 @@ func (handler *Handler) PassengerDriverReviewForRide(writer http.ResponseWriter,
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	rideID, err := strconv.Atoi(chi.URLParam(request, "id"))
-	if err != nil || rideID <= 0 {
-		response.Error(writer, http.StatusBadRequest, "invalid ride id")
+	rideID, ok := positivePathID(writer, request, "invalid ride id")
+	if !ok {
 		return
 	}
 	item, err := handler.service.PassengerDriverReviewForRide(request.Context(), rideID, passengerID)
@@ -108,9 +106,8 @@ func (handler *Handler) CreateReview(writer http.ResponseWriter, request *http.R
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	driverID, err := strconv.Atoi(chi.URLParam(request, "id"))
-	if err != nil || driverID <= 0 {
-		response.Error(writer, http.StatusBadRequest, "invalid driver id")
+	driverID, ok := positivePathID(writer, request, "invalid driver id")
+	if !ok {
 		return
 	}
 	var input ReviewRequest
@@ -138,9 +135,8 @@ func (handler *Handler) CreatePassengerReview(writer http.ResponseWriter, reques
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	passengerID, err := strconv.Atoi(chi.URLParam(request, "id"))
-	if err != nil || passengerID <= 0 {
-		response.Error(writer, http.StatusBadRequest, "invalid passenger id")
+	passengerID, ok := positivePathID(writer, request, "invalid passenger id")
+	if !ok {
 		return
 	}
 	var input ReviewRequest
@@ -160,6 +156,15 @@ func (handler *Handler) CreatePassengerReview(writer http.ResponseWriter, reques
 		return
 	}
 	response.JSON(writer, http.StatusCreated, NewPassengerReviewResponse(item))
+}
+
+func positivePathID(writer http.ResponseWriter, request *http.Request, message string) (int, bool) {
+	id, err := strconv.Atoi(chi.URLParam(request, "id"))
+	if err != nil || id <= 0 {
+		response.Error(writer, http.StatusBadRequest, message)
+		return 0, false
+	}
+	return id, true
 }
 
 func reviewErrorStatus(err error) int {

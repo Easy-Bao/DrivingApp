@@ -16,12 +16,17 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func TestIsProfileNotFoundRecognizesDomainError(t *testing.T) {
-	if !isProfileNotFound(fmt.Errorf("load profile: %w", domain.ErrProfileNotFound)) {
-		t.Fatal("expected wrapped domain error to be classified as not found")
+func TestWriteProfileReadErrorMapsDomainAndFallbackErrors(t *testing.T) {
+	notFoundRecorder := httptest.NewRecorder()
+	writeProfileReadError(notFoundRecorder, fmt.Errorf("load profile: %w", domain.ErrProfileNotFound))
+	if notFoundRecorder.Code != http.StatusNotFound {
+		t.Fatalf("wrapped ErrProfileNotFound status = %d, want %d", notFoundRecorder.Code, http.StatusNotFound)
 	}
-	if isProfileNotFound(errors.New("profile query failed")) {
-		t.Fatal("unexpected not-found classification for unrelated error")
+
+	fallbackRecorder := httptest.NewRecorder()
+	writeProfileReadError(fallbackRecorder, errors.New("profile query failed"))
+	if fallbackRecorder.Code != http.StatusInternalServerError {
+		t.Fatalf("unrelated error status = %d, want %d", fallbackRecorder.Code, http.StatusInternalServerError)
 	}
 }
 

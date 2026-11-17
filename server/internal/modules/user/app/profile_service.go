@@ -19,7 +19,9 @@ type ProfileServiceDependencies struct {
 
 func WithContentTypeDetector(detector ContentTypeDetector) ProfileServiceOption {
 	return func(service *ProfileService) {
-		service.detectContentType = detector
+		if service != nil {
+			service.detectContentType = detector
+		}
 	}
 }
 
@@ -48,7 +50,7 @@ func NewProfileService(
 	return service
 }
 func (service *ProfileService) Get(ctx context.Context, userID int) (domain.Profile, error) {
-	if service.repository == nil {
+	if service == nil || service.repository == nil {
 		return domain.Profile{}, ErrProfileUnavailable
 	}
 	profile, err := service.repository.Get(ctx, userID)
@@ -58,7 +60,7 @@ func (service *ProfileService) Get(ctx context.Context, userID int) (domain.Prof
 	return profile, nil
 }
 func (service *ProfileService) Update(ctx context.Context, profile domain.Profile) (domain.Profile, error) {
-	if service.repository == nil {
+	if service == nil || service.repository == nil {
 		return domain.Profile{}, ErrProfileUnavailable
 	}
 	updated, err := service.repository.Save(ctx, profile)
@@ -74,7 +76,7 @@ func (service *ProfileService) UpdateOnlineStatus(
 	targetID int,
 	isOnline bool,
 ) (domain.Profile, error) {
-	if service.repository == nil {
+	if service == nil || service.repository == nil {
 		return domain.Profile{}, ErrProfileUnavailable
 	}
 	updated, err := service.repository.UpdateOnlineStatus(
@@ -94,13 +96,13 @@ func (service *ProfileService) MaxAvatarBytes() int64 {
 }
 
 func (service *ProfileService) SaveAvatar(ctx context.Context, userID int, content []byte) (domain.Profile, error) {
+	if service == nil || service.detectContentType == nil {
+		return domain.Profile{}, domain.ErrAvatarStorageUnavailable
+	}
 	invalidUserID := userID <= 0
 	invalidSize := len(content) == 0 || int64(len(content)) > domain.MaxAvatarBytes
 	if invalidUserID || invalidSize {
 		return domain.Profile{}, domain.ErrInvalidAvatar
-	}
-	if service.detectContentType == nil {
-		return domain.Profile{}, domain.ErrAvatarStorageUnavailable
 	}
 	contentType := service.detectContentType(content)
 	if contentType != "image/jpeg" && contentType != "image/png" {
@@ -121,6 +123,9 @@ func (service *ProfileService) Avatar(ctx context.Context, userID int) (domain.A
 	if userID <= 0 {
 		return domain.Avatar{}, domain.ErrAvatarNotFound
 	}
+	if service == nil {
+		return domain.Avatar{}, domain.ErrAvatarStorageUnavailable
+	}
 	repository, ok := service.repository.(AvatarStore)
 	if !ok {
 		return domain.Avatar{}, domain.ErrAvatarStorageUnavailable
@@ -138,6 +143,9 @@ func (service *ProfileService) Notifications(
 	limit int,
 	offset int,
 ) ([]domain.Notification, error) {
+	if service == nil {
+		return nil, ErrNotificationUnavailable
+	}
 	repository, ok := service.repository.(NotificationStore)
 	if !ok {
 		return nil, ErrNotificationUnavailable
@@ -162,6 +170,9 @@ func (service *ProfileService) DeleteNotification(
 	userID int,
 	notificationID int,
 ) error {
+	if service == nil {
+		return ErrNotificationUnavailable
+	}
 	repository, ok := service.repository.(NotificationStore)
 	if !ok {
 		return ErrNotificationUnavailable
@@ -176,6 +187,9 @@ func (service *ProfileService) DeleteNotification(
 }
 
 func (service *ProfileService) MarkAllNotificationsRead(ctx context.Context, userID int) error {
+	if service == nil {
+		return ErrNotificationUnavailable
+	}
 	repository, ok := service.repository.(NotificationStore)
 	if !ok {
 		return ErrNotificationUnavailable

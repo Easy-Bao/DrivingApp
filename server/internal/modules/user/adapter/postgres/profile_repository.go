@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,8 +20,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-const _maxPostgresProfileID = 1<<31 - 1
 
 type ProfileRepository struct {
 	pool                       *pgxpool.Pool
@@ -185,8 +184,6 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 			return domain.Profile{}, fmt.Errorf("update passenger profile: %w", updateErr)
 		}
 		updated = passengerProfileFromPostgres(account, passengerProfile)
-	default:
-		return domain.Profile{}, fmt.Errorf("%w: unsupported profile role %q", domain.ErrInvalidRole, profile.Role)
 	}
 
 	if err := transaction.Commit(ctx); err != nil {
@@ -305,9 +302,15 @@ func (repository *ProfileRepository) SaveAvatar(
 		return domain.Profile{}, fmt.Errorf("store passenger avatar: %w", err)
 	}
 
+	committed := false
+	defer func() {
+		if !committed {
+			repository.cleanupAvatar(ctx, storageKey)
+		}
+	}()
+
 	transaction, err := repository.pool.Begin(ctx)
 	if err != nil {
-		repository.cleanupAvatar(ctx, storageKey)
 		return domain.Profile{}, fmt.Errorf("begin passenger avatar transaction: %w", err)
 	}
 	defer func() {
@@ -317,11 +320,9 @@ func (repository *ProfileRepository) SaveAvatar(
 	transactionQueries := repository.queries.WithTx(transaction)
 	passengerProfile, err := transactionQueries.LockPassengerProfileByUserID(ctx, dbUserID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		repository.cleanupAvatar(ctx, storageKey)
 		return domain.Profile{}, domain.ErrAvatarNotFound
 	}
 	if err != nil {
-		repository.cleanupAvatar(ctx, storageKey)
 		return domain.Profile{}, fmt.Errorf("lock passenger avatar profile: %w", err)
 	}
 
@@ -331,18 +332,16 @@ func (repository *ProfileRepository) SaveAvatar(
 		AvatarContentType: toPostgresProfileText(contentType),
 	})
 	if err != nil {
-		repository.cleanupAvatar(ctx, storageKey)
 		return domain.Profile{}, fmt.Errorf("update passenger avatar metadata: %w", err)
 	}
 	if updatedRows == 0 {
-		repository.cleanupAvatar(ctx, storageKey)
 		return domain.Profile{}, domain.ErrAvatarNotFound
 	}
 
 	if err := transaction.Commit(ctx); err != nil {
-		repository.cleanupAvatar(ctx, storageKey)
 		return domain.Profile{}, fmt.Errorf("commit passenger avatar transaction: %w", err)
 	}
+	committed = true
 
 	oldStorageKey := strings.TrimSpace(profileTextValue(passengerProfile.AvatarStorageKey))
 	if oldStorageKey != "" && oldStorageKey != storageKey {
@@ -416,7 +415,7 @@ func (repository *ProfileRepository) Notifications(
 	if limit <= 0 {
 		return nil, errors.New("notification limit must be positive")
 	}
-	if limit == int(^uint(0)>>1) {
+	if limit == math.MaxInt {
 		return nil, errors.New("notification limit exceeds native integer range")
 	}
 	dbLimit, err := toPostgresProfilePageValue(limit+1, "limit")
@@ -611,14 +610,14 @@ func fromPostgresNotification(item databasepostgres.Notification) (domain.Notifi
 }
 
 func toPostgresProfileID(value int, field string) (int32, error) {
-	if value <= 0 || int64(value) > int64(_maxPostgresProfileID) {
+	if value <= 0 || int64(value) > math.MaxInt32 {
 		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
 	}
 	return int32(value), nil
 }
 
 func toPostgresProfilePageValue(value int, field string) (int32, error) {
-	if value < 0 || int64(value) > int64(_maxPostgresProfileID) {
+	if value < 0 || int64(value) > math.MaxInt32 {
 		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
 	}
 	return int32(value), nil

@@ -29,10 +29,20 @@ func NewReviewRepository(pool *pgxpool.Pool) (*ReviewRepository, error) {
 	return &ReviewRepository{queries: databasepostgres.New(pool)}, nil
 }
 
+func (repository *ReviewRepository) validate() error {
+	if repository == nil || repository.queries == nil {
+		return errors.New("postgresql review repository is not initialized")
+	}
+	return nil
+}
+
 func (repository *ReviewRepository) ReviewableRide(
 	ctx context.Context,
 	rideID int,
 ) (domain.ReviewableRide, error) {
+	if err := repository.validate(); err != nil {
+		return domain.ReviewableRide{}, err
+	}
 	dbRideID, err := toPostgresID(rideID, "ride id")
 	if err != nil {
 		return domain.ReviewableRide{}, domain.ErrReviewNotAllowed
@@ -61,6 +71,9 @@ func (repository *ReviewRepository) DriverReviews(
 	driverID int,
 	query domain.ReviewQuery,
 ) ([]domain.Review, error) {
+	if err := repository.validate(); err != nil {
+		return nil, err
+	}
 	dbDriverID, err := toPostgresID(driverID, "driver id")
 	if err != nil {
 		return nil, err
@@ -98,6 +111,9 @@ func (repository *ReviewRepository) DriverReviewForRide(
 	ctx context.Context,
 	rideID, passengerID int,
 ) (domain.Review, error) {
+	if err := repository.validate(); err != nil {
+		return domain.Review{}, err
+	}
 	dbRideID, err := toPostgresID(rideID, "ride id")
 	if err != nil {
 		return domain.Review{}, domain.ErrReviewNotFound
@@ -127,6 +143,9 @@ func (repository *ReviewRepository) CreateReview(
 	ctx context.Context,
 	value domain.Review,
 ) (domain.Review, error) {
+	if err := repository.validate(); err != nil {
+		return domain.Review{}, err
+	}
 	rideID, err := toPostgresID(value.RideID, "ride id")
 	if err != nil {
 		return domain.Review{}, domain.ErrReviewNotAllowed
@@ -177,6 +196,9 @@ func (repository *ReviewRepository) CreatePassengerReview(
 	ctx context.Context,
 	value domain.PassengerReview,
 ) (domain.PassengerReview, error) {
+	if err := repository.validate(); err != nil {
+		return domain.PassengerReview{}, err
+	}
 	rideID, err := toPostgresID(value.RideID, "ride id")
 	if err != nil {
 		return domain.PassengerReview{}, domain.ErrReviewNotAllowed
@@ -329,6 +351,6 @@ func textValue(value pgtype.Text) string {
 }
 
 func isUniqueViolation(err error) bool {
-	var databaseError *pgconn.PgError
-	return errors.As(err, &databaseError) && databaseError.Code == "23505"
+	databaseError, ok := errors.AsType[*pgconn.PgError](err)
+	return ok && databaseError.Code == "23505"
 }
