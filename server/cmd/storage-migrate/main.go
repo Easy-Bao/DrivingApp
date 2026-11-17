@@ -36,25 +36,15 @@ func run(ctx context.Context) (runErr error) {
 	if err != nil {
 		return fmt.Errorf("load object storage migration configuration: %w", err)
 	}
-	migrationDatabase, err := database.OpenPostgresMigrationDatabaseWithContext(
+	migrator, err := database.OpenPostgresMigrator(
 		ctx,
 		config.DatabaseURL,
 		config.PostgresPool.PingTimeout,
+		migrations.FS,
+		".",
 	)
 	if err != nil {
-		return fmt.Errorf("open migration database: %w", err)
-	}
-	migrator, err := database.NewPostgresMigrator(database.PostgresMigratorDependencies{
-		Migrations:    migrations.FS,
-		MigrationPath: ".",
-		Database:      migrationDatabase,
-		Config:        database.DefaultPostgresMigratorConfig(),
-	})
-	if err != nil {
-		if closeErr := migrationDatabase.Close(); closeErr != nil {
-			return errors.Join(fmt.Errorf("create migrator: %w", err), closeErr)
-		}
-		return fmt.Errorf("create migrator: %w", err)
+		return err
 	}
 	defer func() {
 		sourceErr, databaseErr := migrator.Close()

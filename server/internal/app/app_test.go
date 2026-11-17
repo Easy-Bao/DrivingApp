@@ -65,7 +65,6 @@ func TestRunStopsServerOnSubscriberError(t *testing.T) {
 	}
 
 	runDone := make(chan error, 1)
-	go func() {}()
 
 	_ = listener.Close()
 	server.Addr = listener.Addr().String()
@@ -77,7 +76,7 @@ func TestRunStopsServerOnSubscriberError(t *testing.T) {
 	subscriber.signalReady()
 
 	var clientErr error
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		time.Sleep(20 * time.Millisecond)
 		resp, err := http.Get("http://" + server.Addr)
 		if err == nil {
@@ -137,7 +136,7 @@ func TestRunStopsServerOnContextCancellation(t *testing.T) {
 
 	subscriber.signalReady()
 
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		time.Sleep(20 * time.Millisecond)
 		resp, err := http.Get("http://" + addr)
 		if err == nil {

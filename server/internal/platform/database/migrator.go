@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -40,8 +41,41 @@ func DefaultPostgresMigratorConfig() PostgresMigratorConfig {
 	return PostgresMigratorConfig{
 		MigrationsTable:       "app_schema_migrations",
 		StatementTimeout:      _defaultMigrationTimeout,
-		MultiStatementMaxSize: 10 * 1 << 20,
+		MultiStatementMaxSize: 10 << 20,
 	}
+}
+
+// OpenPostgresMigrator opens a PostgreSQL migration connection and binds it to
+// migrations at migrationPath. Ownership of the underlying database handle
+// transfers to the returned migrator, which callers must close.
+func OpenPostgresMigrator(
+	ctx context.Context,
+	databaseURL string,
+	pingTimeout time.Duration,
+	migrations fs.FS,
+	migrationPath string,
+) (*migrate.Migrate, error) {
+	sqlDatabase, err := OpenPostgresMigrationDatabaseWithContext(ctx, databaseURL, pingTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("open migration database: %w", err)
+	}
+	migrator, err := NewPostgresMigrator(PostgresMigratorDependencies{
+		Migrations:    migrations,
+		MigrationPath: migrationPath,
+		Database:      sqlDatabase,
+		Config:        DefaultPostgresMigratorConfig(),
+	})
+	if err != nil {
+		migratorErr := fmt.Errorf("create migrator: %w", err)
+		if closeErr := sqlDatabase.Close(); closeErr != nil {
+			return nil, errors.Join(
+				migratorErr,
+				fmt.Errorf("close migration database: %w", closeErr),
+			)
+		}
+		return nil, migratorErr
+	}
+	return migrator, nil
 }
 
 // NewPostgresMigrator connects embedded migration files to the official

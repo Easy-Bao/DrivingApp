@@ -228,24 +228,12 @@ func (application *Application) Run(ctx context.Context) error {
 		select {
 		case subscriberErr := <-subscriberDone:
 			subscriberStopped = true
-			if subscriberErr != nil {
-				return fmt.Errorf("run realtime event subscriber: %w", subscriberErr)
-			}
-			if ctx.Err() != nil {
-				return nil
-			}
-			return errors.New("realtime event subscriber stopped before subscribing")
+			return subscriberEarlyExitError(ctx, subscriberErr)
 		default:
 		}
 	case subscriberErr := <-subscriberDone:
 		subscriberStopped = true
-		if subscriberErr != nil {
-			return fmt.Errorf("run realtime event subscriber: %w", subscriberErr)
-		}
-		if ctx.Err() != nil {
-			return nil
-		}
-		return errors.New("realtime event subscriber stopped before subscribing")
+		return subscriberEarlyExitError(ctx, subscriberErr)
 	case <-ctx.Done():
 		return nil
 	}
@@ -325,4 +313,14 @@ func (application *Application) log() *slog.Logger {
 		return application.logger
 	}
 	return slog.Default()
+}
+
+func subscriberEarlyExitError(ctx context.Context, subscriberErr error) error {
+	if subscriberErr != nil {
+		return fmt.Errorf("run realtime event subscriber: %w", subscriberErr)
+	}
+	if ctx.Err() != nil {
+		return nil
+	}
+	return errors.New("realtime event subscriber stopped before subscribing")
 }

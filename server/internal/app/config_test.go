@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"log/slog"
+	"maps"
 	"testing"
 	"time"
 
@@ -62,7 +63,7 @@ func TestLoadApplicationUsesDefaults(t *testing.T) {
 
 func TestLoadApplicationReadsOverrides(t *testing.T) {
 	values := baseEnvironment()
-	for key, value := range map[string]string{
+	maps.Copy(values, map[string]string{
 		"API_HOST":                            "0.0.0.0",
 		"LOG_LEVEL":                           "warning",
 		"CORS_ALLOWED_ORIGINS":                "https://one.example, https://two.example, ",
@@ -92,9 +93,7 @@ func TestLoadApplicationReadsOverrides(t *testing.T) {
 		"RIDE_COMPLETION_RADIUS_METERS":       "100.25",
 		"BID_SESSION_DURATION":                "9m",
 		"REPORTING_TIMEZONE":                  "Asia/Manila",
-	} {
-		values[key] = value
-	}
+	})
 
 	config, err := loadApplication(environment(values))
 	if err != nil {
@@ -219,8 +218,6 @@ func environment(values map[string]string) environmentReader {
 
 func cloneEnvironment(values map[string]string) map[string]string {
 	clone := make(map[string]string, len(values))
-	for key, value := range values {
-		clone[key] = value
-	}
+	maps.Copy(clone, values)
 	return clone
 }
