@@ -42,6 +42,26 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
+    // AGP's default asset filter drops dotfiles, which strips the bundled
+    // `flutter_assets/.env` that flutter_dotenv loads at startup. Keep the
+    // default exclusions except the blanket `.*` rule.
+    androidResources {
+        ignoreAssetsPatterns.clear()
+        ignoreAssetsPatterns.addAll(
+            listOf(
+                "!.svn",
+                "!.git",
+                "!.ds_store",
+                "!*.scc",
+                "<dir>_*",
+                "!CVS",
+                "!thumbs.db",
+                "!picasa.ini",
+                "!*~",
+            ),
+        )
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

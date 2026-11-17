@@ -1,3 +1,4 @@
+import '../errors/exceptions.dart';
 import '../network/api_base_uri.dart';
 
 /// Applications provide the values loaded from their own bundled `.env` asset
@@ -38,8 +39,13 @@ class ClientEnvironment {
   Uri get apiBaseUri {
     final rawUrl = value('API_BASE_URL');
     if (rawUrl == null || rawUrl.trim().isEmpty) {
-      throw StateError(
-        'Security Configuration Error: API_BASE_URL is required.',
+      throw ConfigurationException(
+        environment.isEmpty
+            ? 'API_BASE_URL is required, and no .env entries were loaded. '
+                  'Ensure .env is bundled in assets or pass '
+                  '--dart-define=API_BASE_URL=<origin>.'
+            : 'API_BASE_URL is required. Set it in .env or pass '
+                  '--dart-define=API_BASE_URL=<origin>.',
       );
     }
 
@@ -53,7 +59,7 @@ class ClientEnvironment {
         androidEmulatorLoopbackHost: value('ANDROID_EMULATOR_LOOPBACK_HOST'),
       );
     } on FormatException catch (error) {
-      throw StateError('Security Configuration Error: ${error.message}');
+      throw ConfigurationException(error.message);
     }
   }
 

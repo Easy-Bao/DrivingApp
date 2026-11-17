@@ -185,4 +185,38 @@ void main() {
       expect(overview.rides.items, isEmpty);
     });
   });
+
+  test('handles concurrent failures in fetchRideHistoryOverview without unhandled errors', () async {
+    when(
+      () => remoteDataSource.fetchRideHistory(
+        'passenger-1',
+        limit: 25,
+        offset: 0,
+        cursor: '',
+      ),
+    ).thenAnswer(
+      (_) => Future<OffsetPage<Map<String, dynamic>>>.error(
+        DioException(
+          requestOptions: RequestOptions(
+            path: '/api/v1/passengers/passenger-1/rides',
+          ),
+          type: DioExceptionType.connectionError,
+        ),
+      ),
+    );
+    when(() => remoteDataSource.fetchSummary('passenger-1')).thenAnswer(
+      (_) => Future<Map<String, dynamic>>.delayed(
+        const Duration(milliseconds: 10),
+        () => throw const NetworkCircuitOpenException(),
+      ),
+    );
+
+    final result = await repository.fetchRideHistoryOverview('passenger-1');
+
+    result.fold(
+      (failure) => expect(failure, isA<NetworkFailure>()),
+      (_) => fail('Expected a network failure.'),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+  });
 }

@@ -1,52 +1,35 @@
 import 'dart:developer' as developer;
-import 'dart:ui' as ui;
 
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:driver/src/app/app.dart';
+import 'package:driver/src/app/dependencies.dart';
+import 'package:driver/src/core/config/env_config.dart';
+import 'package:driver/src/core/session/session_store.dart';
+import 'package:driver/src/core/telemetry/background_telemetry.dart';
+import 'package:driver/src/features/auth/auth_routes.dart';
+import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
-import 'package:driver/src/app/app.dart';
-import 'package:driver/src/app/dependencies.dart';
-import 'package:driver/src/features/auth/auth_routes.dart';
-import 'package:driver/src/features/dashboard/dashboard_routes.dart';
-import 'package:driver/src/core/config/env_config.dart';
-import 'package:driver/src/core/session/session_store.dart';
-import 'package:driver/src/core/telemetry/background_telemetry.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> bootstrapApp() async {
   final startupTask = developer.TimelineTask()..start('driver.startup');
-  var firstFrameCallbackRegistered = false;
-
-  void captureFirstFrameTiming() {
-    if (firstFrameCallbackRegistered) return;
-    firstFrameCallbackRegistered = true;
-
-    late final ui.TimingsCallback callback;
-    callback = (timings) {
-      if (timings.isEmpty) return;
-      WidgetsBinding.instance.removeTimingsCallback(callback);
-      final timing = timings.first;
-      developer.Timeline.instantSync(
-        'driver.startup.first_frame',
-        arguments: {
-          'build_duration_us': timing.buildDuration.inMicroseconds,
-          'raster_duration_us': timing.rasterDuration.inMicroseconds,
-        },
-      );
-    };
-    WidgetsBinding.instance.addTimingsCallback(callback);
-  }
+  final captureFirstFrameTiming = createFirstFrameTimingRecorder(
+    'driver.startup.first_frame',
+  );
+  var currentStage = 'initializing app';
 
   try {
     WidgetsFlutterBinding.ensureInitialized();
     configureClientErrorBoundary(appName: 'driver-app');
 
     try {
+      currentStage = 'loading startup configuration';
       final sessionService = SessionStore();
       final stopServiceTask = traceTimelineStage<void>(
         'driver.startup.stop_background_service',
@@ -62,9 +45,7 @@ Future<void> bootstrapApp() async {
       );
       final environmentTask = traceTimelineStage<void>(
         'driver.startup.load_environment',
-        () async {
-          await dotenv.load(fileName: '.env', isOptional: true);
-        },
+        () => dotenv.load(fileName: '.env', isOptional: true),
       );
 
       await Future.wait<void>([
@@ -76,6 +57,7 @@ Future<void> bootstrapApp() async {
       final preferences = await preferencesTask;
       final hasSession = await sessionTask;
 
+      currentStage = 'initializing crash reporting';
       await traceTimelineStage(
         'driver.startup.sentry_and_app_runner',
         () => SentryFlutter.init(
@@ -85,6 +67,7 @@ Future<void> bootstrapApp() async {
             options.environment = EnvConfig.appEnvironment;
           },
           appRunner: () async {
+            currentStage = 'configuring dependencies and router';
             await traceTimelineStage(
               'driver.startup.configure_dependencies_and_router',
               () => Modular.configure(
@@ -105,8 +88,10 @@ Future<void> bootstrapApp() async {
             );
             await Future<void>.delayed(Duration.zero);
 
+            currentStage = 'reading API configuration';
+            final apiBaseUri = EnvConfig.apiBaseUri;
             final nativeService = MapNativeService(
-              placeServiceBaseUri: EnvConfig.apiBaseUri,
+              placeServiceBaseUri: apiBaseUri,
               dio: Modular.get<Dio>(),
             );
             LocationService.nativeService = nativeService;
@@ -116,6 +101,8 @@ Future<void> bootstrapApp() async {
                 'Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.',
               );
             }
+
+            currentStage = 'initializing map services';
             await traceTimelineStage(
               'driver.startup.initialize_map_provider',
               () => MapProvider.initialize(
@@ -131,11 +118,12 @@ Future<void> bootstrapApp() async {
       );
     } catch (error, stackTrace) {
       captureFirstFrameTiming();
-      runApp(
-        SafeClientErrorApp(
-          theme: AppTheme.main,
-          message: ErrorHandler.getErrorMessage(error, stackTrace),
-        ),
+      showClientStartupFailure(
+        appName: 'driver-app',
+        theme: AppTheme.main,
+        error: error,
+        stackTrace: stackTrace,
+        stage: currentStage,
       );
     }
   } finally {

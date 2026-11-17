@@ -15,6 +15,32 @@ void main() {
     expect(message, isNot(contains('database')));
   });
 
+  test(
+    'surfaces the missing configuration key instead of a generic message',
+    () {
+      final failure = ErrorHandler.getAppFailure(
+        const ConfigurationException('API_BASE_URL is required.'),
+      );
+
+      expect(failure.title, 'App configuration error');
+      expect(failure.userMessage, 'API_BASE_URL is required.');
+      expect(failure.type, ErrorType.configuration);
+    },
+  );
+
+  test('maps response parsing errors to an explicit format message', () {
+    final failure = ErrorHandler.getAppFailure(
+      DataParsingException(message: 'missing field driver_id'),
+    );
+
+    expect(failure.title, 'Invalid server response');
+    expect(
+      failure.userMessage,
+      'Received an unexpected response format. Try again.',
+    );
+    expect(failure.userMessage, isNot(contains('driver_id')));
+  });
+
   test('maps infrastructure failures to safe user-facing messages', () {
     expect(
       ErrorHandler.getErrorMessage(

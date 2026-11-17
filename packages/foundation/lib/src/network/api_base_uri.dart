@@ -14,17 +14,29 @@ Uri parseApiBaseUri(String rawUrl, {bool allowInsecureHttp = true}) {
 
   if (uri == null ||
       (uri.scheme != 'http' && uri.scheme != 'https') ||
-      (!allowInsecureHttp && uri.scheme != 'https') ||
       uri.host.isEmpty ||
-      uri.userInfo.isNotEmpty ||
-      uri.query.isNotEmpty ||
-      uri.fragment.isNotEmpty ||
-      (uri.path.isNotEmpty && uri.path != '/') ||
       uri.host == '0.0.0.0' ||
       uri.host == '::' ||
       uri.host == '*') {
     throw const FormatException(
-      'API_BASE_URL must be an HTTP(S) origin without credentials or a path.',
+      'API_BASE_URL must be an HTTP(S) origin (for example http://localhost:8000).',
+    );
+  }
+  if (!allowInsecureHttp && uri.scheme != 'https') {
+    throw const FormatException(
+      'API_BASE_URL must use HTTPS when insecure HTTP is disabled.',
+    );
+  }
+  if (uri.userInfo.isNotEmpty) {
+    throw const FormatException(
+      'API_BASE_URL must not contain embedded credentials.',
+    );
+  }
+  if ((uri.path.isNotEmpty && uri.path != '/') ||
+      uri.query.isNotEmpty ||
+      uri.fragment.isNotEmpty) {
+    throw const FormatException(
+      'API_BASE_URL must be an origin without a path, query, or fragment.',
     );
   }
 
@@ -55,9 +67,15 @@ Uri resolveMobileApiBaseUri({
       ? _defaultAndroidEmulatorLoopbackHost
       : configuredLoopbackHost;
 
-  uri = parseApiBaseUri(
-    uri.replace(host: loopbackHost).toString(),
-    allowInsecureHttp: allowInsecureHttp,
-  );
+  try {
+    uri = parseApiBaseUri(
+      uri.replace(host: loopbackHost).toString(),
+      allowInsecureHttp: allowInsecureHttp,
+    );
+  } on FormatException {
+    throw const FormatException(
+      'ANDROID_EMULATOR_LOOPBACK_HOST must be a valid host name or IP address.',
+    );
+  }
   return uri;
 }

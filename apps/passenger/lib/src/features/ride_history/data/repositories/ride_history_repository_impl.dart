@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
@@ -106,8 +108,8 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
         cursor: '',
       );
       final summaryFuture = _remoteDataSource.fetchSummary(passengerId);
-      final rawPage = await pageFuture;
-      final summary = await summaryFuture;
+      // Awaiting both together keeps a failure in either request handled.
+      final (rawPage, summary) = await (pageFuture, summaryFuture).wait;
       return Ok(
         RideHistoryOverview(
           rides: _mapPage(rawPage),
@@ -115,6 +117,13 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
           weeklyRideCount: SafeParse.toInt(
             summary['this_week_completed_rides'],
           ),
+        ),
+      );
+    } on ParallelWaitError<Object?, (AsyncError?, AsyncError?)> catch (error) {
+      final (pageError, summaryError) = error.errors;
+      return Err(
+        _mapExceptionToFailure(
+          pageError?.error ?? summaryError?.error ?? error,
         ),
       );
     } catch (error) {

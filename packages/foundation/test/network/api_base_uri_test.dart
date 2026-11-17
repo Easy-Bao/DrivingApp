@@ -32,7 +32,13 @@ void main() {
     expect(
       () =>
           parseApiBaseUri('http://api.example.test', allowInsecureHttp: false),
-      throwsA(isA<FormatException>()),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains('HTTPS'),
+        ),
+      ),
     );
     expect(
       parseApiBaseUri(

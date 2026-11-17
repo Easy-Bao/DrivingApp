@@ -6,7 +6,15 @@ import 'package:dio/dio.dart';
 import 'package:foundation/src/errors/exceptions.dart';
 import 'package:foundation/src/errors/network_diagnostic.dart';
 
-enum ErrorType { network, server, unauthorized, validation, location, unknown }
+enum ErrorType {
+  network,
+  server,
+  unauthorized,
+  validation,
+  location,
+  configuration,
+  unknown,
+}
 
 /// [technicalLog] and [stackTrace] are intentionally kept separate from the
 /// user copy. They are available to an internal logger and must never be
@@ -79,6 +87,14 @@ class const AppFailure({
       );
     }
 
+    if (error is ConfigurationException) {
+      return createFailure(
+        title: 'App configuration error',
+        userMessage: error.message,
+        type: ErrorType.configuration,
+      );
+    }
+
     if (error is ValidationFailure) {
       return createFailure(
         userMessage: 'Check the highlighted fields.',
@@ -106,10 +122,19 @@ class const AppFailure({
       );
     }
 
-    if (error is ServerFailure || error is DataParsingException) {
+    if (error is ServerFailure) {
       return createFailure(
         title: 'Something went wrong',
         userMessage: 'Something went wrong. Try again.',
+        actionText: 'Retry',
+        type: ErrorType.server,
+      );
+    }
+
+    if (error is DataParsingException) {
+      return createFailure(
+        title: 'Invalid server response',
+        userMessage: 'Received an unexpected response format. Try again.',
         actionText: 'Retry',
         type: ErrorType.server,
       );

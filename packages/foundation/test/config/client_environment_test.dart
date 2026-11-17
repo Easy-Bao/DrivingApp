@@ -40,7 +40,7 @@ void main() {
   });
 
   test('rejects a missing API base URL with an actionable error', () {
-    final config = ClientEnvironment(
+    final missingEnvConfig = ClientEnvironment(
       environment: const {},
       buildValues: const {},
       allowInsecureHttp: true,
@@ -48,12 +48,75 @@ void main() {
     );
 
     expect(
-      () => config.apiBaseUri,
+      () => missingEnvConfig.apiBaseUri,
       throwsA(
-        isA<StateError>().having(
+        isA<ConfigurationException>().having(
           (error) => error.message,
           'message',
-          contains('API_BASE_URL is required'),
+          allOf(
+            contains('API_BASE_URL is required'),
+            contains('no .env entries were loaded'),
+          ),
+        ),
+      ),
+    );
+
+    final loadedEnvWithoutUrl = ClientEnvironment(
+      environment: const {'APP_ENV': 'development'},
+      buildValues: const {},
+      allowInsecureHttp: true,
+      isAndroid: false,
+    );
+
+    expect(
+      () => loadedEnvWithoutUrl.apiBaseUri,
+      throwsA(
+        isA<ConfigurationException>().having(
+          (error) => error.message,
+          'message',
+          allOf(
+            contains('API_BASE_URL is required'),
+            isNot(contains('no .env entries were loaded')),
+          ),
+        ),
+      ),
+    );
+  });
+
+  test('names the offending key for invalid API URL or loopback host', () {
+    final insecureRelease = ClientEnvironment(
+      environment: const {'API_BASE_URL': 'http://api.example.test'},
+      buildValues: const {},
+      allowInsecureHttp: false,
+      isAndroid: false,
+    );
+    expect(
+      () => insecureRelease.apiBaseUri,
+      throwsA(
+        isA<ConfigurationException>().having(
+          (error) => error.message,
+          'message',
+          contains('HTTPS'),
+        ),
+      ),
+    );
+
+    final invalidLoopback = ClientEnvironment(
+      environment: const {
+        'API_BASE_URL': 'http://localhost:8000',
+        'ANDROID_EMULATOR_LOOPBACK_HOST': 'bad host/path',
+      },
+      buildValues: const {},
+      allowInsecureHttp: true,
+      isAndroid: true,
+    );
+    expect(
+      () => invalidLoopback.apiBaseUri,
+      throwsA(
+        isA<ConfigurationException>().having(
+          (error) => error.message,
+          'message',
+          contains('ANDROID_EMULATOR_LOOPBACK_HOST'),
         ),
       ),
     );

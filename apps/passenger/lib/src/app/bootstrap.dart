@@ -1,5 +1,4 @@
 import 'dart:developer' as developer;
-import 'dart:ui' as ui;
 
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
@@ -19,47 +18,35 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> bootstrapApp() async {
   final startupTask = developer.TimelineTask()..start('passenger.startup');
-  var firstFrameCallbackRegistered = false;
-
-  void captureFirstFrameTiming() {
-    if (firstFrameCallbackRegistered) return;
-    firstFrameCallbackRegistered = true;
-
-    late final ui.TimingsCallback callback;
-    callback = (timings) {
-      if (timings.isEmpty) return;
-      WidgetsBinding.instance.removeTimingsCallback(callback);
-      final timing = timings.first;
-      developer.Timeline.instantSync(
-        'passenger.startup.first_frame',
-        arguments: {
-          'build_duration_us': timing.buildDuration.inMicroseconds,
-          'raster_duration_us': timing.rasterDuration.inMicroseconds,
-        },
-      );
-    };
-    WidgetsBinding.instance.addTimingsCallback(callback);
-  }
+  final captureFirstFrameTiming = createFirstFrameTimingRecorder(
+    'passenger.startup.first_frame',
+  );
+  var currentStage = 'initializing app';
 
   try {
     WidgetsFlutterBinding.ensureInitialized();
     configureClientErrorBoundary(appName: 'passenger-app');
 
     try {
+      currentStage = 'stopping background telemetry';
       await traceTimelineStage(
         'passenger.startup.stop_background_service',
         BackgroundTelemetry.stopExistingServiceForStartup,
       );
+
+      currentStage = 'loading local preferences';
       final preferences = await traceTimelineStage(
         'passenger.startup.load_preferences',
         SharedPreferences.getInstance,
       );
 
+      currentStage = 'loading .env configuration';
       await traceTimelineStage(
         'passenger.startup.load_environment',
         () => dotenv.load(fileName: '.env', isOptional: true),
       );
 
+      currentStage = 'initializing crash reporting';
       await traceTimelineStage(
         'passenger.startup.sentry_and_app_runner',
         () => SentryFlutter.init(
@@ -71,6 +58,7 @@ Future<void> bootstrapApp() async {
           appRunner: () async {
             AppTransitions.configure();
 
+            currentStage = 'configuring dependencies and router';
             await traceTimelineStage(
               'passenger.startup.configure_dependencies_and_router',
               () => Modular.configure(
@@ -87,8 +75,10 @@ Future<void> bootstrapApp() async {
             );
             await Future<void>.delayed(Duration.zero);
 
+            currentStage = 'reading API configuration';
+            final apiBaseUri = EnvConfig.apiBaseUri;
             final nativeService = MapNativeService(
-              placeServiceBaseUri: EnvConfig.apiBaseUri,
+              placeServiceBaseUri: apiBaseUri,
               dio: Modular.get<Dio>(),
             );
             LocationService.nativeService = nativeService;
@@ -98,6 +88,8 @@ Future<void> bootstrapApp() async {
                 'Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.',
               );
             }
+
+            currentStage = 'initializing map services';
             await traceTimelineStage(
               'passenger.startup.initialize_map_provider',
               () => MapProvider.initialize(
@@ -112,19 +104,13 @@ Future<void> bootstrapApp() async {
         ),
       );
     } catch (error, stackTrace) {
-      developer.log(
-        'Passenger startup failed.',
-        name: 'passenger-app',
+      captureFirstFrameTiming();
+      showClientStartupFailure(
+        appName: 'passenger-app',
+        theme: AppTheme.main,
         error: error,
         stackTrace: stackTrace,
-        level: 1000,
-      );
-      captureFirstFrameTiming();
-      runApp(
-        SafeClientErrorApp(
-          theme: AppTheme.main,
-          message: ErrorHandler.getErrorMessage(error, stackTrace),
-        ),
+        stage: currentStage,
       );
     }
   } finally {
