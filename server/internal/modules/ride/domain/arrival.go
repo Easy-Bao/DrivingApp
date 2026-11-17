@@ -11,9 +11,9 @@ func ValidateArrivalLocation(
 	driverLongitude,
 	radiusMeters float64,
 ) error {
-	if !validCoordinate(pickupLatitude, pickupLongitude) ||
-		!validCoordinate(driverLatitude, driverLongitude) ||
-		!validRadius(radiusMeters) {
+	pickupValid := Coordinates{Latitude: pickupLatitude, Longitude: pickupLongitude}.Valid()
+	driverValid := Coordinates{Latitude: driverLatitude, Longitude: driverLongitude}.Valid()
+	if !pickupValid || !driverValid || !validRadius(radiusMeters) {
 		return ErrArrivalLocation
 	}
 	if haversineMeters(
@@ -29,13 +29,6 @@ func ValidateArrivalLocation(
 
 func validRadius(radiusMeters float64) bool {
 	return radiusMeters > 0 && !math.IsNaN(radiusMeters) && !math.IsInf(radiusMeters, 0)
-}
-
-func validCoordinate(latitude, longitude float64) bool {
-	return !math.IsNaN(latitude) && !math.IsInf(latitude, 0) &&
-		!math.IsNaN(longitude) && !math.IsInf(longitude, 0) &&
-		latitude >= -90 && latitude <= 90 &&
-		longitude >= -180 && longitude <= 180
 }
 
 func haversineMeters(

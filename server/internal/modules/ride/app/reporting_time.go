@@ -27,21 +27,22 @@ func (service *Service) WithReportingLocation(location *time.Location) *Service 
 	return service
 }
 
-func (service *Service) reportingDayBounds(now time.Time) (time.Time, time.Time) {
-	location := service.reportingLocation
-	if location == nil {
-		location = _defaultReportingLocation
+func (service *Service) reportingLocationOrDefault() *time.Location {
+	if service != nil && service.reportingLocation != nil {
+		return service.reportingLocation
 	}
+	return _defaultReportingLocation
+}
+
+func (service *Service) reportingDayBounds(now time.Time) (time.Time, time.Time) {
+	location := service.reportingLocationOrDefault()
 	localNow := now.In(location)
 	start := time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, location)
 	return start.UTC(), start.AddDate(0, 0, 1).UTC()
 }
 
 func (service *Service) reportingWeekBounds(now time.Time) (time.Time, time.Time) {
-	location := service.reportingLocation
-	if location == nil {
-		location = _defaultReportingLocation
-	}
+	location := service.reportingLocationOrDefault()
 	localNow := now.In(location)
 	dayStart := time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, location)
 	weekStart := dayStart.AddDate(0, 0, -(int(dayStart.Weekday())+6)%7)

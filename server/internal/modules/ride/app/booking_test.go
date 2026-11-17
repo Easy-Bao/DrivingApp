@@ -87,9 +87,9 @@ func TestServiceEstimateFareValidatesRouteInputs(t *testing.T) {
 	_, _, err := service.EstimateFare(
 		context.Background(),
 		nil,
-		floatPointer(1),
-		floatPointer(2),
-		floatPointer(3),
+		new(1.0),
+		new(2.0),
+		new(3.0),
 		0,
 		0,
 	)
@@ -98,10 +98,10 @@ func TestServiceEstimateFareValidatesRouteInputs(t *testing.T) {
 	}
 	metrics, fare, err := service.EstimateFare(
 		context.Background(),
-		floatPointer(1),
-		floatPointer(2),
-		floatPointer(3),
-		floatPointer(4),
+		new(1.0),
+		new(2.0),
+		new(3.0),
+		new(4.0),
 		0,
 		0,
 	)
@@ -114,10 +114,10 @@ func TestServiceEstimateFareValidatesRouteInputs(t *testing.T) {
 
 	_, _, err = service.EstimateFare(
 		context.Background(),
-		floatPointer(1),
-		floatPointer(2),
-		floatPointer(1),
-		floatPointer(2),
+		new(1.0),
+		new(2.0),
+		new(1.0),
+		new(2.0),
 		0,
 		0,
 	)
@@ -148,10 +148,10 @@ func TestServiceEstimateFareCachesAuthoritativeTrafficMetrics(t *testing.T) {
 	for range 2 {
 		metrics, fare, err := service.EstimateFare(
 			context.Background(),
-			floatPointer(1),
-			floatPointer(2),
-			floatPointer(3),
-			floatPointer(4),
+			new(1.0),
+			new(2.0),
+			new(3.0),
+			new(4.0),
 			0,
 			0,
 		)
@@ -250,8 +250,6 @@ func TestServiceCreateRejectsPassengerWithActiveRide(t *testing.T) {
 	}
 }
 
-func floatPointer(value float64) *float64 { return &value }
-
 func TestServiceFareRouteSingleflightLeaderCancellation(t *testing.T) {
 	routeStarted := make(chan struct{})
 	allowRouteToFinish := make(chan struct{})
@@ -275,10 +273,10 @@ func TestServiceFareRouteSingleflightLeaderCancellation(t *testing.T) {
 	go func() {
 		_, _, err := service.EstimateFare(
 			leaderCtx,
-			floatPointer(10.1),
-			floatPointer(20.1),
-			floatPointer(30.1),
-			floatPointer(40.1),
+			new(10.1),
+			new(20.1),
+			new(30.1),
+			new(40.1),
 			0,
 			0,
 		)
@@ -295,10 +293,10 @@ func TestServiceFareRouteSingleflightLeaderCancellation(t *testing.T) {
 	go func() {
 		metrics, fare, err := service.EstimateFare(
 			context.Background(),
-			floatPointer(10.1),
-			floatPointer(20.1),
-			floatPointer(30.1),
-			floatPointer(40.1),
+			new(10.1),
+			new(20.1),
+			new(30.1),
+			new(40.1),
 			0,
 			0,
 		)
@@ -358,10 +356,10 @@ func TestServiceFareRouteSingleflightPanicSafety(t *testing.T) {
 		close(followerJoined)
 		_, _, err := service.EstimateFare(
 			context.Background(),
-			floatPointer(5.0),
-			floatPointer(6.0),
-			floatPointer(7.0),
-			floatPointer(8.0),
+			new(5.0),
+			new(6.0),
+			new(7.0),
+			new(8.0),
 			0,
 			0,
 		)
@@ -374,10 +372,10 @@ func TestServiceFareRouteSingleflightPanicSafety(t *testing.T) {
 		}()
 		_, _, _ = service.EstimateFare(
 			context.Background(),
-			floatPointer(5.0),
-			floatPointer(6.0),
-			floatPointer(7.0),
-			floatPointer(8.0),
+			new(5.0),
+			new(6.0),
+			new(7.0),
+			new(8.0),
 			0,
 			0,
 		)
@@ -395,10 +393,10 @@ func TestServiceFareRouteSingleflightPanicSafety(t *testing.T) {
 	panicking = false
 	metrics, fare, err := service.EstimateFare(
 		context.Background(),
-		floatPointer(5.0),
-		floatPointer(6.0),
-		floatPointer(7.0),
-		floatPointer(8.0),
+		new(5.0),
+		new(6.0),
+		new(7.0),
+		new(8.0),
 		0,
 		0,
 	)

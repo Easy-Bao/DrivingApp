@@ -17,30 +17,23 @@ func driverUnavailableError(operation string, err error, unavailable error) erro
 }
 
 func driverActiveRideConflictError(operation string, err error) error {
-	var databaseError *pgconn.PgError
-	if errors.As(err, &databaseError) &&
-		databaseError.Code == "23505" &&
-		databaseError.ConstraintName == "rides_one_active_ride_per_driver_idx" {
+	if constraint, ok := postgresUniqueConstraint(err); ok && constraint == "rides_one_active_ride_per_driver_idx" {
 		return domain.ErrDriverCapacityReached
 	}
 	return fmt.Errorf("%s: %w", operation, err)
 }
 
 func passengerActiveRideConflictError(operation string, err error) error {
-	var databaseError *pgconn.PgError
-	if errors.As(err, &databaseError) &&
-		databaseError.Code == "23505" &&
-		(databaseError.ConstraintName == "ride_passenger_id" ||
-			databaseError.ConstraintName == "rides_one_active_ride_per_passenger_idx") {
+	if constraint, ok := postgresUniqueConstraint(err); ok &&
+		(constraint == "ride_passenger_id" || constraint == "rides_one_active_ride_per_passenger_idx") {
 		return domain.ErrActiveBooking
 	}
 	return fmt.Errorf("%s: %w", operation, err)
 }
 
 func acceptedRideConflictError(operation string, err error) error {
-	var databaseError *pgconn.PgError
-	if errors.As(err, &databaseError) && databaseError.Code == "23505" {
-		switch databaseError.ConstraintName {
+	if constraint, ok := postgresUniqueConstraint(err); ok {
+		switch constraint {
 		case "ride_passenger_id", "rides_one_active_ride_per_passenger_idx":
 			return domain.ErrActiveBooking
 		case "rides_one_active_ride_per_driver_idx":
@@ -51,6 +44,14 @@ func acceptedRideConflictError(operation string, err error) error {
 }
 
 func isPostgresUniqueViolation(err error) bool {
-	var databaseError *pgconn.PgError
-	return errors.As(err, &databaseError) && databaseError.Code == "23505"
+	_, ok := postgresUniqueConstraint(err)
+	return ok
+}
+
+func postgresUniqueConstraint(err error) (string, bool) {
+	databaseError, ok := errors.AsType[*pgconn.PgError](err)
+	if !ok || databaseError.Code != "23505" {
+		return "", false
+	}
+	return databaseError.ConstraintName, true
 }

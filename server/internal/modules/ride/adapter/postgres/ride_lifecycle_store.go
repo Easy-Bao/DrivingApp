@@ -86,22 +86,14 @@ func (repository *RideRepository) MarkArrived(
 			fmt.Errorf("create ride arrival event: %w", err),
 		)
 	}
-	ride, err := readRideProjection(ctx, transactionQueries, dbRideID)
-	if err != nil {
-		return domain.Ride{}, rollbackRideStatusTransaction(
-			ctx,
-			transaction,
-			fmt.Errorf("read arrived ride: %w", err),
-		)
-	}
-	if err := transaction.Commit(ctx); err != nil {
-		return domain.Ride{}, rollbackRideStatusTransaction(
-			ctx,
-			transaction,
-			fmt.Errorf("commit ride arrival transaction: %w", err),
-		)
-	}
-	return ride, nil
+	return commitRideProjection(
+		ctx,
+		transaction,
+		transactionQueries,
+		dbRideID,
+		"read arrived ride",
+		"commit ride arrival transaction",
+	)
 }
 
 func (repository *RideRepository) StartTrip(
@@ -266,22 +258,14 @@ func (repository *RideRepository) MarkPassengerNoShow(
 			fmt.Errorf("create passenger no-show audit event: %w", err),
 		)
 	}
-	ride, err := readRideProjection(ctx, transactionQueries, dbRideID)
-	if err != nil {
-		return domain.Ride{}, rollbackRideStatusTransaction(
-			ctx,
-			transaction,
-			fmt.Errorf("read passenger no-show ride: %w", err),
-		)
-	}
-	if err := transaction.Commit(ctx); err != nil {
-		return domain.Ride{}, rollbackRideStatusTransaction(
-			ctx,
-			transaction,
-			fmt.Errorf("commit passenger no-show transaction: %w", err),
-		)
-	}
-	return ride, nil
+	return commitRideProjection(
+		ctx,
+		transaction,
+		transactionQueries,
+		dbRideID,
+		"read passenger no-show ride",
+		"commit passenger no-show transaction",
+	)
 }
 
 func (repository *RideRepository) commitLifecycleCommand(
@@ -330,22 +314,14 @@ func (repository *RideRepository) commitLifecycleCommand(
 			fmt.Errorf("create lifecycle audit event: %w", err),
 		)
 	}
-	ride, err := readRideProjection(ctx, transactionQueries, rideID)
-	if err != nil {
-		return domain.Ride{}, rollbackRideStatusTransaction(
-			ctx,
-			transaction,
-			fmt.Errorf("read lifecycle ride: %w", err),
-		)
-	}
-	if err := transaction.Commit(ctx); err != nil {
-		return domain.Ride{}, rollbackRideStatusTransaction(
-			ctx,
-			transaction,
-			fmt.Errorf("commit lifecycle transaction: %w", err),
-		)
-	}
-	return ride, nil
+	return commitRideProjection(
+		ctx,
+		transaction,
+		transactionQueries,
+		rideID,
+		"read lifecycle ride",
+		"commit lifecycle transaction",
+	)
 }
 
 func (repository *RideRepository) UpdateStatus(
@@ -448,19 +424,37 @@ func (repository *RideRepository) UpdateStatus(
 			)
 		}
 	}
-	ride, err := readRideProjection(ctx, transactionQueries, dbRideID)
+	return commitRideProjection(
+		ctx,
+		transaction,
+		transactionQueries,
+		dbRideID,
+		"read updated ride",
+		"commit ride status transaction",
+	)
+}
+
+func commitRideProjection(
+	ctx context.Context,
+	transaction pgx.Tx,
+	queries *databasepostgres.Queries,
+	rideID int32,
+	readContext string,
+	commitContext string,
+) (domain.Ride, error) {
+	ride, err := readRideProjection(ctx, queries, rideID)
 	if err != nil {
 		return domain.Ride{}, rollbackRideStatusTransaction(
 			ctx,
 			transaction,
-			fmt.Errorf("read updated ride: %w", err),
+			fmt.Errorf("%s: %w", readContext, err),
 		)
 	}
 	if err := transaction.Commit(ctx); err != nil {
 		return domain.Ride{}, rollbackRideStatusTransaction(
 			ctx,
 			transaction,
-			fmt.Errorf("commit ride status transaction: %w", err),
+			fmt.Errorf("%s: %w", commitContext, err),
 		)
 	}
 	return ride, nil

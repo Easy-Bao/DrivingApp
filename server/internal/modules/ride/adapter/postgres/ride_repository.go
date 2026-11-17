@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"time"
 
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
@@ -15,8 +16,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const _maxPostgresRideID = 1<<31 - 1
-const _maxPostgresWaitSeconds = 1<<31 - 1
 const _defaultOnlinePresenceMaxAge = 45 * time.Second
 
 type RideRepository struct {
@@ -80,7 +79,7 @@ func postgresTimestamp(value time.Time) pgtype.Timestamptz {
 
 func toPostgresWaitSeconds(duration time.Duration) (int32, error) {
 	seconds := duration / time.Second
-	if duration <= 0 || duration%time.Second != 0 || seconds > _maxPostgresWaitSeconds {
+	if duration <= 0 || duration%time.Second != 0 || seconds > math.MaxInt32 {
 		return 0, errors.New("passenger wait duration must be a positive whole number of seconds")
 	}
 	return int32(seconds), nil
@@ -318,7 +317,7 @@ func rideOptionalInt(value pgtype.Int4) *int {
 }
 
 func toPostgresRideID(value int, field string) (int32, error) {
-	if value <= 0 || int64(value) > int64(_maxPostgresRideID) {
+	if value <= 0 || int64(value) > math.MaxInt32 {
 		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
 	}
 	return int32(value), nil

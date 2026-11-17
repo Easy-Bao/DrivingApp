@@ -52,12 +52,12 @@ func (handler *Handler) principal(r *http.Request) (middleware.Principal, bool) 
 func (handler *Handler) CreateRide(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := handler.identity(r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	var input CreateRideRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || input.FareAmount < 0 {
-		response.Error(w, 400, "invalid fare")
+		response.Error(w, http.StatusBadRequest, "invalid fare")
 		return
 	}
 	ride, err := handler.service.CreateRideWithDetails(r.Context(), domainRide(passengerID, input))
@@ -65,18 +65,12 @@ func (handler *Handler) CreateRide(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	response.JSON(w, 201, rideResponseFromDomain(ride))
+	response.JSON(w, http.StatusCreated, rideResponseFromDomain(ride))
 }
 
 func (handler *Handler) AcceptRide(w http.ResponseWriter, r *http.Request) {
-	driverID, ok := handler.identity(r)
+	driverID, rideID, ok := handler.driverRideCommand(w, r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
-		return
-	}
-	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		response.Error(w, 400, "invalid ride id")
 		return
 	}
 	item, err := handler.service.AcceptRide(r.Context(), rideID, driverID)
@@ -84,35 +78,17 @@ func (handler *Handler) AcceptRide(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	response.JSON(w, 200, rideResponseFromDomain(item))
+	response.JSON(w, http.StatusOK, rideResponseFromDomain(item))
 }
 
 func (handler *Handler) MarkArrived(w http.ResponseWriter, r *http.Request) {
-	driverID, ok := handler.identity(r)
+	driverID, rideID, latitude, longitude, ok := handler.driverRideLocationCommand(w, r)
 	if !ok {
-		response.Error(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid ride id")
-		return
-	}
-	var input ArrivalRequest
-	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil ||
-		input.Latitude == nil || input.Longitude == nil {
-		response.Error(w, http.StatusBadRequest, "driver location is required")
 		return
 	}
 	// Coordinates remain accepted for older clients, but lifecycle validation
 	// deliberately reads server-owned telemetry instead of trusting this body.
-	ride, err := handler.service.MarkArrived(
-		r.Context(),
-		rideID,
-		driverID,
-		*input.Latitude,
-		*input.Longitude,
-	)
+	ride, err := handler.service.MarkArrived(r.Context(), rideID, driverID, latitude, longitude)
 	if err != nil {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
@@ -121,29 +97,11 @@ func (handler *Handler) MarkArrived(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) StartTrip(w http.ResponseWriter, r *http.Request) {
-	driverID, ok := handler.identity(r)
+	driverID, rideID, latitude, longitude, ok := handler.driverRideLocationCommand(w, r)
 	if !ok {
-		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid ride id")
-		return
-	}
-	var input TripLocationRequest
-	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil ||
-		input.Latitude == nil || input.Longitude == nil {
-		response.Error(w, http.StatusBadRequest, "driver location is required")
-		return
-	}
-	ride, err := handler.service.StartTrip(
-		r.Context(),
-		rideID,
-		driverID,
-		*input.Latitude,
-		*input.Longitude,
-	)
+	ride, err := handler.service.StartTrip(r.Context(), rideID, driverID, latitude, longitude)
 	if err != nil {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
@@ -152,29 +110,11 @@ func (handler *Handler) StartTrip(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) CompleteTrip(w http.ResponseWriter, r *http.Request) {
-	driverID, ok := handler.identity(r)
+	driverID, rideID, latitude, longitude, ok := handler.driverRideLocationCommand(w, r)
 	if !ok {
-		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid ride id")
-		return
-	}
-	var input TripLocationRequest
-	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil ||
-		input.Latitude == nil || input.Longitude == nil {
-		response.Error(w, http.StatusBadRequest, "driver location is required")
-		return
-	}
-	ride, err := handler.service.CompleteTrip(
-		r.Context(),
-		rideID,
-		driverID,
-		*input.Latitude,
-		*input.Longitude,
-	)
+	ride, err := handler.service.CompleteTrip(r.Context(), rideID, driverID, latitude, longitude)
 	if err != nil {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
@@ -183,14 +123,8 @@ func (handler *Handler) CompleteTrip(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) MarkPassengerNoShow(w http.ResponseWriter, r *http.Request) {
-	driverID, ok := handler.identity(r)
+	driverID, rideID, ok := handler.driverRideCommand(w, r)
 	if !ok {
-		response.Error(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
 	ride, err := handler.service.MarkPassengerNoShow(r.Context(), rideID, driverID)
@@ -202,19 +136,13 @@ func (handler *Handler) MarkPassengerNoShow(w http.ResponseWriter, r *http.Reque
 }
 
 func (handler *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := handler.identity(r)
+	actorID, rideID, ok := handler.driverRideCommand(w, r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
-		return
-	}
-	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		response.Error(w, 400, "invalid ride id")
 		return
 	}
 	var input StatusRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || input.Status == "" {
-		response.Error(w, 400, "invalid ride status")
+		response.Error(w, http.StatusBadRequest, "invalid ride status")
 		return
 	}
 	item, err := handler.service.UpdateStatus(
@@ -227,18 +155,12 @@ func (handler *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	response.JSON(w, 200, rideResponseFromDomain(item))
+	response.JSON(w, http.StatusOK, rideResponseFromDomain(item))
 }
 
 func (handler *Handler) CancelRide(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := handler.identity(r)
+	actorID, rideID, ok := handler.driverRideCommand(w, r)
 	if !ok {
-		response.Error(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
 	var input CancellationRequest
@@ -260,14 +182,8 @@ func (handler *Handler) CancelRide(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) EmergencyStop(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := handler.identity(r)
+	actorID, rideID, ok := handler.driverRideCommand(w, r)
 	if !ok {
-		response.Error(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
 	var input EmergencyStopRequest
@@ -289,14 +205,8 @@ func (handler *Handler) EmergencyStop(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) SettleCash(w http.ResponseWriter, r *http.Request) {
-	driverID, ok := handler.identity(r)
+	driverID, rideID, ok := handler.driverRideCommand(w, r)
 	if !ok {
-		response.Error(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
 	var input CashSettlementRequest
@@ -318,14 +228,8 @@ func (handler *Handler) SettleCash(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, rideResponseFromDomain(ride))
 }
 func (handler *Handler) GetRide(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := handler.identity(r)
+	actorID, id, ok := handler.driverRideCommand(w, r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
-		return
-	}
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		response.Error(w, 400, "invalid ride id")
 		return
 	}
 	ride, err := handler.service.Get(r.Context(), id)
@@ -336,10 +240,10 @@ func (handler *Handler) GetRide(w http.ResponseWriter, r *http.Request) {
 	isPassenger := ride.PassengerID == actorID
 	isDriver := ride.DriverID != nil && *ride.DriverID == actorID
 	if !isPassenger && !isDriver {
-		response.Error(w, 403, "forbidden")
+		response.Error(w, http.StatusForbidden, "forbidden")
 		return
 	}
-	response.JSON(w, 200, rideResponseFromDomain(ride))
+	response.JSON(w, http.StatusOK, rideResponseFromDomain(ride))
 }
 
 func (handler *Handler) Counterparty(w http.ResponseWriter, r *http.Request) {
@@ -373,12 +277,12 @@ func (handler *Handler) Counterparty(w http.ResponseWriter, r *http.Request) {
 func (handler *Handler) PassengerRides(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || targetID != actorID {
-		response.Error(w, 403, "forbidden")
+		response.Error(w, http.StatusForbidden, "forbidden")
 		return
 	}
 	scope := "passenger-rides:" + strconv.Itoa(targetID)
@@ -391,7 +295,7 @@ func (handler *Handler) PassengerRides(w http.ResponseWriter, r *http.Request) {
 		Limit: page.Limit, Offset: page.Offset, BeforeCreatedAt: page.BeforeCreatedAt, BeforeID: page.BeforeID,
 	})
 	if err != nil {
-		response.Error(w, 500, "Your trip history is temporarily unavailable.")
+		response.Error(w, http.StatusInternalServerError, "Your trip history is temporarily unavailable.")
 		return
 	}
 	writeRideHistoryPage(w, items, page, scope)
@@ -419,12 +323,12 @@ func (handler *Handler) PassengerActivitySummary(w http.ResponseWriter, r *http.
 func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	driverID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		response.Error(w, 400, "invalid driver id")
+		response.Error(w, http.StatusBadRequest, "invalid driver id")
 		return
 	}
 	if driverID != actorID {
@@ -433,10 +337,10 @@ func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
 	}
 	stats, err := handler.service.DriverStats(r.Context(), driverID)
 	if err != nil {
-		response.Error(w, 500, "Driver statistics are temporarily unavailable.")
+		response.Error(w, http.StatusInternalServerError, "Driver statistics are temporarily unavailable.")
 		return
 	}
-	response.JSON(w, 200, NewDriverStatsResponse(stats))
+	response.JSON(w, http.StatusOK, NewDriverStatsResponse(stats))
 }
 
 func (handler *Handler) DriverEarnings(w http.ResponseWriter, r *http.Request) {
@@ -461,16 +365,16 @@ func (handler *Handler) DriverEarnings(w http.ResponseWriter, r *http.Request) {
 func (handler *Handler) DriverTrips(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	driverID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		response.Error(w, 400, "invalid driver id")
+		response.Error(w, http.StatusBadRequest, "invalid driver id")
 		return
 	}
 	if driverID != actorID {
-		response.Error(w, 403, "forbidden")
+		response.Error(w, http.StatusForbidden, "forbidden")
 		return
 	}
 	activeOnly := false
@@ -496,7 +400,7 @@ func (handler *Handler) DriverTrips(w http.ResponseWriter, r *http.Request) {
 		Limit: page.Limit, Offset: page.Offset, BeforeCreatedAt: page.BeforeCreatedAt, BeforeID: page.BeforeID, ActiveOnly: activeOnly,
 	})
 	if err != nil {
-		response.Error(w, 500, "Driver trip history is temporarily unavailable.")
+		response.Error(w, http.StatusInternalServerError, "Driver trip history is temporarily unavailable.")
 		return
 	}
 	writeRideHistoryPage(w, items, page, scope)
@@ -535,7 +439,7 @@ func (handler *Handler) CreateSafetyReport(w http.ResponseWriter, r *http.Reques
 func (handler *Handler) Estimate(w http.ResponseWriter, r *http.Request) {
 	var input FareEstimateRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
-		response.Error(w, 400, "invalid fare input")
+		response.Error(w, http.StatusBadRequest, "invalid fare input")
 		return
 	}
 	metrics, total, err := handler.service.Fare(
@@ -555,7 +459,7 @@ func (handler *Handler) Estimate(w http.ResponseWriter, r *http.Request) {
 	base := float64(config.BaseFareAmount) / 100
 	distanceCharge := metrics.DistanceKm * float64(config.PerKilometerAmount) / 100
 	timeCharge := metrics.DurationMinutes * float64(config.PerMinuteAmount) / 100
-	response.JSON(w, 200, map[string]any{
+	response.JSON(w, http.StatusOK, map[string]any{
 		"base_fare":       base,
 		"distance_charge": distanceCharge,
 		"time_charge":     timeCharge,
@@ -565,10 +469,10 @@ func (handler *Handler) Estimate(w http.ResponseWriter, r *http.Request) {
 	})
 }
 func (handler *Handler) FareConfigs(w http.ResponseWriter, _ *http.Request) {
-	response.JSON(w, 200, handler.service.PricingConfig().FareConfigsJSON())
+	response.JSON(w, http.StatusOK, handler.service.PricingConfig().FareConfigsJSON())
 }
 func (handler *Handler) RatingConfig(w http.ResponseWriter, _ *http.Request) {
-	response.JSON(w, 200, handler.service.PricingConfig().RatingConfigJSON())
+	response.JSON(w, http.StatusOK, handler.service.PricingConfig().RatingConfigJSON())
 }
 func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
 	if handler.verifier != nil {
@@ -584,13 +488,13 @@ func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
 	}
 	var input FinalFareRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
-		response.Error(w, 400, "invalid final fare input")
+		response.Error(w, http.StatusBadRequest, "invalid final fare input")
 		return
 	}
 	invalidDistance := input.DistanceKm < 0
 	invalidDuration := input.DurationMinutes < 0
 	if invalidDistance || invalidDuration {
-		response.Error(w, 400, "invalid final fare input")
+		response.Error(w, http.StatusBadRequest, "invalid final fare input")
 		return
 	}
 	metrics, fare, err := handler.service.Fare(
@@ -608,13 +512,41 @@ func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
 	}
 	commissionBPS := handler.service.PricingConfig().PlatformCommissionBPS
 	commission := fare * commissionBPS / 10000
-	response.JSON(w, 200, map[string]any{
+	response.JSON(w, http.StatusOK, map[string]any{
 		"fare_amount":          fare,
 		"distance_km":          metrics.DistanceKm,
 		"duration_minutes":     metrics.DurationMinutes,
 		"commission_amount":    commission,
 		"driver_payout_amount": fare - commission,
 	})
+}
+
+func (handler *Handler) driverRideCommand(w http.ResponseWriter, r *http.Request) (int, int, bool) {
+	actorID, ok := handler.identity(r)
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return 0, 0, false
+	}
+	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid ride id")
+		return 0, 0, false
+	}
+	return actorID, rideID, true
+}
+
+func (handler *Handler) driverRideLocationCommand(w http.ResponseWriter, r *http.Request) (int, int, float64, float64, bool) {
+	driverID, rideID, ok := handler.driverRideCommand(w, r)
+	if !ok {
+		return 0, 0, 0, 0, false
+	}
+	var input TripLocationRequest
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil ||
+		input.Latitude == nil || input.Longitude == nil {
+		response.Error(w, http.StatusBadRequest, "driver location is required")
+		return 0, 0, 0, 0, false
+	}
+	return driverID, rideID, *input.Latitude, *input.Longitude, true
 }
 
 func domainRide(passengerID int, input CreateRideRequest) domain.Ride {
@@ -639,30 +571,23 @@ func rideErrorStatus(err error) int {
 	switch {
 	case errors.Is(err, domain.ErrRideNotFound):
 		return http.StatusNotFound
-	case errors.Is(err, domain.ErrInvalidTrip):
-		return 400
-	case errors.Is(err, domain.ErrInvalidSettlement):
-		return http.StatusBadRequest
-	case errors.Is(err, domain.ErrInvalidCancellation):
-		return http.StatusBadRequest
-	case errors.Is(err, domain.ErrInvalidEmergencyStop):
+	case errors.Is(err, domain.ErrInvalidTrip),
+		errors.Is(err, domain.ErrInvalidSettlement),
+		errors.Is(err, domain.ErrInvalidCancellation),
+		errors.Is(err, domain.ErrInvalidEmergencyStop),
+		errors.Is(err, domain.ErrSafetyReportInvalid):
 		return http.StatusBadRequest
 	case errors.Is(err, domain.ErrArrivalLocation):
 		return http.StatusUnprocessableEntity
 	case errors.Is(err, domain.ErrDriverLocationUnavailable),
-		errors.Is(err, domain.ErrDriverLocationStale):
+		errors.Is(err, domain.ErrDriverLocationStale),
+		errors.Is(err, domain.ErrRouteUnavailable):
 		return http.StatusServiceUnavailable
-	case errors.Is(err, domain.ErrSafetyReportInvalid):
-		return http.StatusBadRequest
-	case errors.Is(err, domain.ErrSafetyReportNotAllowed):
+	case errors.Is(err, domain.ErrSafetyReportNotAllowed),
+		errors.Is(err, domain.ErrUnauthorizedRide):
 		return http.StatusForbidden
-	case errors.Is(err, domain.ErrSafetyReportAlreadySent):
-		return http.StatusConflict
-	case errors.Is(err, domain.ErrRouteUnavailable):
-		return 503
-	case errors.Is(err, domain.ErrUnauthorizedRide):
-		return 403
-	case errors.Is(err, domain.ErrActiveBooking),
+	case errors.Is(err, domain.ErrSafetyReportAlreadySent),
+		errors.Is(err, domain.ErrActiveBooking),
 		errors.Is(err, domain.ErrDriverCapacityReached),
 		errors.Is(err, domain.ErrDriverUnavailable),
 		errors.Is(err, domain.ErrInvalidStatusTransition),
@@ -673,9 +598,9 @@ func rideErrorStatus(err error) int {
 		errors.Is(err, domain.ErrPassengerNoShowNotReady),
 		errors.Is(err, domain.ErrNoShowCommand),
 		errors.Is(err, domain.ErrEmergencyStopNotAllowed):
-		return 409
+		return http.StatusConflict
 	default:
-		return 500
+		return http.StatusInternalServerError
 	}
 }
 

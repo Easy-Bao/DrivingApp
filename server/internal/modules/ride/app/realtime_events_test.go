@@ -24,7 +24,7 @@ func TestStartTripPublishesToBothRideParticipants(t *testing.T) {
 		ride: domain.Ride{
 			ID:              9,
 			PassengerID:     7,
-			DriverID:        intPointer(11),
+			DriverID:        new(11),
 			Status:          "arrived",
 			PickupLatitude:  6.7,
 			PickupLongitude: 122.1,
@@ -57,7 +57,7 @@ func TestPublishingFailureDoesNotRollbackPersistedStatus(t *testing.T) {
 		ride: domain.Ride{
 			ID:              9,
 			PassengerID:     7,
-			DriverID:        intPointer(11),
+			DriverID:        new(11),
 			Status:          "arrived",
 			PickupLatitude:  6.7,
 			PickupLongitude: 122.1,

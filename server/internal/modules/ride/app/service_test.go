@@ -224,7 +224,7 @@ func TestStartTripRequiresRideParticipantAndCurrentState(t *testing.T) {
 	stub := &ridesRepositoryStub{ride: domain.Ride{
 		ID:              9,
 		PassengerID:     7,
-		DriverID:        intPointer(11),
+		DriverID:        new(11),
 		Status:          "arrived",
 		PickupLatitude:  6.7,
 		PickupLongitude: 122.1,
@@ -251,7 +251,7 @@ func TestStartTripRequiresRideParticipantAndCurrentState(t *testing.T) {
 }
 
 func TestUpdateStatusRequiresArrivalCommandForLegacyAssignedRide(t *testing.T) {
-	stub := &ridesRepositoryStub{ride: domain.Ride{ID: 10, PassengerID: 7, DriverID: intPointer(11), Status: "assigned"}}
+	stub := &ridesRepositoryStub{ride: domain.Ride{ID: 10, PassengerID: 7, DriverID: new(11), Status: "assigned"}}
 	service := newTestRideService(stub, testPricingConfig(t), nil)
 
 	if _, err := service.UpdateStatus(context.Background(), 10, 11, "arrived"); !errors.Is(err, domain.ErrArrivalCommand) {
@@ -264,7 +264,7 @@ func TestUpdateStatusRequiresArrivalCommandForLegacyAssignedRide(t *testing.T) {
 
 func TestUpdateStatusRequiresCancellationCommandAfterRideCompletion(t *testing.T) {
 	stub := &ridesRepositoryStub{
-		ride: domain.Ride{ID: 11, PassengerID: 7, DriverID: intPointer(11), Status: "completed"},
+		ride: domain.Ride{ID: 11, PassengerID: 7, DriverID: new(11), Status: "completed"},
 	}
 	service := newTestRideService(stub, testPricingConfig(t), nil)
 
@@ -278,7 +278,7 @@ func TestUpdateStatusRequiresCancellationCommandAfterRideCompletion(t *testing.T
 
 func TestUpdateStatusRequiresCancellationCommandAfterTripStartForPassenger(t *testing.T) {
 	stub := &ridesRepositoryStub{
-		ride: domain.Ride{ID: 12, PassengerID: 7, DriverID: intPointer(11), Status: "in_transit"},
+		ride: domain.Ride{ID: 12, PassengerID: 7, DriverID: new(11), Status: "in_transit"},
 	}
 	service := newTestRideService(stub, testPricingConfig(t), nil)
 
@@ -292,7 +292,7 @@ func TestUpdateStatusRequiresCancellationCommandAfterTripStartForPassenger(t *te
 
 func TestUpdateStatusRequiresCancellationCommandAfterTripStartForDriver(t *testing.T) {
 	stub := &ridesRepositoryStub{
-		ride: domain.Ride{ID: 13, PassengerID: 7, DriverID: intPointer(11), Status: "in_transit"},
+		ride: domain.Ride{ID: 13, PassengerID: 7, DriverID: new(11), Status: "in_transit"},
 	}
 	service := newTestRideService(stub, testPricingConfig(t), nil)
 
@@ -317,10 +317,10 @@ func TestCalculateFareRejectsNonFiniteInput(t *testing.T) {
 func TestDriverTripsQuarantinesActiveRidesFromHistory(t *testing.T) {
 	stub := &ridesRepositoryStub{
 		driverTrips: []domain.Ride{
-			{ID: 1, Status: "in_transit", DriverID: intPointer(11)},
-			{ID: 2, Status: "assigned", DriverID: intPointer(11)},
-			{ID: 3, Status: "completed", DriverID: intPointer(11)},
-			{ID: 4, Status: "cancelled", DriverID: intPointer(11)},
+			{ID: 1, Status: "in_transit", DriverID: new(11)},
+			{ID: 2, Status: "assigned", DriverID: new(11)},
+			{ID: 3, Status: "completed", DriverID: new(11)},
+			{ID: 4, Status: "cancelled", DriverID: new(11)},
 		},
 	}
 	service := newTestRideService(stub, testPricingConfig(t), nil)
@@ -371,5 +371,3 @@ func TestDriverTripsValidatesPaginationBounds(t *testing.T) {
 		t.Fatal("expected error for negative offset")
 	}
 }
-
-func intPointer(value int) *int { return &value }

@@ -9,7 +9,7 @@ import (
 )
 
 func TestCounterpartyIdentityFromNativeRideUsesOptionalDriver(t *testing.T) {
-	ride := domain.Ride{ID: 303, PassengerID: 99, DriverID: intPointer(42)}
+	ride := domain.Ride{ID: 303, PassengerID: 99, DriverID: new(42)}
 
 	targetID, role, err := counterpartyIdentityFromRide(ride, 99)
 	if err != nil || targetID != 42 || role != "driver" {
@@ -61,8 +61,4 @@ func TestNativeRideContactAvailabilityHandlesCompletedTimestamp(t *testing.T) {
 	if active || until != nil {
 		t.Fatalf("invalid native ride availability = %t/%v", active, until)
 	}
-}
-
-func intPointer(value int) *int {
-	return &value
 }

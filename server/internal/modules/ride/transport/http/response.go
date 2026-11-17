@@ -301,13 +301,13 @@ func writeRideHistoryPage(w http.ResponseWriter, items []domain.Ride, page share
 	if len(items) > page.Limit {
 		last := items[page.Limit-1]
 		if last.CreatedAt == nil {
-			response.Error(w, 500, "Trip history is temporarily unavailable.")
+			response.Error(w, http.StatusInternalServerError, "Trip history is temporarily unavailable.")
 			return
 		}
 		var err error
 		next, err = sharedrequest.EncodeListCursor(scope, *last.CreatedAt, last.ID)
 		if err != nil {
-			response.Error(w, 500, "Trip history is temporarily unavailable.")
+			response.Error(w, http.StatusInternalServerError, "Trip history is temporarily unavailable.")
 			return
 		}
 	}

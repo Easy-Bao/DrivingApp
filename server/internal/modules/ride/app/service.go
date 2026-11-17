@@ -380,10 +380,7 @@ func (service *Service) DriverEarnings(ctx context.Context, driverID int) (domai
 	if !ok {
 		return domain.DriverEarningsSummary{}, errors.New("driver earnings persistence is unavailable")
 	}
-	location := service.reportingLocation
-	if location == nil {
-		location = _defaultReportingLocation
-	}
+	location := service.reportingLocationOrDefault()
 	now := time.Now().In(location)
 	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, location)
 	monthEnd := monthStart.AddDate(0, 1, 0)

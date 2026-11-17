@@ -13,7 +13,7 @@ func TestRideHistoryPageUsesLastVisibleRowForCursor(t *testing.T) {
 	timestamp := "2026-10-23T10:00:00.123456Z"
 	items := []domain.Ride{{ID: 6, CreatedAt: &timestamp}, {ID: 5, CreatedAt: &timestamp}, {ID: 4, CreatedAt: &timestamp}}
 	writer := httptest.NewRecorder()
-	writeRideHistoryPage(writer, items, sharedrequest.CursorPagination{OffsetPagination: sharedrequest.OffsetPagination{Limit: 2}, Enabled: true}, "driver:9")
+	writeRideHistoryPage(writer, items, sharedrequest.CursorPagination{Limit: 2, Enabled: true}, "driver:9")
 	var page struct {
 		Items      []RideResponse `json:"items"`
 		HasMore    bool           `json:"has_more"`

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"math"
 	"strings"
 
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
@@ -217,7 +218,7 @@ func fromPostgresRideWithDriverProfile(
 }
 
 func toPostgresPaginationValue(value int, field string) (int32, error) {
-	if value < 0 || int64(value) > int64(^uint32(0)>>1) {
+	if value < 0 || int64(value) > math.MaxInt32 {
 		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
 	}
 	return int32(value), nil

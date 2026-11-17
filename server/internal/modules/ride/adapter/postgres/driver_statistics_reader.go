@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
@@ -134,7 +135,7 @@ func mapRatingDistribution(row databasepostgres.GetDriverStatsRow) ([5]int, erro
 }
 
 func toNativeRideCount(value int64, field string) (int, error) {
-	if value < 0 || value > int64(^uint(0)>>1) {
+	if value < 0 || value > int64(math.MaxInt) {
 		return 0, fmt.Errorf("%s %d is outside native integer range", field, value)
 	}
 	return int(value), nil
