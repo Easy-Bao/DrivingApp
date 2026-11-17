@@ -67,7 +67,7 @@ func (breaker *CircuitBreaker) Do(ctx context.Context, operation func(context.Co
 	completed := false
 	defer func() {
 		if !completed {
-			breaker.recordPanic(time.Now())
+			breaker.recordFailure(time.Now())
 		}
 	}()
 
@@ -108,8 +108,8 @@ func (breaker *CircuitBreaker) recordFailure(now time.Time) {
 	breaker.failures++
 	if !breaker.openedAt.IsZero() || breaker.failures >= breaker.failureThreshold {
 		breaker.openedAt = now
-		breaker.halfOpen = false
 	}
+	breaker.halfOpen = false
 }
 
 func (breaker *CircuitBreaker) recordSuccess() {
@@ -117,16 +117,6 @@ func (breaker *CircuitBreaker) recordSuccess() {
 	defer breaker.mu.Unlock()
 	breaker.failures = 0
 	breaker.openedAt = time.Time{}
-	breaker.halfOpen = false
-}
-
-func (breaker *CircuitBreaker) recordPanic(now time.Time) {
-	breaker.mu.Lock()
-	defer breaker.mu.Unlock()
-	breaker.failures++
-	if !breaker.openedAt.IsZero() || breaker.failures >= breaker.failureThreshold {
-		breaker.openedAt = now
-	}
 	breaker.halfOpen = false
 }
 

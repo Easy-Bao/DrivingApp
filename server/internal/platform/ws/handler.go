@@ -146,8 +146,7 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		topics, err = handler.protocol.ResolveTopics(request.Context(), request, identity)
 	}
 	if err != nil {
-		var handshakeError *HandshakeError
-		if errors.As(err, &handshakeError) {
+		if handshakeError, ok := errors.AsType[*HandshakeError](err); ok {
 			response.Error(writer, handshakeError.StatusCode, handshakeError.Message)
 			return
 		}
@@ -178,7 +177,7 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	closeConnection := func() {
 		closeOnce.Do(func() {
 			if err := connection.Close(); err != nil {
-				slog.DebugContext(request.Context(), "close realtime websocket failed", "error", err)
+				handler.logger.DebugContext(request.Context(), "close realtime websocket failed", "error", err)
 			}
 		})
 	}

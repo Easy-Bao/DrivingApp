@@ -187,28 +187,21 @@ drainLoop:
 		}
 	}
 
+	keep := false
 	if droppableIndex != -1 {
 		drained = append(drained[:droppableIndex], drained[droppableIndex+1:]...)
 		drained = append(drained, envelope)
-		for _, bufferedEvent := range drained {
-			subscription.events <- bufferedEvent
-		}
-		return true
-	}
-
-	// No droppable events exist in buffer; all are critical.
-	// If incoming envelope is droppable, discard it to preserve critical queue and avoid closing connection.
-	if isDroppable(envelope.Type) {
-		for _, bufferedEvent := range drained {
-			subscription.events <- bufferedEvent
-		}
-		return true
+		keep = true
+	} else if isDroppable(envelope.Type) {
+		// No droppable events exist in buffer; all are critical.
+		// Discard incoming droppable event to preserve critical queue and avoid closing connection.
+		keep = true
 	}
 
 	for _, bufferedEvent := range drained {
 		subscription.events <- bufferedEvent
 	}
-	return false
+	return keep
 }
 
 func (hub *Hub) topicSubscriberCount(topic string) int {

@@ -116,7 +116,7 @@ func TestHubBurstDelivery(t *testing.T) {
 
 	const totalEvents = 30
 	var publishers sync.WaitGroup
-	for i := 0; i < totalEvents; i++ {
+	for i := range totalEvents {
 		envelope, err := event.New(
 			fmt.Sprintf("event-%d", i),
 			event.DriverLocationUpdated,
@@ -127,11 +127,9 @@ func TestHubBurstDelivery(t *testing.T) {
 		if err != nil {
 			t.Fatalf("New() error = %v", err)
 		}
-		publishers.Add(1)
-		go func(envelope event.Envelope) {
-			defer publishers.Done()
+		publishers.Go(func() {
 			hub.Publish(envelope)
-		}(envelope)
+		})
 	}
 	publishers.Wait()
 
@@ -150,7 +148,7 @@ func TestHubBurstDelivery(t *testing.T) {
 			t.Fatalf("timed out waiting for burst, received %d of %d events", len(receivedEvents), totalEvents)
 		}
 	}
-	for expected := 0; expected < totalEvents; expected++ {
+	for expected := range totalEvents {
 		expectedID := fmt.Sprintf("event-%d", expected)
 		if _, exists := receivedEvents[expectedID]; !exists {
 			t.Fatalf("event %q was not delivered", expectedID)
@@ -202,7 +200,7 @@ func TestHubEvictsDroppableEventsWithoutClosingSubscription(t *testing.T) {
 	defer subscription.Close()
 
 	totalTelemetry := _outboundQueueSize + 20
-	for i := 0; i < totalTelemetry; i++ {
+	for i := range totalTelemetry {
 		envelope, err := event.New(
 			fmt.Sprintf("telemetry-%d", i),
 			event.DriverLocationUpdated,
@@ -257,11 +255,9 @@ func TestHubConcurrentPublishersOnFullQueueDoNotBlockClose(t *testing.T) {
 	go func() {
 		defer close(done)
 		var publishers sync.WaitGroup
-		for worker := 0; worker < 16; worker++ {
-			publishers.Add(1)
-			go func() {
-				defer publishers.Done()
-				for i := 0; i < 100; i++ {
+		for worker := range 16 {
+			publishers.Go(func() {
+				for i := range 100 {
 					envelope, err := event.New(
 						fmt.Sprintf("telemetry-%d-%d", worker, i),
 						event.DriverLocationUpdated,
@@ -275,7 +271,7 @@ func TestHubConcurrentPublishersOnFullQueueDoNotBlockClose(t *testing.T) {
 					}
 					hub.Publish(envelope)
 				}
-			}()
+			})
 		}
 		publishers.Wait()
 		subscription.Close()

@@ -317,8 +317,7 @@ func TestHandlerClosesAtCredentialExpiryDespitePongs(t *testing.T) {
 	if err == nil {
 		t.Fatal("expired connection remained readable")
 	}
-	var timeout net.Error
-	if errors.As(err, &timeout) && timeout.Timeout() {
+	if timeout, ok := errors.AsType[net.Error](err); ok && timeout.Timeout() {
 		t.Fatalf("server kept expired credentials alive despite pongs: %v", err)
 	}
 	if time.Now().Before(expires) {
