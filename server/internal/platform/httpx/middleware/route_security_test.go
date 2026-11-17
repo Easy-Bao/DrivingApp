@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -86,11 +87,7 @@ func TestRouteSecurityAuthenticatedChainScopesIdempotencyToPrincipal(t *testing.
 		_, _ = writer.Write([]byte(`{"created":true}`))
 	})
 
-	chain := security.Authenticated(RouteCommand, auth)
-	var handler http.Handler = endpoint
-	for i := len(chain) - 1; i >= 0; i-- {
-		handler = chain[i](handler)
-	}
+	handler := applyMiddlewareChain(security.Authenticated(RouteCommand, auth), endpoint)
 
 	req1 := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare":100}`))
 	req1.Header.Set("Authorization", "Bearer token-1")
@@ -141,11 +138,7 @@ func TestRouteSecurityAuthenticatedChainRejectsExpiredTokenBeforeIdempotencyRepl
 		_, _ = writer.Write([]byte(`{"created":true}`))
 	})
 
-	chain := security.Authenticated(RouteCommand, auth)
-	var handler http.Handler = endpoint
-	for i := len(chain) - 1; i >= 0; i-- {
-		handler = chain[i](handler)
-	}
+	handler := applyMiddlewareChain(security.Authenticated(RouteCommand, auth), endpoint)
 
 	req1 := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare":100}`))
 	req1.Header.Set("Authorization", "Bearer valid-jwt")
@@ -165,4 +158,12 @@ func TestRouteSecurityAuthenticatedChainRejectsExpiredTokenBeforeIdempotencyRepl
 	if res2.Code != http.StatusUnauthorized {
 		t.Fatalf("expired token status = %d, want 401 Unauthorized", res2.Code)
 	}
+}
+
+func applyMiddlewareChain(chain []func(http.Handler) http.Handler, endpoint http.Handler) http.Handler {
+	handler := endpoint
+	for _, wrap := range slices.Backward(chain) {
+		handler = wrap(handler)
+	}
+	return handler
 }

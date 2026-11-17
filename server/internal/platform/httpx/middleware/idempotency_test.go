@@ -126,7 +126,7 @@ func TestIdempotencyReplaysSuccessfulResponse(t *testing.T) {
 		}),
 	)
 
-	for index := 0; index < 2; index++ {
+	for index := range 2 {
 		request := httptest.NewRequest(
 			http.MethodPost,
 			"/api/v1/rides",
@@ -201,7 +201,7 @@ func TestIdempotencySkipsHighThroughputTelemetryUpdates(t *testing.T) {
 		}),
 	)
 
-	for index := 0; index < 2; index++ {
+	for index := range 2 {
 		request := httptest.NewRequest(
 			http.MethodPost,
 			"/api/v1/telemetry/location",
@@ -244,7 +244,7 @@ func TestRoutePoliciesExcludeNonCommandRequestsFromIdempotency(t *testing.T) {
 					writer.WriteHeader(http.StatusOK)
 				}),
 			)
-			for index := 0; index < 2; index++ {
+			for range 2 {
 				request := httptest.NewRequest(test.method, "/route", strings.NewReader(`{"value":true}`))
 				request.Header.Set("Idempotency-Key", "excluded-request-key")
 				handler.ServeHTTP(httptest.NewRecorder(), request)
@@ -422,13 +422,13 @@ func TestIdempotencySkipsCachingLargeResponseBody(t *testing.T) {
 			calls.Add(1)
 			writer.WriteHeader(http.StatusOK)
 			chunk := make([]byte, 1<<20)
-			for i := 0; i < 11; i++ {
+			for range 11 {
 				_, _ = writer.Write(chunk)
 			}
 		}),
 	)
 
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/large", nil)
 		req.Header.Set("Idempotency-Key", "large-response-key")
 		res := httptest.NewRecorder()

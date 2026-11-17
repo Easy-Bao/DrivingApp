@@ -155,10 +155,7 @@ func (store *MemoryIdempotencyStore) evictLocked(now time.Time) {
 		}
 	}
 	if len(store.entries) >= capacity {
-		target := (capacity * 9) / 10
-		if target < 1 {
-			target = 1
-		}
+		target := max((capacity*9)/10, 1)
 		for len(store.entries) >= capacity && len(store.entries) > target {
 			var oldestKey string
 			var oldestExpires time.Time
@@ -366,8 +363,7 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 
 		cached, err := idempotency.store.Get(request.Context(), resultKey)
 		if err != nil {
-			writer.Header().Set("Retry-After", "1")
-			writeSecurityError(writer, http.StatusServiceUnavailable, "request protection is temporarily unavailable")
+			writeProtectionUnavailable(writer)
 			return
 		}
 		if len(cached) > 0 {
@@ -376,8 +372,7 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 		}
 		lockToken, err := newLockToken()
 		if err != nil {
-			writer.Header().Set("Retry-After", "1")
-			writeSecurityError(writer, http.StatusServiceUnavailable, "request protection is temporarily unavailable")
+			writeProtectionUnavailable(writer)
 			return
 		}
 		acquired, err := idempotency.store.SetNX(
@@ -387,8 +382,7 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 			idempotency.lockTimeout,
 		)
 		if err != nil {
-			writer.Header().Set("Retry-After", "1")
-			writeSecurityError(writer, http.StatusServiceUnavailable, "request protection is temporarily unavailable")
+			writeProtectionUnavailable(writer)
 			return
 		}
 		if !acquired {
@@ -402,8 +396,7 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 		// running the command a second time.
 		cached, err = idempotency.store.Get(request.Context(), resultKey)
 		if err != nil {
-			writer.Header().Set("Retry-After", "1")
-			writeSecurityError(writer, http.StatusServiceUnavailable, "request protection is temporarily unavailable")
+			writeProtectionUnavailable(writer)
 			return
 		}
 		if len(cached) > 0 {

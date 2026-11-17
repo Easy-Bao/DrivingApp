@@ -57,7 +57,6 @@ func TestDecodeJSONV2RejectsAmbiguousOrUnknownDocuments(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))

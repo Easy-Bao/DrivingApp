@@ -47,7 +47,7 @@ func TestRateLimiterRejectsReadRequestsAfterTheirLimit(t *testing.T) {
 	limiter := newTestRateLimiter(NewMemoryCounterStore(), config)
 	handler := limiter.MiddlewareFor(RouteRead)(noContentHandler())
 
-	for index := 0; index < 2; index++ {
+	for index := range 2 {
 		response := serveRateLimitedRequest(handler, http.MethodGet, "/api/v1/rides/1", "192.0.2.10:1234")
 		if response.Code != http.StatusNoContent {
 			t.Fatalf("request %d status = %d, want %d", index+1, response.Code, http.StatusNoContent)
@@ -274,7 +274,7 @@ func TestRateLimiterBypassesHealthAndPreflight(t *testing.T) {
 
 func TestMemoryCounterStorePrunesExpiredEntries(t *testing.T) {
 	store := NewMemoryCounterStore()
-	for index := 0; index < _memoryCounterCleanupInterval*2; index++ {
+	for index := range _memoryCounterCleanupInterval * 2 {
 		if _, err := store.Increment(context.Background(), fmt.Sprintf("client-%d", index), time.Nanosecond); err != nil {
 			t.Fatalf("increment %d: %v", index, err)
 		}

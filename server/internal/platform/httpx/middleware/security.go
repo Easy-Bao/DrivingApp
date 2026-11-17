@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -16,7 +17,6 @@ const (
 	_defaultJSONBodyLimit   int64 = 16 << 10
 	_defaultUploadBodyLimit int64 = 10 << 20
 	_multipartEnvelopeLimit int64 = 64 << 10
-	_maxInt64               int64 = 1<<63 - 1
 )
 
 type SecurityConfig struct {
@@ -110,7 +110,7 @@ func requestBodyLimit(jsonLimit, uploadLimit int64, documentUpload bool) func(ht
 			contentType := strings.ToLower(request.Header.Get("Content-Type"))
 			if strings.HasPrefix(contentType, "multipart/") {
 				limit = config.UploadBodyLimit
-				if documentUpload && limit <= _maxInt64-_multipartEnvelopeLimit {
+				if documentUpload && limit <= math.MaxInt64-_multipartEnvelopeLimit {
 					limit += _multipartEnvelopeLimit
 				}
 			} else if documentUpload {
@@ -212,6 +212,11 @@ func containsControlCharacter(value string) bool {
 
 func writeSecurityError(writer http.ResponseWriter, status int, message string) {
 	response.Error(writer, status, message)
+}
+
+func writeProtectionUnavailable(writer http.ResponseWriter) {
+	writer.Header().Set("Retry-After", "1")
+	writeSecurityError(writer, http.StatusServiceUnavailable, "request protection is temporarily unavailable")
 }
 
 type requestIDKey struct{}

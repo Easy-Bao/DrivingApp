@@ -209,15 +209,14 @@ func (limiter *RateLimiter) policyMiddleware(routePolicy RoutePolicy, next http.
 		count, err := limiter.store.Increment(request.Context(), key, limiter.config.Window)
 		if err != nil {
 			if policy.failClosed {
-				writer.Header().Set("Retry-After", "1")
-				writeSecurityError(writer, http.StatusServiceUnavailable, "request protection is temporarily unavailable")
+				writeProtectionUnavailable(writer)
 				return
 			}
 			next.ServeHTTP(writer, request)
 			return
 		}
 		writer.Header().Set("X-RateLimit-Limit", strconv.FormatInt(policy.limit, 10))
-		writer.Header().Set("X-RateLimit-Remaining", strconv.FormatInt(maxInt64(0, policy.limit-count), 10))
+		writer.Header().Set("X-RateLimit-Remaining", strconv.FormatInt(max(0, policy.limit-count), 10))
 		if count > policy.limit {
 			writer.Header().Set(
 				"Retry-After",
@@ -263,34 +262,23 @@ func (limiter *RateLimiter) policy(routePolicy RoutePolicy) (rateLimitPolicy, bo
 
 func normalizedRateLimitConfig(config RateLimitConfig) RateLimitConfig {
 	defaults := DefaultRateLimitConfig()
-	if config.Authentication <= 0 {
-		config.Authentication = defaults.Authentication
-	}
-	if config.Refresh <= 0 {
-		config.Refresh = defaults.Refresh
-	}
-	if config.Location <= 0 {
-		config.Location = defaults.Location
-	}
-	if config.Fare <= 0 {
-		config.Fare = defaults.Fare
-	}
-	if config.Connection <= 0 {
-		config.Connection = defaults.Connection
-	}
-	if config.Telemetry <= 0 {
-		config.Telemetry = defaults.Telemetry
-	}
-	if config.Mutation <= 0 {
-		config.Mutation = defaults.Mutation
-	}
-	if config.Read <= 0 {
-		config.Read = defaults.Read
-	}
-	if config.Window <= 0 {
-		config.Window = defaults.Window
-	}
+	config.Authentication = positiveOrDefault(config.Authentication, defaults.Authentication)
+	config.Refresh = positiveOrDefault(config.Refresh, defaults.Refresh)
+	config.Location = positiveOrDefault(config.Location, defaults.Location)
+	config.Fare = positiveOrDefault(config.Fare, defaults.Fare)
+	config.Connection = positiveOrDefault(config.Connection, defaults.Connection)
+	config.Telemetry = positiveOrDefault(config.Telemetry, defaults.Telemetry)
+	config.Mutation = positiveOrDefault(config.Mutation, defaults.Mutation)
+	config.Read = positiveOrDefault(config.Read, defaults.Read)
+	config.Window = positiveOrDefault(config.Window, defaults.Window)
 	return config
+}
+
+func positiveOrDefault[T ~int64](value, fallback T) T {
+	if value <= 0 {
+		return fallback
+	}
+	return value
 }
 
 func windowKey(now time.Time, window time.Duration) int64 {
@@ -311,12 +299,5 @@ func retryAfterSeconds(now time.Time, window time.Duration) int64 {
 	if remainingNanoseconds%time.Second.Nanoseconds() != 0 {
 		seconds++
 	}
-	return maxInt64(1, seconds)
-}
-
-func maxInt64(left, right int64) int64 {
-	if left > right {
-		return left
-	}
-	return right
+	return max(1, seconds)
 }

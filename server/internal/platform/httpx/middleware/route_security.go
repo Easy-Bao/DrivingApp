@@ -54,12 +54,7 @@ func (security *RouteSecurity) middlewareFor(policy RoutePolicy, next http.Handl
 	if policy == RouteCommand && security.idempotency != nil {
 		handler = security.idempotency.Middleware(handler)
 	}
-	if policy == RouteDocumentUpload {
-		handler = DocumentUploadBodyLimit(security.config.JSONBodyLimit, security.config.UploadBodyLimit)(handler)
-	} else {
-		handler = RequestBodyLimit(security.config.JSONBodyLimit, security.config.UploadBodyLimit)(handler)
-	}
-	return handler
+	return bodyLimitMiddleware(policy, security.config.JSONBodyLimit, security.config.UploadBodyLimit)(handler)
 }
 
 // Authenticated returns a middleware chain that enforces pre-authentication limits
@@ -94,11 +89,13 @@ func (security *RouteSecurity) preAuthMiddleware(policy RoutePolicy) func(http.H
 			jsonLimit = security.config.JSONBodyLimit
 			uploadLimit = security.config.UploadBodyLimit
 		}
-		if policy == RouteDocumentUpload {
-			handler = DocumentUploadBodyLimit(jsonLimit, uploadLimit)(handler)
-		} else {
-			handler = RequestBodyLimit(jsonLimit, uploadLimit)(handler)
-		}
-		return handler
+		return bodyLimitMiddleware(policy, jsonLimit, uploadLimit)(handler)
 	}
+}
+
+func bodyLimitMiddleware(policy RoutePolicy, jsonLimit, uploadLimit int64) func(http.Handler) http.Handler {
+	if policy == RouteDocumentUpload {
+		return DocumentUploadBodyLimit(jsonLimit, uploadLimit)
+	}
+	return RequestBodyLimit(jsonLimit, uploadLimit)
 }

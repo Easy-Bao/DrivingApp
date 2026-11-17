@@ -114,7 +114,7 @@ func (trust *ProxyTrust) forwardedClient(headerValues []string) (netip.Addr, boo
 func forwardedAddresses(headerValues []string) []netip.Addr {
 	addresses := make([]netip.Addr, 0, len(headerValues))
 	for _, headerValue := range headerValues {
-		for _, value := range strings.Split(headerValue, ",") {
+		for value := range strings.SplitSeq(headerValue, ",") {
 			if address, ok := parseRequestAddress(strings.TrimSpace(value)); ok {
 				addresses = append(addresses, address)
 			}
