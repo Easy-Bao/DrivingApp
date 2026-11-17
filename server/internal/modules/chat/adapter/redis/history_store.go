@@ -125,10 +125,11 @@ func (repository *HistoryStore) Messages(ctx context.Context, roomID string) ([]
 		if value.SenderID == peerID {
 			peerID = fields["driver_id"]
 		}
-		created, _ := time.Parse(time.RFC3339Nano, value.CreatedAt)
-		through, _ := time.Parse(time.RFC3339Nano, fields["read:"+peerID])
+		created, createdErr := time.Parse(time.RFC3339Nano, value.CreatedAt)
+		through, throughErr := time.Parse(time.RFC3339Nano, fields["read:"+peerID])
+		seen := createdErr == nil && throughErr == nil && !created.IsZero() && !through.IsZero() && !created.After(through)
 		result = append(result, domain.Message{
-			ID: value.ID, ImageKey: value.ImageKey, Seen: !created.IsZero() && !through.IsZero() && !created.After(through),
+			ID: value.ID, ImageKey: value.ImageKey, Seen: seen,
 			RoomID:    roomID,
 			SenderID:  value.SenderID,
 			Body:      body,

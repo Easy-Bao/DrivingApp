@@ -118,7 +118,8 @@ func (protocol *ConnectionProtocol) HandleMessage(
 	isText bool,
 	message []byte,
 ) ([]byte, error) {
-	if !isText || !validEvent(message) {
+	parsed, eventType, isTyping, ok := parseClientChatEvent(message)
+	if !isText || !ok {
 		return formatWebSocketError("error", "invalid_event", "invalid event"), nil
 	}
 	roomID := request.URL.Query().Get("roomId")
@@ -126,35 +127,22 @@ func (protocol *ConnectionProtocol) HandleMessage(
 		return formatWebSocketError("error", "invalid_chat_event", "invalid chat event"), nil
 	}
 
-	var eventHeader struct {
-		Type           string `json:"type"`
-		IsTyping       *bool  `json:"is_typing"`
-		IsTypingLegacy *bool  `json:"isTyping"`
-	}
-	_ = json.Unmarshal(message, &eventHeader)
-
-	if eventHeader.Type == "typing" {
-		isTyping := false
-		if eventHeader.IsTyping != nil {
-			isTyping = *eventHeader.IsTyping
-		} else if eventHeader.IsTypingLegacy != nil {
-			isTyping = *eventHeader.IsTypingLegacy
+	if eventType == "typing" {
+		if protocol != nil && protocol.limiter != nil && !protocol.limiter.allowTyping(roomID, identity.Subject, isTyping) {
+			return nil, nil
 		}
-		if protocol != nil && protocol.limiter != nil {
-			if !protocol.limiter.allowTyping(roomID, identity.Subject, isTyping) {
-				return nil, nil
-			}
-		}
-	} else if eventHeader.Type == "CHAT_MESSAGE" || eventHeader.Type == "message" {
-		if protocol != nil && protocol.limiter != nil {
-			if !protocol.limiter.allowMessage(roomID, identity.Subject) {
-				return formatWebSocketError("error", "rate_limit_exceeded", "Too many messages. Please slow down."), nil
-			}
+		parsed["is_typing"] = isTyping
+		delete(parsed, "isTyping")
+	} else {
+		if protocol != nil && protocol.limiter != nil && !protocol.limiter.allowMessage(roomID, identity.Subject) {
+			return formatWebSocketError("error", "rate_limit_exceeded", "Too many messages. Please slow down."), nil
 		}
 	}
 
-	enriched := enrichChatEvent(message, roomID, identity.Subject)
-	if enriched == nil {
+	parsed["room_id"] = roomID
+	parsed["sender_id"] = identity.Subject
+	enriched, err := json.Marshal(parsed)
+	if err != nil {
 		return formatWebSocketError("error", "invalid_chat_event", "invalid chat event"), nil
 	}
 	if protocol == nil || protocol.sink == nil {
@@ -252,67 +240,37 @@ func (protocol *ConnectionProtocol) EncodeEnvelope(envelope events.Envelope) ([]
 	}
 }
 
-func validEvent(message []byte) bool {
-	var event struct {
-		Type string `json:"type"`
+func parseClientChatEvent(message []byte) (map[string]any, string, bool, bool) {
+	var parsed map[string]any
+	if json.Unmarshal(message, &parsed) != nil || parsed == nil {
+		return nil, "", false, false
 	}
-	if json.Unmarshal(message, &event) != nil {
-		return false
-	}
-	switch event.Type {
-	case "CHAT_MESSAGE", "message":
-		return true
-	case "typing":
-		return validTypingEvent(message)
-	default:
-		return false
-	}
-}
-
-func validTypingEvent(message []byte) bool {
-	var event struct {
-		IsTyping       *bool `json:"is_typing"`
-		IsTypingLegacy *bool `json:"isTyping"`
-	}
-	if json.Unmarshal(message, &event) != nil {
-		return false
-	}
-	return event.IsTyping != nil || event.IsTypingLegacy != nil
-}
-
-func enrichChatEvent(message []byte, roomID, clientID string) []byte {
-	var event map[string]any
-	if json.Unmarshal(message, &event) != nil {
-		return nil
-	}
-	eventType, ok := event["type"].(string)
+	eventType, ok := parsed["type"].(string)
 	if !ok {
-		return nil
+		return nil, "", false, false
 	}
-	isChatMessage := eventType == "CHAT_MESSAGE" || eventType == "message"
-	isTypingEvent := eventType == "typing"
-	if !isChatMessage && !isTypingEvent {
-		return nil
-	}
-	if roomID == "" || clientID == "" {
-		return nil
-	}
-	event["room_id"] = roomID
-	event["sender_id"] = clientID
-	if isTypingEvent {
-		isTyping, ok := event["is_typing"].(bool)
+	switch eventType {
+	case "CHAT_MESSAGE", "message":
+		return parsed, eventType, false, true
+	case "typing":
+		isTyping, ok := extractTypingFlag(parsed)
 		if !ok {
-			isTyping, ok = event["isTyping"].(bool)
+			return nil, "", false, false
 		}
-		if !ok {
-			return nil
-		}
-		event["is_typing"] = isTyping
-		delete(event, "isTyping")
+		return parsed, eventType, isTyping, true
+	default:
+		return nil, "", false, false
 	}
-	enriched, err := json.Marshal(event)
-	if err != nil {
-		return nil
+}
+
+func extractTypingFlag(parsed map[string]any) (bool, bool) {
+	if raw, exists := parsed["is_typing"]; exists && raw != nil {
+		isTyping, ok := raw.(bool)
+		return isTyping, ok
 	}
-	return enriched
+	if raw, exists := parsed["isTyping"]; exists && raw != nil {
+		isTyping, ok := raw.(bool)
+		return isTyping, ok
+	}
+	return false, false
 }

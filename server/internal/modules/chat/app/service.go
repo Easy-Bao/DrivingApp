@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
@@ -18,6 +17,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/domain"
 	assignment "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
 )
 
 const (
@@ -44,14 +44,18 @@ func NewService(dependencies Dependencies) *Service {
 }
 
 func (service *Service) WithEventPublisher(publisher EventPublisher) *Service {
-	service.events = publisher
+	if service != nil {
+		service.events = publisher
+	}
 	return service
 }
 
 func (service *Service) WithRideAssignmentLookup(
 	lookup assignment.Lookup,
 ) *Service {
-	service.assignments = lookup
+	if service != nil {
+		service.assignments = lookup
+	}
 	return service
 }
 
@@ -76,7 +80,7 @@ func (service *Service) Relay(ctx context.Context, message domain.Message) error
 	if invalidRoomID || invalidSenderID || invalidMessageLength {
 		return domain.ErrInvalidMessage
 	}
-	if service.history == nil {
+	if service == nil || service.history == nil {
 		return domain.ErrRoomUnavailable
 	}
 	if _, err := service.communicationAssignment(ctx, message.RoomID, message.SenderID); err != nil {
@@ -187,7 +191,7 @@ func (service *Service) OpenRideRoom(ctx context.Context, rideID, actorID string
 	if !validRoomID(rideID) || !validParticipantID(actorID) {
 		return domain.ErrInvalidRoom
 	}
-	if service.history == nil {
+	if service == nil || service.history == nil {
 		return domain.ErrRoomUnavailable
 	}
 	rideAssignment, err := service.communicationAssignment(ctx, rideID, actorID)
@@ -227,7 +231,7 @@ func (service *Service) participantAssignment(
 	rideID string,
 	actorID string,
 ) (assignment.Assignment, error) {
-	if service.assignments == nil {
+	if service == nil || service.assignments == nil {
 		return assignment.Assignment{}, domain.ErrRoomUnavailable
 	}
 	rideAssignment, found, err := service.assignments.ForRide(ctx, rideID)
@@ -261,7 +265,7 @@ func (service *Service) CanReadRoom(ctx context.Context, roomID, userID string) 
 	if !validRoomID(roomID) || !validParticipantID(userID) {
 		return false, nil
 	}
-	if service.history == nil {
+	if service == nil || service.history == nil {
 		return false, domain.ErrRoomUnavailable
 	}
 	_, err := service.participantAssignment(ctx, roomID, userID)
@@ -285,7 +289,7 @@ func (service *Service) Messages(ctx context.Context, roomID string) ([]domain.M
 	if !validRoomID(roomID) {
 		return nil, domain.ErrInvalidRoom
 	}
-	if service.history == nil {
+	if service == nil || service.history == nil {
 		return nil, domain.ErrRoomUnavailable
 	}
 	messages, err := service.history.Messages(ctx, roomID)
@@ -299,7 +303,7 @@ func (service *Service) Resolve(ctx context.Context, roomID string) error {
 	if !validRoomID(roomID) {
 		return domain.ErrInvalidRoom
 	}
-	if service.history == nil {
+	if service == nil || service.history == nil {
 		return domain.ErrRoomUnavailable
 	}
 	if err := service.history.Resolve(ctx, roomID); err != nil {
@@ -314,7 +318,7 @@ func (service *Service) CanAccessRoom(ctx context.Context, roomID, userID string
 	if invalidRoomID || invalidUserID {
 		return false, nil
 	}
-	if service.history == nil {
+	if service == nil || service.history == nil {
 		return false, domain.ErrRoomUnavailable
 	}
 	if _, err := service.communicationAssignment(ctx, roomID, userID); err != nil {
@@ -363,11 +367,15 @@ func (service *Service) ResolveForUser(ctx context.Context, roomID, userID strin
 }
 
 func validRoomID(value string) bool {
-	return value != "" && len(value) <= _maxRoomIDBytes && !strings.ContainsAny(value, "\r\n")
+	return validChatIdentifier(value, _maxRoomIDBytes)
 }
 
 func validParticipantID(value string) bool {
-	return value != "" && len(value) <= _maxParticipantBytes && !strings.ContainsAny(value, "\r\n")
+	return validChatIdentifier(value, _maxParticipantBytes)
+}
+
+func validChatIdentifier(value string, maxBytes int) bool {
+	return value != "" && len(value) <= maxBytes && !strings.ContainsAny(value, "\r\n")
 }
 
 const MaxImageBytes = 5 << 20
@@ -417,7 +425,10 @@ func (service *Service) Image(ctx context.Context, roomID, userID, messageID str
 				return nil, "", domain.ErrRoomUnavailable
 			}
 			content, err := service.images.Read(ctx, message.ImageKey, MaxImageBytes)
-			return content, http.DetectContentType(content), err
+			if err != nil {
+				return nil, "", err
+			}
+			return content, http.DetectContentType(content), nil
 		}
 	}
 	return nil, "", domain.ErrForbidden

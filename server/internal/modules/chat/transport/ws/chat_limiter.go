@@ -41,6 +41,22 @@ func newChatLimiter() *ChatLimiter {
 	}
 }
 
+func (limiter *ChatLimiter) budgetLocked(roomID, principal string, now time.Time) *chatBudget {
+	limiter.operations++
+	if limiter.operations%128 == 0 {
+		limiter.cleanup(now)
+	}
+
+	key := roomID + ":" + principal
+	budget, ok := limiter.budgets[key]
+	if !ok {
+		budget = &chatBudget{}
+		limiter.budgets[key] = budget
+	}
+	budget.lastActivity = now
+	return budget
+}
+
 func (limiter *ChatLimiter) allowMessage(roomID, principal string) bool {
 	if limiter == nil {
 		return true
@@ -49,18 +65,7 @@ func (limiter *ChatLimiter) allowMessage(roomID, principal string) bool {
 	defer limiter.mu.Unlock()
 
 	now := limiter.now()
-	limiter.operations++
-	if limiter.operations%128 == 0 {
-		limiter.cleanup(now)
-	}
-
-	key := roomID + ":" + principal
-	b, ok := limiter.budgets[key]
-	if !ok {
-		b = &chatBudget{}
-		limiter.budgets[key] = b
-	}
-	b.lastActivity = now
+	b := limiter.budgetLocked(roomID, principal, now)
 
 	if now.After(b.messageReset) {
 		b.messageReset = now.Add(limiter.messageWindow)
@@ -81,18 +86,7 @@ func (limiter *ChatLimiter) allowTyping(roomID, principal string, isTyping bool)
 	defer limiter.mu.Unlock()
 
 	now := limiter.now()
-	limiter.operations++
-	if limiter.operations%128 == 0 {
-		limiter.cleanup(now)
-	}
-
-	key := roomID + ":" + principal
-	b, ok := limiter.budgets[key]
-	if !ok {
-		b = &chatBudget{}
-		limiter.budgets[key] = b
-	}
-	b.lastActivity = now
+	b := limiter.budgetLocked(roomID, principal, now)
 
 	// Coalesce redundant typing events of the same state within the cooldown window
 	if b.lastTypingState != nil && *b.lastTypingState == isTyping {
@@ -111,8 +105,7 @@ func (limiter *ChatLimiter) allowTyping(roomID, principal string, isTyping bool)
 	}
 
 	b.typingCount++
-	stateCopy := isTyping
-	b.lastTypingState = &stateCopy
+	b.lastTypingState = new(isTyping)
 	b.lastTypingTime = now
 	return true
 }

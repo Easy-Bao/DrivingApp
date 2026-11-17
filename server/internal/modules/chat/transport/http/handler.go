@@ -3,6 +3,7 @@ package http
 import (
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -31,13 +32,8 @@ func NewHandler(dependencies Dependencies) *Handler {
 }
 
 func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Request) {
-	if handler == nil || handler.service == nil {
-		response.Error(writer, http.StatusServiceUnavailable, "chat service is unavailable")
-		return
-	}
-	identity, ok := handler.identity(request)
+	identity, ok := handler.authorize(writer, request)
 	if !ok {
-		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	var input struct {
@@ -60,13 +56,8 @@ func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Req
 }
 
 func (handler *Handler) Messages(writer http.ResponseWriter, request *http.Request) {
-	if handler == nil || handler.service == nil {
-		response.Error(writer, http.StatusServiceUnavailable, "chat service is unavailable")
-		return
-	}
-	identity, ok := handler.identity(request)
+	identity, ok := handler.authorize(writer, request)
 	if !ok {
-		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	items, err := handler.service.MessagesForUser(request.Context(), chi.URLParam(request, "roomID"), identity)
@@ -78,13 +69,8 @@ func (handler *Handler) Messages(writer http.ResponseWriter, request *http.Reque
 }
 
 func (handler *Handler) Resolve(writer http.ResponseWriter, request *http.Request) {
-	if handler == nil || handler.service == nil {
-		response.Error(writer, http.StatusServiceUnavailable, "chat service is unavailable")
-		return
-	}
-	identity, ok := handler.identity(request)
+	identity, ok := handler.authorize(writer, request)
 	if !ok {
-		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	roomID := chi.URLParam(request, "roomID")
@@ -93,6 +79,19 @@ func (handler *Handler) Resolve(writer http.ResponseWriter, request *http.Reques
 		return
 	}
 	response.JSON(writer, http.StatusOK, map[string]any{"room_id": roomID, "status": "resolved"})
+}
+
+func (handler *Handler) authorize(writer http.ResponseWriter, request *http.Request) (string, bool) {
+	if handler == nil || handler.service == nil {
+		response.Error(writer, http.StatusServiceUnavailable, "chat service is unavailable")
+		return "", false
+	}
+	identity, ok := handler.identity(request)
+	if !ok {
+		response.Error(writer, http.StatusUnauthorized, "unauthorized")
+		return "", false
+	}
+	return identity, true
 }
 
 func (handler *Handler) identity(request *http.Request) (string, bool) {
@@ -118,13 +117,8 @@ func chatErrorStatus(err error) int {
 }
 
 func (handler *Handler) SendImage(writer http.ResponseWriter, request *http.Request) {
-	if handler == nil || handler.service == nil {
-		response.Error(writer, http.StatusServiceUnavailable, "chat service is unavailable")
-		return
-	}
-	identity, ok := handler.identity(request)
+	identity, ok := handler.authorize(writer, request)
 	if !ok {
-		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	request.Body = http.MaxBytesReader(writer, request.Body, application.MaxImageBytes+(64<<10))
@@ -132,7 +126,9 @@ func (handler *Handler) SendImage(writer http.ResponseWriter, request *http.Requ
 		response.Error(writer, http.StatusBadRequest, "Choose a JPEG or PNG picture up to 5 MB.")
 		return
 	}
-	defer request.MultipartForm.RemoveAll()
+	defer func() {
+		_ = request.MultipartForm.RemoveAll()
+	}()
 	file, _, err := request.FormFile("photo")
 	if err != nil {
 		response.Error(writer, http.StatusBadRequest, "picture is required")
@@ -153,13 +149,8 @@ func (handler *Handler) SendImage(writer http.ResponseWriter, request *http.Requ
 }
 
 func (handler *Handler) Image(writer http.ResponseWriter, request *http.Request) {
-	if handler == nil || handler.service == nil {
-		response.Error(writer, http.StatusServiceUnavailable, "chat service is unavailable")
-		return
-	}
-	identity, ok := handler.identity(request)
+	identity, ok := handler.authorize(writer, request)
 	if !ok {
-		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	content, contentType, err := handler.service.Image(request.Context(), chi.URLParam(request, "roomID"), identity, chi.URLParam(request, "messageID"))
@@ -170,17 +161,14 @@ func (handler *Handler) Image(writer http.ResponseWriter, request *http.Request)
 	writer.Header().Set("Content-Type", contentType)
 	writer.Header().Set("Cache-Control", "private, no-store")
 	writer.Header().Set("X-Content-Type-Options", "nosniff")
-	writer.Write(content)
+	if _, err := writer.Write(content); err != nil {
+		slog.DebugContext(request.Context(), "write chat image response failed", "error", err)
+	}
 }
 
 func (handler *Handler) MarkRead(writer http.ResponseWriter, request *http.Request) {
-	if handler == nil || handler.service == nil {
-		response.Error(writer, http.StatusServiceUnavailable, "chat service is unavailable")
-		return
-	}
-	identity, ok := handler.identity(request)
+	identity, ok := handler.authorize(writer, request)
 	if !ok {
-		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	var input struct {

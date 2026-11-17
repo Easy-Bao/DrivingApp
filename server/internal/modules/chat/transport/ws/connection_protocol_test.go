@@ -69,7 +69,7 @@ func TestConnectionProtocolEnforcesMessageRateBudget(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/api/v1/chat/ws?roomId=ride-1", nil)
 	identity := security.Identity{Subject: "user-1"}
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		resp, err := protocol.HandleMessage(
 			context.Background(),
 			request,
@@ -254,8 +254,8 @@ func TestConnectionProtocolResolvesOnlyAuthorizedRoomTopics(t *testing.T) {
 			}
 			topics, err := protocol.ResolveTopics(context.Background(), request, identity)
 			if test.wantStatus != 0 {
-				var handshakeError *websockethub.HandshakeError
-				if !errors.As(err, &handshakeError) {
+				handshakeError, ok := errors.AsType[*websockethub.HandshakeError](err)
+				if !ok {
 					t.Fatalf("ResolveTopics() error = %v, want handshake error", err)
 				}
 				if handshakeError.StatusCode != test.wantStatus {
