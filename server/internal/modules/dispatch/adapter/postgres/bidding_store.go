@@ -116,164 +116,218 @@ func (repository *Store) CreateSession(
 	return session, nil
 }
 
+type activeSessionTimings struct {
+	ctx                     context.Context
+	logger                  *slog.Logger
+	enabled                 bool
+	totalStartedAt          time.Time
+	profileLookupDuration   time.Duration
+	activeRideCountDuration time.Duration
+	sessionListDuration     time.Duration
+	mappingDuration         time.Duration
+	sessionCount            int
+	outcome                 string
+}
+
+func newActiveSessionTimings(ctx context.Context, logger *slog.Logger) *activeSessionTimings {
+	if logger == nil {
+		logger = slog.Default()
+	}
+	timings := &activeSessionTimings{
+		ctx:     ctx,
+		logger:  logger,
+		enabled: ctx != nil && logger.Enabled(ctx, slog.LevelDebug),
+		outcome: "failed",
+	}
+	timings.totalStartedAt = timings.start()
+	return timings
+}
+
+func (timings *activeSessionTimings) start() time.Time {
+	if !timings.enabled {
+		return time.Time{}
+	}
+	return time.Now()
+}
+
+func (timings *activeSessionTimings) measure(startedAt time.Time) time.Duration {
+	if startedAt.IsZero() {
+		return 0
+	}
+	return time.Since(startedAt)
+}
+
+func (timings *activeSessionTimings) log(driverScoped bool) {
+	if !timings.enabled {
+		return
+	}
+	timings.logger.LogAttrs(timings.ctx, slog.LevelDebug, "active bid session lookup stage timings",
+		slog.String("outcome", timings.outcome),
+		slog.Bool("driver_scoped", driverScoped),
+		slog.Int64("total_us", timings.measure(timings.totalStartedAt).Microseconds()),
+		slog.Int64("online_profile_us", timings.profileLookupDuration.Microseconds()),
+		slog.Int64("active_ride_count_us", timings.activeRideCountDuration.Microseconds()),
+		slog.Int64("session_list_us", timings.sessionListDuration.Microseconds()),
+		slog.Int64("mapping_us", timings.mappingDuration.Microseconds()),
+		slog.Int("session_count", timings.sessionCount),
+	)
+}
+
 func (repository *Store) ActiveSessions(ctx context.Context, driverID *int) ([]dispatchdomain.BidSession, error) {
 	if err := repository.validate(); err != nil {
 		return nil, err
 	}
-	logger := repository.logger
-	if logger == nil {
-		logger = slog.Default()
-	}
-	timingsEnabled := ctx != nil && logger.Enabled(ctx, slog.LevelDebug)
-	startTiming := func() time.Time {
-		if !timingsEnabled {
-			return time.Time{}
-		}
-		return time.Now()
-	}
-	measure := func(startedAt time.Time) time.Duration {
-		if startedAt.IsZero() {
-			return 0
-		}
-		return time.Since(startedAt)
-	}
-	totalStartedAt := startTiming()
-	var (
-		profileLookupDuration   time.Duration
-		activeRideCountDuration time.Duration
-		sessionListDuration     time.Duration
-		mappingDuration         time.Duration
-		sessionCount            int
-		outcome                 = "failed"
-	)
-	defer func() {
-		if !timingsEnabled {
-			return
-		}
-		logger.LogAttrs(ctx, slog.LevelDebug, "active bid session lookup stage timings",
-			slog.String("outcome", outcome),
-			slog.Bool("driver_scoped", driverID != nil),
-			slog.Int64("total_us", measure(totalStartedAt).Microseconds()),
-			slog.Int64("online_profile_us", profileLookupDuration.Microseconds()),
-			slog.Int64("active_ride_count_us", activeRideCountDuration.Microseconds()),
-			slog.Int64("session_list_us", sessionListDuration.Microseconds()),
-			slog.Int64("mapping_us", mappingDuration.Microseconds()),
-			slog.Int("session_count", sessionCount),
-		)
-	}()
+	timings := newActiveSessionTimings(ctx, repository.logger)
+	defer timings.log(driverID != nil)
 
 	now := bidTimestamp(time.Now().UTC())
-	var (
-		items      []databasepostgres.BidSession
-		dbDriverID int32
-		err        error
-	)
-	if driverID == nil {
-		sessionListStartedAt := startTiming()
-		items, err = repository.queries.ListActiveBidSessions(ctx, now)
-		sessionListDuration = measure(sessionListStartedAt)
-	} else {
-		var idErr error
-		dbDriverID, idErr = toPostgresRideID(*driverID, "driver id")
-		if idErr != nil {
-			return nil, idErr
-		}
-		profileLookupStartedAt := startTiming()
-		if _, profileErr := repository.queries.GetOnlineDriverProfileForBidding(
-			ctx,
-			databasepostgres.GetOnlineDriverProfileForBiddingParams{
-				UserID:                     dbDriverID,
-				OnlineCutoff:               repository.onlinePresenceCutoff(),
-				AllowUnverifiedTestDrivers: repository.allowUnverifiedTestDrivers,
-			},
-		); profileErr != nil {
-			profileLookupDuration = measure(profileLookupStartedAt)
-			outcome = "driver_unavailable"
-			return nil, driverUnavailableError(
-				"find online driver profile for active sessions",
-				profileErr,
-				dispatchdomain.ErrDriverUnavailable,
-			)
-		}
-		profileLookupDuration = measure(profileLookupStartedAt)
-
-		activeRideCountStartedAt := startTiming()
-		activeRides, countErr := repository.queries.CountActiveRidesForDriver(
-			ctx,
-			pgtype.Int4{Int32: dbDriverID, Valid: true},
-		)
-		activeRideCountDuration = measure(activeRideCountStartedAt)
-		if countErr != nil {
-			return nil, fmt.Errorf("count active driver rides: %w", countErr)
-		}
-		if activeRides >= domain.MaxActiveRidesPerDriver {
-			outcome = "active_ride_gate"
-			return []dispatchdomain.BidSession{}, nil
-		}
-
-		sessionListStartedAt := startTiming()
-		items, err = repository.queries.ListTargetedActiveBidSessions(
-			ctx,
-			databasepostgres.ListTargetedActiveBidSessionsParams{
-				ExpiresAt:      now,
-				TargetDriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
-			},
-		)
-		sessionListDuration = measure(sessionListStartedAt)
-	}
+	items, dbDriverID, capped, err := repository.loadActiveSessionRows(ctx, driverID, now, timings)
 	if err != nil {
-		return nil, fmt.Errorf("list active bid sessions: %w", err)
+		return nil, err
 	}
+	if capped {
+		return []dispatchdomain.BidSession{}, nil
+	}
+	result, err := mapActiveBidSessions(items, timings)
+	if err != nil {
+		return nil, err
+	}
+	if driverID != nil && len(items) > 0 {
+		if err := repository.attachDriverPendingOffers(ctx, dbDriverID, now, items, result, timings); err != nil {
+			return nil, err
+		}
+	}
+	timings.sessionCount = len(result)
+	timings.outcome = "success"
+	return result, nil
+}
+
+func (repository *Store) loadActiveSessionRows(
+	ctx context.Context,
+	driverID *int,
+	now pgtype.Timestamptz,
+	timings *activeSessionTimings,
+) ([]databasepostgres.BidSession, int32, bool, error) {
+	if driverID == nil {
+		sessionListStartedAt := timings.start()
+		items, err := repository.queries.ListActiveBidSessions(ctx, now)
+		timings.sessionListDuration = timings.measure(sessionListStartedAt)
+		if err != nil {
+			return nil, 0, false, fmt.Errorf("list active bid sessions: %w", err)
+		}
+		return items, 0, false, nil
+	}
+
+	dbDriverID, err := toPostgresRideID(*driverID, "driver id")
+	if err != nil {
+		return nil, 0, false, err
+	}
+	profileLookupStartedAt := timings.start()
+	_, profileErr := repository.queries.GetOnlineDriverProfileForBidding(
+		ctx,
+		databasepostgres.GetOnlineDriverProfileForBiddingParams{
+			UserID:                     dbDriverID,
+			OnlineCutoff:               repository.onlinePresenceCutoff(),
+			AllowUnverifiedTestDrivers: repository.allowUnverifiedTestDrivers,
+		},
+	)
+	timings.profileLookupDuration = timings.measure(profileLookupStartedAt)
+	if profileErr != nil {
+		timings.outcome = "driver_unavailable"
+		return nil, 0, false, driverUnavailableError(
+			"find online driver profile for active sessions",
+			profileErr,
+			dispatchdomain.ErrDriverUnavailable,
+		)
+	}
+
+	activeRideCountStartedAt := timings.start()
+	activeRides, countErr := repository.queries.CountActiveRidesForDriver(
+		ctx,
+		pgtype.Int4{Int32: dbDriverID, Valid: true},
+	)
+	timings.activeRideCountDuration = timings.measure(activeRideCountStartedAt)
+	if countErr != nil {
+		return nil, 0, false, fmt.Errorf("count active driver rides: %w", countErr)
+	}
+	if activeRides >= domain.MaxActiveRidesPerDriver {
+		timings.outcome = "active_ride_gate"
+		return nil, dbDriverID, true, nil
+	}
+
+	sessionListStartedAt := timings.start()
+	items, err := repository.queries.ListTargetedActiveBidSessions(
+		ctx,
+		databasepostgres.ListTargetedActiveBidSessionsParams{
+			ExpiresAt:      now,
+			TargetDriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
+		},
+	)
+	timings.sessionListDuration = timings.measure(sessionListStartedAt)
+	if err != nil {
+		return nil, 0, false, fmt.Errorf("list active bid sessions: %w", err)
+	}
+	return items, dbDriverID, false, nil
+}
+
+func mapActiveBidSessions(
+	items []databasepostgres.BidSession,
+	timings *activeSessionTimings,
+) ([]dispatchdomain.BidSession, error) {
 	result := make([]dispatchdomain.BidSession, 0, len(items))
-	mappingStartedAt := startTiming()
+	mappingStartedAt := timings.start()
 	for _, item := range items {
 		session, mappingErr := fromPostgresBidSession(item)
 		if mappingErr != nil {
-			mappingDuration = measure(mappingStartedAt)
-			outcome = "mapping_failed"
+			timings.mappingDuration = timings.measure(mappingStartedAt)
+			timings.outcome = "mapping_failed"
 			return nil, fmt.Errorf("map active bid session: %w", mappingErr)
 		}
 		result = append(result, session)
 	}
-	mappingDuration = measure(mappingStartedAt)
-	if driverID != nil && len(items) > 0 {
-		sessionIDs := make([]int32, len(items))
-		for index, item := range items {
-			sessionIDs[index] = item.ID
-		}
-		pendingStartedAt := startTiming()
-		pendingRows, pendingErr := repository.queries.ListPendingBidOffersForDriver(
-			ctx,
-			databasepostgres.ListPendingBidOffersForDriverParams{
-				DriverID:   dbDriverID,
-				ExpiresAt:  now,
-				SessionIds: sessionIDs,
-			},
-		)
-		if pendingErr != nil {
-			return nil, fmt.Errorf("list driver's pending bid offers: %w", pendingErr)
-		}
-		sessionListDuration += measure(pendingStartedAt)
-		pendingMappingStartedAt := startTiming()
-		pendingBySession := make(map[int][]dispatchdomain.BidOffer, len(pendingRows))
-		for _, row := range pendingRows {
-			offer, mappingErr := fromPostgresBidOffer(row)
-			if mappingErr != nil {
-				return nil, fmt.Errorf("map driver's pending bid offer: %w", mappingErr)
-			}
-			pendingBySession[offer.SessionID] = append(
-				pendingBySession[offer.SessionID],
-				offer,
-			)
-		}
-		for index := range result {
-			result[index].Offers = pendingBySession[result[index].ID]
-		}
-		mappingDuration += measure(pendingMappingStartedAt)
-	}
-	sessionCount = len(result)
-	outcome = "success"
+	timings.mappingDuration = timings.measure(mappingStartedAt)
 	return result, nil
+}
+
+func (repository *Store) attachDriverPendingOffers(
+	ctx context.Context,
+	dbDriverID int32,
+	now pgtype.Timestamptz,
+	items []databasepostgres.BidSession,
+	sessions []dispatchdomain.BidSession,
+	timings *activeSessionTimings,
+) error {
+	sessionIDs := make([]int32, len(items))
+	for index, item := range items {
+		sessionIDs[index] = item.ID
+	}
+	pendingStartedAt := timings.start()
+	pendingRows, err := repository.queries.ListPendingBidOffersForDriver(
+		ctx,
+		databasepostgres.ListPendingBidOffersForDriverParams{
+			DriverID:   dbDriverID,
+			ExpiresAt:  now,
+			SessionIds: sessionIDs,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("list driver's pending bid offers: %w", err)
+	}
+	timings.sessionListDuration += timings.measure(pendingStartedAt)
+	pendingMappingStartedAt := timings.start()
+	pendingBySession := make(map[int][]dispatchdomain.BidOffer, len(pendingRows))
+	for _, row := range pendingRows {
+		offer, mappingErr := fromPostgresBidOffer(row)
+		if mappingErr != nil {
+			return fmt.Errorf("map driver's pending bid offer: %w", mappingErr)
+		}
+		pendingBySession[offer.SessionID] = append(pendingBySession[offer.SessionID], offer)
+	}
+	for index := range sessions {
+		sessions[index].Offers = pendingBySession[sessions[index].ID]
+	}
+	timings.mappingDuration += timings.measure(pendingMappingStartedAt)
+	return nil
 }
 
 func (repository *Store) Offers(ctx context.Context, sessionID int) ([]dispatchdomain.BidOffer, error) {

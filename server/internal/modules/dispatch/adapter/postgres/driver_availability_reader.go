@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
@@ -117,7 +118,7 @@ func toPostgresDriverIDs(values []int) ([]int32, error) {
 }
 
 func toNativeDriverAvailabilityCount(value int64) (int, error) {
-	if value < 0 || value > int64(^uint(0)>>1) {
+	if value < 0 || value > int64(math.MaxInt) {
 		return 0, fmt.Errorf("onboard passenger count %d is outside native integer range", value)
 	}
 	return int(value), nil

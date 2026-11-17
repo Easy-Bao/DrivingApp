@@ -74,7 +74,7 @@ func (service *Service) WithLogger(logger *slog.Logger) *Service {
 // CreateSession opens a passenger bid session using authoritative route
 // metrics and pricing.
 func (service *Service) CreateSession(ctx context.Context, session dispatchdomain.BidSession) (dispatchdomain.BidSession, error) {
-	if service.store == nil {
+	if service == nil || service.store == nil {
 		return dispatchdomain.BidSession{}, ErrPersistenceUnavailable
 	}
 	if service.resolveRoute == nil || service.calculateFare == nil {
@@ -135,7 +135,7 @@ func (service *Service) CreateSession(ctx context.Context, session dispatchdomai
 }
 
 func (service *Service) ActiveSessions(ctx context.Context, driverID *int) ([]dispatchdomain.BidSession, error) {
-	if service.store == nil {
+	if service == nil || service.store == nil {
 		return nil, ErrPersistenceUnavailable
 	}
 	sessions, err := service.store.ActiveSessions(ctx, driverID)
@@ -146,7 +146,7 @@ func (service *Service) ActiveSessions(ctx context.Context, driverID *int) ([]di
 }
 
 func (service *Service) Offers(ctx context.Context, sessionID int) ([]dispatchdomain.BidOffer, error) {
-	if service.store == nil {
+	if service == nil || service.store == nil {
 		return nil, ErrPersistenceUnavailable
 	}
 	offers, err := service.store.Offers(ctx, sessionID)
@@ -157,7 +157,7 @@ func (service *Service) Offers(ctx context.Context, sessionID int) ([]dispatchdo
 }
 
 func (service *Service) PlaceOffer(ctx context.Context, offer dispatchdomain.BidOffer) (dispatchdomain.BidOffer, error) {
-	if service.store == nil {
+	if service == nil || service.store == nil {
 		return dispatchdomain.BidOffer{}, ErrPersistenceUnavailable
 	}
 	if offer.DriverID <= 0 || offer.ProposedFareAmount < 0 {
@@ -170,22 +170,8 @@ func (service *Service) PlaceOffer(ctx context.Context, offer dispatchdomain.Bid
 	if offer.ProposedFareAmount == 0 {
 		offer.ProposedFareAmount = session.OfferedFareAmount
 	}
-	const minProposedFareCentavos = 50_00
-	const maxProposedFareCentavos = 5_000_00
-	baseFare := float64(session.OfferedFareAmount)
-	minFare := min(session.OfferedFareAmount, max(int64(minProposedFareCentavos), int64(math.Round(0.70*baseFare))))
-	maxFare := min(int64(maxProposedFareCentavos), int64(math.Round(2.0*baseFare)))
-	if maxFare < minFare {
-		maxFare = minFare
-	}
-	if baseFare > 0 {
-		if offer.ProposedFareAmount < minFare || offer.ProposedFareAmount > maxFare {
-			return dispatchdomain.BidOffer{}, dispatchdomain.ErrInvalidFareOffer
-		}
-	} else {
-		if offer.ProposedFareAmount < minProposedFareCentavos || offer.ProposedFareAmount > maxProposedFareCentavos {
-			return dispatchdomain.BidOffer{}, dispatchdomain.ErrInvalidFareOffer
-		}
+	if !withinOfferFareBounds(session.OfferedFareAmount, offer.ProposedFareAmount) {
+		return dispatchdomain.BidOffer{}, dispatchdomain.ErrInvalidFareOffer
 	}
 	if offer.Status == "" {
 		offer.Status = "pending"
@@ -236,7 +222,7 @@ func (service *Service) AcceptOffer(
 	offerID int,
 	passengerID int,
 ) (dispatchdomain.BidSession, dispatchdomain.BidOffer, ridedomain.Ride, error) {
-	if service.store == nil {
+	if service == nil || service.store == nil {
 		return dispatchdomain.BidSession{}, dispatchdomain.BidOffer{}, ridedomain.Ride{}, ErrPersistenceUnavailable
 	}
 	if passengerID <= 0 {
@@ -287,7 +273,7 @@ func (service *Service) AcceptOffer(
 }
 
 func (service *Service) DeclineSession(ctx context.Context, sessionID, driverID int) (dispatchdomain.BidSession, error) {
-	if service.store == nil {
+	if service == nil || service.store == nil {
 		return dispatchdomain.BidSession{}, ErrPersistenceUnavailable
 	}
 	if driverID <= 0 {
@@ -302,7 +288,7 @@ func (service *Service) DeclineSession(ctx context.Context, sessionID, driverID 
 }
 
 func (service *Service) CancelSession(ctx context.Context, sessionID, passengerID int) (dispatchdomain.BidSession, error) {
-	if service.store == nil {
+	if service == nil || service.store == nil {
 		return dispatchdomain.BidSession{}, ErrPersistenceUnavailable
 	}
 	if passengerID <= 0 {
@@ -326,7 +312,7 @@ func (service *Service) CancelSession(ctx context.Context, sessionID, passengerI
 }
 
 func (service *Service) CancelOffer(ctx context.Context, sessionID, driverID int) (dispatchdomain.BidOffer, error) {
-	if service.store == nil {
+	if service == nil || service.store == nil {
 		return dispatchdomain.BidOffer{}, ErrPersistenceUnavailable
 	}
 	offer, err := service.store.CancelOffer(ctx, sessionID, driverID)
@@ -392,7 +378,7 @@ func isBidStatus(value, expected string) bool {
 }
 
 func (service *Service) Session(ctx context.Context, sessionID int) (dispatchdomain.BidSession, error) {
-	if service.store == nil {
+	if service == nil || service.store == nil {
 		return dispatchdomain.BidSession{}, ErrPersistenceUnavailable
 	}
 	session, err := service.store.Session(ctx, sessionID)
@@ -408,6 +394,18 @@ func (service *Service) Session(ctx context.Context, sessionID int) (dispatchdom
 	}
 	session.Offers = slices.Clone(offers)
 	return session, nil
+}
+
+func withinOfferFareBounds(offeredFareAmount, proposedFareAmount int64) bool {
+	const minProposedFareCentavos = 50_00
+	const maxProposedFareCentavos = 5_000_00
+	if offeredFareAmount <= 0 {
+		return proposedFareAmount >= minProposedFareCentavos && proposedFareAmount <= maxProposedFareCentavos
+	}
+	baseFare := float64(offeredFareAmount)
+	minFare := min(offeredFareAmount, max(int64(minProposedFareCentavos), int64(math.Round(0.70*baseFare))))
+	maxFare := max(min(int64(maxProposedFareCentavos), int64(math.Round(2.0*baseFare))), minFare)
+	return proposedFareAmount >= minFare && proposedFareAmount <= maxFare
 }
 
 func (service *Service) publishRideEvent(

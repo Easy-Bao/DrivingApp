@@ -52,32 +52,8 @@ func (repository *Store) AcceptOffer(
 		},
 	)
 	if err != nil {
-		existingSession, getErr := transactionQueries.GetBidSessionByID(ctx, dbSessionID)
-		if getErr == nil && existingSession.Status == "accepted" && existingSession.PassengerID == dbPassengerID {
-			offers, listErr := transactionQueries.ListBidOffersBySession(ctx, dbSessionID)
-			if listErr == nil {
-				for _, candidateOffer := range offers {
-					if candidateOffer.ID == dbOfferID && candidateOffer.Status == "accepted" &&
-						existingSession.AcceptedDriverID.Valid && existingSession.AcceptedDriverID.Int32 == candidateOffer.DriverID {
-						sessionRideRow, rideErr := transactionQueries.GetRideByBidSessionID(ctx, pgtype.Int4{
-							Int32: dbSessionID,
-							Valid: true,
-						})
-						if rideErr == nil {
-							sessionValue, sessionErr := fromPostgresBidSession(existingSession)
-							offerValue, offerErr := fromPostgresBidOffer(candidateOffer)
-							rideValue, rideErr := fromPostgresBidSessionRideRow(sessionRideRow)
-							if sessionErr == nil && offerErr == nil && rideErr == nil {
-								return dispatchapp.OfferAcceptance{
-									Session: sessionValue,
-									Offer:   offerValue,
-									Ride:    rideValue,
-								}, nil
-							}
-						}
-					}
-				}
-			}
+		if replay, ok := acceptedOfferReplay(ctx, transactionQueries, dbSessionID, dbOfferID, dbPassengerID); ok {
+			return replay, nil
 		}
 		return dispatchapp.OfferAcceptance{}, fmt.Errorf("find active bid session: %w", err)
 	}
@@ -186,83 +162,16 @@ func (repository *Store) AcceptOffer(
 	if err != nil {
 		return dispatchapp.OfferAcceptance{}, fmt.Errorf("accept bid session: %w", err)
 	}
-	sessionValue, err := fromPostgresBidSession(session)
-	if err != nil {
-		return dispatchapp.OfferAcceptance{}, fmt.Errorf("map bid session for offer acceptance: %w", err)
-	}
-	offerValue, err := fromPostgresBidOffer(offer)
-	if err != nil {
-		return dispatchapp.OfferAcceptance{}, fmt.Errorf("map bid offer for offer acceptance: %w", err)
-	}
-	if sessionValue.ID <= 0 || sessionValue.PassengerID <= 0 ||
-		offerValue.DriverID <= 0 || offerValue.SessionID != sessionValue.ID {
-		return dispatchapp.OfferAcceptance{}, domain.ErrInvalidTrip
-	}
-	driverID := offerValue.DriverID
-	acceptedRide, err := domain.NewAcceptedRide(
-		domain.Ride{
-			PassengerID: sessionValue.PassengerID,
-			DriverID:    &driverID,
-			FareAmount:  offerValue.ProposedFareAmount,
-
-			PickupLatitude:   sessionValue.PickupLatitude,
-			PickupLongitude:  sessionValue.PickupLongitude,
-			PickupName:       sessionValue.PickupName,
-			DropoffLatitude:  sessionValue.DropoffLatitude,
-			DropoffLongitude: sessionValue.DropoffLongitude,
-			DropoffName:      sessionValue.DropoffName,
-			DistanceKm:       sessionValue.DistanceKm,
-			DurationMinutes:  sessionValue.DurationMinutes,
-		},
-		domain.DriverAssignmentSnapshot{
-			Name:        profile.Name,
-			VehicleType: profile.VehicleType,
-			PlateNumber: profile.PlateNumber,
-			Rating:      profile.Rating,
-		},
+	createdRide, settlementRecord, err := createAcceptedRideAndSettlement(
+		ctx,
+		transactionQueries,
+		session,
+		profile,
+		offer,
 		repository.platformCommissionBPS,
 	)
 	if err != nil {
 		return dispatchapp.OfferAcceptance{}, err
-	}
-	if acceptedRide.DriverID == nil || acceptedRide.CommissionBPS == nil {
-		return dispatchapp.OfferAcceptance{}, domain.ErrInvalidSettlement
-	}
-	dbAcceptedDriverID, err := toPostgresRideID(*acceptedRide.DriverID, "driver id")
-	if err != nil {
-		return dispatchapp.OfferAcceptance{}, err
-	}
-	createdRide, err := transactionQueries.CreateAcceptedRide(ctx, databasepostgres.CreateAcceptedRideParams{
-		PassengerID: session.PassengerID,
-		DriverID:    pgtype.Int4{Int32: dbAcceptedDriverID, Valid: true},
-		FareAmount:  acceptedRide.FareAmount,
-
-		PickupLatitude:   rideFloat(acceptedRide.PickupLatitude),
-		PickupLongitude:  rideFloat(acceptedRide.PickupLongitude),
-		PickupName:       rideText(acceptedRide.PickupName),
-		DropoffLatitude:  rideFloat(acceptedRide.DropoffLatitude),
-		DropoffLongitude: rideFloat(acceptedRide.DropoffLongitude),
-		DropoffName:      rideText(acceptedRide.DropoffName),
-		DistanceKm:       rideFloat(acceptedRide.DistanceKm),
-		DurationMinutes:  rideFloat(acceptedRide.DurationMinutes),
-		DriverName:       rideText(acceptedRide.DriverName),
-		VehicleType:      rideText(acceptedRide.VehicleType),
-		PlateNumber:      rideText(acceptedRide.PlateNumber),
-		DriverRating:     rideRating(acceptedRide.DriverRating),
-		BidSessionID:     pgtype.Int4{Int32: session.ID, Valid: true},
-	})
-	if err != nil {
-		return dispatchapp.OfferAcceptance{}, acceptedRideConflictError("create accepted ride", err)
-	}
-	settlementRecord, err := transactionQueries.CreateRideSettlement(ctx, databasepostgres.CreateRideSettlementParams{
-		RideID:             createdRide.ID,
-		GrossFare:          acceptedRide.FareAmount,
-		CommissionBps:      pgtype.Int4{Int32: int32(*acceptedRide.CommissionBPS), Valid: true},
-		CommissionAmount:   acceptedRide.CommissionAmount,
-		DriverPayoutAmount: acceptedRide.DriverPayoutAmount,
-	})
-	if err != nil {
-		return dispatchapp.OfferAcceptance{}, fmt.Errorf("create ride settlement: %w", err)
 	}
 	if err := transaction.Commit(ctx); err != nil {
 		return dispatchapp.OfferAcceptance{}, fmt.Errorf("commit offer acceptance transaction: %w", err)
@@ -286,6 +195,129 @@ func (repository *Store) AcceptOffer(
 		RejectedOffers:  rejectedOffers,
 		WithdrawnOffers: withdrawnOffers,
 	}, nil
+}
+
+func acceptedOfferReplay(
+	ctx context.Context,
+	queries *databasepostgres.Queries,
+	dbSessionID, dbOfferID, dbPassengerID int32,
+) (dispatchapp.OfferAcceptance, bool) {
+	existingSession, err := queries.GetBidSessionByID(ctx, dbSessionID)
+	if err != nil || existingSession.Status != "accepted" || existingSession.PassengerID != dbPassengerID || !existingSession.AcceptedDriverID.Valid {
+		return dispatchapp.OfferAcceptance{}, false
+	}
+	offers, err := queries.ListBidOffersBySession(ctx, dbSessionID)
+	if err != nil {
+		return dispatchapp.OfferAcceptance{}, false
+	}
+	for _, candidateOffer := range offers {
+		if candidateOffer.ID != dbOfferID || candidateOffer.Status != "accepted" || existingSession.AcceptedDriverID.Int32 != candidateOffer.DriverID {
+			continue
+		}
+		sessionRideRow, rideErr := queries.GetRideByBidSessionID(ctx, pgtype.Int4{Int32: dbSessionID, Valid: true})
+		if rideErr != nil {
+			return dispatchapp.OfferAcceptance{}, false
+		}
+		sessionValue, sessionErr := fromPostgresBidSession(existingSession)
+		offerValue, offerErr := fromPostgresBidOffer(candidateOffer)
+		rideValue, mapRideErr := fromPostgresBidSessionRideRow(sessionRideRow)
+		if sessionErr != nil || offerErr != nil || mapRideErr != nil {
+			return dispatchapp.OfferAcceptance{}, false
+		}
+		return dispatchapp.OfferAcceptance{
+			Session: sessionValue,
+			Offer:   offerValue,
+			Ride:    rideValue,
+		}, true
+	}
+	return dispatchapp.OfferAcceptance{}, false
+}
+
+func createAcceptedRideAndSettlement(
+	ctx context.Context,
+	queries *databasepostgres.Queries,
+	session databasepostgres.BidSession,
+	profile databasepostgres.LockOnlineDriverProfileForBiddingRow,
+	offer databasepostgres.BidOffer,
+	platformCommissionBPS int64,
+) (databasepostgres.Ride, databasepostgres.RideSettlement, error) {
+	sessionValue, err := fromPostgresBidSession(session)
+	if err != nil {
+		return databasepostgres.Ride{}, databasepostgres.RideSettlement{}, fmt.Errorf("map bid session for offer acceptance: %w", err)
+	}
+	offerValue, err := fromPostgresBidOffer(offer)
+	if err != nil {
+		return databasepostgres.Ride{}, databasepostgres.RideSettlement{}, fmt.Errorf("map bid offer for offer acceptance: %w", err)
+	}
+	if sessionValue.ID <= 0 || sessionValue.PassengerID <= 0 ||
+		offerValue.DriverID <= 0 || offerValue.SessionID != sessionValue.ID {
+		return databasepostgres.Ride{}, databasepostgres.RideSettlement{}, domain.ErrInvalidTrip
+	}
+	driverID := offerValue.DriverID
+	acceptedRide, err := domain.NewAcceptedRide(
+		domain.Ride{
+			PassengerID:      sessionValue.PassengerID,
+			DriverID:         &driverID,
+			FareAmount:       offerValue.ProposedFareAmount,
+			PickupLatitude:   sessionValue.PickupLatitude,
+			PickupLongitude:  sessionValue.PickupLongitude,
+			PickupName:       sessionValue.PickupName,
+			DropoffLatitude:  sessionValue.DropoffLatitude,
+			DropoffLongitude: sessionValue.DropoffLongitude,
+			DropoffName:      sessionValue.DropoffName,
+			DistanceKm:       sessionValue.DistanceKm,
+			DurationMinutes:  sessionValue.DurationMinutes,
+		},
+		domain.DriverAssignmentSnapshot{
+			Name:        profile.Name,
+			VehicleType: profile.VehicleType,
+			PlateNumber: profile.PlateNumber,
+			Rating:      profile.Rating,
+		},
+		platformCommissionBPS,
+	)
+	if err != nil {
+		return databasepostgres.Ride{}, databasepostgres.RideSettlement{}, err
+	}
+	if acceptedRide.DriverID == nil || acceptedRide.CommissionBPS == nil {
+		return databasepostgres.Ride{}, databasepostgres.RideSettlement{}, domain.ErrInvalidSettlement
+	}
+	dbAcceptedDriverID, err := toPostgresRideID(*acceptedRide.DriverID, "driver id")
+	if err != nil {
+		return databasepostgres.Ride{}, databasepostgres.RideSettlement{}, err
+	}
+	createdRide, err := queries.CreateAcceptedRide(ctx, databasepostgres.CreateAcceptedRideParams{
+		PassengerID:      session.PassengerID,
+		DriverID:         pgtype.Int4{Int32: dbAcceptedDriverID, Valid: true},
+		FareAmount:       acceptedRide.FareAmount,
+		PickupLatitude:   rideFloat(acceptedRide.PickupLatitude),
+		PickupLongitude:  rideFloat(acceptedRide.PickupLongitude),
+		PickupName:       rideText(acceptedRide.PickupName),
+		DropoffLatitude:  rideFloat(acceptedRide.DropoffLatitude),
+		DropoffLongitude: rideFloat(acceptedRide.DropoffLongitude),
+		DropoffName:      rideText(acceptedRide.DropoffName),
+		DistanceKm:       rideFloat(acceptedRide.DistanceKm),
+		DurationMinutes:  rideFloat(acceptedRide.DurationMinutes),
+		DriverName:       rideText(acceptedRide.DriverName),
+		VehicleType:      rideText(acceptedRide.VehicleType),
+		PlateNumber:      rideText(acceptedRide.PlateNumber),
+		DriverRating:     rideRating(acceptedRide.DriverRating),
+		BidSessionID:     pgtype.Int4{Int32: session.ID, Valid: true},
+	})
+	if err != nil {
+		return databasepostgres.Ride{}, databasepostgres.RideSettlement{}, acceptedRideConflictError("create accepted ride", err)
+	}
+	settlementRecord, err := queries.CreateRideSettlement(ctx, databasepostgres.CreateRideSettlementParams{
+		RideID:             createdRide.ID,
+		GrossFare:          acceptedRide.FareAmount,
+		CommissionBps:      pgtype.Int4{Int32: int32(*acceptedRide.CommissionBPS), Valid: true},
+		CommissionAmount:   acceptedRide.CommissionAmount,
+		DriverPayoutAmount: acceptedRide.DriverPayoutAmount,
+	})
+	if err != nil {
+		return databasepostgres.Ride{}, databasepostgres.RideSettlement{}, fmt.Errorf("create ride settlement: %w", err)
+	}
+	return createdRide, settlementRecord, nil
 }
 
 func mapBidOfferWithdrawals(

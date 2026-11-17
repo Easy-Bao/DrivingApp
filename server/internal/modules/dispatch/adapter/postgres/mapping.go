@@ -3,6 +3,7 @@ package postgres
 import (
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
@@ -12,8 +13,6 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
-
-const _maxPostgresRideID = 1<<31 - 1
 
 func fromPostgresBidSession(item databasepostgres.BidSession) (dispatchdomain.BidSession, error) {
 	if !item.ExpiresAt.Valid {
@@ -226,15 +225,15 @@ func dispatchOptionalInt(value pgtype.Int4) *int {
 }
 
 func toPostgresRideID(value int, field string) (int32, error) {
-	if value <= 0 || int64(value) > int64(_maxPostgresRideID) {
+	if value <= 0 || int64(value) > math.MaxInt32 {
 		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
 	}
 	return int32(value), nil
 }
 
 func isPostgresUniqueViolation(err error) bool {
-	var databaseError *pgconn.PgError
-	return errors.As(err, &databaseError) && databaseError.Code == "23505"
+	databaseError, ok := errors.AsType[*pgconn.PgError](err)
+	return ok && databaseError.Code == "23505"
 }
 
 func driverUnavailableError(operation string, err error, unavailable error) error {
@@ -245,8 +244,7 @@ func driverUnavailableError(operation string, err error, unavailable error) erro
 }
 
 func acceptedRideConflictError(operation string, err error) error {
-	var databaseError *pgconn.PgError
-	if errors.As(err, &databaseError) && databaseError.Code == "23505" {
+	if databaseError, ok := errors.AsType[*pgconn.PgError](err); ok && databaseError.Code == "23505" {
 		switch databaseError.ConstraintName {
 		case "ride_passenger_id", "rides_one_active_ride_per_passenger_idx":
 			return ridedomain.ErrActiveBooking

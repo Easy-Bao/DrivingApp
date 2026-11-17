@@ -34,17 +34,13 @@ func (lookup *RideLookup) ForRide(
 	}
 	ride, err := lookup.repository.Get(ctx, id)
 	if err != nil {
-		if isRideNotFound(err) {
+		if errors.Is(err, ridedomain.ErrRideNotFound) {
 			return Assignment{}, false, nil
 		}
 		return Assignment{}, false, fmt.Errorf("load ride assignment: %w", err)
 	}
 	value, ok := fromRide(ride)
 	return value, ok, nil
-}
-
-func isRideNotFound(err error) bool {
-	return errors.Is(err, ridedomain.ErrRideNotFound)
 }
 
 func (lookup *RideLookup) ForDriver(

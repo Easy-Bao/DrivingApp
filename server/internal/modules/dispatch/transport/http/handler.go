@@ -61,12 +61,12 @@ func (handler *Handler) principal(r *http.Request) (middleware.Principal, bool) 
 func (handler *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := handler.identity(r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	var input BidSessionRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
-		response.Error(w, 400, "invalid bid session")
+		response.Error(w, http.StatusBadRequest, "invalid bid session")
 		return
 	}
 	session, err := handler.service.CreateSession(r.Context(), dispatchdomain.BidSession{
@@ -88,13 +88,13 @@ func (handler *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
-	response.JSON(w, 201, NewBidSessionResponse(session))
+	response.JSON(w, http.StatusCreated, NewBidSessionResponse(session))
 }
 
 func (handler *Handler) ActiveSessions(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	sessions, err := handler.service.ActiveSessions(r.Context(), &driverID)
@@ -102,18 +102,17 @@ func (handler *Handler) ActiveSessions(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
-	response.JSON(w, 200, NewBidSessionResponses(sessions))
+	response.JSON(w, http.StatusOK, NewBidSessionResponses(sessions))
 }
 
 func (handler *Handler) Session(w http.ResponseWriter, r *http.Request) {
 	principal, ok := handler.principal(r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
-	if err != nil || id <= 0 {
-		response.Error(w, 400, "invalid session id")
+	id, ok := sessionIDParam(w, r)
+	if !ok {
 		return
 	}
 	item, err := handler.service.Session(r.Context(), id)
@@ -125,18 +124,17 @@ func (handler *Handler) Session(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusForbidden, "forbidden")
 		return
 	}
-	response.JSON(w, 200, NewBidSessionResponse(item))
+	response.JSON(w, http.StatusOK, NewBidSessionResponse(item))
 }
 
 func (handler *Handler) Offers(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
-	if err != nil || id <= 0 {
-		response.Error(w, 400, "invalid session id")
+	id, ok := sessionIDParam(w, r)
+	if !ok {
 		return
 	}
 	session, err := handler.service.Session(r.Context(), id)
@@ -153,29 +151,28 @@ func (handler *Handler) Offers(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
-	response.JSON(w, 200, NewBidOfferResponses(items))
+	response.JSON(w, http.StatusOK, NewBidOfferResponses(items))
 }
 
 func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	sessionID, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
-	if err != nil || sessionID <= 0 {
-		response.Error(w, 400, "invalid session id")
+	sessionID, ok := sessionIDParam(w, r)
+	if !ok {
 		return
 	}
 	var input BidOfferRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
-		response.Error(w, 400, "invalid bid offer")
+		response.Error(w, http.StatusBadRequest, "invalid bid offer")
 		return
 	}
 	fare := input.ProposedFareAmount
 	if fare == 0 && input.OfferPrice != 0 {
 		if math.IsNaN(input.OfferPrice) || math.IsInf(input.OfferPrice, 0) || input.OfferPrice < 0 {
-			response.Error(w, 400, "invalid bid offer")
+			response.Error(w, http.StatusBadRequest, "invalid bid offer")
 			return
 		}
 		fare = int64(math.Round(input.OfferPrice * 100))
@@ -192,19 +189,19 @@ func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
-	response.JSON(w, 201, NewBidOfferResponse(offer))
+	response.JSON(w, http.StatusCreated, NewBidOfferResponse(offer))
 }
 
 func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := handler.identity(r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	sessionID, sessionErr := strconv.Atoi(chi.URLParam(r, "sessionID"))
 	offerID, offerErr := strconv.Atoi(chi.URLParam(r, "offerID"))
 	if sessionErr != nil || offerErr != nil || sessionID <= 0 || offerID <= 0 {
-		response.Error(w, 400, "invalid bid id")
+		response.Error(w, http.StatusBadRequest, "invalid bid id")
 		return
 	}
 	session, offer, ride, err := handler.service.AcceptOffer(
@@ -231,9 +228,8 @@ func (handler *Handler) DeclineSession(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
-	if err != nil || id <= 0 {
-		response.Error(w, http.StatusBadRequest, "invalid session id")
+	id, ok := sessionIDParam(w, r)
+	if !ok {
 		return
 	}
 	session, err := handler.service.DeclineSession(r.Context(), id, driverID)
@@ -247,12 +243,11 @@ func (handler *Handler) DeclineSession(w http.ResponseWriter, r *http.Request) {
 func (handler *Handler) CancelSession(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := handler.identity(r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
-	if err != nil || id <= 0 {
-		response.Error(w, 400, "invalid session id")
+	id, ok := sessionIDParam(w, r)
+	if !ok {
 		return
 	}
 	item, err := handler.service.CancelSession(r.Context(), id, passengerID)
@@ -260,18 +255,17 @@ func (handler *Handler) CancelSession(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
-	response.JSON(w, 200, NewBidSessionResponse(item))
+	response.JSON(w, http.StatusOK, NewBidSessionResponse(item))
 }
 
 func (handler *Handler) CancelOffer(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
 	if !ok {
-		response.Error(w, 401, "unauthorized")
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
-	if err != nil || id <= 0 {
-		response.Error(w, 400, "invalid session id")
+	id, ok := sessionIDParam(w, r)
+	if !ok {
 		return
 	}
 	item, err := handler.service.CancelOffer(r.Context(), id, driverID)
@@ -279,7 +273,16 @@ func (handler *Handler) CancelOffer(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
-	response.JSON(w, 200, NewBidOfferResponse(item))
+	response.JSON(w, http.StatusOK, NewBidOfferResponse(item))
+}
+
+func sessionIDParam(w http.ResponseWriter, r *http.Request) (int, bool) {
+	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
+	if err != nil || id <= 0 {
+		response.Error(w, http.StatusBadRequest, "invalid session id")
+		return 0, false
+	}
+	return id, true
 }
 
 func canViewSession(actorID int, actorRole string, session dispatchdomain.BidSession) bool {

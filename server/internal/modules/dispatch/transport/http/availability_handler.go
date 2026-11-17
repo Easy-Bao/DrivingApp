@@ -14,7 +14,7 @@ func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	if handler.availability == nil {
+	if handler == nil || handler.availability == nil {
 		response.Error(w, http.StatusServiceUnavailable, "driver availability unavailable")
 		return
 	}
@@ -36,7 +36,7 @@ func (handler *Handler) PublicDriverSummaries(w http.ResponseWriter, r *http.Req
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	if handler.availability == nil {
+	if handler == nil || handler.availability == nil {
 		response.Error(w, http.StatusServiceUnavailable, "driver availability unavailable")
 		return
 	}
@@ -60,7 +60,7 @@ func (handler *Handler) PublicDriverSummaries(w http.ResponseWriter, r *http.Req
 
 func driverIDsFromQuery(request *http.Request) ([]int, error) {
 	values := strings.Split(request.URL.Query().Get("ids"), ",")
-	if len(values) == 0 || len(values) > 20 {
+	if len(values) > 20 {
 		return nil, errors.New("invalid driver ids")
 	}
 	ids := make([]int, 0, len(values))
