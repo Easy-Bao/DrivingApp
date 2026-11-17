@@ -20,3 +20,8 @@ type User struct {
 
 	AccountStatus string
 }
+
+// IsActive reports whether the account status allows authentication and account updates.
+func (user User) IsActive() bool {
+	return user.AccountStatus == "" || user.AccountStatus == "active"
+}

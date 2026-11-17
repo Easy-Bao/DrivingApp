@@ -232,7 +232,7 @@ func TestSuspendedAccountCannotRequestOrResetPassword(t *testing.T) {
 }
 
 func TestCryptographicOTPGeneration(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		code, err := authapp.GenerateOTP()
 		if err != nil {
 			t.Fatalf("generateOTP() error = %v", err)

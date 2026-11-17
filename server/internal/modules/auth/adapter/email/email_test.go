@@ -113,7 +113,7 @@ func TestMailGatewayOpensCircuitAfterDeliveryFailures(t *testing.T) {
 			return errors.New("mail provider unavailable")
 		}),
 	)
-	for index := 0; index < 3; index++ {
+	for range 3 {
 		if err := gateway.Send(context.Background(), "passenger@example.test", "123456"); err == nil {
 			t.Fatal("expected delivery failure")
 		}

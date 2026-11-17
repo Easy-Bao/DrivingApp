@@ -52,10 +52,6 @@ func (handler *Handler) GenericRegister(w http.ResponseWriter, r *http.Request) 
 	if !decode(w, r, &input) {
 		return
 	}
-	if input.Role != string(domain.Driver) && input.Role != string(domain.Passenger) {
-		response.Error(w, http.StatusBadRequest, "role must be passenger or driver")
-		return
-	}
 	handler.registerDecoded(
 		w,
 		r,

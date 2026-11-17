@@ -25,7 +25,7 @@ func TestOTPVerificationRateLimiterThrottlesByIP(t *testing.T) {
 		writer.WriteHeader(http.StatusNoContent)
 	}))
 
-	for attempt := 0; attempt < 5; attempt++ {
+	for attempt := range 5 {
 		response := serveOTPVerificationAttempt(handler, "passenger@example.test", "192.0.2.10:1234")
 		if response.Code != http.StatusNoContent {
 			t.Fatalf("attempt %d status = %d, want %d", attempt+1, response.Code, http.StatusNoContent)

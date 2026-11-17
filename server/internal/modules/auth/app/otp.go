@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log/slog"
 	"math/big"
-	"net/mail"
 	"strconv"
 	"strings"
 	"time"
@@ -363,7 +362,7 @@ func (service *OTPService) RequestEmailChange(
 	if account.ID != userID || !account.IsVerified || !security.VerifyPassword(account.PasswordHash, currentPassword) {
 		return domain.ErrInvalidCredentials
 	}
-	if account.AccountStatus != "" && account.AccountStatus != "active" {
+	if !account.IsActive() {
 		return domain.ErrAccountSuspended
 	}
 	if strings.EqualFold(strings.TrimSpace(account.Email), newEmail) {
@@ -421,7 +420,7 @@ func (service *OTPService) ConfirmEmailChange(
 	if account.ID != userID || !account.IsVerified {
 		return domain.ErrInvalidCredentials
 	}
-	if account.AccountStatus != "" && account.AccountStatus != "active" {
+	if !account.IsActive() {
 		return domain.ErrAccountSuspended
 	}
 	if strings.EqualFold(strings.TrimSpace(account.Email), newEmail) {
@@ -473,7 +472,7 @@ func (service *OTPService) revokeSessionsAfterEmailChange(ctx context.Context, u
 	}
 	detached := context.WithoutCancel(ctx)
 	var err error
-	for attempt := 0; attempt < _emailChangeRevokeAttempts; attempt++ {
+	for attempt := range _emailChangeRevokeAttempts {
 		attemptCtx, cancel := context.WithTimeout(detached, _emailChangeRevokeTimeout)
 		err = service.sessions.RevokeAll(attemptCtx, userID, time.Now().UTC())
 		cancel()
@@ -500,13 +499,9 @@ func (service *OTPService) ensureEmailAvailable(ctx context.Context, userID int,
 	return domain.ErrOTPUnavailable
 }
 
-func normalizeChangeEmail(email string) (string, error) {
-	email = strings.ToLower(strings.TrimSpace(email))
-	if email == "" || len(email) > 254 {
-		return "", domain.ErrInvalidEmail
-	}
-	address, err := mail.ParseAddress(email)
-	if err != nil || !strings.EqualFold(address.Address, email) {
+func normalizeChangeEmail(raw string) (string, error) {
+	email, ok := normalizeValidEmail(raw)
+	if !ok {
 		return "", domain.ErrInvalidEmail
 	}
 	return email, nil
@@ -558,7 +553,7 @@ func (service *OTPService) accountForRole(ctx context.Context, email string, rol
 	if account.Role != role {
 		return domain.User{}, domain.ErrInvalidCredentials
 	}
-	if account.AccountStatus != "" && account.AccountStatus != "active" {
+	if !account.IsActive() {
 		return domain.User{}, domain.ErrAccountSuspended
 	}
 	return account, nil

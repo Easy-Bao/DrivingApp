@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/domain"
@@ -13,11 +14,6 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
-)
-
-const (
-	_minInt32UserID = -1 << 31
-	_maxInt32UserID = 1<<31 - 1
 )
 
 type UserRepository struct {
@@ -278,7 +274,7 @@ func validateUserRole(role domain.Role) error {
 
 func toPostgresUserID(userID int) (int32, error) {
 	userID64 := int64(userID)
-	if userID64 < _minInt32UserID || userID64 > _maxInt32UserID {
+	if userID64 < math.MinInt32 || userID64 > math.MaxInt32 {
 		return 0, fmt.Errorf("user id %d is outside PostgreSQL integer range", userID)
 	}
 	return int32(userID), nil
@@ -309,6 +305,6 @@ func textValue(value pgtype.Text) string {
 }
 
 func isPostgresUniqueViolation(err error) bool {
-	var databaseError *pgconn.PgError
-	return errors.As(err, &databaseError) && databaseError.Code == "23505"
+	databaseError, ok := errors.AsType[*pgconn.PgError](err)
+	return ok && databaseError.Code == "23505"
 }

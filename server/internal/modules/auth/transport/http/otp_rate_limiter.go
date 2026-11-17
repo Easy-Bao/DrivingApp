@@ -3,9 +3,9 @@ package http
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/domain"
@@ -48,17 +48,14 @@ func (limiter *OTPVerificationRateLimiter) Middleware(next http.Handler) http.Ha
 			return
 		}
 
-		remaining := domain.MaxOTPVerificationAttempts - count
-		if remaining < 0 {
-			remaining = 0
-		}
+		remaining := max(domain.MaxOTPVerificationAttempts-count, 0)
 		writer.Header().Set(
 			"X-RateLimit-Limit",
-			fmt.Sprintf("%d", domain.MaxOTPVerificationAttempts),
+			strconv.FormatInt(domain.MaxOTPVerificationAttempts, 10),
 		)
 		writer.Header().Set(
 			"X-RateLimit-Remaining",
-			fmt.Sprintf("%d", remaining),
+			strconv.FormatInt(remaining, 10),
 		)
 
 		if count > domain.MaxOTPVerificationAttempts {

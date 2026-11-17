@@ -177,16 +177,15 @@ func normalizeInput(
 	role domain.Role,
 	hashPassword func(string) (string, error),
 ) (normalizedRegistration, error) {
-	email := strings.ToLower(strings.TrimSpace(input.Email))
+	email, validEmail := normalizeValidEmail(input.Email)
 	name := strings.TrimSpace(input.Name)
 	phone := strings.TrimSpace(input.Phone)
 	vehicleType := strings.TrimSpace(input.VehicleType)
 	plateNumber := strings.TrimSpace(input.PlateNumber)
-	invalidEmail := !validEmail(email)
 	invalidName := name == "" || len([]rune(name)) > 100
 	invalidPhone := !_e164Phone.MatchString(phone)
 	invalidPassword := len(input.Password) < 8 || len([]byte(input.Password)) > 72
-	if invalidEmail || invalidName || invalidPhone || invalidPassword {
+	if !validEmail || invalidName || invalidPhone || invalidPassword {
 		return normalizedRegistration{}, domain.ErrInvalidCredentials
 	}
 	invalidVehicleType := vehicleType == "" || len([]rune(vehicleType)) > 80
@@ -226,10 +225,14 @@ func (service *RegisterService) create(ctx context.Context, account domain.User)
 
 var _e164Phone = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)
 
-func validEmail(value string) bool {
-	if value == "" || len(value) > 254 {
-		return false
+func normalizeValidEmail(raw string) (string, bool) {
+	email := strings.ToLower(strings.TrimSpace(raw))
+	if email == "" || len(email) > 254 {
+		return "", false
 	}
-	address, err := mail.ParseAddress(value)
-	return err == nil && strings.EqualFold(address.Address, value)
+	address, err := mail.ParseAddress(email)
+	if err != nil || !strings.EqualFold(address.Address, email) {
+		return "", false
+	}
+	return email, true
 }
