@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 
 	adminapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/admin/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/admin/domain"
@@ -72,7 +73,7 @@ func countToInt(value int64) (int, error) {
 	if value < 0 {
 		return 0, fmt.Errorf("count cannot be negative: %d", value)
 	}
-	if uint64(value) > uint64(^uint(0)>>1) {
+	if uint64(value) > uint64(math.MaxInt) {
 		return 0, fmt.Errorf("count %d exceeds native integer range", value)
 	}
 	return int(value), nil

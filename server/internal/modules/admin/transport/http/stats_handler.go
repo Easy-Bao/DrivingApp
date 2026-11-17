@@ -16,10 +16,14 @@ func NewHandler(service *adminapp.StatsService) *Handler {
 }
 
 func (handler *Handler) Stats(w http.ResponseWriter, r *http.Request) {
-	stats, err := handler.service.Stats(r.Context())
-	if err != nil {
-		response.Error(w, 500, "Dashboard statistics are temporarily unavailable.")
+	if handler == nil || handler.service == nil {
+		response.Error(w, http.StatusInternalServerError, "Dashboard statistics are temporarily unavailable.")
 		return
 	}
-	response.JSON(w, 200, statsResponseFromDomain(stats))
+	stats, err := handler.service.Stats(r.Context())
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "Dashboard statistics are temporarily unavailable.")
+		return
+	}
+	response.JSON(w, http.StatusOK, statsResponseFromDomain(stats))
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -17,7 +18,6 @@ import (
 )
 
 const _maxReviewPayloadBytes int64 = 1 << 10
-const _maxInt64 int64 = 1<<63 - 1
 
 type Handler struct {
 	service *app.DocumentService
@@ -33,11 +33,13 @@ func (handler *Handler) Upload(writer http.ResponseWriter, request *http.Request
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
+	if !handler.ensureService(writer) {
+		return
+	}
 	limit := handler.service.MaxDocumentBytes()
 	content, err := io.ReadAll(io.LimitReader(request.Body, limitWithLookahead(limit)))
 	if err != nil {
-		var maxBytesError *http.MaxBytesError
-		if errors.As(err, &maxBytesError) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			response.Error(writer, http.StatusRequestEntityTooLarge, "The document is too large.")
 			return
 		}
@@ -62,6 +64,9 @@ func (handler *Handler) UploadMultipart(writer http.ResponseWriter, request *htt
 	driverID, ok := actorID(request)
 	if !ok {
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	if !handler.ensureService(writer) {
 		return
 	}
 	content, contentType, tooLarge, err := readMultipartDocument(
@@ -124,8 +129,7 @@ func readMultipartDocument(request *http.Request, limit int64) ([]byte, string, 
 	contentType := part.Header.Get("Content-Type")
 	content, err := io.ReadAll(io.LimitReader(part, limitWithLookahead(limit)))
 	if err != nil {
-		var maxBytesError *http.MaxBytesError
-		if errors.As(err, &maxBytesError) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			return nil, "", true, nil
 		}
 		return nil, "", false, err
@@ -139,8 +143,7 @@ func readMultipartDocument(request *http.Request, limit int64) ([]byte, string, 
 		return nil, "", false, errors.New("unexpected multipart field")
 	}
 	if !errors.Is(err, io.EOF) {
-		var maxBytesError *http.MaxBytesError
-		if errors.As(err, &maxBytesError) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			return nil, "", true, nil
 		}
 		return nil, "", false, err
@@ -149,7 +152,7 @@ func readMultipartDocument(request *http.Request, limit int64) ([]byte, string, 
 }
 
 func limitWithLookahead(limit int64) int64 {
-	if limit >= _maxInt64 {
+	if limit >= math.MaxInt64 {
 		return limit
 	}
 	return limit + 1
@@ -159,6 +162,9 @@ func (handler *Handler) Status(writer http.ResponseWriter, request *http.Request
 	driverID, ok := actorID(request)
 	if !ok {
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	if !handler.ensureService(writer) {
 		return
 	}
 	items, err := handler.service.Status(request.Context(), driverID)
@@ -182,6 +188,9 @@ func (handler *Handler) DriverContent(writer http.ResponseWriter, request *http.
 		response.Error(writer, http.StatusBadRequest, "invalid document id")
 		return
 	}
+	if !handler.ensureService(writer) {
+		return
+	}
 	content, err := handler.service.DriverContent(request.Context(), driverID, documentID)
 	if err != nil {
 		writeServiceError(writer, err)
@@ -200,6 +209,9 @@ func (handler *Handler) ReviewQueue(writer http.ResponseWriter, request *http.Re
 	page, err := sharedrequest.ParseOffsetPagination(request.URL.Query(), 25, 100)
 	if err != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid pagination")
+		return
+	}
+	if !handler.ensureService(writer) {
 		return
 	}
 	items, err := handler.service.ReviewQueue(request.Context(), status, page.Limit, page.Offset)
@@ -235,6 +247,9 @@ func (handler *Handler) Review(writer http.ResponseWriter, request *http.Request
 		response.Error(writer, http.StatusUnprocessableEntity, "invalid review status")
 		return
 	}
+	if !handler.ensureService(writer) {
+		return
+	}
 	item, err := handler.service.Review(request.Context(), documentID, reviewerID, status)
 	if err != nil {
 		writeServiceError(writer, err)
@@ -249,6 +264,9 @@ func (handler *Handler) AdminContent(writer http.ResponseWriter, request *http.R
 		response.Error(writer, http.StatusBadRequest, "invalid document id")
 		return
 	}
+	if !handler.ensureService(writer) {
+		return
+	}
 	content, err := handler.service.AdminContent(request.Context(), documentID)
 	if err != nil {
 		writeServiceError(writer, err)
@@ -257,6 +275,14 @@ func (handler *Handler) AdminContent(writer http.ResponseWriter, request *http.R
 	if err := writeDocumentContent(writer, content); err != nil {
 		slog.DebugContext(request.Context(), "write admin document response failed", "error", err)
 	}
+}
+
+func (handler *Handler) ensureService(writer http.ResponseWriter) bool {
+	if handler != nil && handler.service != nil {
+		return true
+	}
+	writeServiceError(writer, app.ErrServiceUnavailable)
+	return false
 }
 
 func actorID(request *http.Request) (int, bool) {

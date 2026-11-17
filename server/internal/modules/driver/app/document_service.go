@@ -67,6 +67,9 @@ func NewDocumentService(
 }
 
 func (service *DocumentService) MaxDocumentBytes() int64 {
+	if service == nil || service.maxDocumentBytes <= 0 {
+		return _defaultMaxDocumentBytes
+	}
 	return service.maxDocumentBytes
 }
 
@@ -77,6 +80,9 @@ func (service *DocumentService) Upload(
 	claimedContentType string,
 	content []byte,
 ) (domain.Document, error) {
+	if service == nil {
+		return domain.Document{}, ErrServiceUnavailable
+	}
 	invalidDriverID := driverID <= 0
 	invalidSize := len(content) == 0 || int64(len(content)) > service.maxDocumentBytes
 	if invalidDriverID || invalidSize {
@@ -124,6 +130,9 @@ func (service *DocumentService) Upload(
 }
 
 func (service *DocumentService) Status(ctx context.Context, driverID int) ([]domain.Document, error) {
+	if service == nil {
+		return nil, ErrServiceUnavailable
+	}
 	if driverID <= 0 {
 		return nil, domain.ErrInvalidDocument
 	}
@@ -143,6 +152,9 @@ func (service *DocumentService) ReviewQueue(
 	limit int,
 	offset int,
 ) ([]domain.Document, error) {
+	if service == nil {
+		return nil, ErrServiceUnavailable
+	}
 	validStatus := status == domain.Pending || status == domain.Approved || status == domain.Rejected
 	if !validStatus {
 		return nil, domain.ErrInvalidDocument
@@ -173,6 +185,9 @@ func (service *DocumentService) Review(
 	reviewerID int,
 	status domain.Status,
 ) (domain.Document, error) {
+	if service == nil {
+		return domain.Document{}, ErrServiceUnavailable
+	}
 	invalidIdentity := id <= 0 || reviewerID <= 0
 	invalidStatus := status != domain.Approved && status != domain.Rejected
 	if invalidIdentity || invalidStatus {
@@ -194,7 +209,7 @@ func (service *DocumentService) Review(
 }
 
 func (service *DocumentService) DriverContent(ctx context.Context, driverID, documentID int) (domain.Content, error) {
-	if service.repository == nil || service.storage == nil {
+	if service == nil || service.repository == nil || service.storage == nil {
 		return domain.Content{}, ErrServiceUnavailable
 	}
 	document, err := service.repository.Get(ctx, documentID)
@@ -208,7 +223,7 @@ func (service *DocumentService) DriverContent(ctx context.Context, driverID, doc
 }
 
 func (service *DocumentService) AdminContent(ctx context.Context, documentID int) (domain.Content, error) {
-	if service.repository == nil || service.storage == nil {
+	if service == nil || service.repository == nil || service.storage == nil {
 		return domain.Content{}, ErrServiceUnavailable
 	}
 	document, err := service.repository.Get(ctx, documentID)

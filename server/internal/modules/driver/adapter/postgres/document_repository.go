@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/app"
@@ -13,8 +14,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-const _maxPostgresDocumentID = 1<<31 - 1
 
 type DocumentRepository struct {
 	pool    *pgxpool.Pool
@@ -124,7 +123,7 @@ func (repository *DocumentRepository) ListForReview(
 	if err := repository.validate(); err != nil {
 		return nil, err
 	}
-	if limit == int(^uint(0)>>1) {
+	if limit == math.MaxInt {
 		return nil, errors.New("limit exceeds PostgreSQL integer range")
 	}
 	dbLimit, err := toPostgresDocumentPageValue(limit+1, "limit")
@@ -248,14 +247,14 @@ func fromPostgresDocument(item databasepostgres.DriverDocument) (domain.Document
 }
 
 func toPostgresDocumentPageValue(value int, field string) (int32, error) {
-	if value < 0 || int64(value) > int64(_maxPostgresDocumentID) {
+	if value < 0 || int64(value) > math.MaxInt32 {
 		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
 	}
 	return int32(value), nil
 }
 
 func toPostgresDocumentID(value int, field string) (int32, error) {
-	if value <= 0 || int64(value) > int64(_maxPostgresDocumentID) {
+	if value <= 0 || int64(value) > math.MaxInt32 {
 		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
 	}
 	return int32(value), nil
