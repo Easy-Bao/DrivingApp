@@ -213,7 +213,7 @@ func TestAuthenticatedDashboardLoadsLocationAndHistoryConcurrently(t *testing.T)
 	go func() {
 		snapshot, err := service.Load(
 			context.Background(),
-			intPointer(42),
+			new(42),
 			&ridedomain.Coordinates{Latitude: 7.8, Longitude: 123.4},
 		)
 		result <- struct {
@@ -262,7 +262,7 @@ func TestAuthenticatedDashboardDoesNotWaitForUnboundedAddressResolution(t *testi
 	go func() {
 		snapshot, err := service.Load(
 			context.Background(),
-			intPointer(42),
+			new(42),
 			&ridedomain.Coordinates{Latitude: 7.8, Longitude: 123.4},
 		)
 		result <- struct {
@@ -286,10 +286,6 @@ func TestAuthenticatedDashboardDoesNotWaitForUnboundedAddressResolution(t *testi
 	case <-time.After(2 * time.Second):
 		t.Fatal("ride context query waited for an unbounded address resolver")
 	}
-}
-
-func intPointer(value int) *int {
-	return &value
 }
 
 func waitForSignal(t *testing.T, signal <-chan struct{}, dependency string) {

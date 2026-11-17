@@ -432,13 +432,11 @@ func TestConcurrentRideCompletionWritesOneLifecycleEvent(t *testing.T) {
 	results := make(chan error, 2)
 	var workers sync.WaitGroup
 	for range 2 {
-		workers.Add(1)
-		go func() {
-			defer workers.Done()
+		workers.Go(func() {
 			<-start
 			_, err := fixture.store.CompleteTrip(ctx, rideID, driverID)
 			results <- err
-		}()
+		})
 	}
 	close(start)
 	workers.Wait()
@@ -491,13 +489,11 @@ VALUES ($1, 2000, 1500, 300, 1700)`, rideID); err != nil {
 	results := make(chan error, 2)
 	var workers sync.WaitGroup
 	for range 2 {
-		workers.Add(1)
-		go func() {
-			defer workers.Done()
+		workers.Go(func() {
 			<-start
 			_, err := fixture.store.SettleCash(ctx, request)
 			results <- err
-		}()
+		})
 	}
 	close(start)
 	workers.Wait()

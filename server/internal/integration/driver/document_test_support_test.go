@@ -15,7 +15,6 @@ var validPDF = []byte("%PDF-1.7\nprivate driver document")
 
 type documentRepositoryFake struct {
 	documents map[int]domain.Document
-	createErr error
 }
 
 func newDocumentRepositoryFake() *documentRepositoryFake {
@@ -23,9 +22,6 @@ func newDocumentRepositoryFake() *documentRepositoryFake {
 }
 
 func (repository *documentRepositoryFake) Create(_ context.Context, document domain.Document) (domain.Document, error) {
-	if repository.createErr != nil {
-		return domain.Document{}, repository.createErr
-	}
 	document.ID = len(repository.documents) + 1
 	document.CreatedAt = time.Now().UTC()
 	repository.documents[document.ID] = document
@@ -99,7 +95,6 @@ func (repository *documentRepositoryFake) Review(
 
 type documentStorageFake struct {
 	objects map[string][]byte
-	deleted []string
 }
 
 func newDocumentStorageFake() *documentStorageFake {
@@ -125,6 +120,5 @@ func (storage *documentStorageFake) Read(_ context.Context, key string, maxBytes
 
 func (storage *documentStorageFake) Delete(_ context.Context, key string) error {
 	delete(storage.objects, key)
-	storage.deleted = append(storage.deleted, key)
 	return nil
 }

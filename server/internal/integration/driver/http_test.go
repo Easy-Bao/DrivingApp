@@ -31,16 +31,24 @@ func newDocumentService(
 	)
 }
 
+func mustIssueToken(
+	t *testing.T,
+	manager *security.TokenManager,
+	subject string,
+	role string,
+) string {
+	t.Helper()
+	token, err := manager.IssueWithRole(subject, role)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return token
+}
+
 func TestDocumentAdministrationRequiresConfiguredAdministrator(t *testing.T) {
 	tokenManager := security.NewTokenManager("document-test-secret")
-	driverToken, err := tokenManager.IssueWithRole("7", security.RoleDriver)
-	if err != nil {
-		t.Fatal(err)
-	}
-	adminToken, err := tokenManager.IssueWithRole("42", security.RolePassenger)
-	if err != nil {
-		t.Fatal(err)
-	}
+	driverToken := mustIssueToken(t, tokenManager, "7", security.RoleDriver)
+	adminToken := mustIssueToken(t, tokenManager, "42", security.RolePassenger)
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
 	service := newDocumentService(
@@ -70,7 +78,10 @@ func TestDocumentAdministrationRequiresConfiguredAdministrator(t *testing.T) {
 		{name: "administrator token", token: adminToken, status: http.StatusOK},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			body, _ := json.Marshal(map[string]string{"status": "approved"})
+			body, err := json.Marshal(map[string]string{"status": "approved"})
+			if err != nil {
+				t.Fatal(err)
+			}
 			request := httptest.NewRequest(
 				http.MethodPatch,
 				"/api/v1/admin/documents/"+strconv.Itoa(document.ID)+"/review",
@@ -89,9 +100,9 @@ func TestDocumentAdministrationRequiresConfiguredAdministrator(t *testing.T) {
 
 func TestPrivateDocumentContentIsOwnerOrAdminOnly(t *testing.T) {
 	tokenManager := security.NewTokenManager("document-content-test-secret")
-	ownerToken, _ := tokenManager.IssueWithRole("7", security.RoleDriver)
-	otherDriverToken, _ := tokenManager.IssueWithRole("8", security.RoleDriver)
-	adminToken, _ := tokenManager.IssueWithRole("42", security.RolePassenger)
+	ownerToken := mustIssueToken(t, tokenManager, "7", security.RoleDriver)
+	otherDriverToken := mustIssueToken(t, tokenManager, "8", security.RoleDriver)
+	adminToken := mustIssueToken(t, tokenManager, "42", security.RolePassenger)
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
 	service := newDocumentService(
@@ -159,7 +170,7 @@ func TestPrivateDocumentContentIsOwnerOrAdminOnly(t *testing.T) {
 
 func TestDocumentMultipartUploadUsesTypedDriverRoute(t *testing.T) {
 	tokenManager := security.NewTokenManager("document-multipart-test-secret")
-	driverToken, _ := tokenManager.IssueWithRole("7", security.RoleDriver)
+	driverToken := mustIssueToken(t, tokenManager, "7", security.RoleDriver)
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
 	service := newDocumentService(
@@ -219,7 +230,7 @@ func TestDocumentMultipartUploadUsesTypedDriverRoute(t *testing.T) {
 
 func TestDocumentUploadRequiresCanonicalTypeAndMatchingSignature(t *testing.T) {
 	tokenManager := security.NewTokenManager("document-upload-test-secret")
-	driverToken, _ := tokenManager.IssueWithRole("7", security.RoleDriver)
+	driverToken := mustIssueToken(t, tokenManager, "7", security.RoleDriver)
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
 	service := newDocumentService(

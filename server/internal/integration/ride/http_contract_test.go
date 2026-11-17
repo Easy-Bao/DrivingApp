@@ -12,7 +12,6 @@ import (
 
 	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
-	dispatchdto "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/transport/http"
 	dispatchhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/transport/http"
 	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/adapter/config"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
@@ -414,7 +413,7 @@ func TestOnlineDriverReceivesPassengerBookingThroughActiveSessions(t *testing.T)
 	if repository.requestedDriverID == nil || *repository.requestedDriverID != 42 {
 		t.Fatalf("active session driver id = %#v, want 42", repository.requestedDriverID)
 	}
-	var sessions []dispatchdto.BidSessionResponse
+	var sessions []dispatchhttp.BidSessionResponse
 	if err := json.NewDecoder(response.Body).Decode(&sessions); err != nil {
 		t.Fatalf("decode active sessions: %v", err)
 	}

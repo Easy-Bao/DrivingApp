@@ -106,8 +106,8 @@ func TestTelemetryUsesTheVerifiedSubjectAsDriverID(t *testing.T) {
 		t.Fatalf("driver id = %q", repository.point.DriverID)
 	}
 	var body map[string]any
-	if json.Unmarshal(response.Body.Bytes(), &body) != nil {
-		t.Fatal("invalid response")
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
 	}
 }
 
