@@ -102,8 +102,10 @@ final class DashboardRepositoryImpl implements DashboardRepository {
         'Driver availability endpoint was not found. Check that the API services are running.',
         404,
       ),
-      null => const NetworkFailure(
-        'Unable to reach driver availability services. Check your connection and try again.',
+      null => FailureMapper.fromException(
+        error,
+        serverMessage:
+            'Unable to update your driver availability. Please try again.',
       ),
       final statusCode => ServerFailure.withStatusCode(
         'Unable to update your driver availability. Please try again.',
@@ -122,7 +124,6 @@ final class DashboardRepositoryImpl implements DashboardRepository {
           403,
         ),
         400 || 422 => const ValidationFailure('Invalid request data.'),
-        0 => const NetworkFailure(),
         _ => FailureMapper.fromException(
           error,
           serverMessage:

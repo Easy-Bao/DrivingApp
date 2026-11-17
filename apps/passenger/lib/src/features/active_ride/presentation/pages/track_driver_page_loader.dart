@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:design_system/design_system.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
@@ -38,6 +38,7 @@ class TrackDriverPageLoader extends StatefulWidget {
 class _TrackDriverPageLoaderState extends State<TrackDriverPageLoader> {
   bool _isLoading = true;
   RideSnapshot? _ride;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -51,7 +52,12 @@ class _TrackDriverPageLoaderState extends State<TrackDriverPageLoader> {
         ? await widget.sessionService.readActiveRideId()
         : requestedRideId;
     if (activeRideId == null || activeRideId.trim().isEmpty) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _errorMessage = null;
+          _isLoading = false;
+        });
+      }
       return;
     }
 
@@ -61,17 +67,26 @@ class _TrackDriverPageLoaderState extends State<TrackDriverPageLoader> {
     if (!mounted) return;
 
     result.fold(
-      (_) {
-        if (mounted) setState(() => _isLoading = false);
+      (failure) {
+        if (mounted) {
+          setState(() {
+            _errorMessage = ErrorHandler.getErrorMessage(failure);
+            _isLoading = false;
+          });
+        }
       },
       (snapshot) {
         if (mounted) {
           if (snapshot.isTerminal) {
             unawaited(widget.sessionService.saveActiveRideId(''));
-            setState(() => _isLoading = false);
+            setState(() {
+              _errorMessage = null;
+              _isLoading = false;
+            });
           } else {
             setState(() {
               _ride = snapshot;
+              _errorMessage = null;
               _isLoading = false;
             });
           }
@@ -91,31 +106,19 @@ class _TrackDriverPageLoaderState extends State<TrackDriverPageLoader> {
     final ride = _ride;
     if (ride == null) {
       return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Ride details aren\'t available.'),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextButton.icon(
-                    onPressed: () {
-                      setState(() => _isLoading = true);
-                      unawaited(_restoreRide());
-                    },
-                    icon: const Icon(LucideIcons.refresh_cw, size: 16),
-                    label: const Text('Retry'),
-                  ),
-                  const SizedBox(width: 8),
-                  TextButton(
-                    onPressed: () => context.goNamed(HomeRoutes.home),
-                    child: const Text('Return to home'),
-                  ),
-                ],
-              ),
-            ],
+        body: AppRetryErrorView(
+          title: 'Could not load trip',
+          message: _errorMessage ?? 'No active trip was found.',
+          onRetry: () {
+            setState(() {
+              _errorMessage = null;
+              _isLoading = true;
+            });
+            unawaited(_restoreRide());
+          },
+          secondaryAction: TextButton(
+            onPressed: () => context.goNamed(HomeRoutes.home),
+            child: const Text('Return to home'),
           ),
         ),
       );

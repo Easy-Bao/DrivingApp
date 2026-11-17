@@ -145,7 +145,8 @@ void main() {
         const DashboardState(isLoadingStats: true),
         const DashboardState(
           isLoadingStats: false,
-          statsErrorMessage: 'Something went wrong. Try again.',
+          statsErrorMessage:
+              'The server could not complete your request. Try again.',
         ),
       ],
     );
@@ -188,7 +189,8 @@ void main() {
           hasLoadedStats: true,
           earnings: 385.50,
           completedTrips: 7,
-          statsErrorMessage: 'Something went wrong. Try again.',
+          statsErrorMessage:
+              'The server could not complete your request. Try again.',
         ),
       ],
       verify: (_) {

@@ -102,4 +102,32 @@ void main() {
     expect(find.textContaining('Something went wrong'), findsNothing);
     expect(find.textContaining('bad layout state'), findsOneWidget);
   });
+
+  testWidgets('AppRetryErrorView surfaces title, message, and retry callback', (
+    tester,
+  ) async {
+    var retried = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppRetryErrorView(
+            title: 'Connection error',
+            message: 'Cannot reach the server. Check that the server is running and try again.',
+            actionLabel: 'Retry activity',
+            onRetry: () => retried++,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Connection error'), findsOneWidget);
+    expect(
+      find.text(
+        'Cannot reach the server. Check that the server is running and try again.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Retry activity'));
+    expect(retried, 1);
+  });
 }

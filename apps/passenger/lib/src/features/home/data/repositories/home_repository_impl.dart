@@ -79,21 +79,6 @@ final class HomeRepositoryImpl({required this._homeRemoteDataSource})
           403,
         );
       }
-      return switch (error.type) {
-        DioExceptionType.connectionError => const NetworkFailure(
-          'Unable to connect. Check your connection and try again.',
-        ),
-        DioExceptionType.connectionTimeout ||
-        DioExceptionType.receiveTimeout ||
-        DioExceptionType.sendTimeout => const ServerFailure.withStatusCode(
-          'Home data request timed out.',
-          504,
-        ),
-        _ => ServerFailure.withStatusCode(
-          'Home data is temporarily unavailable. Please try again.',
-          statusCode ?? 500,
-        ),
-      };
     }
     if (error is ServerException) {
       if (error.statusCode == 401) {
@@ -107,23 +92,11 @@ final class HomeRepositoryImpl({required this._homeRemoteDataSource})
           403,
         );
       }
-      if (error.statusCode == 400 || error.statusCode == 422) {
-        return const ValidationFailure('Invalid home data request.');
-      }
-      return ServerFailure.withStatusCode(
-        'Home data is temporarily unavailable. Please try again.',
-        error.statusCode,
-      );
     }
-    if (error is DataParsingException) {
-      return FailureMapper.fromException(
-        error,
-        serverMessage:
-            'Home data is temporarily unavailable. Please try again.',
-      );
-    }
-    return const ServerFailure(
-      'Home data is temporarily unavailable. Please try again.',
+    return FailureMapper.fromException(
+      error,
+      serverMessage: 'Home data is temporarily unavailable. Please try again.',
+      validationMessage: 'Invalid home data request.',
     );
   }
 }

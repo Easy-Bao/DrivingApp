@@ -1,11 +1,10 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:foundation/src/errors/exceptions.dart';
 import 'package:foundation/src/errors/failure.dart';
+import 'package:foundation/src/errors/network_diagnostic.dart';
 
-const _defaultServerMessage = 'Something went wrong. Try again.';
+const _defaultServerMessage =
+    'The server could not complete your request. Try again.';
 const _defaultValidationMessage = 'Check the highlighted fields.';
 const _defaultNetworkMessage =
     "Couldn't connect. Check your internet connection and try again.";
@@ -15,7 +14,9 @@ const _defaultCacheMessage = 'Saved information is unavailable. Try again.';
 /// Data sources may contain backend-provided details, but those details must
 /// stay in technical logs. Repositories use this mapper before a failure can
 /// cross into a BLoC or view.
-class FailureMapper._() {
+class FailureMapper {
+  const FailureMapper._();
+
   static Failure fromException(
     Object error, {
     String serverMessage = _defaultServerMessage,
@@ -28,95 +29,60 @@ class FailureMapper._() {
       statusCode,
       serverMessage: serverMessage,
       validationMessage: validationMessage,
-      networkMessage: networkMessage,
       timeoutMessage: timeoutMessage,
     );
 
-    return switch (error) {
-      NetworkFailure() || SocketException() => NetworkFailure(networkMessage),
-      NetworkCircuitOpenException() => NetworkFailure(networkMessage),
-      CacheFailure() || CacheException() => CacheFailure(cacheMessage),
-      ValidationFailure() => ValidationFailure(validationMessage),
-      UnexpectedFailure() => error,
-      final ServerFailure failure => mapStatus(failure.statusCode),
-      final DioException dioError => _fromDioException(
-        dioError,
-        mapStatus: mapStatus,
-        networkMessage: networkMessage,
-        timeoutMessage: timeoutMessage,
-      ),
-      ServerException(statusCode: 0) => NetworkFailure(networkMessage),
-      final ServerException exception => mapStatus(exception.statusCode),
-      TimeoutException() => ServerFailure.withStatusCode(timeoutMessage, 504),
-      DataParsingException() ||
-      FormatException() => ServerFailure(serverMessage),
-      final Failure failure => failure,
-      _ => ServerFailure(serverMessage),
-    };
-  }
+    if (error is NetworkFailure) return error;
+    if (error is CacheFailure || error is CacheException) {
+      return CacheFailure(cacheMessage);
+    }
+    if (error is ValidationFailure) {
+      return ValidationFailure(validationMessage);
+    }
+    if (error is UnexpectedFailure) return error;
+    if (error is ServerFailure) return mapStatus(error.statusCode);
+    if (error is ServerException && error.statusCode != 0) {
+      return mapStatus(error.statusCode);
+    }
+    if (error is DioException) {
+      final statusCode = error.response?.statusCode;
+      if (statusCode != null) return mapStatus(statusCode);
+    }
 
-  static Failure _fromDioException(
-    DioException error, {
-    required Failure Function(int? statusCode) mapStatus,
-    required String networkMessage,
-    required String timeoutMessage,
-  }) {
-    final statusCode = error.response?.statusCode;
-    if (statusCode == null && _isTimeout(error)) {
-      return ServerFailure.withStatusCode(timeoutMessage, 504);
-    }
-    if (statusCode == null && _isOffline(error)) {
-      return NetworkFailure(networkMessage);
-    }
-    return mapStatus(statusCode);
+    final diagnostic = NetworkErrorDiagnostic.fromError(error);
+    final mapped = mapDiagnosticCategoryToFailure(
+      diagnostic.category,
+      offlineMessage: networkMessage,
+      timeoutMessage: timeoutMessage,
+    );
+    if (mapped != null) return mapped;
+
+    if (error is Failure) return error;
+    if (error is DioException) return UnexpectedFailure(serverMessage);
+    return ServerFailure(serverMessage);
   }
 
   static Failure _fromStatusCode(
     int? statusCode, {
     required String serverMessage,
     required String validationMessage,
-    required String networkMessage,
     required String timeoutMessage,
   }) {
     if (statusCode == null || statusCode == 0) {
       return UnexpectedFailure(serverMessage);
     }
-
-    return switch (statusCode) {
-      401 => const ServerFailure.withStatusCode(
-        'Your session has expired. Sign in again.',
-        401,
-      ),
-      403 => const ServerFailure.withStatusCode(
-        "You don't have permission to do that.",
-        403,
-      ),
-      400 || 422 => ValidationFailure(validationMessage),
-      429 => const ServerFailure.withStatusCode(
-        'Too many requests. Wait a moment and try again.',
-        429,
-      ),
-      503 => const ServerFailure.withStatusCode(
-        'The service is unavailable. Try again later.',
-        503,
-      ),
-      504 => ServerFailure.withStatusCode(timeoutMessage, 504),
-      >= 500 => ServerFailure.withStatusCode(serverMessage, statusCode),
-      _ => ServerFailure.withStatusCode(serverMessage, statusCode),
-    };
-  }
-
-  static bool _isTimeout(DioException error) {
-    return switch (error.type) {
-      DioExceptionType.connectionTimeout ||
-      DioExceptionType.sendTimeout ||
-      DioExceptionType.receiveTimeout => true,
-      _ => false,
-    };
-  }
-
-  static bool _isOffline(DioException error) {
-    return error.error is SocketException ||
-        error.type == DioExceptionType.connectionError && error.error == null;
+    if (statusCode == 400 || statusCode == 422) {
+      return ValidationFailure(validationMessage);
+    }
+    if (statusCode == 408 || statusCode == 504) {
+      return ServerFailure.withStatusCode(timeoutMessage, statusCode);
+    }
+    if (statusCode >= 500 && statusCode != 502 && statusCode != 503) {
+      return ServerFailure.withStatusCode(serverMessage, statusCode);
+    }
+    return ServerFailure.withStatusCode(
+      describeHttpStatusFailure(statusCode).userMessage,
+      statusCode,
+    );
   }
 }

@@ -197,4 +197,29 @@ void main() {
     ).called(1);
     await cubit.close();
   });
+
+  test(
+    'surfaces the specific failure message when loading ride details fails',
+    () async {
+      when(
+        () => repository.fetchRideResult('707'),
+      ).thenAnswer((_) async => const Err(NetworkFailure.serverUnreachable()));
+      when(
+        () => repository.fetchCounterpartyResult('707'),
+      ).thenAnswer((_) async => const Err(NetworkFailure.serverUnreachable()));
+
+      final cubit = RideDetailsCubit(
+        repository: repository,
+        sessionService: sessionService,
+        profileRepository: profileRepository,
+      );
+      await cubit.load('707');
+
+      expect(
+        cubit.state.errorMessage,
+        'Cannot reach the server. Check that the server is running and try again.',
+      );
+      await cubit.close();
+    },
+  );
 }

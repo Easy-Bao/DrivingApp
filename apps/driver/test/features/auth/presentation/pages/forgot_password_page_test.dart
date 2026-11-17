@@ -30,7 +30,10 @@ void main() {
 
     verify(() => repository.resetPassword(email: 'driver@example.com'))
         .called(1);
-    expect(find.text('Something went wrong. Try again.'), findsOneWidget);
+    expect(
+      find.text('The server could not complete your request. Try again.'),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
   testWidgets('validates inline and prevents repeat code requests', (

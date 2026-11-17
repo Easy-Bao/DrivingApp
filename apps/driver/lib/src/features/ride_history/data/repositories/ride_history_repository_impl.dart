@@ -40,7 +40,6 @@ final class RideHistoryRepositoryImpl({required this._dataSource})
       serverMessage:
           'Driver trip history is temporarily unavailable. Please try again.',
       validationMessage: 'Invalid driver trip history request.',
-      networkMessage: 'Unable to reach driver trip history services. Check your connection and try again.',
     );
   }
 }

@@ -228,7 +228,7 @@ void main() {
             .having(
               (s) => s.message,
               'error message',
-              'Something went wrong. Try again.',
+              'The server could not complete your request. Try again.',
             )
             .having(
               (s) => s.failureKind,

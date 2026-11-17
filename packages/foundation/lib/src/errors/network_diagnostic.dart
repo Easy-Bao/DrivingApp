@@ -3,29 +3,9 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:foundation/src/errors/exceptions.dart';
+import 'package:foundation/src/errors/network_error_category.dart';
 
-enum NetworkErrorCategory {
-  connectionRefused,
-  connectionTimeout,
-  sendTimeout,
-  receiveTimeout,
-  requestTimeout,
-  dnsFailure,
-  hostUnreachable,
-  deviceOffline,
-  tlsFailure,
-  requestCancelled,
-  invalidServerResponse,
-  invalidJson,
-  httpClientError,
-  unauthorized,
-  forbidden,
-  notFound,
-  rateLimited,
-  serverError,
-  connectionError,
-  unknown,
-}
+export 'package:foundation/src/errors/network_error_category.dart';
 
 /// The category is intended for development logs and telemetry correlation.
 /// It deliberately contains no request URL, headers, response body, or socket
@@ -65,6 +45,15 @@ final class NetworkErrorDiagnostic {
 
   factory NetworkErrorDiagnostic.fromError(Object error) {
     if (error is DioException) return _fromDioException(error);
+    if (error is ServerException) {
+      final diagnostic = error.diagnostic;
+      if (diagnostic != null) return diagnostic;
+      return error.statusCode == 0
+          ? const NetworkErrorDiagnostic(
+              category: NetworkErrorCategory.connectionError,
+            )
+          : _fromStatusCode(error.statusCode);
+    }
     if (error is SocketException) return _fromSocketException(error);
     if (error is HandshakeException) {
       return const NetworkErrorDiagnostic(
@@ -87,9 +76,7 @@ final class NetworkErrorDiagnostic {
       );
     }
     if (error is NetworkCircuitOpenException) {
-      return const NetworkErrorDiagnostic(
-        category: NetworkErrorCategory.deviceOffline,
-      );
+      return NetworkErrorDiagnostic(category: error.category);
     }
     return const NetworkErrorDiagnostic(category: NetworkErrorCategory.unknown);
   }

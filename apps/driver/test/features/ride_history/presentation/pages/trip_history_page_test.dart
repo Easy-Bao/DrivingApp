@@ -54,7 +54,10 @@ void main() {
     expect(find.text('Try again'), findsOneWidget);
     expect(find.text('No trip history found'), findsNothing);
     expect(find.text('backend query details must stay internal'), findsNothing);
-    expect(find.text('Something went wrong. Try again.'), findsOneWidget);
+    expect(
+      find.text('The server could not complete your request. Try again.'),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
 
     await cubit.close();

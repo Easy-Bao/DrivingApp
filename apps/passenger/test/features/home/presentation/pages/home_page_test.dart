@@ -863,4 +863,94 @@ void main() {
     expect(find.text('Active Ride in Progress'), findsOneWidget);
     expect(find.text('Resume Trip'), findsOneWidget);
   });
+
+  testWidgets(
+    'displays the specific error reason alongside Retry activity on Home',
+    (tester) async {
+      final locationRepository = _MockCurrentLocationRepository();
+      final homeRepository = _MockHomeRepository();
+      final homeCubit = HomeCubit(
+        repository: homeRepository,
+        currentLocationRepository: locationRepository,
+      );
+      final sessionBloc = SessionBloc(
+        sessionRepository: _MockSessionRepository(),
+      );
+      final locationAccess = _MockLocationAccessCubit();
+      final bookingBloc = _MockBookingBloc();
+      final history = _MockRideHistoryBloc();
+      final savedPlaces = _MockSavedPlacesCubit();
+      final draft = BookingDraftCubit();
+      final lifecycle = AppLifecycleCoordinator();
+
+      when(locationRepository.getCurrentLocation).thenAnswer(
+        (_) async => const Ok(CurrentLocation(latitude: 7.8, longitude: 123.4)),
+      );
+      when(locationRepository.watchCurrentLocation)
+          .thenAnswer((_) => const Stream.empty());
+      when(
+        () => homeRepository.loadHomeData(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer(
+        (_) async =>
+            const Ok(HomeData(currentAddress: 'Pickup', recentLocations: [])),
+      );
+      when(() => locationAccess.state).thenReturn(const LocationAccessReady());
+      when(() => bookingBloc.activeDriverSearch).thenReturn(null);
+      when(() => savedPlaces.state).thenReturn(const SavedPlacesState());
+      when(savedPlaces.loadPlaces).thenAnswer((_) async {});
+      when(() => history.state).thenReturn(
+        const RideHistoryError(
+          message: 'Cannot reach the server. Check that the server is running and try again.',
+          failureKind: RideHistoryFailureKind.connection,
+          retryAutomatically: true,
+        ),
+      );
+      sessionBloc.add(
+        const SessionAuthenticatedRequested(
+          passengerId: 'pass-1',
+          passengerName: 'Avery',
+        ),
+      );
+
+      addTearDown(() async {
+        await homeCubit.close();
+        await sessionBloc.close();
+        await draft.close();
+        await lifecycle.dispose();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<SessionBloc>.value(value: sessionBloc),
+              BlocProvider<LocationAccessCubit>.value(value: locationAccess),
+              BlocProvider<HomeCubit>.value(value: homeCubit),
+              BlocProvider<BookingDraftCubit>.value(value: draft),
+              BlocProvider<RideHistoryBloc>.value(value: history),
+              BlocProvider<SavedPlacesCubit>.value(value: savedPlaces),
+            ],
+            child: HomePage(
+              bookingBloc: bookingBloc,
+              lifecycleCoordinator: lifecycle,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Connection error'), findsOneWidget);
+      expect(
+        find.text(
+          'Cannot reach the server. Check that the server is running and try again.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Retry activity'), findsOneWidget);
+    },
+  );
 }

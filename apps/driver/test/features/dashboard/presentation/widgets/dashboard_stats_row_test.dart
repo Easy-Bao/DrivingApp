@@ -199,4 +199,30 @@ void main() {
     expect(find.text("Today's Net Earnings"), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('surfaces the specific error message when initial stats fail', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: DashboardStatsRow(
+            isLoadingStats: false,
+            earnings: 0,
+            completedTrips: 0,
+            hasError: true,
+            errorMessage: 'Cannot reach the server. Check that the server is running and try again.',
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.text(
+        'Cannot reach the server. Check that the server is running and try again.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text("Today's stats are unavailable."), findsNothing);
+  });
 }

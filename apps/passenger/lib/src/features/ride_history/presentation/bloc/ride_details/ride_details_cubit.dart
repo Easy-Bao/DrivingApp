@@ -138,8 +138,15 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
       final passengerId = await passengerIdFuture ?? '';
       RideSnapshot? ride;
       RideCounterparty? counterparty;
-      (await rideFuture).fold((_) {}, (value) => ride = value);
-      (await counterpartyFuture).fold((_) {}, (value) => counterparty = value);
+      Failure? firstFailure;
+      (await rideFuture).fold(
+        (failure) => firstFailure ??= failure,
+        (value) => ride = value,
+      );
+      (await counterpartyFuture).fold(
+        (failure) => firstFailure ??= failure,
+        (value) => counterparty = value,
+      );
 
       if (isClosed) return;
       emit(
@@ -149,16 +156,21 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
           counterparty: counterparty,
           passengerId: passengerId,
           errorMessage: ride == null && counterparty == null
-              ? 'Ride details are temporarily unavailable.'
+              ? ErrorHandler.getErrorMessage(
+                  firstFailure ??
+                      const ServerFailure(
+                        'Ride details are temporarily unavailable.',
+                      ),
+                )
               : null,
         ),
       );
-    } catch (_) {
+    } catch (error, stackTrace) {
       if (!isClosed) {
         emit(
           RideDetailsState(
             rideId: rideId,
-            errorMessage: 'Ride details are temporarily unavailable.',
+            errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),
           ),
         );
       }

@@ -1132,6 +1132,7 @@ class _DashboardPageState extends State<DashboardPage>
       earnings: state.earnings,
       completedTrips: state.completedTrips,
       hasError: state.statsErrorMessage != null,
+      errorMessage: state.statsErrorMessage,
       onRetry: () =>
           unawaited(BlocProvider.of<DashboardCubit>(context).loadStats()),
     );

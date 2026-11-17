@@ -39,18 +39,12 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
         return Ok(RideUpdateDto.fromJson(data).toDomain());
       }
       return const Err(ServerFailure('No status data returned from server.'));
-    } on ServerException catch (e) {
+    } catch (error) {
       return Err(
         FailureMapper.fromException(
-          e,
+          error,
           serverMessage:
               'Ride status is temporarily unavailable. Please try again.',
-        ),
-      );
-    } catch (_) {
-      return const Err(
-        ServerFailure(
-          'Ride status is temporarily unavailable. Please try again.',
         ),
       );
     }
@@ -68,16 +62,12 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
         return const Err(ValidationFailure('The ride response is incomplete.'));
       }
       return Ok(ride);
-    } on ServerException catch (error) {
+    } catch (error) {
       return Err(
         FailureMapper.fromException(
           error,
           serverMessage: 'Ride details are temporarily unavailable.',
         ),
-      );
-    } catch (_) {
-      return const Err(
-        ServerFailure('Ride details are temporarily unavailable.'),
       );
     }
   }
@@ -92,16 +82,12 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
           await _remoteDataSource.fetchCounterparty(rideId),
         ),
       );
-    } on ServerException catch (error) {
+    } catch (error) {
       return Err(
         FailureMapper.fromException(
           error,
           serverMessage: 'Driver contact details are temporarily unavailable.',
         ),
-      );
-    } catch (_) {
-      return const Err(
-        ServerFailure('Driver contact details are temporarily unavailable.'),
       );
     }
   }
@@ -134,18 +120,12 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
       return const Err(
         ServerFailure('Driver location coordinates unavailable.'),
       );
-    } on ServerException catch (e) {
+    } catch (error) {
       return Err(
         FailureMapper.fromException(
-          e,
+          error,
           serverMessage:
               'Driver location is temporarily unavailable. Please try again.',
-        ),
-      );
-    } catch (_) {
-      return const Err(
-        ServerFailure(
-          'Driver location is temporarily unavailable. Please try again.',
         ),
       );
     }
@@ -167,18 +147,12 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
       return const Err(
         ServerFailure('Failed to update ride status on server.'),
       );
-    } on ServerException catch (e) {
+    } catch (error) {
       return Err(
         FailureMapper.fromException(
-          e,
+          error,
           serverMessage:
               'The ride status could not be updated. Please try again.',
-        ),
-      );
-    } catch (_) {
-      return const Err(
-        ServerFailure(
-          'The ride status could not be updated. Please try again.',
         ),
       );
     }
@@ -200,16 +174,12 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
         return const Ok(null);
       }
       return const Err(ServerFailure('The ride could not be cancelled.'));
-    } on ServerException catch (error) {
+    } catch (error) {
       return Err(
         FailureMapper.fromException(
           error,
           serverMessage: 'The ride could not be cancelled. Please try again.',
         ),
-      );
-    } catch (_) {
-      return const Err(
-        ServerFailure('The ride could not be cancelled. Please try again.'),
       );
     }
   }
@@ -241,18 +211,12 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
         );
       }
       return const Ok(null);
-    } on ServerException catch (error) {
+    } catch (error) {
       return Err(
         FailureMapper.fromException(
           error,
           serverMessage:
               'The ride could not be ended for safety. Please try again.',
-        ),
-      );
-    } catch (_) {
-      return const Err(
-        ServerFailure(
-          'The ride could not be ended for safety. Please try again.',
         ),
       );
     }
@@ -278,17 +242,13 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
         );
       }
       return const Ok(null);
-    } on ServerException catch (error) {
+    } catch (error) {
       return Err(
         FailureMapper.fromException(
           error,
           serverMessage: 'Unable to submit the safety report right now.',
           validationMessage: 'Choose a valid report category and description.',
         ),
-      );
-    } catch (_) {
-      return const Err(
-        ServerFailure('Unable to submit the safety report right now.'),
       );
     }
   }
@@ -308,16 +268,12 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
       return sent
           ? const Ok(null)
           : const Err(NetworkFailure('Passenger location was not accepted.'));
-    } on ServerException catch (error) {
+    } catch (error) {
       return Err(
         FailureMapper.fromException(
           error,
           serverMessage: 'Unable to share your current trip location.',
         ),
-      );
-    } catch (_) {
-      return const Err(
-        NetworkFailure('Unable to share your current trip location.'),
       );
     }
   }

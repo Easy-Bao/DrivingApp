@@ -54,7 +54,7 @@ class _EarningsPageState extends State<EarningsPage> {
       body: SafeArea(
         top: false,
         child: summary == null && state.errorMessage != null
-            ? _buildErrorState()
+            ? _buildErrorState(state.errorMessage!)
             : RefreshIndicator(
                 onRefresh: context.read<EarningsCubit>().load,
                 child: LayoutBuilder(
@@ -150,29 +150,10 @@ class _EarningsPageState extends State<EarningsPage> {
     ],
   );
 
-  Widget _buildErrorState() => Center(
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Earnings are unavailable',
-            style: context.textStyles.titleMedium,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          const Text(
-            'We could not load your earnings. Please try again.',
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          FilledButton(
-            onPressed: context.read<EarningsCubit>().load,
-            child: const Text('Retry'),
-          ),
-        ],
-      ),
-    ),
+  Widget _buildErrorState(String errorMessage) => AppRetryErrorView(
+    title: 'Unable to load earnings',
+    message: errorMessage,
+    onRetry: context.read<EarningsCubit>().load,
   );
 
   Widget _buildSummary(EarningsPeriodSummary summary) => Column(

@@ -42,24 +42,19 @@ final class AuthRepositoryImpl implements AuthRepository {
       if (error.statusCode == 401 || error.statusCode == 403) {
         return const Err(InvalidCredentialsFailure());
       }
-      if (error.statusCode == 0) {
-        return const Err(NetworkFailure());
-      }
       return Err(
         FailureMapper.fromException(
           error,
           serverMessage: "Couldn't sign in. Try again.",
         ),
       );
-    } on DataParsingException catch (error) {
+    } catch (error) {
       return Err(
         FailureMapper.fromException(
           error,
           serverMessage: "Couldn't sign in. Try again.",
         ),
       );
-    } catch (_) {
-      return const Err(ServerFailure("Couldn't sign in. Try again."));
     }
   }
 
@@ -91,22 +86,15 @@ final class AuthRepositoryImpl implements AuthRepository {
       }
       return Ok(responseData);
     } catch (error) {
-      if (error is ServerException) {
-        if (error.statusCode == 409) {
-          return const Err(EmailAlreadyRegisteredFailure());
-        }
-        if (error.statusCode == 0) {
-          return const Err(NetworkFailure());
-        }
-        return Err(
-          FailureMapper.fromException(
-            error,
-            validationMessage: 'Check your registration details and try again.',
-          ),
-        );
+      if (error is ServerException && error.statusCode == 409) {
+        return const Err(EmailAlreadyRegisteredFailure());
       }
-      return const Err(
-        ServerFailure("Couldn't create your account. Try again."),
+      return Err(
+        FailureMapper.fromException(
+          error,
+          serverMessage: "Couldn't create your account. Try again.",
+          validationMessage: 'Check your registration details and try again.',
+        ),
       );
     }
   }
@@ -128,15 +116,13 @@ final class AuthRepositoryImpl implements AuthRepository {
       await _persistSession(credentials);
       return Ok(credentials);
     } catch (error) {
-      if (error is ServerException) {
-        return Err(
-          FailureMapper.fromException(
-            error,
-            validationMessage: 'Invalid verification code. Try again.',
-          ),
-        );
-      }
-      return const Err(ServerFailure("Couldn't verify your code. Try again."));
+      return Err(
+        FailureMapper.fromException(
+          error,
+          serverMessage: "Couldn't verify your code. Try again.",
+          validationMessage: 'Invalid verification code. Try again.',
+        ),
+      );
     }
   }
 
@@ -218,16 +204,13 @@ final class AuthRepositoryImpl implements AuthRepository {
         return const Err(ServerFailure("Couldn't send a new code. Try again."));
       }
       return const Ok(null);
-    } on ServerException catch (error) {
+    } catch (error) {
       return Err(
         FailureMapper.fromException(
           error,
+          serverMessage: 'Failed to send a new verification code.',
           validationMessage: 'Couldn\'t send a new code. Try again.',
         ),
-      );
-    } catch (_) {
-      return const Err(
-        ServerFailure('Failed to send a new verification code.'),
       );
     }
   }

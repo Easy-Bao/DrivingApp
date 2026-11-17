@@ -11,7 +11,7 @@ void main() {
       const ServerFailure('database password leaked by the server'),
     );
 
-    expect(message, 'Something went wrong. Try again.');
+    expect(message, 'The server could not complete your request. Try again.');
     expect(message, isNot(contains('database')));
   });
 
@@ -68,10 +68,14 @@ void main() {
       403: "You don't have permission to do that.",
       400: 'Check the highlighted fields.',
       422: 'Check the highlighted fields.',
+      404: 'The requested item was not found on the server.',
+      408: 'The request took too long. Try again.',
+      409: 'This information changed on the server. Refresh and try again.',
       429: 'Too many requests. Wait a moment and try again.',
+      502: 'The server received an invalid response upstream. Try again later.',
       503: 'The service is unavailable. Try again later.',
       504: 'The request took too long. Try again.',
-      500: 'Something went wrong. Try again.',
+      500: 'The server encountered an error. Try again later.',
     };
 
     for (final entry in expectedMessages.entries) {
@@ -101,16 +105,54 @@ void main() {
     expect(failure.userMessage, isNot(contains('database')));
   });
 
-  test('maps connection and timeout failures safely', () {
-    expect(
-      ErrorHandler.getErrorMessage(const SocketException('connection refused')),
-      "Couldn't connect. Check your internet connection and try again.",
-    );
-    expect(
-      ErrorHandler.getErrorMessage(TimeoutException('internal timeout')),
-      'The request took too long. Try again.',
-    );
-  });
+  test(
+    'maps connection, TLS, cancellation, and timeout failures specifically',
+    () {
+      expect(
+        ErrorHandler.getErrorMessage(
+          const SocketException(
+            'Connection refused',
+            osError: OSError('Connection refused', 111),
+          ),
+        ),
+        'Cannot reach the server. Check that the server is running and try again.',
+      );
+      expect(
+        ErrorHandler.getErrorMessage(
+          const NetworkCircuitOpenException(
+            category: NetworkErrorCategory.connectionRefused,
+          ),
+        ),
+        'Cannot reach the server. Check that the server is running and try again.',
+      );
+      expect(
+        ErrorHandler.getErrorMessage(
+          const SocketException(
+            'Network is unreachable',
+            osError: OSError('Network is unreachable', 101),
+          ),
+        ),
+        "Couldn't connect. Check your internet connection and try again.",
+      );
+      expect(
+        ErrorHandler.getErrorMessage(const HandshakeException('tls failed')),
+        'Could not verify a secure server connection. Check your network or device clock and try again.',
+      );
+      expect(
+        ErrorHandler.getErrorMessage(
+          DioException(
+            requestOptions: RequestOptions(path: '/test'),
+            type: DioExceptionType.cancel,
+          ),
+        ),
+        'The request was cancelled before completing. Try again.',
+      );
+      expect(
+        ErrorHandler.getErrorMessage(TimeoutException('internal timeout')),
+        'The request took too long. Try again.',
+      );
+    },
+  );
 }
 
 DioException _dioExceptionWithStatus(int statusCode, String responseBody) {

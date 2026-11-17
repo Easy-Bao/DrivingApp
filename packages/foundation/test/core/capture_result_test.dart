@@ -45,7 +45,7 @@ void main() {
 
   test('captures asynchronous exceptions with the operation message', () async {
     final result = await captureResult<int>(
-      () async => throw const FormatException('invalid payload'),
+      () async => throw StateError('async failure'),
       message: 'Fare unavailable.',
     );
     result.fold(

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
@@ -174,10 +176,50 @@ void main() {
       expect(attempts, 1);
     },
   );
+
+  test(
+    'circuit-open rejection retains connectionRefused diagnostic category',
+    () async {
+      final coordinator = NetworkAvailabilityCoordinator(
+        failureThreshold: 1,
+        cooldown: const Duration(minutes: 1),
+      );
+      final dio = Dio(BaseOptions(baseUrl: 'https://api.example.test'))
+        ..httpClientAdapter = _FailingHttpClientAdapter(
+          () {},
+          innerError: const SocketException(
+            'Connection refused',
+            osError: OSError('Connection refused', 111),
+          ),
+        )
+        ..interceptors.add(NetworkAvailabilityInterceptor(coordinator));
+      addTearDown(() async {
+        dio.close(force: true);
+        await coordinator.dispose();
+      });
+
+      await expectLater(
+        dio.get<void>('/api/v1/rides'),
+        throwsA(isA<DioException>()),
+      );
+      await expectLater(
+        dio.get<void>('/api/v1/rides'),
+        throwsA(
+          isA<DioException>().having(
+            (error) => (error.error as NetworkCircuitOpenException).category,
+            'circuit category',
+            NetworkErrorCategory.connectionRefused,
+          ),
+        ),
+      );
+    },
+  );
 }
 
-class _FailingHttpClientAdapter(this.onAttempt) implements HttpClientAdapter {
+class _FailingHttpClientAdapter(this.onAttempt, {this.innerError})
+    implements HttpClientAdapter {
   final void Function() onAttempt;
+  final Object? innerError;
 
   @override
   Future<ResponseBody> fetch(
@@ -189,6 +231,7 @@ class _FailingHttpClientAdapter(this.onAttempt) implements HttpClientAdapter {
     throw DioException(
       requestOptions: options,
       type: DioExceptionType.connectionError,
+      error: innerError,
     );
   }
 

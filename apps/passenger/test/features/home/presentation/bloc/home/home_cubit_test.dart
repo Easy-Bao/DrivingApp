@@ -99,7 +99,8 @@ void main() {
         const HomeState(isLoading: true),
         const HomeState(
           isLoading: false,
-          locationErrorMessage: 'Something went wrong. Try again.',
+          locationErrorMessage:
+              'The server could not complete your request. Try again.',
         ),
       ],
     );

@@ -12,6 +12,7 @@ class DashboardStatsRow extends StatelessWidget {
     required this.completedTrips,
     this.hasExistingStats = false,
     this.hasError = false,
+    this.errorMessage,
     this.onRetry,
   });
 
@@ -20,6 +21,7 @@ class DashboardStatsRow extends StatelessWidget {
   final int completedTrips;
   final bool hasExistingStats;
   final bool hasError;
+  final String? errorMessage;
   final VoidCallback? onRetry;
 
   @override
@@ -85,7 +87,7 @@ class DashboardStatsRow extends StatelessWidget {
             child: Text(
               hasExistingStats
                   ? 'Showing last loaded stats.'
-                  : "Today's stats are unavailable.",
+                  : (errorMessage ?? "Today's stats are unavailable."),
               style: context.textStyles.bodySmall?.copyWith(
                 color: context.colorScheme.onSurfaceVariant,
               ),

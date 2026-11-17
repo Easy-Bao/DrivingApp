@@ -51,7 +51,6 @@ final class PerformanceRepositoryImpl({required this._dataSource})
       serverMessage:
           'Driver performance is temporarily unavailable. Please try again.',
       validationMessage: 'Invalid driver performance request.',
-      networkMessage: 'Unable to reach driver performance services. Check your connection and try again.',
     );
   }
 }

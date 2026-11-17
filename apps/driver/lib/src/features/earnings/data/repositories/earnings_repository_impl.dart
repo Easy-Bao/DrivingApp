@@ -28,7 +28,6 @@ final class EarningsRepositoryImpl({required this._dataSource})
       serverMessage:
           'Driver earnings are temporarily unavailable. Please try again.',
       validationMessage: 'Invalid driver earnings request.',
-      networkMessage: 'Unable to reach driver earnings services. Check your connection and try again.',
     );
   }
 }

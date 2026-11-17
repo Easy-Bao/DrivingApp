@@ -97,25 +97,18 @@ final class AuthRepositoryImpl({
       if (error.statusCode == 401 || error.statusCode == 403) {
         return const Err(InvalidCredentialsFailure());
       }
-      if (error.statusCode == 0) {
-        return const Err(NetworkFailure());
-      }
       return Err(
         FailureMapper.fromException(
           error,
           serverMessage: 'Unable to sign in right now. Please try again.',
         ),
       );
-    } on DataParsingException catch (error) {
+    } catch (error) {
       return Err(
         FailureMapper.fromException(
           error,
           serverMessage: 'Unable to sign in right now. Please try again.',
         ),
-      );
-    } catch (_) {
-      return const Err(
-        ServerFailure('Unable to sign in right now. Please try again.'),
       );
     }
   }
@@ -150,7 +143,6 @@ final class AuthRepositoryImpl({
         FailureMapper.fromException(
           error,
           serverMessage: 'Failed to send verification code. Please try again.',
-          networkMessage: 'Unable to reach driver auth services. Check your connection and try again.',
         ),
       );
     }
@@ -178,7 +170,6 @@ final class AuthRepositoryImpl({
         FailureMapper.fromException(
           error,
           serverMessage: 'Password reset failed. Please try again.',
-          networkMessage: 'Unable to reach driver auth services. Check your connection and try again.',
         ),
       );
     }

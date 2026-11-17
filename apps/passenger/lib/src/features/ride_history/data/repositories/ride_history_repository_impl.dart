@@ -49,21 +49,6 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
           403,
         );
       }
-      return switch (error.type) {
-        DioExceptionType.connectionError => const NetworkFailure(
-          'Unable to connect. Check your connection and try again.',
-        ),
-        DioExceptionType.connectionTimeout ||
-        DioExceptionType.receiveTimeout ||
-        DioExceptionType.sendTimeout => const ServerFailure.withStatusCode(
-          'Activity request timed out.',
-          504,
-        ),
-        _ => ServerFailure.withStatusCode(
-          'Activity is temporarily unavailable. Please try again.',
-          statusCode ?? 500,
-        ),
-      };
     }
     if (error is ServerException) {
       if (error.statusCode == 401) {
@@ -77,22 +62,11 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
           403,
         );
       }
-      if (error.statusCode == 400 || error.statusCode == 422) {
-        return const ValidationFailure('Invalid request data.');
-      }
-      return ServerFailure.withStatusCode(
-        'Activity is temporarily unavailable. Please try again.',
-        error.statusCode,
-      );
     }
-    if (error is DataParsingException) {
-      return const ValidationFailure('Activity data could not be read.');
-    }
-    if (error is CacheException) {
-      return const CacheFailure('Unable to read saved activity data.');
-    }
-    return const ServerFailure(
-      'Activity is temporarily unavailable. Please try again.',
+    return FailureMapper.fromException(
+      error,
+      serverMessage: 'Activity is temporarily unavailable. Please try again.',
+      cacheMessage: 'Unable to read saved activity data.',
     );
   }
 

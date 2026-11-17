@@ -537,7 +537,7 @@ class _HomePageState extends State<HomePage> {
           );
         }
         if (state is RideHistoryError) {
-          return _buildRecentRideHistoryError();
+          return _buildRecentRideHistoryError(state);
         }
         if (state is! RideHistoryLoaded) {
           return RecentRideHistoryEmptyState(isGuest: isGuest);
@@ -566,19 +566,23 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildRecentRideHistoryError() {
+  Widget _buildRecentRideHistoryError(RideHistoryError state) {
     if (AppNetworkStatusScope.isUnavailableOf(context)) {
       return const SizedBox.shrink();
     }
-    return Center(
-      child: TextButton.icon(
-        onPressed: _loadRecentRideHistory,
-        icon: const Icon(LucideIcons.refresh_cw, size: 16),
-        label: const Text('Retry activity'),
-        style: TextButton.styleFrom(
-          foregroundColor: context.colorScheme.onSurface,
-        ),
-      ),
+    final title = switch (state.failureKind) {
+      RideHistoryFailureKind.connection => 'Connection error',
+      RideHistoryFailureKind.server => 'Server error',
+      RideHistoryFailureKind.other => 'Could not load recent activity',
+    };
+    return AppRetryErrorView(
+      title: title,
+      message: state.message,
+      actionLabel: 'Retry activity',
+      icon: state.failureKind == RideHistoryFailureKind.connection
+          ? LucideIcons.wifi_off
+          : LucideIcons.circle_alert,
+      onRetry: _loadRecentRideHistory,
     );
   }
 

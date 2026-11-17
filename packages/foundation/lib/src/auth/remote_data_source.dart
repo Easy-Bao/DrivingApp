@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import 'package:foundation/src/errors/exceptions.dart';
+import 'package:foundation/src/errors/network_diagnostic.dart';
 
 abstract interface class AuthRemoteDataSource {
   Future<Map<String, dynamic>> postJson(
@@ -37,6 +38,7 @@ final class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       throw ServerException(
         statusCode: error.response?.statusCode ?? (_isTimeout(error) ? 504 : 0),
         message: _safeErrorMessage(error),
+        diagnostic: NetworkErrorDiagnostic.fromError(error),
       );
     }
   }

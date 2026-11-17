@@ -9,7 +9,7 @@ void main() {
       safeAuthFailureMessage(
         const ServerFailure('database password leaked by the server'),
       ),
-      'Something went wrong. Try again.',
+      'The server could not complete your request. Try again.',
     );
   });
 

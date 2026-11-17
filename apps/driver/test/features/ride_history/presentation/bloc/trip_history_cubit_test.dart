@@ -113,7 +113,7 @@ void main() {
           .having(
             (state) => state.errorMessage,
             'safe error message',
-            'Something went wrong. Try again.',
+            'The server could not complete your request. Try again.',
           ),
     ],
   );
@@ -172,7 +172,7 @@ void main() {
           .having(
             (state) => state.errorMessage,
             'safe refresh error',
-            'Something went wrong. Try again.',
+            'The server could not complete your request. Try again.',
           ),
     ],
   );

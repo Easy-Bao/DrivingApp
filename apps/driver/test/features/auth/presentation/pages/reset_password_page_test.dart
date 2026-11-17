@@ -60,7 +60,10 @@ void main() {
           newPassword: 'new-password',
         ),
       ).called(1);
-      expect(find.text('Something went wrong. Try again.'), findsOneWidget);
+      expect(
+        find.text('The server could not complete your request. Try again.'),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     },
   );

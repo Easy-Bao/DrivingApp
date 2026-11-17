@@ -129,17 +129,25 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                             _RideHistoryMessageView(
                               headerTitle: widget.title,
                               subtitle: widget.subtitle,
-                              title: 'Could not load activity',
-                              message: switch (failureKind) {
-                                RideHistoryFailureKind.connection
-                                    when retryAutomatically =>
-                                  'We’ll update this page automatically when your connection returns.',
-                                RideHistoryFailureKind.server
-                                    when retryAutomatically =>
-                                  'Your activity is temporarily unavailable. We’ll try again automatically.',
-                                _ => message,
+                              title: switch (failureKind) {
+                                RideHistoryFailureKind.connection =>
+                                  'Connection problem',
+                                RideHistoryFailureKind.server => 'Server issue',
+                                RideHistoryFailureKind.other =>
+                                  'Could not load activity',
                               },
-                              icon: null,
+                              message: retryAutomatically
+                                  ? '$message We’ll try again automatically.'
+                                  : message,
+                              icon:
+                                  failureKind ==
+                                      RideHistoryFailureKind.connection
+                                  ? LucideIcons.wifi_off
+                                  : LucideIcons.circle_alert,
+                              actionLabel: retryAutomatically ? null : 'Retry',
+                              onAction: retryAutomatically
+                                  ? null
+                                  : () => unawaited(_loadRideHistory()),
                               showBackButton: widget.showBackButton,
                               showSubtitle: widget.showHeaderSubtitle,
                             ),
@@ -237,6 +245,8 @@ class _RideHistoryMessageView extends StatelessWidget {
     this.showBackButton = false,
     this.showSubtitle = true,
     this.icon = LucideIcons.route,
+    this.actionLabel,
+    this.onAction,
   });
   final String subtitle;
   final String title;
@@ -245,6 +255,8 @@ class _RideHistoryMessageView extends StatelessWidget {
   final bool showBackButton;
   final bool showSubtitle;
   final IconData? icon;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -320,6 +332,14 @@ class _RideHistoryMessageView extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (actionLabel != null && onAction != null) ...[
+                  const SizedBox(height: 16),
+                  TextButton.icon(
+                    onPressed: onAction,
+                    icon: const Icon(LucideIcons.refresh_cw, size: 16),
+                    label: Text(actionLabel!),
+                  ),
+                ],
               ],
             ),
           ),

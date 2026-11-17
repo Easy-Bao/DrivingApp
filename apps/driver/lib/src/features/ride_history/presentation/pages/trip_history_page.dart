@@ -140,7 +140,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
           ? _buildMessageState(
               title: 'Couldn’t load trips',
               message: state.errorMessage!,
-              icon: LucideIcons.wifi_off,
+              icon: LucideIcons.circle_alert,
               actionLabel: 'Try again',
               onAction: () => BlocProvider.of<TripHistoryCubit>(context).load(),
             )

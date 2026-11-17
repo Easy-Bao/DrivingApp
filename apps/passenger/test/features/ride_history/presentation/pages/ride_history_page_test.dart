@@ -87,11 +87,11 @@ void main() {
 
       expect(
         find.text(
-          'Your activity is temporarily unavailable. We’ll try again automatically.',
+          'The service is unavailable. Try again later. We’ll try again automatically.',
         ),
         findsOneWidget,
       );
-      expect(find.text('Could not load activity'), findsOneWidget);
+      expect(find.text('Server issue'), findsOneWidget);
       expect(find.text('Retry'), findsNothing);
       expect(repository.overviewCalls, 1);
 
@@ -102,7 +102,7 @@ void main() {
       expect(find.text('No rides yet'), findsOneWidget);
       expect(
         find.text(
-          'Your activity is temporarily unavailable. We’ll try again automatically.',
+          'The service is unavailable. Try again later. We’ll try again automatically.',
         ),
         findsNothing,
       );
@@ -147,7 +147,7 @@ void main() {
         ),
         findsNothing,
       );
-      expect(find.text('Could not load activity'), findsOneWidget);
+      expect(find.text('Server issue'), findsOneWidget);
     },
   );
 

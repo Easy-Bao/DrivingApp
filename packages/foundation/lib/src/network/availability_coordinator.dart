@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:foundation/src/errors/exceptions.dart';
+import 'package:foundation/src/errors/network_diagnostic.dart';
 
 enum NetworkAvailabilityStatus {
   available,
@@ -45,8 +46,11 @@ final class NetworkAvailabilityCoordinator({
   DateTime? _circuitOpenUntil;
   bool _probeInFlight = false;
   int _successGeneration = 0;
+  NetworkErrorCategory? _lastFailureCategory;
 
   int get successGeneration => _successGeneration;
+
+  NetworkErrorCategory? get lastFailureCategory => _lastFailureCategory;
 
   NetworkAvailabilityStatus get status => _status;
 
@@ -72,6 +76,7 @@ final class NetworkAvailabilityCoordinator({
     _consecutiveFailures = 0;
     _circuitOpenUntil = null;
     _probeInFlight = false;
+    _lastFailureCategory = null;
     _setStatus(
       _failedEndpoints.isEmpty
           ? NetworkAvailabilityStatus.available
@@ -106,13 +111,14 @@ final class NetworkAvailabilityCoordinator({
     _probeInFlight = false;
   }
 
-  void recordFailure({int? requestGeneration}) {
+  void recordFailure({int? requestGeneration, NetworkErrorCategory? category}) {
     // An older request timing out cannot overturn a response that reached the
     // server after that request began. Only fresh failures judge recovery.
     if (requestGeneration != null && requestGeneration != _successGeneration) {
       return;
     }
     _probeInFlight = false;
+    if (category != null) _lastFailureCategory = category;
     _consecutiveFailures++;
     if (_consecutiveFailures >= _failureThreshold) {
       _circuitOpenUntil = _now().add(_cooldown);
@@ -156,7 +162,11 @@ final class const NetworkAvailabilityInterceptor(this.coordinator)
         DioException(
           requestOptions: options,
           type: DioExceptionType.connectionError,
-          error: const NetworkCircuitOpenException(),
+          error: NetworkCircuitOpenException(
+            category:
+                coordinator.lastFailureCategory ??
+                NetworkErrorCategory.connectionError,
+          ),
         ),
       );
       return;
@@ -179,6 +189,7 @@ final class const NetworkAvailabilityInterceptor(this.coordinator)
     if (NetworkAvailabilityCoordinator.isNetworkFailure(error)) {
       coordinator.recordFailure(
         requestGeneration: error.requestOptions.extra[_generationKey] as int?,
+        category: NetworkErrorDiagnostic.fromError(error).category,
       );
     } else if (error.response != null) {
       coordinator.recordResponse(error.response!);

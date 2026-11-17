@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -208,3 +209,83 @@ class const SafeClientErrorView({
 }
 
 typedef SafeClientErrorWidget = SafeClientErrorView;
+
+/// Centered inline/page error prompt that pairs an issue-specific [message]
+/// (and optional [title]) with an explicit retry trigger.
+class AppRetryErrorView extends StatelessWidget {
+  const AppRetryErrorView({
+    super.key,
+    required this.message,
+    required this.onRetry,
+    this.title,
+    this.actionLabel = 'Retry',
+    this.icon = LucideIcons.circle_alert,
+    this.secondaryAction,
+  });
+
+  final String? title;
+  final String message;
+  final VoidCallback onRetry;
+  final String actionLabel;
+  final IconData icon;
+  final Widget? secondaryAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final hasTitle = title != null && title!.trim().isNotEmpty;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 340),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 22, color: colorScheme.onSurfaceVariant),
+              const SizedBox(height: 8),
+              if (hasTitle) ...[
+                Text(
+                  title!,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+              ],
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  TextButton.icon(
+                    onPressed: onRetry,
+                    icon: const Icon(LucideIcons.refresh_cw, size: 16),
+                    label: Text(actionLabel),
+                    style: TextButton.styleFrom(
+                      foregroundColor: colorScheme.onSurface,
+                    ),
+                  ),
+                  ?secondaryAction,
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

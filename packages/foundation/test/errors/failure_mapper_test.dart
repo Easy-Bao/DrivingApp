@@ -50,27 +50,29 @@ void main() {
     );
   });
 
-  test(
-    'maps non-network DioException with null status code to UnexpectedFailure',
-    () {
-      final cancelException = DioException(
-        requestOptions: RequestOptions(path: '/test'),
-        type: DioExceptionType.cancel,
-      );
-      final failure = FailureMapper.fromException(cancelException);
-      expect(failure, isA<UnexpectedFailure>());
-      expect(failure.message, 'Something went wrong. Try again.');
+  test('maps cancelled and TLS DioExceptions to specific failure types', () {
+    final cancelException = DioException(
+      requestOptions: RequestOptions(path: '/test'),
+      type: DioExceptionType.cancel,
+    );
+    final failure = FailureMapper.fromException(cancelException);
+    expect(failure, isA<UnexpectedFailure>());
+    expect(
+      failure.message,
+      'The request was cancelled before completing. Try again.',
+    );
 
-      final badCertException = DioException(
-        requestOptions: RequestOptions(path: '/test'),
-        type: DioExceptionType.badCertificate,
-      );
-      expect(
-        FailureMapper.fromException(badCertException),
-        isA<UnexpectedFailure>(),
-      );
-    },
-  );
+    final badCertException = DioException(
+      requestOptions: RequestOptions(path: '/test'),
+      type: DioExceptionType.badCertificate,
+    );
+    final tlsFailure = FailureMapper.fromException(badCertException);
+    expect(tlsFailure, isA<NetworkFailure>());
+    expect(
+      (tlsFailure as NetworkFailure).reason,
+      NetworkFailureReason.tlsHandshake,
+    );
+  });
 }
 
 class const _FeatureFailure() extends Failure {
