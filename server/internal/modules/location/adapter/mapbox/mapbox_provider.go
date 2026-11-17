@@ -215,10 +215,7 @@ func paginateNearbyPlaces(places []domain.Place, page int) []domain.Place {
 	if start >= len(places) {
 		return []domain.Place{}
 	}
-	end := start + _nearbyPageSize
-	if end > len(places) {
-		end = len(places)
-	}
+	end := min(start+_nearbyPageSize, len(places))
 	return places[start:end]
 }
 
@@ -281,15 +278,8 @@ func placeFromFeature(feature feature, origin domain.Coordinates) (domain.Place,
 }
 
 func categoryName(raw json.RawMessage) string {
-	if len(raw) == 0 {
-		return ""
-	}
-	var category string
-	if json.Unmarshal(raw, &category) == nil {
-		return category
-	}
-	var categories []string
-	if json.Unmarshal(raw, &categories) == nil && len(categories) > 0 {
+	categories := categoryValues(raw)
+	if len(categories) > 0 {
 		return categories[0]
 	}
 	return ""

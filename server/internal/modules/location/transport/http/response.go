@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
-	trackingdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
 )
 
 type PlaceResponse struct {
@@ -97,7 +96,7 @@ type DriverLocationResponse struct {
 	ObservedAt time.Time `json:"observed_at"`
 }
 
-func NewDriverLocationResponse(point trackingdomain.DriverPoint) DriverLocationResponse {
+func NewDriverLocationResponse(point domain.DriverPoint) DriverLocationResponse {
 	return DriverLocationResponse{
 		DriverID:   point.DriverID,
 		Latitude:   point.Latitude,
@@ -108,7 +107,7 @@ func NewDriverLocationResponse(point trackingdomain.DriverPoint) DriverLocationR
 	}
 }
 
-func NewDriverLocationResponses(points []trackingdomain.DriverPoint) []DriverLocationResponse {
+func NewDriverLocationResponses(points []domain.DriverPoint) []DriverLocationResponse {
 	if points == nil {
 		return nil
 	}

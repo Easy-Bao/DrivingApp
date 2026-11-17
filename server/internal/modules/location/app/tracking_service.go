@@ -78,58 +78,76 @@ func NewTrackingService(
 	return service
 }
 
-func (service *TrackingService) Ingest(ctx context.Context, point domain.DriverPoint) error {
-	logger := service.log()
-	timingsEnabled := ctx != nil && logger.Enabled(ctx, slog.LevelDebug)
-	startTiming := func() time.Time {
-		if !timingsEnabled {
-			return time.Time{}
-		}
-		return time.Now()
-	}
-	measure := func(startedAt time.Time) time.Duration {
-		if startedAt.IsZero() {
-			return 0
-		}
-		return time.Since(startedAt)
-	}
+type ingestStageTimings struct {
+	ctx                       context.Context
+	logger                    *slog.Logger
+	enabled                   bool
+	totalStartedAt            time.Time
+	validationStartedAt       time.Time
+	validationDuration        time.Duration
+	preWritePresenceDuration  time.Duration
+	persistenceDuration       time.Duration
+	postWritePresenceDuration time.Duration
+	assignmentLookupDuration  time.Duration
+	eventPublicationDuration  time.Duration
+	assignmentCount           int
+	outcome                   string
+}
 
-	totalStartedAt := startTiming()
-	validationStartedAt := startTiming()
-	var (
-		validationDuration        time.Duration
-		preWritePresenceDuration  time.Duration
-		persistenceDuration       time.Duration
-		postWritePresenceDuration time.Duration
-		assignmentLookupDuration  time.Duration
-		eventPublicationDuration  time.Duration
-		assignmentCount           int
-		outcome                   = "not_accepted"
+func newIngestStageTimings(ctx context.Context, logger *slog.Logger) *ingestStageTimings {
+	timings := &ingestStageTimings{
+		ctx:     ctx,
+		logger:  logger,
+		enabled: ctx != nil && logger.Enabled(ctx, slog.LevelDebug),
+		outcome: "not_accepted",
+	}
+	timings.totalStartedAt = timings.start()
+	timings.validationStartedAt = timings.totalStartedAt
+	return timings
+}
+
+func (timings *ingestStageTimings) start() time.Time {
+	if !timings.enabled {
+		return time.Time{}
+	}
+	return time.Now()
+}
+
+func (timings *ingestStageTimings) measure(startedAt time.Time) time.Duration {
+	if startedAt.IsZero() {
+		return 0
+	}
+	return time.Since(startedAt)
+}
+
+func (timings *ingestStageTimings) log() {
+	if !timings.enabled {
+		return
+	}
+	if timings.validationDuration == 0 {
+		timings.validationDuration = timings.measure(timings.validationStartedAt)
+	}
+	timings.logger.LogAttrs(timings.ctx, slog.LevelDebug, "location ingest stage timings",
+		slog.String("outcome", timings.outcome),
+		slog.Int64("total_us", timings.measure(timings.totalStartedAt).Microseconds()),
+		slog.Int64("validation_us", timings.validationDuration.Microseconds()),
+		slog.Int64("pre_write_presence_us", timings.preWritePresenceDuration.Microseconds()),
+		slog.Int64("persistence_us", timings.persistenceDuration.Microseconds()),
+		slog.Int64("post_write_presence_us", timings.postWritePresenceDuration.Microseconds()),
+		slog.Int64("assignment_lookup_us", timings.assignmentLookupDuration.Microseconds()),
+		slog.Int64("event_publication_us", timings.eventPublicationDuration.Microseconds()),
+		slog.Int("assignment_count", timings.assignmentCount),
 	)
-	defer func() {
-		if !timingsEnabled {
-			return
-		}
-		if validationDuration == 0 {
-			validationDuration = measure(validationStartedAt)
-		}
-		logger.LogAttrs(ctx, slog.LevelDebug, "location ingest stage timings",
-			slog.String("outcome", outcome),
-			slog.Int64("total_us", measure(totalStartedAt).Microseconds()),
-			slog.Int64("validation_us", validationDuration.Microseconds()),
-			slog.Int64("pre_write_presence_us", preWritePresenceDuration.Microseconds()),
-			slog.Int64("persistence_us", persistenceDuration.Microseconds()),
-			slog.Int64("post_write_presence_us", postWritePresenceDuration.Microseconds()),
-			slog.Int64("assignment_lookup_us", assignmentLookupDuration.Microseconds()),
-			slog.Int64("event_publication_us", eventPublicationDuration.Microseconds()),
-			slog.Int("assignment_count", assignmentCount),
-		)
-	}()
+}
+
+func (service *TrackingService) Ingest(ctx context.Context, point domain.DriverPoint) error {
+	timings := newIngestStageTimings(ctx, service.log())
+	defer timings.log()
 
 	if err := contextError(ctx); err != nil {
 		return err
 	}
-	if service.repository == nil {
+	if service == nil || service.repository == nil {
 		return ErrPersistenceUnavailable
 	}
 	if point.ObservedAt.IsZero() {
@@ -143,66 +161,66 @@ func (service *TrackingService) Ingest(ctx context.Context, point domain.DriverP
 		// A delayed mobile spool may legitimately deliver an old point after
 		// reconnecting. It must not replace fresh telemetry, but retrying it is
 		// also pointless, so treat it as an accepted no-op.
-		outcome = "stale_age_ignored"
+		timings.outcome = "stale_age_ignored"
 		return nil
 	}
-	invalidCoordinates := !validCoordinates(point.Latitude, point.Longitude)
+	invalidCoordinates := !domain.Coordinates{Latitude: point.Latitude, Longitude: point.Longitude}.Valid()
 	invalidMotion := !validMotion(point.Heading, point.Speed)
 	missingDriverID := point.DriverID == ""
 	if invalidCoordinates || invalidMotion || missingDriverID {
 		return domain.ErrInvalidLocation
 	}
-	validationDuration = measure(validationStartedAt)
+	timings.validationDuration = timings.measure(timings.validationStartedAt)
 
-	preWritePresenceStartedAt := startTiming()
+	preWritePresenceStartedAt := timings.start()
 	if err := service.requireOnlineDriver(ctx, point.DriverID); err != nil {
-		preWritePresenceDuration = measure(preWritePresenceStartedAt)
-		outcome = "presence_rejected"
+		timings.preWritePresenceDuration = timings.measure(preWritePresenceStartedAt)
+		timings.outcome = "presence_rejected"
 		return err
 	}
-	preWritePresenceDuration = measure(preWritePresenceStartedAt)
+	timings.preWritePresenceDuration = timings.measure(preWritePresenceStartedAt)
 
-	persistenceStartedAt := startTiming()
+	persistenceStartedAt := timings.start()
 	if err := service.repository.Upsert(ctx, point); err != nil {
-		persistenceDuration = measure(persistenceStartedAt)
+		timings.persistenceDuration = timings.measure(persistenceStartedAt)
 		if errors.Is(err, domain.ErrStaleLocation) {
-			outcome = "stale_persist_ignored"
+			timings.outcome = "stale_persist_ignored"
 			return nil
 		}
-		outcome = "persistence_failed"
+		timings.outcome = "persistence_failed"
 		return fmt.Errorf("persist driver location: %w", err)
 	}
-	persistenceDuration = measure(persistenceStartedAt)
+	timings.persistenceDuration = timings.measure(persistenceStartedAt)
 
-	postWritePresenceStartedAt := startTiming()
+	postWritePresenceStartedAt := timings.start()
 	if err := service.requireOnlineDriver(ctx, point.DriverID); err != nil {
-		postWritePresenceDuration = measure(postWritePresenceStartedAt)
+		timings.postWritePresenceDuration = timings.measure(postWritePresenceStartedAt)
 		if cleanupErr := service.repository.Remove(ctx, point.DriverID); cleanupErr != nil {
-			outcome = "presence_race_cleanup_failed"
+			timings.outcome = "presence_race_cleanup_failed"
 			return fmt.Errorf("%w: remove location after presence changed: %v", err, cleanupErr)
 		}
-		outcome = "presence_changed_after_write"
+		timings.outcome = "presence_changed_after_write"
 		return err
 	}
-	postWritePresenceDuration = measure(postWritePresenceStartedAt)
+	timings.postWritePresenceDuration = timings.measure(postWritePresenceStartedAt)
 	if err := contextError(ctx); err != nil {
 		return err
 	}
 
-	assignmentLookupStartedAt := startTiming()
+	assignmentLookupStartedAt := timings.start()
 	assignments, err := service.activeRidesForDriver(ctx, point.DriverID)
-	assignmentLookupDuration = measure(assignmentLookupStartedAt)
-	assignmentCount = len(assignments)
+	timings.assignmentLookupDuration = timings.measure(assignmentLookupStartedAt)
+	timings.assignmentCount = len(assignments)
 	if err != nil {
-		outcome = "accepted_assignment_lookup_failed"
+		timings.outcome = "accepted_assignment_lookup_failed"
 		service.log().WarnContext(ctx, "load realtime ride assignments failed", "error", err)
 	}
 	if err := contextError(ctx); err != nil {
 		return err
 	}
-	eventPublicationStartedAt := startTiming()
+	eventPublicationStartedAt := timings.start()
 	defer func() {
-		eventPublicationDuration = measure(eventPublicationStartedAt)
+		timings.eventPublicationDuration = timings.measure(eventPublicationStartedAt)
 	}()
 	if len(assignments) == 0 {
 		service.publish(
@@ -214,8 +232,8 @@ func (service *TrackingService) Ingest(ctx context.Context, point domain.DriverP
 		if err := contextError(ctx); err != nil {
 			return err
 		}
-		if outcome == "not_accepted" {
-			outcome = "accepted"
+		if timings.outcome == "not_accepted" {
+			timings.outcome = "accepted"
 		}
 		return nil
 	}
@@ -234,8 +252,8 @@ func (service *TrackingService) Ingest(ctx context.Context, point domain.DriverP
 			map[string]any{"location": point},
 		)
 	}
-	if outcome == "not_accepted" {
-		outcome = "accepted"
+	if timings.outcome == "not_accepted" {
+		timings.outcome = "accepted"
 	}
 	return contextError(ctx)
 }
@@ -248,12 +266,12 @@ func (service *TrackingService) Nearby(
 	if err := contextError(ctx); err != nil {
 		return nil, err
 	}
-	invalidCoordinates := !validCoordinates(latitude, longitude)
+	invalidCoordinates := !domain.Coordinates{Latitude: latitude, Longitude: longitude}.Valid()
 	invalidRadius := math.IsNaN(radiusKm) || math.IsInf(radiusKm, 0) || radiusKm <= 0 || radiusKm > 50
 	if invalidCoordinates || invalidRadius {
 		return nil, domain.ErrInvalidLocation
 	}
-	if service.repository == nil {
+	if service == nil || service.repository == nil {
 		return nil, ErrPersistenceUnavailable
 	}
 	points, err := service.repository.Nearby(ctx, latitude, longitude, radiusKm)
@@ -270,10 +288,10 @@ func (service *TrackingService) Remove(ctx context.Context, driverID string) err
 	if err := contextError(ctx); err != nil {
 		return err
 	}
-	repository := service.repository
-	if repository == nil {
+	if service == nil || service.repository == nil {
 		return ErrPersistenceUnavailable
 	}
+	repository := service.repository
 	if driverID == "" {
 		return errors.New("driver id is required")
 	}
@@ -287,10 +305,10 @@ func (service *TrackingService) Get(ctx context.Context, driverID string) (domai
 	if err := contextError(ctx); err != nil {
 		return domain.DriverPoint{}, err
 	}
-	repository := service.repository
-	if repository == nil {
+	if service == nil || service.repository == nil {
 		return domain.DriverPoint{}, ErrPersistenceUnavailable
 	}
+	repository := service.repository
 	point, err := repository.Get(ctx, driverID)
 	if err != nil {
 		return domain.DriverPoint{}, fmt.Errorf("load driver location: %w", err)
@@ -310,13 +328,13 @@ func (service *TrackingService) UpdatePassenger(
 	if err := contextError(ctx); err != nil {
 		return err
 	}
-	repository := service.repository
-	if repository == nil {
+	if service == nil || service.repository == nil {
 		return ErrPersistenceUnavailable
 	}
+	repository := service.repository
 	missingRideID := rideID == ""
 	missingPassengerID := passengerID == ""
-	invalidCoordinates := !validCoordinates(point.Latitude, point.Longitude)
+	invalidCoordinates := !domain.Coordinates{Latitude: point.Latitude, Longitude: point.Longitude}.Valid()
 	if missingRideID || missingPassengerID || invalidCoordinates {
 		return domain.ErrInvalidLocation
 	}
@@ -359,10 +377,10 @@ func (service *TrackingService) GetPassengerForDriver(
 	if err := contextError(ctx); err != nil {
 		return domain.DriverPoint{}, err
 	}
-	repository := service.repository
-	if repository == nil {
+	if service == nil || service.repository == nil {
 		return domain.DriverPoint{}, ErrPersistenceUnavailable
 	}
+	repository := service.repository
 	assignment, err := service.assignmentForRide(ctx, rideID)
 	if err != nil {
 		return domain.DriverPoint{}, err
@@ -388,10 +406,10 @@ func (service *TrackingService) GetDriverForRide(
 	if err := contextError(ctx); err != nil {
 		return domain.DriverPoint{}, err
 	}
-	repository := service.repository
-	if repository == nil {
+	if service == nil || service.repository == nil {
 		return domain.DriverPoint{}, ErrPersistenceUnavailable
 	}
+	repository := service.repository
 	rideAssignment, err := service.assignmentForRide(ctx, rideID)
 	if err != nil {
 		return domain.DriverPoint{}, err
@@ -524,11 +542,6 @@ func approximateNearbyPoints(points []domain.DriverPoint) []domain.DriverPoint {
 		})
 	}
 	return result
-}
-
-func validCoordinates(latitude, longitude float64) bool {
-	return !math.IsNaN(latitude) && !math.IsInf(latitude, 0) && latitude >= -90 && latitude <= 90 &&
-		!math.IsNaN(longitude) && !math.IsInf(longitude, 0) && longitude >= -180 && longitude <= 180
 }
 
 func validMotion(heading, speed float64) bool {

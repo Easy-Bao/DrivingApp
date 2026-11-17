@@ -37,9 +37,8 @@ func (handler *TrackingHandler) UpdateDriverLocation(writer http.ResponseWriter,
 		response.Error(writer, http.StatusBadRequest, "invalid location")
 		return
 	}
-	identity, ok := handler.identity(request)
-	if !ok || identity.Role != "driver" {
-		response.Error(writer, http.StatusUnauthorized, "unauthorized")
+	identity, ok := handler.requireRoleIdentity(writer, request, "driver")
+	if !ok {
 		return
 	}
 	point := domain.DriverPoint{
@@ -95,9 +94,8 @@ func (handler *TrackingHandler) GetDriverLocation(writer http.ResponseWriter, re
 }
 
 func (handler *TrackingHandler) GetRideDriverLocation(writer http.ResponseWriter, request *http.Request) {
-	identity, ok := handler.identity(request)
-	if !ok || identity.Role != "passenger" {
-		response.Error(writer, http.StatusUnauthorized, "unauthorized")
+	identity, ok := handler.requireRoleIdentity(writer, request, "passenger")
+	if !ok {
 		return
 	}
 	point, err := handler.service.GetDriverForRide(
@@ -117,9 +115,8 @@ func (handler *TrackingHandler) DeleteDriverLocation(writer http.ResponseWriter,
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	identity, ok := handler.identity(request)
-	if !ok || identity.Role != "driver" {
-		response.Error(writer, http.StatusUnauthorized, "unauthorized")
+	identity, ok := handler.requireRoleIdentity(writer, request, "driver")
+	if !ok {
 		return
 	}
 	if err := handler.service.Remove(request.Context(), identity.Subject); err != nil {
@@ -134,9 +131,8 @@ func (handler *TrackingHandler) UpdatePassengerLocation(writer http.ResponseWrit
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	identity, ok := handler.identity(request)
-	if !ok || identity.Role != "passenger" {
-		response.Error(writer, http.StatusUnauthorized, "unauthorized")
+	identity, ok := handler.requireRoleIdentity(writer, request, "passenger")
+	if !ok {
 		return
 	}
 	var input PassengerLocationUpdate
@@ -162,9 +158,8 @@ func (handler *TrackingHandler) GetPassengerLocation(writer http.ResponseWriter,
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	identity, ok := handler.identity(request)
-	if !ok || identity.Role != "driver" {
-		response.Error(writer, http.StatusUnauthorized, "unauthorized")
+	identity, ok := handler.requireRoleIdentity(writer, request, "driver")
+	if !ok {
 		return
 	}
 	point, err := handler.service.GetPassengerForDriver(
@@ -190,13 +185,9 @@ func (handler *TrackingHandler) NearbyDrivers(writer http.ResponseWriter, reques
 	latitude, latErr := strconv.ParseFloat(query.Get("latitude"), 64)
 	longitude, lonErr := strconv.ParseFloat(query.Get("longitude"), 64)
 	radius, radiusErr := strconv.ParseFloat(query.Get("radius_km"), 64)
-	parseFailed := latErr != nil || lonErr != nil || radiusErr != nil ||
-		math.IsNaN(latitude) || math.IsInf(latitude, 0) ||
-		math.IsNaN(longitude) || math.IsInf(longitude, 0) ||
-		math.IsNaN(radius) || math.IsInf(radius, 0)
-	invalidCoordinates := latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180
-	invalidRadius := radius <= 0 || radius > 50
-	if parseFailed || invalidCoordinates || invalidRadius {
+	invalidCoordinates := !domain.Coordinates{Latitude: latitude, Longitude: longitude}.Valid()
+	invalidRadius := radiusErr != nil || math.IsNaN(radius) || math.IsInf(radius, 0) || radius <= 0 || radius > 50
+	if latErr != nil || lonErr != nil || invalidCoordinates || invalidRadius {
 		response.Error(writer, http.StatusBadRequest, "invalid nearby query")
 		return
 	}
@@ -212,6 +203,19 @@ func (handler *TrackingHandler) NearbyDrivers(writer http.ResponseWriter, reques
 	response.JSON(writer, http.StatusOK, map[string]any{
 		"drivers": NewDriverLocationResponses(points),
 	})
+}
+
+func (handler *TrackingHandler) requireRoleIdentity(
+	writer http.ResponseWriter,
+	request *http.Request,
+	role string,
+) (security.Identity, bool) {
+	identity, ok := handler.identity(request)
+	if !ok || identity.Role != role {
+		response.Error(writer, http.StatusUnauthorized, "unauthorized")
+		return security.Identity{}, false
+	}
+	return identity, true
 }
 
 func (handler *TrackingHandler) identity(request *http.Request) (security.Identity, bool) {
