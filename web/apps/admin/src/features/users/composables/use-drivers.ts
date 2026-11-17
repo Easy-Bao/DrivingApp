@@ -13,9 +13,6 @@ export function resetDriversForTesting(): void {
   drivers.value = cloneDrivers(SEED_DRIVERS)
 }
 
-/**
- * Manages active driver fleet records using live platform reserve thresholds and centavos.
- */
 export function useDrivers() {
   const { config } = usePlatformConfig()
   const { appendAuditLog } = useAuditLogs()

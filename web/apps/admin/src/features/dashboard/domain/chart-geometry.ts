@@ -29,9 +29,6 @@ export interface PlotBounds {
   plotHeight: number
 }
 
-/**
- * Computes contiguous SVG stroke-dasharray / stroke-dashoffset segments in a single O(n) pass.
- */
 export function buildDonutSegments(
   slices: readonly BookingSlice[],
   circumference: number,

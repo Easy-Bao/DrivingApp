@@ -22,11 +22,9 @@ func (m *mockTx) Rollback(ctx context.Context) error {
 }
 
 func TestRollbackHandlesNilInputs(t *testing.T) {
-	// Must not panic on nil transaction
 	Rollback(context.Background(), nil)
 	Rollback(nil, nil)
 
-	// Must not panic on nil context with valid transaction
 	tx := &mockTx{}
 	Rollback(nil, tx)
 	if tx.rollbackCtx == nil {
@@ -55,7 +53,6 @@ func TestRollbackIsolatesCancelledContext(t *testing.T) {
 
 func TestRollbackIgnoresErrTxClosed(t *testing.T) {
 	tx := &mockTx{rollbackErr: pgx.ErrTxClosed}
-	// Should cleanly handle already-closed transaction
 	Rollback(context.Background(), tx)
 	if tx.rollbackCtx == nil {
 		t.Fatal("expected rollback to be executed")
@@ -65,7 +62,6 @@ func TestRollbackIgnoresErrTxClosed(t *testing.T) {
 func TestRollbackLogsOnUnexpectedError(t *testing.T) {
 	unexpectedErr := errors.New("network connection reset")
 	tx := &mockTx{rollbackErr: unexpectedErr}
-	// Should handle error gracefully without panicking
 	Rollback(context.Background(), tx)
 	if tx.rollbackCtx == nil {
 		t.Fatal("expected rollback to be executed")

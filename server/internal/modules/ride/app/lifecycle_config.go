@@ -10,7 +10,6 @@ const (
 	DefaultCompletionRadiusMeters = 250.0
 )
 
-// LifecycleConfig contains server-authoritative ride lifecycle policy values.
 type LifecycleConfig struct {
 	PassengerWaitDuration  time.Duration
 	DriverLocationMaxAge   time.Duration

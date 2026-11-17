@@ -115,7 +115,6 @@ func TestCircuitBreakerReleasesProbeOnPanic(t *testing.T) {
 		<-timer.C
 		synctest.Wait()
 
-		// Probe panics
 		func() {
 			defer func() {
 				_ = recover()
@@ -152,7 +151,6 @@ func TestCircuitBreakerTripsOnPanicInClosedState(t *testing.T) {
 		}()
 	}
 
-	// Should now be open
 	if err := breaker.Do(context.Background(), func(context.Context) error { return nil }); !errors.Is(err, ErrCircuitOpen) {
 		t.Fatalf("expected ErrCircuitOpen after repeated panics, got %v", err)
 	}

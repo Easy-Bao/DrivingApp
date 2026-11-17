@@ -767,7 +767,6 @@ func TestListDriverRidesFiltersActiveAndTerminalTrips(t *testing.T) {
 	fixture.createRide(t, ctx, passengerID, driverID, "completed", 3000)
 	fixture.createRide(t, ctx, passengerID, driverID, "cancelled", 1500)
 
-	// active_only = false (History query): should only return completed and cancelled rides
 	historyTrips, err := fixture.store.DriverTrips(ctx, driverID, domain.TripHistoryQuery{
 		Limit:      10,
 		Offset:     0,
@@ -785,7 +784,6 @@ func TestListDriverRidesFiltersActiveAndTerminalTrips(t *testing.T) {
 		}
 	}
 
-	// active_only = true (Active rides query): should only return active rides
 	activeTrips, err := fixture.store.DriverTrips(ctx, driverID, domain.TripHistoryQuery{
 		Limit:      10,
 		Offset:     0,
@@ -828,7 +826,6 @@ func TestReplayAcceptedOfferReturnsOriginalRideNotUnrelatedRide(t *testing.T) {
 	fixture.seedPassenger(t, ctx, passengerID)
 	fixture.seedDriver(t, ctx, driverID)
 
-	// 1. Passenger accepts driver's offer in session 1 -> creates ride 1.
 	session1ID := fixture.createBidSession(t, ctx, passengerID)
 	offer1ID := fixture.createBidOffer(t, ctx, session1ID, driverID)
 
@@ -838,7 +835,6 @@ func TestReplayAcceptedOfferReturnsOriginalRideNotUnrelatedRide(t *testing.T) {
 	}
 	ride1ID := acceptance1.Ride.ID
 
-	// Verify replay while R1 is active returns R1.
 	replayActive, err := fixture.dispatchStore.AcceptOffer(ctx, session1ID, offer1ID, passengerID)
 	if err != nil {
 		t.Fatalf("replay AcceptOffer() while R1 active error = %v", err)
@@ -847,12 +843,10 @@ func TestReplayAcceptedOfferReturnsOriginalRideNotUnrelatedRide(t *testing.T) {
 		t.Fatalf("replayed ride ID = %d, want original ride %d", replayActive.Ride.ID, ride1ID)
 	}
 
-	// 2. Complete R1.
 	if _, err := fixture.pool.Exec(ctx, `UPDATE rides SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE id = $1`, ride1ID); err != nil {
 		t.Fatalf("complete ride 1: %v", err)
 	}
 
-	// 3. Passenger and driver create another active ride R2 through a second session.
 	session2ID := fixture.createBidSession(t, ctx, passengerID)
 	offer2ID := fixture.createBidOffer(t, ctx, session2ID, driverID)
 
@@ -865,7 +859,6 @@ func TestReplayAcceptedOfferReturnsOriginalRideNotUnrelatedRide(t *testing.T) {
 		t.Fatalf("second ride ID = %d, want different from ride 1 %d", ride2ID, ride1ID)
 	}
 
-	// 4. Replay AcceptOffer for session 1 / offer 1 while R2 is active.
 	replayCompleted, err := fixture.dispatchStore.AcceptOffer(ctx, session1ID, offer1ID, passengerID)
 	if err != nil {
 		t.Fatalf("replay AcceptOffer() for completed R1 error = %v", err)
@@ -883,7 +876,6 @@ func TestAcceptedRideCapturesDriverRatingSnapshot(t *testing.T) {
 	fixture.seedPassenger(t, ctx, passengerID)
 	fixture.seedDriver(t, ctx, driverID) // rating seeded as 4.8
 
-	// Path 1: Bid session acceptance captures driver rating snapshot.
 	sessionID := fixture.createBidSession(t, ctx, passengerID)
 	offerID := fixture.createBidOffer(t, ctx, sessionID, driverID)
 
@@ -903,12 +895,10 @@ func TestAcceptedRideCapturesDriverRatingSnapshot(t *testing.T) {
 		t.Fatalf("stored driver_rating in rides = %f, want 4.8", storedRating)
 	}
 
-	// Update driver's rating in profile (e.g. subsequent review changes profile to 3.5).
 	if _, err := fixture.pool.Exec(ctx, `UPDATE driver_profiles SET rating = 3.5 WHERE user_id = $1`, driverID); err != nil {
 		t.Fatalf("update driver rating in profile: %v", err)
 	}
 
-	// Stored historical snapshot must remain 4.8.
 	if err := fixture.pool.QueryRow(ctx, `SELECT driver_rating FROM rides WHERE id = $1`, acceptance.Ride.ID).Scan(&storedRating); err != nil {
 		t.Fatalf("re-read stored driver rating: %v", err)
 	}
@@ -916,12 +906,10 @@ func TestAcceptedRideCapturesDriverRatingSnapshot(t *testing.T) {
 		t.Fatalf("stored driver_rating changed to %f, want immutable 4.8", storedRating)
 	}
 
-	// Complete the ride.
 	if _, err := fixture.pool.Exec(ctx, `UPDATE rides SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE id = $1`, acceptance.Ride.ID); err != nil {
 		t.Fatalf("complete ride: %v", err)
 	}
 
-	// Path 2: Direct ride acceptance also captures current driver rating snapshot (3.5).
 	tripID := fixture.createRide(t, ctx, passengerID, 0, string(domain.RideRequested), 3000)
 	acceptedTrip, err := fixture.store.AcceptRide(ctx, tripID, driverID)
 	if err != nil {

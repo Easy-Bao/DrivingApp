@@ -172,7 +172,6 @@ void main() {
       findsOneWidget,
     );
 
-    // Tap cancel ride without details
     await tester.tap(
       find.byKey(const ValueKey('confirm-driver-cancel-ride-button')),
     );
@@ -181,7 +180,6 @@ void main() {
     expect(find.text('Add details when choosing Other.'), findsOneWidget);
     expect(result, isNull);
 
-    // Enter details
     await tester.enterText(
       find.byKey(const ValueKey('driver-cancellation-details')),
       'Flat tire on expressway',

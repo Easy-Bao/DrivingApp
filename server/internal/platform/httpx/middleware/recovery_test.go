@@ -77,7 +77,6 @@ func TestRecoveryDoesNotDuplicateWriteWhenHeadersAlreadySent(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/stream", nil)
 	rec := httptest.NewRecorder()
 
-	// Should not crash or re-write 500 over 200
 	handler.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {

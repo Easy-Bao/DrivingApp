@@ -65,11 +65,7 @@ func TestRunStopsServerOnSubscriberError(t *testing.T) {
 	}
 
 	runDone := make(chan error, 1)
-	go func() {
-		// Replace server.ListenAndServe with custom listener serving by wrapping
-		// For Application.Run, it calls application.server.ListenAndServe().
-		// Since Addr is listener.Addr().String(), close listener first so ListenAndServe can bind.
-	}()
+	go func() {}()
 
 	_ = listener.Close()
 	server.Addr = listener.Addr().String()
@@ -78,10 +74,8 @@ func TestRunStopsServerOnSubscriberError(t *testing.T) {
 		runDone <- app.Run(context.Background())
 	}()
 
-	// Wait briefly, signal subscriber readiness so server starts listening
 	subscriber.signalReady()
 
-	// Wait for server to bind and listen
 	var clientErr error
 	for i := 0; i < 20; i++ {
 		time.Sleep(20 * time.Millisecond)
@@ -97,7 +91,6 @@ func TestRunStopsServerOnSubscriberError(t *testing.T) {
 		t.Fatalf("server did not start accepting requests: %v", clientErr)
 	}
 
-	// Trigger subscriber error
 	close(subscriber.stop)
 
 	select {
@@ -109,7 +102,6 @@ func TestRunStopsServerOnSubscriberError(t *testing.T) {
 		t.Fatal("Run() did not return within timeout after subscriber error")
 	}
 
-	// Verify server was stopped: requests should fail
 	_, err = http.Get("http://" + server.Addr)
 	if err == nil {
 		t.Fatal("expected server to be stopped and reject requests, but request succeeded")
@@ -154,7 +146,6 @@ func TestRunStopsServerOnContextCancellation(t *testing.T) {
 		}
 	}
 
-	// Cancel context to stop application
 	cancel()
 
 	select {

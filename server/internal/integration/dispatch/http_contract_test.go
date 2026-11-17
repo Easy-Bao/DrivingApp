@@ -61,7 +61,6 @@ func TestPublicDriverSummariesPreserveFieldsAndHideSensitiveData(t *testing.T) {
 	verifier := security.NewTokenManager("dispatch-test-secret")
 	mux := newAvailabilityRouter(reader, verifier)
 
-	// Unauthenticated request must be rejected with 401
 	unauthRequest := httptest.NewRequest(
 		http.MethodGet,
 		api.V1Prefix+"/drivers/public/summaries?limit=1",

@@ -29,18 +29,12 @@ const pendingDocs: Ref<PendingDocument[]> = ref(clonePending(SEED_PENDING_DOCUME
 const expiringDocs: Ref<ExpiringDocument[]> = ref(cloneExpiring(SEED_EXPIRING_DOCUMENTS))
 const rejectedDocs: Ref<RejectedDocument[]> = ref(cloneRejected(SEED_REJECTED_DOCUMENTS))
 
-/**
- * Resets all reactive document compliance queues to canonical seed state for tests.
- */
 export function resetDocumentsForTesting(): void {
   pendingDocs.value = clonePending(SEED_PENDING_DOCUMENTS)
   expiringDocs.value = cloneExpiring(SEED_EXPIRING_DOCUMENTS)
   rejectedDocs.value = cloneRejected(SEED_REJECTED_DOCUMENTS)
 }
 
-/**
- * Manages the active driver compliance verification queue and cross-queue rejections.
- */
 export function useVerificationDocuments() {
   const { appendAuditLog } = useAuditLogs()
 
@@ -116,9 +110,6 @@ export function useVerificationDocuments() {
   }
 }
 
-/**
- * Manages expiring compliance documents and SMS reminder broadcasts.
- */
 export function useExpiringDocuments() {
   const { appendAuditLog } = useAuditLogs()
 
@@ -175,9 +166,6 @@ export function useExpiringDocuments() {
   }
 }
 
-/**
- * Manages previously rejected documents and re-opening items back into active review.
- */
 export function useRejectedDocuments() {
   const { appendAuditLog } = useAuditLogs()
 

@@ -388,7 +388,6 @@ func TestPlaceOfferEnforcesFareBounds(t *testing.T) {
 	store := &biddingStoreStub{session: session}
 	service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
 
-	// Offer below lower bound (10000 < 14000)
 	_, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 		SessionID:          10,
 		DriverID:           42,
@@ -398,7 +397,6 @@ func TestPlaceOfferEnforcesFareBounds(t *testing.T) {
 		t.Fatalf("expected ErrInvalidFareOffer for low bid, got %v", err)
 	}
 
-	// Offer above upper bound (45000 > 40000)
 	_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 		SessionID:          10,
 		DriverID:           42,
@@ -408,7 +406,6 @@ func TestPlaceOfferEnforcesFareBounds(t *testing.T) {
 		t.Fatalf("expected ErrInvalidFareOffer for high bid, got %v", err)
 	}
 
-	// Offer within bounds (25000)
 	_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 		SessionID:          10,
 		DriverID:           42,
@@ -439,7 +436,6 @@ func TestPlaceOfferAllowsAdvertisedShortTripFare(t *testing.T) {
 	store := &biddingStoreStub{session: session}
 	service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
 
-	// 1. Driver places offer at exact advertised fare (2850).
 	offer, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 		SessionID:          15,
 		DriverID:           42,
@@ -452,7 +448,6 @@ func TestPlaceOfferAllowsAdvertisedShortTripFare(t *testing.T) {
 		t.Fatalf("expected offer fare 2850, got %d", offer.ProposedFareAmount)
 	}
 
-	// 2. Driver submits zero/default fare, which defaults to session.OfferedFareAmount (2850).
 	defaultOffer, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 		SessionID:          15,
 		DriverID:           42,
@@ -465,7 +460,6 @@ func TestPlaceOfferAllowsAdvertisedShortTripFare(t *testing.T) {
 		t.Fatalf("expected default offer fare to resolve to 2850, got %d", defaultOffer.ProposedFareAmount)
 	}
 
-	// 3. Driver counteroffers below the short-trip fare (e.g. 2500 < 2850).
 	_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 		SessionID:          15,
 		DriverID:           42,

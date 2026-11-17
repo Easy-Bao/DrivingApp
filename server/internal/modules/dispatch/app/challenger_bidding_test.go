@@ -201,7 +201,6 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 			t.Fatalf("expected ErrInvalidFareOffer for math.MinInt64, got %v", err)
 		}
 
-		// Zero offer inherits base fare (30000) -> accepted
 		offer, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 40, DriverID: 1, ProposedFareAmount: 0,
 		})

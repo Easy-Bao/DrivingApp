@@ -63,7 +63,6 @@ func TestMemoryIdempotencyStoreOnlyReleasesTheCurrentLockOwner(t *testing.T) {
 func TestMemoryIdempotencyStorePeriodicEviction(t *testing.T) {
 	store := NewMemoryIdempotencyStore()
 	ctx := context.Background()
-	// Insert an expired key
 	_ = store.Set(ctx, "expired-key", []byte("val"), -time.Second)
 	// Force eviction by simulating interval lapse
 	store.lastEviction = time.Now().Add(-2 * time.Minute)
@@ -81,7 +80,6 @@ func TestMemoryIdempotencyStoreCapacityBoundedEviction(t *testing.T) {
 	ctx := context.Background()
 	store := NewMemoryIdempotencyStoreWithCapacity(5)
 
-	// Add 5 unexpired entries with staggered expirations
 	for i := 1; i <= 5; i++ {
 		key := fmt.Sprintf("key-%d", i)
 		_ = store.Set(ctx, key, []byte(key), time.Duration(i)*time.Hour)
@@ -93,7 +91,6 @@ func TestMemoryIdempotencyStoreCapacityBoundedEviction(t *testing.T) {
 	}
 	store.mu.Unlock()
 
-	// Adding 6th entry must enforce capacity bounds by evicting oldest
 	_ = store.Set(ctx, "key-6", []byte("key-6"), 6*time.Hour)
 
 	store.mu.Lock()
@@ -424,8 +421,7 @@ func TestIdempotencySkipsCachingLargeResponseBody(t *testing.T) {
 		http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
 			calls.Add(1)
 			writer.WriteHeader(http.StatusOK)
-			// write over 10MB
-			chunk := make([]byte, 1<<20) // 1MB
+			chunk := make([]byte, 1<<20)
 			for i := 0; i < 11; i++ {
 				_, _ = writer.Write(chunk)
 			}

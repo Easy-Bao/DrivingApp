@@ -13,8 +13,6 @@ type Coordinates struct {
 	Longitude float64
 }
 
-// Valid reports whether both coordinates are finite and within geographic
-// latitude and longitude bounds.
 func (coordinates Coordinates) Valid() bool {
 	return isFiniteInRange(coordinates.Latitude, -90, 90) &&
 		isFiniteInRange(coordinates.Longitude, -180, 180)
@@ -41,16 +39,12 @@ const (
 	RouteProfileDrivingTraffic RouteProfile = "driving-traffic"
 )
 
-// RouteOptions controls route optimization, profile selection, and excluded
-// map points.
 type RouteOptions struct {
 	Preference    RoutePreference
 	Profile       RouteProfile
 	ExcludePoints []Coordinates
 }
 
-// Normalize fills defaults and rejects unsupported route options or invalid
-// exclusion points.
 func (options RouteOptions) Normalize() (RouteOptions, error) {
 	options.ExcludePoints = slices.Clone(options.ExcludePoints)
 	if options.Preference == "" {

@@ -44,7 +44,6 @@ final class RefreshableTokenProvider({
     _hasActiveMission = checker;
   }
 
-  /// Returns a usable token, refreshing it before it expires when possible.
   Future<String?> getToken() async {
     final token = (await _readAccessToken())?.trim();
     if (token == null || token.isEmpty) {
@@ -62,7 +61,6 @@ final class RefreshableTokenProvider({
     return refreshAccessToken();
   }
 
-  /// Refreshes the access token once for all concurrent callers.
   Future<String?> refreshAccessToken() {
     final pending = _refreshInFlight;
     if (pending != null) return pending;

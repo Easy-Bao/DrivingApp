@@ -26,9 +26,6 @@ export type {
   UserActionResult,
 } from '@/features/users/types'
 
-/**
- * Resets all user, fleet, passenger, application, and RBAC stores to seed state for tests.
- */
 export function resetUsersForTesting(): void {
   resetDriverApplicationsForTesting()
   resetDriversForTesting()

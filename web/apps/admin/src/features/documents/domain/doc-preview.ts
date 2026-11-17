@@ -3,9 +3,6 @@ import type { DocumentPreviewInput } from '@/features/documents/types'
 
 export { escapeXml }
 
-/**
- * Generates an inline SVG preview document scan with all interpolated fields XML-escaped.
- */
 export function buildDocumentPreviewSvg(input: DocumentPreviewInput): string {
   const safeSide = input.side ? ` (${input.side} Scan)` : ''
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="360" viewBox="0 0 600 360">

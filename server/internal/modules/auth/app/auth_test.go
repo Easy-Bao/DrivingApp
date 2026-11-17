@@ -259,12 +259,10 @@ func TestAuthenticationNonExistentUserAndBlankPasswordHash(t *testing.T) {
 		Sessions:   newTestRefreshSessionStore(),
 	})
 
-	// Non-existent user should fail with ErrInvalidCredentials after dummy verification
 	if _, _, err := authenticate.Execute(context.Background(), "ghost@example.test", "wrong-password"); !errors.Is(err, domain.ErrInvalidCredentials) {
 		t.Fatalf("nonexistent user error = %v, want ErrInvalidCredentials", err)
 	}
 
-	// User without password hash should fail with ErrInvalidCredentials after dummy verification
 	if _, _, err := authenticate.Execute(context.Background(), "oauth@example.test", "wrong-password"); !errors.Is(err, domain.ErrInvalidCredentials) {
 		t.Fatalf("blank hash user error = %v, want ErrInvalidCredentials", err)
 	}

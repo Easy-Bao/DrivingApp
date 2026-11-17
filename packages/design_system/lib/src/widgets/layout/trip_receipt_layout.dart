@@ -3,7 +3,6 @@ import 'package:design_system/src/tokens/palette.dart';
 import 'package:design_system/src/tokens/spacing.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Quiet receipt chrome shared by passenger and driver ride details.
 class TripReceiptLayout extends StatelessWidget {
   const TripReceiptLayout({
     super.key,

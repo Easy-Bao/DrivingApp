@@ -46,7 +46,6 @@ func TestOTPVerificationRateLimiterThrottlesByIP(t *testing.T) {
 		t.Fatalf("blocked retry-after = %q, want 900", retryAfter)
 	}
 
-	// Another IP is not blocked, even for the same target email
 	otherIP := serveOTPVerificationAttempt(handler, "passenger@example.test", "192.0.2.11:1234")
 	if otherIP.Code != http.StatusNoContent {
 		t.Fatalf("other IP status = %d, want %d", otherIP.Code, http.StatusNoContent)

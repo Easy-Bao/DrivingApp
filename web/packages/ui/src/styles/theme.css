@@ -33,20 +33,12 @@
   font-display: swap;
 }
 
-/* ==========================================================================
-   Global Design Tokens & Tailwind CSS Theme (@web/ui)
-   Three-layer token architecture: Primitive -> Semantic -> Component
-   Aligned with packages/design_system
-   ========================================================================== */
-
 @theme {
-  /* Fonts */
   --font-sans:
     'ProductSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
     sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Brand & Status Palette */
   --color-emerald: #059669;
   --color-emerald-hover: #047857;
   --color-emerald-soft: #ecfdf5;
@@ -60,14 +52,12 @@
 
   --color-obsidian: #090d16;
 
-  /* Status Colors */
   --color-status-success: #26845b;
   --color-status-warning: #b45309;
   --color-status-error: #d64545;
   --color-status-info: #3977c3;
   --color-status-rating: #e0a12d;
 
-  /* Semantic Surface & Text Colors (Mapped to CSS Variables) */
   --color-background: var(--surface-background);
   --color-surface: var(--surface-card);
   --color-surface-muted: var(--surface-muted);
@@ -83,7 +73,6 @@
   --color-primary-soft: var(--brand-primary-soft);
   --color-on-primary: var(--brand-on-primary);
 
-  /* Spacing Scale (4px -> 32px) */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 0.75rem;
@@ -92,7 +81,6 @@
   --spacing-xxl: 1.5rem;
   --spacing-xxxl: 2rem;
 
-  /* Border Radius Scale */
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
@@ -100,7 +88,6 @@
   --radius-sheet: 1.75rem;
   --radius-pill: 999px;
 
-  /* Shadows */
   --shadow-key: 0 1px 2px 0 rgba(9, 13, 22, 0.04);
   --shadow-ambient: 0 4px 12px -2px rgba(9, 13, 22, 0.08), 0 2px 4px -2px rgba(9, 13, 22, 0.04);
 }

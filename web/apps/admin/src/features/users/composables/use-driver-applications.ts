@@ -16,9 +16,6 @@ export function resetDriverApplicationsForTesting(): void {
   applications.value = cloneApplications(SEED_DRIVER_APPLICATIONS)
 }
 
-/**
- * Manages driver onboarding applications, validation guards, and audit logging.
- */
 export function useDriverApplications() {
   const { appendAuditLog } = useAuditLogs()
 

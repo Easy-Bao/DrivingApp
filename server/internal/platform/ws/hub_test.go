@@ -104,7 +104,6 @@ func TestClosedHubSubscribeAndCloseDoesNotPanic(t *testing.T) {
 		t.Fatal("subscription on closed hub should be immediately closed")
 	}
 
-	// Must not panic when Close is invoked on subscription from closed hub
 	sub.Close()
 }
 
@@ -295,7 +294,6 @@ func TestHubPublishSingleAndMultiTopicFastPath(t *testing.T) {
 	hub := NewHub()
 	defer hub.Close()
 
-	// Empty topics: should safely no-op without deadlock or panic
 	emptyEnvelope := event.Envelope{}
 	hub.Publish(emptyEnvelope)
 
@@ -304,7 +302,6 @@ func TestHubPublishSingleAndMultiTopicFastPath(t *testing.T) {
 	defer subA.Close()
 	defer subB.Close()
 
-	// Single topic publishing
 	singleEnvelope, err := event.New(
 		"evt-single",
 		event.DriverLocationUpdated,
@@ -317,7 +314,6 @@ func TestHubPublishSingleAndMultiTopicFastPath(t *testing.T) {
 	}
 	hub.Publish(singleEnvelope)
 
-	// SubA receives, subB does not
 	select {
 	case received := <-subA.Events():
 		if received.ID != "evt-single" {
@@ -333,7 +329,6 @@ func TestHubPublishSingleAndMultiTopicFastPath(t *testing.T) {
 	default:
 	}
 
-	// Multi-topic envelope with overlap
 	multiSub := hub.Subscribe("topic:gamma")
 	defer multiSub.Close()
 

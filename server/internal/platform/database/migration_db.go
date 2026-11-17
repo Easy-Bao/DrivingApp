@@ -11,8 +11,6 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-// OpenPostgresMigrationDatabase opens the single database/sql connection used
-// by the schema migration command.
 func OpenPostgresMigrationDatabase(databaseURL string) (*sql.DB, error) {
 	return OpenPostgresMigrationDatabaseWithContext(
 		context.Background(),

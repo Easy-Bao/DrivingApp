@@ -17,8 +17,6 @@ type RecentDestination = domain.RecentDestination
 type RecentLocation = domain.RecentLocation
 type RideContextSnapshot = domain.RideContextSnapshot
 
-// RecentDestinationReader and AddressResolver are the small consumer-side
-// contracts needed by this query feature.
 type RecentDestinationReader interface {
 	ReadRecentDestinations(ctx context.Context, passengerID, limit int) ([]RecentDestination, error)
 }

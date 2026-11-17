@@ -1,8 +1,5 @@
 import { onBeforeUnmount, ref } from 'vue'
 
-/**
- * Copies text to the clipboard with transient copied state and an auto-dismissing status message.
- */
 export function useClipboardCopy(successLabel = 'Copied to clipboard', durationMs = 2000) {
   const copied = ref(false)
   const toastMessage = ref<string | null>(null)

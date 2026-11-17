@@ -652,9 +652,7 @@ class _HomePageState extends State<HomePage> {
     String? activeRideId;
     try {
       activeRideId = await session?.readActiveRideId();
-    } catch (_) {
-      // Fall back to the latest active ride from history.
-    }
+    } catch (_) {}
     if (!mounted) return;
     if (activeRideId != null && activeRideId.trim().isNotEmpty) {
       unawaited(

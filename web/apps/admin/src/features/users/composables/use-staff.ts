@@ -40,9 +40,6 @@ function inferDepartment(role: string): string {
   return 'Administration'
 }
 
-/**
- * Manages staff operator accounts, root protection guards, MFA toggles, and suspensions.
- */
 export function useOperators() {
   const { appendAuditLog } = useAuditLogs()
 
@@ -187,9 +184,6 @@ export function useOperators() {
   }
 }
 
-/**
- * Manages RBAC roles, permission matrix updates, and live staff counts.
- */
 export function useRoles() {
   const { appendAuditLog } = useAuditLogs()
 

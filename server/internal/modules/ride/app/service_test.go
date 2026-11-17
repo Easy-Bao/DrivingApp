@@ -325,7 +325,6 @@ func TestDriverTripsQuarantinesActiveRidesFromHistory(t *testing.T) {
 	}
 	service := newTestRideService(stub, testPricingConfig(t), nil)
 
-	// Historical archive (ActiveOnly = false): must only contain terminal trips (completed, cancelled)
 	historyTrips, err := service.DriverTrips(context.Background(), 11, domain.TripHistoryQuery{
 		Limit:      10,
 		Offset:     0,
@@ -343,7 +342,6 @@ func TestDriverTripsQuarantinesActiveRidesFromHistory(t *testing.T) {
 		}
 	}
 
-	// Active dispatch query (ActiveOnly = true): must only contain active trips (in_transit, assigned)
 	activeTrips, err := service.DriverTrips(context.Background(), 11, domain.TripHistoryQuery{
 		Limit:      10,
 		Offset:     0,

@@ -61,7 +61,6 @@ void main() {
       AuthRoutes.signinPath,
     );
 
-    // Verify deferred expiry during an active ride and flush when cleared
     session
       ..sessionCleared = false
       ..activeRideId = 'ride-123';

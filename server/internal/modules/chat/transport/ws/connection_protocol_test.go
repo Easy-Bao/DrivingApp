@@ -69,7 +69,6 @@ func TestConnectionProtocolEnforcesMessageRateBudget(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/api/v1/chat/ws?roomId=ride-1", nil)
 	identity := security.Identity{Subject: "user-1"}
 
-	// Send 3 allowed messages
 	for i := 0; i < 3; i++ {
 		resp, err := protocol.HandleMessage(
 			context.Background(),
@@ -83,7 +82,6 @@ func TestConnectionProtocolEnforcesMessageRateBudget(t *testing.T) {
 		}
 	}
 
-	// 4th message exceeds budget
 	resp, err := protocol.HandleMessage(
 		context.Background(),
 		request,
@@ -119,7 +117,6 @@ func TestConnectionProtocolCoalescesRedundantTypingEvents(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/api/v1/chat/ws?roomId=ride-1", nil)
 	identity := security.Identity{Subject: "user-1"}
 
-	// First typing: true -> should be handled
 	resp, err := protocol.HandleMessage(
 		context.Background(),
 		request,
@@ -134,7 +131,6 @@ func TestConnectionProtocolCoalescesRedundantTypingEvents(t *testing.T) {
 		t.Fatalf("sink received %d events, want 1", len(sink.messages))
 	}
 
-	// Immediate duplicate typing: true -> should be dropped/coalesced
 	resp, err = protocol.HandleMessage(
 		context.Background(),
 		request,
@@ -149,7 +145,6 @@ func TestConnectionProtocolCoalescesRedundantTypingEvents(t *testing.T) {
 		t.Fatalf("redundant typing event was not coalesced, sink count = %d", len(sink.messages))
 	}
 
-	// State change to false -> should be handled
 	resp, err = protocol.HandleMessage(
 		context.Background(),
 		request,

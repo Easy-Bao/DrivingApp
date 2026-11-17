@@ -6,8 +6,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Registers a one-shot callback that logs first-frame build and raster
-/// durations to the developer timeline under [timelineEventName].
 VoidCallback createFirstFrameTimingRecorder(String timelineEventName) {
   var registered = false;
   return () {
@@ -35,7 +33,6 @@ VoidCallback createFirstFrameTimingRecorder(String timelineEventName) {
 /// render an actionable, presentation-safe message.
 void configureClientErrorBoundary({required String appName}) {
   FlutterError.onError = (details) {
-    // Keep framework diagnostics visible in the debug console.
     if (kDebugMode) FlutterError.presentError(details);
     developer.log(
       'Unhandled framework error.',
@@ -97,8 +94,6 @@ void configureClientErrorBoundary({required String appName}) {
   );
 }
 
-/// Logs a client startup failure and replaces the root widget with a clear,
-/// non-vague error surface.
 void showClientStartupFailure({
   required String appName,
   required ThemeData theme,
@@ -210,8 +205,6 @@ class const SafeClientErrorView({
 
 typedef SafeClientErrorWidget = SafeClientErrorView;
 
-/// Centered inline/page error prompt that pairs an issue-specific [message]
-/// (and optional [title]) with an explicit retry trigger.
 class AppRetryErrorView extends StatelessWidget {
   const AppRetryErrorView({
     super.key,

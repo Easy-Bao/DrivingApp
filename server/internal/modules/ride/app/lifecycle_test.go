@@ -849,7 +849,6 @@ func TestStartTripCancelsDriverLocationOnEarlyRejection(t *testing.T) {
 
 	select {
 	case <-locationReader.cancelled:
-		// Succeeded: background location reader context was promptly cancelled on early rejection
 	case <-time.After(time.Second):
 		t.Fatal("expected speculative location reader context to be cancelled after early rejection")
 	}

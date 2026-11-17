@@ -13,9 +13,6 @@ export function resetRidersForTesting(): void {
   riders.value = cloneRiders(SEED_RIDERS)
 }
 
-/**
- * Manages passenger accounts, standing updates, and trust-and-safety audit notes.
- */
 export function useRiders() {
   const { appendAuditLog } = useAuditLogs()
 

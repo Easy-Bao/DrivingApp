@@ -336,7 +336,6 @@ class UnexpectedFailure extends Failure {
   ]);
 }
 
-/// Describes an HTTP status code using the shared client-safe copy table.
 ({String title, String userMessage, String? actionText, ErrorType type})
 describeHttpStatusFailure(int statusCode) => switch (statusCode) {
   401 => (
@@ -415,8 +414,6 @@ describeHttpStatusFailure(int statusCode) => switch (statusCode) {
   ),
 };
 
-/// Maps a [NetworkErrorCategory] to its typed [Failure] so `AppFailure` and
-/// `FailureMapper` keep one consistent error classification table.
 Failure? mapDiagnosticCategoryToFailure(
   NetworkErrorCategory category, {
   String? offlineMessage,

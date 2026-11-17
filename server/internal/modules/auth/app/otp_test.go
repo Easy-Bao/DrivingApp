@@ -216,7 +216,6 @@ func TestSuspendedAccountCannotRequestOrResetPassword(t *testing.T) {
 		Sessions: newTestRefreshSessionStore(),
 	})
 
-	// Request should return nil silently without sending any code
 	err := service.RequestPasswordResetForRole(context.Background(), "driver@example.test", domain.Driver)
 	if err != nil {
 		t.Fatalf("RequestPasswordResetForRole() error = %v, want nil", err)
@@ -225,7 +224,6 @@ func TestSuspendedAccountCannotRequestOrResetPassword(t *testing.T) {
 		t.Fatal("reset code was sent to a suspended driver account")
 	}
 
-	// Reset attempt with existing code must be rejected with ErrAccountSuspended
 	store.values["reset:driver@example.test"] = "123456"
 	err = service.ResetPasswordForRole(context.Background(), "driver@example.test", "123456", "new-secret-8", domain.Driver)
 	if !errors.Is(err, domain.ErrAccountSuspended) {

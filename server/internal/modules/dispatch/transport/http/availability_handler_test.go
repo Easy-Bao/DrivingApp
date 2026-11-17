@@ -73,7 +73,6 @@ func TestDriverAvailabilityEndpointsRequireAuthentication(t *testing.T) {
 func TestAvailabilityHandlerDirectCallRejectsUnauthenticated(t *testing.T) {
 	handler := NewHandler(Dependencies{})
 
-	// PublicDriverSummaries without identity
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/drivers/public/summaries", nil)
 	rec := httptest.NewRecorder()
 	handler.PublicDriverSummaries(rec, req)
@@ -81,7 +80,6 @@ func TestAvailabilityHandlerDirectCallRejectsUnauthenticated(t *testing.T) {
 		t.Fatalf("PublicDriverSummaries direct call status = %d, want %d", rec.Code, http.StatusUnauthorized)
 	}
 
-	// OnlineDrivers without identity
 	req = httptest.NewRequest(http.MethodGet, "/api/v1/drivers/online?ids=1", nil)
 	rec = httptest.NewRecorder()
 	handler.OnlineDrivers(rec, req)

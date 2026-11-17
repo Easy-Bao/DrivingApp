@@ -86,7 +86,6 @@ class const _RouteStopRow({
   }
 }
 
-/// Filled route pins shared by booking and receipt summaries.
 class const RouteStopMarker({super.key, required this.isPickup, this.size = 20})
     extends StatelessWidget {
   final bool isPickup;

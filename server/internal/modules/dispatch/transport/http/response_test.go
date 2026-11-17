@@ -125,7 +125,6 @@ func TestCanViewSession(t *testing.T) {
 		TargetDriverID: nil,
 	}
 
-	// Owner passenger can always view
 	if !canViewSession(5, "passenger", directSession) {
 		t.Fatal("expected owner passenger to view direct session")
 	}
@@ -133,7 +132,6 @@ func TestCanViewSession(t *testing.T) {
 		t.Fatal("expected owner passenger to view broadcast session")
 	}
 
-	// Unrelated passenger cannot view
 	if canViewSession(6, "passenger", directSession) {
 		t.Fatal("expected unrelated passenger cannot view direct session")
 	}
@@ -141,22 +139,18 @@ func TestCanViewSession(t *testing.T) {
 		t.Fatal("expected unrelated passenger cannot view broadcast session")
 	}
 
-	// Target driver can view direct session
 	if !canViewSession(10, "driver", directSession) {
 		t.Fatal("expected target driver to view direct session")
 	}
 
-	// Non-target driver cannot view direct session
 	if canViewSession(11, "driver", directSession) {
 		t.Fatal("expected non-target driver cannot view direct session")
 	}
 
-	// Any authenticated driver can view broadcast session
 	if !canViewSession(11, "driver", broadcastSession) {
 		t.Fatal("expected driver to view broadcast session")
 	}
 
-	// Non-positive actor ID cannot view any session
 	if canViewSession(0, "passenger", directSession) {
 		t.Fatal("expected zero actorID cannot view direct session")
 	}

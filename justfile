@@ -50,36 +50,28 @@ ci-local: ci-guards ci-flutter ci-backend
 bootstrap:
     dart run melos bootstrap
 
-# Docker-only database lifecycle helper.
 db-up:
     docker compose up -d postgres-db
     @echo "PostgreSQL container started; see POSTGRES_HOST_PORT in .env for the host port."
 
-# Docker-only database lifecycle helper.
 db-down:
     docker compose stop postgres-db
 
-# Docker-only infrastructure helper for the native API workflow.
 infra-up:
     docker compose up -d --remove-orphans --wait --wait-timeout 60 postgres-db redis minio
 
-# Apply the ordered additive migration plan to configured native PostgreSQL.
 db-migrate:
     cd server && go run ./cmd/migrate
 
-# Apply the migration stream to Docker Compose PostgreSQL instead.
 docker-db-migrate: infra-up
     @./scripts/database/migrate.sh
 
-# Copy, verify, and contract PostgreSQL-backed private objects into MinIO.
 objectstorage-migrate:
     docker compose --profile ops run --rm objectstorage-migrate
 
 test-services:
     cd server && go test ./...
 
-# Run the native API with no action. Docker Compose lifecycle is available
-# through `just server --start` and `just server --stop`.
 server action="":
     @case "{{ action }}" in \
         "") exec just native-server ;; \
@@ -88,8 +80,6 @@ server action="":
         *) echo "Usage: just server [--start|--stop]" >&2; exit 2 ;; \
     esac
 
-# Start the API natively while keeping the Compose API container out of the way.
-# PostgreSQL, Redis, and MinIO remain containerized dependencies for local development.
 native-server:
     @docker compose stop api >/dev/null 2>&1 || true
     @just infra-up
@@ -125,13 +115,10 @@ native-server:
     fi
     cd server && MINIO_ENDPOINT="127.0.0.1:{{ minio-host-port }}" go run ./cmd/api
 
-# Backward-compatible local startup alias.
 start-all: native-server
 
-# Start every application and dependency through Docker Compose explicitly.
 docker-start-all: services-up
 
-# Docker-only service lifecycle for the whole team.
 services-up:
     @./scripts/script.sh --start
 
@@ -144,20 +131,16 @@ services-status:
 services-logs:
     @./scripts/script.sh --logs
 
-# Reverse ports for all connected Android devices/emulators
 adb-reverse:
     @./scripts/adb_reverse.sh
 
-# Backward-compatible Docker aliases.
 docker-up: services-up
 
 docker-down: services-down
 
-# Build or rebuild compose images
 docker-build:
     docker compose build postgres-db redis migrate api
 
-# View logs for all Docker services.
 docker-logs: services-logs
 
 generate-sqlc:

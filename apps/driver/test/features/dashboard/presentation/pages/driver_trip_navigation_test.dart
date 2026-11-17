@@ -379,7 +379,6 @@ void main() {
       );
       await tester.pump();
 
-      // 1st booking is assigned and opens Active trip page.
       emitDashboard(
         const DashboardState(isOnline: true, activeRides: [firstTrip]),
       );
@@ -387,7 +386,6 @@ void main() {
       expect(find.text('Active trip'), findsOneWidget);
       expect(observer.pushes, 1);
 
-      // 2nd booking arrives for the same driver while 1st trip is open.
       emitDashboard(
         const DashboardState(
           isOnline: true,
@@ -399,7 +397,6 @@ void main() {
       expect(find.text('A passenger chose you'), findsOneWidget);
       expect(find.text('Second Pickup'), findsOneWidget);
 
-      // Driver accepts the 2nd booking and returns to the active 1st trip without pushing a duplicate trip route.
       await tester.tap(find.text('Accept ride'));
       await tester.pumpAndSettle();
       expect(find.text('Active trip'), findsOneWidget);
