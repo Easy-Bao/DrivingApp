@@ -4,41 +4,20 @@ package database_test
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"reflect"
+	"slices"
 	"testing"
 	"time"
 
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func TestHistoryAndReviewCursorPagination(t *testing.T) {
-	databaseURL := os.Getenv("TEST_DATABASE_URL")
-	if databaseURL == "" {
-		t.Skip("TEST_DATABASE_URL is not set")
-	}
 	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
 	defer cancel()
-	conn, err := pgx.Connect(ctx, databaseURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	schema := pgx.Identifier{fmt.Sprintf("cursor_pagination_%d", time.Now().UnixNano())}.Sanitize()
-	if _, err := conn.Exec(ctx, "CREATE SCHEMA "+schema); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		cleanup, done := context.WithTimeout(context.Background(), 5*time.Second)
-		defer done()
-		_, _ = conn.Exec(cleanup, "DROP SCHEMA "+schema+" CASCADE")
-		_ = conn.Close(cleanup)
-	})
-	if _, err := conn.Exec(ctx, "SET search_path TO "+schema); err != nil {
-		t.Fatal(err)
-	}
+
+	conn := openIsolatedSchemaConn(t, ctx, "cursor_pagination")
 	if _, err := conn.Exec(ctx, `
 CREATE TABLE users (id integer PRIMARY KEY, name text, phone text);
 CREATE TABLE bid_sessions (id integer PRIMARY KEY, booking_reference text, UNIQUE(id,booking_reference));
@@ -106,7 +85,7 @@ SELECT id,id,2,1,5,created_at FROM rides;`); err != nil {
 	assertPage := func(fetch func(boundary, int32) ([]int32, error), b boundary, offset int32, want []int32) {
 		t.Helper()
 		got, err := fetch(b, offset)
-		if err != nil || !reflect.DeepEqual(got, want) {
+		if err != nil || !slices.Equal(got, want) {
 			t.Fatalf("page=%v want=%v err=%v", got, want, err)
 		}
 	}
@@ -121,7 +100,10 @@ INSERT INTO reviews(id,ride_id,driver_id,passenger_id,rating,created_at) SELECT 
 DELETE FROM rides WHERE id=5;`); err != nil {
 		t.Fatal(err)
 	}
-	at, _ := time.Parse(time.RFC3339Nano, "2026-10-23T10:00:00.123456Z")
+	at, err := time.Parse(time.RFC3339Nano, "2026-10-23T10:00:00.123456Z")
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, fetch := range []func(boundary, int32) ([]int32, error){driver, passenger, review} {
 		assertPage(fetch, boundary{pgtype.Timestamptz{Time: at, Valid: true}, 5}, 0, []int32{4, 3})
 		assertPage(fetch, boundary{pgtype.Timestamptz{Time: at, Valid: true}, 3}, 0, []int32{2, 1})

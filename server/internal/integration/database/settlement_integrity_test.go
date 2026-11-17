@@ -5,39 +5,18 @@ package database_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func TestSettlementIntegrity(t *testing.T) {
-	databaseURL := os.Getenv("TEST_DATABASE_URL")
-	if databaseURL == "" {
-		t.Skip("TEST_DATABASE_URL is not set")
-	}
 	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
 	defer cancel()
-	conn, err := pgx.Connect(ctx, databaseURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	schema := pgx.Identifier{fmt.Sprintf("settlement_integrity_%d", time.Now().UnixNano())}.Sanitize()
-	if _, err := conn.Exec(ctx, "CREATE SCHEMA "+schema); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		cleanup, done := context.WithTimeout(context.Background(), 5*time.Second)
-		defer done()
-		_, _ = conn.Exec(cleanup, "DROP SCHEMA "+schema+" CASCADE")
-		_ = conn.Close(cleanup)
-	})
-	if _, err := conn.Exec(ctx, "SET search_path TO "+schema); err != nil {
-		t.Fatal(err)
-	}
+
+	conn := openIsolatedSchemaConn(t, ctx, "settlement_integrity")
 	ddl, err := os.ReadFile("../../../db/schema/ride_settlements.sql")
 	if err != nil {
 		t.Fatal(err)
@@ -65,15 +44,15 @@ func TestSettlementIntegrity(t *testing.T) {
 		received, change      int64
 		valid                 bool
 	}{
-		{"initial", "unpaid", "unpaid", intPointer(1500), 0, 0, true},
+		{"initial", "unpaid", "unpaid", new(1500), 0, 0, true},
 		{"legacy null rate", "unpaid", "unpaid", nil, 0, 0, true},
-		{"paid with change", "paid", "paid", intPointer(10000), 1200, 200, true},
-		{"partial", "unpaid", "partial", intPointer(0), 400, 0, true},
+		{"paid with change", "paid", "paid", new(10000), 1200, 200, true},
+		{"partial", "unpaid", "partial", new(0), 400, 0, true},
 		{"refused", "unpaid", "refused", nil, 0, 0, true},
 		{"returned cash", "unpaid", "unpaid", nil, 500, 500, true},
 		{"disputed", "unpaid", "disputed", nil, 700, 0, true},
-		{"high rate", "unpaid", "unpaid", intPointer(15000), 0, 0, false},
-		{"negative rate", "unpaid", "unpaid", intPointer(-1), 0, 0, false},
+		{"high rate", "unpaid", "unpaid", new(15000), 0, 0, false},
+		{"negative rate", "unpaid", "unpaid", new(-1), 0, 0, false},
 		{"paid without cash", "paid", "paid", nil, 0, 0, false},
 		{"paid unpaid outcome", "paid", "unpaid", nil, 0, 0, false},
 		{"unpaid paid outcome", "unpaid", "paid", nil, 1000, 0, false},
@@ -95,8 +74,8 @@ func TestSettlementIntegrity(t *testing.T) {
 				}
 				return
 			}
-			var pgErr *pgconn.PgError
-			if !errors.As(err, &pgErr) || pgErr.Code != "23514" {
+			pgErr, ok := errors.AsType[*pgconn.PgError](err)
+			if !ok || pgErr.Code != "23514" {
 				t.Fatalf("want check violation, got %v", err)
 			}
 		})
@@ -117,5 +96,3 @@ func TestSettlementIntegrity(t *testing.T) {
 		t.Fatal(err)
 	}
 }
-
-func intPointer(value int) *int { return &value }

@@ -4,39 +4,16 @@ package database_test
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"regexp"
 	"testing"
 	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
 func TestBookingReferenceMigrationBackfillsAndReservesReferences(t *testing.T) {
-	databaseURL := os.Getenv("TEST_DATABASE_URL")
-	if databaseURL == "" {
-		t.Skip("TEST_DATABASE_URL is not set")
-	}
 	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
 	defer cancel()
-	connection, err := pgx.Connect(ctx, databaseURL)
-	if err != nil {
-		t.Fatal("connect to test database")
-	}
-	schema := pgx.Identifier{fmt.Sprintf("booking_reference_it_%d", time.Now().UnixNano())}.Sanitize()
-	if _, err := connection.Exec(ctx, "CREATE SCHEMA "+schema); err != nil {
-		t.Fatalf("create test schema: %v", err)
-	}
-	t.Cleanup(func() {
-		cleanup, done := context.WithTimeout(context.Background(), 5*time.Second)
-		defer done()
-		_, _ = connection.Exec(cleanup, "DROP SCHEMA "+schema+" CASCADE")
-		_ = connection.Close(cleanup)
-	})
-	if _, err := connection.Exec(ctx, "SET search_path TO "+schema); err != nil {
-		t.Fatal(err)
-	}
+
+	connection := openIsolatedSchemaConn(t, ctx, "booking_reference_it")
 	if _, err := connection.Exec(ctx, `
 CREATE TABLE bid_sessions (id serial PRIMARY KEY);
 CREATE TABLE rides (id serial PRIMARY KEY, bid_session_id integer REFERENCES bid_sessions(id));

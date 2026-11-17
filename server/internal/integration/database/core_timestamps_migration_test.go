@@ -4,8 +4,6 @@ package database_test
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -13,47 +11,11 @@ import (
 )
 
 func TestCoreEntityTimestampMigrationTracksMutableRows(t *testing.T) {
-	databaseURL := os.Getenv("TEST_DATABASE_URL")
-	if databaseURL == "" {
-		t.Skip("TEST_DATABASE_URL is not set")
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	admin, err := pgx.Connect(ctx, databaseURL)
-	if err != nil {
-		t.Fatalf("connect to test PostgreSQL database: %v", err)
-	}
-
-	schemaName := fmt.Sprintf("core_timestamps_it_%d", time.Now().UnixNano())
-	quotedSchema := pgx.Identifier{schemaName}.Sanitize()
-	if _, err := admin.Exec(ctx, "CREATE SCHEMA "+quotedSchema); err != nil {
-		_ = admin.Close(context.Background())
-		t.Fatalf("create isolated test schema: %v", err)
-	}
-
-	var connection *pgx.Conn
-	t.Cleanup(func() {
-		cleanupContext, cleanupCancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cleanupCancel()
-		if connection != nil {
-			_ = connection.Close(cleanupContext)
-		}
-		_, _ = admin.Exec(cleanupContext, "DROP SCHEMA "+quotedSchema+" CASCADE")
-		_ = admin.Close(cleanupContext)
-	})
-
-	config, err := pgx.ParseConfig(databaseURL)
-	if err != nil {
-		t.Fatalf("parse test PostgreSQL connection: %v", err)
-	}
-	config.RuntimeParams["search_path"] = schemaName
-	connection, err = pgx.ConnectConfig(ctx, config)
-	if err != nil {
-		t.Fatalf("connect to isolated test schema: %v", err)
-	}
-	_, err = connection.Exec(ctx, `
+	connection := openIsolatedSchemaConn(t, ctx, "core_timestamps_it")
+	_, err := connection.Exec(ctx, `
 CREATE TABLE users (id bigint PRIMARY KEY);
 CREATE TABLE driver_profiles (id bigint PRIMARY KEY);
 CREATE TABLE passenger_profiles (id bigint PRIMARY KEY);
