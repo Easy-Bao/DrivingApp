@@ -152,7 +152,7 @@ func TestReviewRoutesKeepPathsRolesAndResponseShapes(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &cursorPage); err != nil {
 		t.Fatal(err)
 	}
-	if response.Code != 200 || len(cursorPage.Items) != 1 || cursorPage.HasMore || cursorPage.NextCursor == nil || *cursorPage.NextCursor != "" {
+	if response.Code != http.StatusOK || len(cursorPage.Items) != 1 || cursorPage.HasMore || cursorPage.NextCursor == nil || *cursorPage.NextCursor != "" {
 		t.Fatalf("cursor page=%+v code=%d", cursorPage, response.Code)
 	}
 	request = httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/9/reviews?cursor=invalid", nil)

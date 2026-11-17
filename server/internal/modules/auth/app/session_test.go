@@ -130,15 +130,13 @@ func TestRefreshAllowsParallelRequestsDuringRotationGrace(t *testing.T) {
 	errorsByRequest := make([]error, 2)
 	var waitGroup sync.WaitGroup
 	for index := range results {
-		waitGroup.Add(1)
-		go func(index int) {
-			defer waitGroup.Done()
+		waitGroup.Go(func() {
 			<-start
 			results[index], errorsByRequest[index] = service.Refresh(
 				context.Background(),
 				issued.RefreshToken,
 			)
-		}(index)
+		})
 	}
 	close(start)
 	waitGroup.Wait()

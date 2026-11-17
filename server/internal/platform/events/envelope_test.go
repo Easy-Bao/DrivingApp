@@ -95,7 +95,6 @@ func TestEnvelopeRejectsInvalidContractValues(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		testCase := testCase
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 			if err := testCase.envelope.Validate(); err == nil || !strings.Contains(err.Error(), testCase.want) {
