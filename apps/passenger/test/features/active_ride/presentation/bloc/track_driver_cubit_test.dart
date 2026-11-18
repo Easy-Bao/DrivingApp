@@ -104,6 +104,79 @@ void main() {
         await cubit.close();
       },
     );
+
+    test('preserves active polling after cancelTripRequest fails', () async {
+      var pollCount = 0;
+      when(
+        () => repo.getRoutePolyline(
+          startLat: any(named: 'startLat'),
+          startLng: any(named: 'startLng'),
+          endLat: any(named: 'endLat'),
+          endLng: any(named: 'endLng'),
+        ),
+      ).thenAnswer(
+        (_) async => const [
+          [120.9842, 14.5995],
+          [120.9942, 14.6095],
+        ],
+      );
+      when(() => repo.getRideStatusUpdate('ride-42')).thenAnswer((_) async {
+        return const Ok(
+          RideUpdate(
+            status: RideStatus.accepted,
+            driverName: 'Juan',
+            vehiclePlate: 'ABC-123',
+            vehicleType: 'Sedan',
+          ),
+        );
+      });
+      when(() => repo.fetchDriverLocation('ride-42')).thenAnswer((_) async {
+        pollCount += 1;
+        return Ok(
+          DriverLocation(
+            latitude: 14.5995 + pollCount * 0.001,
+            longitude: 120.9842 + pollCount * 0.001,
+          ),
+        );
+      });
+      when(() => session.readActiveRideId()).thenAnswer((_) async => 'ride-42');
+      when(
+        () => repo.cancelRide(
+          rideId: any(named: 'rideId'),
+          reason: any(named: 'reason'),
+          details: any(named: 'details'),
+        ),
+      ).thenAnswer((_) async => const Err(NetworkFailure('cancel rejected')));
+
+      final cubit = _makeCubit(repo, session);
+      await cubit.startTracking(
+        rideId: 'ride-42',
+        driverId: 'driver-1',
+        startLat: 14.5995,
+        startLng: 120.9842,
+        endLat: 14.6045,
+        endLng: 120.9892,
+        destinationLat: 14.6095,
+        destinationLng: 120.9942,
+        driverName: 'Juan',
+        vehiclePlate: 'ABC-123',
+        vehicleType: 'Sedan',
+      );
+
+      expect(cubit.state, isA<TrackDriverInProgress>());
+      expect(await cubit.cancelTripRequest(), isFalse);
+      expect(cubit.state, isA<TrackDriverInProgress>());
+
+      await cubit.resyncActiveTrip();
+
+      verify(() => repo.getRideStatusUpdate('ride-42'))
+          .called(greaterThanOrEqualTo(2));
+      verify(() => repo.fetchDriverLocation('ride-42'))
+          .called(greaterThanOrEqualTo(2));
+      final inProgress = cubit.state as TrackDriverInProgress;
+      expect(inProgress.driverLat, closeTo(14.5995 + pollCount * 0.001, 1e-6));
+      await cubit.close();
+    });
   });
 
   group('TrackDriverCubit — emergencyStop()', () {
@@ -578,6 +651,82 @@ void main() {
       verify: (_) {
         verifyNever(() => repo.fetchDriverLocation('ride-1'));
         verify(() => session.saveActiveRideId('')).called(1);
+      },
+    );
+
+    Future<TrackDriverInProgress> trackRoute({
+      required String rideId,
+      required List<List<double>> route,
+    }) async {
+      when(() => session.readActiveRideId()).thenAnswer((_) async => rideId);
+      when(
+        () => repo.getRoutePolyline(
+          startLat: any(named: 'startLat'),
+          startLng: any(named: 'startLng'),
+          endLat: any(named: 'endLat'),
+          endLng: any(named: 'endLng'),
+        ),
+      ).thenAnswer((_) async => route);
+      when(() => repo.getRideStatusUpdate(rideId)).thenAnswer(
+        (_) async => const Ok(
+          RideUpdate(
+            status: RideStatus.accepted,
+            driverName: 'Juan',
+            vehiclePlate: 'ABC-123',
+            vehicleType: 'Sedan',
+          ),
+        ),
+      );
+      when(() => repo.fetchDriverLocation(rideId)).thenAnswer(
+        (_) async =>
+            const Ok(DriverLocation(latitude: 14.5995, longitude: 120.9842)),
+      );
+
+      final cubit = _makeCubit(repo, session);
+      addTearDown(cubit.close);
+      await cubit.startTracking(
+        rideId: rideId,
+        driverId: 'driver-1',
+        startLat: 14.5995,
+        startLng: 120.9842,
+        endLat: 14.6045,
+        endLng: 120.9892,
+        destinationLat: 14.6095,
+        destinationLng: 120.9942,
+        driverName: 'Juan',
+        vehiclePlate: 'ABC-123',
+        vehicleType: 'Sedan',
+      );
+      return cubit.state as TrackDriverInProgress;
+    }
+
+    test(
+      'retains route geometry when at least two valid coordinate pairs exist',
+      () async {
+        const routeWithInvalidLead = [
+          [double.nan, 14.5995],
+          [120.9842, 14.5995],
+          [120.9942, 14.6095],
+        ];
+        final state = await trackRoute(
+          rideId: 'ride-route',
+          route: routeWithInvalidLead,
+        );
+        expect(state.routePoints, equals(routeWithInvalidLead));
+      },
+    );
+
+    test(
+      'ignores route geometry with fewer than two valid coordinate pairs',
+      () async {
+        final state = await trackRoute(
+          rideId: 'ride-route-bad',
+          route: const [
+            [120.9842, 14.5995],
+            [120.9942, 95.0],
+          ],
+        );
+        expect(state.routePoints, isNull);
       },
     );
   });

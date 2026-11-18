@@ -3,6 +3,7 @@ import 'dart:developer' as dev;
 import 'dart:ui';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:foundation/foundation.dart';
@@ -27,9 +28,6 @@ class BackgroundTelemetry {
   final FlutterBackgroundService _service;
   final AppLifecycleCoordinator lifecycleCoordinator;
   bool _configured = false;
-
-  Uri get _apiBaseUri => apiBaseUri;
-  AppLifecycleCoordinator get _lifecycleCoordinator => lifecycleCoordinator;
 
   static Future<void> stopExistingServiceForStartup() async {
     await _stopRunningService(FlutterBackgroundService());
@@ -80,7 +78,7 @@ class BackgroundTelemetry {
   }
 
   Future<void> _configureService({required bool serviceWasStarted}) async {
-    final configuration = <String, dynamic>{'baseUrl': _apiBaseUri.toString()};
+    final configuration = <String, dynamic>{'baseUrl': apiBaseUri.toString()};
     _service.invoke('configure', configuration);
     if (!serviceWasStarted) return;
 
@@ -115,15 +113,15 @@ class BackgroundTelemetry {
   }
 
   Future<void> _waitForResumedActivity() async {
-    if (_lifecycleCoordinator.isForeground) return;
+    if (lifecycleCoordinator.isForeground) return;
 
     final resumed = Completer<void>();
     late final StreamSubscription<AppLifecycleStatus> subscription;
-    subscription = _lifecycleCoordinator.changes.listen((status) {
+    subscription = lifecycleCoordinator.changes.listen((status) {
       if (status != AppLifecycleStatus.foreground) return;
       if (!resumed.isCompleted) resumed.complete();
     });
-    if (_lifecycleCoordinator.isForeground && !resumed.isCompleted) {
+    if (lifecycleCoordinator.isForeground && !resumed.isCompleted) {
       resumed.complete();
     }
     try {
@@ -153,41 +151,155 @@ class BackgroundTelemetry {
   Future<void> stopRideTelemetry() => stop();
 }
 
-@pragma('vm:entry-point')
-void backgroundTelemetryOnStart(ServiceInstance service) {
-  DartPluginRegistrant.ensureInitialized();
+/// Manages background telemetry configuration, periodic location dispatch,
+/// and service shutdown inside the background service isolate.
+@visibleForTesting
+class BackgroundTelemetrySession {
+  BackgroundTelemetrySession({
+    required this.service,
+    SessionStore? sessionStore,
+    Dio Function(Uri baseUri)? createHttpClient,
+    Future<Position> Function()? readCurrentPosition,
+    Future<void> Function()? clearProfileCache,
+  }) : _sessionStore =
+           sessionStore ?? SessionStore(storage: const FlutterSecureStorage()),
+       _createHttpClient = createHttpClient ?? _defaultTelemetryHttpClient,
+       _readCurrentPosition =
+           readCurrentPosition ?? _defaultReadCurrentPosition,
+       _clearProfileCache = clearProfileCache ?? _defaultClearProfileCache;
 
-  final storage = const FlutterSecureStorage();
-  final sessionStore = SessionStore(storage: storage);
-  Dio? telemetryClient;
-  Dio? refreshClient;
-  RefreshableTokenProvider? tokenProvider;
-  var sending = false;
-  var isConfigured = false;
-  Timer? timer;
-  StreamSubscription<Map<String, dynamic>?>? configureSubscription;
-  StreamSubscription<Map<String, dynamic>?>? stopSubscription;
-  var isStopping = false;
+  final ServiceInstance service;
+  final SessionStore _sessionStore;
+  final Dio Function(Uri baseUri) _createHttpClient;
+  final Future<Position> Function() _readCurrentPosition;
+  final Future<void> Function() _clearProfileCache;
+
+  Dio? _telemetryClient;
+  Dio? _refreshClient;
+  RefreshableTokenProvider? _tokenProvider;
+  bool _sending = false;
+  bool _isConfigured = false;
+  bool _isStopping = false;
+  Timer? _timer;
+  StreamSubscription<Map<String, dynamic>?>? _configureSubscription;
+  StreamSubscription<Map<String, dynamic>?>? _stopSubscription;
+
+  void start() {
+    _configureSubscription = service.on('configure').listen(configure);
+    _stopSubscription = service.on('stopService').listen((_) {
+      unawaited(shutdown());
+    });
+    _timer = Timer.periodic(
+      _backgroundTelemetryInterval,
+      (_) => unawaited(sendLocation()),
+    );
+    unawaited(sendLocation());
+  }
+
+  void configure(Map<String, dynamic>? event) {
+    if (_isStopping) return;
+    final baseUrl = event?['baseUrl'] as String?;
+    final parsed = Uri.tryParse(baseUrl ?? '');
+    if (parsed == null || !_isValidTelemetryBaseUri(parsed)) {
+      _isConfigured = false;
+      _closeClients();
+      _tokenProvider = null;
+      return;
+    }
+
+    _closeClients();
+    final client = _createHttpClient(parsed);
+    final refresh = _createHttpClient(parsed);
+    final provider = RefreshableTokenProvider(
+      readAccessToken: _sessionStore.readToken,
+      readRefreshToken: _sessionStore.readRefreshToken,
+      saveAccessToken: _sessionStore.saveToken,
+      saveRefreshToken: _sessionStore.saveRefreshToken,
+      clearSession: () async {
+        await _sessionStore.clearSession();
+        await _clearProfileCache();
+      },
+      hasActiveMission: () async {
+        final activeRideId = await _sessionStore.readActiveRideId();
+        return activeRideId != null && activeRideId.trim().isNotEmpty;
+      },
+      refreshClient: refresh,
+      onSessionExpired: shutdown,
+    );
+    client.interceptors.add(
+      AuthInterceptor(
+        _sessionStore,
+        dio: client,
+        allowedBaseUri: parsed,
+        tokenProvider: provider,
+      ),
+    );
+    _telemetryClient = client;
+    _refreshClient = refresh;
+    _tokenProvider = provider;
+    _isConfigured = true;
+  }
+
+  Future<void> sendLocation() async {
+    final client = _telemetryClient;
+    final provider = _tokenProvider;
+    if (_isStopping ||
+        !_isConfigured ||
+        _sending ||
+        client == null ||
+        provider == null) {
+      return;
+    }
+
+    _sending = true;
+    try {
+      final token = await provider.getToken();
+      final rideId = (await _sessionStore.readActiveRideId())?.trim();
+      if (_isStopping ||
+          !_isConfigured ||
+          !identical(_telemetryClient, client) ||
+          token == null ||
+          token.isEmpty ||
+          rideId == null ||
+          rideId.isEmpty) {
+        return;
+      }
+
+      final position = await _readCurrentPosition();
+      if (_isStopping ||
+          !_isConfigured ||
+          !identical(_telemetryClient, client)) {
+        return;
+      }
+      await client.post<void>(
+        '/api/v1/telemetry/passenger/${Uri.encodeComponent(rideId)}',
+        data: {'latitude': position.latitude, 'longitude': position.longitude},
+      );
+    } on DioException catch (error) {
+      dev.log(
+        'Passenger telemetry request failed: ${error.type.name}/${error.response?.statusCode ?? 'network'}',
+      );
+    } catch (_) {
+      dev.log('Passenger telemetry collection failed.');
+    } finally {
+      _sending = false;
+    }
+  }
 
   Future<void> shutdown() async {
-    if (isStopping) return;
-    isStopping = true;
-    isConfigured = false;
-    timer?.cancel();
-    timer = null;
+    if (_isStopping) return;
+    _isStopping = true;
+    _isConfigured = false;
+    _timer?.cancel();
+    _timer = null;
 
-    final client = telemetryClient;
-    final refresh = refreshClient;
-    telemetryClient = null;
-    refreshClient = null;
-    tokenProvider = null;
-    client?.close(force: true);
-    refresh?.close(force: true);
+    _tokenProvider = null;
+    _closeClients();
 
     try {
       await Future.wait([
-        configureSubscription?.cancel() ?? Future<void>.value(),
-        stopSubscription?.cancel() ?? Future<void>.value(),
+        _configureSubscription?.cancel() ?? Future<void>.value(),
+        _stopSubscription?.cancel() ?? Future<void>.value(),
       ]);
     } catch (error) {
       dev.log('Unable to close telemetry event subscriptions: $error');
@@ -200,115 +312,46 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     }
   }
 
-  configureSubscription = service.on('configure').listen((event) {
-    if (isStopping) return;
-    final baseUrl = event?['baseUrl'] as String?;
-    final parsed = Uri.tryParse(baseUrl ?? '');
-    if (parsed == null || !_isValidTelemetryBaseUri(parsed)) {
-      isConfigured = false;
-      telemetryClient?.close(force: true);
-      refreshClient?.close(force: true);
-      telemetryClient = null;
-      refreshClient = null;
-      tokenProvider = null;
-      return;
-    }
-    telemetryClient?.close(force: true);
-    refreshClient?.close(force: true);
-    final client = Dio(
-      BaseOptions(
-        baseUrl: parsed.toString(),
-        connectTimeout: const Duration(seconds: 10),
-        sendTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
-      ),
-    );
-    final refresh = Dio(
-      BaseOptions(
-        baseUrl: parsed.toString(),
-        connectTimeout: const Duration(seconds: 10),
-        sendTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
-      ),
-    );
-    final provider = RefreshableTokenProvider(
-      readAccessToken: sessionStore.readToken,
-      readRefreshToken: sessionStore.readRefreshToken,
-      saveAccessToken: sessionStore.saveToken,
-      saveRefreshToken: sessionStore.saveRefreshToken,
-      clearSession: () async {
-        await sessionStore.clearSession();
-        try {
-          final preferences = await SharedPreferences.getInstance();
-          for (final key in StorageKeys.profileCacheKeys) {
-            await preferences.remove(key);
-          }
-        } catch (_) {}
-      },
-      hasActiveMission: () async {
-        final activeRideId = await sessionStore.readActiveRideId();
-        return activeRideId != null && activeRideId.trim().isNotEmpty;
-      },
-      refreshClient: refresh,
-      onSessionExpired: shutdown,
-    );
-    client.interceptors.add(
-      AuthInterceptor(
-        sessionStore,
-        dio: client,
-        allowedBaseUri: parsed,
-        tokenProvider: provider,
-      ),
-    );
-    telemetryClient = client;
-    refreshClient = refresh;
-    tokenProvider = provider;
-    isConfigured = true;
-  });
-
-  Future<void> sendLocation() async {
-    final client = telemetryClient;
-    final provider = tokenProvider;
-    if (!isConfigured || sending || client == null || provider == null) return;
-
-    final token = await provider.getToken();
-    final rideId = (await sessionStore.readActiveRideId())?.trim();
-    if (token == null || token.isEmpty || rideId == null || rideId.isEmpty) {
-      return;
-    }
-
-    sending = true;
-    try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 10,
-          timeLimit: Duration(seconds: 5),
-        ),
-      );
-      await client.post<void>(
-        '/api/v1/telemetry/passenger/${Uri.encodeComponent(rideId)}',
-        data: {'latitude': position.latitude, 'longitude': position.longitude},
-      );
-    } on DioException catch (error) {
-      dev.log(
-        'Passenger telemetry request failed: ${error.type.name}/${error.response?.statusCode ?? 'network'}',
-      );
-    } catch (_) {
-      dev.log('Passenger telemetry collection failed.');
-    } finally {
-      sending = false;
-    }
+  void _closeClients() {
+    final client = _telemetryClient;
+    final refresh = _refreshClient;
+    _telemetryClient = null;
+    _refreshClient = null;
+    client?.close(force: true);
+    refresh?.close(force: true);
   }
+}
 
-  stopSubscription = service.on('stopService').listen((_) {
-    unawaited(shutdown());
-  });
-  timer = Timer.periodic(
-    _backgroundTelemetryInterval,
-    (_) => unawaited(sendLocation()),
-  );
-  unawaited(sendLocation());
+Dio _defaultTelemetryHttpClient(Uri baseUri) => Dio(
+  BaseOptions(
+    baseUrl: baseUri.toString(),
+    connectTimeout: const Duration(seconds: 10),
+    sendTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 10),
+  ),
+);
+
+Future<Position> _defaultReadCurrentPosition() => Geolocator.getCurrentPosition(
+  locationSettings: const LocationSettings(
+    accuracy: LocationAccuracy.high,
+    distanceFilter: 10,
+    timeLimit: Duration(seconds: 5),
+  ),
+);
+
+Future<void> _defaultClearProfileCache() async {
+  try {
+    final preferences = await SharedPreferences.getInstance();
+    for (final key in StorageKeys.profileCacheKeys) {
+      await preferences.remove(key);
+    }
+  } catch (_) {}
+}
+
+@pragma('vm:entry-point')
+void backgroundTelemetryOnStart(ServiceInstance service) {
+  DartPluginRegistrant.ensureInitialized();
+  BackgroundTelemetrySession(service: service).start();
 }
 
 bool _isValidTelemetryBaseUri(Uri uri) {

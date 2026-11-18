@@ -336,13 +336,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     unawaited(_locationSubscription?.cancel());
     unawaited(_chatMessagesPollingTask.dispose());
     unawaited(_chatRepository?.dispose());
-    for (final manager in <MapBaseAnnotationManager?>[
-      _routeLineManager,
-      _passengerMarkerManager,
-      _driverMarkerManager,
-    ]) {
-      unawaited(MapProvider.clearAnnotations(manager));
-    }
+    _clearMapAnnotations();
     _mapController = null;
     _pendingMapUpdate = null;
     super.dispose();
@@ -491,11 +485,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     setState(() => _unreadChatMessagesCount = 0);
   }
 
-  void _onMapCreated(AppMapController controller) {
-    _mapController = controller;
-    _isMapReady = false;
-    _hasFittedInitialMap = false;
-    _lastCameraFitAt = null;
+  void _clearMapAnnotations() {
     for (final manager in <MapBaseAnnotationManager?>[
       _routeLineManager,
       _passengerMarkerManager,
@@ -506,6 +496,14 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     _routeLineManager = null;
     _passengerMarkerManager = null;
     _driverMarkerManager = null;
+  }
+
+  void _onMapCreated(AppMapController controller) {
+    _mapController = controller;
+    _isMapReady = false;
+    _hasFittedInitialMap = false;
+    _lastCameraFitAt = null;
+    _clearMapAnnotations();
     _startTracking();
   }
 
@@ -673,17 +671,15 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       final result = await chatRepository.fetchRoomMessages(widget.ride.id);
 
       result.fold((_) => null, (List<ChatMessage> messages) {
-        final driverChatMessagesList = messages
-            .where((m) => m.senderId != passengerIdentifier)
-            .toList();
         if (!mounted) return;
         final readAt = _chatReadAt;
-        final unreadMessagesCount = driverChatMessagesList
-            .where(
-              (message) =>
-                  readAt == null || message.createdAt.toUtc().isAfter(readAt),
-            )
-            .length;
+        var unreadMessagesCount = 0;
+        for (final message in messages) {
+          if (message.senderId == passengerIdentifier) continue;
+          if (readAt == null || message.createdAt.toUtc().isAfter(readAt)) {
+            unreadMessagesCount++;
+          }
+        }
         if (unreadMessagesCount != _unreadChatMessagesCount) {
           setState(() => _unreadChatMessagesCount = unreadMessagesCount);
         }
