@@ -14,6 +14,8 @@ class RetryInterceptor(
   RetryDelay? retryDelay,
   bool retrySafeReadsByDefault = false,
 }) extends Interceptor {
+  static final Random _random = Random();
+
   final Dio dio;
   final bool _retrySafeReadsByDefault;
   final RetryDelay _retryDelay;
@@ -57,6 +59,8 @@ class RetryInterceptor(
       try {
         final response = await dio.fetch(requestOptions);
         return handler.resolve(response);
+      } on DioException catch (retryError) {
+        return handler.next(retryError);
       } catch (_) {}
     }
     super.onError(error, handler);
@@ -65,7 +69,7 @@ class RetryInterceptor(
   static Duration _defaultRetryDelay(int retryAttempt) {
     final boundedAttempt = retryAttempt.clamp(1, 4);
     final baseMilliseconds = 250 * (1 << (boundedAttempt - 1));
-    final jitterMilliseconds = Random().nextInt(126);
+    final jitterMilliseconds = _random.nextInt(126);
     return Duration(milliseconds: baseMilliseconds + jitterMilliseconds);
   }
 }

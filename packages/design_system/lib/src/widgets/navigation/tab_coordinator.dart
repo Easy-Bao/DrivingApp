@@ -46,14 +46,20 @@ class TabNavigationCoordinator extends ChangeNotifier {
     if (_navigationHistory.length > 1) {
       _navigationHistory.removeLast();
       _selectedIndex = _navigationHistory.last;
-    } else {
-      _navigationHistory
-        ..clear()
-        ..add(0);
-      _selectedIndex = 0;
+      notifyListeners();
+      return selectedIndex;
     }
+    if (_selectedIndex == 0 &&
+        _navigationHistory.length == 1 &&
+        _navigationHistory.first == 0) {
+      return 0;
+    }
+    _navigationHistory
+      ..clear()
+      ..add(0);
+    _selectedIndex = 0;
     notifyListeners();
-    return selectedIndex;
+    return 0;
   }
 
   @override

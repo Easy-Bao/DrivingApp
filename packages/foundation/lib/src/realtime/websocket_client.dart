@@ -405,10 +405,9 @@ final class RealtimeWebSocketClient({
   }
 
   bool _remember(String id) {
-    if (_seenIds.contains(id)) {
+    if (!_seenIds.add(id)) {
       return false;
     }
-    _seenIds.add(id);
     if (_seenIds.length > _maximumDuplicateIds) {
       _seenIds.remove(_seenIds.first);
     }

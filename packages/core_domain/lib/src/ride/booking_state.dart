@@ -110,7 +110,10 @@ extension ShortHopBookingStatePresentation on ShortHopBookingState {
       :final driver,
       driverLocation: (final latitude, final longitude),
     )
-        when latitude != 0 && longitude != 0 =>
+        when latitude.isFinite &&
+            longitude.isFinite &&
+            latitude != 0 &&
+            longitude != 0 =>
       '${driver.displayName} is on the way at '
           '(${latitude.toStringAsFixed(4)}, ${longitude.toStringAsFixed(4)}).',
     ShortHopDriverAssigned(:final driver) =>

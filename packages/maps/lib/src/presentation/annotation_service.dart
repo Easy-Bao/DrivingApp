@@ -436,39 +436,13 @@ class MapAnnotationService._() {
     List<List<double>> points, {
     Color color = TripMapMarkerStyle.ownLocation,
     double width = 4.0,
-  }) async {
-    final validPoints = points.where(_isValidPolylinePoint).toList();
-    if (validPoints.length < 2) {
-      throw ArgumentError.value(
-        points,
-        'points',
-        'at least two valid coordinates are required',
-      );
-    }
-
-    final mapController = controller.native;
-    final annotationManager = await mapController.annotations
-        .createPolylineAnnotationManager();
-    _annotationManagerOwners[annotationManager] = mapController;
-
-    final coordinates = validPoints
-        .map((point) => mapbox.Position(point[0], point[1]))
-        .toList();
-
-    try {
-      await annotationManager.create(
-        mapbox.PolylineAnnotationOptions(
-          geometry: mapbox.LineString(coordinates: coordinates),
-          lineWidth: width,
-          lineColor: color.toARGB32(),
-          lineJoin: mapbox.LineJoin.ROUND,
-        ),
-      );
-      return annotationManager;
-    } catch (_) {
-      await clearAnnotations(annotationManager);
-      rethrow;
-    }
+  }) {
+    return _addPolylinePositions(
+      controller,
+      _positionsFromPoints(points),
+      color: color,
+      width: width,
+    );
   }
 
   static Future<mapbox.PolylineAnnotationManager> addPolylineBuffer(
@@ -476,8 +450,21 @@ class MapAnnotationService._() {
     Float64List coordinates, {
     Color color = TripMapMarkerStyle.ownLocation,
     double width = 4.0,
+  }) {
+    return _addPolylinePositions(
+      controller,
+      _positionsFromBuffer(coordinates),
+      color: color,
+      width: width,
+    );
+  }
+
+  static Future<mapbox.PolylineAnnotationManager> _addPolylinePositions(
+    AppMapController controller,
+    List<mapbox.Position> positions, {
+    required Color color,
+    required double width,
   }) async {
-    final positions = _positionsFromBuffer(coordinates);
     final mapController = controller.native;
     final annotationManager = await mapController.annotations
         .createPolylineAnnotationManager();
@@ -504,39 +491,13 @@ class MapAnnotationService._() {
     List<List<double>> points, {
     Color color = TripMapMarkerStyle.ownLocation,
     double width = 4.0,
-  }) async {
-    final validPoints = points.where(_isValidPolylinePoint).toList();
-    if (validPoints.length < 2) {
-      throw ArgumentError.value(
-        points,
-        'points',
-        'at least two valid coordinates are required',
-      );
-    }
-    final coordinates = validPoints
-        .map((point) => mapbox.Position(point[0], point[1]))
-        .toList();
-    final annotations = await annotationManager.getAnnotations();
-    if (annotations.isEmpty) {
-      await annotationManager.create(
-        mapbox.PolylineAnnotationOptions(
-          geometry: mapbox.LineString(coordinates: coordinates),
-          lineWidth: width,
-          lineColor: color.toARGB32(),
-          lineJoin: mapbox.LineJoin.ROUND,
-        ),
-      );
-      return;
-    }
-    final annotation = annotations.first;
-    annotation.geometry = mapbox.LineString(coordinates: coordinates);
-    annotation.lineWidth = width;
-    annotation.lineColor = color.toARGB32();
-    annotation.lineJoin = mapbox.LineJoin.ROUND;
-    await annotationManager.update(annotation);
-    if (annotations.length > 1) {
-      await annotationManager.deleteMulti(annotations.skip(1).toList());
-    }
+  }) {
+    return _replacePolylinePositions(
+      annotationManager,
+      _positionsFromPoints(points),
+      color: color,
+      width: width,
+    );
   }
 
   static Future<void> replacePolylineBuffer(
@@ -544,8 +505,21 @@ class MapAnnotationService._() {
     Float64List coordinates, {
     Color color = TripMapMarkerStyle.ownLocation,
     double width = 4.0,
+  }) {
+    return _replacePolylinePositions(
+      annotationManager,
+      _positionsFromBuffer(coordinates),
+      color: color,
+      width: width,
+    );
+  }
+
+  static Future<void> _replacePolylinePositions(
+    mapbox.PolylineAnnotationManager annotationManager,
+    List<mapbox.Position> positions, {
+    required Color color,
+    required double width,
   }) async {
-    final positions = _positionsFromBuffer(coordinates);
     final annotations = await annotationManager.getAnnotations();
     if (annotations.isEmpty) {
       await annotationManager.create(
@@ -567,6 +541,23 @@ class MapAnnotationService._() {
     if (annotations.length > 1) {
       await annotationManager.deleteMulti(annotations.skip(1).toList());
     }
+  }
+
+  static List<mapbox.Position> _positionsFromPoints(List<List<double>> points) {
+    final positions = <mapbox.Position>[];
+    for (final point in points) {
+      if (_isValidPolylinePoint(point)) {
+        positions.add(mapbox.Position(point[0], point[1]));
+      }
+    }
+    if (positions.length < 2) {
+      throw ArgumentError.value(
+        points,
+        'points',
+        'at least two valid coordinates are required',
+      );
+    }
+    return positions;
   }
 
   static List<mapbox.Position> _positionsFromBuffer(Float64List coordinates) {

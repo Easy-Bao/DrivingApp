@@ -88,6 +88,19 @@ void main() {
       expect(states[3].driverLatitude, 8.058);
       expect(states[0].driverLatitude, isNull);
     });
+
+    test('falls back cleanly when driver coordinates are non-finite', () {
+      const assignedWithNaN = ShortHopDriverAssigned(
+        rideId: RideId('ride-1'),
+        driver: driver,
+        driverLocation: (double.nan, double.nan),
+        pickup: (8.056, 123.742),
+        destination: (8.060, 123.746),
+        eta: Duration(minutes: 2),
+      );
+
+      expect(assignedWithNaN.statusMessage, 'Alex is on the way.');
+    });
   });
 
   group('ride session access', () {

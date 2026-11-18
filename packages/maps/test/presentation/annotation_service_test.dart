@@ -97,6 +97,43 @@ void main() {
       closeTo(89.99, 0.5),
     );
   });
+
+  group('polyline annotations', () {
+    test(
+      'addPolyline and replacePolyline filter invalid points in a single pass',
+      () async {
+        final annotations = _TestAnnotations();
+        final controller = AppMapController(
+          mapbox.MapboxMap(_TestMap(annotations)),
+        );
+
+        final manager = await MapAnnotationService.addPolyline(
+          controller,
+          const [
+            [123.4, 7.8],
+            [double.nan, 7.9],
+            [123.5, 7.9],
+          ],
+        );
+        expect(annotations.polyline.createdCoordinates, hasLength(2));
+
+        await MapAnnotationService.replacePolyline(manager, const [
+          [123.6, 8.0],
+          [123.7, 95.0],
+          [123.8, 8.1],
+        ]);
+        expect(annotations.polyline.updatedCoordinates, hasLength(2));
+
+        await expectLater(
+          () => MapAnnotationService.addPolyline(controller, const [
+            [123.4, 7.8],
+            [double.nan, 7.9],
+          ]),
+          throwsArgumentError,
+        );
+      },
+    );
+  });
 }
 
 class _TestMap(this.annotations) implements MapboxMapPlatformInterface {
@@ -120,6 +157,7 @@ class _TestAnnotations({this.removalFails = false, this.removal})
   final bool removalFails;
   final Completer<void>? removal;
   final point = _TestPoint();
+  final polyline = _TestPolyline();
   int removalCalls = 0;
 
   @override
@@ -127,6 +165,11 @@ class _TestAnnotations({this.removalFails = false, this.removal})
     String? id,
     String? below,
   }) async => point;
+
+  @override
+  Future<PolylineAnnotationManagerPlatformInterface>
+  createPolylineAnnotationManager({String? id, String? below}) async =>
+      polyline;
 
   @override
   Future<void> removeAnnotationManager(
@@ -137,6 +180,38 @@ class _TestAnnotations({this.removalFails = false, this.removal})
       throw MissingPluginException('annotation#remove_manager');
     }
     await removal?.future;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _TestPolyline implements PolylineAnnotationManagerPlatformInterface {
+  List<mapbox.Position>? createdCoordinates;
+  List<mapbox.Position>? updatedCoordinates;
+  final List<PolylineAnnotation> _annotations = [];
+
+  @override
+  String get id => '3';
+
+  @override
+  Future<PolylineAnnotation> create(PolylineAnnotationOptions options) async {
+    createdCoordinates = options.geometry.coordinates;
+    final annotation = PolylineAnnotation(
+      id: 'polyline',
+      geometry: options.geometry,
+    );
+    _annotations.add(annotation);
+    return annotation;
+  }
+
+  @override
+  Future<List<PolylineAnnotation>> getAnnotations() async =>
+      List<PolylineAnnotation>.from(_annotations);
+
+  @override
+  Future<void> update(PolylineAnnotation annotation) async {
+    updatedCoordinates = annotation.geometry.coordinates;
   }
 
   @override

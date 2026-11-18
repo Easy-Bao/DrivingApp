@@ -103,4 +103,20 @@ void main() {
 
     expect(route.polylinePoints, hasLength(2));
   });
+
+  test('computes geometry and startCoordinate past leading invalid points', () {
+    const route = Route(
+      polylinePoints: [
+        [double.nan, 7.8],
+        [123.4, 95.0],
+        [123.5, 7.9],
+        [123.6, 8.0],
+      ],
+      distanceKm: 1.5,
+      durationSeconds: 180,
+    );
+
+    expect(route.hasGeometry, isTrue);
+    expect(route.startCoordinate, (lat: 7.9, lng: 123.5));
+  });
 }

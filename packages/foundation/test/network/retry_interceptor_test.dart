@@ -133,6 +133,59 @@ void main() {
 
     expect(attempts, 3);
   });
+
+  test(
+    'forwards the retry HTTP failure instead of the stale initial error',
+    () async {
+      final dio = Dio(BaseOptions(baseUrl: 'https://api.example.test'))
+        ..httpClientAdapter = _NetworkThenHttpErrorAdapter();
+      dio.interceptors.add(
+        RetryInterceptor(
+          dio,
+          retrySafeReadsByDefault: true,
+          retryDelay: (_) => Duration.zero,
+        ),
+      );
+
+      await expectLater(
+        dio.get<void>('/api/v1/dashboard'),
+        throwsA(
+          isA<DioException>().having(
+            (error) => error.response?.statusCode,
+            'status code',
+            503,
+          ),
+        ),
+      );
+    },
+  );
+}
+
+class _NetworkThenHttpErrorAdapter implements HttpClientAdapter {
+  int attempts = 0;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<List<int>>? requestStream,
+    Future<void>? cancelFuture,
+  ) {
+    attempts++;
+    if (attempts == 1) {
+      throw DioException(
+        requestOptions: options,
+        type: DioExceptionType.connectionError,
+      );
+    }
+    throw DioException.badResponse(
+      statusCode: 503,
+      requestOptions: options,
+      response: Response<void>(requestOptions: options, statusCode: 503),
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
 }
 
 class _FailingHttpClientAdapter(this.onAttempt) implements HttpClientAdapter {

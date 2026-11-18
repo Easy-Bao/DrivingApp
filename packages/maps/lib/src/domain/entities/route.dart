@@ -153,7 +153,15 @@ extension RouteExtension on Route {
       .map((point) => [point[0], point[1]])
       .toList(growable: false);
 
-  bool get hasGeometry => validPolylinePoints.length >= 2;
+  bool get hasGeometry {
+    var validCount = 0;
+    for (final point in polylinePoints) {
+      if (_isValidPolylinePoint(point) && ++validCount >= 2) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   /// Mapbox coordinates are ordered longitude first.
   ({double lat, double lng})? get bufferedStartCoordinate {
@@ -165,8 +173,11 @@ extension RouteExtension on Route {
   /// Returns the first valid point from the GeoJSON polyline as a map-ready
   /// latitude/longitude pair. Mapbox coordinates are ordered longitude first.
   ({double lat, double lng})? get startCoordinate {
-    final point = validPolylinePoints.firstOrNull;
-    if (point != null) return (lat: point[1], lng: point[0]);
+    for (final point in polylinePoints) {
+      if (_isValidPolylinePoint(point)) {
+        return (lat: point[1], lng: point[0]);
+      }
+    }
     return null;
   }
 }
