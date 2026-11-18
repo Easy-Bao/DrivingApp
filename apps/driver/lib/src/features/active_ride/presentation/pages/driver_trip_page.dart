@@ -51,6 +51,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
   late final RideFlowCubit _rideCubit;
   late final AppLifecyclePeriodicTask _trackingTask;
   ChatRepository? _chatRepository;
+  String? _driverId;
   double? _pickupLatitude;
   double? _pickupLongitude;
   double? _destinationLatitude;
@@ -87,8 +88,18 @@ class _DriverTripPageState extends State<DriverTripPage> {
     unawaited(_initialize());
   }
 
-  Future<void> _initialize() async {
+  Future<String> _resolveDriverId() async {
+    final cached = _driverId;
+    if (cached != null && cached.isNotEmpty) return cached;
     final driverId = await widget.sessionService.readDriverId() ?? '';
+    if (driverId.isNotEmpty) {
+      _driverId = driverId;
+    }
+    return driverId;
+  }
+
+  Future<void> _initialize() async {
+    final driverId = await _resolveDriverId();
     if (!mounted) return;
     if (driverId.isNotEmpty) {
       _chatRepository = widget.chatRepositoryFactory.create(
@@ -345,7 +356,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
   }
 
   Future<void> _openChat() async {
-    final driverId = await widget.sessionService.readDriverId() ?? '';
+    final driverId = await _resolveDriverId();
     final rideId = _rideCubit.activeRideId;
     if (!mounted || driverId.isEmpty || rideId == null) return;
     setState(() {
@@ -371,17 +382,19 @@ class _DriverTripPageState extends State<DriverTripPage> {
       final rideId = cubit.activeRideId;
       if (rideId == null || rideId.isEmpty) return;
 
-      final driverIdentifier = await widget.sessionService.readDriverId() ?? '';
+      final driverIdentifier = await _resolveDriverId();
       if (driverIdentifier.isEmpty) return;
 
       final chatRepository = _chatRepository;
       if (chatRepository == null) return;
       final result = await chatRepository.fetchRoomMessages(rideId);
       result.fold((_) => null, (List<ChatMessage> messages) {
-        final passengerChatMessagesList = messages
-            .where((m) => m.senderId != driverIdentifier)
-            .toList();
-        final currentPassengerMessagesCount = passengerChatMessagesList.length;
+        var currentPassengerMessagesCount = 0;
+        for (final message in messages) {
+          if (message.senderId != driverIdentifier) {
+            currentPassengerMessagesCount++;
+          }
+        }
 
         if (!_isInitialChatMessagesCountFetched) {
           _viewedPassengerMessagesCount = 0;

@@ -132,14 +132,7 @@ class RideFlowCubit({
       return;
     }
     final actionGeneration = ++_actionGeneration;
-    _waitTimer?.cancel();
-    _stopRideStatusSyncTimer();
-    _activeRideId = null;
-    _activePassengerId = null;
-    _activePassengerName = null;
-    _waitingUntil = null;
-    _waitStartedAt = null;
-    _elapsedWaitTime = 0;
+    _clearLocalRideState();
     _isActionInFlight = true;
     _isRideCompletionPending = false;
     await _clearActiveRideSession();
@@ -221,14 +214,7 @@ class RideFlowCubit({
       'cancelled',
     }.contains(normalizedStatus)) {
       final actionGeneration = ++_actionGeneration;
-      _waitTimer?.cancel();
-      _stopRideStatusSyncTimer();
-      _activeRideId = null;
-      _activePassengerId = null;
-      _activePassengerName = null;
-      _waitingUntil = null;
-      _waitStartedAt = null;
-      _elapsedWaitTime = 0;
+      _clearLocalRideState();
       _isActionInFlight = true;
       await _clearActiveRideSession();
       if (!_isCurrentAction(actionGeneration)) return false;
@@ -444,29 +430,24 @@ class RideFlowCubit({
     }
   }
 
-  Future<bool> markPassengerNoShow() async {
-    if (_isActionInFlight || _activeRideId == null) return false;
+  Future<bool> _executeTerminalAction(
+    Future<Result<void, DomainFailure>> Function(String rideId) action,
+  ) async {
+    final rideId = _activeRideId;
+    if (_isActionInFlight || rideId == null) return false;
     final tripBeforeAction = state;
     _lastActionFailureMessage = null;
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
     try {
-      Failure? noShowFailure;
-      (await _rideRepository.markPassengerNoShowResult(_activeRideId!))
-          .fold((failure) => noShowFailure = failure, (_) {});
+      Failure? failure;
+      (await action(rideId)).fold((value) => failure = value, (_) {});
       if (!_isCurrentAction(actionGeneration)) return false;
-      if (noShowFailure != null) {
-        emit(RideFlowError(ErrorHandler.getErrorMessage(noShowFailure!)));
+      if (failure != null) {
+        emit(RideFlowError(ErrorHandler.getErrorMessage(failure!)));
         return false;
       }
-      _waitTimer?.cancel();
-      _stopRideStatusSyncTimer();
-      _activeRideId = null;
-      _activePassengerId = null;
-      _activePassengerName = null;
-      _waitingUntil = null;
-      _waitStartedAt = null;
-      _elapsedWaitTime = 0;
+      _clearLocalRideState();
       await _clearActiveRideSession();
       if (!_isCurrentAction(actionGeneration)) return false;
       emit(const RideFlowInitial());
@@ -484,96 +465,26 @@ class RideFlowCubit({
     }
   }
 
-  Future<bool> cancelRide({required String reason, String details = ''}) async {
-    if (_isActionInFlight || _activeRideId == null) return false;
-    final tripBeforeAction = state;
-    _lastActionFailureMessage = null;
-    final actionGeneration = ++_actionGeneration;
-    _isActionInFlight = true;
-    try {
-      Failure? cancellationFailure;
-      (await _rideRepository.cancelRideResult(
-        rideId: _activeRideId!,
-        reason: reason,
-        details: details,
-      )).fold((failure) => cancellationFailure = failure, (_) {});
-      if (!_isCurrentAction(actionGeneration)) return false;
-      if (cancellationFailure != null) {
-        emit(RideFlowError(ErrorHandler.getErrorMessage(cancellationFailure!)));
-        return false;
-      }
-      _waitTimer?.cancel();
-      _stopRideStatusSyncTimer();
-      _activeRideId = null;
-      _activePassengerId = null;
-      _activePassengerName = null;
-      _waitingUntil = null;
-      _waitStartedAt = null;
-      _elapsedWaitTime = 0;
-      await _clearActiveRideSession();
-      if (!_isCurrentAction(actionGeneration)) return false;
-      emit(const RideFlowInitial());
-      return true;
-    } catch (error) {
-      if (_isCurrentAction(actionGeneration)) {
-        emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
-      }
-      return false;
-    } finally {
-      if (_isCurrentAction(actionGeneration)) {
-        _isActionInFlight = false;
-        _restoreTripAfterFailedAction(tripBeforeAction, actionGeneration);
-      }
-    }
-  }
+  Future<bool> markPassengerNoShow() =>
+      _executeTerminalAction(_rideRepository.markPassengerNoShowResult);
 
-  Future<bool> emergencyStop({
-    required String reason,
-    String details = '',
-  }) async {
-    if (_isActionInFlight || _activeRideId == null) return false;
-    final tripBeforeAction = state;
-    _lastActionFailureMessage = null;
-    final actionGeneration = ++_actionGeneration;
-    _isActionInFlight = true;
-    try {
-      Failure? emergencyStopFailure;
-      (await _rideRepository.emergencyStopResult(
-        rideId: _activeRideId!,
-        reason: reason,
-        details: details,
-      )).fold((failure) => emergencyStopFailure = failure, (_) {});
-      if (!_isCurrentAction(actionGeneration)) return false;
-      if (emergencyStopFailure != null) {
-        emit(
-          RideFlowError(ErrorHandler.getErrorMessage(emergencyStopFailure!)),
-        );
-        return false;
-      }
-      _waitTimer?.cancel();
-      _stopRideStatusSyncTimer();
-      _activeRideId = null;
-      _activePassengerId = null;
-      _activePassengerName = null;
-      _waitingUntil = null;
-      _waitStartedAt = null;
-      _elapsedWaitTime = 0;
-      await _clearActiveRideSession();
-      if (!_isCurrentAction(actionGeneration)) return false;
-      emit(const RideFlowInitial());
-      return true;
-    } catch (error) {
-      if (_isCurrentAction(actionGeneration)) {
-        emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
-      }
-      return false;
-    } finally {
-      if (_isCurrentAction(actionGeneration)) {
-        _isActionInFlight = false;
-        _restoreTripAfterFailedAction(tripBeforeAction, actionGeneration);
-      }
-    }
-  }
+  Future<bool> cancelRide({required String reason, String details = ''}) =>
+      _executeTerminalAction(
+        (rideId) => _rideRepository.cancelRideResult(
+          rideId: rideId,
+          reason: reason,
+          details: details,
+        ),
+      );
+
+  Future<bool> emergencyStop({required String reason, String details = ''}) =>
+      _executeTerminalAction(
+        (rideId) => _rideRepository.emergencyStopResult(
+          rideId: rideId,
+          reason: reason,
+          details: details,
+        ),
+      );
 
   void _restoreTripAfterFailedAction(RideState previous, int generation) {
     if (state is! RideFlowError ||
@@ -838,6 +749,7 @@ class RideFlowCubit({
         if (!_isCurrentAction(actionGeneration)) return null;
         if (completionFailure != null || completedRide == null) {
           final recheck = await _rideRepository.fetchRideResult(rideId);
+          if (!_isCurrentAction(actionGeneration)) return null;
           RideSnapshot? authoritative;
           recheck.fold((_) {}, (r) => authoritative = r);
           if (authoritative != null && authoritative!.status == 'completed') {
@@ -895,21 +807,28 @@ class RideFlowCubit({
 
   Future<void> reset() async {
     final actionGeneration = ++_actionGeneration;
-    _waitTimer?.cancel();
-    _stopRideStatusSyncTimer();
-    _activeRideId = null;
-    _activePassengerId = null;
-    _activePassengerName = null;
-    _waitingUntil = null;
-    _lastActionFailureMessage = null;
-    _waitStartedAt = null;
-    _elapsedWaitTime = 0;
+    _clearLocalRideState(clearLastFailure: true);
     _isRideCompletionPending = false;
     _isActionInFlight = true;
     await _clearActiveRideSession();
     if (!_isCurrentAction(actionGeneration)) return;
     _isActionInFlight = false;
     emit(const RideFlowInitial());
+  }
+
+  void _clearLocalRideState({bool clearLastFailure = false}) {
+    _waitTimer?.cancel();
+    _stopRideStatusSyncTimer();
+    _activeRideId = null;
+    _activeBookingReference = null;
+    _activePassengerId = null;
+    _activePassengerName = null;
+    _waitingUntil = null;
+    _waitStartedAt = null;
+    _elapsedWaitTime = 0;
+    if (clearLastFailure) {
+      _lastActionFailureMessage = null;
+    }
   }
 
   Future<void> _clearActiveRideSession() =>

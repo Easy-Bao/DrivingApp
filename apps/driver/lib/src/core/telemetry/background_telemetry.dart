@@ -197,51 +197,183 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
 
   final storage = const FlutterSecureStorage();
   final sessionStore = SessionStore(storage: storage);
-  Dio? telemetryClient;
-  Dio? refreshClient;
-  RefreshableTokenProvider? tokenProvider;
-  var sending = false;
-  var sendingPresence = false;
-  var pollingRideRequests = false;
-  var appIsVisible = false;
-  var batteryOptimizationWarning = false;
-  var isConfigured = false;
-  var activeRequestIds = <String>{};
-  DateTime? previousLocationSampleAt;
-  Timer? locationTimer;
-  Timer? presenceTimer;
-  Timer? requestTimer;
-  StreamSubscription<Map<String, dynamic>?>? configureSubscription;
-  StreamSubscription<Map<String, dynamic>?>? visibilitySubscription;
-  StreamSubscription<Map<String, dynamic>?>? stopSubscription;
-  var isStopping = false;
-  final locationSpool = LocationSpool();
+  DriverBackgroundTelemetrySession(
+    service: service,
+    sessionStore: sessionStore,
+    clearSessionFallback: () async {
+      SharedPreferences? preferences;
+      try {
+        preferences = await SharedPreferences.getInstance();
+      } catch (_) {}
+      await SessionStore(
+        storage: storage,
+        preferences: preferences,
+      ).clearSession();
+    },
+  ).start();
+}
+
+@visibleForTesting
+class DriverBackgroundTelemetrySession {
+  DriverBackgroundTelemetrySession({
+    required this.service,
+    SessionStore? sessionStore,
+    LocationSpool? locationSpool,
+    Dio Function(Uri baseUri, BaseOptions options)? createHttpClient,
+    Future<Position> Function()? readCurrentPosition,
+    this._clearSessionFallback,
+    this._onUpdateNotification,
+    DateTime Function()? now,
+  }) : _sessionStore =
+           sessionStore ?? SessionStore(storage: const FlutterSecureStorage()),
+       _locationSpool = locationSpool ?? LocationSpool(),
+       _createHttpClient = createHttpClient ?? _defaultHttpClient,
+       _readCurrentPosition = readCurrentPosition ?? _defaultCurrentPosition,
+       _now = now ?? DateTime.now;
+
+  final ServiceInstance service;
+  final SessionStore _sessionStore;
+  final LocationSpool _locationSpool;
+  final Dio Function(Uri baseUri, BaseOptions options) _createHttpClient;
+  final Future<Position> Function() _readCurrentPosition;
+  final Future<void> Function()? _clearSessionFallback;
+  final Future<void> Function(String content)? _onUpdateNotification;
+  final DateTime Function() _now;
+
+  Dio? _telemetryClient;
+  Dio? _refreshClient;
+  RefreshableTokenProvider? _tokenProvider;
+  Future<bool>? _onlineWorkCheck;
+  bool _sending = false;
+  bool _sendingPresence = false;
+  bool _pollingRideRequests = false;
+  bool _appIsVisible = false;
+  bool _batteryOptimizationWarning = false;
+  bool _isConfigured = false;
+  Set<String> _activeRequestIds = <String>{};
+  DateTime? _previousLocationSampleAt;
+  Timer? _locationTimer;
+  Timer? _presenceTimer;
+  Timer? _requestTimer;
+  StreamSubscription<Map<String, dynamic>?>? _configureSubscription;
+  StreamSubscription<Map<String, dynamic>?>? _visibilitySubscription;
+  StreamSubscription<Map<String, dynamic>?>? _stopSubscription;
+  bool _isStopping = false;
+
+  static Dio _defaultHttpClient(Uri _, BaseOptions options) => Dio(options);
+
+  static Future<Position> _defaultCurrentPosition() =>
+      Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 10,
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+
+  static BaseOptions _createDioOptions(Uri baseUri) => BaseOptions(
+    baseUrl: baseUri.toString(),
+    connectTimeout: const Duration(seconds: 10),
+    sendTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 10),
+  );
+
+  void start() {
+    _configureSubscription = service.on('configure').listen(configure);
+    _visibilitySubscription = service.on('setAppVisible').listen(setAppVisible);
+    _stopSubscription = service.on('stopService').listen((_) {
+      unawaited(shutdown());
+    });
+    _locationTimer = Timer.periodic(
+      _backgroundTelemetryInterval,
+      (_) => unawaited(sendLocation()),
+    );
+    _presenceTimer = Timer.periodic(
+      _backgroundPresenceInterval,
+      (_) => unawaited(sendOnlinePresence()),
+    );
+    _requestTimer = Timer.periodic(
+      _backgroundRideRequestInterval,
+      (_) => unawaited(pollRideRequests()),
+    );
+    unawaited(sendLocation());
+    unawaited(sendOnlinePresence());
+    unawaited(pollRideRequests());
+  }
+
+  void configure(Map<String, dynamic>? event) {
+    if (_isStopping) return;
+    _appIsVisible = event?['appVisible'] == true;
+    _batteryOptimizationWarning = event?['batteryOptimizationWarning'] == true;
+    final baseUrl = event?['baseUrl'] as String?;
+    final parsed = Uri.tryParse(baseUrl ?? '');
+    if (parsed == null || !_isValidTelemetryBaseUri(parsed)) {
+      _clearClients();
+      return;
+    }
+
+    unawaited(_updateNotification(_idleNotificationContent()));
+    _closeClients();
+
+    final options = _createDioOptions(parsed);
+    final client = _createHttpClient(parsed, options);
+    final refresh = _createHttpClient(parsed, options);
+    final provider = RefreshableTokenProvider(
+      readAccessToken: _sessionStore.readToken,
+      readRefreshToken: _sessionStore.readRefreshToken,
+      saveAccessToken: _sessionStore.saveToken,
+      saveRefreshToken: _sessionStore.saveRefreshToken,
+      clearSession: () async {
+        final clearFallback = _clearSessionFallback;
+        if (clearFallback != null) {
+          await clearFallback();
+          return;
+        }
+        await _sessionStore.clearSession();
+      },
+      hasActiveMission: () async {
+        final activeRideId = await _sessionStore.readActiveRideId();
+        return activeRideId != null && activeRideId.trim().isNotEmpty;
+      },
+      refreshClient: refresh,
+      onSessionExpired: shutdown,
+    );
+    client.interceptors.add(
+      AuthInterceptor(
+        _sessionStore,
+        dio: client,
+        allowedBaseUri: parsed,
+        tokenProvider: provider,
+      ),
+    );
+    _telemetryClient = client;
+    _refreshClient = refresh;
+    _tokenProvider = provider;
+    _isConfigured = true;
+  }
+
+  void setAppVisible(Map<String, dynamic>? event) {
+    if (_isStopping) return;
+    _appIsVisible = event?['visible'] == true;
+  }
 
   Future<void> shutdown() async {
-    if (isStopping) return;
-    isStopping = true;
-    locationTimer?.cancel();
-    presenceTimer?.cancel();
-    requestTimer?.cancel();
-    locationTimer = null;
-    presenceTimer = null;
-    requestTimer = null;
-    activeRequestIds = <String>{};
-    isConfigured = false;
-
-    final client = telemetryClient;
-    final refresh = refreshClient;
-    telemetryClient = null;
-    refreshClient = null;
-    tokenProvider = null;
-    client?.close(force: true);
-    refresh?.close(force: true);
+    if (_isStopping) return;
+    _isStopping = true;
+    _locationTimer?.cancel();
+    _presenceTimer?.cancel();
+    _requestTimer?.cancel();
+    _locationTimer = null;
+    _presenceTimer = null;
+    _requestTimer = null;
+    _activeRequestIds = <String>{};
+    _clearClients();
 
     try {
       await Future.wait([
-        configureSubscription?.cancel() ?? Future<void>.value(),
-        visibilitySubscription?.cancel() ?? Future<void>.value(),
-        stopSubscription?.cancel() ?? Future<void>.value(),
+        _configureSubscription?.cancel() ?? Future<void>.value(),
+        _visibilitySubscription?.cancel() ?? Future<void>.value(),
+        _stopSubscription?.cancel() ?? Future<void>.value(),
       ]);
     } catch (error) {
       dev.log('Unable to close telemetry event subscriptions: $error');
@@ -254,30 +386,96 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     }
   }
 
-  Future<bool> shouldContinueOnlineWork() async {
-    try {
-      final isOnline = await sessionStore.readDriverOnlineStatus() == true;
-      if (!isOnline) return false;
+  void _clearClients() {
+    _isConfigured = false;
+    _closeClients();
+  }
 
-      if (!appIsVisible) {
-        final activeRideId = await sessionStore.readActiveRideId();
+  void _closeClients() {
+    final client = _telemetryClient;
+    final refresh = _refreshClient;
+    _telemetryClient = null;
+    _refreshClient = null;
+    _tokenProvider = null;
+    client?.close(force: true);
+    refresh?.close(force: true);
+  }
+
+  ({Dio client, RefreshableTokenProvider provider})? _activeCredentials() {
+    final client = _telemetryClient;
+    final provider = _tokenProvider;
+    if (_isStopping ||
+        !_isConfigured ||
+        _appIsVisible ||
+        client == null ||
+        provider == null) {
+      return null;
+    }
+    return (client: client, provider: provider);
+  }
+
+  bool _canContinueWith(Dio client, RefreshableTokenProvider provider) {
+    return !_isStopping &&
+        _isConfigured &&
+        !_appIsVisible &&
+        identical(_telemetryClient, client) &&
+        identical(_tokenProvider, provider);
+  }
+
+  static bool _hasCredential(String? value) =>
+      value != null && value.isNotEmpty;
+
+  String _idleNotificationContent() => _batteryOptimizationWarning
+      ? 'Battery saver may delay location updates. Allow unrestricted battery use.'
+      : 'Sharing location while you are online.';
+
+  String _newRequestNotificationContent() => _batteryOptimizationWarning
+      ? 'New ride request available. Battery saver may delay location updates.'
+      : 'New ride request available.';
+
+  Future<bool> _shouldContinueOnlineWork() {
+    final inFlight = _onlineWorkCheck;
+    if (inFlight != null) return inFlight;
+
+    late final Future<bool> check;
+    check = _performOnlineWorkCheck().whenComplete(() {
+      if (identical(_onlineWorkCheck, check)) {
+        _onlineWorkCheck = null;
+      }
+    });
+    _onlineWorkCheck = check;
+    return check;
+  }
+
+  Future<bool> _performOnlineWorkCheck() async {
+    try {
+      if (_isStopping) return false;
+      final isOnline = await _sessionStore.readDriverOnlineStatus() == true;
+      if (_isStopping || !isOnline) return false;
+
+      if (!_appIsVisible) {
+        final activeRideId = await _sessionStore.readActiveRideId();
+        if (_isStopping) return false;
         if (activeRideId == null || activeRideId.trim().isEmpty) {
-          final lastActive = await sessionStore.readDriverLastActive();
+          final lastActive = await _sessionStore.readDriverLastActive();
+          if (_isStopping) return false;
           if (lastActive == null ||
-              DateTime.now().toUtc().difference(lastActive) >
+              _now().toUtc().difference(lastActive) >
                   _backgroundInactivityTimeout) {
             dev.log(
               'Background telemetry expiring online presence due to inactivity.',
             );
-            await sessionStore.saveDriverOnlineStatus(false);
-            await sessionStore.clearDriverLastActive();
-            final client = telemetryClient;
-            if (client != null) {
-              final driverId = await sessionStore.readDriverId();
-              if (driverId != null && driverId.isNotEmpty) {
+            await _sessionStore.saveDriverOnlineStatus(false);
+            await _sessionStore.clearDriverLastActive();
+            final client = _telemetryClient;
+            if (!_isStopping && client != null) {
+              final driverId = await _sessionStore.readDriverId();
+              if (!_isStopping &&
+                  identical(_telemetryClient, client) &&
+                  _hasCredential(driverId)) {
                 try {
                   await client.post<void>(
-                    '/api/v1/drivers/${Uri.encodeComponent(driverId)}/online',
+                    '/api/v1/drivers/${Uri.encodeComponent(driverId!)}/online',
                     data: {'is_online': false},
                   );
                 } catch (_) {}
@@ -288,7 +486,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
           }
         }
       }
-      return true;
+      return !_isStopping;
     } catch (error) {
       // If the local online intent cannot be read, fail closed. Continuing to
       // publish a heartbeat could resurrect an explicitly stopped driver.
@@ -297,11 +495,17 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     }
   }
 
-  Future<void> updateNotification(String content) async {
-    if (service is! AndroidServiceInstance) return;
+  Future<void> _updateNotification(String content) async {
+    final override = _onUpdateNotification;
+    if (override != null) {
+      await override(content);
+      return;
+    }
+    final serviceInstance = service;
+    if (serviceInstance is! AndroidServiceInstance) return;
     try {
-      if (!await service.isForegroundService()) return;
-      await service.setForegroundNotificationInfo(
+      if (!await serviceInstance.isForegroundService()) return;
+      await serviceInstance.setForegroundNotificationInfo(
         title: 'EasyRide Driver',
         content: content,
       );
@@ -310,130 +514,66 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     }
   }
 
-  configureSubscription = service.on('configure').listen((event) {
-    if (isStopping) return;
-    appIsVisible = event?['appVisible'] == true;
-    batteryOptimizationWarning = event?['batteryOptimizationWarning'] == true;
-    final baseUrl = event?['baseUrl'] as String?;
-    final parsed = Uri.tryParse(baseUrl ?? '');
-    if (parsed == null || !_isValidTelemetryBaseUri(parsed)) {
-      isConfigured = false;
-      telemetryClient?.close(force: true);
-      refreshClient?.close(force: true);
-      telemetryClient = null;
-      refreshClient = null;
-      tokenProvider = null;
-      return;
+  Future<String?> _prepareDriverRequest(
+    Dio client,
+    RefreshableTokenProvider provider,
+  ) async {
+    if (!await _shouldContinueOnlineWork() ||
+        !_canContinueWith(client, provider)) {
+      return null;
     }
-    unawaited(
-      updateNotification(
-        batteryOptimizationWarning
-            ? 'Battery saver may delay location updates. Allow unrestricted battery use.'
-            : 'Sharing location while you are online.',
-      ),
-    );
-    telemetryClient?.close(force: true);
-    refreshClient?.close(force: true);
-    final client = Dio(
-      BaseOptions(
-        baseUrl: parsed.toString(),
-        connectTimeout: const Duration(seconds: 10),
-        sendTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
-      ),
-    );
-    final refresh = Dio(
-      BaseOptions(
-        baseUrl: parsed.toString(),
-        connectTimeout: const Duration(seconds: 10),
-        sendTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
-      ),
-    );
-    final provider = RefreshableTokenProvider(
-      readAccessToken: sessionStore.readToken,
-      readRefreshToken: sessionStore.readRefreshToken,
-      saveAccessToken: sessionStore.saveToken,
-      saveRefreshToken: sessionStore.saveRefreshToken,
-      clearSession: () async {
-        SharedPreferences? preferences;
-        try {
-          preferences = await SharedPreferences.getInstance();
-        } catch (_) {}
-        await SessionStore(
-          storage: storage,
-          preferences: preferences,
-        ).clearSession();
-      },
-      hasActiveMission: () async {
-        final activeRideId = await sessionStore.readActiveRideId();
-        return activeRideId != null && activeRideId.trim().isNotEmpty;
-      },
-      refreshClient: refresh,
-      onSessionExpired: shutdown,
-    );
-    client.interceptors.add(
-      AuthInterceptor(
-        sessionStore,
-        dio: client,
-        allowedBaseUri: parsed,
-        tokenProvider: provider,
-      ),
-    );
-    telemetryClient = client;
-    refreshClient = refresh;
-    tokenProvider = provider;
-    isConfigured = true;
-  });
-  visibilitySubscription = service.on('setAppVisible').listen((event) {
-    if (isStopping) return;
-    appIsVisible = event?['visible'] == true;
-  });
+    final token = await provider.getToken();
+    final driverId = await _sessionStore.readDriverId();
+    if (!_canContinueWith(client, provider) ||
+        !_hasCredential(token) ||
+        !_hasCredential(driverId)) {
+      return null;
+    }
+    return driverId;
+  }
 
   Future<void> sendLocation() async {
-    final client = telemetryClient;
-    final provider = tokenProvider;
-    if (!isConfigured ||
-        appIsVisible ||
-        sending ||
-        client == null ||
-        provider == null) {
-      return;
-    }
-    if (!await shouldContinueOnlineWork()) return;
+    final active = _activeCredentials();
+    if (active == null || _sending) return;
+    final (:client, :provider) = active;
 
-    final token = await provider.getToken();
-    if (token == null || token.isEmpty) {
-      return;
-    }
-
-    sending = true;
+    _sending = true;
     try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 10,
-          timeLimit: Duration(seconds: 5),
-        ),
-      );
+      if (!await _shouldContinueOnlineWork() ||
+          !_canContinueWith(client, provider)) {
+        return;
+      }
+
+      final token = await provider.getToken();
+      if (!_canContinueWith(client, provider) || !_hasCredential(token)) {
+        return;
+      }
+
+      final position = await _readCurrentPosition();
+      if (!_canContinueWith(client, provider)) return;
+
       final point = locationPointFromPosition(position);
-      final receivedAt = DateTime.now().toUtc();
-      final sampleInterval = previousLocationSampleAt == null
+      final receivedAt = _now().toUtc();
+      final sampleInterval = _previousLocationSampleAt == null
           ? null
-          : point.observedAt.difference(previousLocationSampleAt!);
-      previousLocationSampleAt = point.observedAt;
-      await locationSpool.enqueue(point);
+          : point.observedAt.difference(_previousLocationSampleAt!);
+      _previousLocationSampleAt = point.observedAt;
+
+      await _locationSpool.enqueue(point);
+      if (!_canContinueWith(client, provider)) return;
+
       var acknowledgedPointCount = 0;
-      final flushSucceeded = await locationSpool.flush((point) async {
+      final flushSucceeded = await _locationSpool.flush((spooledPoint) async {
+        if (!_canContinueWith(client, provider)) return false;
         try {
           final response = await client.post<void>(
             '/api/v1/telemetry/location',
             data: {
-              'latitude': point.latitude,
-              'longitude': point.longitude,
-              'observed_at': point.observedAt.toUtc().toIso8601String(),
-              'heading': point.heading,
-              'speed': point.speed,
+              'latitude': spooledPoint.latitude,
+              'longitude': spooledPoint.longitude,
+              'observed_at': spooledPoint.observedAt.toUtc().toIso8601String(),
+              'heading': spooledPoint.heading,
+              'speed': spooledPoint.speed,
             },
           );
           final acknowledged =
@@ -467,34 +607,23 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     } catch (_) {
       dev.log('Driver telemetry collection failed.');
     } finally {
-      sending = false;
+      _sending = false;
     }
   }
 
   Future<void> pollRideRequests() async {
-    final client = telemetryClient;
-    final provider = tokenProvider;
-    if (!isConfigured ||
-        appIsVisible ||
-        pollingRideRequests ||
-        client == null ||
-        provider == null) {
-      return;
-    }
-    if (!await shouldContinueOnlineWork()) return;
+    final active = _activeCredentials();
+    if (active == null || _pollingRideRequests) return;
+    final (:client, :provider) = active;
 
-    final token = await provider.getToken();
-    final driverId = await sessionStore.readDriverId();
-    if (token == null ||
-        token.isEmpty ||
-        driverId == null ||
-        driverId.isEmpty) {
-      return;
-    }
-
-    pollingRideRequests = true;
+    _pollingRideRequests = true;
     try {
+      final driverId = await _prepareDriverRequest(client, provider);
+      if (driverId == null) return;
+
       final response = await client.get<List<dynamic>>('/api/v1/bids/active');
+      if (!_canContinueWith(client, provider)) return;
+
       final requestIds = <String>{};
       for (final item in response.data ?? const <dynamic>[]) {
         if (item is! Map<String, dynamic>) continue;
@@ -502,20 +631,12 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
         if (id != null && id.isNotEmpty) requestIds.add(id);
       }
 
-      final hasNewRequest = requestIds.difference(activeRequestIds).isNotEmpty;
-      activeRequestIds = requestIds;
+      final hasNewRequest = requestIds.difference(_activeRequestIds).isNotEmpty;
+      _activeRequestIds = requestIds;
       if (hasNewRequest) {
-        await updateNotification(
-          batteryOptimizationWarning
-              ? 'New ride request available. Battery saver may delay location updates.'
-              : 'New ride request available.',
-        );
+        await _updateNotification(_newRequestNotificationContent());
       } else if (requestIds.isEmpty) {
-        await updateNotification(
-          batteryOptimizationWarning
-              ? 'Battery saver may delay location updates. Allow unrestricted battery use.'
-              : 'Sharing location while you are online.',
-        );
+        await _updateNotification(_idleNotificationContent());
       }
     } on DioException catch (error) {
       dev.log(
@@ -524,32 +645,19 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     } catch (_) {
       dev.log('Driver request polling failed.');
     } finally {
-      pollingRideRequests = false;
+      _pollingRideRequests = false;
     }
   }
 
   Future<void> sendOnlinePresence() async {
-    final client = telemetryClient;
-    final provider = tokenProvider;
-    if (!isConfigured ||
-        appIsVisible ||
-        sendingPresence ||
-        client == null ||
-        provider == null) {
-      return;
-    }
-    if (!await shouldContinueOnlineWork()) return;
+    final active = _activeCredentials();
+    if (active == null || _sendingPresence) return;
+    final (:client, :provider) = active;
 
-    sendingPresence = true;
+    _sendingPresence = true;
     try {
-      final token = await provider.getToken();
-      final driverId = await sessionStore.readDriverId();
-      if (token == null ||
-          token.isEmpty ||
-          driverId == null ||
-          driverId.isEmpty) {
-        return;
-      }
+      final driverId = await _prepareDriverRequest(client, provider);
+      if (driverId == null) return;
 
       final response = await client.post<void>(
         '/api/v1/drivers/${Uri.encodeComponent(driverId)}/online',
@@ -567,28 +675,9 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     } catch (_) {
       dev.log('Driver presence heartbeat failed.');
     } finally {
-      sendingPresence = false;
+      _sendingPresence = false;
     }
   }
-
-  stopSubscription = service.on('stopService').listen((_) {
-    unawaited(shutdown());
-  });
-  locationTimer = Timer.periodic(
-    _backgroundTelemetryInterval,
-    (_) => unawaited(sendLocation()),
-  );
-  presenceTimer = Timer.periodic(
-    _backgroundPresenceInterval,
-    (_) => unawaited(sendOnlinePresence()),
-  );
-  requestTimer = Timer.periodic(
-    _backgroundRideRequestInterval,
-    (_) => unawaited(pollRideRequests()),
-  );
-  unawaited(sendLocation());
-  unawaited(sendOnlinePresence());
-  unawaited(pollRideRequests());
 }
 
 bool _isValidTelemetryBaseUri(Uri uri) {

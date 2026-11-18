@@ -828,4 +828,101 @@ void main() {
     verify(() => mockSessionService.clearActiveRideId()).called(1);
     await cubit.close();
   });
+
+  test(
+    'marks passenger no-show and clears local active ride metadata',
+    () async {
+      when(() => mockRideRepository.markPassengerNoShow('test-ride-id'))
+          .thenAnswer(
+            (_) async => const Ok(
+              RideSnapshot(
+                id: 'test-ride-id',
+                status: 'cancelled',
+                pickupName: 'Pickup',
+                dropoffName: 'Dropoff',
+              ),
+            ),
+          );
+      final cubit = _makeCubit(mockRideRepository, mockSessionService);
+      await cubit.resumeRide(
+        rideId: 'test-ride-id',
+        bookingReference: 'BOOK-42',
+        status: 'arrived',
+        passengerName: 'Juan Dela Cruz',
+        passengerId: 'passenger-1',
+      );
+
+      final marked = await cubit.markPassengerNoShow();
+
+      expect(marked, isTrue);
+      expect(cubit.activeRideId, isNull);
+      expect(cubit.activeBookingReference, isNull);
+      expect(cubit.activePassengerId, isNull);
+      expect(cubit.state, isA<RideFlowInitial>());
+      verify(() => mockSessionService.clearActiveRideId()).called(1);
+      await cubit.close();
+    },
+  );
+
+  test(
+    'ignores late completeRide recheck failure after the flow resets',
+    () async {
+      final recheckCompleter = Completer<Result<RideSnapshot, Failure>>();
+      var fetchCount = 0;
+      when(() => mockRideRepository.fetchRide('test-ride-id')).thenAnswer((_) {
+        fetchCount += 1;
+        if (fetchCount == 1) {
+          return Future.value(
+            const Ok(
+              RideSnapshot(
+                id: 'test-ride-id',
+                status: 'in_transit',
+                pickupName: 'Pickup',
+                dropoffName: 'Dropoff',
+              ),
+            ),
+          );
+        }
+        return recheckCompleter.future;
+      });
+      when(
+        () => mockRideRepository.completeRide(
+          rideId: 'test-ride-id',
+          latitude: any(named: 'latitude'),
+          longitude: any(named: 'longitude'),
+        ),
+      ).thenAnswer(
+        (_) async => const Err(NetworkFailure('Completion timed out.')),
+      );
+
+      final cubit = _makeCubit(mockRideRepository, mockSessionService);
+      await cubit.resumeRide(
+        rideId: 'test-ride-id',
+        status: 'in_transit',
+        passengerName: 'Juan Dela Cruz',
+      );
+
+      final completionFuture = cubit.completeRide(
+        driverLatitude: 14.5995,
+        driverLongitude: 120.9842,
+      );
+      await untilCalled(
+        () => mockRideRepository.completeRide(
+          rideId: 'test-ride-id',
+          latitude: any(named: 'latitude'),
+          longitude: any(named: 'longitude'),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      await cubit.reset();
+      recheckCompleter.complete(
+        const Err(NetworkFailure('Stale recheck error.')),
+      );
+
+      expect(await completionFuture, isNull);
+      expect(cubit.state, isA<RideFlowInitial>());
+      await cubit.close();
+    },
+  );
 }
