@@ -133,6 +133,7 @@ UPDATE users
 SET is_verified = true,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
+  AND is_verified = false
 `
 
 func (q *Queries) MarkUserVerified(ctx context.Context, id int32) (int64, error) {

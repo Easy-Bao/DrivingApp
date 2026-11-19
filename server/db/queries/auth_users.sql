@@ -8,7 +8,8 @@ RETURNING id, name, phone, email, password_hash, role, is_verified,
 UPDATE users
 SET is_verified = true,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1;
+WHERE id = $1
+  AND is_verified = false;
 
 -- name: UpdateUserPassword :execrows
 UPDATE users

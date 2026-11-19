@@ -271,3 +271,108 @@ func TestVerifyPassengerAndResetPasswordRequireNonEmptyOTPCode(t *testing.T) {
 		t.Fatalf("ResetPasswordForRole(blank code) error = %v, want ErrOTPRequired", err)
 	}
 }
+
+func TestVerifiedPassengerCannotRequestOrUseVerificationOTP(t *testing.T) {
+	repository := &otpRepository{account: domain.User{
+		ID:            7,
+		Email:         "verified@example.test",
+		Role:          domain.Passenger,
+		IsVerified:    true,
+		AccountStatus: "active",
+	}}
+	store := &otpMemoryStore{values: map[string]string{}}
+	gateway := &otpGateway{}
+	service := authapp.NewOTPService(authapp.OTPDependencies{
+		Users:    repository,
+		Store:    store,
+		Gateway:  gateway,
+		Tokens:   otpIssuer{},
+		Sessions: newTestRefreshSessionStore(),
+	})
+
+	if err := service.RequestVerification(context.Background(), repository.account.Email); err != nil {
+		t.Fatalf("RequestVerification() error = %v, want nil", err)
+	}
+	if gateway.sent != "" {
+		t.Fatalf("verification code %q was sent to an already-verified passenger", gateway.sent)
+	}
+
+	// Even if a verification OTP existed, VerifyPassenger must never issue tokens for an already-verified account.
+	store.values["verification:verified@example.test"] = "123456"
+	_, token, err := service.VerifyPassenger(context.Background(), repository.account.Email, "123456")
+	if !errors.Is(err, domain.ErrInvalidOTP) || token != "" {
+		t.Fatalf("VerifyPassenger() = (%q, %v), want empty token and ErrInvalidOTP", token, err)
+	}
+	if repository.marked {
+		t.Fatal("MarkVerified should not be called for an already-verified passenger")
+	}
+}
+
+type failingFindUserStore struct {
+	otpRepository
+	findErr error
+}
+
+func (store *failingFindUserStore) FindByEmail(context.Context, string) (domain.User, error) {
+	return domain.User{}, store.findErr
+}
+
+func TestResetPasswordDoesNotEnumerateAccountsWithoutValidOTP(t *testing.T) {
+	tests := []struct {
+		name    string
+		account domain.User
+		findErr error
+		role    domain.Role
+	}{
+		{
+			name:    "unknown account",
+			findErr: domain.ErrUserNotFound,
+			role:    domain.Passenger,
+		},
+		{
+			name:    "wrong role",
+			account: domain.User{ID: 8, Email: "user@example.test", Role: domain.Driver, AccountStatus: "active"},
+			role:    domain.Passenger,
+		},
+		{
+			name:    "suspended account with invalid code",
+			account: domain.User{ID: 9, Email: "user@example.test", Role: domain.Passenger, AccountStatus: "suspended"},
+			role:    domain.Passenger,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var users authapp.VerifiedUserStore
+			if tc.findErr != nil {
+				users = &failingFindUserStore{findErr: tc.findErr}
+			} else {
+				users = &otpRepository{account: tc.account}
+			}
+			service := authapp.NewOTPService(authapp.OTPDependencies{
+				Users:    users,
+				Store:    &otpMemoryStore{values: map[string]string{}},
+				Gateway:  &otpGateway{},
+				Tokens:   otpIssuer{},
+				Sessions: newTestRefreshSessionStore(),
+			})
+
+			err := service.ResetPasswordForRole(context.Background(), "user@example.test", "000000", "new-secret-8", tc.role)
+			if !errors.Is(err, domain.ErrInvalidOTP) {
+				t.Fatalf("ResetPasswordForRole() error = %v, want ErrInvalidOTP", err)
+			}
+		})
+	}
+
+	// Non-not-found DB failures must propagate as ErrOTPUnavailable rather than silent success.
+	dbErrService := authapp.NewOTPService(authapp.OTPDependencies{
+		Users:    &failingFindUserStore{findErr: errors.New("connection refused")},
+		Store:    &otpMemoryStore{values: map[string]string{}},
+		Gateway:  &otpGateway{},
+		Tokens:   otpIssuer{},
+		Sessions: newTestRefreshSessionStore(),
+	})
+	if err := dbErrService.RequestPasswordResetForRole(context.Background(), "user@example.test", domain.Passenger); !errors.Is(err, domain.ErrOTPUnavailable) {
+		t.Fatalf("RequestPasswordResetForRole(db error) = %v, want ErrOTPUnavailable", err)
+	}
+}

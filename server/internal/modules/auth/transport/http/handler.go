@@ -367,6 +367,8 @@ func otpErrorStatus(err error) int {
 	switch {
 	case errors.Is(err, domain.ErrAccountSuspended):
 		return http.StatusForbidden
+	case errors.Is(err, domain.ErrEmailTaken), errors.Is(err, domain.ErrAccountConflict):
+		return http.StatusConflict
 	case errors.Is(err, domain.ErrOTPMaxAttemptsExceeded):
 		return http.StatusTooManyRequests
 	case errors.Is(err, domain.ErrOTPUnavailable), errors.Is(err, domain.ErrRefreshSessionUnavailable):

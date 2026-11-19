@@ -101,14 +101,15 @@ func (service *OTPService) RegisterPassenger(
 	ctx context.Context,
 	input RegisterInput,
 ) (domain.PendingRegistration, error) {
-	if service == nil || service.pending == nil || service.registrations == nil {
+	if service == nil || service.pending == nil || service.registrations == nil ||
+		service.store == nil || service.gateway == nil {
 		return domain.PendingRegistration{}, domain.ErrOTPUnavailable
 	}
 	email := strings.ToLower(strings.TrimSpace(input.Email))
 	if service.users != nil {
 		account, err := service.users.FindByEmail(ctx, email)
 		if err == nil && account.ID != 0 {
-			if account.Role != domain.Passenger || account.IsVerified {
+			if account.Role != domain.Passenger || account.IsVerified || !account.IsActive() {
 				return domain.PendingRegistration{}, domain.ErrEmailTaken
 			}
 			if err := service.requestCode(ctx, "verification", account.Email); err != nil {
@@ -126,6 +127,23 @@ func (service *OTPService) RegisterPassenger(
 	if err != nil {
 		return domain.PendingRegistration{}, fmt.Errorf("prepare passenger registration: %w", err)
 	}
+	previousPending, prevErr := service.pending.Get(ctx, registration.Email)
+	hasPreviousPending := prevErr == nil
+	if prevErr != nil && !errors.Is(prevErr, domain.ErrPendingRegistrationNotFound) {
+		service.log().WarnContext(ctx, "check existing pending passenger registration failed", "error", prevErr)
+		return domain.PendingRegistration{}, domain.ErrOTPUnavailable
+	}
+
+	code, err := service.generateOTP()
+	if err != nil {
+		return domain.PendingRegistration{}, fmt.Errorf("generate verification otp: %w", err)
+	}
+	// Replace any existing verification OTP before overwriting pending data so
+	// an earlier code cannot verify a newer registration's credentials.
+	if err := service.store.Put(ctx, "verification", registration.Email, code, _otpLifetime); err != nil {
+		service.log().WarnContext(ctx, "store otp failed", "error", err, "purpose", "verification")
+		return domain.PendingRegistration{}, fmt.Errorf("%w: store otp: %w", domain.ErrOTPUnavailable, err)
+	}
 	if err := service.pending.Put(ctx, registration, _otpLifetime); err != nil {
 		service.log().WarnContext(ctx, "store pending passenger registration failed", "error", err)
 		return domain.PendingRegistration{}, fmt.Errorf(
@@ -134,11 +152,16 @@ func (service *OTPService) RegisterPassenger(
 			err,
 		)
 	}
-	if err := service.requestCode(ctx, "verification", registration.Email); err != nil {
-		if cleanupErr := service.pending.Delete(ctx, registration.Email); cleanupErr != nil {
+	if err := service.gateway.Send(ctx, registration.Email, code); err != nil {
+		service.log().WarnContext(ctx, "send otp failed", "error", err, "purpose", "verification")
+		if hasPreviousPending {
+			if restoreErr := service.pending.Put(ctx, previousPending, _otpLifetime); restoreErr != nil {
+				service.log().WarnContext(ctx, "restore previous passenger registration cleanup", "error", restoreErr)
+			}
+		} else if cleanupErr := service.pending.Delete(ctx, registration.Email); cleanupErr != nil {
 			service.log().WarnContext(ctx, "remove failed passenger registration cleanup", "error", cleanupErr)
 		}
-		return domain.PendingRegistration{}, fmt.Errorf("request verification code: %w", err)
+		return domain.PendingRegistration{}, fmt.Errorf("request verification code: %w: send otp: %w", domain.ErrOTPUnavailable, err)
 	}
 	return registration, nil
 }
@@ -150,10 +173,10 @@ func (service *OTPService) RequestVerification(ctx context.Context, email string
 	}
 	account, err := service.users.FindByEmail(ctx, email)
 	if err == nil && account.ID != 0 {
-		if account.Role != domain.Passenger {
+		if account.Role != domain.Passenger || account.IsVerified {
 			return nil
 		}
-		if account.AccountStatus != "" && account.AccountStatus != "active" {
+		if !account.IsActive() {
 			// Match the unknown-account response so suspension is not disclosed.
 			return nil
 		}
@@ -166,6 +189,10 @@ func (service *OTPService) RequestVerification(ctx context.Context, email string
 	if service.pending != nil {
 		registration, pendingErr := service.pending.Get(ctx, email)
 		if pendingErr == nil && registration.Role == domain.Passenger {
+			if putErr := service.pending.Put(ctx, registration, _otpLifetime); putErr != nil {
+				service.log().WarnContext(ctx, "refresh pending registration ttl failed", "error", putErr)
+				return domain.ErrOTPUnavailable
+			}
 			return service.requestCode(ctx, "verification", registration.Email)
 		}
 		if pendingErr != nil && !errors.Is(pendingErr, domain.ErrPendingRegistrationNotFound) {
@@ -194,10 +221,10 @@ func (service *OTPService) VerifyPassenger(ctx context.Context, email, code stri
 	}
 	account, err := service.users.FindByEmail(ctx, email)
 	if err == nil && account.ID != 0 {
-		if account.Role != domain.Passenger {
+		if account.Role != domain.Passenger || account.IsVerified {
 			return domain.User{}, "", domain.ErrInvalidOTP
 		}
-		if account.AccountStatus != "" && account.AccountStatus != "active" {
+		if !account.IsActive() {
 			return domain.User{}, "", domain.ErrAccountSuspended
 		}
 		if err := service.users.MarkVerified(ctx, account.ID); err != nil {
@@ -285,15 +312,8 @@ func (service *OTPService) ResetPasswordForRole(
 	password string,
 	role domain.Role,
 ) error {
-	if service == nil {
+	if service == nil || service.store == nil || service.users == nil {
 		return domain.ErrOTPUnavailable
-	}
-	account, err := service.accountForRole(ctx, email, role)
-	if err != nil {
-		if errors.Is(err, domain.ErrAccountSuspended) {
-			return err
-		}
-		return fmt.Errorf("find account for password reset: %w", err)
 	}
 	if len(password) < 8 || len([]byte(password)) > 72 {
 		return domain.ErrInvalidCredentials
@@ -302,15 +322,20 @@ func (service *OTPService) ResetPasswordForRole(
 	if code == "" {
 		return domain.ErrOTPRequired
 	}
-	if service.store == nil {
-		return domain.ErrOTPUnavailable
-	}
-	if err := service.store.Consume(ctx, "reset", account.Email, code); err != nil {
+	normalizedEmail := strings.ToLower(strings.TrimSpace(email))
+	if err := service.store.Consume(ctx, "reset", normalizedEmail, code); err != nil {
 		if errors.Is(err, domain.ErrInvalidOTP) || errors.Is(err, domain.ErrOTPMaxAttemptsExceeded) {
 			return err
 		}
 		service.log().WarnContext(ctx, "consume password reset otp failed", "error", err)
 		return domain.ErrOTPUnavailable
+	}
+	account, err := service.accountForRole(ctx, normalizedEmail, role)
+	if err != nil {
+		if errors.Is(err, domain.ErrAccountSuspended) || errors.Is(err, domain.ErrOTPUnavailable) {
+			return err
+		}
+		return domain.ErrInvalidOTP
 	}
 	if service.sessions == nil {
 		return domain.ErrRefreshSessionUnavailable
@@ -545,12 +570,13 @@ func (service *OTPService) accountForRole(ctx context.Context, email string, rol
 		if errors.Is(err, domain.ErrOTPUnavailable) {
 			return domain.User{}, err
 		}
-		if !errors.Is(err, domain.ErrUserNotFound) {
-			service.log().WarnContext(ctx, "find account for role-scoped operation failed", "error", err)
+		if errors.Is(err, domain.ErrUserNotFound) {
+			return domain.User{}, domain.ErrInvalidCredentials
 		}
-		return domain.User{}, domain.ErrInvalidCredentials
+		service.log().WarnContext(ctx, "find account for role-scoped operation failed", "error", err)
+		return domain.User{}, domain.ErrOTPUnavailable
 	}
-	if account.Role != role {
+	if account.ID == 0 || account.Role != role {
 		return domain.User{}, domain.ErrInvalidCredentials
 	}
 	if !account.IsActive() {

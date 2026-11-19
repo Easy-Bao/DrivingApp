@@ -126,4 +126,10 @@ func TestAuthHTTPStatusMappingsForValidationAndSuspension(t *testing.T) {
 	if status := otpErrorStatus(domain.ErrRefreshSessionUnavailable); status != http.StatusServiceUnavailable {
 		t.Fatalf("otpErrorStatus(ErrRefreshSessionUnavailable) = %d, want %d", status, http.StatusServiceUnavailable)
 	}
+	if status := otpErrorStatus(domain.ErrEmailTaken); status != http.StatusConflict {
+		t.Fatalf("otpErrorStatus(ErrEmailTaken) = %d, want %d", status, http.StatusConflict)
+	}
+	if status := otpErrorStatus(domain.ErrAccountConflict); status != http.StatusConflict {
+		t.Fatalf("otpErrorStatus(ErrAccountConflict) = %d, want %d", status, http.StatusConflict)
+	}
 }

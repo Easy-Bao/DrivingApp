@@ -109,7 +109,7 @@ func (repository *UserRepository) MarkVerified(ctx context.Context, userID int) 
 		return fmt.Errorf("mark user %d verified: %w", userID, err)
 	}
 	if rows == 0 {
-		return fmt.Errorf("mark user %d verified: %w", userID, pgx.ErrNoRows)
+		return fmt.Errorf("mark user %d verified: %w", userID, domain.ErrInvalidOTP)
 	}
 	return nil
 }
