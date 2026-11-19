@@ -1,6 +1,9 @@
 package postgres
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -90,5 +93,47 @@ func TestMapBidOfferWithdrawalsUsesUpdatedOfferStatus(t *testing.T) {
 	}
 	if withdrawals[0].Session.ID != 21 {
 		t.Fatalf("session id = %d, want 21", withdrawals[0].Session.ID)
+	}
+}
+
+func TestBiddingSQLQuerySafetyInvariants(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "..", "db", "queries", "bidding.sql"))
+	if err != nil {
+		t.Fatalf("read bidding.sql: %v", err)
+	}
+	content := string(raw)
+
+	extractQuery := func(name string) string {
+		t.Helper()
+		marker := "-- name: " + name
+		start := strings.Index(content, marker)
+		if start < 0 {
+			t.Fatalf("query %q not found in bidding.sql", name)
+		}
+		rest := content[start+len(marker):]
+		if end := strings.Index(rest, "\n-- name:"); end >= 0 {
+			return rest[:end]
+		}
+		return rest
+	}
+
+	cancelSQL := extractQuery("CancelBidSession")
+	sessionUpdateIdx := strings.Index(cancelSQL, "UPDATE bid_sessions")
+	offerUpdateIdx := strings.Index(cancelSQL, "UPDATE bid_offers")
+	if sessionUpdateIdx < 0 || offerUpdateIdx < 0 || sessionUpdateIdx > offerUpdateIdx {
+		t.Fatalf("CancelBidSession must update bid_sessions before bid_offers:\n%s", cancelSQL)
+	}
+	if !strings.Contains(cancelSQL, "IN (SELECT cancelled.id FROM cancelled)") {
+		t.Fatalf("CancelBidSession must gate offer rejection on cancelled CTE:\n%s", cancelSQL)
+	}
+
+	declineSQL := extractQuery("DeclineTargetedBidSession")
+	if !strings.Contains(declineSQL, "IN (SELECT declined.id FROM declined)") {
+		t.Fatalf("DeclineTargetedBidSession must reject pending offers for declined session:\n%s", declineSQL)
+	}
+
+	lockDriverSQL := extractQuery("LockOnlineDriverProfileForBidding")
+	if !strings.Contains(lockDriverSQL, "FOR UPDATE OF driver_profiles") {
+		t.Fatalf("LockOnlineDriverProfileForBidding must lock only driver_profiles:\n%s", lockDriverSQL)
 	}
 }

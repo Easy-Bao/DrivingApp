@@ -12,21 +12,33 @@ import (
 )
 
 const cancelBidSession = `-- name: CancelBidSession :one
-WITH rejected_offers AS (
+WITH cancelled AS (
+    UPDATE bid_sessions
+    SET status = 'cancelled'
+    WHERE bid_sessions.id = $1
+      AND bid_sessions.passenger_id = $2
+      AND bid_sessions.status = 'open'
+    RETURNING bid_sessions.id, bid_sessions.booking_reference, bid_sessions.passenger_id,
+        bid_sessions.ride_type, bid_sessions.pickup_latitude, bid_sessions.pickup_longitude,
+        bid_sessions.pickup_name, bid_sessions.dropoff_latitude, bid_sessions.dropoff_longitude,
+        bid_sessions.dropoff_name, bid_sessions.passenger_note, bid_sessions.distance_km,
+        bid_sessions.duration_minutes, bid_sessions.offered_fare, bid_sessions.status,
+        bid_sessions.target_driver_id, bid_sessions.accepted_driver_id,
+        bid_sessions.expires_at, bid_sessions.created_at
+), rejected_offers AS (
     UPDATE bid_offers
     SET status = 'rejected'
-    WHERE bid_offers.session_id = $1
+    WHERE bid_offers.session_id IN (SELECT cancelled.id FROM cancelled)
       AND bid_offers.status = 'pending'
 )
-UPDATE bid_sessions
-SET status = 'cancelled'
-WHERE bid_sessions.id = $1
-  AND bid_sessions.passenger_id = $2
-  AND bid_sessions.status = 'open'
-RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
-    pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
-    passenger_note, distance_km, duration_minutes, offered_fare,
-    status, target_driver_id, accepted_driver_id, expires_at, created_at
+SELECT cancelled.id, cancelled.booking_reference, cancelled.passenger_id,
+    cancelled.ride_type, cancelled.pickup_latitude, cancelled.pickup_longitude,
+    cancelled.pickup_name, cancelled.dropoff_latitude, cancelled.dropoff_longitude,
+    cancelled.dropoff_name, cancelled.passenger_note, cancelled.distance_km,
+    cancelled.duration_minutes, cancelled.offered_fare, cancelled.status,
+    cancelled.target_driver_id, cancelled.accepted_driver_id,
+    cancelled.expires_at, cancelled.created_at
+FROM cancelled
 `
 
 type CancelBidSessionParams struct {
@@ -34,9 +46,31 @@ type CancelBidSessionParams struct {
 	PassengerID int32 `db:"passenger_id"`
 }
 
-func (q *Queries) CancelBidSession(ctx context.Context, arg CancelBidSessionParams) (BidSession, error) {
+type CancelBidSessionRow struct {
+	ID               int32              `db:"id"`
+	BookingReference string             `db:"booking_reference"`
+	PassengerID      int32              `db:"passenger_id"`
+	RideType         string             `db:"ride_type"`
+	PickupLatitude   float64            `db:"pickup_latitude"`
+	PickupLongitude  float64            `db:"pickup_longitude"`
+	PickupName       string             `db:"pickup_name"`
+	DropoffLatitude  float64            `db:"dropoff_latitude"`
+	DropoffLongitude float64            `db:"dropoff_longitude"`
+	DropoffName      string             `db:"dropoff_name"`
+	PassengerNote    pgtype.Text        `db:"passenger_note"`
+	DistanceKm       float64            `db:"distance_km"`
+	DurationMinutes  float64            `db:"duration_minutes"`
+	OfferedFare      int64              `db:"offered_fare"`
+	Status           string             `db:"status"`
+	TargetDriverID   pgtype.Int4        `db:"target_driver_id"`
+	AcceptedDriverID pgtype.Int4        `db:"accepted_driver_id"`
+	ExpiresAt        pgtype.Timestamptz `db:"expires_at"`
+	CreatedAt        pgtype.Timestamptz `db:"created_at"`
+}
+
+func (q *Queries) CancelBidSession(ctx context.Context, arg CancelBidSessionParams) (CancelBidSessionRow, error) {
 	row := q.db.QueryRow(ctx, cancelBidSession, arg.ID, arg.PassengerID)
-	var i BidSession
+	var i CancelBidSessionRow
 	err := row.Scan(
 		&i.ID,
 		&i.BookingReference,
@@ -234,15 +268,36 @@ func (q *Queries) CreateBidSession(ctx context.Context, arg CreateBidSessionPara
 }
 
 const declineTargetedBidSession = `-- name: DeclineTargetedBidSession :one
-UPDATE bid_sessions
-SET status = 'declined'
-WHERE id = $1
-  AND target_driver_id = $2
-  AND (status = 'declined' OR (status = 'open' AND expires_at > clock_timestamp()))
-RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
-    pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
-    passenger_note, distance_km, duration_minutes, offered_fare,
-    status, target_driver_id, accepted_driver_id, expires_at, created_at
+WITH declined AS (
+    UPDATE bid_sessions
+    SET status = 'declined'
+    WHERE bid_sessions.id = $1
+      AND bid_sessions.target_driver_id = $2
+      AND (
+          bid_sessions.status = 'declined'
+          OR (bid_sessions.status = 'open' AND bid_sessions.expires_at > clock_timestamp())
+      )
+    RETURNING bid_sessions.id, bid_sessions.booking_reference, bid_sessions.passenger_id,
+        bid_sessions.ride_type, bid_sessions.pickup_latitude, bid_sessions.pickup_longitude,
+        bid_sessions.pickup_name, bid_sessions.dropoff_latitude, bid_sessions.dropoff_longitude,
+        bid_sessions.dropoff_name, bid_sessions.passenger_note, bid_sessions.distance_km,
+        bid_sessions.duration_minutes, bid_sessions.offered_fare, bid_sessions.status,
+        bid_sessions.target_driver_id, bid_sessions.accepted_driver_id,
+        bid_sessions.expires_at, bid_sessions.created_at
+), rejected_offers AS (
+    UPDATE bid_offers
+    SET status = 'rejected'
+    WHERE bid_offers.session_id IN (SELECT declined.id FROM declined)
+      AND bid_offers.status = 'pending'
+)
+SELECT declined.id, declined.booking_reference, declined.passenger_id,
+    declined.ride_type, declined.pickup_latitude, declined.pickup_longitude,
+    declined.pickup_name, declined.dropoff_latitude, declined.dropoff_longitude,
+    declined.dropoff_name, declined.passenger_note, declined.distance_km,
+    declined.duration_minutes, declined.offered_fare, declined.status,
+    declined.target_driver_id, declined.accepted_driver_id,
+    declined.expires_at, declined.created_at
+FROM declined
 `
 
 type DeclineTargetedBidSessionParams struct {
@@ -250,9 +305,31 @@ type DeclineTargetedBidSessionParams struct {
 	TargetDriverID pgtype.Int4 `db:"target_driver_id"`
 }
 
-func (q *Queries) DeclineTargetedBidSession(ctx context.Context, arg DeclineTargetedBidSessionParams) (BidSession, error) {
+type DeclineTargetedBidSessionRow struct {
+	ID               int32              `db:"id"`
+	BookingReference string             `db:"booking_reference"`
+	PassengerID      int32              `db:"passenger_id"`
+	RideType         string             `db:"ride_type"`
+	PickupLatitude   float64            `db:"pickup_latitude"`
+	PickupLongitude  float64            `db:"pickup_longitude"`
+	PickupName       string             `db:"pickup_name"`
+	DropoffLatitude  float64            `db:"dropoff_latitude"`
+	DropoffLongitude float64            `db:"dropoff_longitude"`
+	DropoffName      string             `db:"dropoff_name"`
+	PassengerNote    pgtype.Text        `db:"passenger_note"`
+	DistanceKm       float64            `db:"distance_km"`
+	DurationMinutes  float64            `db:"duration_minutes"`
+	OfferedFare      int64              `db:"offered_fare"`
+	Status           string             `db:"status"`
+	TargetDriverID   pgtype.Int4        `db:"target_driver_id"`
+	AcceptedDriverID pgtype.Int4        `db:"accepted_driver_id"`
+	ExpiresAt        pgtype.Timestamptz `db:"expires_at"`
+	CreatedAt        pgtype.Timestamptz `db:"created_at"`
+}
+
+func (q *Queries) DeclineTargetedBidSession(ctx context.Context, arg DeclineTargetedBidSessionParams) (DeclineTargetedBidSessionRow, error) {
 	row := q.db.QueryRow(ctx, declineTargetedBidSession, arg.ID, arg.TargetDriverID)
-	var i BidSession
+	var i DeclineTargetedBidSessionRow
 	err := row.Scan(
 		&i.ID,
 		&i.BookingReference,
@@ -735,7 +812,7 @@ WHERE driver_profiles.user_id = $1
   AND driver_profiles.is_online = true
   AND driver_profiles.online_last_seen_at >= $3::timestamptz
 LIMIT 1
-FOR UPDATE
+FOR UPDATE OF driver_profiles
 `
 
 type LockOnlineDriverProfileForBiddingParams struct {

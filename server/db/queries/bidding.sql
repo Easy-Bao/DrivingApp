@@ -98,7 +98,7 @@ WHERE driver_profiles.user_id = $1
   AND driver_profiles.is_online = true
   AND driver_profiles.online_last_seen_at >= sqlc.arg('online_cutoff')::timestamptz
 LIMIT 1
-FOR UPDATE;
+FOR UPDATE OF driver_profiles;
 
 -- name: CountActiveRidesForDriver :one
 SELECT count(*)
@@ -201,21 +201,33 @@ RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
     proposed_fare, status, created_at;
 
 -- name: CancelBidSession :one
-WITH rejected_offers AS (
+WITH cancelled AS (
+    UPDATE bid_sessions
+    SET status = 'cancelled'
+    WHERE bid_sessions.id = $1
+      AND bid_sessions.passenger_id = $2
+      AND bid_sessions.status = 'open'
+    RETURNING bid_sessions.id, bid_sessions.booking_reference, bid_sessions.passenger_id,
+        bid_sessions.ride_type, bid_sessions.pickup_latitude, bid_sessions.pickup_longitude,
+        bid_sessions.pickup_name, bid_sessions.dropoff_latitude, bid_sessions.dropoff_longitude,
+        bid_sessions.dropoff_name, bid_sessions.passenger_note, bid_sessions.distance_km,
+        bid_sessions.duration_minutes, bid_sessions.offered_fare, bid_sessions.status,
+        bid_sessions.target_driver_id, bid_sessions.accepted_driver_id,
+        bid_sessions.expires_at, bid_sessions.created_at
+), rejected_offers AS (
     UPDATE bid_offers
     SET status = 'rejected'
-    WHERE bid_offers.session_id = $1
+    WHERE bid_offers.session_id IN (SELECT cancelled.id FROM cancelled)
       AND bid_offers.status = 'pending'
 )
-UPDATE bid_sessions
-SET status = 'cancelled'
-WHERE bid_sessions.id = $1
-  AND bid_sessions.passenger_id = $2
-  AND bid_sessions.status = 'open'
-RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
-    pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
-    passenger_note, distance_km, duration_minutes, offered_fare,
-    status, target_driver_id, accepted_driver_id, expires_at, created_at;
+SELECT cancelled.id, cancelled.booking_reference, cancelled.passenger_id,
+    cancelled.ride_type, cancelled.pickup_latitude, cancelled.pickup_longitude,
+    cancelled.pickup_name, cancelled.dropoff_latitude, cancelled.dropoff_longitude,
+    cancelled.dropoff_name, cancelled.passenger_note, cancelled.distance_km,
+    cancelled.duration_minutes, cancelled.offered_fare, cancelled.status,
+    cancelled.target_driver_id, cancelled.accepted_driver_id,
+    cancelled.expires_at, cancelled.created_at
+FROM cancelled;
 
 -- name: CancelPendingBidOffer :one
 UPDATE bid_offers
@@ -233,12 +245,33 @@ RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
 
 
 -- name: DeclineTargetedBidSession :one
-UPDATE bid_sessions
-SET status = 'declined'
-WHERE id = $1
-  AND target_driver_id = $2
-  AND (status = 'declined' OR (status = 'open' AND expires_at > clock_timestamp()))
-RETURNING id, booking_reference, passenger_id, ride_type, pickup_latitude, pickup_longitude,
-    pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
-    passenger_note, distance_km, duration_minutes, offered_fare,
-    status, target_driver_id, accepted_driver_id, expires_at, created_at;
+WITH declined AS (
+    UPDATE bid_sessions
+    SET status = 'declined'
+    WHERE bid_sessions.id = $1
+      AND bid_sessions.target_driver_id = $2
+      AND (
+          bid_sessions.status = 'declined'
+          OR (bid_sessions.status = 'open' AND bid_sessions.expires_at > clock_timestamp())
+      )
+    RETURNING bid_sessions.id, bid_sessions.booking_reference, bid_sessions.passenger_id,
+        bid_sessions.ride_type, bid_sessions.pickup_latitude, bid_sessions.pickup_longitude,
+        bid_sessions.pickup_name, bid_sessions.dropoff_latitude, bid_sessions.dropoff_longitude,
+        bid_sessions.dropoff_name, bid_sessions.passenger_note, bid_sessions.distance_km,
+        bid_sessions.duration_minutes, bid_sessions.offered_fare, bid_sessions.status,
+        bid_sessions.target_driver_id, bid_sessions.accepted_driver_id,
+        bid_sessions.expires_at, bid_sessions.created_at
+), rejected_offers AS (
+    UPDATE bid_offers
+    SET status = 'rejected'
+    WHERE bid_offers.session_id IN (SELECT declined.id FROM declined)
+      AND bid_offers.status = 'pending'
+)
+SELECT declined.id, declined.booking_reference, declined.passenger_id,
+    declined.ride_type, declined.pickup_latitude, declined.pickup_longitude,
+    declined.pickup_name, declined.dropoff_latitude, declined.dropoff_longitude,
+    declined.dropoff_name, declined.passenger_note, declined.distance_km,
+    declined.duration_minutes, declined.offered_fare, declined.status,
+    declined.target_driver_id, declined.accepted_driver_id,
+    declined.expires_at, declined.created_at
+FROM declined;

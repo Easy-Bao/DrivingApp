@@ -12,7 +12,7 @@ import (
 
 type Querier interface {
 	AcceptRideFromRequest(ctx context.Context, arg AcceptRideFromRequestParams) (Ride, error)
-	CancelBidSession(ctx context.Context, arg CancelBidSessionParams) (BidSession, error)
+	CancelBidSession(ctx context.Context, arg CancelBidSessionParams) (CancelBidSessionRow, error)
 	CancelPendingBidOffer(ctx context.Context, arg CancelPendingBidOfferParams) (BidOffer, error)
 	CompleteRide(ctx context.Context, arg CompleteRideParams) (Ride, error)
 	CountActiveRidesForAcceptance(ctx context.Context, driverID pgtype.Int4) (int64, error)
@@ -37,7 +37,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateWalletLedger(ctx context.Context, arg CreateWalletLedgerParams) (int64, error)
 	CreditDriverWalletAccount(ctx context.Context, arg CreditDriverWalletAccountParams) (DriverWalletAccount, error)
-	DeclineTargetedBidSession(ctx context.Context, arg DeclineTargetedBidSessionParams) (BidSession, error)
+	DeclineTargetedBidSession(ctx context.Context, arg DeclineTargetedBidSessionParams) (DeclineTargetedBidSessionRow, error)
 	DeleteNotification(ctx context.Context, arg DeleteNotificationParams) (int64, error)
 	DeletePrivateObjectByStorageKey(ctx context.Context, storageKey string) error
 	ExpireBidSessions(ctx context.Context, arg ExpireBidSessionsParams) error

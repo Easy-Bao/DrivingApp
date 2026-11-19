@@ -483,7 +483,7 @@ func (repository *Store) CancelSession(
 		}
 		return dispatchdomain.BidSession{}, fmt.Errorf("cancel bid session: %w", err)
 	}
-	session, err := fromPostgresBidSession(item)
+	session, err := fromPostgresBidSession(databasepostgres.BidSession(item))
 	if err != nil {
 		return dispatchdomain.BidSession{}, fmt.Errorf("map canceled bid session: %w", err)
 	}
@@ -584,7 +584,7 @@ func (repository *Store) DeclineSession(ctx context.Context, sessionID, driverID
 	if err != nil {
 		return dispatchdomain.BidSession{}, fmt.Errorf("decline targeted ride request: %w", err)
 	}
-	session, err := fromPostgresBidSession(item)
+	session, err := fromPostgresBidSession(databasepostgres.BidSession(item))
 	if err != nil {
 		return dispatchdomain.BidSession{}, fmt.Errorf("map declined ride request: %w", err)
 	}
