@@ -237,13 +237,6 @@ const prefilledRoute = computed(() => {
                   <span class="block text-xs font-bold leading-tight">App Store</span>
                 </span>
               </RouterLink>
-
-              <RouterLink
-                :to="{ path: '/download', query: { role: 'passenger' }, hash: '#apk' }"
-                class="inline-flex min-h-11 items-center rounded-xl border border-neutral-200/90 bg-neutral-50 px-4 py-2 text-xs font-semibold text-neutral-800 transition-colors hover:border-neutral-300 hover:bg-neutral-100"
-              >
-                Direct APK
-              </RouterLink>
             </div>
           </article>
 
@@ -311,96 +304,8 @@ const prefilledRoute = computed(() => {
                   <span class="block text-xs font-bold leading-tight">Google Play</span>
                 </span>
               </RouterLink>
-
-              <RouterLink
-                :to="{ path: '/download', query: { role: 'driver' }, hash: '#apk' }"
-                class="inline-flex min-h-11 items-center rounded-xl border border-neutral-200/90 bg-white px-4 py-2 text-xs font-semibold text-neutral-900 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-neutral-50"
-              >
-                Driver APK
-              </RouterLink>
             </div>
           </article>
-        </motion.div>
-
-        <motion.div
-          :initial="{ opacity: 0, y: 14 }"
-          :while-in-view="{ opacity: 1, y: 0 }"
-          :viewport="{ once: true, amount: 0.25 }"
-          :transition="{ duration: 0.45, ease: EASE }"
-          class="mt-8 flex flex-col items-center justify-between gap-6 rounded-2xl border border-neutral-200/85 bg-white p-6 shadow-[0_1px_3px_rgba(9,13,22,0.03)] sm:flex-row sm:p-7"
-        >
-          <div class="flex items-center gap-5">
-            <div class="rounded-xl border border-neutral-200/80 bg-neutral-50 p-2.5">
-              <svg
-                width="60"
-                height="60"
-                viewBox="0 0 68 68"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-              >
-                <rect width="68" height="68" rx="6" fill="#FFFFFF" />
-                <rect x="6" y="6" width="20" height="20" rx="3" stroke="#090D16" stroke-width="4" />
-                <rect x="12" y="12" width="8" height="8" rx="1.5" fill="#090D16" />
-                <rect
-                  x="42"
-                  y="6"
-                  width="20"
-                  height="20"
-                  rx="3"
-                  stroke="#090D16"
-                  stroke-width="4"
-                />
-                <rect x="48" y="12" width="8" height="8" rx="1.5" fill="#090D16" />
-                <rect
-                  x="6"
-                  y="42"
-                  width="20"
-                  height="20"
-                  rx="3"
-                  stroke="#090D16"
-                  stroke-width="4"
-                />
-                <rect x="12" y="48" width="8" height="8" rx="1.5" fill="#090D16" />
-                <rect x="32" y="8" width="4" height="8" rx="1" fill="#090D16" />
-                <rect x="32" y="22" width="4" height="12" rx="1" fill="#525252" />
-                <rect x="8" y="32" width="14" height="4" rx="1" fill="#090D16" />
-                <rect x="28" y="30" width="12" height="10" rx="2" fill="#090D16" />
-                <rect x="46" y="32" width="16" height="4" rx="1" fill="#090D16" />
-                <rect x="32" y="46" width="10" height="10" rx="2" fill="#090D16" />
-                <rect x="48" y="46" width="14" height="6" rx="1.5" fill="#525252" />
-                <rect x="48" y="56" width="14" height="6" rx="1.5" fill="#090D16" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-[11px] font-bold tracking-[0.12em] text-neutral-400 uppercase">
-                Desktop Quick Handoff
-              </p>
-              <motion.h3
-                :key="selectedRole"
-                :initial="{ opacity: 0, y: 4 }"
-                :animate="{ opacity: 1, y: 0 }"
-                :transition="{ duration: 0.2, ease: EASE }"
-                class="mt-0.5 text-base font-bold tracking-[-0.01em] text-neutral-950"
-              >
-                {{
-                  selectedRole === 'passenger'
-                    ? 'Scan for EasyRide Passenger'
-                    : 'Scan for EasyRide Driver'
-                }}
-              </motion.h3>
-              <p class="mt-1 text-xs leading-relaxed text-neutral-500">
-                Store links and signed APK downloads activate once mobile builds publish.
-              </p>
-            </div>
-          </div>
-
-          <RouterLink
-            to="/"
-            class="inline-flex min-h-10 shrink-0 items-center rounded-full border border-neutral-200/90 bg-white px-5 py-2 text-xs font-semibold text-neutral-800 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-950"
-          >
-            Back to Estimator
-          </RouterLink>
         </motion.div>
       </div>
     </section>
