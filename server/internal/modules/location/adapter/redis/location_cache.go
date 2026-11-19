@@ -74,15 +74,25 @@ func (record matrixCacheRecord) matrix() *domain.Matrix {
 	return &domain.Matrix{DistancesKm: record.DistancesKm, DurationsMin: record.DurationsMin}
 }
 
+const (
+	_defaultPlaceCacheTTL  = time.Hour
+	_defaultMatrixCacheTTL = 5 * time.Minute
+)
+
 type Cache struct {
-	client *redisclient.Client
-	ttl    time.Duration
+	client    *redisclient.Client
+	ttl       time.Duration
+	matrixTTL time.Duration
 }
 
 var _ locationports.Cache = (*Cache)(nil)
 
 func NewCache(client *redisclient.Client) *Cache {
-	return &Cache{client: client, ttl: time.Hour}
+	return &Cache{
+		client:    client,
+		ttl:       _defaultPlaceCacheTTL,
+		matrixTTL: _defaultMatrixCacheTTL,
+	}
 }
 
 func (cache *Cache) GetPlaces(ctx context.Context, key string) ([]domain.Place, error) {
@@ -91,7 +101,7 @@ func (cache *Cache) GetPlaces(ctx context.Context, key string) ([]domain.Place, 
 		return nil, err
 	}
 	if records == nil {
-		return nil, nil
+		return nil, locationports.ErrCacheMiss
 	}
 	places := make([]domain.Place, 0, len(records))
 	for _, record := range records {
@@ -102,19 +112,22 @@ func (cache *Cache) GetPlaces(ctx context.Context, key string) ([]domain.Place, 
 
 func (cache *Cache) SetPlaces(ctx context.Context, key string, places []domain.Place) error {
 	if places == nil {
-		return cache.set(ctx, key, []placeCacheRecord(nil))
+		return cache.set(ctx, key, []placeCacheRecord{}, cache.ttl)
 	}
 	records := make([]placeCacheRecord, 0, len(places))
 	for _, place := range places {
 		records = append(records, newPlaceCacheRecord(place))
 	}
-	return cache.set(ctx, key, records)
+	return cache.set(ctx, key, records, cache.ttl)
 }
 
 func (cache *Cache) GetPlace(ctx context.Context, key string) (*domain.Place, error) {
-	var record placeCacheRecord
+	var record *placeCacheRecord
 	if err := cache.get(ctx, key, &record); err != nil {
 		return nil, err
+	}
+	if record == nil {
+		return nil, locationports.ErrCacheMiss
 	}
 	place := record.place()
 	return &place, nil
@@ -122,22 +135,32 @@ func (cache *Cache) GetPlace(ctx context.Context, key string) (*domain.Place, er
 
 func (cache *Cache) SetPlace(ctx context.Context, key string, place *domain.Place) error {
 	if place == nil {
-		return cache.set(ctx, key, (*placeCacheRecord)(nil))
+		return nil
 	}
 	record := newPlaceCacheRecord(*place)
-	return cache.set(ctx, key, record)
+	return cache.set(ctx, key, record, cache.ttl)
 }
 
 func (cache *Cache) GetMatrix(ctx context.Context, key string) (*domain.Matrix, error) {
-	var record matrixCacheRecord
+	var record *matrixCacheRecord
 	if err := cache.get(ctx, key, &record); err != nil {
 		return nil, err
+	}
+	if record == nil {
+		return nil, locationports.ErrCacheMiss
 	}
 	return record.matrix(), nil
 }
 
 func (cache *Cache) SetMatrix(ctx context.Context, key string, matrix *domain.Matrix) error {
-	return cache.set(ctx, key, newMatrixCacheRecord(matrix))
+	if matrix == nil {
+		return nil
+	}
+	ttl := cache.matrixTTL
+	if ttl <= 0 {
+		ttl = _defaultMatrixCacheTTL
+	}
+	return cache.set(ctx, key, newMatrixCacheRecord(matrix), ttl)
 }
 
 func (cache *Cache) get(ctx context.Context, key string, target any) error {
@@ -157,7 +180,7 @@ func (cache *Cache) get(ctx context.Context, key string, target any) error {
 	return nil
 }
 
-func (cache *Cache) set(ctx context.Context, key string, value any) error {
+func (cache *Cache) set(ctx context.Context, key string, value any, ttl time.Duration) error {
 	if cache == nil || cache.client == nil {
 		return errors.New("location cache is not configured")
 	}
@@ -169,7 +192,7 @@ func (cache *Cache) set(ctx context.Context, key string, value any) error {
 		ctx,
 		"location:"+key,
 		payload,
-		cache.ttl,
+		ttl,
 	).Err(); err != nil {
 		return fmt.Errorf("store location cache entry: %w", err)
 	}

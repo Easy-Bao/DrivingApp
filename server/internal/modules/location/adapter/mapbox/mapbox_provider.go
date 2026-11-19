@@ -34,6 +34,8 @@ const (
 	_mapboxRequestTimeout           = 10 * time.Second
 	_routeCacheTTL                  = 15 * time.Second
 	_routeCacheMaxEntries           = 128
+	_nearbyCacheTTL                 = 2 * time.Minute
+	_nearbyCacheMaxEntries          = 128
 )
 
 const _defaultNearbyCategoriesCSV = "food_and_drink,hotel,hospital,school,gas_station,bank,shopping_mall,park"
@@ -45,12 +47,19 @@ type RoutingProvider struct {
 	nearbyCategories []string
 	routeCacheMu     sync.Mutex
 	routeCache       map[string]routeCacheEntry
+	nearbyCacheMu    sync.Mutex
+	nearbyCache      map[string]nearbyCacheEntry
 }
 
 var _ locationports.Provider = (*RoutingProvider)(nil)
 
 type routeCacheEntry struct {
 	routes    []cachedRoute
+	createdAt time.Time
+}
+
+type nearbyCacheEntry struct {
+	places    []domain.Place
 	createdAt time.Time
 }
 
@@ -74,7 +83,8 @@ func NewRoutingProvider(token string) *RoutingProvider {
 			FailureThreshold: 5,
 			ResetAfter:       30 * time.Second,
 		}),
-		routeCache: make(map[string]routeCacheEntry),
+		routeCache:  make(map[string]routeCacheEntry),
+		nearbyCache: make(map[string]nearbyCacheEntry),
 	}
 }
 
@@ -158,7 +168,13 @@ func (provider *RoutingProvider) Nearby(
 	if invalidPage || !origin.Valid() {
 		return nil, fmt.Errorf("invalid nearby page or coordinates")
 	}
+	cacheKey := nearbyCacheKey(origin, provider.nearbyCategories)
+	if cached, ok := provider.cachedNearby(cacheKey); ok {
+		return paginateNearbyPlaces(cached, page), nil
+	}
+
 	categories := provider.nearbyCategories
+	var places []domain.Place
 	if len(categories) == 0 {
 		result := provider.nearbyCategory(
 			ctx,
@@ -168,35 +184,35 @@ func (provider *RoutingProvider) Nearby(
 		if result.err != nil {
 			return nil, result.err
 		}
-		return paginateNearbyPlaces(result.places, page), nil
-	}
-
-	results := make([]categoryResult, 0, len(categories))
-	var resultsMu sync.Mutex
-	var waitGroup sync.WaitGroup
-	for _, category := range categories {
-		waitGroup.Go(func() {
-			result := provider.nearbyCategory(ctx, origin, category)
-			resultsMu.Lock()
-			results = append(results, result)
-			resultsMu.Unlock()
-		})
-	}
-	waitGroup.Wait()
-
-	places := make([]domain.Place, 0)
-	var firstErr error
-	for _, result := range results {
-		if result.err != nil {
-			if firstErr == nil {
-				firstErr = result.err
-			}
-			continue
+		places = result.places
+	} else {
+		results := make([]categoryResult, 0, len(categories))
+		var resultsMu sync.Mutex
+		var waitGroup sync.WaitGroup
+		for _, category := range categories {
+			waitGroup.Go(func() {
+				result := provider.nearbyCategory(ctx, origin, category)
+				resultsMu.Lock()
+				results = append(results, result)
+				resultsMu.Unlock()
+			})
 		}
-		places = append(places, result.places...)
-	}
-	if len(places) == 0 && firstErr != nil {
-		return nil, firstErr
+		waitGroup.Wait()
+
+		places = make([]domain.Place, 0)
+		var firstErr error
+		for _, result := range results {
+			if result.err != nil {
+				if firstErr == nil {
+					firstErr = result.err
+				}
+				continue
+			}
+			places = append(places, result.places...)
+		}
+		if len(places) == 0 && firstErr != nil {
+			return nil, firstErr
+		}
 	}
 
 	places = uniqueNearbyPlaces(places)
@@ -206,8 +222,62 @@ func (provider *RoutingProvider) Nearby(
 		}
 		return cmp.Compare(left.Name, right.Name)
 	})
+	provider.storeNearby(cacheKey, places)
 
 	return paginateNearbyPlaces(places, page), nil
+}
+
+func nearbyCacheKey(origin domain.Coordinates, categories []string) string {
+	base := fmt.Sprintf("%.4f,%.4f", origin.Latitude, origin.Longitude)
+	if len(categories) == 0 {
+		return base
+	}
+	return base + "|" + strings.Join(categories, ",")
+}
+
+func (provider *RoutingProvider) cachedNearby(key string) ([]domain.Place, bool) {
+	provider.nearbyCacheMu.Lock()
+	defer provider.nearbyCacheMu.Unlock()
+	entry, ok := provider.nearbyCache[key]
+	if !ok {
+		return nil, false
+	}
+	if time.Since(entry.createdAt) >= _nearbyCacheTTL {
+		delete(provider.nearbyCache, key)
+		return nil, false
+	}
+	return slices.Clone(entry.places), true
+}
+
+func (provider *RoutingProvider) storeNearby(key string, places []domain.Place) {
+	provider.nearbyCacheMu.Lock()
+	defer provider.nearbyCacheMu.Unlock()
+	if provider.nearbyCache == nil {
+		provider.nearbyCache = make(map[string]nearbyCacheEntry)
+	}
+	if _, exists := provider.nearbyCache[key]; !exists && len(provider.nearbyCache) >= _nearbyCacheMaxEntries {
+		oldestKey := ""
+		var oldest time.Time
+		for candidateKey, candidate := range provider.nearbyCache {
+			if oldestKey == "" || candidate.createdAt.Before(oldest) {
+				oldestKey = candidateKey
+				oldest = candidate.createdAt
+			}
+		}
+		delete(provider.nearbyCache, oldestKey)
+	}
+	provider.nearbyCache[key] = nearbyCacheEntry{
+		places:    slices.Clone(places),
+		createdAt: time.Now(),
+	}
+}
+
+func escapeCategoryPath(category string) string {
+	parts := strings.Split(category, ",")
+	for index, part := range parts {
+		parts[index] = url.PathEscape(strings.TrimSpace(part))
+	}
+	return strings.Join(parts, ",")
 }
 
 func paginateNearbyPlaces(places []domain.Place, page int) []domain.Place {
@@ -216,7 +286,7 @@ func paginateNearbyPlaces(places []domain.Place, page int) []domain.Place {
 		return []domain.Place{}
 	}
 	end := min(start+_nearbyPageSize, len(places))
-	return places[start:end]
+	return slices.Clone(places[start:end])
 }
 
 func (provider *RoutingProvider) nearbyCategory(
@@ -230,7 +300,7 @@ func (provider *RoutingProvider) nearbyCategory(
 		"proximity":    {coordinate(origin.Longitude) + "," + coordinate(origin.Latitude)},
 	}
 	var response featureResponse
-	endpoint := _searchURL + "/category/" + url.PathEscape(category) + "?" + queryParams.Encode()
+	endpoint := _searchURL + "/category/" + escapeCategoryPath(category) + "?" + queryParams.Encode()
 	if err := provider.getJSON(ctx, endpoint, &response); err != nil {
 		return categoryResult{err: fmt.Errorf("search nearby category %q: %w", category, err)}
 	}
@@ -818,6 +888,9 @@ func (provider *RoutingProvider) validate() error {
 	if provider == nil || provider.client == nil {
 		return fmt.Errorf("location provider is not configured")
 	}
+	if strings.TrimSpace(provider.token) == "" {
+		return fmt.Errorf("location provider access token is not configured")
+	}
 	if provider.breaker == nil {
 		return resilience.ErrCircuitNotConfigured
 	}
@@ -827,11 +900,11 @@ func (provider *RoutingProvider) validate() error {
 func (provider *RoutingProvider) fetchJSON(ctx context.Context, endpoint string, target any) (err error) {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return fmt.Errorf("create location provider request: %w", err)
+		return fmt.Errorf("create location provider request: %w", sanitizeMapboxError(err))
 	}
 	response, err := provider.client.Do(request)
 	if err != nil {
-		return fmt.Errorf("send location provider request: %w", err)
+		return fmt.Errorf("send location provider request: %w", sanitizeMapboxError(err))
 	}
 	defer func() {
 		if closeErr := response.Body.Close(); closeErr != nil {
@@ -844,19 +917,55 @@ func (provider *RoutingProvider) fetchJSON(ctx context.Context, endpoint string,
 		}
 	}()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
-		return fmt.Errorf("location provider returned status %d", response.StatusCode)
+		_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, 4<<10))
+		statusErr := fmt.Errorf("location provider returned status %d", response.StatusCode)
+		if isClientQueryError(response.StatusCode) {
+			return resilience.NonTripError{Err: statusErr}
+		}
+		return statusErr
 	}
 	body, err := io.ReadAll(io.LimitReader(response.Body, _maxProviderResponseBytes+1))
 	if err != nil {
 		return fmt.Errorf("read location provider response: %w", err)
 	}
 	if int64(len(body)) > _maxProviderResponseBytes {
+		_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, 4<<10))
 		return fmt.Errorf("location provider response exceeds %d bytes", _maxProviderResponseBytes)
 	}
 	if err := json.Unmarshal(body, target); err != nil {
 		return fmt.Errorf("decode location provider response: %w", err)
 	}
 	return nil
+}
+
+func isClientQueryError(statusCode int) bool {
+	return statusCode >= http.StatusBadRequest &&
+		statusCode < http.StatusInternalServerError &&
+		statusCode != http.StatusUnauthorized &&
+		statusCode != http.StatusForbidden &&
+		statusCode != http.StatusTooManyRequests
+}
+
+func sanitizeMapboxError(err error) error {
+	var urlErr *url.Error
+	if !errors.As(err, &urlErr) || urlErr == nil {
+		return err
+	}
+	sanitized := *urlErr
+	if parsed, parseErr := url.Parse(urlErr.URL); parseErr == nil {
+		query := parsed.Query()
+		if query.Has("access_token") {
+			query.Set("access_token", "REDACTED")
+			parsed.RawQuery = query.Encode()
+		}
+		sanitized.URL = parsed.String()
+	} else if idx := strings.IndexByte(urlErr.URL, '?'); idx >= 0 {
+		sanitized.URL = urlErr.URL[:idx]
+	}
+	if sanitized.Err != nil {
+		sanitized.Err = sanitizeMapboxError(sanitized.Err)
+	}
+	return &sanitized
 }
 
 func coordinate(value float64) string {

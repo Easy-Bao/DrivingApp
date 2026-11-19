@@ -20,6 +20,31 @@ const (
 	_defaultResetAfter       = 30 * time.Second
 )
 
+// NonTripError wraps an error that should be returned to the caller without
+// counting as a downstream health failure against the circuit breaker.
+type NonTripError struct {
+	Err error
+}
+
+func (e NonTripError) Error() string {
+	if e.Err == nil {
+		return ""
+	}
+	return e.Err.Error()
+}
+
+func (e NonTripError) Unwrap() error {
+	return e.Err
+}
+
+type breakerState uint8
+
+const (
+	stateClosed breakerState = iota
+	stateOpen
+	stateHalfOpen
+)
+
 type CircuitBreakerConfig struct {
 	FailureThreshold int
 	ResetAfter       time.Duration
@@ -29,9 +54,10 @@ type CircuitBreaker struct {
 	mu               sync.Mutex
 	failureThreshold int
 	resetAfter       time.Duration
+	state            breakerState
+	generation       uint64
 	failures         int
 	openedAt         time.Time
-	halfOpen         bool
 }
 
 func NewCircuitBreaker(config CircuitBreakerConfig) *CircuitBreaker {
@@ -44,6 +70,7 @@ func NewCircuitBreaker(config CircuitBreakerConfig) *CircuitBreaker {
 	return &CircuitBreaker{
 		failureThreshold: config.FailureThreshold,
 		resetAfter:       config.ResetAfter,
+		state:            stateClosed,
 	}
 }
 
@@ -60,14 +87,15 @@ func (breaker *CircuitBreaker) Do(ctx context.Context, operation func(context.Co
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if !breaker.allow(time.Now()) {
+	generation, isProbe, allowed := breaker.allow(time.Now())
+	if !allowed {
 		return ErrCircuitOpen
 	}
 
 	completed := false
 	defer func() {
 		if !completed {
-			breaker.recordFailure(time.Now())
+			breaker.recordFailure(generation, isProbe, time.Now())
 		}
 	}()
 
@@ -76,52 +104,89 @@ func (breaker *CircuitBreaker) Do(ctx context.Context, operation func(context.Co
 	if err != nil {
 		if errors.Is(err, context.Canceled) && errors.Is(ctx.Err(), context.Canceled) {
 			// Caller cancellation says nothing about downstream health.
-			breaker.release()
+			breaker.release(generation, isProbe)
 			return fmt.Errorf("execute circuit-protected operation: %w", err)
 		}
-		breaker.recordFailure(time.Now())
+		var nonTrip NonTripError
+		if errors.As(err, &nonTrip) {
+			breaker.release(generation, isProbe)
+			return fmt.Errorf("execute circuit-protected operation: %w", nonTrip.Unwrap())
+		}
+		breaker.recordFailure(generation, isProbe, time.Now())
 		return fmt.Errorf("execute circuit-protected operation: %w", err)
 	}
-	breaker.recordSuccess()
+	breaker.recordSuccess(generation, isProbe)
 	return nil
 }
 
-func (breaker *CircuitBreaker) allow(now time.Time) bool {
+func (breaker *CircuitBreaker) allow(now time.Time) (uint64, bool, bool) {
 	breaker.mu.Lock()
 	defer breaker.mu.Unlock()
-	if breaker.openedAt.IsZero() {
-		return true
+	switch breaker.state {
+	case stateClosed:
+		return breaker.generation, false, true
+	case stateOpen:
+		if now.Sub(breaker.openedAt) < breaker.resetAfter {
+			return 0, false, false
+		}
+		breaker.state = stateHalfOpen
+		breaker.generation++
+		return breaker.generation, true, true
+	default:
+		return 0, false, false
 	}
-	if now.Sub(breaker.openedAt) < breaker.resetAfter {
-		return false
-	}
-	if breaker.halfOpen {
-		return false
-	}
-	breaker.halfOpen = true
-	return true
 }
 
-func (breaker *CircuitBreaker) recordFailure(now time.Time) {
+func (breaker *CircuitBreaker) recordFailure(generation uint64, isProbe bool, now time.Time) {
 	breaker.mu.Lock()
 	defer breaker.mu.Unlock()
-	breaker.failures++
-	if !breaker.openedAt.IsZero() || breaker.failures >= breaker.failureThreshold {
+	if generation != breaker.generation {
+		return
+	}
+	if isProbe {
+		breaker.state = stateOpen
 		breaker.openedAt = now
+		breaker.failures = breaker.failureThreshold
+		breaker.generation++
+		return
 	}
-	breaker.halfOpen = false
+	if breaker.state != stateClosed {
+		return
+	}
+	breaker.failures++
+	if breaker.failures >= breaker.failureThreshold {
+		breaker.state = stateOpen
+		breaker.openedAt = now
+		breaker.generation++
+	}
 }
 
-func (breaker *CircuitBreaker) recordSuccess() {
+func (breaker *CircuitBreaker) recordSuccess(generation uint64, isProbe bool) {
 	breaker.mu.Lock()
 	defer breaker.mu.Unlock()
-	breaker.failures = 0
-	breaker.openedAt = time.Time{}
-	breaker.halfOpen = false
+	if generation != breaker.generation {
+		return
+	}
+	if isProbe && breaker.state == stateHalfOpen {
+		breaker.state = stateClosed
+		breaker.failures = 0
+		breaker.openedAt = time.Time{}
+		breaker.generation++
+		return
+	}
+	if breaker.state == stateClosed {
+		breaker.failures = 0
+	}
 }
 
-func (breaker *CircuitBreaker) release() {
+func (breaker *CircuitBreaker) release(generation uint64, isProbe bool) {
 	breaker.mu.Lock()
 	defer breaker.mu.Unlock()
-	breaker.halfOpen = false
+	if !isProbe || generation != breaker.generation || breaker.state != stateHalfOpen {
+		return
+	}
+	// Return to open while preserving openedAt so the next caller can probe
+	// immediately, and bump generation to fence any stale work.
+	breaker.state = stateOpen
+	breaker.generation++
 }

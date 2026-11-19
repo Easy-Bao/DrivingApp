@@ -2,15 +2,18 @@ package mapbox
 
 import (
 	"context"
+	"errors"
 	"io"
 	"math"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/resilience"
 )
 
 func TestNearbyUsesCategorySearchAndParsesMapboxCategories(t *testing.T) {
@@ -589,5 +592,100 @@ func responseWithBody(request *http.Request, body string) *http.Response {
 		Body:       io.NopCloser(strings.NewReader(body)),
 		Header:     make(http.Header),
 		Request:    request,
+	}
+}
+
+func TestProviderRedactsAccessTokenFromTransportErrors(t *testing.T) {
+	const secretToken = "pk.super-secret-mapbox-token"
+	provider := NewRoutingProvider(secretToken)
+	provider.client = &http.Client{
+		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+			return nil, &url.Error{
+				Op:  "Get",
+				URL: request.URL.String(),
+				Err: errors.New("dial tcp timeout"),
+			}
+		}),
+	}
+
+	_, err := provider.Search(context.Background(), "Pagadian", domain.Coordinates{Latitude: 7.8, Longitude: 123.4})
+	if err == nil {
+		t.Fatal("expected search error")
+	}
+	if strings.Contains(err.Error(), secretToken) {
+		t.Fatalf("mapbox error leaked access token: %v", err)
+	}
+}
+
+func TestProviderRejectsEmptyAccessToken(t *testing.T) {
+	provider := NewRoutingProvider("   ")
+	_, err := provider.Search(context.Background(), "Pagadian", domain.Coordinates{Latitude: 7.8, Longitude: 123.4})
+	if err == nil {
+		t.Fatal("expected empty token to be rejected")
+	}
+}
+
+func TestProviderClient4xxDoesNotTripCircuitBreaker(t *testing.T) {
+	provider := NewRoutingProvider("test-token")
+	provider.breaker = resilience.NewCircuitBreaker(resilience.CircuitBreakerConfig{
+		FailureThreshold: 1,
+		ResetAfter:       time.Hour,
+	})
+	provider.client = &http.Client{
+		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusBadRequest,
+				Body:       io.NopCloser(strings.NewReader(`{"message":"bad query"}`)),
+				Header:     make(http.Header),
+				Request:    request,
+			}, nil
+		}),
+	}
+
+	for range 3 {
+		_, err := provider.Search(context.Background(), "bad", domain.Coordinates{Latitude: 7.8, Longitude: 123.4})
+		if err == nil {
+			t.Fatal("expected 400 error")
+		}
+		if errors.Is(err, resilience.ErrCircuitOpen) {
+			t.Fatalf("client 400 tripped circuit breaker: %v", err)
+		}
+	}
+}
+
+func TestNearbyDefaultCategoriesKeepCommasAndCachePages(t *testing.T) {
+	requestCount := 0
+	var rawPath string
+	provider := NewRoutingProvider("test-token")
+	provider.client = &http.Client{
+		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+			requestCount++
+			rawPath = request.URL.EscapedPath()
+			return responseWithBody(request, `{"features":[
+				{"id":"far","properties":{"name":"Far"},"geometry":{"coordinates":[123.4500,7.8282]}},
+				{"id":"near","properties":{"name":"Near"},"geometry":{"coordinates":[123.4362,7.8282]}},
+				{"id":"near","properties":{"name":"Near Duplicate"},"geometry":{"coordinates":[123.4362,7.8282]}}
+			]}`), nil
+		}),
+	}
+
+	origin := domain.Coordinates{Latitude: 7.8282, Longitude: 123.4361}
+	page1, err := provider.Nearby(context.Background(), origin, 1)
+	if err != nil {
+		t.Fatalf("Nearby page 1 error = %v", err)
+	}
+	if strings.Contains(rawPath, "%2C") || strings.Contains(rawPath, "%2c") {
+		t.Fatalf("default category path escaped commas: %s", rawPath)
+	}
+	if len(page1) != 2 || page1[0].ID != "near" || page1[1].ID != "far" {
+		t.Fatalf("default nearby did not dedup/sort: %#v", page1)
+	}
+
+	page2, err := provider.Nearby(context.Background(), origin, 2)
+	if err != nil || len(page2) != 0 {
+		t.Fatalf("Nearby page 2 = (%#v, %v), want empty slice", page2, err)
+	}
+	if requestCount != 1 {
+		t.Fatalf("Mapbox request count across pages 1 and 2 = %d, want 1", requestCount)
 	}
 }

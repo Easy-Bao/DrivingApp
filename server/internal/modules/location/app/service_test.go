@@ -293,3 +293,29 @@ func TestServiceCopiesProviderValuesAtTheApplicationBoundary(t *testing.T) {
 		t.Fatalf("provider changed caller destinations: %#v", destinations)
 	}
 }
+
+type searchCountProvider struct {
+	providerStub
+	calls int
+}
+
+func (provider *searchCountProvider) Search(context.Context, string, domain.Coordinates) ([]domain.Place, error) {
+	provider.calls++
+	return []domain.Place{{Name: "Pagadian City"}}, nil
+}
+
+func TestServiceNormalizesSearchCacheKeyCaseAndWhitespace(t *testing.T) {
+	provider := &searchCountProvider{}
+	service := newLocationService(provider, locationapp.WithCache(&cacheStub{values: map[string]any{}}))
+	origin := domain.Coordinates{Latitude: 7.8282, Longitude: 123.4361}
+
+	if _, err := service.Search(context.Background(), "  Pagadian   City ", origin); err != nil {
+		t.Fatalf("first Search() error = %v", err)
+	}
+	if _, err := service.Search(context.Background(), "pagadian city", origin); err != nil {
+		t.Fatalf("second Search() error = %v", err)
+	}
+	if provider.calls != 1 {
+		t.Fatalf("provider.Search calls = %d, want 1", provider.calls)
+	}
+}

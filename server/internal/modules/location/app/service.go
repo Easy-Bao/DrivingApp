@@ -84,7 +84,8 @@ func (service *Service) Search(
 	if service.provider == nil {
 		return nil, ErrProviderUnavailable
 	}
-	key := fmt.Sprintf("search:%s:%.4f:%.4f", query, origin.Latitude, origin.Longitude)
+	normalizedQuery := strings.ToLower(strings.Join(strings.Fields(query), " "))
+	key := fmt.Sprintf("search:%s:%.4f:%.4f", normalizedQuery, origin.Latitude, origin.Longitude)
 	if places, ok := service.cachedPlaces(ctx, key); ok {
 		return clonePlaces(places), nil
 	}

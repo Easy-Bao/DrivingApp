@@ -155,3 +155,59 @@ func TestCircuitBreakerTripsOnPanicInClosedState(t *testing.T) {
 		t.Fatalf("expected ErrCircuitOpen after repeated panics, got %v", err)
 	}
 }
+
+func TestCircuitBreakerStaleInFlightSuccessDoesNotCloseOpenCircuit(t *testing.T) {
+	breaker := NewCircuitBreaker(CircuitBreakerConfig{
+		FailureThreshold: 1,
+		ResetAfter:       time.Hour,
+	})
+
+	started := make(chan struct{})
+	release := make(chan struct{})
+	done := make(chan error, 1)
+	go func() {
+		done <- breaker.Do(context.Background(), func(context.Context) error {
+			close(started)
+			<-release
+			return nil
+		})
+	}()
+	<-started
+
+	// Trip the circuit while the earlier request is still in flight.
+	if err := breaker.Do(context.Background(), func(context.Context) error {
+		return errors.New("downstream outage")
+	}); err == nil {
+		t.Fatal("expected failure")
+	}
+
+	// Stale pre-open request completes successfully.
+	close(release)
+	if err := <-done; err != nil {
+		t.Fatalf("stale request error = %v, want nil", err)
+	}
+
+	// Circuit must remain open.
+	if err := breaker.Do(context.Background(), func(context.Context) error { return nil }); !errors.Is(err, ErrCircuitOpen) {
+		t.Fatalf("expected circuit to remain open after stale success, got %v", err)
+	}
+}
+
+func TestCircuitBreakerDoesNotTripOnNonTripError(t *testing.T) {
+	breaker := NewCircuitBreaker(CircuitBreakerConfig{
+		FailureThreshold: 1,
+		ResetAfter:       time.Hour,
+	})
+	badInput := errors.New("bad query")
+	for range 3 {
+		err := breaker.Do(context.Background(), func(context.Context) error {
+			return NonTripError{Err: badInput}
+		})
+		if !errors.Is(err, badInput) {
+			t.Fatalf("Do() error = %v, want wrapped badInput", err)
+		}
+	}
+	if err := breaker.Do(context.Background(), func(context.Context) error { return nil }); err != nil {
+		t.Fatalf("NonTripError unexpectedly opened circuit: %v", err)
+	}
+}
