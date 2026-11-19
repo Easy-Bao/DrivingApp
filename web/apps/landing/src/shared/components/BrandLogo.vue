@@ -1,26 +1,23 @@
 <script setup lang="ts">
 interface BrandLogoProps {
   surface?: 'light' | 'dark'
+  size?: 'sm' | 'md'
 }
 
 withDefaults(defineProps<BrandLogoProps>(), {
   surface: 'light',
+  size: 'md',
 })
 </script>
 
 <template>
-  <span class="inline-flex items-center gap-2.5 select-none">
-    <span
-      class="inline-flex h-8 w-8 shrink-0 items-center justify-center text-xs font-bold tracking-tight"
-      :class="surface === 'dark' ? 'bg-white text-neutral-900' : 'bg-neutral-900 text-white'"
-    >
-      ER
-    </span>
-    <span
-      class="text-base font-bold tracking-tight"
-      :class="surface === 'dark' ? 'text-white' : 'text-neutral-900'"
-    >
-      EasyRide
-    </span>
+  <span
+    class="inline-flex items-center font-bold tracking-[-0.03em] select-none"
+    :class="[
+      size === 'sm' ? 'text-[15px]' : 'text-[17px]',
+      surface === 'dark' ? 'text-white' : 'text-neutral-950',
+    ]"
+  >
+    EasyRide
   </span>
 </template>

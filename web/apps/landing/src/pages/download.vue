@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { motion } from 'motion-v'
 import { computed, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { RIDE_TIER_CONFIGS } from '@/features/fare-estimation/api/fare-estimation.api'
 import type { RideTier } from '@/features/fare-estimation/types'
 import LandingLayout from '@/shared/layouts/LandingLayout.vue'
+
+const EASE = [0.22, 1, 0.36, 1] as const
 
 function readQueryString(value: unknown): string {
   if (typeof value === 'string') {
@@ -43,37 +46,54 @@ const prefilledRoute = computed(() => {
 
 <template>
   <LandingLayout>
-    <section class="border-b border-neutral-200 bg-neutral-50 py-14 sm:py-20">
-      <div class="mx-auto max-w-5xl px-4 sm:px-6">
-        <div
+    <section class="bg-neutral-50/70 py-16 sm:py-22">
+      <div class="mx-auto max-w-5xl px-5 sm:px-6">
+        <motion.div
           v-if="prefilledRoute"
-          class="mb-8 flex flex-wrap items-center justify-between gap-3 border border-neutral-300 bg-white px-5 py-4 text-sm text-neutral-900"
+          :initial="{ opacity: 0, y: 10 }"
+          :animate="{ opacity: 1, y: 0 }"
+          :transition="{ duration: 0.4, ease: EASE }"
+          class="mb-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-neutral-200/90 bg-white px-5 py-4 text-sm text-neutral-950 shadow-[0_8px_24px_-16px_rgba(9,13,22,0.12)]"
         >
-          <div>
-            <p class="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
-              Selected Route Estimate
-            </p>
-            <p class="mt-0.5 font-semibold">
-              {{ prefilledRoute.from }} &#8594; {{ prefilledRoute.to }} ·
-              {{ prefilledRoute.tierName }}
-              <strong v-if="prefilledRoute.fare" class="tabular-nums">
-                &#8369;{{ prefilledRoute.fare }}
-              </strong>
-            </p>
+          <div class="flex items-start gap-3">
+            <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-600" aria-hidden="true" />
+            <div>
+              <p class="text-[11px] font-bold tracking-[0.12em] text-neutral-400 uppercase">
+                Selected Route Estimate
+              </p>
+              <p class="mt-0.5 font-semibold text-neutral-950">
+                {{ prefilledRoute.from }} &#8594; {{ prefilledRoute.to }} ·
+                {{ prefilledRoute.tierName }}
+                <strong v-if="prefilledRoute.fare" class="tabular-nums text-neutral-950">
+                  &#8369;{{ prefilledRoute.fare }}
+                </strong>
+              </p>
+            </div>
           </div>
+
           <RouterLink
             to="/"
-            class="border border-neutral-300 bg-neutral-50 px-3.5 py-1.5 text-xs font-semibold text-neutral-900 hover:bg-neutral-100"
+            class="rounded-full border border-neutral-200/90 bg-neutral-50 px-4 py-1.5 text-xs font-semibold text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-100 hover:text-neutral-950"
           >
             Adjust route
           </RouterLink>
-        </div>
+        </motion.div>
 
-        <div class="text-center">
-          <h1 class="text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl">
+        <motion.div
+          :initial="{ opacity: 0, y: 12 }"
+          :animate="{ opacity: 1, y: 0 }"
+          :transition="{ duration: 0.48, ease: EASE }"
+          class="text-center"
+        >
+          <p class="text-[11px] font-bold tracking-[0.14em] text-neutral-400 uppercase">
+            Mobile Apps
+          </p>
+          <h1
+            class="mt-3 text-4xl leading-tight font-bold tracking-[-0.035em] text-neutral-950 sm:text-5xl"
+          >
             Get EasyRide
           </h1>
-          <p class="mx-auto mt-3 max-w-xl text-base text-neutral-600">
+          <p class="mx-auto mt-3.5 max-w-xl text-base leading-relaxed text-neutral-500">
             Choose the Passenger app to book Pagadian Taxicles, or install the Driver app to bid on
             local trips.
           </p>
@@ -81,85 +101,104 @@ const prefilledRoute = computed(() => {
           <div
             role="group"
             aria-label="Switch app edition"
-            class="mt-7 inline-flex border border-neutral-300 bg-white p-1"
+            class="mt-8 inline-flex rounded-full border border-neutral-200/90 bg-white p-1 shadow-[0_1px_3px_rgba(9,13,22,0.04)]"
           >
             <button
               type="button"
-              class="px-5 py-2 text-sm font-semibold transition-colors"
+              class="relative z-10 rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-150"
               :class="
                 selectedRole === 'passenger'
-                  ? 'bg-neutral-900 text-white'
-                  : 'text-neutral-600 hover:text-neutral-900'
+                  ? 'text-white'
+                  : 'text-neutral-500 hover:text-neutral-950'
               "
               @click="selectedRole = 'passenger'"
             >
+              <motion.span
+                v-if="selectedRole === 'passenger'"
+                layout-id="download-role-pill"
+                :transition="{ type: 'spring', stiffness: 460, damping: 34 }"
+                class="absolute inset-0 -z-10 rounded-full bg-neutral-950 shadow-xs"
+                aria-hidden="true"
+              />
               Passenger App
             </button>
             <button
               type="button"
-              class="px-5 py-2 text-sm font-semibold transition-colors"
+              class="relative z-10 rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-150"
               :class="
-                selectedRole === 'driver'
-                  ? 'bg-neutral-900 text-white'
-                  : 'text-neutral-600 hover:text-neutral-900'
+                selectedRole === 'driver' ? 'text-white' : 'text-neutral-500 hover:text-neutral-950'
               "
               @click="selectedRole = 'driver'"
             >
+              <motion.span
+                v-if="selectedRole === 'driver'"
+                layout-id="download-role-pill"
+                :transition="{ type: 'spring', stiffness: 460, damping: 34 }"
+                class="absolute inset-0 -z-10 rounded-full bg-neutral-950 shadow-xs"
+                aria-hidden="true"
+              />
               Driver App
             </button>
           </div>
-        </div>
+        </motion.div>
 
-        <div class="mt-10 grid gap-6 md:grid-cols-2">
+        <motion.div
+          :initial="{ opacity: 0, y: 16 }"
+          :animate="{ opacity: 1, y: 0 }"
+          :transition="{ duration: 0.52, delay: 0.08, ease: EASE }"
+          class="mt-10 grid gap-6 md:grid-cols-2"
+        >
           <article
             id="android"
-            class="flex flex-col justify-between border p-7 transition-colors"
+            class="flex flex-col justify-between rounded-2xl border p-7 transition-all duration-200 sm:p-8"
             :class="
               selectedRole === 'passenger'
-                ? 'border-neutral-900 bg-white'
-                : 'border-neutral-200 bg-neutral-100/60'
+                ? 'border-neutral-950 bg-white shadow-[0_20px_48px_-24px_rgba(9,13,22,0.14)] ring-1 ring-neutral-950/10'
+                : 'border-neutral-200/80 bg-white/60 opacity-85 hover:opacity-100'
             "
           >
             <div>
               <div class="flex items-center justify-between text-xs">
                 <span
-                  class="border border-neutral-300 bg-neutral-50 px-2.5 py-1 font-semibold text-neutral-800"
+                  class="rounded-full border border-neutral-200/90 bg-neutral-50 px-3 py-1 font-semibold text-neutral-800"
                 >
                   Commuters
                 </span>
-                <span class="font-medium text-neutral-500">Android &amp; iOS</span>
+                <span class="font-medium text-neutral-400">Android &amp; iOS</span>
               </div>
 
-              <h2 class="mt-4 text-2xl font-bold text-neutral-900">EasyRide Passenger</h2>
-              <p class="mt-2 text-sm leading-relaxed text-neutral-600">
+              <h2 class="mt-5 text-2xl font-bold tracking-[-0.02em] text-neutral-950">
+                EasyRide Passenger
+              </h2>
+              <p class="mt-2.5 text-sm leading-relaxed text-neutral-500">
                 Check upfront fare floors across Poblacion, Dao Capitol, and Bulatok Terminal and
                 choose from live Taxicle bids.
               </p>
 
-              <ul class="mt-5 space-y-2.5 text-sm text-neutral-700">
-                <li class="flex items-center gap-2.5">
-                  <span class="h-1.5 w-1.5 shrink-0 bg-neutral-900" aria-hidden="true" />
+              <ul class="mt-6 space-y-2.5 text-sm text-neutral-700">
+                <li class="flex items-center gap-3">
+                  <span class="h-px w-3 shrink-0 bg-neutral-300" aria-hidden="true" />
                   Upfront PHP tariff preview before pickup
                 </li>
-                <li class="flex items-center gap-2.5">
-                  <span class="h-1.5 w-1.5 shrink-0 bg-neutral-900" aria-hidden="true" />
+                <li class="flex items-center gap-3">
+                  <span class="h-px w-3 shrink-0 bg-neutral-300" aria-hidden="true" />
                   Live arrival ETA and driver unit comparison
                 </li>
-                <li class="flex items-center gap-2.5">
-                  <span class="h-1.5 w-1.5 shrink-0 bg-neutral-900" aria-hidden="true" />
+                <li class="flex items-center gap-3">
+                  <span class="h-px w-3 shrink-0 bg-neutral-300" aria-hidden="true" />
                   Saved Pagadian stops and trip receipts
                 </li>
               </ul>
             </div>
 
-            <div id="ios" class="mt-7 flex flex-wrap gap-2.5 border-t border-neutral-200 pt-5">
+            <div id="ios" class="mt-8 flex flex-wrap gap-2.5 border-t border-neutral-100 pt-6">
               <RouterLink
                 :to="{ path: '/download', query: { role: 'passenger' }, hash: '#android' }"
-                class="inline-flex min-h-11 items-center gap-3 bg-neutral-900 px-4 py-2 text-left text-white transition-colors hover:bg-neutral-800"
+                class="inline-flex min-h-11 items-center gap-2.5 rounded-xl bg-neutral-950 px-4 py-2 text-left text-white shadow-[0_4px_12px_-4px_rgba(9,13,22,0.3)] transition-all duration-150 hover:bg-neutral-800 active:scale-[0.985]"
               >
                 <svg
-                  width="16"
-                  height="16"
+                  width="15"
+                  height="15"
                   viewBox="0 0 24 24"
                   fill="currentColor"
                   aria-hidden="true"
@@ -169,20 +208,20 @@ const prefilledRoute = computed(() => {
                   />
                 </svg>
                 <span>
-                  <span class="block text-[10px] uppercase tracking-wider text-neutral-300">
+                  <span class="block text-[9px] uppercase tracking-wider text-neutral-300">
                     Get it on
                   </span>
-                  <span class="block text-sm font-bold leading-tight">Google Play</span>
+                  <span class="block text-xs font-bold leading-tight">Google Play</span>
                 </span>
               </RouterLink>
 
               <RouterLink
                 :to="{ path: '/download', query: { role: 'passenger' }, hash: '#ios' }"
-                class="inline-flex min-h-11 items-center gap-3 border border-neutral-300 bg-white px-4 py-2 text-left text-neutral-900 transition-colors hover:bg-neutral-100"
+                class="inline-flex min-h-11 items-center gap-2.5 rounded-xl border border-neutral-200/90 bg-white px-4 py-2 text-left text-neutral-950 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all duration-150 hover:border-neutral-300 hover:bg-neutral-50 active:scale-[0.985]"
               >
                 <svg
-                  width="16"
-                  height="16"
+                  width="15"
+                  height="15"
                   viewBox="0 0 24 24"
                   fill="currentColor"
                   aria-hidden="true"
@@ -192,16 +231,16 @@ const prefilledRoute = computed(() => {
                   />
                 </svg>
                 <span>
-                  <span class="block text-[10px] uppercase tracking-wider text-neutral-500">
+                  <span class="block text-[9px] uppercase tracking-wider text-neutral-500">
                     Download on the
                   </span>
-                  <span class="block text-sm font-bold leading-tight">App Store</span>
+                  <span class="block text-xs font-bold leading-tight">App Store</span>
                 </span>
               </RouterLink>
 
               <RouterLink
                 :to="{ path: '/download', query: { role: 'passenger' }, hash: '#apk' }"
-                class="inline-flex min-h-11 items-center border border-neutral-300 bg-neutral-50 px-4 py-2 text-sm font-semibold text-neutral-900 transition-colors hover:bg-neutral-100"
+                class="inline-flex min-h-11 items-center rounded-xl border border-neutral-200/90 bg-neutral-50 px-4 py-2 text-xs font-semibold text-neutral-800 transition-colors hover:border-neutral-300 hover:bg-neutral-100"
               >
                 Direct APK
               </RouterLink>
@@ -210,51 +249,53 @@ const prefilledRoute = computed(() => {
 
           <article
             id="apk"
-            class="flex flex-col justify-between border p-7 transition-colors"
+            class="flex flex-col justify-between rounded-2xl border p-7 transition-all duration-200 sm:p-8"
             :class="
               selectedRole === 'driver'
-                ? 'border-neutral-900 bg-white'
-                : 'border-neutral-200 bg-neutral-100/60'
+                ? 'border-neutral-950 bg-white shadow-[0_20px_48px_-24px_rgba(9,13,22,0.14)] ring-1 ring-neutral-950/10'
+                : 'border-neutral-200/80 bg-white/60 opacity-85 hover:opacity-100'
             "
           >
             <div>
               <div class="flex items-center justify-between text-xs">
-                <span class="bg-neutral-900 px-2.5 py-1 font-semibold text-white">
+                <span class="rounded-full bg-neutral-950 px-3 py-1 font-semibold text-white">
                   Taxicle Drivers
                 </span>
-                <span class="font-medium text-neutral-500">Android Build</span>
+                <span class="font-medium text-neutral-400">Android Build</span>
               </div>
 
-              <h2 class="mt-4 text-2xl font-bold text-neutral-900">EasyRide Driver</h2>
-              <p class="mt-2 text-sm leading-relaxed text-neutral-600">
+              <h2 class="mt-5 text-2xl font-bold tracking-[-0.02em] text-neutral-950">
+                EasyRide Driver
+              </h2>
+              <p class="mt-2.5 text-sm leading-relaxed text-neutral-500">
                 Receive nearby Pagadian passenger requests, send transparent bids, and track your
                 QRPh wallet balance in one view.
               </p>
 
-              <ul class="mt-5 space-y-2.5 text-sm text-neutral-700">
-                <li class="flex items-center gap-2.5">
-                  <span class="h-1.5 w-1.5 shrink-0 bg-neutral-900" aria-hidden="true" />
+              <ul class="mt-6 space-y-2.5 text-sm text-neutral-700">
+                <li class="flex items-center gap-3">
+                  <span class="h-px w-3 shrink-0 bg-neutral-300" aria-hidden="true" />
                   QRPh top-ups via GCash, Maya, BDO, and BPI
                 </li>
-                <li class="flex items-center gap-2.5">
-                  <span class="h-1.5 w-1.5 shrink-0 bg-neutral-900" aria-hidden="true" />
+                <li class="flex items-center gap-3">
+                  <span class="h-px w-3 shrink-0 bg-neutral-300" aria-hidden="true" />
                   10%–15% commission ledger per completed trip
                 </li>
-                <li class="flex items-center gap-2.5">
-                  <span class="h-1.5 w-1.5 shrink-0 bg-neutral-900" aria-hidden="true" />
+                <li class="flex items-center gap-3">
+                  <span class="h-px w-3 shrink-0 bg-neutral-300" aria-hidden="true" />
                   Fast onboarding for LTO and MTOP units
                 </li>
               </ul>
             </div>
 
-            <div class="mt-7 flex flex-wrap gap-2.5 border-t border-neutral-200 pt-5">
+            <div class="mt-8 flex flex-wrap gap-2.5 border-t border-neutral-100 pt-6">
               <RouterLink
                 :to="{ path: '/download', query: { role: 'driver' }, hash: '#android' }"
-                class="inline-flex min-h-11 items-center gap-3 bg-neutral-900 px-4 py-2 text-left text-white transition-colors hover:bg-neutral-800"
+                class="inline-flex min-h-11 items-center gap-2.5 rounded-xl bg-neutral-950 px-4 py-2 text-left text-white shadow-[0_4px_12px_-4px_rgba(9,13,22,0.3)] transition-all duration-150 hover:bg-neutral-800 active:scale-[0.985]"
               >
                 <svg
-                  width="16"
-                  height="16"
+                  width="15"
+                  height="15"
                   viewBox="0 0 24 24"
                   fill="currentColor"
                   aria-hidden="true"
@@ -264,65 +305,91 @@ const prefilledRoute = computed(() => {
                   />
                 </svg>
                 <span>
-                  <span class="block text-[10px] uppercase tracking-wider text-neutral-300">
+                  <span class="block text-[9px] uppercase tracking-wider text-neutral-300">
                     Driver Android
                   </span>
-                  <span class="block text-sm font-bold leading-tight">Google Play</span>
+                  <span class="block text-xs font-bold leading-tight">Google Play</span>
                 </span>
               </RouterLink>
 
               <RouterLink
                 :to="{ path: '/download', query: { role: 'driver' }, hash: '#apk' }"
-                class="inline-flex min-h-11 items-center border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-900 transition-colors hover:bg-neutral-100"
+                class="inline-flex min-h-11 items-center rounded-xl border border-neutral-200/90 bg-white px-4 py-2 text-xs font-semibold text-neutral-900 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-neutral-50"
               >
                 Driver APK
               </RouterLink>
             </div>
           </article>
-        </div>
+        </motion.div>
 
-        <div
-          class="mt-8 flex flex-col items-center justify-between gap-6 border border-neutral-200 bg-white p-6 sm:flex-row"
+        <motion.div
+          :initial="{ opacity: 0, y: 14 }"
+          :while-in-view="{ opacity: 1, y: 0 }"
+          :viewport="{ once: true, amount: 0.25 }"
+          :transition="{ duration: 0.45, ease: EASE }"
+          class="mt-8 flex flex-col items-center justify-between gap-6 rounded-2xl border border-neutral-200/85 bg-white p-6 shadow-[0_1px_3px_rgba(9,13,22,0.03)] sm:flex-row sm:p-7"
         >
-          <div class="flex items-center gap-4">
-            <div class="border border-neutral-200 bg-neutral-50 p-2.5">
+          <div class="flex items-center gap-5">
+            <div class="rounded-xl border border-neutral-200/80 bg-neutral-50 p-2.5">
               <svg
-                width="64"
-                height="64"
+                width="60"
+                height="60"
                 viewBox="0 0 68 68"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
                 aria-hidden="true"
               >
-                <rect width="68" height="68" fill="#FFFFFF" />
-                <rect x="6" y="6" width="20" height="20" stroke="#090D16" stroke-width="4" />
-                <rect x="12" y="12" width="8" height="8" fill="#090D16" />
-                <rect x="42" y="6" width="20" height="20" stroke="#090D16" stroke-width="4" />
-                <rect x="48" y="12" width="8" height="8" fill="#090D16" />
-                <rect x="6" y="42" width="20" height="20" stroke="#090D16" stroke-width="4" />
-                <rect x="12" y="48" width="8" height="8" fill="#090D16" />
-                <rect x="32" y="8" width="4" height="8" fill="#090D16" />
-                <rect x="32" y="22" width="4" height="12" fill="#525252" />
-                <rect x="8" y="32" width="14" height="4" fill="#090D16" />
-                <rect x="28" y="30" width="12" height="10" fill="#090D16" />
-                <rect x="46" y="32" width="16" height="4" fill="#090D16" />
-                <rect x="32" y="46" width="10" height="10" fill="#090D16" />
-                <rect x="48" y="46" width="14" height="6" fill="#525252" />
-                <rect x="48" y="56" width="14" height="6" fill="#090D16" />
+                <rect width="68" height="68" rx="6" fill="#FFFFFF" />
+                <rect x="6" y="6" width="20" height="20" rx="3" stroke="#090D16" stroke-width="4" />
+                <rect x="12" y="12" width="8" height="8" rx="1.5" fill="#090D16" />
+                <rect
+                  x="42"
+                  y="6"
+                  width="20"
+                  height="20"
+                  rx="3"
+                  stroke="#090D16"
+                  stroke-width="4"
+                />
+                <rect x="48" y="12" width="8" height="8" rx="1.5" fill="#090D16" />
+                <rect
+                  x="6"
+                  y="42"
+                  width="20"
+                  height="20"
+                  rx="3"
+                  stroke="#090D16"
+                  stroke-width="4"
+                />
+                <rect x="12" y="48" width="8" height="8" rx="1.5" fill="#090D16" />
+                <rect x="32" y="8" width="4" height="8" rx="1" fill="#090D16" />
+                <rect x="32" y="22" width="4" height="12" rx="1" fill="#525252" />
+                <rect x="8" y="32" width="14" height="4" rx="1" fill="#090D16" />
+                <rect x="28" y="30" width="12" height="10" rx="2" fill="#090D16" />
+                <rect x="46" y="32" width="16" height="4" rx="1" fill="#090D16" />
+                <rect x="32" y="46" width="10" height="10" rx="2" fill="#090D16" />
+                <rect x="48" y="46" width="14" height="6" rx="1.5" fill="#525252" />
+                <rect x="48" y="56" width="14" height="6" rx="1.5" fill="#090D16" />
               </svg>
             </div>
             <div>
-              <p class="text-xs font-bold uppercase tracking-wider text-neutral-500">
+              <p class="text-[11px] font-bold tracking-[0.12em] text-neutral-400 uppercase">
                 Desktop Quick Handoff
               </p>
-              <h3 class="text-base font-bold text-neutral-900">
+              <motion.h3
+                :key="selectedRole"
+                :initial="{ opacity: 0, y: 4 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :transition="{ duration: 0.2, ease: EASE }"
+                class="mt-0.5 text-base font-bold tracking-[-0.01em] text-neutral-950"
+              >
                 {{
                   selectedRole === 'passenger'
                     ? 'Scan for EasyRide Passenger'
                     : 'Scan for EasyRide Driver'
                 }}
-              </h3>
-              <p class="mt-0.5 text-xs text-neutral-500">
+              </motion.h3>
+              <p class="mt-1 text-xs leading-relaxed text-neutral-500">
                 Store links and signed APK downloads activate once mobile builds publish.
               </p>
             </div>
@@ -330,11 +397,11 @@ const prefilledRoute = computed(() => {
 
           <RouterLink
             to="/"
-            class="inline-flex min-h-10 shrink-0 items-center border border-neutral-300 bg-white px-4 py-2 text-xs font-semibold text-neutral-900 hover:bg-neutral-100"
+            class="inline-flex min-h-10 shrink-0 items-center rounded-full border border-neutral-200/90 bg-white px-5 py-2 text-xs font-semibold text-neutral-800 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-950"
           >
             Back to Estimator
           </RouterLink>
-        </div>
+        </motion.div>
       </div>
     </section>
   </LandingLayout>

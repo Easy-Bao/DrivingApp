@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { AnimatePresence, motion } from 'motion-v'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
@@ -8,6 +9,7 @@ import {
 import type { RideTier } from '@/features/fare-estimation/types'
 
 const TIER_ORDER: RideTier[] = ['standard', 'comfort', 'executive']
+const EASE = [0.22, 1, 0.36, 1] as const
 
 const {
   request,
@@ -25,7 +27,13 @@ const {
 } = useFareEstimation()
 
 const highlighted = ref(false)
+const swapCount = ref(0)
 let highlightTimer: ReturnType<typeof setTimeout> | null = null
+
+const handleSwap = async () => {
+  swapCount.value += 1
+  await swapLocations()
+}
 
 watch(farePrefillSignal, async (payload) => {
   if (!payload) {
@@ -53,78 +61,117 @@ const floorFarePhp = computed(() => {
   }
   return Math.round(estimate.value.estimatedFareCents / 100)
 })
+
+const formatPresetLabel = (label: string) => label.replace('->', '→')
 </script>
 
 <template>
   <section
     aria-labelledby="fare-card-heading"
-    class="border bg-white p-5 transition-colors sm:p-6"
-    :class="highlighted ? 'border-neutral-900' : 'border-neutral-200'"
+    class="rounded-2xl border bg-white p-6 shadow-[0_20px_48px_-24px_rgba(9,13,22,0.12),0_1px_3px_rgba(9,13,22,0.04)] transition-all duration-300 sm:p-7"
+    :class="
+      highlighted
+        ? 'border-neutral-950 ring-4 ring-neutral-950/8'
+        : 'border-neutral-200/85 ring-1 ring-transparent'
+    "
   >
-    <div class="flex items-center justify-between gap-2">
-      <h2 id="fare-card-heading" class="text-lg font-bold tracking-tight text-neutral-900">
+    <div class="flex items-center justify-between gap-3">
+      <h2 id="fare-card-heading" class="text-lg font-bold tracking-[-0.02em] text-neutral-950">
         Fare Estimate
       </h2>
-      <span class="text-xs font-medium text-neutral-500">PHP</span>
+      <span
+        class="rounded-full border border-neutral-200/80 bg-neutral-50 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-neutral-500"
+      >
+        PHP
+      </span>
     </div>
 
-    <div class="mt-3 flex flex-wrap gap-1.5">
+    <div class="mt-4 flex flex-wrap gap-1.5">
       <button
         v-for="corridor in presets.slice(0, 3)"
         :key="corridor.id"
         type="button"
-        class="border px-2.5 py-1 text-xs font-medium transition-colors"
+        class="rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-150"
         :class="
           activePresetId === corridor.id
-            ? 'border-neutral-900 bg-neutral-900 text-white'
-            : 'border-neutral-200 bg-neutral-50 text-neutral-600 hover:text-neutral-900'
+            ? 'border-neutral-950 bg-neutral-950 text-white shadow-[0_2px_8px_-2px_rgba(9,13,22,0.28)]'
+            : 'border-neutral-200/85 bg-neutral-50/80 text-neutral-600 hover:border-neutral-300 hover:bg-neutral-100/70 hover:text-neutral-950'
         "
         @click="selectPreset(corridor)"
       >
-        {{ corridor.label }}
+        {{ formatPresetLabel(corridor.label) }}
       </button>
     </div>
 
-    <form class="mt-4 space-y-3" @submit.prevent="estimateFare">
-      <div class="relative space-y-2.5 border border-neutral-200 bg-neutral-50 p-3 pr-12">
-        <div>
-          <label for="landing-pickup-input" class="block text-xs font-medium text-neutral-600">
-            Pickup
-          </label>
-          <input
-            id="landing-pickup-input"
-            v-model="request.pickupLocation"
-            type="text"
-            autocomplete="off"
-            placeholder="Agora Public Market"
-            class="mt-1 w-full border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
-            @input="activePresetId = null"
-          />
+    <form class="mt-5 space-y-4" @submit.prevent="estimateFare">
+      <div
+        class="relative rounded-xl border border-neutral-200/80 bg-neutral-50/75 p-3.5 pr-13 pl-8 sm:p-4 sm:pr-14 sm:pl-9"
+      >
+        <!-- Minimalist pickup-to-dropoff route rail -->
+        <div
+          class="pointer-events-none absolute top-[2.35rem] bottom-[1.7rem] left-3.5 flex flex-col items-center sm:left-4"
+          aria-hidden="true"
+        >
+          <span class="h-2 w-2 rounded-full border-[1.75px] border-neutral-950 bg-white" />
+          <span class="my-1 w-px flex-1 border-l border-dashed border-neutral-300" />
+          <span class="h-2 w-2 rounded-full bg-emerald-600" />
         </div>
 
-        <div>
-          <label for="landing-destination-input" class="block text-xs font-medium text-neutral-600">
-            Drop-off
-          </label>
-          <input
-            id="landing-destination-input"
-            v-model="request.destinationLocation"
-            type="text"
-            autocomplete="off"
-            placeholder="Dao Provincial Capitol"
-            class="mt-1 w-full border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
-            @input="activePresetId = null"
-          />
+        <div class="space-y-3">
+          <div>
+            <label
+              for="landing-pickup-input"
+              class="block text-[11px] font-semibold text-neutral-500"
+            >
+              Pickup
+            </label>
+            <input
+              id="landing-pickup-input"
+              v-model="request.pickupLocation"
+              type="text"
+              autocomplete="off"
+              placeholder="Agora Public Market"
+              class="mt-1 w-full rounded-lg border border-neutral-200/90 bg-white px-3 py-2 text-sm text-neutral-950 shadow-[0_1px_2px_rgba(0,0,0,0.02)] placeholder:text-neutral-400 transition-[border-color,box-shadow] duration-150 focus:border-neutral-950 focus:shadow-[0_0_0_1px_#090d16] focus:outline-none"
+              @input="activePresetId = null"
+            />
+          </div>
+
+          <div>
+            <label
+              for="landing-destination-input"
+              class="block text-[11px] font-semibold text-neutral-500"
+            >
+              Drop-off
+            </label>
+            <input
+              id="landing-destination-input"
+              v-model="request.destinationLocation"
+              type="text"
+              autocomplete="off"
+              placeholder="Dao Provincial Capitol"
+              class="mt-1 w-full rounded-lg border border-neutral-200/90 bg-white px-3 py-2 text-sm text-neutral-950 shadow-[0_1px_2px_rgba(0,0,0,0.02)] placeholder:text-neutral-400 transition-[border-color,box-shadow] duration-150 focus:border-neutral-950 focus:shadow-[0_0_0_1px_#090d16] focus:outline-none"
+              @input="activePresetId = null"
+            />
+          </div>
         </div>
 
-        <button
+        <motion.button
           type="button"
           aria-label="Swap pickup and destination"
           title="Swap"
-          class="absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center border border-neutral-300 bg-white text-neutral-600 hover:border-neutral-900 hover:text-neutral-900"
-          @click="swapLocations"
+          :while-press="{ scale: 0.9 }"
+          class="absolute top-1/2 right-2.5 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-neutral-200/90 bg-white text-neutral-500 shadow-[0_1px_3px_rgba(9,13,22,0.06)] transition-colors hover:border-neutral-400 hover:text-neutral-950 sm:right-3"
+          @click="handleSwap"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <motion.svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+            :animate="{ rotate: swapCount * 180 }"
+            :transition="{ type: 'spring', stiffness: 360, damping: 24 }"
+          >
             <path
               d="M7 16V4m0 0L3.5 7.5M7 4l3.5 3.5M17 8v12m0 0l3.5-3.5M17 20l-3.5-3.5"
               stroke="currentColor"
@@ -132,8 +179,8 @@ const floorFarePhp = computed(() => {
               stroke-linecap="round"
               stroke-linejoin="round"
             />
-          </svg>
-        </button>
+          </motion.svg>
+        </motion.button>
       </div>
 
       <div>
@@ -145,52 +192,93 @@ const floorFarePhp = computed(() => {
             type="button"
             role="radio"
             :aria-checked="request.rideTier === tierKey"
-            class="border px-3 py-2 text-left transition-colors"
+            class="rounded-xl border px-3 py-2.5 text-left transition-all duration-150"
             :class="
               request.rideTier === tierKey
-                ? 'border-neutral-900 bg-neutral-100 text-neutral-900'
-                : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-neutral-900'
+                ? 'border-neutral-950 bg-neutral-50 text-neutral-950 ring-1 ring-neutral-950/10'
+                : 'border-neutral-200/85 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50/50 hover:text-neutral-950'
             "
             @click="selectTier(tierKey)"
           >
-            <span class="block text-xs font-bold">{{ tierConfigs[tierKey].shortLabel }}</span>
-            <span class="block text-[11px] tabular-nums"
-              >&#8369;{{ tierConfigs[tierKey].basePhp }}</span
-            >
+            <span class="flex items-center justify-between gap-1">
+              <span class="text-xs font-bold">{{ tierConfigs[tierKey].shortLabel }}</span>
+              <span
+                class="h-1.5 w-1.5 rounded-full transition-colors"
+                :class="request.rideTier === tierKey ? 'bg-neutral-950' : 'bg-transparent'"
+                aria-hidden="true"
+              />
+            </span>
+            <span class="mt-0.5 block text-[11px] font-medium tabular-nums text-neutral-500">
+              &#8369;{{ tierConfigs[tierKey].basePhp }}
+            </span>
           </button>
         </div>
       </div>
 
-      <p
-        v-if="validationError"
-        role="alert"
-        class="border border-neutral-300 border-l-2 border-l-rose-600 bg-neutral-50 px-3 py-2 text-xs font-medium text-neutral-900"
-      >
-        {{ validationError }}
-      </p>
+      <AnimatePresence>
+        <motion.p
+          v-if="validationError"
+          key="fare-validation-error"
+          role="alert"
+          :initial="{ opacity: 0, y: -4 }"
+          :animate="{ opacity: 1, y: 0 }"
+          :exit="{ opacity: 0, y: -4 }"
+          :transition="{ duration: 0.18, ease: EASE }"
+          class="rounded-xl border border-rose-200/90 bg-rose-50/70 px-3.5 py-2.5 text-xs font-medium text-rose-800"
+        >
+          {{ validationError }}
+        </motion.p>
+      </AnimatePresence>
 
       <div
         v-if="estimate"
         aria-live="polite"
-        class="flex items-baseline justify-between border-t border-neutral-200 pt-4"
+        class="rounded-xl border border-neutral-200/75 bg-neutral-50/80 px-4 py-4"
       >
-        <div>
-          <span class="block text-xs font-medium text-neutral-500">Floor Fare</span>
-          <span class="text-3xl font-bold tracking-tight tabular-nums text-neutral-900">
-            &#8369;{{ floorFarePhp }}
-          </span>
+        <div class="flex flex-wrap items-baseline justify-between gap-3">
+          <div>
+            <span class="block text-[11px] font-semibold tracking-wide text-neutral-500 uppercase">
+              Floor Fare
+            </span>
+            <motion.span
+              :key="floorFarePhp"
+              :initial="{ opacity: 0, y: 4 }"
+              :animate="{ opacity: 1, y: 0 }"
+              :transition="{ duration: 0.22, ease: EASE }"
+              class="mt-0.5 block text-3xl font-bold tracking-tight tabular-nums text-neutral-950"
+            >
+              &#8369;{{ floorFarePhp }}
+            </motion.span>
+          </div>
+
+          <div class="text-right">
+            <span
+              class="inline-flex items-center rounded-full border border-neutral-200/80 bg-white px-2.5 py-1 text-xs font-medium tabular-nums text-neutral-600"
+            >
+              {{ estimate.estimatedDistanceKm.toFixed(1) }} km ·
+              {{ estimate.estimatedDurationMinutes }} min
+            </span>
+            <p class="mt-1.5 text-[11px] tabular-nums text-neutral-500">
+              Typical bids &#8369;{{ estimate.suggestedBidRangePhp.min }}–&#8369;{{
+                estimate.suggestedBidRangePhp.max
+              }}
+            </p>
+          </div>
         </div>
-        <span class="text-xs font-medium tabular-nums text-neutral-500">
-          {{ estimate.estimatedDistanceKm.toFixed(1) }} km ·
-          {{ estimate.estimatedDurationMinutes }} min
-        </span>
+
+        <p
+          v-if="estimate.corridorNote"
+          class="mt-3 border-t border-neutral-200/70 pt-2.5 text-[11px] text-neutral-500"
+        >
+          {{ estimate.corridorNote }}
+        </p>
       </div>
 
-      <div class="grid gap-2 pt-1 sm:grid-cols-2">
+      <div class="grid gap-2.5 pt-1 sm:grid-cols-2">
         <button
           type="submit"
           :disabled="isCalculating"
-          class="inline-flex min-h-10 w-full items-center justify-center border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-900 transition-colors hover:bg-neutral-100 disabled:opacity-60"
+          class="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-neutral-200/90 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all duration-150 hover:border-neutral-300 hover:bg-neutral-50 active:scale-[0.985] disabled:opacity-60"
         >
           {{ isCalculating ? 'Calculating...' : 'Estimate' }}
         </button>
@@ -205,7 +293,7 @@ const floorFarePhp = computed(() => {
               fare: String(floorFarePhp),
             },
           }"
-          class="inline-flex min-h-10 w-full items-center justify-center bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
+          class="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_6px_16px_-6px_rgba(9,13,22,0.35)] transition-all duration-150 hover:bg-neutral-800 active:scale-[0.985]"
         >
           Open App
         </RouterLink>
