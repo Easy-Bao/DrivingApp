@@ -218,7 +218,7 @@ func (application *Application) Run(ctx context.Context) error {
 		ctx = context.Background()
 	}
 	applicationLogger := application.log()
-	subscriberContext, stopSubscriber := context.WithCancel(ctx)
+	subscriberContext, stopSubscriber := context.WithCancel(context.WithoutCancel(ctx))
 	subscriberDone := make(chan error, 1)
 	go func() {
 		subscriberDone <- application.eventSubscriber.Run(subscriberContext)
@@ -227,7 +227,7 @@ func (application *Application) Run(ctx context.Context) error {
 	defer func() {
 		stopSubscriber()
 		if !subscriberStopped {
-			if err := <-subscriberDone; err != nil {
+			if err := <-subscriberDone; err != nil && !errors.Is(err, context.Canceled) {
 				applicationLogger.Warn("stop realtime event subscriber", "error", err)
 			}
 		}
@@ -248,7 +248,7 @@ func (application *Application) Run(ctx context.Context) error {
 		return nil
 	}
 
-	monitorContext, stopMonitoring := context.WithCancel(ctx)
+	monitorContext, stopMonitoring := context.WithCancel(context.WithoutCancel(ctx))
 	monitorDone := make(chan struct{})
 	go func() {
 		defer close(monitorDone)
@@ -272,6 +272,19 @@ func (application *Application) Run(ctx context.Context) error {
 			shutdownContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
 			defer cancel()
 			shutdownErr = application.server.Shutdown(shutdownContext)
+			if shutdownErr != nil {
+				if closeErr := application.server.Close(); closeErr != nil && !errors.Is(closeErr, http.ErrServerClosed) {
+					shutdownErr = errors.Join(shutdownErr, closeErr)
+				}
+			}
+			if application.eventHub != nil {
+				application.eventHub.Close()
+				drainContext, cancelDrain := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+				defer cancelDrain()
+				if drainErr := application.eventHub.Wait(drainContext); drainErr != nil {
+					applicationLogger.Warn("timed out waiting for websocket connections to drain", "error", drainErr)
+				}
+			}
 		})
 		return shutdownErr
 	}

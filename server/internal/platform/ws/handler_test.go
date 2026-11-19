@@ -324,3 +324,49 @@ func TestHandlerClosesAtCredentialExpiryDespitePongs(t *testing.T) {
 		t.Fatalf("connection closed before credential expiry: %v", err)
 	}
 }
+
+func TestHandlerRejectsExcessiveConnectionsPerUser(t *testing.T) {
+	hub := NewHub(WithConnectionLimits(10, 1))
+	defer hub.Close()
+	handler := newTestHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}})
+	server := newIPv4TestServer(t, handler)
+	defer server.Close()
+
+	url := "ws" + strings.TrimPrefix(server.URL, "http")
+	conn, _, err := websocket.DefaultDialer.Dial(url, http.Header{"Authorization": []string{"Bearer valid"}})
+	if err != nil {
+		t.Fatalf("first Dial() error = %v", err)
+	}
+	defer conn.Close()
+
+	_, resp, err := websocket.DefaultDialer.Dial(url, http.Header{"Authorization": []string{"Bearer valid"}})
+	if err == nil {
+		t.Fatal("second Dial() exceeded per-user limit")
+	}
+	if resp == nil || resp.StatusCode != http.StatusTooManyRequests {
+		t.Fatalf("second Dial() response = %v, want 429", resp)
+	}
+}
+
+func TestHandlerClosesRealtimeSocketOnUnexpectedClientFrame(t *testing.T) {
+	hub := NewHub()
+	defer hub.Close()
+	handler := newTestHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}})
+	server := newIPv4TestServer(t, handler)
+	defer server.Close()
+
+	url := "ws" + strings.TrimPrefix(server.URL, "http")
+	conn, _, err := websocket.DefaultDialer.Dial(url, http.Header{"Authorization": []string{"Bearer valid"}})
+	if err != nil {
+		t.Fatalf("Dial() error = %v", err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteMessage(websocket.TextMessage, []byte(`{"unexpected":true}`)); err != nil {
+		t.Fatalf("WriteMessage() error = %v", err)
+	}
+	_ = conn.SetReadDeadline(time.Now().Add(time.Second))
+	if _, _, err := conn.ReadMessage(); err == nil {
+		t.Fatal("expected server-push realtime socket to close after unexpected client data frame")
+	}
+}

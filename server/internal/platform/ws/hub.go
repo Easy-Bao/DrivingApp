@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"log/slog"
 	"strings"
 	"sync"
@@ -8,15 +9,37 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
-const _outboundQueueSize = 64
+const (
+	_outboundQueueSize            = 64
+	_defaultMaxGlobalConnections  = 10_000
+	_defaultMaxUserConnections    = 8
+)
 
 // Hub owns local WebSocket queues. Priority buffer eviction drops telemetry and
 // chat events first when a queue reaches capacity to protect critical lifecycle events
 // and avoid terminating mobile connections during cellular network jitter.
 type Hub struct {
-	mutex  sync.RWMutex
-	topics map[string]map[*Subscription]struct{}
-	closed bool
+	mutex          sync.RWMutex
+	topics         map[string]map[*Subscription]struct{}
+	closed         bool
+	maxGlobal      int
+	maxPerSubject  int
+	totalConns     int
+	subjectConns   map[string]int
+	activeConns    sync.WaitGroup
+}
+
+type HubOption func(*Hub)
+
+func WithConnectionLimits(maxGlobal, maxPerSubject int) HubOption {
+	return func(hub *Hub) {
+		if maxGlobal > 0 {
+			hub.maxGlobal = maxGlobal
+		}
+		if maxPerSubject > 0 {
+			hub.maxPerSubject = maxPerSubject
+		}
+	}
 }
 
 type Subscription struct {
@@ -28,8 +51,78 @@ type Subscription struct {
 	once          sync.Once
 }
 
-func NewHub() *Hub {
-	return &Hub{topics: make(map[string]map[*Subscription]struct{})}
+func NewHub(options ...HubOption) *Hub {
+	hub := &Hub{
+		topics:        make(map[string]map[*Subscription]struct{}),
+		maxGlobal:     _defaultMaxGlobalConnections,
+		maxPerSubject: _defaultMaxUserConnections,
+		subjectConns:  make(map[string]int),
+	}
+	for _, option := range options {
+		if option != nil {
+			option(hub)
+		}
+	}
+	return hub
+}
+
+// AcquireConnection reserves a connection slot for subject while respecting
+// global and per-user caps and hub shutdown state. Callers must invoke the
+// returned release function when the connection terminates.
+func (hub *Hub) AcquireConnection(subject string) (func(), bool) {
+	if hub == nil {
+		return func() {}, false
+	}
+	hub.mutex.Lock()
+	defer hub.mutex.Unlock()
+	if hub.closed {
+		return func() {}, false
+	}
+	if hub.maxGlobal > 0 && hub.totalConns >= hub.maxGlobal {
+		return func() {}, false
+	}
+	if subject != "" && hub.maxPerSubject > 0 && hub.subjectConns[subject] >= hub.maxPerSubject {
+		return func() {}, false
+	}
+	hub.totalConns++
+	if subject != "" {
+		hub.subjectConns[subject]++
+	}
+	hub.activeConns.Add(1)
+	var releaseOnce sync.Once
+	return func() {
+		releaseOnce.Do(func() {
+			hub.mutex.Lock()
+			hub.totalConns--
+			if subject != "" {
+				if hub.subjectConns[subject] <= 1 {
+					delete(hub.subjectConns, subject)
+				} else {
+					hub.subjectConns[subject]--
+				}
+			}
+			hub.mutex.Unlock()
+			hub.activeConns.Done()
+		})
+	}, true
+}
+
+// Wait blocks until all acquired WebSocket connections have exited or ctx expires.
+func (hub *Hub) Wait(ctx context.Context) error {
+	if hub == nil {
+		return nil
+	}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		hub.activeConns.Wait()
+	}()
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (hub *Hub) Subscribe(topics ...string) *Subscription {
@@ -188,7 +281,12 @@ drainLoop:
 	}
 
 	keep := false
-	if droppableIndex != -1 {
+	if len(drained) < _outboundQueueSize {
+		// The consumer freed at least one slot between the non-blocking send
+		// attempt and the drain loop; preserve every buffered event.
+		drained = append(drained, envelope)
+		keep = true
+	} else if droppableIndex != -1 {
 		drained = append(drained[:droppableIndex], drained[droppableIndex+1:]...)
 		drained = append(drained, envelope)
 		keep = true

@@ -159,6 +159,16 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		response.Error(writer, http.StatusUnauthorized, "Your session has expired. Please sign in again to continue.")
 		return
 	}
+	releaseConnection, acquired := handler.hub.AcquireConnection(identity.Subject)
+	if !acquired {
+		response.Error(
+			writer,
+			http.StatusTooManyRequests,
+			"Too many active live connections. Please close an existing session and try again.",
+		)
+		return
+	}
+	defer releaseConnection()
 	subscription := handler.hub.Subscribe(topics...)
 	defer subscription.Close()
 	connection, err := handler.upgrader.Upgrade(writer, request, nil)
@@ -207,6 +217,7 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		// A failed write is the first signal for a half-open socket. Stop
 		// waiting on the reader so the subscription is scavenged immediately.
 	}
+	cancelConnection()
 	close(stopWriter)
 	closeConnection()
 	<-readDone
@@ -262,7 +273,8 @@ func (handler *Handler) readPump(
 			return
 		}
 		if handler.protocol == nil {
-			continue
+			// Server-push realtime sockets do not accept client data frames.
+			return
 		}
 		responseMessage, protocolErr := handler.protocol.HandleMessage(
 			request.Context(),

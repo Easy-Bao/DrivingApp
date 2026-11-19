@@ -19,10 +19,24 @@ const (
 	_readinessReady
 )
 
+type subscriberReadinessChecker interface {
+	Connected() bool
+}
+
 func registerHealthRoutes(
 	router chi.Router,
 	redisClient *redisclient.Client,
 	postgresPool *pgxpool.Pool,
+	routeSecurity ...*middleware.RouteSecurity,
+) {
+	registerHealthRoutesWithSubscriber(router, redisClient, postgresPool, nil, routeSecurity...)
+}
+
+func registerHealthRoutesWithSubscriber(
+	router chi.Router,
+	redisClient *redisclient.Client,
+	postgresPool *pgxpool.Pool,
+	subscriber subscriberReadinessChecker,
 	routeSecurity ...*middleware.RouteSecurity,
 ) {
 	var security *middleware.RouteSecurity
@@ -44,6 +58,10 @@ func registerHealthRoutes(
 			return
 		}
 		if redisClient == nil || redisClient.Ping(checkContext).Err() != nil {
+			writeReadinessResponse(writer, http.StatusServiceUnavailable, _readinessNotReady)
+			return
+		}
+		if subscriber != nil && !subscriber.Connected() {
 			writeReadinessResponse(writer, http.StatusServiceUnavailable, _readinessNotReady)
 			return
 		}

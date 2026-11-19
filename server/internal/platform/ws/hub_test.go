@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -349,5 +350,43 @@ func TestHubPublishSingleAndMultiTopicFastPath(t *testing.T) {
 		case <-time.After(time.Second):
 			t.Fatal("subscriber timed out waiting for multi topic event")
 		}
+	}
+}
+
+func TestHubEnforcesConnectionLimitsAndDrainsActiveConnections(t *testing.T) {
+	t.Parallel()
+
+	hub := NewHub(WithConnectionLimits(3, 2))
+	rel1, ok := hub.AcquireConnection("user-1")
+	if !ok {
+		t.Fatal("first connection for user-1 should be allowed")
+	}
+	rel2, ok := hub.AcquireConnection("user-1")
+	if !ok {
+		t.Fatal("second connection for user-1 should be allowed")
+	}
+	if _, ok := hub.AcquireConnection("user-1"); ok {
+		t.Fatal("third connection for user-1 should be rejected by per-subject cap")
+	}
+	rel3, ok := hub.AcquireConnection("user-2")
+	if !ok {
+		t.Fatal("first connection for user-2 should be allowed within global cap")
+	}
+	if _, ok := hub.AcquireConnection("user-3"); ok {
+		t.Fatal("fourth global connection should be rejected by global cap")
+	}
+
+	waitDone := make(chan error, 1)
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		waitDone <- hub.Wait(ctx)
+	}()
+
+	rel1()
+	rel2()
+	rel3()
+	if err := <-waitDone; err != nil {
+		t.Fatalf("hub.Wait() error = %v, want nil after releasing all connections", err)
 	}
 }

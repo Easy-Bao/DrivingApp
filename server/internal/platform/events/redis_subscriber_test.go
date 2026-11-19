@@ -38,4 +38,10 @@ func TestDistributedSubscriberRequiresClient(t *testing.T) {
 	if !strings.Contains(err.Error(), "redis client is required") {
 		t.Fatalf("unexpected error message: %v", err)
 	}
+	if subscriber.Connected() {
+		t.Fatal("unconfigured subscriber must report Connected() == false")
+	}
+	if (*DistributedSubscriber)(nil).Connected() {
+		t.Fatal("nil subscriber must report Connected() == false")
+	}
 }

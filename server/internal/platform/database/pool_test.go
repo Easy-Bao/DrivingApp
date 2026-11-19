@@ -49,8 +49,8 @@ func TestOpenPostgresPoolRejectsInvalidConfigBeforeConnecting(t *testing.T) {
 func TestDefaultPostgresNativePoolConfigWarmIdleAndDefaultMax(t *testing.T) {
 	config := DefaultPostgresNativePoolConfig()
 
-	if config.MaxConnections < 50 {
-		t.Fatalf("max connections = %d, want >= 50", config.MaxConnections)
+	if config.MaxConnections < 50 || config.MaxConnections > 100 {
+		t.Fatalf("max connections = %d, want between 50 and 100", config.MaxConnections)
 	}
 	if config.MinIdleConnections != 10 {
 		t.Fatalf("min idle connections = %d, want 10", config.MinIdleConnections)

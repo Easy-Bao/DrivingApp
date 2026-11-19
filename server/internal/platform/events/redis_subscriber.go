@@ -6,28 +6,33 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	redisclient "github.com/redis/go-redis/v9"
 )
 
 const (
-	_redisRetryInitial = 100 * time.Millisecond
-	_redisRetryMaximum = 5 * time.Second
-	_redisStablePeriod = time.Minute
+	_redisRetryInitial        = 100 * time.Millisecond
+	_redisRetryMaximum        = 5 * time.Second
+	_redisStablePeriod        = time.Minute
+	_redisPubSubHealthTimeout = 15 * time.Second
+	_redisPubSubPingTimeout   = 5 * time.Second
 )
 
 // DistributedSubscriber forwards events published by other application
 // processes to this process's sinks. It reconnects after Redis disconnects.
 type DistributedSubscriber struct {
-	client  *redisclient.Client
-	origin  string
-	channel string
-	sinks   []Sink
-	logger  *slog.Logger
-	ready   chan struct{}
-	once    sync.Once
+	client    *redisclient.Client
+	origin    string
+	channel   string
+	sinks     []Sink
+	logger    *slog.Logger
+	ready     chan struct{}
+	once      sync.Once
+	connected atomic.Bool
 }
 
 func (subscriber *DistributedSubscriber) WithLogger(logger *slog.Logger) *DistributedSubscriber {
@@ -35,6 +40,15 @@ func (subscriber *DistributedSubscriber) WithLogger(logger *slog.Logger) *Distri
 		subscriber.logger = logger
 	}
 	return subscriber
+}
+
+// Connected reports whether the subscriber currently holds a live Pub/Sub
+// subscription to Redis.
+func (subscriber *DistributedSubscriber) Connected() bool {
+	if subscriber == nil {
+		return false
+	}
+	return subscriber.connected.Load()
 }
 
 func (subscriber *DistributedSubscriber) Ready() <-chan struct{} {
@@ -76,12 +90,14 @@ func (subscriber *DistributedSubscriber) Run(ctx context.Context) error {
 		var connectedAt time.Time
 		if err == nil {
 			connectedAt = time.Now()
+			subscriber.connected.Store(true)
 			subscriber.once.Do(func() {
 				if subscriber.ready != nil {
 					close(subscriber.ready)
 				}
 			})
 			err = subscriber.receive(ctx, pubsub)
+			subscriber.connected.Store(false)
 		}
 
 		close(stopCloseOnCancel)
@@ -113,12 +129,26 @@ func (subscriber *DistributedSubscriber) Run(ctx context.Context) error {
 
 func (subscriber *DistributedSubscriber) receive(ctx context.Context, pubsub *redisclient.PubSub) error {
 	for ctx.Err() == nil {
-		message, err := pubsub.ReceiveMessage(ctx)
+		received, err := pubsub.ReceiveTimeout(ctx, _redisPubSubHealthTimeout)
 		if err != nil {
+			var netErr net.Error
+			if ctx.Err() == nil && errors.As(err, &netErr) && netErr.Timeout() {
+				pingCtx, cancel := context.WithTimeout(ctx, _redisPubSubPingTimeout)
+				pingErr := pubsub.Ping(pingCtx)
+				cancel()
+				if pingErr != nil {
+					return fmt.Errorf("redis realtime pubsub health ping failed: %w", pingErr)
+				}
+				continue
+			}
 			return fmt.Errorf("receive redis realtime event: %w", err)
 		}
-		if err := subscriber.dispatch(message.Payload); err != nil {
-			subscriber.log().WarnContext(ctx, "ignore invalid redis realtime event", "error", err)
+		switch item := received.(type) {
+		case *redisclient.Message:
+			if err := subscriber.dispatch(item.Payload); err != nil {
+				subscriber.log().WarnContext(ctx, "ignore invalid redis realtime event", "error", err)
+			}
+		case *redisclient.Pong, *redisclient.Subscription:
 		}
 	}
 	return ctx.Err()

@@ -380,7 +380,7 @@ func newHTTPRouter(
 		Verifier:      verifier,
 		RouteSecurity: routeSecurity,
 	}).RegisterRoutes(router)
-	registerHealthRoutes(router, redisClient, postgresPool, routeSecurity)
+	registerHealthRoutesWithSubscriber(router, redisClient, postgresPool, eventSubscriber, routeSecurity)
 
 	return router, eventHub, eventSubscriber
 }

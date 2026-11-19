@@ -23,10 +23,16 @@ type PostgresNativePoolConfig struct {
 	PingTimeout           time.Duration
 }
 
+const (
+	_defaultMaxPoolConnections = 50
+	_maxDefaultPoolConnections = 100
+	_defaultStatementTimeoutMS = "30000"
+)
+
 func DefaultPostgresNativePoolConfig() PostgresNativePoolConfig {
-	defaultMax := int32(50)
-	if cpuMax := int32(runtime.NumCPU() * 8); cpuMax > defaultMax {
-		defaultMax = cpuMax
+	defaultMax := int32(_defaultMaxPoolConnections)
+	if cpuMax := int32(runtime.GOMAXPROCS(0) * 8); cpuMax > defaultMax {
+		defaultMax = min(cpuMax, int32(_maxDefaultPoolConnections))
 	}
 	minIdle := int32(10)
 
@@ -74,6 +80,15 @@ func OpenPostgresPoolWithContext(
 	poolConfig.MaxConnLifetime = config.ConnectionMaxLifetime
 	poolConfig.MaxConnIdleTime = config.ConnectionMaxIdleTime
 	poolConfig.PingTimeout = config.PingTimeout
+	if poolConfig.ConnConfig.ConnectTimeout == 0 {
+		poolConfig.ConnConfig.ConnectTimeout = config.PingTimeout
+	}
+	if poolConfig.ConnConfig.RuntimeParams == nil {
+		poolConfig.ConnConfig.RuntimeParams = make(map[string]string)
+	}
+	if _, exists := poolConfig.ConnConfig.RuntimeParams["statement_timeout"]; !exists {
+		poolConfig.ConnConfig.RuntimeParams["statement_timeout"] = _defaultStatementTimeoutMS
+	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
