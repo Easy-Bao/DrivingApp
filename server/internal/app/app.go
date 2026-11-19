@@ -176,8 +176,18 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		otpAttemptStore:    rateCounterStore,
 		routeSecurity:      routeSecurity,
 	})
-	secureHandler := middleware.SecureHTTP(router, config.Security)
-	handler := middleware.Recovery(applicationLogger)(proxyTrust.Middleware(middleware.Logging(applicationLogger)(secureHandler)))
+	hstsMode := middleware.HSTSDisabled
+	if config.Security.EnableHSTS {
+		hstsMode = middleware.HSTSEnabled
+	}
+	handler := http.Handler(router)
+	handler = middleware.RejectControlCharacters(handler)
+	handler = middleware.CORS(config.Security.AllowedOrigins)(handler)
+	handler = middleware.SecurityHeaders(hstsMode)(handler)
+	handler = middleware.Recovery(applicationLogger)(handler)
+	handler = middleware.Logging(applicationLogger)(handler)
+	handler = proxyTrust.Middleware(handler)
+	handler = middleware.RequestID(handler)
 
 	application := &Application{
 		server: &http.Server{

@@ -18,7 +18,6 @@ import (
 	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/app"
 	chathttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/transport/http"
 	chatwebsocket "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/transport/ws"
-	assignment "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	dispatchhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/transport/http"
 	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/app"
@@ -188,7 +187,7 @@ func newHTTPRouter(
 		},
 	)
 	eventHub := websockethub.NewHub()
-	assignmentProjection := assignment.NewMemoryProjection()
+	assignmentProjection := dispatchapplication.NewMemoryProjection()
 	eventPublisher, eventSubscriber := eventadapter.NewDistributedTransport(
 		redisClient,
 		assignmentProjection,
@@ -196,10 +195,10 @@ func newHTTPRouter(
 	)
 	eventSubscriber.WithLogger(applicationLogger)
 	rideEventPublisher := ridewebsocket.NewEventPublisher(eventPublisher)
-	rideAssignments := assignment.NewResolver(
-		assignment.ResolverDependencies{
+	rideAssignments := dispatchapplication.NewResolver(
+		dispatchapplication.ResolverDependencies{
 			Routing:   assignmentProjection,
-			Authority: assignment.NewRideLookup(rideStore),
+			Authority: dispatchapplication.NewRideLookup(rideStore),
 		},
 	)
 	trackingService := locationapplication.NewTrackingService(
@@ -348,7 +347,7 @@ func newHTTPRouter(
 		WithLogger(applicationLogger)
 	chatEventHandler := chatwebsocket.NewEventHandler(chatService)
 	chatProtocol := chatwebsocket.NewConnectionProtocol(chatEventHandler, chatService)
-	router.Handle(
+	router.Get(
 		api.V1Prefix+"/chat/ws",
 		routeSecurity.Middleware(middleware.RouteRealtimeConnection)(websockethub.NewHandler(
 			websockethub.HandlerDependencies{
@@ -358,9 +357,9 @@ func newHTTPRouter(
 			},
 			websockethub.WithAllowedOrigins(config.Security.AllowedOrigins),
 			websockethub.WithLogger(applicationLogger),
-		)),
+		)).ServeHTTP,
 	)
-	router.Handle(
+	router.Get(
 		api.V1Prefix+"/realtime/ws",
 		routeSecurity.Middleware(middleware.RouteRealtimeConnection)(websockethub.NewHandler(
 			websockethub.HandlerDependencies{
@@ -369,7 +368,7 @@ func newHTTPRouter(
 			},
 			websockethub.WithAllowedOrigins(config.Security.AllowedOrigins),
 			websockethub.WithLogger(applicationLogger),
-		)),
+		)).ServeHTTP,
 	)
 	locationhttp.NewTrackingRouter(locationhttp.TrackingDependencies{
 		Service:       trackingService,
@@ -393,7 +392,7 @@ func notFoundHandler(routeSecurity *middleware.RouteSecurity) http.Handler {
 	if routeSecurity == nil {
 		return handler
 	}
-	return routeSecurity.Middleware(middleware.RouteDefault)(handler)
+	return routeSecurity.Middleware(middleware.RouteRead)(handler)
 }
 
 func methodNotAllowedHandler(routeSecurity *middleware.RouteSecurity) http.Handler {
@@ -403,5 +402,5 @@ func methodNotAllowedHandler(routeSecurity *middleware.RouteSecurity) http.Handl
 	if routeSecurity == nil {
 		return handler
 	}
-	return routeSecurity.Middleware(middleware.RouteDefault)(handler)
+	return routeSecurity.Middleware(middleware.RouteRead)(handler)
 }

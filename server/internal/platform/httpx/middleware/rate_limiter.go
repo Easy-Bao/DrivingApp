@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"sync"
@@ -22,13 +23,13 @@ type CacheCounterStore struct {
 
 var _ CounterStore = (*CacheCounterStore)(nil)
 
-const _atomicIncrementScript = `
+var _atomicIncrementScript = redisclient.NewScript(`
 local count = redis.call('INCR', KEYS[1])
 if count == 1 then
   redis.call('PEXPIRE', KEYS[1], ARGV[1])
 end
 return count
-`
+`)
 
 func NewCacheCounterStore(client *redisclient.Client) *CacheCounterStore {
 	return &CacheCounterStore{client: client}
@@ -51,9 +52,9 @@ func (store *CacheCounterStore) Increment(ctx context.Context, key string, windo
 	if expirationMilliseconds <= 0 {
 		expirationMilliseconds = 1
 	}
-	count, err := store.client.Eval(
+	count, err := _atomicIncrementScript.Run(
 		ctx,
-		_atomicIncrementScript,
+		store.client,
 		[]string{key},
 		expirationMilliseconds,
 	).Int64()
@@ -66,6 +67,7 @@ func (store *CacheCounterStore) Increment(ctx context.Context, key string, windo
 type MemoryCounterStore struct {
 	mu         sync.Mutex
 	entries    map[string]memoryCounter
+	capacity   int
 	operations uint64
 }
 
@@ -76,10 +78,16 @@ type memoryCounter struct {
 	expires time.Time
 }
 
-const _memoryCounterCleanupInterval = 128
+const (
+	_memoryCounterCleanupInterval = 128
+	_defaultMemoryCounterCapacity = 50_000
+)
 
 func NewMemoryCounterStore() *MemoryCounterStore {
-	return &MemoryCounterStore{entries: make(map[string]memoryCounter)}
+	return &MemoryCounterStore{
+		entries:  make(map[string]memoryCounter),
+		capacity: _defaultMemoryCounterCapacity,
+	}
 }
 
 func (store *MemoryCounterStore) Increment(ctx context.Context, key string, window time.Duration) (int64, error) {
@@ -102,7 +110,11 @@ func (store *MemoryCounterStore) Increment(ctx context.Context, key string, wind
 	}
 	now := time.Now()
 	store.operations++
-	if store.operations%_memoryCounterCleanupInterval == 0 {
+	capacity := store.capacity
+	if capacity <= 0 {
+		capacity = _defaultMemoryCounterCapacity
+	}
+	if store.operations%_memoryCounterCleanupInterval == 0 || len(store.entries) >= capacity {
 		for entryKey, entry := range store.entries {
 			if !now.Before(entry.expires) {
 				delete(store.entries, entryKey)
@@ -111,6 +123,26 @@ func (store *MemoryCounterStore) Increment(ctx context.Context, key string, wind
 	}
 	entry, ok := store.entries[key]
 	if !ok || !now.Before(entry.expires) {
+		if !ok && len(store.entries) >= capacity {
+			target := (capacity * 9) / 10
+			if target >= capacity {
+				target = capacity - 1
+			}
+			for len(store.entries) > target {
+				var oldestKey string
+				var oldestExpires time.Time
+				for entryKey, item := range store.entries {
+					if oldestKey == "" || item.expires.Before(oldestExpires) {
+						oldestKey = entryKey
+						oldestExpires = item.expires
+					}
+				}
+				if oldestKey == "" {
+					break
+				}
+				delete(store.entries, oldestKey)
+			}
+		}
 		entry = memoryCounter{expires: now.Add(window)}
 	}
 	entry.count++
@@ -203,7 +235,7 @@ func (limiter *RateLimiter) policyMiddleware(routePolicy RoutePolicy, next http.
 		key := fmt.Sprintf(
 			"rate:%s:%s:%d",
 			policy.scope,
-			ClientIPFromRequest(request),
+			rateLimitClientKey(ClientIPFromRequest(request)),
 			windowKey(time.Now(), limiter.config.Window),
 		)
 		count, err := limiter.store.Increment(request.Context(), key, limiter.config.Window)
@@ -212,6 +244,12 @@ func (limiter *RateLimiter) policyMiddleware(routePolicy RoutePolicy, next http.
 				writeProtectionUnavailable(writer)
 				return
 			}
+			slog.WarnContext(
+				request.Context(),
+				"rate limiter store failed open",
+				"scope", policy.scope,
+				"error", err,
+			)
 			next.ServeHTTP(writer, request)
 			return
 		}
@@ -300,4 +338,19 @@ func retryAfterSeconds(now time.Time, window time.Duration) int64 {
 		seconds++
 	}
 	return max(1, seconds)
+}
+
+func rateLimitClientKey(clientIP string) string {
+	address, ok := parseRequestAddress(clientIP)
+	if !ok {
+		return clientIP
+	}
+	address = address.Unmap()
+	if address.Is6() {
+		prefix, err := address.Prefix(64)
+		if err == nil {
+			return prefix.Masked().String()
+		}
+	}
+	return address.String()
 }

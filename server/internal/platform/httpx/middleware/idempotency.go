@@ -95,6 +95,13 @@ func (store *CacheIdempotencyStore) SetNX(
 	return acquired, nil
 }
 
+var _releaseIdempotencyLockScript = redisclient.NewScript(`
+if redis.call("GET", KEYS[1]) == ARGV[1] then
+    return redis.call("DEL", KEYS[1])
+else
+    return 0
+end`)
+
 func (store *CacheIdempotencyStore) DeleteIfValue(ctx context.Context, key string, value []byte) error {
 	if store == nil || store.client == nil {
 		return fmt.Errorf("redis idempotency store is not configured")
@@ -102,15 +109,9 @@ func (store *CacheIdempotencyStore) DeleteIfValue(ctx context.Context, key strin
 	if ctx == nil {
 		return errors.New("idempotency context is nil")
 	}
-	const releaseLockScript = `
-if redis.call("GET", KEYS[1]) == ARGV[1] then
-    return redis.call("DEL", KEYS[1])
-else
-    return 0
-end`
-	if err := store.client.Eval(
+	if err := _releaseIdempotencyLockScript.Run(
 		ctx,
-		releaseLockScript,
+		store.client,
 		[]string{key},
 		value,
 	).Err(); err != nil {
@@ -155,8 +156,11 @@ func (store *MemoryIdempotencyStore) evictLocked(now time.Time) {
 		}
 	}
 	if len(store.entries) >= capacity {
-		target := max((capacity*9)/10, 1)
-		for len(store.entries) >= capacity && len(store.entries) > target {
+		target := (capacity * 9) / 10
+		if target >= capacity {
+			target = capacity - 1
+		}
+		for len(store.entries) > target {
 			var oldestKey string
 			var oldestExpires time.Time
 			for k, v := range store.entries {
@@ -351,7 +355,12 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 			var err error
 			body, err = io.ReadAll(request.Body)
 			if err != nil {
-				writeSecurityError(writer, http.StatusRequestEntityTooLarge, "request body is too large")
+				var maxBytesErr *http.MaxBytesError
+				if errors.As(err, &maxBytesErr) {
+					writeSecurityError(writer, http.StatusRequestEntityTooLarge, "request body is too large")
+					return
+				}
+				writeSecurityError(writer, http.StatusBadRequest, "failed to read request body")
 				return
 			}
 		}
@@ -539,8 +548,10 @@ func replayIdempotentResponse(writer http.ResponseWriter, encoded []byte, finger
 		writer.Header()[key] = append([]string(nil), values...)
 	}
 	writer.WriteHeader(response.Status)
-	if _, err := writer.Write(response.Body); err != nil {
-		slog.Debug("replay idempotent response failed", "error", err)
+	if len(response.Body) > 0 {
+		if _, err := writer.Write(response.Body); err != nil {
+			slog.Debug("replay idempotent response failed", "error", err)
+		}
 	}
 }
 
@@ -592,12 +603,29 @@ func hashIdempotencyKey(key string) string {
 func cloneHeaders(headers http.Header) map[string][]string {
 	clone := make(map[string][]string, len(headers))
 	for key, values := range headers {
-		if strings.EqualFold(key, "X-Request-ID") ||
-			strings.HasPrefix(strings.ToLower(key), "x-ratelimit-") ||
-			strings.EqualFold(key, "Retry-After") {
+		if !isCacheableRepresentationHeader(key) {
 			continue
 		}
 		clone[key] = append([]string(nil), values...)
 	}
 	return clone
+}
+
+func isCacheableRepresentationHeader(key string) bool {
+	switch http.CanonicalHeaderKey(key) {
+	case "Content-Type",
+		"Content-Language",
+		"Content-Disposition",
+		"Content-Encoding",
+		"Location",
+		"Etag",
+		"Last-Modified",
+		"Cache-Control",
+		"Deprecation",
+		"Sunset",
+		"Link":
+		return true
+	default:
+		return false
+	}
 }

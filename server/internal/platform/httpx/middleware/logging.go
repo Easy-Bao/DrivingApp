@@ -89,11 +89,7 @@ func (writer *statusWriter) Flush() {
 }
 
 func (writer *statusWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	hijacker, ok := writer.ResponseWriter.(http.Hijacker)
-	if !ok {
-		return nil, nil, http.ErrNotSupported
-	}
-	connection, buffered, err := hijacker.Hijack()
+	connection, buffered, err := http.NewResponseController(writer.ResponseWriter).Hijack()
 	if err == nil {
 		writer.hijacked = true
 	}

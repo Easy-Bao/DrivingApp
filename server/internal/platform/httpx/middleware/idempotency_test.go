@@ -469,3 +469,63 @@ func TestIdempotencyResponseWriterUnwrapAndFlush(t *testing.T) {
 		t.Fatal("expected underlying flusher to be invoked")
 	}
 }
+
+type failingReadCloser struct{}
+
+func (failingReadCloser) Read([]byte) (int, error) { return 0, io.ErrUnexpectedEOF }
+func (failingReadCloser) Close() error             { return nil }
+
+func TestIdempotencyDistinguishesReadErrorFromBodyTooLarge(t *testing.T) {
+	handler := newTestIdempotency(NewMemoryIdempotencyStore()).Middleware(
+		http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+			writer.WriteHeader(http.StatusOK)
+		}),
+	)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/rides", failingReadCloser{})
+	req.Header.Set("Idempotency-Key", "read-error-key-1")
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	if res.Code != http.StatusBadRequest {
+		t.Fatalf("body read error status = %d, want 400", res.Code)
+	}
+}
+
+func TestIdempotencyDoesNotLeakCORSOrHSTSHeadersAcrossReplays(t *testing.T) {
+	handler := newTestIdempotency(NewMemoryIdempotencyStore()).Middleware(
+		http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+			writer.Header().Set("Content-Type", "application/json")
+			writer.Header().Set("Location", "/api/v1/rides/99")
+			writer.Header().Set("Access-Control-Allow-Origin", "https://origin-a.example")
+			writer.Header().Set("Strict-Transport-Security", "max-age=31536000")
+			writer.WriteHeader(http.StatusCreated)
+			_, _ = writer.Write([]byte(`{"id":99}`))
+		}),
+	)
+	req1 := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare":100}`))
+	req1.Header.Set("Idempotency-Key", "cors-header-test-key")
+	handler.ServeHTTP(httptest.NewRecorder(), req1)
+
+	req2 := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare":100}`))
+	req2.Header.Set("Idempotency-Key", "cors-header-test-key")
+	res2 := httptest.NewRecorder()
+	handler.ServeHTTP(res2, req2)
+
+	if res2.Header().Get("Content-Type") != "application/json" || res2.Header().Get("Location") != "/api/v1/rides/99" {
+		t.Fatalf("representation headers missing on replay: %v", res2.Header())
+	}
+	if res2.Header().Get("Access-Control-Allow-Origin") != "" || res2.Header().Get("Strict-Transport-Security") != "" {
+		t.Fatalf("non-representation security/CORS headers leaked on replay: %v", res2.Header())
+	}
+}
+
+func TestMemoryIdempotencyStoreEnforcesSingleItemCapacity(t *testing.T) {
+	store := NewMemoryIdempotencyStoreWithCapacity(1)
+	_ = store.Set(context.Background(), "k1", []byte("v1"), time.Hour)
+	_ = store.Set(context.Background(), "k2", []byte("v2"), 2*time.Hour)
+	store.mu.Lock()
+	count := len(store.entries)
+	store.mu.Unlock()
+	if count != 1 {
+		t.Fatalf("store entries = %d, want 1", count)
+	}
+}

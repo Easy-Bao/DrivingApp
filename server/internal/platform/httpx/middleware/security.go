@@ -90,6 +90,27 @@ func RequestBodyLimit(jsonLimit, uploadLimit int64) func(http.Handler) http.Hand
 	return requestBodyLimit(jsonLimit, uploadLimit, false)
 }
 
+func JSONBodyLimit(jsonLimit int64) func(http.Handler) http.Handler {
+	config := normalizedSecurityConfig(SecurityConfig{
+		JSONBodyLimit: jsonLimit,
+	})
+	limit := config.JSONBodyLimit
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			if request.Body == nil || request.Body == http.NoBody {
+				next.ServeHTTP(writer, request)
+				return
+			}
+			if request.ContentLength > limit {
+				writeSecurityError(writer, http.StatusRequestEntityTooLarge, "request body is too large")
+				return
+			}
+			request.Body = http.MaxBytesReader(writer, request.Body, limit)
+			next.ServeHTTP(writer, request)
+		})
+	}
+}
+
 func DocumentUploadBodyLimit(jsonLimit, uploadLimit int64) func(http.Handler) http.Handler {
 	return requestBodyLimit(jsonLimit, uploadLimit, true)
 }

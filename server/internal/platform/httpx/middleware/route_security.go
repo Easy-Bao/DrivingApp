@@ -48,18 +48,19 @@ func (security *RouteSecurity) Middleware(policy RoutePolicy) func(http.Handler)
 
 func (security *RouteSecurity) middlewareFor(policy RoutePolicy, next http.Handler) http.Handler {
 	handler := next
-	if security.limiter != nil {
-		handler = security.limiter.MiddlewareFor(policy)(handler)
-	}
 	if policy == RouteCommand && security.idempotency != nil {
 		handler = security.idempotency.Middleware(handler)
+	}
+	if security.limiter != nil {
+		handler = security.limiter.MiddlewareFor(policy)(handler)
 	}
 	return bodyLimitMiddleware(policy, security.config.JSONBodyLimit, security.config.UploadBodyLimit)(handler)
 }
 
 // Authenticated returns a middleware chain that enforces pre-authentication limits
-// (request body size and rate limits), authenticates the principal, and then applies
-// command protections (such as idempotency) scoped to the authenticated principal.
+// (request body size and rate limits), authenticates the principal, checks role/access
+// guards, and then applies command protections (such as idempotency) scoped to the
+// authorized principal.
 func (security *RouteSecurity) Authenticated(
 	policy RoutePolicy,
 	authenticate func(http.Handler) http.Handler,
@@ -70,10 +71,10 @@ func (security *RouteSecurity) Authenticated(
 	if authenticate != nil {
 		chain = append(chain, authenticate)
 	}
+	chain = append(chain, guards...)
 	if policy == RouteCommand && security != nil && security.idempotency != nil {
 		chain = append(chain, security.idempotency.Middleware)
 	}
-	chain = append(chain, guards...)
 	return chain
 }
 
@@ -97,5 +98,5 @@ func bodyLimitMiddleware(policy RoutePolicy, jsonLimit, uploadLimit int64) func(
 	if policy == RouteDocumentUpload {
 		return DocumentUploadBodyLimit(jsonLimit, uploadLimit)
 	}
-	return RequestBodyLimit(jsonLimit, uploadLimit)
+	return JSONBodyLimit(jsonLimit)
 }

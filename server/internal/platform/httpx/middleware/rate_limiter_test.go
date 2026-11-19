@@ -302,6 +302,25 @@ func TestRetryAfterSecondsReportsCurrentWindowRemainder(t *testing.T) {
 	}
 }
 
+func TestRateLimiterBucketsIPv6By64Prefix(t *testing.T) {
+	config := DefaultRateLimitConfig()
+	config.Authentication = 1
+	handler := newTestRateLimiter(NewMemoryCounterStore(), config).MiddlewareFor(RouteAuthentication)(noContentHandler())
+
+	first := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/auth/login", "[2001:db8:abcd:1::1]:1234")
+	if first.Code != http.StatusNoContent {
+		t.Fatalf("first IPv6 status = %d, want 204", first.Code)
+	}
+	second := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/auth/login", "[2001:db8:abcd:1::dead:beef]:5678")
+	if second.Code != http.StatusTooManyRequests {
+		t.Fatalf("same /64 IPv6 status = %d, want 429", second.Code)
+	}
+	otherSubnet := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/auth/login", "[2001:db8:abcd:2::1]:1234")
+	if otherSubnet.Code != http.StatusNoContent {
+		t.Fatalf("different /64 IPv6 status = %d, want 204", otherSubnet.Code)
+	}
+}
+
 func noContentHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
 		writer.WriteHeader(http.StatusNoContent)

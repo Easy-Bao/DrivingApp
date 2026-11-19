@@ -112,3 +112,37 @@ func TestRecoveryAndLoggingPreserveWebSocketUpgrade(t *testing.T) {
 		t.Fatalf("message=%q err=%v", message, err)
 	}
 }
+
+func TestRecoveryRepanicsErrAbortHandler(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	handler := middleware.Recovery(logger)(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		panic(http.ErrAbortHandler)
+	}))
+
+	defer func() {
+		r := recover()
+		if r != http.ErrAbortHandler {
+			t.Fatalf("recovered = %v, want http.ErrAbortHandler", r)
+		}
+	}()
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/abort", nil))
+}
+
+func TestRecoveryIgnoresInvalidControlCharRequestID(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	handler := middleware.Recovery(logger)(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		panic("boom")
+	}))
+	req := httptest.NewRequest(http.MethodGet, "/panic", nil)
+	req.Header.Set("X-Request-ID", "bad\r\nid-value")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	var body map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("unmarshal problem: %v", err)
+	}
+	if id, exists := body["request_id"]; exists && id != "" {
+		t.Fatalf("malformed X-Request-ID echoed into response: %v", id)
+	}
+}

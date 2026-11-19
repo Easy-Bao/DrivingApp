@@ -167,3 +167,75 @@ func applyMiddlewareChain(chain []func(http.Handler) http.Handler, endpoint http
 	}
 	return handler
 }
+
+func TestRouteSecurityEnforcesRateLimitAndGuardsBeforeIdempotency(t *testing.T) {
+	store := NewMemoryIdempotencyStore()
+	idempotency := newTestIdempotency(store, WithIdempotencyExpiration(time.Minute))
+	limitConfig := DefaultRateLimitConfig()
+	limitConfig.Mutation = 1
+	limiter := NewRateLimiter(RateLimiterDependencies{
+		Store:  NewMemoryCounterStore(),
+		Config: limitConfig,
+	})
+	security := NewRouteSecurity(RouteSecurityDependencies{
+		Config:      SecurityConfig{JSONBodyLimit: 32, UploadBodyLimit: 1024},
+		RateLimiter: limiter,
+		Idempotency: idempotency,
+	})
+
+	// 1. Rate limiter must reject second request even with a cached Idempotency-Key.
+	handler := security.Middleware(RouteCommand)(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.WriteHeader(http.StatusCreated)
+	}))
+	for i, want := range []int{http.StatusCreated, http.StatusTooManyRequests} {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare":10}`))
+		req.RemoteAddr = "192.0.2.50:1234"
+		req.Header.Set("Idempotency-Key", "rate-before-idem-key")
+		res := httptest.NewRecorder()
+		handler.ServeHTTP(res, req)
+		if res.Code != want {
+			t.Fatalf("request %d status = %d, want %d", i+1, res.Code, want)
+		}
+	}
+
+	// 2. Role guard must reject unauthorized role before idempotency touches the store.
+	auth := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			ctx := context.WithValue(request.Context(), _principalKey, Principal{UserID: 7, Role: "passenger"})
+			next.ServeHTTP(writer, request.WithContext(ctx))
+		})
+	}
+	forbidGuard := func(http.Handler) http.Handler {
+		return http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+			writer.WriteHeader(http.StatusForbidden)
+		})
+	}
+	guardedSecurity := NewRouteSecurity(RouteSecurityDependencies{
+		Config:      SecurityConfig{JSONBodyLimit: 32, UploadBodyLimit: 1024},
+		Idempotency: newTestIdempotency(failingIdempotencyStore{}),
+	})
+	guarded := applyMiddlewareChain(
+		guardedSecurity.Authenticated(RouteCommand, auth, forbidGuard),
+		http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+			writer.WriteHeader(http.StatusOK)
+		}),
+	)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/drivers/only", strings.NewReader(`{}`))
+	req.Header.Set("Idempotency-Key", "guard-before-idem-key")
+	res := httptest.NewRecorder()
+	guarded.ServeHTTP(res, req)
+	if res.Code != http.StatusForbidden {
+		t.Fatalf("guarded status = %d, want 403 (idempotency should not run before role guard)", res.Code)
+	}
+
+	// 3. Spoofed multipart Content-Type on a JSON command route must still enforce JSONBodyLimit.
+	spoofReq := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(strings.Repeat("a", 64)))
+	spoofReq.Header.Set("Content-Type", "multipart/form-data; boundary=evil")
+	spoofRes := httptest.NewRecorder()
+	guardedSecurity.Middleware(RouteCommand)(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.WriteHeader(http.StatusOK)
+	})).ServeHTTP(spoofRes, spoofReq)
+	if spoofRes.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("spoofed multipart status = %d, want 413", spoofRes.Code)
+	}
+}

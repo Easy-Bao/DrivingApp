@@ -3,10 +3,12 @@ package middleware
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log/slog"
 	"net"
 	"net/http"
 	"runtime/debug"
+	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 )
@@ -30,6 +32,19 @@ func (responseWriter *recoveryResponseWriter) Unwrap() http.ResponseWriter {
 	return responseWriter.ResponseWriter
 }
 
+func (responseWriter *recoveryResponseWriter) Flush() {
+	responseWriter.wroteHeader = true
+	_ = http.NewResponseController(responseWriter.ResponseWriter).Flush()
+}
+
+func (responseWriter *recoveryResponseWriter) ReadFrom(reader io.Reader) (int64, error) {
+	responseWriter.wroteHeader = true
+	if readerFrom, ok := responseWriter.ResponseWriter.(io.ReaderFrom); ok {
+		return readerFrom.ReadFrom(reader)
+	}
+	return io.Copy(responseWriter.ResponseWriter, reader)
+}
+
 func (responseWriter *recoveryResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	connection, buffered, err := http.NewResponseController(responseWriter.ResponseWriter).Hijack()
 	if err == nil {
@@ -49,13 +64,18 @@ func Recovery(logger *slog.Logger) func(http.Handler) http.Handler {
 			responseWriter := &recoveryResponseWriter{ResponseWriter: writer}
 			defer func() {
 				if recoveredPanic := recover(); recoveredPanic != nil {
+					if recoveredPanic == http.ErrAbortHandler {
+						panic(recoveredPanic)
+					}
 					stack := debug.Stack()
 					requestID := RequestIDFromRequest(request)
 					if requestID == "" {
-						requestID = request.Header.Get("X-Request-ID")
+						requestID = responseWriter.Header().Get("X-Request-ID")
 					}
 					if requestID == "" {
-						requestID = responseWriter.Header().Get("X-Request-ID")
+						if candidate := strings.TrimSpace(request.Header.Get("X-Request-ID")); validRequestID(candidate) {
+							requestID = candidate
+						}
 					}
 
 					logger.ErrorContext(request.Context(), "unhandled http panic recovered",
