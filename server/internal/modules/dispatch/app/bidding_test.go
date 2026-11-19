@@ -487,6 +487,28 @@ func TestAcceptOfferPublishesRideMatchedEvent(t *testing.T) {
 	}
 }
 
+func TestAcceptOfferSkipsEventPublicationOnReplay(t *testing.T) {
+	store := &biddingStoreStub{acceptance: dispatchapplication.OfferAcceptance{
+		Session:  dispatchdomain.BidSession{ID: 10, PassengerID: 101, Status: "accepted"},
+		Offer:    dispatchdomain.BidOffer{ID: 20, SessionID: 10, DriverID: 303, Status: "accepted"},
+		Ride:     ridedomain.Ride{ID: 55, PassengerID: 101, Status: "completed"},
+		Replayed: true,
+	}}
+	publisher := &eventPublisherStub{}
+	service := dispatchapplication.NewService(dispatchapplication.Dependencies{
+		Store:          store,
+		EventPublisher: publisher,
+	})
+
+	session, offer, ride, err := service.AcceptOffer(context.Background(), 10, 20, 101)
+	if err != nil || session.ID != 10 || offer.ID != 20 || ride.ID != 55 {
+		t.Fatalf("AcceptOffer(replay) = (%+v, %+v, %+v, %v)", session, offer, ride, err)
+	}
+	if len(publisher.events) != 0 {
+		t.Fatalf("replayed AcceptOffer published %d events, want 0", len(publisher.events))
+	}
+}
+
 func TestAcceptOfferPublishesRejectedCompetingOfferToItsDriver(t *testing.T) {
 	rejectedOffer := dispatchdomain.BidOffer{
 		ID:        21,

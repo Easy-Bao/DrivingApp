@@ -80,20 +80,13 @@ func fromRide(ride ridedomain.Ride) (Assignment, bool) {
 		DriverID:    strconv.Itoa(*ride.DriverID),
 		Status:      ride.Status,
 	}
-	value.ContactOpen = value.Active() || completedWithinContactWindow(ride.CompletedAt)
+	if ride.CompletedAt != nil {
+		if completed, err := parseTimestamp(*ride.CompletedAt); err == nil {
+			value.CompletedAt = &completed
+		}
+	}
+	value.ContactOpen = value.AllowsCommunication()
 	return value, true
-}
-
-func completedWithinContactWindow(completedAt *string) bool {
-	if completedAt == nil {
-		return false
-	}
-	completed, err := parseTimestamp(*completedAt)
-	if err != nil {
-		return false
-	}
-	age := time.Since(completed)
-	return age >= 0 && age <= 24*time.Hour
 }
 
 func parseTimestamp(value string) (time.Time, error) {

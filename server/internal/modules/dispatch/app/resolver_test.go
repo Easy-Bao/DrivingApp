@@ -4,13 +4,17 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
+
+	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 type lookupStub struct {
-	byRide        Assignment
-	ridesByDriver []Assignment
-	err           error
-	forRideCalls  *int
+	byRide         Assignment
+	ridesByDriver  []Assignment
+	err            error
+	forRideCalls   *int
+	forDriverCalls *int
 }
 
 func newTestResolver(routing, authority Lookup) *Resolver {
@@ -25,6 +29,9 @@ func (stub lookupStub) ForRide(context.Context, string) (Assignment, bool, error
 }
 
 func (stub lookupStub) ForDriver(context.Context, string) ([]Assignment, error) {
+	if stub.forDriverCalls != nil {
+		*stub.forDriverCalls++
+	}
 	return stub.ridesByDriver, stub.err
 }
 
@@ -165,4 +172,85 @@ func (lookup cancelingLookup) ForRide(context.Context, string) (Assignment, bool
 
 func (cancelingLookup) ForDriver(context.Context, string) ([]Assignment, error) {
 	return nil, context.Canceled
+}
+
+func TestResolverForRideDoesNotWipeActiveRidesOrCacheTerminalRides(t *testing.T) {
+	projection := NewMemoryProjection()
+	projection.Remember("42", []Assignment{
+		{RideID: "303", DriverID: "42", PassengerID: "99", Status: "accepted"},
+		{RideID: "304", DriverID: "42", PassengerID: "100", Status: "in_transit"},
+	})
+	completedAt := time.Now().Add(-time.Hour)
+	authorityCalls := 0
+	authority := lookupStub{
+		byRide: Assignment{
+			RideID:      "100",
+			DriverID:    "42",
+			PassengerID: "55",
+			Status:      "completed",
+			ContactOpen: true,
+			CompletedAt: &completedAt,
+		},
+		forRideCalls: &authorityCalls,
+	}
+	resolver := newTestResolver(projection, authority)
+
+	got, found, err := resolver.ForRide(context.Background(), "100")
+	if err != nil || !found || got.Status != "completed" || !got.AllowsCommunication() {
+		t.Fatalf("ForRide(100) = (%#v, %t, %v)", got, found, err)
+	}
+
+	// Completed ride must NOT be cached in the active projection.
+	if _, cached, err := projection.ForRide(context.Background(), "100"); err != nil || cached {
+		t.Fatalf("completed ride leaked into projection: cached=%t, err=%v", cached, err)
+	}
+
+	// Driver 42's active rides must remain intact.
+	active, err := projection.ForDriver(context.Background(), "42")
+	if err != nil || len(active) != 2 {
+		t.Fatalf("driver active rides after ForRide = %#v, %v; want 2 active rides preserved", active, err)
+	}
+}
+
+func TestResolverCachesIdleDriverAndInvalidatesOnRideMatched(t *testing.T) {
+	now := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	projection := NewMemoryProjection()
+	projection.now = func() time.Time { return now }
+	driverCalls := 0
+	authority := lookupStub{
+		ridesByDriver:  nil,
+		forDriverCalls: &driverCalls,
+	}
+	resolver := newTestResolver(projection, authority)
+
+	// First lookup hits authority and remembers the idle state.
+	got, err := resolver.ForDriver(context.Background(), "55")
+	if err != nil || len(got) != 0 || driverCalls != 1 {
+		t.Fatalf("first ForDriver = (%#v, %v), calls=%d", got, err, driverCalls)
+	}
+
+	// Second lookup within TTL hits the negative cache (no authority query).
+	now = now.Add(5 * time.Second)
+	got, err = resolver.ForDriver(context.Background(), "55")
+	if err != nil || len(got) != 0 || driverCalls != 1 {
+		t.Fatalf("cached idle ForDriver = (%#v, %v), calls=%d, want 1", got, err, driverCalls)
+	}
+
+	// Matching a ride immediately invalidates the idle cache.
+	matched, err := event.New(
+		"match-1",
+		event.RideMatched,
+		now,
+		event.Scope{RideID: "777", DriverID: "55", PassengerID: "88"},
+		map[string]any{"ride": map[string]any{"status": "accepted"}},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projection.Publish(matched)
+
+	got, err = resolver.ForDriver(context.Background(), "55")
+	if err != nil || len(got) != 1 || got[0].RideID != "777" || driverCalls != 1 {
+		t.Fatalf("ForDriver after match = (%#v, %v), calls=%d", got, err, driverCalls)
+	}
 }

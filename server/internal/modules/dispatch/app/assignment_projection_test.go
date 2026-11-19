@@ -56,3 +56,48 @@ func TestMemoryProjectionRememberRefreshesOneDriver(t *testing.T) {
 		t.Fatalf("stale assignment = found %t, error %v", found, err)
 	}
 }
+
+func TestMemoryProjectionExcludesNonActiveAndRemovesNoShow(t *testing.T) {
+	projection := NewMemoryProjection()
+	projection.Remember("driver-1", []Assignment{
+		{RideID: "active-1", DriverID: "driver-1", PassengerID: "p-1", Status: "accepted"},
+		{RideID: "done-1", DriverID: "driver-1", PassengerID: "p-2", Status: "completed", ContactOpen: true},
+		{RideID: "cancelled-1", DriverID: "driver-1", PassengerID: "p-3", Status: "cancelled"},
+	})
+	values, err := projection.ForDriver(context.Background(), "driver-1")
+	if err != nil || len(values) != 1 || values[0].RideID != "active-1" {
+		t.Fatalf("ForDriver() = %#v, %v; want only active-1", values, err)
+	}
+
+	// Replayed RideMatched with terminal status must not enter the projection.
+	terminalMatch, err := event.New(
+		"replayed-match",
+		event.RideMatched,
+		time.Now().UTC(),
+		event.Scope{RideID: "done-2", DriverID: "driver-1", PassengerID: "p-4"},
+		map[string]any{"ride": map[string]any{"status": "completed"}},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projection.Publish(terminalMatch)
+	if _, found, err := projection.ForRide(context.Background(), "done-2"); err != nil || found {
+		t.Fatalf("terminal RideMatched leaked into projection: found=%t err=%v", found, err)
+	}
+
+	// no_show transition must evict the active ride.
+	noShow, err := event.New(
+		"no-show",
+		event.RideStatusChanged,
+		time.Now().UTC(),
+		event.Scope{RideID: "active-1", DriverID: "driver-1", PassengerID: "p-1"},
+		map[string]any{"ride": map[string]any{"status": "no_show"}},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projection.Publish(noShow)
+	if _, found, err := projection.ForRide(context.Background(), "active-1"); err != nil || found {
+		t.Fatalf("no_show ride remained in projection: found=%t err=%v", found, err)
+	}
+}

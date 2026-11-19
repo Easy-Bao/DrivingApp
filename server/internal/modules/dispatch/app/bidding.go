@@ -237,37 +237,39 @@ func (service *Service) AcceptOffer(
 	if err != nil {
 		return dispatchdomain.BidSession{}, dispatchdomain.BidOffer{}, ridedomain.Ride{}, fmt.Errorf("accept bid offer: %w", err)
 	}
-	service.publishRideEvent(
-		ctx,
-		event.RideMatched,
-		accepted.Ride,
-		map[string]any{
-			"offer":   accepted.Offer,
-			"ride":    accepted.Ride,
-			"session": accepted.Session,
-		},
-	)
-	for _, rejectedOffer := range accepted.RejectedOffers {
-		service.publishDriverOfferEvent(
+	if !accepted.Replayed {
+		service.publishRideEvent(
 			ctx,
-			rejectedOffer,
+			event.RideMatched,
+			accepted.Ride,
 			map[string]any{
-				"offer_id":   rejectedOffer.ID,
-				"session_id": rejectedOffer.SessionID,
-				"reason":     "another_driver_selected",
+				"offer":   accepted.Offer,
+				"ride":    accepted.Ride,
+				"session": accepted.Session,
 			},
 		)
-	}
-	for _, withdrawal := range accepted.WithdrawnOffers {
-		service.publishSessionEvent(
-			ctx,
-			event.RideOfferUpdated,
-			withdrawal.Session,
-			map[string]any{
-				"offer":  withdrawal.Offer,
-				"reason": "driver_unavailable",
-			},
-		)
+		for _, rejectedOffer := range accepted.RejectedOffers {
+			service.publishDriverOfferEvent(
+				ctx,
+				rejectedOffer,
+				map[string]any{
+					"offer_id":   rejectedOffer.ID,
+					"session_id": rejectedOffer.SessionID,
+					"reason":     "another_driver_selected",
+				},
+			)
+		}
+		for _, withdrawal := range accepted.WithdrawnOffers {
+			service.publishSessionEvent(
+				ctx,
+				event.RideOfferUpdated,
+				withdrawal.Session,
+				map[string]any{
+					"offer":  withdrawal.Offer,
+					"reason": "driver_unavailable",
+				},
+			)
+		}
 	}
 	return accepted.Session, accepted.Offer, accepted.Ride, nil
 }

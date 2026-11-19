@@ -28,6 +28,7 @@ type OfferAcceptance struct {
 	Ride            ridedomain.Ride
 	RejectedOffers  []domain.BidOffer
 	WithdrawnOffers []domain.BidOfferWithdrawal
+	Replayed        bool
 }
 
 type PassengerActiveRideChecker interface {

@@ -35,6 +35,10 @@ func (resolver *Resolver) WithLogger(logger *slog.Logger) *Resolver {
 	return resolver
 }
 
+type cachedDriverLookup interface {
+	ForDriverCached(ctx context.Context, driverID string) ([]Assignment, bool, error)
+}
+
 func (resolver *Resolver) ForRide(ctx context.Context, rideID string) (Assignment, bool, error) {
 	if resolver == nil {
 		return Assignment{}, false, nil
@@ -44,7 +48,7 @@ func (resolver *Resolver) ForRide(ctx context.Context, rideID string) (Assignmen
 	}
 	if resolver.routing != nil {
 		value, found, err := resolver.routing.ForRide(ctx, rideID)
-		if err == nil && found {
+		if err == nil && found && value.Active() {
 			return value, true, nil
 		}
 		if contextErr := contextError(ctx); contextErr != nil {
@@ -70,9 +74,9 @@ func (resolver *Resolver) ForRide(ctx context.Context, rideID string) (Assignmen
 	if err := contextError(ctx); err != nil {
 		return Assignment{}, false, err
 	}
-	if found {
-		resolver.remember(value.DriverID, []Assignment{value})
-	}
+	// Do NOT call resolver.remember(value.DriverID, []Assignment{value}) here:
+	// a single-ride lookup does not contain a driver's full active-ride set and
+	// may return a terminal/completed ride for post-trip chat authorization.
 	return value, found, nil
 }
 
@@ -84,18 +88,34 @@ func (resolver *Resolver) ForDriver(ctx context.Context, driverID string) ([]Ass
 		return nil, err
 	}
 	if resolver.routing != nil {
-		assignments, err := resolver.routing.ForDriver(ctx, driverID)
-		if err == nil && len(assignments) > 0 {
-			return slices.Clone(assignments), nil
-		}
-		if contextErr := contextError(ctx); contextErr != nil {
-			return nil, contextErr
-		}
-		if err != nil && resolver.authority == nil {
-			return nil, fmt.Errorf("load routing driver assignments: %w", err)
-		}
-		if err != nil {
-			resolver.log().DebugContext(ctx, "routing driver assignment lookup failed; using authority", "error", err)
+		if cached, ok := resolver.routing.(cachedDriverLookup); ok {
+			assignments, hit, err := cached.ForDriverCached(ctx, driverID)
+			if err == nil && hit {
+				return slices.Clone(assignments), nil
+			}
+			if contextErr := contextError(ctx); contextErr != nil {
+				return nil, contextErr
+			}
+			if err != nil && resolver.authority == nil {
+				return nil, fmt.Errorf("load routing driver assignments: %w", err)
+			}
+			if err != nil {
+				resolver.log().DebugContext(ctx, "routing driver assignment lookup failed; using authority", "error", err)
+			}
+		} else {
+			assignments, err := resolver.routing.ForDriver(ctx, driverID)
+			if err == nil && len(assignments) > 0 {
+				return slices.Clone(assignments), nil
+			}
+			if contextErr := contextError(ctx); contextErr != nil {
+				return nil, contextErr
+			}
+			if err != nil && resolver.authority == nil {
+				return nil, fmt.Errorf("load routing driver assignments: %w", err)
+			}
+			if err != nil {
+				resolver.log().DebugContext(ctx, "routing driver assignment lookup failed; using authority", "error", err)
+			}
 		}
 	}
 	if err := contextError(ctx); err != nil {

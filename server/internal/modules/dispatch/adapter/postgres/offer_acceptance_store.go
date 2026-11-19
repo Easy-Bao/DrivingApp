@@ -225,9 +225,10 @@ func acceptedOfferReplay(
 			return dispatchapp.OfferAcceptance{}, false
 		}
 		return dispatchapp.OfferAcceptance{
-			Session: sessionValue,
-			Offer:   offerValue,
-			Ride:    rideValue,
+			Session:  sessionValue,
+			Offer:    offerValue,
+			Ride:     rideValue,
+			Replayed: true,
 		}, true
 	}
 	return dispatchapp.OfferAcceptance{}, false
