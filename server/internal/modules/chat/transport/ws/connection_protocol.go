@@ -118,7 +118,7 @@ func (protocol *ConnectionProtocol) HandleMessage(
 	isText bool,
 	message []byte,
 ) ([]byte, error) {
-	parsed, eventType, isTyping, ok := parseClientChatEvent(message)
+	parsed, ok := parseClientChatEvent(message)
 	if !isText || !ok {
 		return formatWebSocketError("error", "invalid_event", "invalid event"), nil
 	}
@@ -127,21 +127,42 @@ func (protocol *ConnectionProtocol) HandleMessage(
 		return formatWebSocketError("error", "invalid_chat_event", "invalid chat event"), nil
 	}
 
-	if eventType == "typing" {
-		if protocol != nil && protocol.limiter != nil && !protocol.limiter.allowTyping(roomID, identity.Subject, isTyping) {
+	var canonical any
+	if parsed.eventType == "typing" {
+		if protocol != nil && protocol.limiter != nil && !protocol.limiter.allowTyping(roomID, identity.Subject, parsed.isTyping) {
 			return nil, nil
 		}
-		parsed["is_typing"] = isTyping
-		delete(parsed, "isTyping")
+		canonical = struct {
+			Type     string `json:"type"`
+			RoomID   string `json:"room_id"`
+			SenderID string `json:"sender_id"`
+			IsTyping bool   `json:"is_typing"`
+		}{
+			Type:     "typing",
+			RoomID:   roomID,
+			SenderID: identity.Subject,
+			IsTyping: parsed.isTyping,
+		}
 	} else {
 		if protocol != nil && protocol.limiter != nil && !protocol.limiter.allowMessage(roomID, identity.Subject) {
 			return formatWebSocketError("error", "rate_limit_exceeded", "Too many messages. Please slow down."), nil
 		}
+		canonical = struct {
+			Type     string `json:"type"`
+			RoomID   string `json:"room_id"`
+			SenderID string `json:"sender_id"`
+			Body     string `json:"body,omitempty"`
+			Text     string `json:"text,omitempty"`
+		}{
+			Type:     parsed.eventType,
+			RoomID:   roomID,
+			SenderID: identity.Subject,
+			Body:     parsed.body,
+			Text:     parsed.text,
+		}
 	}
 
-	parsed["room_id"] = roomID
-	parsed["sender_id"] = identity.Subject
-	enriched, err := json.Marshal(parsed)
+	enriched, err := json.Marshal(canonical)
 	if err != nil {
 		return formatWebSocketError("error", "invalid_chat_event", "invalid chat event"), nil
 	}
@@ -240,27 +261,58 @@ func (protocol *ConnectionProtocol) EncodeEnvelope(envelope events.Envelope) ([]
 	}
 }
 
-func parseClientChatEvent(message []byte) (map[string]any, string, bool, bool) {
+type parsedClientChatEvent struct {
+	eventType string
+	body      string
+	text      string
+	isTyping  bool
+}
+
+func parseClientChatEvent(message []byte) (parsedClientChatEvent, bool) {
 	var parsed map[string]any
 	if json.Unmarshal(message, &parsed) != nil || parsed == nil {
-		return nil, "", false, false
+		return parsedClientChatEvent{}, false
 	}
 	eventType, ok := parsed["type"].(string)
 	if !ok {
-		return nil, "", false, false
+		return parsedClientChatEvent{}, false
 	}
 	switch eventType {
 	case "CHAT_MESSAGE", "message":
-		return parsed, eventType, false, true
+		body, ok := extractOptionalString(parsed, "body")
+		if !ok {
+			return parsedClientChatEvent{}, false
+		}
+		text, ok := extractOptionalString(parsed, "text")
+		if !ok {
+			return parsedClientChatEvent{}, false
+		}
+		return parsedClientChatEvent{
+			eventType: eventType,
+			body:      body,
+			text:      text,
+		}, true
 	case "typing":
 		isTyping, ok := extractTypingFlag(parsed)
 		if !ok {
-			return nil, "", false, false
+			return parsedClientChatEvent{}, false
 		}
-		return parsed, eventType, isTyping, true
+		return parsedClientChatEvent{
+			eventType: eventType,
+			isTyping:  isTyping,
+		}, true
 	default:
-		return nil, "", false, false
+		return parsedClientChatEvent{}, false
 	}
+}
+
+func extractOptionalString(parsed map[string]any, key string) (string, bool) {
+	raw, exists := parsed[key]
+	if !exists || raw == nil {
+		return "", true
+	}
+	value, ok := raw.(string)
+	return value, ok
 }
 
 func extractTypingFlag(parsed map[string]any) (bool, bool) {

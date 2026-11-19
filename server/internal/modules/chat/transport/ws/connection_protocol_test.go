@@ -160,6 +160,99 @@ func TestConnectionProtocolCoalescesRedundantTypingEvents(t *testing.T) {
 	}
 }
 
+func TestConnectionProtocolStripsUnicodeFoldedSpoofedFields(t *testing.T) {
+	sink := &protocolEventSinkStub{messages: make(chan []byte, 2)}
+	protocol := NewConnectionProtocol(sink, protocolRoomAuthorizerStub{allowed: true})
+	request, err := http.NewRequest(http.MethodGet, "/api/v1/chat/ws?roomId=303", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	identity := security.Identity{Subject: "7", Role: "passenger"}
+
+	// U+017F (LATIN SMALL LETTER LONG S) case-folds to 's' under encoding/json v1.
+	reply, err := protocol.HandleMessage(
+		context.Background(),
+		request,
+		identity,
+		true,
+		[]byte("{\"type\":\"message\",\"text\":\"hello\",\"\u017fender_id\":\"8\",\"SENDER_ID\":\"8\"}"),
+	)
+	if err != nil || len(reply) != 0 {
+		t.Fatalf("HandleMessage(message) = (%s, %v), want nil", reply, err)
+	}
+	rawMsg := <-sink.messages
+	if strings.Contains(string(rawMsg), "\u017f") || strings.Contains(string(rawMsg), "SENDER_ID") {
+		t.Fatalf("spoofed keys leaked into canonical message: %s", rawMsg)
+	}
+	var decodedMsg MessageEvent
+	if err := json.Unmarshal(rawMsg, &decodedMsg); err != nil {
+		t.Fatal(err)
+	}
+	if decodedMsg.SenderID != "7" || decodedMsg.RoomID != "303" || decodedMsg.Text != "hello" {
+		t.Fatalf("decoded message = %#v", decodedMsg)
+	}
+
+	reply, err = protocol.HandleMessage(
+		context.Background(),
+		request,
+		identity,
+		true,
+		[]byte("{\"type\":\"typing\",\"is_typing\":true,\"i\u017f_typing\":false,\"\u017fender_id\":\"8\"}"),
+	)
+	if err != nil || len(reply) != 0 {
+		t.Fatalf("HandleMessage(typing) = (%s, %v), want nil", reply, err)
+	}
+	rawTyping := <-sink.messages
+	if strings.Contains(string(rawTyping), "\u017f") {
+		t.Fatalf("spoofed keys leaked into canonical typing event: %s", rawTyping)
+	}
+	var decodedTyping struct {
+		RoomID   string `json:"room_id"`
+		SenderID string `json:"sender_id"`
+		IsTyping bool   `json:"is_typing"`
+	}
+	if err := json.Unmarshal(rawTyping, &decodedTyping); err != nil {
+		t.Fatal(err)
+	}
+	if decodedTyping.RoomID != "303" || decodedTyping.SenderID != "7" || !decodedTyping.IsTyping {
+		t.Fatalf("decoded typing = %#v", decodedTyping)
+	}
+}
+
+func TestChatLimiterAllowsStopTypingWhenThrottledAndCapsMemory(t *testing.T) {
+	now := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	limiter := newChatLimiter()
+	limiter.now = func() time.Time { return now }
+	limiter.typingLimit = 1
+	limiter.typingWindow = time.Minute
+	limiter.typingCooldown = 2 * time.Second
+
+	if !limiter.allowTyping("room-1", "user-1", true) {
+		t.Fatal("first typing=true should be allowed")
+	}
+	// Budget is now exhausted, but stopping from active typing=true must still pass.
+	if !limiter.allowTyping("room-1", "user-1", false) {
+		t.Fatal("stop-typing transition from typing=true must bypass throttle")
+	}
+	// Redundant typing=false and subsequent typing=true remain blocked.
+	if limiter.allowTyping("room-1", "user-1", false) {
+		t.Fatal("duplicate typing=false should be blocked")
+	}
+	if limiter.allowTyping("room-1", "user-1", true) {
+		t.Fatal("subsequent typing=true should remain throttled")
+	}
+
+	// Verify hard capacity bound.
+	limiter.maxEntries = 3
+	for i := range 10 {
+		now = now.Add(time.Second)
+		limiter.allowMessage("room-"+string(rune('a'+i)), "user-1")
+	}
+	if got := len(limiter.budgets); got > 3 {
+		t.Fatalf("limiter.budgets length = %d, want <= 3", got)
+	}
+}
+
 type protocolRoomAuthorizerStub struct {
 	allowed bool
 	err     error

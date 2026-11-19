@@ -121,3 +121,18 @@ func TestEventHandlerRejectsMalformedAndUnsupportedEvents(t *testing.T) {
 		t.Fatalf("nil handler error = %v, want %v", err, domain.ErrRoomUnavailable)
 	}
 }
+
+func TestEventHandlerIgnoresUnicodeFoldedSenderID(t *testing.T) {
+	history := &roomRepositoryStub{}
+	service := application.NewService(application.Dependencies{History: history}).
+		WithRideAssignmentLookup(assignmentLookupStub{})
+	handler := NewEventHandler(service)
+
+	payload := []byte("{\"type\":\"message\",\"room_id\":\"303\",\"sender_id\":\"7\",\"\u017fender_id\":\"8\",\"text\":\"hi\"}")
+	if err := handler.Handle(context.Background(), payload); err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+	if history.message.SenderID != "7" {
+		t.Fatalf("stored SenderID = %q, want %q", history.message.SenderID, "7")
+	}
+}

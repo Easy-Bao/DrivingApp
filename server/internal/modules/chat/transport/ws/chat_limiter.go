@@ -5,11 +5,19 @@ import (
 	"time"
 )
 
+const defaultMaxChatLimiterEntries = 10_000
+
+type chatBudgetKey struct {
+	roomID    string
+	principal string
+}
+
 type chatBudget struct {
 	messageCount int
 	messageReset time.Time
 
-	lastTypingState *bool
+	hasTypingState  bool
+	lastTypingState bool
 	lastTypingTime  time.Time
 	typingCount     int
 	typingReset     time.Time
@@ -19,7 +27,8 @@ type chatBudget struct {
 
 type ChatLimiter struct {
 	mu             sync.Mutex
-	budgets        map[string]*chatBudget
+	budgets        map[chatBudgetKey]*chatBudget
+	maxEntries     int
 	messageLimit   int
 	messageWindow  time.Duration
 	typingLimit    int
@@ -31,7 +40,8 @@ type ChatLimiter struct {
 
 func newChatLimiter() *ChatLimiter {
 	return &ChatLimiter{
-		budgets:        make(map[string]*chatBudget),
+		budgets:        make(map[chatBudgetKey]*chatBudget),
+		maxEntries:     defaultMaxChatLimiterEntries,
 		messageLimit:   10,
 		messageWindow:  5 * time.Second,
 		typingLimit:    10,
@@ -47,14 +57,42 @@ func (limiter *ChatLimiter) budgetLocked(roomID, principal string, now time.Time
 		limiter.cleanup(now)
 	}
 
-	key := roomID + ":" + principal
+	key := chatBudgetKey{roomID: roomID, principal: principal}
 	budget, ok := limiter.budgets[key]
 	if !ok {
+		maxEntries := limiter.maxEntries
+		if maxEntries <= 0 {
+			maxEntries = defaultMaxChatLimiterEntries
+		}
+		if len(limiter.budgets) >= maxEntries {
+			limiter.cleanup(now)
+			for len(limiter.budgets) >= maxEntries {
+				limiter.evictOldestLocked()
+			}
+		}
 		budget = &chatBudget{}
 		limiter.budgets[key] = budget
 	}
 	budget.lastActivity = now
 	return budget
+}
+
+func (limiter *ChatLimiter) evictOldestLocked() {
+	var (
+		oldestKey  chatBudgetKey
+		oldestTime time.Time
+		found      bool
+	)
+	for key, budget := range limiter.budgets {
+		if !found || budget.lastActivity.Before(oldestTime) {
+			oldestKey = key
+			oldestTime = budget.lastActivity
+			found = true
+		}
+	}
+	if found {
+		delete(limiter.budgets, oldestKey)
+	}
 }
 
 func (limiter *ChatLimiter) allowMessage(roomID, principal string) bool {
@@ -88,24 +126,31 @@ func (limiter *ChatLimiter) allowTyping(roomID, principal string, isTyping bool)
 	now := limiter.now()
 	b := limiter.budgetLocked(roomID, principal, now)
 
-	// Coalesce redundant typing events of the same state within the cooldown window
-	if b.lastTypingState != nil && *b.lastTypingState == isTyping {
+	// Coalesce redundant typing events of the same state within the cooldown window.
+	if b.hasTypingState && b.lastTypingState == isTyping {
 		if now.Sub(b.lastTypingTime) < limiter.typingCooldown {
 			return false
 		}
 	}
 
-	// Throttle rapid typing state toggles
+	// Always allow a single stop-typing transition from active typing so peers
+	// are never left with a stuck typing indicator when throttled.
+	stoppingFromTyping := !isTyping && b.hasTypingState && b.lastTypingState
+
+	// Throttle rapid typing state toggles.
 	if now.After(b.typingReset) {
 		b.typingReset = now.Add(limiter.typingWindow)
 		b.typingCount = 0
 	}
-	if b.typingCount >= limiter.typingLimit {
+	if b.typingCount >= limiter.typingLimit && !stoppingFromTyping {
 		return false
 	}
 
-	b.typingCount++
-	b.lastTypingState = new(isTyping)
+	if b.typingCount < limiter.typingLimit {
+		b.typingCount++
+	}
+	b.hasTypingState = true
+	b.lastTypingState = isTyping
 	b.lastTypingTime = now
 	return true
 }
