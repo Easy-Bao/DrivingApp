@@ -240,6 +240,31 @@ func TestIngestRejectsTelemetryBeyondTheAllowedClockSkew(t *testing.T) {
 	}
 }
 
+func TestIngestClampsBoundedForwardClockSkewToServerNow(t *testing.T) {
+	repository := &locationRepositoryStub{}
+	service := newLocationTrackingService(repository)
+	futureObserved := time.Now().UTC().Add(5 * time.Second)
+
+	err := service.Ingest(
+		context.Background(),
+		domain.DriverPoint{
+			DriverID:   "driver-1",
+			Latitude:   6.7,
+			Longitude:  122.1,
+			ObservedAt: futureObserved,
+		},
+	)
+	if err != nil {
+		t.Fatalf("Ingest() error = %v, want nil for bounded forward skew", err)
+	}
+	if repository.upsertCalls != 1 {
+		t.Fatalf("Upsert() calls = %d, want 1", repository.upsertCalls)
+	}
+	if repository.driverPoint.ObservedAt.After(time.Now().UTC().Add(time.Second)) {
+		t.Fatalf("stored ObservedAt = %v was not clamped to server time", repository.driverPoint.ObservedAt)
+	}
+}
+
 func TestIngestStopsBeforePersistenceWhenContextIsCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()

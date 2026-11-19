@@ -45,7 +45,7 @@ func CanTransition(current, next string) bool {
 	case RideArrived:
 		return to == RideInTransit || to == RideCancelled
 	case RideInTransit:
-		return to == RideCompleted || to == RideCancelled
+		return to == RideCompleted
 	default:
 		return false
 	}

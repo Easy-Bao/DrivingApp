@@ -1,6 +1,9 @@
 package domain
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestValidateCancellationDoesNotAssignFaultFromUnverifiedClaims(t *testing.T) {
 	tests := []struct {
@@ -107,5 +110,17 @@ func TestValidateCancellationRetainsEvidenceBasedResponsibility(t *testing.T) {
 				t.Fatalf("responsibility = %q, want %q", responsibility, test.want)
 			}
 		})
+	}
+}
+
+func TestValidateCancellationRejectsInTransitRide(t *testing.T) {
+	_, _, err := ValidateCancellation(
+		CancellationActorPassenger,
+		string(RideInTransit),
+		CancellationReasonPassengerChangedMind,
+		"",
+	)
+	if !errors.Is(err, ErrInvalidStatusTransition) {
+		t.Fatalf("ValidateCancellation(in_transit) error = %v, want ErrInvalidStatusTransition", err)
 	}
 }

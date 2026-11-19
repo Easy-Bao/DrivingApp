@@ -15,6 +15,7 @@ import (
 type fakeLifecycleStore struct {
 	ride                  domain.Ride
 	transition            domain.RideTransition
+	getCalls              int
 	arrivalCalls          int
 	noShowCalls           int
 	acceptCalls           int
@@ -53,6 +54,7 @@ func newLifecycleServiceWithLocation(
 }
 
 func (store *fakeLifecycleStore) Get(_ context.Context, _ int) (domain.Ride, error) {
+	store.getCalls++
 	return store.ride, nil
 }
 
@@ -851,5 +853,72 @@ func TestStartTripCancelsDriverLocationOnEarlyRejection(t *testing.T) {
 	case <-locationReader.cancelled:
 	case <-time.After(time.Second):
 		t.Fatal("expected speculative location reader context to be cancelled after early rejection")
+	}
+}
+
+func TestCancelReadsRideOnceAndRejectsInTransit(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:          1,
+			PassengerID: 10,
+			DriverID:    &driverID,
+			Status:      string(domain.RideAccepted),
+		},
+	}
+	service := lifecycle.NewLifecycleService(lifecycle.LifecycleDependencies{Store: store})
+
+	if _, err := service.Cancel(context.Background(), domain.CancellationRequest{
+		RideID:  1,
+		ActorID: 10,
+		Reason:  domain.CancellationReasonPassengerChangedMind,
+	}); err != nil {
+		t.Fatalf("Cancel(accepted) error = %v", err)
+	}
+	if store.getCalls != 1 {
+		t.Fatalf("Cancel() called store.Get %d times, want 1", store.getCalls)
+	}
+
+	inTransitStore := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:          2,
+			PassengerID: 10,
+			DriverID:    &driverID,
+			Status:      string(domain.RideInTransit),
+		},
+	}
+	inTransitService := lifecycle.NewLifecycleService(lifecycle.LifecycleDependencies{Store: inTransitStore})
+	if _, err := inTransitService.Cancel(context.Background(), domain.CancellationRequest{
+		RideID:  2,
+		ActorID: 10,
+		Reason:  domain.CancellationReasonPassengerChangedMind,
+	}); !errors.Is(err, domain.ErrInvalidStatusTransition) {
+		t.Fatalf("Cancel(in_transit) error = %v, want ErrInvalidStatusTransition", err)
+	}
+}
+
+func TestMarkArrivedAllowsBoundedForwardClockSkewAndRejectsExcessiveSkew(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:              1,
+			PassengerID:     10,
+			DriverID:        &driverID,
+			Status:          string(domain.RideAccepted),
+			PickupLatitude:  6.7000,
+			PickupLongitude: 122.1000,
+		},
+	}
+	service, reader := newLifecycleServiceWithLocation(store, lifecycle.LifecycleConfig{}, 6.7001, 122.1001)
+
+	reader.point.ObservedAt = time.Now().UTC().Add(5 * time.Second)
+	if _, err := service.MarkArrived(context.Background(), 1, driverID, 6.7001, 122.1001); err != nil {
+		t.Fatalf("MarkArrived(5s forward skew) error = %v, want nil", err)
+	}
+
+	store.ride.Status = string(domain.RideAccepted)
+	reader.point.ObservedAt = time.Now().UTC().Add(20 * time.Second)
+	if _, err := service.MarkArrived(context.Background(), 1, driverID, 6.7001, 122.1001); !errors.Is(err, domain.ErrDriverLocationStale) {
+		t.Fatalf("MarkArrived(20s forward skew) error = %v, want ErrDriverLocationStale", err)
 	}
 }

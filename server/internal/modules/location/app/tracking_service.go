@@ -150,12 +150,21 @@ func (service *TrackingService) Ingest(ctx context.Context, point domain.DriverP
 	if service == nil || service.repository == nil {
 		return ErrPersistenceUnavailable
 	}
+	now := time.Now().UTC()
 	if point.ObservedAt.IsZero() {
-		point.ObservedAt = time.Now().UTC()
+		point.ObservedAt = now
+	} else {
+		point.ObservedAt = point.ObservedAt.UTC()
 	}
-	observedAge := time.Since(point.ObservedAt)
+	observedAge := now.Sub(point.ObservedAt)
 	if observedAge < -maximumLocationClockSkew {
 		return domain.ErrInvalidLocation
+	}
+	if observedAge < 0 {
+		// Clamp small forward client clock skew to server time so downstream
+		// freshness checks never treat recently ingested telemetry as stale.
+		point.ObservedAt = now
+		observedAge = 0
 	}
 	if observedAge > service.maxLocationAge() {
 		// A delayed mobile spool may legitimately deliver an old point after

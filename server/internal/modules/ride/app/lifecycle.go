@@ -288,6 +288,8 @@ func (service *LifecycleService) loadRideWithDriverLocation(
 	return current, getLocation, cleanup, nil
 }
 
+const _maxDriverLocationClockSkew = 15 * time.Second
+
 func (service *LifecycleService) authoritativeDriverLocation(
 	ctx context.Context,
 	driverID int,
@@ -306,7 +308,7 @@ func (service *LifecycleService) authoritativeDriverLocation(
 		return 0, 0, domain.ErrDriverLocationUnavailable
 	}
 	observedAge := time.Since(point.ObservedAt)
-	if observedAge < 0 || observedAge > service.config.driverLocationMaxAge() {
+	if observedAge < -_maxDriverLocationClockSkew || observedAge > service.config.driverLocationMaxAge() {
 		return 0, 0, domain.ErrDriverLocationStale
 	}
 	return point.Latitude, point.Longitude, nil
@@ -414,7 +416,7 @@ func (service *LifecycleService) Cancel(ctx context.Context, request domain.Canc
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	return service.transition(ctx, request.RideID, request.ActorID, string(domain.RideCancelled), domain.RideTransition{
+	return service.transitionFrom(ctx, current, request.ActorID, string(domain.RideCancelled), domain.RideTransition{
 		EventType:      domain.RideEventCancelled,
 		Reason:         normalizedReason,
 		Responsibility: responsibility,
@@ -502,6 +504,19 @@ func (service *LifecycleService) transition(
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("load ride for status update: %w", err)
 	}
+	return service.transitionFrom(ctx, current, actorID, next, transition)
+}
+
+func (service *LifecycleService) transitionFrom(
+	ctx context.Context,
+	current domain.Ride,
+	actorID int,
+	next string,
+	transition domain.RideTransition,
+) (domain.Ride, error) {
+	if service.store == nil {
+		return domain.Ride{}, ErrPersistenceUnavailable
+	}
 	isPassenger := current.PassengerID == actorID
 	isDriver := current.DriverID != nil && *current.DriverID == actorID
 	if !isPassenger && !isDriver {
@@ -540,7 +555,7 @@ func (service *LifecycleService) transition(
 	}
 	updated, err := service.store.UpdateStatus(
 		ctx,
-		rideID,
+		current.ID,
 		actorID,
 		string(currentStatus),
 		string(nextStatus),
