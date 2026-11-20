@@ -183,7 +183,7 @@ function exportRequestsCsv() {
             >
               <td class="py-3 px-4">
                 <div class="font-mono font-bold text-neutral-900">{{ req.id }}</div>
-                <div class="text-[11px] text-neutral-400">{{ req.submittedAt }}</div>
+                <div class="text-[11px] text-neutral-500">{{ req.submittedAt }}</div>
               </td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ req.driverName }}</div>
@@ -220,10 +220,10 @@ function exportRequestsCsv() {
               <td class="py-3 px-4 text-right whitespace-nowrap">
                 <button
                   type="button"
-                  class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs transition-colors inline-flex items-center space-x-1 cursor-pointer"
+                  class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs transition-colors cursor-pointer"
                   @click="navigateToDetails(req.id)"
                 >
-                  <span>Inspect Proof</span>
+                  Inspect Proof
                 </button>
               </td>
             </tr>

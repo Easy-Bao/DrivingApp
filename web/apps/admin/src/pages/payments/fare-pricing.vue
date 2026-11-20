@@ -68,16 +68,8 @@ function saveRuleChanges() {
   <div class="space-y-6">
     <PageHeader
       title="Tariff Rates"
-      description="Configure corridor base fares, distance increments, cancellation fees, and bidding ceilings."
-    >
-      <template #actions>
-        <span
-          class="inline-flex items-center border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700"
-        >
-          Server-computed fare calculation
-        </span>
-      </template>
-    </PageHeader>
+      description="Configure corridor base fares, distance increments, cancellation fees, and bidding ceilings. Server-computed fare calculation."
+    />
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
@@ -150,98 +142,119 @@ function saveRuleChanges() {
     >
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Corridor Scope</label>
+          <label for="tariff-corridor-scope" class="block font-medium text-neutral-700 mb-1">
+            Corridor Scope
+          </label>
           <input
+            id="tariff-corridor-scope"
             v-model="editCorridorScope"
             type="text"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Base Fare (PHP)</label>
+            <label for="tariff-base-fare" class="block font-medium text-neutral-700 mb-1">
+              Base Fare (PHP)
+            </label>
             <input
+              id="tariff-base-fare"
               v-model.number="editBaseFarePhp"
               type="number"
               min="1"
               step="1"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
             />
           </div>
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Per Km (PHP)</label>
+            <label for="tariff-per-km" class="block font-medium text-neutral-700 mb-1">
+              Per Km (PHP)
+            </label>
             <input
+              id="tariff-per-km"
               v-model.number="editPerKmPhp"
               type="number"
               min="1"
               step="0.5"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
             />
           </div>
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Per Minute (PHP)</label>
+            <label for="tariff-per-minute" class="block font-medium text-neutral-700 mb-1">
+              Per Minute (PHP)
+            </label>
             <input
+              id="tariff-per-minute"
               v-model.number="editPerMinutePhp"
               type="number"
               min="0"
               step="0.5"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
             />
           </div>
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Minimum Fare (PHP)</label>
+            <label for="tariff-minimum-fare" class="block font-medium text-neutral-700 mb-1">
+              Minimum Fare (PHP)
+            </label>
             <input
+              id="tariff-minimum-fare"
               v-model.number="editMinimumFarePhp"
               type="number"
               min="1"
               step="1"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
             />
           </div>
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Cancellation Fee (PHP)</label>
+            <label for="tariff-cancellation-fee" class="block font-medium text-neutral-700 mb-1">
+              Cancellation Fee (PHP)
+            </label>
             <input
+              id="tariff-cancellation-fee"
               v-model.number="editCancellationFeePhp"
               type="number"
               min="0"
               step="1"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
             />
           </div>
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Max Surge Multiplier</label>
+            <label for="tariff-max-surge" class="block font-medium text-neutral-700 mb-1">
+              Max Surge Multiplier
+            </label>
             <input
+              id="tariff-max-surge"
               v-model.number="editMaxSurgeCap"
               type="number"
               min="1"
               max="2.5"
               step="0.1"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
             />
           </div>
         </div>
       </div>
 
-      <p v-if="modalError" class="mt-3 text-xs font-medium text-rose-700">{{ modalError }}</p>
+      <p v-if="modalError" role="alert" class="mt-3 text-xs font-medium text-rose-700">
+        {{ modalError }}
+      </p>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
-            @click="closeEditModal"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800 cursor-pointer"
-            @click="saveRuleChanges"
-          >
-            Save Tariff Rule
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+          @click="closeEditModal"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
+          @click="saveRuleChanges"
+        >
+          Save Tariff Rule
+        </button>
       </template>
     </ModalDialog>
   </div>

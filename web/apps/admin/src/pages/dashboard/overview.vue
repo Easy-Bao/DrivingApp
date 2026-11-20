@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Icon } from '@iconify/vue'
 import { MotionConfig, motion } from 'motion-v'
 import {
   FleetDistributionCard,
   TripVolumeChart,
   useOverviewMetrics,
-  type DashboardKpiKey,
   type DashboardTimeframe,
 } from '@/features/dashboard'
 import { TripDetailsModal, useTrips, type TripRecord, type TripStatus } from '@/features/trips'
@@ -24,13 +22,6 @@ import {
 
 const timeframe = ref<DashboardTimeframe>('today')
 const { activeDataset, totalTrips, totalRevenuePhp, kpis } = useOverviewMetrics(timeframe)
-
-const KPI_ICONS: Record<DashboardKpiKey, string> = {
-  rides: 'lucide:navigation',
-  drivers: 'lucide:users',
-  revenue: 'lucide:banknote',
-  completion: 'lucide:check-circle-2',
-}
 
 const timeframeOptions = [
   { label: 'Today', value: 'today' },
@@ -76,19 +67,12 @@ const {
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
         <div
           v-for="kpi in kpis"
-          :key="kpi.label"
-          class="p-5 bg-white rounded-none border border-neutral-200 border-t-2 border-t-neutral-900 flex flex-col gap-1.5"
+          :key="kpi.key"
+          class="p-5 bg-white border border-neutral-200 border-t-2 border-t-neutral-900 flex flex-col gap-1.5"
         >
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
-              {{ kpi.label }}
-            </span>
-            <Icon
-              :icon="KPI_ICONS[kpi.key]"
-              class="h-4 w-4 text-neutral-400 shrink-0"
-              aria-hidden="true"
-            />
-          </div>
+          <span class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+            {{ kpi.label }}
+          </span>
           <motion.div
             :key="`${timeframe}-${kpi.value}`"
             :initial="{ opacity: 0, y: 4 }"
@@ -100,7 +84,12 @@ const {
               {{ kpi.value }}
             </div>
             <div class="text-xs font-medium text-neutral-500">
-              <span class="font-semibold text-emerald-700">{{ kpi.change }}</span>
+              <span
+                class="font-semibold"
+                :class="kpi.change.startsWith('-') ? 'text-rose-700' : 'text-emerald-700'"
+              >
+                {{ kpi.change }}
+              </span>
               {{ kpi.comparisonLabel }}
             </div>
           </motion.div>
@@ -120,13 +109,13 @@ const {
         />
       </div>
 
-      <div class="bg-white rounded-none border border-neutral-200 overflow-hidden">
+      <div class="bg-white border border-neutral-200 overflow-hidden">
         <div
           class="p-4 sm:p-5 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
         >
           <div class="flex items-center gap-2">
             <h2 class="font-semibold text-sm text-neutral-900">Recent Trip Dispatches</h2>
-            <span class="text-xs font-mono text-neutral-400 tabular-nums">
+            <span class="text-xs font-mono text-neutral-500 tabular-nums">
               ({{ filteredTrips.length }})
             </span>
           </div>
@@ -178,7 +167,10 @@ const {
                 </td>
                 <td class="py-3.5 px-4 font-medium text-neutral-900">{{ trip.rider }}</td>
                 <td class="py-3.5 px-4">{{ trip.driver ?? 'Unassigned' }}</td>
-                <td class="py-3.5 px-4 text-neutral-500 max-w-xs truncate">
+                <td
+                  class="py-3.5 px-4 text-neutral-500 max-w-xs truncate"
+                  :title="`${trip.pickup} → ${trip.dropoff}`"
+                >
                   {{ trip.pickup }} → {{ trip.dropoff }}
                 </td>
                 <td class="py-3.5 px-4 font-mono font-semibold text-neutral-900 tabular-nums">

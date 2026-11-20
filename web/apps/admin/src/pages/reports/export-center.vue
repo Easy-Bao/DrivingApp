@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Icon } from '@iconify/vue'
 import {
   useExportCenter,
   type GeneratedExportRecord,
@@ -91,7 +90,7 @@ function submitSchedule() {
       >
         <div>
           <h2 class="font-bold text-sm text-neutral-900">Scheduled Automated Reports</h2>
-          <p class="text-xs text-neutral-400 mt-0.5">
+          <p class="text-xs text-neutral-500 mt-0.5">
             Dispatched automatically in Philippine Standard Time (PHT / UTC+8)
           </p>
         </div>
@@ -99,7 +98,7 @@ function submitSchedule() {
           <StatusBadge :label="`${activeScheduleCount} Active Schedules`" tone="neutral" />
           <button
             type="button"
-            class="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors cursor-pointer shrink-0"
+            class="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer shrink-0"
             @click="openCreateModal"
           >
             + Schedule Report
@@ -129,7 +128,7 @@ function submitSchedule() {
             >
               <td class="py-3 px-4">
                 <div class="font-bold text-neutral-900">{{ schedule.name }}</div>
-                <div class="text-[11px] font-mono text-neutral-400">{{ schedule.id }}</div>
+                <div class="text-[11px] font-mono text-neutral-500">{{ schedule.id }}</div>
               </td>
               <td class="py-3 px-4">
                 <StatusBadge
@@ -157,7 +156,7 @@ function submitSchedule() {
               <td class="py-3 px-4 text-right">
                 <button
                   type="button"
-                  class="px-2.5 py-1 text-xs font-semibold rounded-none transition-colors cursor-pointer"
+                  class="px-2.5 py-1 text-xs font-semibold transition-colors cursor-pointer"
                   :class="
                     schedule.isActive
                       ? 'bg-neutral-900 hover:bg-neutral-800 text-white'
@@ -184,7 +183,7 @@ function submitSchedule() {
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="p-4 border-b border-neutral-100">
         <h2 class="font-bold text-sm text-neutral-900">Recent Generated Exports</h2>
-        <p class="text-xs text-neutral-400 mt-0.5">
+        <p class="text-xs text-neutral-500 mt-0.5">
           Download recent generated regional snapshots directly as local CSV records
         </p>
       </div>
@@ -209,13 +208,8 @@ function submitSchedule() {
               :key="exportItem.id"
               class="hover:bg-neutral-50/70 transition-colors"
             >
-              <td class="py-3 px-4 font-mono font-medium text-neutral-900 flex items-center gap-2">
-                <Icon
-                  icon="lucide:file-text"
-                  class="text-neutral-500 text-base shrink-0"
-                  aria-hidden="true"
-                />
-                <span>{{ exportItem.filename }}</span>
+              <td class="py-3 px-4 font-mono font-medium text-neutral-900">
+                {{ exportItem.filename }}
               </td>
               <td class="py-3 px-4 text-neutral-700 font-medium">
                 {{ exportItem.reportCategory }}
@@ -232,7 +226,7 @@ function submitSchedule() {
               <td class="py-3 px-4 text-right">
                 <button
                   type="button"
-                  class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors cursor-pointer"
+                  class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
                   @click="handleDownloadExport(exportItem)"
                 >
                   Download
@@ -259,18 +253,21 @@ function submitSchedule() {
     >
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Schedule Title</label>
+          <label for="export-schedule-title" class="block font-medium text-neutral-700 mb-1">
+            Schedule Title
+          </label>
           <input
+            id="export-schedule-title"
             v-model="newName"
             type="text"
             placeholder="e.g., Weekly Toda Cash Settlement Reconciliation"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Frequency</label>
+            <div class="font-medium text-neutral-700 mb-1">Frequency</div>
             <BaseSelect
               v-model="newFrequency"
               :full-width="true"
@@ -279,7 +276,7 @@ function submitSchedule() {
             />
           </div>
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Format</label>
+            <div class="font-medium text-neutral-700 mb-1">Format</div>
             <BaseSelect
               v-model="newFormat"
               :full-width="true"
@@ -290,45 +287,49 @@ function submitSchedule() {
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Recipient Emails</label>
+          <label for="export-schedule-recipients" class="block font-medium text-neutral-700 mb-1">
+            Recipient Emails
+          </label>
           <input
+            id="export-schedule-recipients"
             v-model="newRecipients"
             type="text"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 font-mono bg-white text-neutral-900"
           />
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Execution Window</label>
+          <label for="export-schedule-window" class="block font-medium text-neutral-700 mb-1">
+            Execution Window
+          </label>
           <input
+            id="export-schedule-window"
             v-model="newWindow"
             type="text"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
 
-        <p v-if="scheduleError" class="text-xs font-medium text-rose-700">
+        <p v-if="scheduleError" role="alert" class="text-xs font-medium text-rose-700">
           {{ scheduleError }}
         </p>
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
-            @click="showScheduleModal = false"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800 cursor-pointer"
-            @click="submitSchedule"
-          >
-            Save Schedule
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+          @click="showScheduleModal = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
+          @click="submitSchedule"
+        >
+          Save Schedule
+        </button>
       </template>
     </ModalDialog>
   </div>

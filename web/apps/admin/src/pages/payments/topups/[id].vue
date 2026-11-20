@@ -125,38 +125,34 @@ function submitRejection() {
               <p class="text-xs font-mono text-neutral-500">{{ request.driverPhone }}</p>
             </div>
           </div>
-          <span
-            class="px-2.5 py-1 text-xs font-semibold w-fit"
-            :class="
-              request.currentBalanceCentavos < minDispatchBalanceCentavos
-                ? 'bg-neutral-100 text-neutral-900 border border-neutral-300'
-                : 'bg-neutral-50 text-neutral-700 border border-neutral-200'
-            "
-          >
-            {{
+          <StatusBadge
+            :label="
               request.currentBalanceCentavos < minDispatchBalanceCentavos
                 ? `Below Dispatch Threshold (< ${formatCentavos(minDispatchBalanceCentavos)} min)`
                 : 'Dispatch Eligible'
-            }}
-          </span>
+            "
+            :tone="
+              request.currentBalanceCentavos < minDispatchBalanceCentavos ? 'warning' : 'success'
+            "
+          />
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">Assigned Vehicle</div>
+            <div class="text-neutral-500 text-[11px] font-medium">Assigned Vehicle</div>
             <div class="font-mono font-semibold text-neutral-900 mt-0.5">
               Plate: {{ request.vehiclePlate }}
             </div>
             <div class="text-[11px] text-neutral-500">{{ request.bodyUnit }}</div>
           </div>
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">Current Wallet Balance</div>
+            <div class="text-neutral-500 text-[11px] font-medium">Current Wallet Balance</div>
             <div class="font-mono font-bold mt-0.5 tabular-nums text-neutral-900">
               {{ formatCentavos(request.currentBalanceCentavos) }}
             </div>
           </div>
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">Balance After Approval</div>
+            <div class="text-neutral-500 text-[11px] font-medium">Balance After Approval</div>
             <div class="font-mono font-bold text-neutral-900 mt-0.5 tabular-nums">
               {{
                 formatCentavos(
@@ -182,35 +178,28 @@ function submitRejection() {
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <div class="text-neutral-400 text-[11px] font-medium">Transfer Mechanism</div>
-              <div class="font-semibold text-neutral-900 mt-0.5 flex items-center space-x-1.5">
-                <Icon
-                  :icon="
-                    request.paymentMethod.includes('QR') ? 'lucide:qr-code' : 'lucide:building-2'
-                  "
-                  class="text-neutral-500"
-                  aria-hidden="true"
-                />
-                <span>{{ request.paymentMethod }} ({{ request.channelProvider }})</span>
+              <div class="text-neutral-500 text-[11px] font-medium">Transfer Mechanism</div>
+              <div class="font-semibold text-neutral-900 mt-0.5">
+                {{ request.paymentMethod }} ({{ request.channelProvider }})
               </div>
             </div>
 
             <div>
-              <div class="text-neutral-400 text-[11px] font-medium">Company Account Paid</div>
+              <div class="text-neutral-500 text-[11px] font-medium">Company Account Paid</div>
               <div class="font-mono font-semibold text-neutral-800 mt-0.5">
                 {{ request.companyAccountPaid }}
               </div>
             </div>
 
             <div>
-              <div class="text-neutral-400 text-[11px] font-medium">Reference Code</div>
+              <div class="text-neutral-500 text-[11px] font-medium">Reference Code</div>
               <div class="font-mono font-bold text-neutral-900 mt-0.5">
                 {{ request.referenceCode }}
               </div>
             </div>
 
             <div>
-              <div class="text-neutral-400 text-[11px] font-medium">Sender Account Used</div>
+              <div class="text-neutral-500 text-[11px] font-medium">Sender Account Used</div>
               <div class="font-mono text-neutral-700 mt-0.5">
                 {{ request.senderAccount }}
               </div>
@@ -259,11 +248,10 @@ function submitRejection() {
             <h2 class="font-bold text-sm text-neutral-900">Receipt</h2>
             <button
               type="button"
-              class="text-xs font-semibold text-neutral-900 hover:underline inline-flex items-center gap-1 cursor-pointer"
+              class="text-xs font-semibold text-neutral-900 hover:underline cursor-pointer"
               @click="showProofModal = true"
             >
-              <Icon icon="lucide:maximize-2" class="text-xs" aria-hidden="true" />
-              <span>Enlarge</span>
+              Enlarge
             </button>
           </div>
 

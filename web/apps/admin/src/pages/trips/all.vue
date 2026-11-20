@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Icon } from '@iconify/vue'
 import { TripDetailsModal, useTrips, type TripRecord, type TripStatus } from '@/features/trips'
 import {
   BaseSelect,
@@ -148,11 +147,10 @@ const handleExport = () => {
           />
           <button
             type="button"
-            class="inline-flex items-center justify-center space-x-1.5 px-3 py-1.5 bg-white border border-neutral-300 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
+            class="px-3 py-1.5 bg-white border border-neutral-300 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
             @click="handleExport"
           >
-            <Icon icon="lucide:download" class="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Export</span>
+            Export
           </button>
         </div>
       </div>
@@ -183,17 +181,17 @@ const handleExport = () => {
               </td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ trip.rider }}</div>
-                <div class="text-[11px] font-mono text-neutral-400">{{ trip.riderPhone }}</div>
+                <div class="text-[11px] font-mono text-neutral-500">{{ trip.riderPhone }}</div>
               </td>
               <td class="py-3 px-4">
                 <div class="font-medium text-neutral-800">{{ trip.driver ?? 'Unassigned' }}</div>
-                <div class="text-[11px] text-neutral-400">
+                <div class="text-[11px] text-neutral-500">
                   {{ trip.vehicleModel }} ({{ trip.plateNumber ?? 'Pending' }})
                 </div>
               </td>
-              <td class="py-3 px-4 max-w-xs truncate">
+              <td class="py-3 px-4 max-w-xs truncate" :title="`${trip.pickup} → ${trip.dropoff}`">
                 <div class="truncate text-neutral-800 font-medium">{{ trip.pickup }}</div>
-                <div class="truncate text-[11px] text-neutral-400">→ {{ trip.dropoff }}</div>
+                <div class="truncate text-[11px] text-neutral-500">→ {{ trip.dropoff }}</div>
               </td>
               <td class="py-3 px-4 font-mono font-bold text-neutral-900 tabular-nums">
                 {{ formatCentavos(trip.fareCentavos) }}

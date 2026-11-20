@@ -6,6 +6,7 @@ import {
   ModalDialog,
   PageHeader,
   SearchField,
+  SegmentedToggle,
   StatusBadge,
   TablePagination,
   ToastBanner,
@@ -26,6 +27,11 @@ const REJECTION_GROUNDS = [
   'Expired regulatory document',
   'Missing two-sided capture or reverse barcode',
 ]
+
+const DOCUMENT_SIDE_OPTIONS = [
+  { label: 'Front Side', value: 'front' },
+  { label: 'Back Side', value: 'back' },
+] as const
 
 const { pendingDocs, verifyDocument, rejectDocument } = useVerificationDocuments()
 
@@ -193,7 +199,7 @@ function rejectCurrent() {
               <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ doc.id }}</td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ doc.driver }}</div>
-                <div class="text-[11px] font-mono text-neutral-400">{{ doc.driverPhone }}</div>
+                <div class="text-[11px] font-mono text-neutral-500">{{ doc.driverPhone }}</div>
               </td>
               <td class="py-3 px-4">
                 <div class="font-medium text-neutral-900">{{ doc.docType }}</div>
@@ -262,28 +268,15 @@ function rejectCurrent() {
       @update:open="!$event && closeReview()"
     >
       <div v-if="inspectingDoc" class="space-y-4 text-xs">
-        <div v-if="inspectingDoc.hasTwoSides" class="flex items-center justify-between">
-          <div class="inline-flex border border-neutral-200 bg-neutral-100 p-0.5">
-            <button
-              type="button"
-              class="px-3 py-1 font-semibold cursor-pointer"
-              :class="docSide === 'front' ? 'bg-neutral-900 text-white' : 'text-neutral-600'"
-              @click="docSide = 'front'"
-            >
-              Front Side
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1 font-semibold cursor-pointer"
-              :class="docSide === 'back' ? 'bg-neutral-900 text-white' : 'text-neutral-600'"
-              @click="docSide = 'back'"
-            >
-              Back Side
-            </button>
-          </div>
-          <span class="font-mono text-[11px] text-neutral-500"
-            >Submitted {{ inspectingDoc.submittedAt }}</span
-          >
+        <div v-if="inspectingDoc.hasTwoSides" class="flex items-center justify-between gap-2">
+          <SegmentedToggle
+            v-model="docSide"
+            aria-label="Document scan side"
+            :options="DOCUMENT_SIDE_OPTIONS"
+          />
+          <span class="font-mono text-[11px] text-neutral-500">
+            Submitted {{ inspectingDoc.submittedAt }}
+          </span>
         </div>
 
         <div class="bg-neutral-100 border border-neutral-200 p-3 flex justify-center">
@@ -316,20 +309,20 @@ function rejectCurrent() {
         </div>
 
         <div v-if="rejectingMode" class="p-3 bg-rose-50 border border-rose-200 space-y-2">
-          <label class="block text-[11px] font-semibold uppercase text-rose-900">
+          <div class="text-[11px] font-semibold uppercase text-rose-900">
             Regulatory Rejection Ground
-          </label>
+          </div>
           <BaseSelect
             v-model="rejectionGround"
             aria-label="Regulatory rejection ground"
             placeholder="Select regulatory rejection ground..."
-            :options="REJECTION_GROUNDS.map((reason) => ({ label: reason, value: reason }))"
+            :options="REJECTION_GROUNDS"
           />
         </div>
       </div>
 
       <template #footer>
-        <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="w-full flex flex-wrap items-center justify-between gap-2">
           <button
             v-if="!rejectingMode"
             type="button"

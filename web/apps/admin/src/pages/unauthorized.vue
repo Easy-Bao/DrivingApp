@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Icon } from '@iconify/vue'
 import { ROLE_PROFILES, lockAuthSession, useAuthSession } from '@/core'
 
 definePage({
@@ -46,12 +45,6 @@ function switchOperatorRole() {
     <div
       class="w-full max-w-md bg-white border border-neutral-300 p-6 sm:p-8 text-center space-y-5"
     >
-      <div
-        class="w-12 h-12 mx-auto bg-neutral-100 border border-neutral-300 flex items-center justify-center text-neutral-900"
-      >
-        <Icon icon="lucide:shield-alert" class="text-2xl" aria-hidden="true" />
-      </div>
-
       <div class="space-y-1.5">
         <p class="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-500">
           403 · Restricted
@@ -63,7 +56,7 @@ function switchOperatorRole() {
           <span class="font-mono text-neutral-900">{{ requestedPath }}</span
           >.
         </p>
-        <p class="text-[11px] font-mono text-neutral-400">Allowed: {{ requiredRoles }}</p>
+        <p class="text-[11px] font-mono text-neutral-500">Allowed: {{ requiredRoles }}</p>
       </div>
 
       <div class="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">

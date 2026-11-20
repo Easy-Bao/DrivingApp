@@ -156,9 +156,12 @@ function confirmExpireSession() {
                   {{ session.passengerPhone }}
                 </div>
               </td>
-              <td class="py-3 px-4 text-neutral-600 max-w-[260px]">
+              <td
+                class="py-3 px-4 text-neutral-600 max-w-[260px]"
+                :title="`${session.pickup} → ${session.dropoff}`"
+              >
                 <div class="truncate font-medium text-neutral-800">{{ session.pickup }}</div>
-                <div class="truncate text-neutral-500">-> {{ session.dropoff }}</div>
+                <div class="truncate text-neutral-500">→ {{ session.dropoff }}</div>
               </td>
               <td class="py-3 px-4 tabular-nums">
                 <div class="font-bold text-neutral-900">
@@ -173,7 +176,7 @@ function confirmExpireSession() {
               </td>
               <td class="py-3 px-4">
                 <div class="font-medium text-neutral-800">{{ session.requestMode }}</div>
-                <div class="text-[11px] text-neutral-400">
+                <div class="text-[11px] text-neutral-500">
                   {{ session.offers.length }} driver responses · {{ session.expiresIn }}
                 </div>
               </td>
@@ -297,15 +300,13 @@ function confirmExpireSession() {
       </div>
 
       <template #footer>
-        <div class="flex justify-end">
-          <button
-            type="button"
-            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer"
-            @click="inspectedSession = null"
-          >
-            Close
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer"
+          @click="inspectedSession = null"
+        >
+          Close
+        </button>
       </template>
     </ModalDialog>
 

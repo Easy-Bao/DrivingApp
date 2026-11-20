@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Icon } from '@iconify/vue'
 import { ROLE_PROFILES, lockAuthSession, updateOperatorProfile, useAuthSession } from '@/core'
 import { ModalDialog, PageHeader, StatusBadge, ToastBanner, getInitials, useToast } from '@/shared'
 
@@ -95,32 +94,27 @@ const submitPasswordRotation = () => {
       <template #actions>
         <button
           type="button"
-          class="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-800 hover:bg-neutral-50 transition-colors cursor-pointer"
+          class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-800 hover:bg-neutral-50 transition-colors cursor-pointer"
           @click="openPasswordModal"
         >
-          <Icon icon="lucide:key-round" class="w-4 h-4" aria-hidden="true" />
-          <span>Rotate Password</span>
+          Rotate Password
         </button>
         <button
           type="button"
-          class="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
+          class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
           @click="lockConsoleSession"
         >
-          <Icon icon="lucide:lock" class="w-4 h-4" aria-hidden="true" />
-          <span>Lock Session</span>
+          Lock Session
         </button>
       </template>
     </PageHeader>
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
-    <form
-      class="bg-white rounded-none border border-neutral-200 p-6 space-y-6"
-      @submit.prevent="saveProfile"
-    >
+    <form class="bg-white border border-neutral-200 p-6 space-y-6" @submit.prevent="saveProfile">
       <div class="flex flex-col sm:flex-row sm:items-center gap-4 border-b border-neutral-100 pb-6">
         <div
-          class="w-16 h-16 rounded-none bg-neutral-900 text-white flex items-center justify-center font-bold text-xl shrink-0"
+          class="w-16 h-16 bg-neutral-900 text-white flex items-center justify-center font-bold text-xl shrink-0"
         >
           {{ initials }}
         </div>
@@ -199,7 +193,7 @@ const submitPasswordRotation = () => {
           <button
             type="button"
             @click="toggleMfaMethod"
-            class="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-none text-xs font-medium transition-colors cursor-pointer"
+            class="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-medium transition-colors cursor-pointer"
           >
             Switch 2FA Factor
           </button>
@@ -209,7 +203,7 @@ const submitPasswordRotation = () => {
       <div class="flex justify-end pt-2">
         <button
           type="submit"
-          class="px-4 py-2 bg-neutral-900 text-white rounded-none text-xs font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
+          class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
         >
           Save Profile Changes
         </button>
@@ -222,56 +216,71 @@ const submitPasswordRotation = () => {
       size="md"
       close-label="Close"
     >
-      <form class="space-y-4 text-xs" @submit.prevent="submitPasswordRotation">
-        <div class="space-y-3">
-          <div>
-            <label class="block font-semibold text-neutral-700 mb-1">Current Password</label>
-            <input
-              v-model="currentPassword"
-              type="password"
-              required
-              class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
-            />
-          </div>
-          <div>
-            <label class="block font-semibold text-neutral-700 mb-1"
-              >New Passphrase (min. 10 chars)</label
-            >
-            <input
-              v-model="newPassword"
-              type="password"
-              required
-              class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
-            />
-          </div>
-          <div>
-            <label class="block font-semibold text-neutral-700 mb-1">Confirm Passphrase</label>
-            <input
-              v-model="confirmPassword"
-              type="password"
-              required
-              class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
-            />
-          </div>
-          <p v-if="passwordError" class="text-rose-600 font-medium">{{ passwordError }}</p>
+      <form
+        id="rotate-password-form"
+        class="space-y-3 text-xs"
+        @submit.prevent="submitPasswordRotation"
+      >
+        <div>
+          <label for="rotate-current-password" class="block font-semibold text-neutral-700 mb-1">
+            Current Password
+          </label>
+          <input
+            id="rotate-current-password"
+            v-model="currentPassword"
+            type="password"
+            autocomplete="current-password"
+            required
+            class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
+          />
         </div>
-
-        <div class="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-neutral-100">
-          <button
-            type="button"
-            class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
-            @click="showPasswordModal = false"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-          >
-            Update Password
-          </button>
+        <div>
+          <label for="rotate-new-password" class="block font-semibold text-neutral-700 mb-1">
+            New Passphrase (min. 10 chars)
+          </label>
+          <input
+            id="rotate-new-password"
+            v-model="newPassword"
+            type="password"
+            autocomplete="new-password"
+            required
+            class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
+          />
         </div>
+        <div>
+          <label for="rotate-confirm-password" class="block font-semibold text-neutral-700 mb-1">
+            Confirm Passphrase
+          </label>
+          <input
+            id="rotate-confirm-password"
+            v-model="confirmPassword"
+            type="password"
+            autocomplete="new-password"
+            required
+            class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
+          />
+        </div>
+        <p v-if="passwordError" role="alert" class="text-rose-600 font-medium">
+          {{ passwordError }}
+        </p>
       </form>
+
+      <template #footer>
+        <button
+          type="button"
+          class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+          @click="showPasswordModal = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          form="rotate-password-form"
+          class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+        >
+          Update Password
+        </button>
+      </template>
     </ModalDialog>
   </div>
 </template>

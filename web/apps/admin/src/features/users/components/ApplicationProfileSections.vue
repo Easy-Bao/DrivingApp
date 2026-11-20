@@ -60,7 +60,7 @@ const emit = defineEmits<{
       </div>
 
       <div class="text-xs text-neutral-500 sm:text-right shrink-0">
-        <div class="font-medium text-neutral-400 text-[11px]">Submitted</div>
+        <div class="font-medium text-neutral-500 text-[11px]">Submitted</div>
         <div class="font-semibold text-neutral-900">{{ application.appliedDate }}</div>
         <div class="text-[11px]">{{ application.appliedTime }}</div>
       </div>
@@ -82,19 +82,19 @@ const emit = defineEmits<{
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div class="sm:col-span-2">
-              <div class="text-neutral-400 text-[11px] font-medium">License Number</div>
+              <div class="text-neutral-500 text-[11px] font-medium">License Number</div>
               <div class="font-mono font-bold text-neutral-900 mt-0.5">
                 {{ application.licenseNumber }}
               </div>
             </div>
             <div>
-              <div class="text-neutral-400 text-[11px] font-medium">Classification &amp; Code</div>
+              <div class="text-neutral-500 text-[11px] font-medium">Classification &amp; Code</div>
               <div class="font-semibold text-neutral-900 mt-0.5">
                 {{ application.licenseType }} · Code {{ application.licenseCodes }}
               </div>
             </div>
             <div>
-              <div class="text-neutral-400 text-[11px] font-medium">Expiration</div>
+              <div class="text-neutral-500 text-[11px] font-medium">Expiration</div>
               <div class="font-mono font-semibold text-neutral-900 mt-0.5">
                 {{ application.licenseExpiry }}
               </div>
@@ -115,26 +115,26 @@ const emit = defineEmits<{
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">Model &amp; Year</div>
+            <div class="text-neutral-500 text-[11px] font-medium">Model &amp; Year</div>
             <div class="font-semibold text-neutral-900 mt-0.5">
               {{ application.vehicle.year }} {{ application.vehicle.make }}
               {{ application.vehicle.model }}
             </div>
           </div>
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">Plate &amp; Body No.</div>
+            <div class="text-neutral-500 text-[11px] font-medium">Plate &amp; Body No.</div>
             <div class="font-mono font-bold text-neutral-900 mt-0.5">
               {{ application.vehicle.plate }} · {{ application.vehicle.bodyNumber }}
             </div>
           </div>
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">TODA &amp; MTOP</div>
+            <div class="text-neutral-500 text-[11px] font-medium">TODA &amp; MTOP</div>
             <div class="font-semibold text-neutral-800 mt-0.5">
               {{ application.vehicle.todaFranchise }} · {{ application.vehicle.mtopNumber }}
             </div>
           </div>
           <div>
-            <div class="text-neutral-400 text-[11px] font-medium">Engine / Chassis</div>
+            <div class="text-neutral-500 text-[11px] font-medium">Engine / Chassis</div>
             <div class="font-mono text-neutral-700 mt-0.5">
               {{ application.vehicle.engineNumber }} / {{ application.vehicle.chassisNumber }}
             </div>
@@ -150,7 +150,7 @@ const emit = defineEmits<{
             @click="emit('openVehicleDoc', 'OR')"
           >
             <div class="min-w-0 pr-2">
-              <div class="text-[11px] text-neutral-400 font-medium">LTO OR</div>
+              <div class="text-[11px] text-neutral-500 font-medium">LTO OR</div>
               <div class="font-mono font-semibold text-neutral-800 truncate">
                 {{ application.vehicle.orNumber }}
               </div>
@@ -166,7 +166,7 @@ const emit = defineEmits<{
             @click="emit('openVehicleDoc', 'CR')"
           >
             <div class="min-w-0 pr-2">
-              <div class="text-[11px] text-neutral-400 font-medium">LTO CR</div>
+              <div class="text-[11px] text-neutral-500 font-medium">LTO CR</div>
               <div class="font-mono font-semibold text-neutral-800 truncate">
                 {{ application.vehicle.crNumber }}
               </div>
@@ -182,7 +182,7 @@ const emit = defineEmits<{
             @click="emit('openVehicleDoc', 'CTPL')"
           >
             <div class="min-w-0 pr-2">
-              <div class="text-[11px] text-neutral-400 font-medium">CTPL Policy</div>
+              <div class="text-[11px] text-neutral-500 font-medium">CTPL Policy</div>
               <div class="font-semibold text-neutral-800 truncate">
                 {{ application.vehicle.insurancePolicy }}
               </div>
@@ -198,7 +198,7 @@ const emit = defineEmits<{
             @click="emit('openVehicleDoc', 'MVIR')"
           >
             <div class="min-w-0 pr-2">
-              <div class="text-[11px] text-neutral-400 font-medium">MVIR Certificate</div>
+              <div class="text-[11px] text-neutral-500 font-medium">MVIR Certificate</div>
               <div class="font-mono text-neutral-800 truncate">
                 {{ application.vehicle.inspectionDoc }}
               </div>
@@ -225,23 +225,17 @@ const emit = defineEmits<{
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <div class="text-neutral-400 text-[11px] font-medium">Authority</div>
+              <div class="text-neutral-500 text-[11px] font-medium">Authority</div>
               <div class="font-semibold text-neutral-900 mt-0.5 flex items-center gap-2">
                 <span>{{ application.backgroundProvider }}</span>
-                <span
-                  class="px-1.5 py-0.5 text-[10px] font-semibold"
-                  :class="
-                    application.backgroundStatus === 'Passed'
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-amber-50 text-amber-700 border border-amber-200'
-                  "
-                >
-                  {{ application.backgroundStatus }}
-                </span>
+                <StatusBadge
+                  :label="application.backgroundStatus"
+                  :tone="application.backgroundStatus === 'Passed' ? 'success' : 'warning'"
+                />
               </div>
             </div>
             <div>
-              <div class="text-neutral-400 text-[11px] font-medium">Reference No.</div>
+              <div class="text-neutral-500 text-[11px] font-medium">Reference No.</div>
               <div class="font-mono font-semibold text-neutral-900 mt-0.5">
                 {{ application.clearanceNumber }}
               </div>

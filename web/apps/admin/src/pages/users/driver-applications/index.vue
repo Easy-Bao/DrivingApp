@@ -143,7 +143,7 @@ function navigateToDetails(id: string) {
                     <span class="font-semibold text-neutral-900 block">{{
                       application.applicant
                     }}</span>
-                    <span class="text-[11px] text-neutral-400 font-mono">{{
+                    <span class="text-[11px] text-neutral-500 font-mono">{{
                       application.phone
                     }}</span>
                   </div>
@@ -151,7 +151,7 @@ function navigateToDetails(id: string) {
               </td>
               <td class="py-3 px-4 whitespace-nowrap">
                 <div class="font-medium text-neutral-900">{{ application.appliedDate }}</div>
-                <div class="text-[11px] text-neutral-400">{{ application.appliedTime }}</div>
+                <div class="text-[11px] text-neutral-500">{{ application.appliedTime }}</div>
               </td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ application.city }}</div>
@@ -163,7 +163,7 @@ function navigateToDetails(id: string) {
                 <div class="font-semibold text-neutral-900">
                   {{ application.vehicle.make }} {{ application.vehicle.model }}
                 </div>
-                <div class="text-[11px] text-neutral-400 font-mono">
+                <div class="text-[11px] text-neutral-500 font-mono">
                   {{ application.vehicle.plate }} · {{ application.vehicle.bodyNumber }}
                 </div>
               </td>
@@ -176,7 +176,7 @@ function navigateToDetails(id: string) {
               <td class="py-3 px-4 text-right whitespace-nowrap">
                 <button
                   type="button"
-                  class="px-3 py-1.5 font-semibold text-xs transition-colors inline-flex items-center space-x-1 cursor-pointer"
+                  class="px-3 py-1.5 font-semibold text-xs transition-colors cursor-pointer"
                   :class="
                     application.status === 'Pending Review'
                       ? 'bg-neutral-900 hover:bg-neutral-800 text-white'
@@ -184,9 +184,9 @@ function navigateToDetails(id: string) {
                   "
                   @click="navigateToDetails(application.id)"
                 >
-                  <span>{{
+                  {{
                     application.status === 'Pending Review' ? 'Review Application' : 'View Details'
-                  }}</span>
+                  }}
                 </button>
               </td>
             </tr>

@@ -19,7 +19,8 @@ const props = defineProps<{
 }>()
 
 const activeMetric = ref<ChartMetric>('trips')
-const selectedIndex = ref<number | null>(null)
+const hoveredIndex = ref<number | null>(null)
+const pinnedIndex = ref<number | null>(null)
 
 const metricOptions = [
   { label: 'Trips', value: 'trips' },
@@ -29,13 +30,25 @@ const metricOptions = [
 watch(
   () => props.series,
   () => {
-    selectedIndex.value = null
+    hoveredIndex.value = null
+    pinnedIndex.value = null
   },
 )
 
 const peakIndex = computed(() => findPeakBucketIndex(props.series, activeMetric.value))
-const highlightedIndex = computed(() => selectedIndex.value ?? peakIndex.value)
+const activeSelectionIndex = computed(() => hoveredIndex.value ?? pinnedIndex.value)
+const highlightedIndex = computed(() => activeSelectionIndex.value ?? peakIndex.value)
 const highlightedBucket = computed(() => props.series[highlightedIndex.value] ?? null)
+
+function togglePinnedBucket(index: number) {
+  pinnedIndex.value = pinnedIndex.value === index ? null : index
+}
+
+function getBucketAriaLabel(index: number): string {
+  const bucket = props.series[index]
+  if (!bucket) return ''
+  return `${bucket.label}: ${bucket.trips.toLocaleString()} trips, ${formatPhp(bucket.revenuePhp)}`
+}
 
 const averageTripFare = computed(() =>
   props.totalTrips > 0 ? props.totalRevenuePhp / props.totalTrips : 0,
@@ -121,7 +134,8 @@ const trendStrokeColor = computed(() => (activeMetric.value === 'trips' ? '#10b9
         class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-neutral-50 border border-neutral-200 text-xs tabular-nums"
       >
         <span class="font-semibold text-neutral-900">
-          {{ selectedIndex !== null ? 'Selected' : 'Peak Window' }}: {{ highlightedBucket.label }}
+          {{ activeSelectionIndex !== null ? 'Selected' : 'Peak Window' }}:
+          {{ highlightedBucket.label }}
         </span>
         <div class="flex items-center gap-4 font-mono">
           <span
@@ -191,12 +205,18 @@ const trendStrokeColor = computed(() => (activeMetric.value === 'trips' ? '#10b9
           <g
             v-for="slot in styledBarSlots"
             :key="`${seriesKey}-${slot.label}`"
-            class="cursor-pointer focus:outline-none"
+            role="button"
             tabindex="0"
-            @mouseenter="selectedIndex = slot.index"
-            @focus="selectedIndex = slot.index"
-            @click="selectedIndex = selectedIndex === slot.index ? null : slot.index"
-            @mouseleave="selectedIndex = null"
+            :aria-pressed="pinnedIndex === slot.index"
+            :aria-label="getBucketAriaLabel(slot.index)"
+            class="cursor-pointer"
+            @mouseenter="hoveredIndex = slot.index"
+            @mouseleave="hoveredIndex = null"
+            @focus="hoveredIndex = slot.index"
+            @blur="hoveredIndex = null"
+            @click="togglePinnedBucket(slot.index)"
+            @keydown.enter.prevent="togglePinnedBucket(slot.index)"
+            @keydown.space.prevent="togglePinnedBucket(slot.index)"
           >
             <motion.rect
               :key="`bar-${seriesKey}-${slot.label}`"

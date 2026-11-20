@@ -84,10 +84,14 @@ const ringSegments = computed(() => buildDonutSegments(props.bookingMix, circumf
               class="flex items-center justify-between gap-2"
             >
               <div class="flex items-center gap-2 min-w-0">
-                <span class="w-2.5 h-2.5 shrink-0" :class="BOOKING_STYLES[mode.key].barClass" />
+                <span
+                  class="w-2.5 h-2.5 shrink-0"
+                  :class="BOOKING_STYLES[mode.key].barClass"
+                  aria-hidden="true"
+                />
                 <div class="min-w-0">
                   <div class="text-neutral-700 font-medium truncate">{{ mode.label }}</div>
-                  <div class="text-[11px] text-neutral-400 tabular-nums">
+                  <div class="text-[11px] text-neutral-500 tabular-nums">
                     {{ mode.count.toLocaleString() }} trips
                   </div>
                 </div>
@@ -129,7 +133,11 @@ const ringSegments = computed(() => buildDonutSegments(props.bookingMix, circumf
             class="flex items-center justify-between gap-2"
           >
             <span class="text-neutral-600 flex items-center gap-1.5 min-w-0">
-              <span class="w-2 h-2 shrink-0" :class="STATUS_BAR_CLASSES[item.key]" />
+              <span
+                class="w-2 h-2 shrink-0"
+                :class="STATUS_BAR_CLASSES[item.key]"
+                aria-hidden="true"
+              />
               <span class="truncate">{{ item.label }}</span>
             </span>
             <motion.span

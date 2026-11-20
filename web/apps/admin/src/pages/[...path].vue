@@ -1,12 +1,7 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { Icon } from '@iconify/vue'
+import { useSafeBack } from '@/shared'
 
-const router = useRouter()
-
-function goBack() {
-  router.back()
-}
+const goBack = useSafeBack('/dashboard/overview')
 </script>
 
 <template>
@@ -14,14 +9,8 @@ function goBack() {
     <div
       class="w-full max-w-md bg-white border border-neutral-200 p-6 sm:p-8 text-center space-y-5"
     >
-      <div
-        class="w-12 h-12 mx-auto bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-700"
-      >
-        <Icon icon="lucide:compass" class="text-2xl" aria-hidden="true" />
-      </div>
-
       <div class="space-y-1.5">
-        <p class="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-400">
+        <p class="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-500">
           Error 404
         </p>
         <h1 class="text-xl font-bold text-neutral-900 tracking-tight">Page Not Found</h1>

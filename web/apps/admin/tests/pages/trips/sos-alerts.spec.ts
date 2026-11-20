@@ -18,7 +18,6 @@ describe('SosAlertsPage', () => {
   it('displays actual incident counts, filters status tabs, and auto-dismisses action toasts', async () => {
     const wrapper = mount(SosAlertsPage)
 
-    expect(wrapper.text()).toContain('2 Active')
     expect(wrapper.text()).toContain('All (3)')
     expect(wrapper.text()).toContain('Active (2)')
     expect(wrapper.text()).toContain('Resolved (1)')
@@ -29,6 +28,7 @@ describe('SosAlertsPage', () => {
       .findAll('button')
       .find((button) => button.text().includes('Resolved (1)'))
     await resolvedTab?.trigger('click')
+    expect(resolvedTab?.attributes('aria-pressed')).toBe('true')
     expect(wrapper.text()).toContain('SOS-7016-102')
     expect(wrapper.text()).not.toContain('SOS-7016-104')
 

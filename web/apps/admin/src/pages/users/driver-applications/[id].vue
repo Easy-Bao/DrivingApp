@@ -174,16 +174,14 @@ function handleReject(reason: string) {
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between gap-4">
-      <button
-        type="button"
-        class="inline-flex items-center space-x-1.5 text-xs font-semibold text-neutral-700 hover:text-neutral-900 cursor-pointer"
-        @click="goBack"
-      >
-        <Icon icon="lucide:arrow-left" class="text-sm" />
-        <span>Back</span>
-      </button>
-    </div>
+    <button
+      type="button"
+      class="inline-flex items-center space-x-1.5 text-xs font-semibold text-neutral-700 hover:text-neutral-900 cursor-pointer"
+      @click="goBack"
+    >
+      <Icon icon="lucide:arrow-left" class="text-sm" aria-hidden="true" />
+      <span>Back</span>
+    </button>
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 

@@ -83,22 +83,20 @@ function submitReject() {
     </div>
 
     <template #footer>
-      <div class="flex items-center justify-end space-x-2">
-        <button
-          type="button"
-          class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
-          @click="emit('update:showApprove', false)"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
-          @click="emit('confirmApprove')"
-        >
-          Confirm &amp; Activate Driver
-        </button>
-      </div>
+      <button
+        type="button"
+        class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
+        @click="emit('update:showApprove', false)"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
+        @click="emit('confirmApprove')"
+      >
+        Confirm &amp; Activate Driver
+      </button>
     </template>
   </ModalDialog>
 
@@ -117,21 +115,24 @@ function submitReject() {
       </p>
 
       <div>
-        <label class="block text-[11px] font-semibold uppercase text-neutral-500 mb-1.5">
-          Reason
-        </label>
+        <div class="text-[11px] font-semibold uppercase text-neutral-500 mb-1.5">Reason</div>
         <BaseSelect
           v-model="selectedReason"
           aria-label="Reason"
-          :options="REJECTION_REASON_OPTIONS.map((item) => ({ label: item, value: item }))"
+          :full-width="true"
+          :options="REJECTION_REASON_OPTIONS"
         />
       </div>
 
       <div>
-        <label class="block text-[11px] font-semibold uppercase text-neutral-500 mb-1.5">
+        <label
+          for="reject-application-notes"
+          class="block text-[11px] font-semibold uppercase text-neutral-500 mb-1.5"
+        >
           Notes (Optional)
         </label>
         <textarea
+          id="reject-application-notes"
           v-model="notes"
           rows="3"
           placeholder="Specify any missing stamps, plate discrepancies, or required re-uploads..."
@@ -141,22 +142,20 @@ function submitReject() {
     </div>
 
     <template #footer>
-      <div class="flex items-center justify-end space-x-2">
-        <button
-          type="button"
-          class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
-          @click="emit('update:showReject', false)"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition-colors cursor-pointer"
-          @click="submitReject"
-        >
-          Confirm Rejection
-        </button>
-      </div>
+      <button
+        type="button"
+        class="px-4 py-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
+        @click="emit('update:showReject', false)"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition-colors cursor-pointer"
+        @click="submitReject"
+      >
+        Confirm Rejection
+      </button>
     </template>
   </ModalDialog>
 </template>

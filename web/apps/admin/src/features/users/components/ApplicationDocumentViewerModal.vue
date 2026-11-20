@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { ModalDialog } from '@/shared'
+import { ModalDialog, SegmentedToggle } from '@/shared'
 import { buildDocumentPreviewSvg } from '@/features/documents'
 
 export interface ApplicationViewerDocument {
@@ -22,6 +22,11 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
+
+const DOCUMENT_SIDE_OPTIONS = [
+  { label: 'Front Side', value: 'front' },
+  { label: 'Back Side', value: 'back' },
+] as const
 
 const docSide = ref<'front' | 'back'>('front')
 
@@ -74,32 +79,11 @@ const previewSrc = computed(() => {
         v-if="document.category === 'license'"
         class="flex items-center justify-between gap-2 pb-1"
       >
-        <div class="inline-flex border border-neutral-200 bg-neutral-100 p-0.5 text-xs">
-          <button
-            type="button"
-            class="px-3 py-1 font-semibold transition-colors cursor-pointer"
-            :class="
-              docSide === 'front'
-                ? 'bg-neutral-900 text-white'
-                : 'text-neutral-600 hover:text-neutral-900'
-            "
-            @click="docSide = 'front'"
-          >
-            Front Side
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1 font-semibold transition-colors cursor-pointer"
-            :class="
-              docSide === 'back'
-                ? 'bg-neutral-900 text-white'
-                : 'text-neutral-600 hover:text-neutral-900'
-            "
-            @click="docSide = 'back'"
-          >
-            Back Side
-          </button>
-        </div>
+        <SegmentedToggle
+          v-model="docSide"
+          aria-label="License scan side"
+          :options="DOCUMENT_SIDE_OPTIONS"
+        />
         <span class="text-[11px] font-mono text-neutral-500 truncate">{{ displayedFilename }}</span>
       </div>
 
@@ -134,15 +118,13 @@ const previewSrc = computed(() => {
     </div>
 
     <template #footer>
-      <div class="flex justify-end">
-        <button
-          type="button"
-          class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-          @click="emit('close')"
-        >
-          Done
-        </button>
-      </div>
+      <button
+        type="button"
+        class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+        @click="emit('close')"
+      >
+        Done
+      </button>
     </template>
   </ModalDialog>
 </template>

@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { SosLocationModal, useSosAlerts, type SosIncident } from '@/features/trips'
-import { ConfirmDialog, PageHeader, StatusBadge, ToastBanner, useToast } from '@/shared'
+import {
+  ConfirmDialog,
+  PageHeader,
+  SegmentedToggle,
+  StatusBadge,
+  ToastBanner,
+  useToast,
+} from '@/shared'
 
 const { alerts, activeAlertsCount, resolvedAlertsCount, notifyResponders, resolveAlert } =
   useSosAlerts()
@@ -13,11 +20,14 @@ const resolveModalOpen = ref(false)
 const resolutionNote = ref('')
 const locationAlert = ref<SosIncident | null>(null)
 
-const filterTabs = computed(() => [
-  { key: 'all' as const, label: 'All', count: alerts.value.length },
-  { key: 'Active' as const, label: 'Active', count: activeAlertsCount.value },
-  { key: 'Resolved' as const, label: 'Resolved', count: resolvedAlertsCount.value },
-])
+const filterOptions = computed(
+  () =>
+    [
+      { label: `All (${alerts.value.length})`, value: 'all' },
+      { label: `Active (${activeAlertsCount.value})`, value: 'Active' },
+      { label: `Resolved (${resolvedAlertsCount.value})`, value: 'Resolved' },
+    ] as const,
+)
 
 const filteredAlerts = computed(() => {
   if (statusFilter.value === 'all') return alerts.value
@@ -65,32 +75,16 @@ const confirmResolution = () => {
       description="Monitor emergency alerts and coordinate rapid dispatch response."
     >
       <template #actions>
-        <div class="flex flex-wrap items-center gap-1.5">
-          <span
-            class="px-2 py-1 text-xs font-mono border border-neutral-200 bg-neutral-50 text-neutral-700"
-          >
-            911 · CDRRMO (062-925-0911)
-          </span>
-          <span
-            class="px-2 py-1 text-xs font-semibold tabular-nums border border-neutral-300 bg-white text-neutral-900"
-          >
-            {{ activeAlertsCount }} Active
-          </span>
-          <button
-            v-for="tab in filterTabs"
-            :key="tab.key"
-            type="button"
-            class="px-3 py-1.5 text-xs font-medium tabular-nums border transition-colors cursor-pointer"
-            :class="
-              statusFilter === tab.key
-                ? 'bg-neutral-900 text-white border-neutral-900'
-                : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50'
-            "
-            @click="statusFilter = tab.key"
-          >
-            {{ tab.label }} ({{ tab.count }})
-          </button>
-        </div>
+        <span
+          class="px-2 py-1 text-xs font-mono border border-neutral-200 bg-neutral-50 text-neutral-700"
+        >
+          911 · CDRRMO (062-925-0911)
+        </span>
+        <SegmentedToggle
+          v-model="statusFilter"
+          aria-label="Filter SOS alerts by status"
+          :options="filterOptions"
+        />
       </template>
     </PageHeader>
 

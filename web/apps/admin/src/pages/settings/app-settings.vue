@@ -7,14 +7,7 @@ import {
   validatePlatformConfig,
   type PlatformConfig,
 } from '@/features/settings'
-import {
-  ConfirmDialog,
-  PageHeader,
-  StatusBadge,
-  ToastBanner,
-  formatCentavos,
-  useToast,
-} from '@/shared'
+import { ConfirmDialog, PageHeader, ToastBanner, formatCentavos, useToast } from '@/shared'
 
 const { config, commitConfig, resetToDefaults } = usePlatformConfig()
 
@@ -92,11 +85,10 @@ const handleResetDefaults = () => {
       description="Configure dispatch timeouts, wallet thresholds, and compliance gates."
     >
       <template #actions>
-        <StatusBadge label="Live Bidding Architecture" tone="neutral" />
         <button
           id="reset-runtime-defaults"
           type="button"
-          class="px-3 py-2 border border-neutral-300 bg-white hover:bg-neutral-50 text-neutral-800 rounded-none text-xs font-medium cursor-pointer"
+          class="px-3 py-2 border border-neutral-300 bg-white hover:bg-neutral-50 text-neutral-800 text-xs font-medium cursor-pointer"
           @click="handleResetDefaults"
         >
           Reset Defaults
@@ -104,7 +96,7 @@ const handleResetDefaults = () => {
         <button
           id="save-runtime-config"
           type="button"
-          class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold cursor-pointer"
+          class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer"
           @click="requestSave"
         >
           Save Runtime Configuration
@@ -117,7 +109,7 @@ const handleResetDefaults = () => {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="pb-3 border-b border-neutral-100">
-          <h3 class="font-bold text-sm text-neutral-900">Bidding Engine &amp; Telemetry Timing</h3>
+          <h2 class="font-bold text-sm text-neutral-900">Bidding Engine &amp; Telemetry Timing</h2>
         </div>
 
         <div class="space-y-3 text-xs">
@@ -131,9 +123,9 @@ const handleResetDefaults = () => {
               type="number"
               min="30"
               max="300"
-              class="w-full px-3 py-1.5 bg-white border border-neutral-300 rounded-none font-mono text-xs text-neutral-900"
+              class="w-full px-3 py-1.5 bg-white border border-neutral-300 font-mono text-xs text-neutral-900"
             />
-            <p class="text-[11px] text-neutral-400 mt-0.5">
+            <p class="text-[11px] text-neutral-500 mt-0.5">
               Duration passengers review driver offers before session expiration
             </p>
           </div>
@@ -148,9 +140,9 @@ const handleResetDefaults = () => {
               type="number"
               min="2"
               max="60"
-              class="w-full px-3 py-1.5 bg-white border border-neutral-300 rounded-none font-mono text-xs text-neutral-900"
+              class="w-full px-3 py-1.5 bg-white border border-neutral-300 font-mono text-xs text-neutral-900"
             />
-            <p class="text-[11px] text-neutral-400 mt-0.5">
+            <p class="text-[11px] text-neutral-500 mt-0.5">
               Real-time coordinate ping cadence across active trips
             </p>
           </div>
@@ -167,7 +159,7 @@ const handleResetDefaults = () => {
                 min="1"
                 max="2.5"
                 step="0.1"
-                class="w-full px-3 py-1.5 bg-white border border-neutral-300 rounded-none font-mono text-xs text-neutral-900"
+                class="w-full px-3 py-1.5 bg-white border border-neutral-300 font-mono text-xs text-neutral-900"
               />
             </div>
             <div>
@@ -181,7 +173,7 @@ const handleResetDefaults = () => {
                 min="1"
                 max="5"
                 step="0.1"
-                class="w-full px-3 py-1.5 bg-white border border-neutral-300 rounded-none font-mono text-xs text-neutral-900"
+                class="w-full px-3 py-1.5 bg-white border border-neutral-300 font-mono text-xs text-neutral-900"
               />
             </div>
             <div>
@@ -195,7 +187,7 @@ const handleResetDefaults = () => {
                 min="1"
                 max="1.2"
                 step="0.01"
-                class="w-full px-3 py-1.5 bg-white border border-neutral-300 rounded-none font-mono text-xs text-neutral-900"
+                class="w-full px-3 py-1.5 bg-white border border-neutral-300 font-mono text-xs text-neutral-900"
               />
             </div>
           </div>
@@ -204,7 +196,7 @@ const handleResetDefaults = () => {
 
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div class="pb-3 border-b border-neutral-100">
-          <h3 class="font-bold text-sm text-neutral-900">Prepaid Wallet &amp; Compliance Gates</h3>
+          <h2 class="font-bold text-sm text-neutral-900">Prepaid Wallet &amp; Compliance Gates</h2>
         </div>
 
         <div class="space-y-3 text-xs">
@@ -218,9 +210,9 @@ const handleResetDefaults = () => {
               type="number"
               min="0"
               step="10"
-              class="w-full px-3 py-1.5 bg-white border border-neutral-300 rounded-none font-mono text-xs text-neutral-900"
+              class="w-full px-3 py-1.5 bg-white border border-neutral-300 font-mono text-xs text-neutral-900"
             />
-            <p class="text-[11px] text-neutral-400 mt-0.5">
+            <p class="text-[11px] text-neutral-500 mt-0.5">
               Drivers below {{ formattedMinBalance }} cannot accept new cash bid requests
             </p>
           </div>
@@ -228,7 +220,7 @@ const handleResetDefaults = () => {
           <div class="flex items-center justify-between py-2 border-t border-neutral-100">
             <div>
               <div class="font-medium text-neutral-900">Enforce LTO &amp; TODA Document Gate</div>
-              <div class="text-[11px] text-neutral-400">
+              <div class="text-[11px] text-neutral-500">
                 Block dispatch when driver license, OR/CR, or MTOP expires
               </div>
             </div>
@@ -236,14 +228,14 @@ const handleResetDefaults = () => {
               v-model="draft.enforceDocumentGate"
               aria-label="Enforce LTO and TODA Document Gate"
               type="checkbox"
-              class="h-4 w-4 accent-neutral-900 rounded-none"
+              class="h-4 w-4 accent-neutral-900 cursor-pointer"
             />
           </div>
 
           <div class="flex items-center justify-between py-2 border-t border-neutral-100">
             <div>
               <div class="font-medium text-neutral-900">Dynamic Corridor Surge Multiplier</div>
-              <div class="text-[11px] text-neutral-400">
+              <div class="text-[11px] text-neutral-500">
                 Allow geofenced demand multipliers up to the
                 {{ draft.maxBiddingSurgeCap.toFixed(1) }}x server cap
               </div>
@@ -252,14 +244,14 @@ const handleResetDefaults = () => {
               v-model="draft.enableSurgePricing"
               aria-label="Dynamic Corridor Surge Multiplier"
               type="checkbox"
-              class="h-4 w-4 accent-neutral-900 rounded-none"
+              class="h-4 w-4 accent-neutral-900 cursor-pointer"
             />
           </div>
 
           <div class="flex items-center justify-between py-2 border-t border-neutral-100">
             <div>
               <div class="font-medium text-neutral-900">Auto-Lock Low-Balance Dispatch</div>
-              <div class="text-[11px] text-neutral-400">
+              <div class="text-[11px] text-neutral-500">
                 Automatically pause bidding eligibility when prepaid balance drops below
                 {{ formattedMinBalance }}
               </div>
@@ -268,7 +260,7 @@ const handleResetDefaults = () => {
               v-model="draft.autoLockLowBalanceDispatch"
               aria-label="Auto-Lock Low-Balance Dispatch"
               type="checkbox"
-              class="h-4 w-4 accent-neutral-900 rounded-none"
+              class="h-4 w-4 accent-neutral-900 cursor-pointer"
             />
           </div>
         </div>

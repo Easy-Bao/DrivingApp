@@ -39,21 +39,10 @@ function submitSignIn() {
 </script>
 
 <template>
-  <div class="min-h-dvh min-h-screen bg-neutral-100 flex items-center justify-center p-4 sm:p-6">
+  <div class="min-h-screen min-h-dvh bg-neutral-100 flex items-center justify-center p-4 sm:p-6">
     <div class="w-full max-w-md bg-white border border-neutral-300 shadow-sm">
-      <div
-        class="px-5 sm:px-6 py-4 sm:py-5 border-b border-neutral-200 flex items-center justify-between gap-3"
-      >
-        <div class="flex items-center gap-3">
-          <div
-            class="w-9 h-9 bg-neutral-900 text-white flex items-center justify-center font-bold text-sm"
-          >
-            ER
-          </div>
-          <div>
-            <h1 class="text-base font-bold text-neutral-900 tracking-tight">EasyRide Admin</h1>
-          </div>
-        </div>
+      <div class="px-5 sm:px-6 py-4 sm:py-5 border-b border-neutral-200">
+        <h1 class="text-base font-bold text-neutral-900 tracking-tight">EasyRide Admin</h1>
       </div>
 
       <form class="p-5 sm:p-6 space-y-4 text-xs" @submit.prevent="submitSignIn">
@@ -67,7 +56,7 @@ function submitSignIn() {
         </div>
 
         <div class="space-y-1.5">
-          <label class="block font-semibold text-neutral-800">Role</label>
+          <div class="font-semibold text-neutral-800">Role</div>
           <BaseSelect
             v-model="selectedRole"
             aria-label="Select operator role"
@@ -98,12 +87,12 @@ function submitSignIn() {
               :type="showPin ? 'text' : 'password'"
               autocomplete="current-password"
               placeholder="4+ digit PIN"
-              class="w-full px-3 pr-9 py-2 bg-white border border-neutral-300 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+              class="w-full px-3 pr-9 py-2 bg-white border border-neutral-300 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
             />
             <button
               type="button"
               :aria-label="showPin ? 'Hide security PIN' : 'Show security PIN'"
-              class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-900 transition-colors cursor-pointer"
+              class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-500 hover:text-neutral-900 transition-colors cursor-pointer"
               @click="showPin = !showPin"
             >
               <Icon
