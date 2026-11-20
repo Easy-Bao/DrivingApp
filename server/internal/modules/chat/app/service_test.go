@@ -378,12 +378,18 @@ func TestReadReceiptRequiresAPeerMessageAndPublishesItsTimestamp(t *testing.T) {
 }
 
 type pictureStore struct {
-	content []byte
-	deleted bool
+	content    []byte
+	storeCalls int
+	deleted    bool
+	onStore    func()
 }
 
 func (store *pictureStore) Store(_ context.Context, content []byte) (string, error) {
+	store.storeCalls++
 	store.content = bytes.Clone(content)
+	if store.onStore != nil {
+		store.onStore()
+	}
 	return "private-picture", nil
 }
 func (store *pictureStore) Read(context.Context, string, int64) ([]byte, error) {
@@ -416,8 +422,112 @@ func TestPicturesUsePrivateStorageAndRoomAuthorization(t *testing.T) {
 	if _, _, err := service.Image(context.Background(), "ride-1", "outsider", message.ID); !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("outsider picture read: %v", err)
 	}
+	// An already-locked room must reject before uploading bytes to object storage.
 	history.locked = true
+	storesBeforeLocked := pictures.storeCalls
+	if _, err := service.SendImage(context.Background(), "ride-1", "7", picture.Bytes()); !errors.Is(err, domain.ErrRoomLocked) {
+		t.Fatalf("already-locked picture upload error = %v, want %v", err, domain.ErrRoomLocked)
+	}
+	if pictures.storeCalls != storesBeforeLocked || pictures.deleted {
+		t.Fatalf("already-locked room touched object storage: storeCalls=%d (was %d), deleted=%v", pictures.storeCalls, storesBeforeLocked, pictures.deleted)
+	}
+	// If the room locks concurrently during object upload, the uploaded orphan must be deleted.
+	history.locked = false
+	pictures.onStore = func() { history.locked = true }
 	if _, err := service.SendImage(context.Background(), "ride-1", "7", picture.Bytes()); !errors.Is(err, domain.ErrRoomLocked) || !pictures.deleted {
-		t.Fatalf("closed picture upload: %v, cleanup %v", err, pictures.deleted)
+		t.Fatalf("concurrently-locked picture upload: %v, cleanup %v", err, pictures.deleted)
+	}
+}
+
+type atomicChatHistory struct {
+	chatHistory
+	appendWithParticipantsCalls int
+	isLockedCalls               int
+	isMemberCalls               int
+	roomParticipantsCalls       int
+	appendCalls                 int
+	onAppend                    func()
+}
+
+func (history *atomicChatHistory) Append(ctx context.Context, message domain.Message) error {
+	history.appendCalls++
+	return history.chatHistory.Append(ctx, message)
+}
+
+func (history *atomicChatHistory) IsLocked(ctx context.Context, roomID string) (bool, error) {
+	history.isLockedCalls++
+	return history.chatHistory.IsLocked(ctx, roomID)
+}
+
+func (history *atomicChatHistory) IsMember(ctx context.Context, roomID, userID string) (bool, error) {
+	history.isMemberCalls++
+	return history.chatHistory.IsMember(ctx, roomID, userID)
+}
+
+func (history *atomicChatHistory) RoomParticipants(ctx context.Context, roomID string) (string, string, error) {
+	history.roomParticipantsCalls++
+	return history.chatHistory.RoomParticipants(ctx, roomID)
+}
+
+func (history *atomicChatHistory) AppendWithParticipants(_ context.Context, message domain.Message) (string, string, error) {
+	history.appendWithParticipantsCalls++
+	if history.locked {
+		return "", "", domain.ErrRoomLocked
+	}
+	history.messages = append(history.messages, message)
+	if history.onAppend != nil {
+		history.onAppend()
+	}
+	return history.passengerID, history.driverID, nil
+}
+
+type contextCheckingEventPublisher struct {
+	events       []event.Envelope
+	ctxErr       error
+	hasDeadline  bool
+	publishCalls int
+}
+
+func (publisher *contextCheckingEventPublisher) Publish(ctx context.Context, envelope event.Envelope) error {
+	publisher.publishCalls++
+	publisher.ctxErr = ctx.Err()
+	_, publisher.hasDeadline = ctx.Deadline()
+	publisher.events = append(publisher.events, envelope)
+	return nil
+}
+
+func TestChatRelayUsesAtomicAppenderFastPathAndDetachesPublishContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	history := &atomicChatHistory{
+		chatHistory: chatHistory{passengerID: "7", driverID: "8"},
+		onAppend:    cancel,
+	}
+	publisher := &contextCheckingEventPublisher{}
+	service := newChatService(history).WithEventPublisher(publisher)
+
+	if err := service.Relay(ctx, domain.Message{
+		RoomID:   "ride-1",
+		SenderID: "7",
+		Body:     "atomic relay",
+	}); err != nil {
+		t.Fatalf("Relay() error = %v", err)
+	}
+	if history.appendWithParticipantsCalls != 1 {
+		t.Fatalf("AppendWithParticipants calls = %d, want 1", history.appendWithParticipantsCalls)
+	}
+	if history.isLockedCalls != 0 || history.isMemberCalls != 0 || history.appendCalls != 0 || history.roomParticipantsCalls != 0 {
+		t.Fatalf("unexpected fallback calls: isLocked=%d isMember=%d append=%d participants=%d",
+			history.isLockedCalls, history.isMemberCalls, history.appendCalls, history.roomParticipantsCalls)
+	}
+	if publisher.publishCalls != 1 {
+		t.Fatalf("publishCalls = %d, want 1", publisher.publishCalls)
+	}
+	if publisher.ctxErr != nil || !publisher.hasDeadline {
+		t.Fatalf("publish context should be detached with deadline: err=%v hasDeadline=%v", publisher.ctxErr, publisher.hasDeadline)
+	}
+	if publisher.events[0].Scope.PassengerID != "7" || publisher.events[0].Scope.DriverID != "8" {
+		t.Fatalf("event scope = %#v, want passenger 7 / driver 8", publisher.events[0].Scope)
 	}
 }

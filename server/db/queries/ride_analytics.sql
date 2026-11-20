@@ -107,27 +107,16 @@ WHERE ride.driver_id = sqlc.arg('driver_id')
 
 -- name: GetPassengerActivitySummary :one
 SELECT
-    COALESCE(SUM(r.fare_amount) FILTER (
-        WHERE r.status = 'completed'
-          AND (
-              (r.completed_at >= sqlc.arg('week_start') AND r.completed_at < sqlc.arg('week_end'))
-              OR (
-                  r.completed_at IS NULL
-                  AND r.created_at >= sqlc.arg('week_start')
-                  AND r.created_at < sqlc.arg('week_end')
-              )
-          )
-    ), 0)::bigint AS this_week_fare_amount,
-    COUNT(*) FILTER (
-        WHERE r.status = 'completed'
-          AND (
-              (r.completed_at >= sqlc.arg('week_start') AND r.completed_at < sqlc.arg('week_end'))
-              OR (
-                  r.completed_at IS NULL
-                  AND r.created_at >= sqlc.arg('week_start')
-                  AND r.created_at < sqlc.arg('week_end')
-              )
-          )
-    )::bigint AS this_week_completed_rides
+    COALESCE(SUM(r.fare_amount), 0)::bigint AS this_week_fare_amount,
+    COUNT(*)::bigint AS this_week_completed_rides
 FROM rides AS r
-WHERE r.passenger_id = sqlc.arg('passenger_id');
+WHERE r.passenger_id = sqlc.arg('passenger_id')
+  AND r.status = 'completed'
+  AND (
+      (r.completed_at >= sqlc.arg('week_start') AND r.completed_at < sqlc.arg('week_end'))
+      OR (
+          r.completed_at IS NULL
+          AND r.created_at >= sqlc.arg('week_start')
+          AND r.created_at < sqlc.arg('week_end')
+      )
+  );

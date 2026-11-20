@@ -27,11 +27,10 @@ WITH eligible_profiles AS (
 ), onboard_counts AS (
     SELECT
         ride.driver_id,
-        COUNT(*) FILTER (
-            WHERE ride.status IN ('assigned', 'accepted', 'arrived', 'in_transit')
-        )::bigint AS onboard_passenger_count
+        COUNT(*)::bigint AS onboard_passenger_count
     FROM rides AS ride
     JOIN eligible_profiles AS profile ON profile.user_id = ride.driver_id
+    WHERE ride.status IN ('assigned', 'accepted', 'arrived', 'in_transit')
     GROUP BY ride.driver_id
 )
 SELECT

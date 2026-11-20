@@ -12,3 +12,10 @@ CREATE TABLE notifications (
 
 CREATE INDEX notification_user_id_created_at
     ON notifications (user_id, created_at);
+
+CREATE INDEX notifications_user_id_id_desc_idx
+    ON notifications (user_id, id DESC);
+
+CREATE INDEX notifications_user_unread_idx
+    ON notifications (user_id)
+    WHERE is_read = false;

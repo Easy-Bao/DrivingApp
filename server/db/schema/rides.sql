@@ -106,3 +106,14 @@ CREATE UNIQUE INDEX rides_bid_session_id_idx
     ON rides (bid_session_id)
     WHERE bid_session_id IS NOT NULL;
 
+CREATE INDEX rides_passenger_created_id_desc_idx
+    ON rides (passenger_id, created_at DESC, id DESC);
+
+CREATE INDEX rides_driver_created_id_desc_idx
+    ON rides (driver_id, created_at DESC, id DESC)
+    WHERE driver_id IS NOT NULL;
+
+CREATE INDEX rides_passenger_completed_id_desc_idx
+    ON rides (passenger_id, id DESC)
+    WHERE status = 'completed';
+

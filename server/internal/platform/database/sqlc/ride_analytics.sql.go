@@ -158,36 +158,25 @@ func (q *Queries) GetDriverStats(ctx context.Context, arg GetDriverStatsParams) 
 
 const getPassengerActivitySummary = `-- name: GetPassengerActivitySummary :one
 SELECT
-    COALESCE(SUM(r.fare_amount) FILTER (
-        WHERE r.status = 'completed'
-          AND (
-              (r.completed_at >= $1 AND r.completed_at < $2)
-              OR (
-                  r.completed_at IS NULL
-                  AND r.created_at >= $1
-                  AND r.created_at < $2
-              )
-          )
-    ), 0)::bigint AS this_week_fare_amount,
-    COUNT(*) FILTER (
-        WHERE r.status = 'completed'
-          AND (
-              (r.completed_at >= $1 AND r.completed_at < $2)
-              OR (
-                  r.completed_at IS NULL
-                  AND r.created_at >= $1
-                  AND r.created_at < $2
-              )
-          )
-    )::bigint AS this_week_completed_rides
+    COALESCE(SUM(r.fare_amount), 0)::bigint AS this_week_fare_amount,
+    COUNT(*)::bigint AS this_week_completed_rides
 FROM rides AS r
-WHERE r.passenger_id = $3
+WHERE r.passenger_id = $1
+  AND r.status = 'completed'
+  AND (
+      (r.completed_at >= $2 AND r.completed_at < $3)
+      OR (
+          r.completed_at IS NULL
+          AND r.created_at >= $2
+          AND r.created_at < $3
+      )
+  )
 `
 
 type GetPassengerActivitySummaryParams struct {
+	PassengerID int32              `db:"passenger_id"`
 	WeekStart   pgtype.Timestamptz `db:"week_start"`
 	WeekEnd     pgtype.Timestamptz `db:"week_end"`
-	PassengerID int32              `db:"passenger_id"`
 }
 
 type GetPassengerActivitySummaryRow struct {
@@ -196,7 +185,7 @@ type GetPassengerActivitySummaryRow struct {
 }
 
 func (q *Queries) GetPassengerActivitySummary(ctx context.Context, arg GetPassengerActivitySummaryParams) (GetPassengerActivitySummaryRow, error) {
-	row := q.db.QueryRow(ctx, getPassengerActivitySummary, arg.WeekStart, arg.WeekEnd, arg.PassengerID)
+	row := q.db.QueryRow(ctx, getPassengerActivitySummary, arg.PassengerID, arg.WeekStart, arg.WeekEnd)
 	var i GetPassengerActivitySummaryRow
 	err := row.Scan(&i.ThisWeekFareAmount, &i.ThisWeekCompletedRides)
 	return i, err

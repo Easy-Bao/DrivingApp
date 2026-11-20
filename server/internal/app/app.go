@@ -27,12 +27,13 @@ import (
 )
 
 type Application struct {
-	server          *http.Server
-	postgresPool    *pgxpool.Pool
-	redisClient     redisClient
-	eventHub        *websockethub.Hub
-	eventSubscriber eventSubscriber
-	logger          *slog.Logger
+	server            *http.Server
+	postgresPool      *pgxpool.Pool
+	redisClient       redisClient
+	eventHub          *websockethub.Hub
+	eventSubscriber   eventSubscriber
+	retainChatHistory func(context.Context) error
+	logger            *slog.Logger
 }
 
 type eventSubscriber interface {
@@ -80,13 +81,6 @@ func New(ctx context.Context, config Config) (*Application, error) {
 			}
 		}
 	}()
-
-	retentionContext, cancelRetention := context.WithTimeout(ctx, 30*time.Second)
-	retentionErr := chatredis.NewHistoryStore(redisClient).RetainExistingHistory(retentionContext)
-	cancelRetention()
-	if retentionErr != nil {
-		return nil, fmt.Errorf("retain existing chat conversations: %w", retentionErr)
-	}
 
 	applicationLogger := logger.New(_serviceName, config.LogLevel)
 	authStore, err := authpostgres.NewUserRepository(postgresPool)
@@ -200,11 +194,12 @@ func New(ctx context.Context, config Config) (*Application, error) {
 			WriteTimeout:      15 * time.Second,
 			IdleTimeout:       60 * time.Second,
 		},
-		postgresPool:    postgresPool,
-		redisClient:     redisClient,
-		eventHub:        eventHub,
-		eventSubscriber: eventSubscriber,
-		logger:          applicationLogger,
+		postgresPool:      postgresPool,
+		redisClient:       redisClient,
+		eventHub:          eventHub,
+		eventSubscriber:   eventSubscriber,
+		retainChatHistory: chatredis.NewHistoryStore(redisClient).RetainExistingHistory,
+		logger:            applicationLogger,
 	}
 	application.server.RegisterOnShutdown(eventHub.Close)
 	closePostgresPool = false
@@ -256,9 +251,23 @@ func (application *Application) Run(ctx context.Context) error {
 		defer close(monitorDone)
 		monitorPostgresPool(monitorContext, applicationLogger, application.postgresPool)
 	}()
+	retentionDone := make(chan struct{})
+	if application.retainChatHistory != nil {
+		go func() {
+			defer close(retentionDone)
+			retentionContext, cancelRetention := context.WithTimeout(monitorContext, 30*time.Second)
+			defer cancelRetention()
+			if err := application.retainChatHistory(retentionContext); err != nil && !errors.Is(err, context.Canceled) {
+				applicationLogger.Warn("retain existing chat conversations failed", "error", err)
+			}
+		}()
+	} else {
+		close(retentionDone)
+	}
 	defer func() {
 		stopMonitoring()
 		<-monitorDone
+		<-retentionDone
 	}()
 
 	serverErrors := make(chan error, 1)

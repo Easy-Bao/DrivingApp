@@ -161,3 +161,97 @@ func TestRunStopsServerOnContextCancellation(t *testing.T) {
 		t.Fatal("expected server to be stopped after cancellation")
 	}
 }
+
+type orderRecordingRedisClient struct {
+	mu     *sync.Mutex
+	events *[]string
+}
+
+func (client orderRecordingRedisClient) Close() error {
+	client.mu.Lock()
+	*client.events = append(*client.events, "redis_closed")
+	client.mu.Unlock()
+	return nil
+}
+
+func TestRunExecutesChatHistoryRetentionAsynchronouslyAndAwaitsBeforeClosingRedis(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen failed: %v", err)
+	}
+	addr := listener.Addr().String()
+	_ = listener.Close()
+
+	var (
+		mu             sync.Mutex
+		lifecycleOrder []string
+	)
+	retentionStarted := make(chan struct{})
+	subscriber := newTestSubscriber(nil)
+	server := &http.Server{
+		Addr: addr,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}),
+	}
+	application := &Application{
+		server:          server,
+		eventSubscriber: subscriber,
+		redisClient:     orderRecordingRedisClient{mu: &mu, events: &lifecycleOrder},
+		retainChatHistory: func(ctx context.Context) error {
+			close(retentionStarted)
+			<-ctx.Done()
+			mu.Lock()
+			lifecycleOrder = append(lifecycleOrder, "retention_done")
+			mu.Unlock()
+			return ctx.Err()
+		},
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	runDone := make(chan error, 1)
+	go func() {
+		runDone <- application.Run(ctx)
+	}()
+
+	subscriber.signalReady()
+
+	select {
+	case <-retentionStarted:
+	case <-time.After(3 * time.Second):
+		t.Fatal("retainChatHistory did not start")
+	}
+
+	// HTTP must already be serving while retention is still blocked.
+	var clientErr error
+	for range 20 {
+		time.Sleep(20 * time.Millisecond)
+		resp, err := http.Get("http://" + addr)
+		if err == nil {
+			resp.Body.Close()
+			clientErr = nil
+			break
+		}
+		clientErr = err
+	}
+	if clientErr != nil {
+		t.Fatalf("server blocked on chat retention: %v", clientErr)
+	}
+
+	cancel()
+
+	select {
+	case err := <-runDone:
+		if err != nil {
+			t.Fatalf("Run() error = %v, want nil", err)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("Run() did not stop cleanly")
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	if len(lifecycleOrder) != 2 || lifecycleOrder[0] != "retention_done" || lifecycleOrder[1] != "redis_closed" {
+		t.Fatalf("shutdown order = %v, want [retention_done redis_closed]", lifecycleOrder)
+	}
+}

@@ -37,13 +37,31 @@ func TestRetainedHistoryAndReadWatermarks(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	store := NewHistoryStore(client)
+	if _, _, err := store.AppendWithParticipants(ctx, domain.Message{ID: "missing", RoomID: "ride", SenderID: "7", Body: "before open"}); !errors.Is(err, domain.ErrRoomUnavailable) {
+		t.Fatalf("missing room append = %v, want %v", err, domain.ErrRoomUnavailable)
+	}
 	if err := store.CreateRoom(ctx, "ride", "7", "8"); err != nil {
 		t.Fatal(err)
 	}
+	if member, err := store.IsMember(ctx, "ride", ""); err != nil || member {
+		t.Fatalf("empty member = %v, %v", member, err)
+	}
+	if member, err := store.IsMember(ctx, "ride", "7"); err != nil || !member {
+		t.Fatalf("passenger member = %v, %v", member, err)
+	}
+	if member, err := store.IsMember(ctx, "ride", "outsider"); err != nil || member {
+		t.Fatalf("outsider member = %v, %v", member, err)
+	}
+	if _, _, err := store.AppendWithParticipants(ctx, domain.Message{ID: "bad", RoomID: "ride", SenderID: "outsider", Body: "denied"}); !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("outsider append = %v, want %v", err, domain.ErrForbidden)
+	}
 	for index := range 105 {
-		err := store.Append(ctx, domain.Message{ID: fmt.Sprint(index), RoomID: "ride", SenderID: "7", Body: "retained", CreatedAt: time.Date(2026, 10, 23, 0, 0, index, 0, time.UTC).Format(time.RFC3339Nano)})
+		passenger, driver, err := store.AppendWithParticipants(ctx, domain.Message{ID: fmt.Sprint(index), RoomID: "ride", SenderID: "7", Body: "retained", CreatedAt: time.Date(2026, 10, 23, 0, 0, index, 0, time.UTC).Format(time.RFC3339Nano)})
 		if err != nil {
 			t.Fatal(err)
+		}
+		if passenger != "7" || driver != "8" {
+			t.Fatalf("append participants = %q/%q, want 7/8", passenger, driver)
 		}
 	}
 	if err := client.Expire(ctx, roomKey("ride"), time.Hour).Err(); err != nil {

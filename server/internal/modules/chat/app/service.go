@@ -21,10 +21,15 @@ import (
 )
 
 const (
-	_maxRoomIDBytes      = 128
-	_maxParticipantBytes = 128
-	_maxMessageBytes     = 4096
+	_maxRoomIDBytes          = 128
+	_maxParticipantBytes     = 128
+	_maxMessageBytes         = 4096
+	_chatEventPublishTimeout = 2 * time.Second
 )
+
+type atomicMessageAppender interface {
+	AppendWithParticipants(ctx context.Context, message domain.Message) (passengerID, driverID string, err error)
+}
 
 type Service struct {
 	images      storage.ObjectStore
@@ -86,6 +91,24 @@ func (service *Service) Relay(ctx context.Context, message domain.Message) error
 	if _, err := service.communicationAssignment(ctx, message.RoomID, message.SenderID); err != nil {
 		return err
 	}
+	if message.ID == "" {
+		message.ID = event.NewID()
+	}
+	if message.CreatedAt == "" {
+		message.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	} else if parsed, err := time.Parse(time.RFC3339Nano, message.CreatedAt); err != nil {
+		message.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	} else {
+		message.CreatedAt = parsed.UTC().Format(time.RFC3339Nano)
+	}
+	if appender, ok := service.history.(atomicMessageAppender); ok {
+		passengerID, driverID, err := appender.AppendWithParticipants(ctx, message)
+		if err != nil {
+			return fmt.Errorf("append chat message: %w", err)
+		}
+		service.publishRealtimeMessageWithParticipants(ctx, message, passengerID, driverID)
+		return nil
+	}
 	locked, err := service.history.IsLocked(ctx, message.RoomID)
 	if err != nil {
 		return fmt.Errorf("check chat room lock: %w", err)
@@ -99,16 +122,6 @@ func (service *Service) Relay(ctx context.Context, message domain.Message) error
 	}
 	if !member {
 		return domain.ErrForbidden
-	}
-	if message.ID == "" {
-		message.ID = event.NewID()
-	}
-	if message.CreatedAt == "" {
-		message.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
-	} else if parsed, err := time.Parse(time.RFC3339Nano, message.CreatedAt); err != nil {
-		message.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
-	} else {
-		message.CreatedAt = parsed.UTC().Format(time.RFC3339Nano)
 	}
 	if err := service.history.Append(ctx, message); err != nil {
 		return fmt.Errorf("append chat message: %w", err)
@@ -157,7 +170,16 @@ func (service *Service) publishRealtimeMessage(ctx context.Context, message doma
 		service.log().WarnContext(ctx, "load chat room participants for notification failed", "error", err)
 		return
 	}
-	if passengerID == "" || driverID == "" {
+	service.publishRealtimeMessageWithParticipants(ctx, message, passengerID, driverID)
+}
+
+func (service *Service) publishRealtimeMessageWithParticipants(
+	ctx context.Context,
+	message domain.Message,
+	passengerID string,
+	driverID string,
+) {
+	if service.events == nil || passengerID == "" || driverID == "" {
 		return
 	}
 	occurredAt, err := time.Parse(time.RFC3339Nano, message.CreatedAt)
@@ -182,7 +204,9 @@ func (service *Service) publishRealtimeMessage(ctx context.Context, message doma
 		service.log().ErrorContext(ctx, "construct chat notification event failed", "error", err)
 		return
 	}
-	if err := service.events.Publish(ctx, envelope); err != nil {
+	publishCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), _chatEventPublishTimeout)
+	defer cancel()
+	if err := service.events.Publish(publishCtx, envelope); err != nil {
 		service.log().WarnContext(ctx, "publish chat notification event failed", "error", err)
 	}
 }
@@ -381,6 +405,12 @@ func validChatIdentifier(value string, maxBytes int) bool {
 const MaxImageBytes = 5 << 20
 
 func (service *Service) SendImage(ctx context.Context, roomID, userID string, content []byte) (domain.Message, error) {
+	if !validRoomID(roomID) || !validParticipantID(userID) {
+		return domain.Message{}, domain.ErrInvalidMessage
+	}
+	if service == nil || service.history == nil || service.images == nil {
+		return domain.Message{}, domain.ErrRoomUnavailable
+	}
 	if _, err := service.communicationAssignment(ctx, roomID, userID); err != nil {
 		return domain.Message{}, err
 	}
@@ -391,8 +421,19 @@ func (service *Service) SendImage(ctx context.Context, roomID, userID string, co
 	if err != nil || (format != "jpeg" && format != "png") || config.Width <= 0 || config.Height <= 0 || int64(config.Width)*int64(config.Height) > 24000000 {
 		return domain.Message{}, domain.ErrInvalidMessage
 	}
-	if service.images == nil {
-		return domain.Message{}, domain.ErrRoomUnavailable
+	locked, err := service.history.IsLocked(ctx, roomID)
+	if err != nil {
+		return domain.Message{}, fmt.Errorf("check chat room lock: %w", err)
+	}
+	if locked {
+		return domain.Message{}, domain.ErrRoomLocked
+	}
+	member, err := service.history.IsMember(ctx, roomID, userID)
+	if err != nil {
+		return domain.Message{}, fmt.Errorf("check chat room membership: %w", err)
+	}
+	if !member {
+		return domain.Message{}, domain.ErrForbidden
 	}
 	key, err := service.images.Store(ctx, content)
 	if err != nil {
@@ -460,7 +501,10 @@ func (service *Service) MarkRead(ctx context.Context, roomID, userID, messageID 
 			if err != nil {
 				return err
 			}
-			if err := service.events.Publish(ctx, envelope); err != nil {
+			publishCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), _chatEventPublishTimeout)
+			err = service.events.Publish(publishCtx, envelope)
+			cancel()
+			if err != nil {
 				service.log().WarnContext(ctx, "publish chat receipt failed", "error", err)
 			}
 		}

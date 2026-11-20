@@ -13,6 +13,49 @@ import (
 	redis "github.com/redis/go-redis/v9"
 )
 
+var (
+	// _createRoomScript atomically preserves existing participants and lock state on concurrent opens.
+	_createRoomScript = redis.NewScript(`
+if redis.call('EXISTS', KEYS[1]) == 0 then
+	redis.call('HSET', KEYS[1], 'passenger_id', ARGV[1], 'driver_id', ARGV[2], 'locked', '0')
+end
+redis.call('PERSIST', KEYS[1])
+redis.call('PERSIST', KEYS[2])
+return 1
+`)
+
+	// _appendMessageScript checks room existence, lock state, and membership
+	// atomically with appending and returns the room's participants in one RTT.
+	_appendMessageScript = redis.NewScript(`
+if redis.call('EXISTS', KEYS[1]) == 0 then
+	return {'-1'}
+end
+local fields = redis.call('HMGET', KEYS[1], 'locked', 'passenger_id', 'driver_id')
+if fields[1] == '1' then
+	return {'-2'}
+end
+local passenger = fields[2] or ''
+local driver = fields[3] or ''
+if passenger ~= ARGV[1] and driver ~= ARGV[1] then
+	return {'-3'}
+end
+redis.call('RPUSH', KEYS[2], ARGV[2])
+redis.call('PERSIST', KEYS[1])
+redis.call('PERSIST', KEYS[2])
+return {'1', passenger, driver}
+`)
+
+	// _markReadScript advances a participant's read watermark monotonically.
+	// Fixed-width UTC timestamps compare chronologically.
+	_markReadScript = redis.NewScript(`
+local previous = redis.call('HGET', KEYS[1], ARGV[1])
+if not previous or previous < ARGV[2] then
+	redis.call('HSET', KEYS[1], ARGV[1], ARGV[2])
+end
+return 1
+`)
+)
+
 // HistoryStore is the Redis adapter for the retained chat-room history port.
 type HistoryStore struct{ client *redis.Client }
 
@@ -27,13 +70,7 @@ func (repository *HistoryStore) CreateRoom(ctx context.Context, roomID, passenge
 	if err := repository.validate(); err != nil {
 		return err
 	}
-	// Atomically preserve existing participants and lock state on concurrent opens.
-	const script = `if redis.call('EXISTS', KEYS[1]) == 0 then
- redis.call('HSET', KEYS[1], 'passenger_id', ARGV[1], 'driver_id', ARGV[2], 'locked', '0') end
- redis.call('PERSIST', KEYS[1])
- redis.call('PERSIST', KEYS[2])
- return 1`
-	if err := repository.client.Eval(ctx, script, []string{roomKey(roomID), messagesKey(roomID)}, passengerID, driverID).Err(); err != nil {
+	if err := _createRoomScript.Run(ctx, repository.client, []string{roomKey(roomID), messagesKey(roomID)}, passengerID, driverID).Err(); err != nil {
 		return fmt.Errorf("create chat room: %w", err)
 	}
 	return nil
@@ -41,8 +78,15 @@ func (repository *HistoryStore) CreateRoom(ctx context.Context, roomID, passenge
 
 // Append retains messages independently of the sending window.
 func (repository *HistoryStore) Append(ctx context.Context, message domain.Message) error {
+	_, _, err := repository.AppendWithParticipants(ctx, message)
+	return err
+}
+
+// AppendWithParticipants atomically validates room existence, lock state, and
+// sender membership while appending a message and returning the room's participants.
+func (repository *HistoryStore) AppendWithParticipants(ctx context.Context, message domain.Message) (string, string, error) {
 	if err := repository.validate(); err != nil {
-		return err
+		return "", "", err
 	}
 	if message.CreatedAt == "" {
 		message.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
@@ -58,30 +102,40 @@ func (repository *HistoryStore) Append(ctx context.Context, message domain.Messa
 		"createdAt":  message.CreatedAt,
 	})
 	if err != nil {
-		return fmt.Errorf("marshal chat message: %w", err)
+		return "", "", fmt.Errorf("marshal chat message: %w", err)
 	}
-	// The lock and membership check shares the append operation so resolving a
-	// conversation cannot race with an accepted message or picture.
-	const script = `if redis.call('EXISTS', KEYS[1]) == 0 then return -1 end
- if redis.call('HGET', KEYS[1], 'locked') == '1' then return -2 end
- if redis.call('HGET', KEYS[1], 'passenger_id') ~= ARGV[1] and redis.call('HGET', KEYS[1], 'driver_id') ~= ARGV[1] then return -3 end
- redis.call('RPUSH', KEYS[2], ARGV[2])
- redis.call('PERSIST', KEYS[1])
- redis.call('PERSIST', KEYS[2])
- return 1`
-	result, err := repository.client.Eval(ctx, script, []string{roomKey(message.RoomID), messagesKey(message.RoomID)}, message.SenderID, string(payload)).Int()
+	values, err := _appendMessageScript.Run(
+		ctx,
+		repository.client,
+		[]string{roomKey(message.RoomID), messagesKey(message.RoomID)},
+		message.SenderID,
+		string(payload),
+	).StringSlice()
 	if err != nil {
-		return fmt.Errorf("append chat message: %w", err)
+		return "", "", fmt.Errorf("append chat message: %w", err)
 	}
-	switch result {
-	case -1:
-		return domain.ErrRoomUnavailable
-	case -2:
-		return domain.ErrRoomLocked
-	case -3:
-		return domain.ErrForbidden
+	if len(values) == 0 {
+		return "", "", errors.New("append chat message: unexpected empty script result")
 	}
-	return nil
+	switch values[0] {
+	case "-1":
+		return "", "", domain.ErrRoomUnavailable
+	case "-2":
+		return "", "", domain.ErrRoomLocked
+	case "-3":
+		return "", "", domain.ErrForbidden
+	case "1":
+		var passengerID, driverID string
+		if len(values) > 1 {
+			passengerID = values[1]
+		}
+		if len(values) > 2 {
+			driverID = values[2]
+		}
+		return passengerID, driverID, nil
+	default:
+		return "", "", fmt.Errorf("append chat message: unexpected script status %q", values[0])
+	}
 }
 
 // Messages returns valid entries from the retained room history. Malformed
@@ -90,14 +144,23 @@ func (repository *HistoryStore) Messages(ctx context.Context, roomID string) ([]
 	if err := repository.validate(); err != nil {
 		return nil, err
 	}
-	if err := repository.retain(ctx, roomID); err != nil {
-		return nil, err
-	}
-	fields, err := repository.client.HGetAll(ctx, roomKey(roomID)).Result()
+	var (
+		fieldsCmd *redis.MapStringStringCmd
+		itemsCmd  *redis.StringSliceCmd
+	)
+	_, err := repository.client.Pipelined(ctx, func(pipe redis.Pipeliner) error {
+		fieldsCmd = pipe.HGetAll(ctx, roomKey(roomID))
+		itemsCmd = pipe.LRange(ctx, messagesKey(roomID), 0, -1)
+		return nil
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("load chat messages: %w", err)
 	}
-	items, err := repository.client.LRange(ctx, messagesKey(roomID), 0, -1).Result()
+	fields, err := fieldsCmd.Result()
+	if err != nil {
+		return nil, fmt.Errorf("load chat room metadata: %w", err)
+	}
+	items, err := itemsCmd.Result()
 	if err != nil {
 		return nil, fmt.Errorf("load chat messages: %w", err)
 	}
@@ -154,11 +217,14 @@ func (repository *HistoryStore) IsMember(ctx context.Context, roomID, userID str
 	if err := repository.validate(); err != nil {
 		return false, err
 	}
-	fields, err := repository.client.HGetAll(ctx, roomKey(roomID)).Result()
-	if err != nil {
-		return false, fmt.Errorf("load chat room participants: %w", err)
+	if userID == "" {
+		return false, nil
 	}
-	return fields["passenger_id"] == userID || fields["driver_id"] == userID, nil
+	passengerID, driverID, err := repository.RoomParticipants(ctx, roomID)
+	if err != nil {
+		return false, err
+	}
+	return passengerID == userID || driverID == userID, nil
 }
 
 func (repository *HistoryStore) IsLocked(ctx context.Context, roomID string) (bool, error) {
@@ -179,11 +245,25 @@ func (repository *HistoryStore) RoomParticipants(ctx context.Context, roomID str
 	if err := repository.validate(); err != nil {
 		return "", "", err
 	}
-	fields, err := repository.client.HGetAll(ctx, roomKey(roomID)).Result()
+	values, err := repository.client.HMGet(ctx, roomKey(roomID), "passenger_id", "driver_id").Result()
 	if err != nil {
 		return "", "", fmt.Errorf("load chat room participants: %w", err)
 	}
-	return fields["passenger_id"], fields["driver_id"], nil
+	var passengerID, driverID string
+	if len(values) > 0 {
+		passengerID = hashString(values[0])
+	}
+	if len(values) > 1 {
+		driverID = hashString(values[1])
+	}
+	return passengerID, driverID, nil
+}
+
+func hashString(value any) string {
+	if text, ok := value.(string); ok {
+		return text
+	}
+	return ""
 }
 
 func roomKey(roomID string) string     { return "chat:room:" + roomID }
@@ -196,27 +276,11 @@ func (repository *HistoryStore) validate() error {
 	return nil
 }
 
-// retain upgrades still-available legacy rooms without reopening them.
-func (repository *HistoryStore) retain(ctx context.Context, roomID string) error {
-	_, err := repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
-		pipe.Persist(ctx, roomKey(roomID))
-		pipe.Persist(ctx, messagesKey(roomID))
-		return nil
-	})
-	return err
-}
-
 func (repository *HistoryStore) MarkRead(ctx context.Context, roomID, userID, through string) error {
 	if err := repository.validate(); err != nil {
 		return err
 	}
-	// Fixed-width UTC timestamps compare chronologically. Older acknowledgements
-	// from another device must never move the watermark backwards.
-	const script = `local previous = redis.call('HGET', KEYS[1], ARGV[1])
- if not previous or previous < ARGV[2] then
- redis.call('HSET', KEYS[1], ARGV[1], ARGV[2]) end
- return 1`
-	return repository.client.Eval(ctx, script, []string{roomKey(roomID)}, "read:"+userID, through).Err()
+	return _markReadScript.Run(ctx, repository.client, []string{roomKey(roomID)}, "read:"+userID, through).Err()
 }
 
 // RetainExistingHistory removes the former expiry from still-available chat
