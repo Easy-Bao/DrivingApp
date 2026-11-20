@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import {
   BaseSelect,
   EmptyTableRow,
@@ -37,14 +37,10 @@ const hasActiveFilters = computed(
   () => searchQuery.value.trim().length > 0 || typeFilter.value !== 'All',
 )
 
-const { currentPage, itemsPerPage, paginatedItems, resetPage } = useDataTable(
-  filteredTransactions,
-  {
-    initialPageSize: 10,
-  },
-)
-
-watch([searchQuery, typeFilter], resetPage)
+const { currentPage, itemsPerPage, paginatedItems } = useDataTable(filteredTransactions, {
+  initialPageSize: 10,
+  resetDeps: [searchQuery, typeFilter],
+})
 
 function resetFilters() {
   searchQuery.value = ''

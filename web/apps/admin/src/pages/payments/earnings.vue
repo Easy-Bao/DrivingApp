@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import {
   BaseSelect,
   EmptyTableRow,
@@ -42,11 +42,10 @@ const hasActiveFilters = computed(
   () => searchQuery.value.trim().length > 0 || standingFilter.value !== 'All',
 )
 
-const { currentPage, itemsPerPage, paginatedItems, resetPage } = useDataTable(filteredEarnings, {
+const { currentPage, itemsPerPage, paginatedItems } = useDataTable(filteredEarnings, {
   initialPageSize: 10,
+  resetDeps: [searchQuery, standingFilter],
 })
-
-watch([searchQuery, standingFilter], resetPage)
 
 const totalGrossCentavos = computed(() =>
   filteredEarnings.value.reduce((sum, row) => sum + row.cashGrossCentavos, 0),
@@ -191,7 +190,7 @@ function exportEarningsCsv() {
               </td>
               <td class="py-3 px-4 font-mono tabular-nums text-neutral-700">
                 {{ formatCentavos(computePlatformCommissionCentavos(row)) }}
-                <span class="text-neutral-400">({{ formatBpsAsPercent(row.commissionBps) }})</span>
+                <span class="text-neutral-500">({{ formatBpsAsPercent(row.commissionBps) }})</span>
               </td>
               <td class="py-3 px-4 font-mono font-bold tabular-nums text-neutral-900">
                 {{ formatCentavos(computeDriverTakeHomeCentavos(row)) }}

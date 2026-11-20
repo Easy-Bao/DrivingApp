@@ -117,15 +117,15 @@ function handleReopen(id: string) {
               <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ doc.id }}</td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ doc.driver }}</div>
-                <div class="text-[11px] font-mono text-neutral-400">{{ doc.driverPhone }}</div>
+                <div class="text-[11px] font-mono text-neutral-500">{{ doc.driverPhone }}</div>
               </td>
               <td class="py-3 px-4 font-medium text-neutral-900">{{ doc.docType }}</td>
-              <td class="py-3 px-4 max-w-xs truncate text-neutral-600">
+              <td class="py-3 px-4 max-w-xs truncate text-neutral-600" :title="doc.rejectionReason">
                 {{ doc.rejectionReason }}
               </td>
               <td class="py-3 px-4">
                 <div>{{ doc.rejectedBy }}</div>
-                <div class="text-[11px] text-neutral-400">{{ doc.rejectedAt }}</div>
+                <div class="text-[11px] text-neutral-500">{{ doc.rejectedAt }}</div>
               </td>
               <td class="py-3 px-4">
                 <StatusBadge
@@ -187,23 +187,21 @@ function handleReopen(id: string) {
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-2 border border-neutral-300 text-neutral-700 text-xs font-semibold cursor-pointer"
-            @click="inspectingDoc = null"
-          >
-            Close
-          </button>
-          <button
-            v-if="inspectingDoc"
-            type="button"
-            class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer"
-            @click="handleReopen(inspectingDoc.id)"
-          >
-            Re-Open for Verification
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-2 border border-neutral-300 text-neutral-700 text-xs font-semibold cursor-pointer"
+          @click="inspectingDoc = null"
+        >
+          Close
+        </button>
+        <button
+          v-if="inspectingDoc"
+          type="button"
+          class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer"
+          @click="handleReopen(inspectingDoc.id)"
+        >
+          Re-Open for Verification
+        </button>
       </template>
     </ModalDialog>
   </div>

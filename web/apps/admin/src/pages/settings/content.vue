@@ -79,7 +79,7 @@ const saveDocument = () => {
               <td class="py-3.5 px-4 text-right">
                 <button
                   type="button"
-                  class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold cursor-pointer"
+                  class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer"
                   @click="openEditor(doc)"
                 >
                   Edit Policy
@@ -113,7 +113,7 @@ const saveDocument = () => {
             id="policy-title"
             v-model="draftTitle"
             type="text"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
 
@@ -125,39 +125,35 @@ const saveDocument = () => {
             id="policy-body"
             v-model="draftBody"
             rows="7"
-            class="w-full px-3 py-2 border border-neutral-300 rounded-none font-mono text-xs bg-white text-neutral-900"
+            class="w-full px-3 py-2 border border-neutral-300 font-mono text-xs bg-white text-neutral-900"
           />
         </div>
 
         <label class="inline-flex items-center gap-2 cursor-pointer font-medium text-neutral-800">
-          <input
-            v-model="bumpMinor"
-            type="checkbox"
-            class="h-4 w-4 accent-neutral-900 rounded-none"
-          />
+          <input v-model="bumpMinor" type="checkbox" class="h-4 w-4 accent-neutral-900" />
           Increment minor revision number (requires app acceptance on next launch)
         </label>
 
-        <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
+        <p v-if="modalError" role="alert" class="text-xs font-medium text-rose-700">
+          {{ modalError }}
+        </p>
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-            @click="editingDoc = null"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-            @click="saveDocument"
-          >
-            Publish Revision
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+          @click="editingDoc = null"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
+          @click="saveDocument"
+        >
+          Publish Revision
+        </button>
       </template>
     </ModalDialog>
   </div>

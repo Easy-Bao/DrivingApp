@@ -136,7 +136,7 @@ const submitLostItem = () => {
           />
           <button
             type="button"
-            class="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold cursor-pointer shrink-0"
+            class="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer shrink-0"
             @click="openLogModal"
           >
             + Log Report
@@ -168,7 +168,7 @@ const submitLostItem = () => {
               <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ item.id }}</td>
               <td class="py-3 px-4 max-w-xs">
                 <div class="font-medium text-neutral-900">{{ item.itemDescription }}</div>
-                <div class="text-[11px] text-neutral-400 mt-0.5">{{ item.corridor }}</div>
+                <div class="text-[11px] text-neutral-500 mt-0.5">{{ item.corridor }}</div>
                 <div v-if="item.handoffNote" class="text-[11px] text-neutral-600 mt-1">
                   Handoff: {{ item.handoffNote }}
                 </div>
@@ -198,12 +198,12 @@ const submitLostItem = () => {
                 <button
                   v-if="item.status !== 'Returned to Owner'"
                   type="button"
-                  class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors"
+                  class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
                   @click="openReturnDialog(item)"
                 >
                   Confirm Return
                 </button>
-                <span v-else class="text-neutral-400 text-xs">Closed</span>
+                <span v-else class="text-neutral-500 text-xs">Closed</span>
               </td>
             </tr>
             <EmptyTableRow
@@ -236,42 +236,54 @@ const submitLostItem = () => {
     <ModalDialog v-model:open="showLogModal" title="Log Lost & Found Report" size="md">
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Item Description</label>
+          <label for="lost-item-description" class="block font-medium text-neutral-700 mb-1">
+            Item Description
+          </label>
           <input
+            id="lost-item-description"
             v-model="newDescription"
             type="text"
             placeholder="e.g., Leather wallet with student ID"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Passenger Name</label>
+          <label for="lost-item-passenger" class="block font-medium text-neutral-700 mb-1">
+            Passenger Name
+          </label>
           <input
+            id="lost-item-passenger"
             v-model="newReporter"
             type="text"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Contact (+63)</label>
+            <label for="lost-item-phone" class="block font-medium text-neutral-700 mb-1">
+              Contact (+63)
+            </label>
             <input
+              id="lost-item-phone"
               v-model="newReporterPhone"
               type="text"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 font-mono bg-white text-neutral-900"
             />
           </div>
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Trip Reference</label>
+            <label for="lost-item-trip" class="block font-medium text-neutral-700 mb-1">
+              Trip Reference
+            </label>
             <input
+              id="lost-item-trip"
               v-model="newTripId"
               type="text"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 font-mono bg-white text-neutral-900"
             />
           </div>
         </div>
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Assigned Driver</label>
+          <div class="font-medium text-neutral-700 mb-1">Assigned Driver</div>
           <BaseSelect
             v-model="newDriver"
             :full-width="true"
@@ -279,26 +291,24 @@ const submitLostItem = () => {
             :options="[...driverRosterOptions]"
           />
         </div>
-        <p v-if="logError" class="text-xs font-medium text-rose-700">{{ logError }}</p>
+        <p v-if="logError" role="alert" class="text-xs font-medium text-rose-700">{{ logError }}</p>
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-            @click="showLogModal = false"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-            @click="submitLostItem"
-          >
-            Submit Report
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+          @click="showLogModal = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
+          @click="submitLostItem"
+        >
+          Submit Report
+        </button>
       </template>
     </ModalDialog>
   </div>

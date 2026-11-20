@@ -53,7 +53,6 @@ const {
   currentPage,
   itemsPerPage,
   paginatedItems: paginatedApplications,
-  resetPage,
 } = useDataTable(filteredApplications, {
   initialPageSize: 10,
   resetDeps: [searchQuery, statusFilter],
@@ -62,7 +61,6 @@ const {
 function resetFilters() {
   searchQuery.value = ''
   statusFilter.value = 'ALL'
-  resetPage()
 }
 
 function getStatusTone(status: DriverApplication['status']): BadgeTone {
@@ -93,14 +91,12 @@ function navigateToDetails(id: string) {
               v-model="searchQuery"
               placeholder="Search applicant, plate, barangay..."
               aria-label="Search driver applications"
-              @update:model-value="currentPage = 1"
             />
           </div>
           <BaseSelect
             v-model="statusFilter"
             aria-label="Filter applications by status"
             :options="statusOptions"
-            @update:model-value="currentPage = 1"
           />
         </div>
         <span

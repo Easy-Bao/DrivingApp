@@ -228,7 +228,7 @@ const exportReports = () => {
                   {{ SAFETY_CATEGORY_LABELS[item.category] }}
                 </div>
                 <div class="text-[11px] text-neutral-600">{{ item.reportedParty }}</div>
-                <div class="text-[11px] text-neutral-400">{{ item.corridor }}</div>
+                <div class="text-[11px] text-neutral-500">{{ item.corridor }}</div>
               </td>
               <td class="py-3.5 px-4">
                 <StatusBadge
@@ -318,9 +318,7 @@ const exportReports = () => {
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-neutral-700 mb-1">
-            Updated Moderation Status
-          </label>
+          <div class="text-xs font-medium text-neutral-700 mb-1">Updated Moderation Status</div>
           <BaseSelect
             v-model="draftStatus"
             aria-label="Updated moderation status"
@@ -335,10 +333,14 @@ const exportReports = () => {
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-neutral-700 mb-1">
+          <label
+            for="safety-moderation-note"
+            class="block text-xs font-medium text-neutral-700 mb-1"
+          >
             Investigation &amp; Disposition Note
           </label>
           <textarea
+            id="safety-moderation-note"
             v-model="moderationNote"
             rows="3"
             placeholder="Record evidence review, suspension outcome, or passenger callback note..."
@@ -346,26 +348,26 @@ const exportReports = () => {
           />
         </div>
 
-        <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
+        <p v-if="modalError" role="alert" class="text-xs font-medium text-rose-700">
+          {{ modalError }}
+        </p>
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
-            @click="closeModerationModal"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
-            @click="saveModerationDecision"
-          >
-            Save Decision
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+          @click="closeModerationModal"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
+          @click="saveModerationDecision"
+        >
+          Save Decision
+        </button>
       </template>
     </ModalDialog>
   </div>

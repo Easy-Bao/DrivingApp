@@ -60,11 +60,9 @@ const triggerExport = () => {
     >
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
         <div>
-          <label
-            class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1"
-          >
+          <div class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1">
             Date Range
-          </label>
+          </div>
           <BaseSelect
             v-model="dateRange"
             :full-width="true"
@@ -79,11 +77,9 @@ const triggerExport = () => {
         </div>
 
         <div>
-          <label
-            class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1"
-          >
+          <div class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1">
             Zone
-          </label>
+          </div>
           <BaseSelect
             v-model="cityZone"
             :full-width="true"
@@ -99,11 +95,9 @@ const triggerExport = () => {
         </div>
 
         <div>
-          <label
-            class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1"
-          >
+          <div class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1">
             Dispatch Mode
-          </label>
+          </div>
           <BaseSelect
             v-model="dispatchMode"
             :full-width="true"
@@ -123,14 +117,14 @@ const triggerExport = () => {
         <button
           v-if="hasActiveFilters"
           type="button"
-          class="px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-700 rounded-none text-xs font-medium transition-colors cursor-pointer"
+          class="px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-700 text-xs font-medium transition-colors cursor-pointer"
           @click="resetFilters"
         >
           Reset
         </button>
         <button
           type="button"
-          class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors cursor-pointer"
+          class="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
           @click="triggerExport"
         >
           Download CSV

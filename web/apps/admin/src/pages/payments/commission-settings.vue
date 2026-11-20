@@ -123,7 +123,7 @@ function submitTierUpdate() {
             type="number"
             min="100"
             max="3500"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
           />
         </div>
 
@@ -138,7 +138,7 @@ function submitTierUpdate() {
               type="number"
               min="0"
               step="0.5"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
             />
           </div>
           <div>
@@ -151,7 +151,7 @@ function submitTierUpdate() {
               type="number"
               min="0"
               step="10"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
             />
           </div>
         </div>
@@ -164,30 +164,28 @@ function submitTierUpdate() {
             id="commission-eligibility"
             v-model="draftEligibilityRule"
             rows="2"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
 
-        <p v-if="modalError" class="text-rose-700 font-medium">{{ modalError }}</p>
+        <p v-if="modalError" role="alert" class="text-rose-700 font-medium">{{ modalError }}</p>
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
-            @click="showEditModal = false"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-            @click="submitTierUpdate"
-          >
-            Save Commission Config
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+          @click="showEditModal = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+          @click="submitTierUpdate"
+        >
+          Save Commission Config
+        </button>
       </template>
     </ModalDialog>
   </div>

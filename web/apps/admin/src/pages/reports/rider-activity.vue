@@ -43,7 +43,7 @@ const handleExport = () => {
         class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
       >
         <h2 class="font-bold text-sm text-neutral-900">Passenger Engagement Cohorts</h2>
-        <span class="text-xs text-neutral-400">
+        <span class="text-xs text-neutral-500">
           Filtered active population: {{ totalActiveRiders.toLocaleString() }} passengers
         </span>
       </div>

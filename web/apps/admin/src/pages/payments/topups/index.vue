@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   BaseSelect,
@@ -51,11 +51,10 @@ const hasActiveFilters = computed(
     methodFilter.value !== 'All',
 )
 
-const { currentPage, itemsPerPage, paginatedItems, resetPage } = useDataTable(filteredRequests, {
+const { currentPage, itemsPerPage, paginatedItems } = useDataTable(filteredRequests, {
   initialPageSize: 10,
+  resetDeps: [searchQuery, statusFilter, methodFilter],
 })
-
-watch([searchQuery, statusFilter, methodFilter], resetPage)
 
 function resetFilters() {
   searchQuery.value = ''

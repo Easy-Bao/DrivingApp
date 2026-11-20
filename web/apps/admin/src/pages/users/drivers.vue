@@ -149,7 +149,7 @@ function confirmStatusUpdate() {
               <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ driver.id }}</td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ driver.name }}</div>
-                <div class="text-[11px] font-mono text-neutral-400">{{ driver.phone }}</div>
+                <div class="text-[11px] font-mono text-neutral-500">{{ driver.phone }}</div>
               </td>
               <td class="py-3 px-4 font-medium text-neutral-800">{{ driver.vehicle }}</td>
               <td class="py-3 px-4 text-neutral-600">{{ driver.todaZone }}</td>
@@ -242,15 +242,13 @@ function confirmStatusUpdate() {
       </div>
 
       <template #footer>
-        <div class="flex justify-end">
-          <button
-            type="button"
-            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
-            @click="inspectedDriver = null"
-          >
-            Done
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
+          @click="inspectedDriver = null"
+        >
+          Done
+        </button>
       </template>
     </ModalDialog>
 

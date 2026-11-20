@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import {
   BaseSelect,
   ConfirmDialog,
@@ -49,11 +49,10 @@ const hasActiveFilters = computed(
   () => searchQuery.value.trim().length > 0 || statusFilter.value !== 'All',
 )
 
-const { currentPage, itemsPerPage, paginatedItems, resetPage } = useDataTable(filteredClaims, {
+const { currentPage, itemsPerPage, paginatedItems } = useDataTable(filteredClaims, {
   initialPageSize: 10,
+  resetDeps: [searchQuery, statusFilter],
 })
-
-watch([searchQuery, statusFilter], resetPage)
 
 function resetFilters() {
   searchQuery.value = ''
@@ -202,7 +201,7 @@ function submitDecision() {
                     Approve &amp; Credit
                   </button>
                 </div>
-                <span v-else class="text-[11px] text-neutral-400">Resolved</span>
+                <span v-else class="text-[11px] text-neutral-500">Resolved</span>
               </td>
             </tr>
             <EmptyTableRow

@@ -136,7 +136,7 @@ const handleTogglePublished = (article: FaqArticle) => {
         />
         <button
           type="button"
-          class="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold cursor-pointer shrink-0"
+          class="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer shrink-0"
           @click="openCreateFaq"
         >
           + New FAQ
@@ -161,20 +161,20 @@ const handleTogglePublished = (article: FaqArticle) => {
                 :tone="faq.isPublished ? 'success' : 'warning'"
               />
             </div>
-            <h3 class="text-sm font-bold text-neutral-900 pt-1">{{ faq.question }}</h3>
+            <h2 class="text-sm font-bold text-neutral-900 pt-1">{{ faq.question }}</h2>
           </div>
 
           <div class="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              class="px-3 py-1 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50"
+              class="px-3 py-1 border border-neutral-300 bg-white text-neutral-800 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
               @click="openEditFaq(faq)"
             >
               Edit
             </button>
             <button
               type="button"
-              class="px-3 py-1 border border-neutral-300 bg-white text-neutral-700 rounded-none text-xs font-medium hover:bg-neutral-50"
+              class="px-3 py-1 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
               @click="handleTogglePublished(faq)"
             >
               {{ faq.isPublished ? 'Unpublish' : 'Publish' }}
@@ -183,7 +183,7 @@ const handleTogglePublished = (article: FaqArticle) => {
         </div>
 
         <p class="text-xs text-neutral-600 leading-relaxed">{{ faq.answer }}</p>
-        <div class="text-[11px] font-mono text-neutral-400">
+        <div class="text-[11px] font-mono text-neutral-500">
           Mobile Help Views: {{ faq.views.toLocaleString() }}
         </div>
       </div>
@@ -215,7 +215,7 @@ const handleTogglePublished = (article: FaqArticle) => {
       <div class="space-y-3 text-xs">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Topic Category</label>
+            <div class="font-medium text-neutral-700 mb-1">Topic Category</div>
             <BaseSelect
               v-model="draftCategory"
               :full-width="true"
@@ -224,7 +224,7 @@ const handleTogglePublished = (article: FaqArticle) => {
             />
           </div>
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Target App</label>
+            <div class="font-medium text-neutral-700 mb-1">Target App</div>
             <BaseSelect
               v-model="draftAudience"
               :full-width="true"
@@ -235,44 +235,46 @@ const handleTogglePublished = (article: FaqArticle) => {
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Question</label>
+          <label for="faq-question" class="block font-medium text-neutral-700 mb-1">Question</label>
           <input
+            id="faq-question"
             v-model="draftQuestion"
             type="text"
             aria-label="FAQ question heading"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Answer</label>
+          <label for="faq-answer" class="block font-medium text-neutral-700 mb-1">Answer</label>
           <textarea
+            id="faq-answer"
             v-model="draftAnswer"
             rows="4"
-            class="w-full px-3 py-2 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-2 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
 
-        <p v-if="editorError" class="text-xs font-medium text-rose-700">{{ editorError }}</p>
+        <p v-if="editorError" role="alert" class="text-xs font-medium text-rose-700">
+          {{ editorError }}
+        </p>
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-            @click="showEditorModal = false"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-            @click="saveFaqArticle"
-          >
-            {{ editingId ? 'Save Changes' : 'Publish Article' }}
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+          @click="showEditorModal = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
+          @click="saveFaqArticle"
+        >
+          {{ editingId ? 'Save Changes' : 'Publish Article' }}
+        </button>
       </template>
     </ModalDialog>
   </div>

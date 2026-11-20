@@ -83,7 +83,7 @@ const saveMunicipality = () => {
         </span>
         <button
           type="button"
-          class="self-start sm:self-auto px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold cursor-pointer shrink-0"
+          class="self-start sm:self-auto px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer shrink-0"
           @click="openCreateModal"
         >
           + Add Municipality
@@ -142,7 +142,7 @@ const saveMunicipality = () => {
               <td class="py-3.5 px-4 text-right">
                 <button
                   type="button"
-                  class="px-3 py-1 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50"
+                  class="px-3 py-1 border border-neutral-300 bg-white text-neutral-800 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
                   @click="openEditModal(city)"
                 >
                   Configure Market
@@ -173,7 +173,7 @@ const saveMunicipality = () => {
               id="city-name"
               v-model="draftName"
               type="text"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
             />
           </div>
           <div>
@@ -182,7 +182,7 @@ const saveMunicipality = () => {
               id="city-zip"
               v-model="draftZip"
               type="text"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 font-mono bg-white text-neutral-900"
             />
           </div>
         </div>
@@ -197,12 +197,12 @@ const saveMunicipality = () => {
             type="number"
             min="15"
             step="5"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 font-mono bg-white text-neutral-900"
           />
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Launch State</label>
+          <div class="font-medium text-neutral-700 mb-1">Launch State</div>
           <BaseSelect
             v-model="draftStatus"
             :full-width="true"
@@ -212,34 +212,30 @@ const saveMunicipality = () => {
         </div>
 
         <label class="inline-flex items-center gap-2 cursor-pointer font-medium text-neutral-800">
-          <input
-            v-model="draftRequireToda"
-            type="checkbox"
-            class="h-4 w-4 accent-neutral-900 rounded-none"
-          />
+          <input v-model="draftRequireToda" type="checkbox" class="h-4 w-4 accent-neutral-900" />
           Require verified municipal TODA MTOP franchise certificate
         </label>
 
-        <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
+        <p v-if="modalError" role="alert" class="text-xs font-medium text-rose-700">
+          {{ modalError }}
+        </p>
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-            @click="showModal = false"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-            @click="saveMunicipality"
-          >
-            Save Municipality
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+          @click="showModal = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
+          @click="saveMunicipality"
+        >
+          Save Municipality
+        </button>
       </template>
     </ModalDialog>
   </div>

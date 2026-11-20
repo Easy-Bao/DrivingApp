@@ -223,15 +223,13 @@ function confirmStandingUpdate() {
       </div>
 
       <template #footer>
-        <div class="flex justify-end">
-          <button
-            type="button"
-            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
-            @click="inspectedRider = null"
-          >
-            Done
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
+          @click="inspectedRider = null"
+        >
+          Done
+        </button>
       </template>
     </ModalDialog>
 

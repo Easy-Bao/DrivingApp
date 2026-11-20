@@ -53,7 +53,7 @@ function handleOpenUpdate(open: boolean) {
           type="button"
           title="Copy Booking ID"
           aria-label="Copy Booking ID"
-          class="inline-flex items-center gap-1 p-1 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition-colors cursor-pointer shrink-0"
+          class="inline-flex items-center gap-1 p-1 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-colors cursor-pointer shrink-0"
           @click="copyBookingId(trip.id)"
         >
           <Icon
@@ -89,7 +89,7 @@ function handleOpenUpdate(open: boolean) {
         <div>
           <div class="text-neutral-500">Vehicle Unit</div>
           <div class="font-medium text-neutral-900 mt-0.5">{{ trip.vehicleModel }}</div>
-          <div class="text-[11px] text-neutral-400">{{ trip.timestamp }}</div>
+          <div class="text-[11px] text-neutral-500">{{ trip.timestamp }}</div>
         </div>
         <div>
           <div class="text-neutral-500">Distance / Duration</div>
@@ -107,22 +107,20 @@ function handleOpenUpdate(open: boolean) {
     </div>
 
     <template #footer>
-      <div class="flex items-center justify-end gap-2">
-        <RouterLink
-          to="/payments/settlements"
-          class="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold transition-colors"
-          @click="handleOpenUpdate(false)"
-        >
-          Settlements
-        </RouterLink>
-        <button
-          type="button"
-          class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
-          @click="handleOpenUpdate(false)"
-        >
-          Close
-        </button>
-      </div>
+      <RouterLink
+        to="/payments/settlements"
+        class="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold transition-colors"
+        @click="handleOpenUpdate(false)"
+      >
+        Settlements
+      </RouterLink>
+      <button
+        type="button"
+        class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
+        @click="handleOpenUpdate(false)"
+      >
+        Close
+      </button>
     </template>
   </ModalDialog>
 

@@ -85,19 +85,19 @@ const confirmDriverAssignment = () => {
         </div>
         <div class="grid grid-cols-3 gap-1 pt-2 border-t border-neutral-100 text-center">
           <div>
-            <div class="text-[11px] text-neutral-400">Drivers</div>
+            <div class="text-[11px] text-neutral-500">Drivers</div>
             <div class="text-xs font-bold text-neutral-900 tabular-nums">
               {{ zone.activeDrivers }}
             </div>
           </div>
           <div>
-            <div class="text-[11px] text-neutral-400">Waiting</div>
+            <div class="text-[11px] text-neutral-500">Waiting</div>
             <div class="text-xs font-bold text-neutral-900 tabular-nums">
               {{ zone.pendingRequests }}
             </div>
           </div>
           <div>
-            <div class="text-[11px] text-neutral-400">ETA</div>
+            <div class="text-[11px] text-neutral-500">ETA</div>
             <div class="text-xs font-bold text-neutral-900 tabular-nums">{{ zone.avgWait }}</div>
           </div>
         </div>
@@ -168,33 +168,38 @@ const confirmDriverAssignment = () => {
       close-label="Close"
       @update:open="(open) => !open && (editingZone = null)"
     >
-      <form v-if="editingZone" class="space-y-4 text-xs" @submit.prevent="applySurgeOverride">
-        <div class="space-y-2">
-          <div class="font-semibold text-neutral-800">{{ editingZone.name }}</div>
-          <label class="block text-neutral-500">Select temporary demand multiplier</label>
-          <BaseSelect
-            v-model="selectedSurge"
-            aria-label="Select surge zone multiplier"
-            :full-width="true"
-            :options="surgeOptions"
-          />
-        </div>
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100">
-          <button
-            type="button"
-            class="px-3.5 py-1.5 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
-            @click="editingZone = null"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            class="px-3.5 py-1.5 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
-          >
-            Apply Surge
-          </button>
-        </div>
+      <form
+        v-if="editingZone"
+        id="zone-surge-form"
+        class="space-y-2 text-xs"
+        @submit.prevent="applySurgeOverride"
+      >
+        <div class="font-semibold text-neutral-800">{{ editingZone.name }}</div>
+        <div class="text-neutral-500">Select temporary demand multiplier</div>
+        <BaseSelect
+          v-model="selectedSurge"
+          aria-label="Select surge zone multiplier"
+          :full-width="true"
+          :options="surgeOptions"
+        />
       </form>
+
+      <template #footer>
+        <button
+          type="button"
+          class="px-3.5 py-1.5 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
+          @click="editingZone = null"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          form="zone-surge-form"
+          class="px-3.5 py-1.5 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
+        >
+          Apply Surge
+        </button>
+      </template>
     </ModalDialog>
 
     <ModalDialog
@@ -206,40 +211,41 @@ const confirmDriverAssignment = () => {
     >
       <form
         v-if="assigningDispatch"
-        class="space-y-4 text-xs"
+        id="manual-dispatch-form"
+        class="space-y-2 text-xs"
         @submit.prevent="confirmDriverAssignment"
       >
-        <div class="space-y-2">
-          <div>
-            Passenger: <span class="font-semibold">{{ assigningDispatch.rider }}</span> ({{
-              assigningDispatch.zone
-            }})
-          </div>
-          <label class="block text-neutral-500 pt-1">Select Driver Unit</label>
-          <BaseSelect
-            v-model="selectedDriver"
-            aria-label="Select replacement driver"
-            :full-width="true"
-            :options="availableDrivers"
-          />
+        <div>
+          Passenger: <span class="font-semibold">{{ assigningDispatch.rider }}</span> ({{
+            assigningDispatch.zone
+          }})
         </div>
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100">
-          <button
-            type="button"
-            class="px-3.5 py-1.5 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
-            @click="assigningDispatch = null"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            :disabled="!selectedDriver"
-            class="px-3.5 py-1.5 bg-neutral-900 text-white text-xs font-semibold disabled:opacity-40 cursor-pointer"
-          >
-            Dispatch Driver
-          </button>
-        </div>
+        <div class="text-neutral-500 pt-1">Select Driver Unit</div>
+        <BaseSelect
+          v-model="selectedDriver"
+          aria-label="Select replacement driver"
+          :full-width="true"
+          :options="availableDrivers"
+        />
       </form>
+
+      <template #footer>
+        <button
+          type="button"
+          class="px-3.5 py-1.5 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
+          @click="assigningDispatch = null"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          form="manual-dispatch-form"
+          :disabled="!selectedDriver"
+          class="px-3.5 py-1.5 bg-neutral-900 text-white text-xs font-semibold disabled:opacity-40 cursor-pointer"
+        >
+          Dispatch Driver
+        </button>
+      </template>
     </ModalDialog>
   </div>
 </template>

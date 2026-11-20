@@ -184,14 +184,14 @@ function confirmOperatorStatus() {
               <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ op.id }}</td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ op.name }}</div>
-                <div class="text-[11px] font-mono text-neutral-400">{{ op.email }}</div>
+                <div class="text-[11px] font-mono text-neutral-500">{{ op.email }}</div>
               </td>
               <td class="py-3 px-4">
                 <BaseSelect
                   :model-value="op.role"
                   :disabled="op.id === 'ADM-001'"
                   :aria-label="`Assigned role for ${op.name}`"
-                  :options="roleOptions.map((role) => ({ label: role, value: role }))"
+                  :options="roleOptions"
                   @update:model-value="handleRoleChange(op.id, $event)"
                 />
               </td>
@@ -255,12 +255,16 @@ function confirmOperatorStatus() {
       close-label="Close"
       @update:open="showInviteModal = $event"
     >
-      <form class="space-y-4 text-xs" @submit.prevent="submitInvite">
+      <form id="invite-operator-form" class="space-y-4 text-xs" @submit.prevent="submitInvite">
         <div>
-          <label class="block text-[11px] font-semibold text-neutral-500 uppercase mb-1">
+          <label
+            for="invite-operator-name"
+            class="block text-[11px] font-semibold text-neutral-500 uppercase mb-1"
+          >
             Full Name
           </label>
           <input
+            id="invite-operator-name"
             v-model="inviteForm.name"
             type="text"
             required
@@ -269,10 +273,14 @@ function confirmOperatorStatus() {
           />
         </div>
         <div>
-          <label class="block text-[11px] font-semibold text-neutral-500 uppercase mb-1">
+          <label
+            for="invite-operator-email"
+            class="block text-[11px] font-semibold text-neutral-500 uppercase mb-1"
+          >
             Corporate Email
           </label>
           <input
+            id="invite-operator-email"
             v-model="inviteForm.email"
             type="email"
             required
@@ -281,31 +289,32 @@ function confirmOperatorStatus() {
           />
         </div>
         <div>
-          <label class="block text-[11px] font-semibold text-neutral-500 uppercase mb-1">
-            Console Role
-          </label>
+          <div class="text-[11px] font-semibold text-neutral-500 uppercase mb-1">Console Role</div>
           <BaseSelect
             v-model="inviteForm.role"
+            :full-width="true"
             aria-label="Console Role"
-            :options="roleOptions.map((role) => ({ label: role, value: role }))"
+            :options="roleOptions"
           />
         </div>
-        <div class="flex justify-end gap-2 pt-2 border-t border-neutral-100">
-          <button
-            type="button"
-            class="px-4 py-2 border border-neutral-300 text-neutral-700 text-xs font-semibold cursor-pointer"
-            @click="showInviteModal = false"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
-          >
-            Send Invite
-          </button>
-        </div>
       </form>
+
+      <template #footer>
+        <button
+          type="button"
+          class="px-4 py-2 border border-neutral-300 text-neutral-700 text-xs font-semibold cursor-pointer"
+          @click="showInviteModal = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          form="invite-operator-form"
+          class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold cursor-pointer"
+        >
+          Send Invite
+        </button>
+      </template>
     </ModalDialog>
 
     <ConfirmDialog

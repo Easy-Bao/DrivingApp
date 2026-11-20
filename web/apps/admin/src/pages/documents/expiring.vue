@@ -148,7 +148,7 @@ function handleBroadcastCritical() {
               <td class="py-3 px-4 font-mono font-bold text-neutral-900">{{ doc.id }}</td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ doc.driver }}</div>
-                <div class="text-[11px] font-mono text-neutral-400">{{ doc.driverPhone }}</div>
+                <div class="text-[11px] font-mono text-neutral-500">{{ doc.driverPhone }}</div>
               </td>
               <td class="py-3 px-4 font-medium text-neutral-900">{{ doc.docType }}</td>
               <td class="py-3 px-4 text-neutral-600">{{ doc.city }}</td>
@@ -156,7 +156,7 @@ function handleBroadcastCritical() {
                 <span :class="doc.daysLeft <= 14 ? 'text-rose-700 font-bold' : 'text-neutral-800'">
                   {{ doc.expiryDate }}
                 </span>
-                <span class="text-[11px] text-neutral-400 ml-1">({{ doc.daysLeft }}d)</span>
+                <span class="text-[11px] text-neutral-500 ml-1">({{ doc.daysLeft }}d)</span>
               </td>
               <td class="py-3 px-4">
                 <StatusBadge :label="doc.status" :tone="getStatusTone(doc.status)" />

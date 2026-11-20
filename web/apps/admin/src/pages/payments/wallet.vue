@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
   BaseSelect,
@@ -56,11 +56,10 @@ const hasActiveFilters = computed(
   () => searchQuery.value.trim().length > 0 || eligibilityFilter.value !== 'All',
 )
 
-const { currentPage, itemsPerPage, paginatedItems, resetPage } = useDataTable(filteredWallets, {
+const { currentPage, itemsPerPage, paginatedItems } = useDataTable(filteredWallets, {
   initialPageSize: 10,
+  resetDeps: [searchQuery, eligibilityFilter],
 })
-
-watch([searchQuery, eligibilityFilter], resetPage)
 
 const totalLiabilityCentavos = computed(() =>
   wallets.value.reduce((sum, wallet) => sum + wallet.balanceCentavos, 0),
@@ -216,21 +215,21 @@ function exportWalletLedger() {
           <button
             v-if="hasActiveFilters"
             type="button"
-            class="px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+            class="px-3 py-1.5 bg-white border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
             @click="resetFilters"
           >
             Reset
           </button>
           <button
             type="button"
-            class="px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+            class="px-3 py-1.5 bg-white border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
             @click="exportWalletLedger"
           >
             Export CSV
           </button>
           <RouterLink
             to="/payments/topups"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
+            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800"
           >
             Pending Top-Ups
           </RouterLink>
@@ -266,7 +265,7 @@ function exportWalletLedger() {
               </td>
               <td class="py-3 px-4">
                 <div class="font-mono text-neutral-800">{{ wallet.plateNumber }}</div>
-                <div class="text-[11px] text-neutral-400">
+                <div class="text-[11px] text-neutral-500">
                   Last top-up: {{ wallet.lastTopupAt }}
                 </div>
               </td>
@@ -297,7 +296,7 @@ function exportWalletLedger() {
                 <div class="inline-flex items-center gap-2">
                   <button
                     type="button"
-                    class="px-2.5 py-1 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+                    class="px-2.5 py-1 border border-neutral-300 bg-white text-neutral-800 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
                     @click="openAdjustModal(wallet)"
                   >
                     Adjust Credit
@@ -305,7 +304,7 @@ function exportWalletLedger() {
                   <button
                     v-if="wallet.balanceCentavos < minDispatchBalanceCentavos"
                     type="button"
-                    class="px-2.5 py-1 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800 cursor-pointer"
+                    class="px-2.5 py-1 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
                     @click="triggerTopupPrompt(wallet)"
                   >
                     Remind Top-Up
@@ -340,7 +339,7 @@ function exportWalletLedger() {
     >
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Adjustment Direction</label>
+          <div class="font-medium text-neutral-700 mb-1">Adjustment Direction</div>
           <BaseSelect
             v-model="adjustDirection"
             :full-width="true"
@@ -361,29 +360,27 @@ function exportWalletLedger() {
             type="number"
             min="1"
             step="0.01"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
           />
         </div>
-        <p v-if="modalError" class="text-rose-700 font-medium">{{ modalError }}</p>
+        <p v-if="modalError" role="alert" class="text-rose-700 font-medium">{{ modalError }}</p>
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
-            @click="showAdjustModal = false"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-            @click="proceedToAuditConfirmation"
-          >
-            Continue to Audit Note
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+          @click="showAdjustModal = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+          @click="proceedToAuditConfirmation"
+        >
+          Continue to Audit Note
+        </button>
       </template>
     </ModalDialog>
 

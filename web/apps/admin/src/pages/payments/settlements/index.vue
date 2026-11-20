@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   BaseSelect,
@@ -48,11 +48,10 @@ const hasActiveFilters = computed(
     stateFilter.value !== 'all',
 )
 
-const { currentPage, itemsPerPage, paginatedItems, resetPage } = useDataTable(filteredSettlements, {
+const { currentPage, itemsPerPage, paginatedItems } = useDataTable(filteredSettlements, {
   initialPageSize: 10,
+  resetDeps: [searchQuery, outcomeFilter, stateFilter],
 })
-
-watch([searchQuery, outcomeFilter, stateFilter], resetPage)
 
 const totalGrossCentavos = computed(() =>
   settlements.value.reduce((sum, item) => sum + item.grossFareCentavos, 0),

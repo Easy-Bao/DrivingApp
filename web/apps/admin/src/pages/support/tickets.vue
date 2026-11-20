@@ -144,7 +144,7 @@ const submitReply = () => {
             >
               <td class="py-3 px-4">
                 <div class="font-mono font-bold text-neutral-900">{{ ticket.id }}</div>
-                <div class="text-[11px] text-neutral-400">{{ ticket.updatedAt }}</div>
+                <div class="text-[11px] text-neutral-500">{{ ticket.updatedAt }}</div>
               </td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ ticket.user }}</div>
@@ -175,7 +175,7 @@ const submitReply = () => {
               <td class="py-3 px-4 text-right whitespace-nowrap">
                 <button
                   type="button"
-                  class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold transition-colors"
+                  class="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors cursor-pointer"
                   @click="openTicketModal(ticket)"
                 >
                   {{ ticket.status === 'Resolved' ? 'View Thread' : 'Inspect & Reply' }}
@@ -227,7 +227,7 @@ const submitReply = () => {
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Next Ticket Status</label>
+          <div class="font-medium text-neutral-700 mb-1">Next Ticket Status</div>
           <BaseSelect
             v-model="draftStatus"
             :full-width="true"
@@ -237,35 +237,38 @@ const submitReply = () => {
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1"> Reply </label>
+          <label for="ticket-reply-note" class="block font-medium text-neutral-700 mb-1">
+            Reply
+          </label>
           <textarea
+            id="ticket-reply-note"
             v-model="draftReply"
             rows="3"
             placeholder="Write a clear response sent to the driver or passenger..."
-            class="w-full px-3 py-2 border border-neutral-300 rounded-none text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
+            class="w-full px-3 py-2 border border-neutral-300 text-xs bg-white text-neutral-900 focus:outline-none focus:border-neutral-900"
           />
         </div>
 
-        <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
+        <p v-if="modalError" role="alert" class="text-xs font-medium text-rose-700">
+          {{ modalError }}
+        </p>
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-            @click="closeTicketModal"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-            @click="submitReply"
-          >
-            Send Reply &amp; Save
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+          @click="closeTicketModal"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
+          @click="submitReply"
+        >
+          Send Reply &amp; Save
+        </button>
       </template>
     </ModalDialog>
   </div>

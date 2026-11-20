@@ -42,7 +42,7 @@ const handleExport = () => {
         class="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
       >
         <h2 class="font-bold text-sm text-neutral-900">Demand Curves by Operational Window</h2>
-        <span class="text-xs text-neutral-400">
+        <span class="text-xs text-neutral-500">
           Hard server surge ceiling: {{ maxSurgeCapLabel }}
         </span>
       </div>

@@ -113,7 +113,7 @@ const saveZone = () => {
         />
         <button
           type="button"
-          class="self-start sm:self-auto px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-none text-xs font-semibold cursor-pointer shrink-0"
+          class="self-start sm:self-auto px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer shrink-0"
           @click="openCreateZone"
         >
           + Create Zone
@@ -172,7 +172,7 @@ const saveZone = () => {
               <td class="py-3 px-4 text-right whitespace-nowrap">
                 <button
                   type="button"
-                  class="px-3 py-1 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50"
+                  class="px-3 py-1 border border-neutral-300 bg-white text-neutral-800 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
                   @click="openEditZone(zone)"
                 >
                   Edit Zone &amp; Surge
@@ -204,7 +204,7 @@ const saveZone = () => {
             id="zone-name"
             v-model="draftName"
             type="text"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
         <div>
@@ -215,7 +215,7 @@ const saveZone = () => {
             id="zone-barangays"
             v-model="draftBarangays"
             type="text"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -230,7 +230,7 @@ const saveZone = () => {
               min="1"
               :max="config.maxBiddingSurgeCap"
               step="0.1"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 font-mono bg-white text-neutral-900"
             />
           </div>
           <div>
@@ -242,7 +242,7 @@ const saveZone = () => {
               v-model.number="draftPoints"
               type="number"
               min="4"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 font-mono bg-white text-neutral-900"
             />
           </div>
         </div>
@@ -254,11 +254,11 @@ const saveZone = () => {
             id="zone-coords"
             v-model="draftCoords"
             type="text"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none font-mono bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 font-mono bg-white text-neutral-900"
           />
         </div>
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Zone Status</label>
+          <div class="font-medium text-neutral-700 mb-1">Zone Status</div>
           <BaseSelect
             v-model="draftStatus"
             :full-width="true"
@@ -266,26 +266,26 @@ const saveZone = () => {
             :options="['Active', 'Monitoring', 'Paused']"
           />
         </div>
-        <p v-if="modalError" class="text-xs font-medium text-rose-700">{{ modalError }}</p>
+        <p v-if="modalError" role="alert" class="text-xs font-medium text-rose-700">
+          {{ modalError }}
+        </p>
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50"
-            @click="showModal = false"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
-            @click="saveZone"
-          >
-            Save Service Zone
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+          @click="showModal = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
+          @click="saveZone"
+        >
+          Save Service Zone
+        </button>
       </template>
     </ModalDialog>
   </div>

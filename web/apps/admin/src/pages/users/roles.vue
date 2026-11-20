@@ -99,7 +99,7 @@ function submitRole() {
         </div>
 
         <div class="pt-3 border-t border-neutral-100 flex items-center justify-between text-xs">
-          <span class="font-mono text-neutral-400">{{ role.id }}</span>
+          <span class="font-mono text-neutral-500">{{ role.id }}</span>
           <button
             type="button"
             class="font-semibold text-neutral-900 hover:underline cursor-pointer"
@@ -119,70 +119,77 @@ function submitRole() {
       close-label="Close"
       @update:open="showRoleModal = $event"
     >
-      <form class="space-y-4 text-xs" @submit.prevent="submitRole">
-        <div class="space-y-3">
-          <div>
-            <label class="block text-[11px] font-semibold uppercase text-neutral-500 mb-1">
-              Role Title
-            </label>
-            <input
-              v-model="formName"
-              type="text"
-              required
-              placeholder="e.g. Dispatch Reviewer"
-              class="w-full px-3 py-2 border border-neutral-300 text-xs focus:outline-none focus:border-neutral-900"
-            />
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold uppercase text-neutral-500 mb-1">
-              Description
-            </label>
-            <input
-              v-model="formSummary"
-              type="text"
-              placeholder="Role responsibilities..."
-              class="w-full px-3 py-2 border border-neutral-300 text-xs focus:outline-none focus:border-neutral-900"
-            />
-          </div>
-          <div>
-            <div class="text-[11px] font-semibold uppercase text-neutral-500 mb-1.5">
-              Permission Scopes
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <label
-                v-for="scope in permissionCatalog"
-                :key="scope"
-                class="flex items-center space-x-2 p-2 border border-neutral-200 cursor-pointer hover:bg-neutral-50"
-              >
-                <input
-                  type="checkbox"
-                  :checked="formScopes.includes(scope)"
-                  class="accent-neutral-900"
-                  @change="toggleScope(scope)"
-                />
-                <span class="text-neutral-800 font-medium">{{ scope }}</span>
-              </label>
-            </div>
-          </div>
+      <form id="role-editor-form" class="space-y-3 text-xs" @submit.prevent="submitRole">
+        <div>
+          <label
+            for="role-editor-title"
+            class="block text-[11px] font-semibold uppercase text-neutral-500 mb-1"
+          >
+            Role Title
+          </label>
+          <input
+            id="role-editor-title"
+            v-model="formName"
+            type="text"
+            required
+            placeholder="e.g. Dispatch Reviewer"
+            class="w-full px-3 py-2 border border-neutral-300 text-xs focus:outline-none focus:border-neutral-900"
+          />
         </div>
-
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100">
-          <button
-            type="button"
-            class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
-            @click="showRoleModal = false"
+        <div>
+          <label
+            for="role-editor-summary"
+            class="block text-[11px] font-semibold uppercase text-neutral-500 mb-1"
           >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            :disabled="formScopes.length === 0"
-            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 disabled:opacity-40 cursor-pointer"
-          >
-            {{ editingRoleId ? 'Save' : 'Create' }}
-          </button>
+            Description
+          </label>
+          <input
+            id="role-editor-summary"
+            v-model="formSummary"
+            type="text"
+            placeholder="Role responsibilities..."
+            class="w-full px-3 py-2 border border-neutral-300 text-xs focus:outline-none focus:border-neutral-900"
+          />
+        </div>
+        <div>
+          <div class="text-[11px] font-semibold uppercase text-neutral-500 mb-1.5">
+            Permission Scopes
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label
+              v-for="scope in permissionCatalog"
+              :key="scope"
+              class="flex items-center space-x-2 p-2 border border-neutral-200 cursor-pointer hover:bg-neutral-50"
+            >
+              <input
+                type="checkbox"
+                :checked="formScopes.includes(scope)"
+                class="accent-neutral-900"
+                @change="toggleScope(scope)"
+              />
+              <span class="text-neutral-800 font-medium">{{ scope }}</span>
+            </label>
+          </div>
         </div>
       </form>
+
+      <template #footer>
+        <button
+          type="button"
+          class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+          @click="showRoleModal = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          form="role-editor-form"
+          :disabled="formScopes.length === 0"
+          class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 disabled:opacity-40 cursor-pointer"
+        >
+          {{ editingRoleId ? 'Save' : 'Create' }}
+        </button>
+      </template>
     </ModalDialog>
   </div>
 </template>

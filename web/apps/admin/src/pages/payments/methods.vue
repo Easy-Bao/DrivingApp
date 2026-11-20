@@ -160,18 +160,16 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
       description="Manage verified QRPh merchant codes and corporate bank depository accounts used for driver wallet top-ups."
     >
       <template #actions>
-        <div class="flex items-center gap-3">
-          <span class="text-xs font-mono text-neutral-500">
-            {{ activeChannelCount }} Active / {{ accounts.length }} Total
-          </span>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-            @click="openAddModal"
-          >
-            + Add Company Account
-          </button>
-        </div>
+        <span class="text-xs font-mono text-neutral-500">
+          {{ activeChannelCount }} Active / {{ accounts.length }} Total
+        </span>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+          @click="openAddModal"
+        >
+          + Add Company Account
+        </button>
       </template>
     </PageHeader>
 
@@ -186,7 +184,7 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div class="space-y-2 flex-1">
             <div class="flex flex-wrap items-center gap-2">
-              <h3 class="font-bold text-sm text-neutral-900">{{ account.label }}</h3>
+              <h2 class="font-bold text-sm text-neutral-900">{{ account.label }}</h2>
               <StatusBadge
                 :label="account.isActive ? 'Active' : 'Paused'"
                 :tone="account.isActive ? 'success' : 'neutral'"
@@ -195,21 +193,21 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div>
-                <span class="text-neutral-400 block">Institution / Rail</span>
+                <span class="text-neutral-500 block">Institution / Rail</span>
                 <span class="font-medium text-neutral-800">{{ account.institution }}</span>
               </div>
               <div>
-                <span class="text-neutral-400 block">Account / Wallet Number</span>
+                <span class="text-neutral-500 block">Account / Wallet Number</span>
                 <span class="font-mono font-semibold text-neutral-900">
                   {{ account.accountNumber }}
                 </span>
               </div>
               <div>
-                <span class="text-neutral-400 block">Beneficiary Account Name</span>
+                <span class="text-neutral-500 block">Beneficiary Account Name</span>
                 <span class="font-medium text-neutral-800">{{ account.accountHolder }}</span>
               </div>
               <div>
-                <span class="text-neutral-400 block">Reference / Branch</span>
+                <span class="text-neutral-500 block">Reference / Branch</span>
                 <span class="font-mono text-neutral-700">{{ account.branchOrMerchantId }}</span>
               </div>
             </div>
@@ -236,7 +234,7 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
           <div class="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+              class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-800 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
               @click="openEditModal(account)"
             >
               Edit Account
@@ -244,7 +242,7 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
             <button
               v-if="account.channelType === 'QRPh Wallet'"
               type="button"
-              class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+              class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-800 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
               @click="openUpdateQrModal(account)"
             >
               Update QR Code Image
@@ -253,7 +251,7 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
 
           <button
             type="button"
-            class="px-3 py-1.5 text-xs font-medium rounded-none border border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50 transition-colors cursor-pointer"
+            class="px-3 py-1.5 text-xs font-medium border border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50 transition-colors cursor-pointer"
             @click="toggleAccountStatus(account)"
           >
             {{ account.isActive ? 'Pause Channel' : 'Activate Channel' }}
@@ -270,17 +268,20 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
     >
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Display Account Label</label>
+          <label for="add-channel-label" class="block font-medium text-neutral-700 mb-1">
+            Display Account Label
+          </label>
           <input
+            id="add-channel-label"
             v-model="newLabel"
             type="text"
             placeholder="e.g., Landbank Business Account"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Deposit Channel Type</label>
+          <div class="font-medium text-neutral-700 mb-1">Deposit Channel Type</div>
           <BaseSelect
             v-model="newChannelType"
             :full-width="true"
@@ -293,65 +294,75 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Financial Institution</label>
+          <label for="add-channel-institution" class="block font-medium text-neutral-700 mb-1">
+            Financial Institution
+          </label>
           <input
+            id="add-channel-institution"
             v-model="newInstitution"
             type="text"
             placeholder="e.g., Land Bank of the Philippines"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Account / Mobile Number</label>
+            <label for="add-channel-account" class="block font-medium text-neutral-700 mb-1">
+              Account / Mobile Number
+            </label>
             <input
+              id="add-channel-account"
               v-model="newAccountNumber"
               type="text"
               placeholder="e.g., +63 917 701 6005"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
             />
           </div>
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Merchant / Branch Code</label>
+            <label for="add-channel-branch" class="block font-medium text-neutral-700 mb-1">
+              Merchant / Branch Code
+            </label>
             <input
+              id="add-channel-branch"
               v-model="newBranchOrMerchantId"
               type="text"
               placeholder="e.g., QRPH-PAG-8805"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
             />
           </div>
         </div>
 
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Beneficiary Account Holder</label>
+          <label for="add-channel-holder" class="block font-medium text-neutral-700 mb-1">
+            Beneficiary Account Holder
+          </label>
           <input
+            id="add-channel-holder"
             v-model="newAccountHolder"
             type="text"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
 
-        <p v-if="modalError" class="text-rose-700 font-medium">{{ modalError }}</p>
+        <p v-if="modalError" role="alert" class="text-rose-700 font-medium">{{ modalError }}</p>
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
-            @click="showAddModal = false"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-            @click="submitNewAccount"
-          >
-            Save Collection Account
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+          @click="showAddModal = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+          @click="submitNewAccount"
+        >
+          Save Collection Account
+        </button>
       </template>
     </ModalDialog>
 
@@ -363,67 +374,80 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
     >
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Display Account Label</label>
+          <label for="edit-channel-label" class="block font-medium text-neutral-700 mb-1">
+            Display Account Label
+          </label>
           <input
+            id="edit-channel-label"
             v-model="editLabel"
             type="text"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Financial Institution</label>
+          <label for="edit-channel-institution" class="block font-medium text-neutral-700 mb-1">
+            Financial Institution
+          </label>
           <input
+            id="edit-channel-institution"
             v-model="editInstitution"
             type="text"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Account / Wallet Number</label>
+            <label for="edit-channel-account" class="block font-medium text-neutral-700 mb-1">
+              Account / Wallet Number
+            </label>
             <input
+              id="edit-channel-account"
               v-model="editAccountNumber"
               type="text"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
             />
           </div>
           <div>
-            <label class="block font-medium text-neutral-700 mb-1">Reference / Branch</label>
+            <label for="edit-channel-branch" class="block font-medium text-neutral-700 mb-1">
+              Reference / Branch
+            </label>
             <input
+              id="edit-channel-branch"
               v-model="editBranchOrMerchantId"
               type="text"
-              class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+              class="w-full px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
             />
           </div>
         </div>
         <div>
-          <label class="block font-medium text-neutral-700 mb-1">Beneficiary Account Holder</label>
+          <label for="edit-channel-holder" class="block font-medium text-neutral-700 mb-1">
+            Beneficiary Account Holder
+          </label>
           <input
+            id="edit-channel-holder"
             v-model="editAccountHolder"
             type="text"
-            class="w-full px-3 py-1.5 border border-neutral-300 rounded-none bg-white text-neutral-900"
+            class="w-full px-3 py-1.5 border border-neutral-300 bg-white text-neutral-900"
           />
         </div>
-        <p v-if="modalError" class="text-rose-700 font-medium">{{ modalError }}</p>
+        <p v-if="modalError" role="alert" class="text-rose-700 font-medium">{{ modalError }}</p>
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
-            @click="showEditModal = false"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-            @click="submitAccountEdit"
-          >
-            Update Account Details
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+          @click="showEditModal = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+          @click="submitAccountEdit"
+        >
+          Update Account Details
+        </button>
       </template>
     </ModalDialog>
 
@@ -442,13 +466,16 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
           />
           <div class="space-y-2 flex-1">
             <div>
-              <label class="block font-medium text-neutral-700 mb-1">QRPh Merchant Reference</label>
+              <label for="qr-merchant-ref" class="block font-medium text-neutral-700 mb-1">
+                QRPh Merchant Reference
+              </label>
               <div class="flex gap-2">
                 <input
+                  id="qr-merchant-ref"
                   v-model="qrMerchantReference"
                   aria-label="QRPh Merchant Reference"
                   type="text"
-                  class="flex-1 px-3 py-1.5 border border-neutral-300 rounded-none bg-white font-mono text-neutral-900"
+                  class="flex-1 px-3 py-1.5 border border-neutral-300 bg-white font-mono text-neutral-900"
                 />
                 <button
                   type="button"
@@ -461,8 +488,11 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
             </div>
 
             <div>
-              <label class="block font-medium text-neutral-700 mb-1">Upload QR Image File</label>
+              <label for="qr-image-upload" class="block font-medium text-neutral-700 mb-1">
+                Upload QR Image File
+              </label>
               <input
+                id="qr-image-upload"
                 type="file"
                 aria-label="Upload QR code image"
                 accept="image/png,image/jpeg,image/webp,image/svg+xml"
@@ -476,26 +506,24 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
           </div>
         </div>
 
-        <p v-if="modalError" class="text-rose-700 font-medium">{{ modalError }}</p>
+        <p v-if="modalError" role="alert" class="text-rose-700 font-medium">{{ modalError }}</p>
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
-            @click="showQrModal = false"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-            @click="publishQrUpdate"
-          >
-            Publish Updated QR Code
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+          @click="showQrModal = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
+          @click="publishQrUpdate"
+        >
+          Publish Updated QR Code
+        </button>
       </template>
     </ModalDialog>
   </div>

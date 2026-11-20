@@ -164,7 +164,7 @@ const applyResolution = () => {
               <td class="py-3 px-4 font-medium text-neutral-900">{{ dispute.cancelledBy }}</td>
               <td class="py-3 px-4 text-neutral-600 max-w-xs">
                 <div>{{ dispute.reason }}</div>
-                <div class="text-[11px] text-neutral-400 mt-0.5">{{ dispute.route }}</div>
+                <div class="text-[11px] text-neutral-500 mt-0.5">{{ dispute.route }}</div>
               </td>
               <td class="py-3 px-4">
                 <StatusBadge
@@ -182,7 +182,7 @@ const applyResolution = () => {
                 <span class="font-mono font-bold text-neutral-900">
                   {{ formatCentavos(dispute.cancellationFeeCentavos) }}
                 </span>
-                <div class="text-[11px] text-neutral-400">{{ dispute.feeChargedTo }}</div>
+                <div class="text-[11px] text-neutral-500">{{ dispute.feeChargedTo }}</div>
               </td>
               <td class="py-3 px-4">
                 <StatusBadge
@@ -231,59 +231,66 @@ const applyResolution = () => {
       close-label="Close"
       @update:open="(open) => !open && (reviewingCase = null)"
     >
-      <form v-if="reviewingCase" class="space-y-4 text-xs" @submit.prevent="applyResolution">
-        <div class="space-y-3">
-          <div>
-            <label class="block font-semibold text-neutral-700 mb-1"> Fault Classification </label>
-            <BaseSelect
-              v-model="overrideResponsibility"
-              aria-label="Select fault classification"
-              :full-width="true"
-              :options="[
-                { label: 'No Fault (Mutual / Traffic)', value: 'no_fault' },
-                { label: 'Driver Fault', value: 'driver_fault' },
-                { label: 'Passenger Fault', value: 'passenger_fault' },
-                { label: 'System Fault', value: 'system_fault' },
-                { label: 'Safety Related', value: 'safety_related' },
-                { label: 'Operator Override', value: 'operator_override' },
-              ]"
-            />
-          </div>
-          <label class="flex items-center space-x-2 text-neutral-800 cursor-pointer">
-            <input v-model="shouldWaiveFee" type="checkbox" class="accent-neutral-900" />
-            <span>
-              Waive cancellation fee ({{ formatCentavos(reviewingCase.cancellationFeeCentavos) }})
-            </span>
-          </label>
-          <div>
-            <label class="block font-semibold text-neutral-700 mb-1"> Reason </label>
-            <textarea
-              v-model="auditNote"
-              rows="3"
-              required
-              placeholder="Explain GPS evidence or operator call verification..."
-              class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
-            />
-          </div>
+      <form
+        v-if="reviewingCase"
+        id="dispute-resolution-form"
+        class="space-y-3 text-xs"
+        @submit.prevent="applyResolution"
+      >
+        <div>
+          <div class="font-semibold text-neutral-700 mb-1">Fault Classification</div>
+          <BaseSelect
+            v-model="overrideResponsibility"
+            aria-label="Select fault classification"
+            :full-width="true"
+            :options="[
+              { label: 'No Fault (Mutual / Traffic)', value: 'no_fault' },
+              { label: 'Driver Fault', value: 'driver_fault' },
+              { label: 'Passenger Fault', value: 'passenger_fault' },
+              { label: 'System Fault', value: 'system_fault' },
+              { label: 'Safety Related', value: 'safety_related' },
+              { label: 'Operator Override', value: 'operator_override' },
+            ]"
+          />
         </div>
-
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100">
-          <button
-            type="button"
-            class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
-            @click="reviewingCase = null"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            :disabled="!auditNote.trim()"
-            class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 disabled:opacity-40 cursor-pointer"
-          >
-            Save Determination
-          </button>
+        <label class="flex items-center space-x-2 text-neutral-800 cursor-pointer">
+          <input v-model="shouldWaiveFee" type="checkbox" class="accent-neutral-900" />
+          <span>
+            Waive cancellation fee ({{ formatCentavos(reviewingCase.cancellationFeeCentavos) }})
+          </span>
+        </label>
+        <div>
+          <label for="dispute-audit-note" class="block font-semibold text-neutral-700 mb-1">
+            Reason
+          </label>
+          <textarea
+            id="dispute-audit-note"
+            v-model="auditNote"
+            rows="3"
+            required
+            placeholder="Explain GPS evidence or operator call verification..."
+            class="w-full px-3 py-2 border border-neutral-200 focus:outline-none focus:border-neutral-900"
+          />
         </div>
       </form>
+
+      <template #footer>
+        <button
+          type="button"
+          class="px-4 py-2 bg-white border border-neutral-200 text-xs font-semibold text-neutral-700 cursor-pointer"
+          @click="reviewingCase = null"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          form="dispute-resolution-form"
+          :disabled="!auditNote.trim()"
+          class="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 disabled:opacity-40 cursor-pointer"
+        >
+          Save Determination
+        </button>
+      </template>
     </ModalDialog>
   </div>
 </template>

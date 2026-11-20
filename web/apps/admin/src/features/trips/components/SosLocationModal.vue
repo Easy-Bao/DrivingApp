@@ -85,15 +85,13 @@ function copyCoordinates(incident: SosIncident) {
     </div>
 
     <template #footer>
-      <div class="flex justify-end">
-        <button
-          type="button"
-          class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer"
-          @click="handleOpenUpdate(false)"
-        >
-          Close
-        </button>
-      </div>
+      <button
+        type="button"
+        class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold cursor-pointer"
+        @click="handleOpenUpdate(false)"
+      >
+        Close
+      </button>
     </template>
   </ModalDialog>
 

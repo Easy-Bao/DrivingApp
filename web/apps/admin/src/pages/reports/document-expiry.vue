@@ -43,13 +43,13 @@ const handleExport = () => {
       >
         <div>
           <h2 class="font-bold text-sm text-neutral-900">Document Renewal Projections</h2>
-          <p class="text-xs text-neutral-400 mt-0.5">
+          <p class="text-xs text-neutral-500 mt-0.5">
             Automated driver reminders trigger 30 days prior to expiry
           </p>
         </div>
         <RouterLink
           to="/documents/expiring"
-          class="self-start sm:self-auto px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800 shrink-0"
+          class="self-start sm:self-auto px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 shrink-0"
         >
           Open Renewal Queue
         </RouterLink>

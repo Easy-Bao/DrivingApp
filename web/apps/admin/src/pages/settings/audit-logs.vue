@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useAuditLogs, type AuditLogEntry, type AuditSeverity } from '@/features/settings'
 import {
   BaseSelect,
@@ -46,10 +46,10 @@ const {
   currentPage,
   itemsPerPage,
   paginatedItems: paginatedLogs,
-  resetPage,
-} = useDataTable(filteredLogs, { initialPageSize: 10 })
-
-watch([searchQuery, severityFilter], resetPage)
+} = useDataTable(filteredLogs, {
+  initialPageSize: 10,
+  resetDeps: [searchQuery, severityFilter],
+})
 
 const exportAuditLogs = () => {
   exportToCsv(
@@ -100,7 +100,7 @@ const exportAuditLogs = () => {
           />
           <button
             type="button"
-            class="px-3 py-1.5 bg-white border border-neutral-300 rounded-none text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer shrink-0"
+            class="px-3 py-1.5 bg-white border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 cursor-pointer shrink-0"
             @click="exportAuditLogs"
           >
             Export CSV
@@ -130,7 +130,7 @@ const exportAuditLogs = () => {
             >
               <td class="py-3 px-4">
                 <div class="font-mono font-bold text-neutral-900">{{ log.id }}</div>
-                <div class="text-[11px] font-mono text-neutral-400">{{ log.timestamp }}</div>
+                <div class="text-[11px] font-mono text-neutral-500">{{ log.timestamp }}</div>
               </td>
               <td class="py-3 px-4">
                 <div class="font-semibold text-neutral-900">{{ log.actor }}</div>
@@ -153,7 +153,7 @@ const exportAuditLogs = () => {
               <td class="py-3 px-4 text-right">
                 <button
                   type="button"
-                  class="px-3 py-1 border border-neutral-300 bg-white text-neutral-800 rounded-none text-xs font-medium hover:bg-neutral-50 cursor-pointer"
+                  class="px-3 py-1 border border-neutral-300 bg-white text-neutral-800 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
                   @click="inspectedLog = log"
                 >
                   Inspect Payload
@@ -219,22 +219,20 @@ const exportAuditLogs = () => {
         </div>
         <div>
           <div class="text-neutral-500 mb-1">Recorded State Diff</div>
-          <pre
-            class="bg-neutral-950 text-emerald-300 p-3 rounded-none font-mono text-[11px] overflow-x-auto"
-            >{{ inspectedLog.payloadDiff }}</pre>
+          <pre class="bg-neutral-950 text-emerald-300 p-3 font-mono text-[11px] overflow-x-auto">{{
+            inspectedLog.payloadDiff
+          }}</pre>
         </div>
       </div>
 
       <template #footer>
-        <div class="flex justify-end">
-          <button
-            type="button"
-            class="px-3 py-1.5 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800 cursor-pointer"
-            @click="inspectedLog = null"
-          >
-            Close
-          </button>
-        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
+          @click="inspectedLog = null"
+        >
+          Close
+        </button>
       </template>
     </ModalDialog>
   </div>

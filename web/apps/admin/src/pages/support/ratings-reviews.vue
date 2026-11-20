@@ -152,7 +152,7 @@ const confirmModeration = () => {
               <td class="py-3.5 px-4">
                 <div class="font-mono font-bold text-neutral-900">{{ review.id }}</div>
                 <div class="text-[11px] font-mono text-neutral-500">{{ review.tripId }}</div>
-                <div class="text-[10px] text-neutral-400">{{ review.direction }}</div>
+                <div class="text-[10px] text-neutral-500">{{ review.direction }}</div>
               </td>
               <td class="py-3.5 px-4">
                 <div class="font-semibold text-neutral-900">{{ review.subjectParty }}</div>
@@ -196,7 +196,7 @@ const confirmModeration = () => {
                   <button
                     v-if="review.moderationState !== 'Published'"
                     type="button"
-                    class="px-2.5 py-1 bg-neutral-900 text-white rounded-none text-xs font-medium hover:bg-neutral-800"
+                    class="px-2.5 py-1 bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 cursor-pointer"
                     @click="openModerationConfirm(review, 'approve')"
                   >
                     Approve Public
@@ -204,7 +204,7 @@ const confirmModeration = () => {
                   <button
                     v-if="review.moderationState !== 'Hidden by Moderator'"
                     type="button"
-                    class="px-2.5 py-1 border border-neutral-300 bg-white text-neutral-700 rounded-none text-xs font-medium hover:bg-neutral-50"
+                    class="px-2.5 py-1 border border-neutral-300 bg-white text-neutral-700 text-xs font-medium hover:bg-neutral-50 cursor-pointer"
                     @click="openModerationConfirm(review, 'hide')"
                   >
                     Hide Remark
