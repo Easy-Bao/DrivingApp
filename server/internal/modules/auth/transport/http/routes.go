@@ -99,11 +99,11 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		router.limitOTPAttempts(router.handler.DriverResetPassword),
 	)
 	protected := middleware.RequireAuth(router.handler.verifier)
-	mux.With(router.routeSecurity.Authenticated(middleware.RouteCommand, protected)...).Post(
+	mux.With(router.routeSecurity.Authenticated(middleware.RouteAuthentication, protected)...).Post(
 		api.V1Prefix+"/users/me/email/request",
 		router.handler.RequestEmailChange,
 	)
-	mux.With(router.routeSecurity.Authenticated(middleware.RouteCommand, protected)...).Method(
+	mux.With(router.routeSecurity.Authenticated(middleware.RouteAuthentication, protected)...).Method(
 		http.MethodPost,
 		api.V1Prefix+"/users/me/email/confirm",
 		router.limitOTPAttempts(router.handler.ConfirmEmailChange),

@@ -2,6 +2,9 @@ package redis
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -13,11 +16,21 @@ import (
 	redisclient "github.com/redis/go-redis/v9"
 )
 
-type OTPStore struct{ client *redisclient.Client }
+type OTPStore struct {
+	client *redisclient.Client
+	secret []byte
+}
 
 var _ authports.OTPStore = (*OTPStore)(nil)
 
 func NewOTPStore(client *redisclient.Client) *OTPStore { return &OTPStore{client: client} }
+
+func (store *OTPStore) WithHashSecret(secret string) *OTPStore {
+	if store != nil && secret != "" {
+		store.secret = []byte(secret)
+	}
+	return store
+}
 
 func (store *OTPStore) Put(ctx context.Context, purpose, email, code string, ttl time.Duration) error {
 	if store == nil || store.client == nil {
@@ -30,7 +43,7 @@ func (store *OTPStore) Put(ctx context.Context, purpose, email, code string, ttl
 		ctx,
 		store.client,
 		[]string{key(purpose, email), attemptKey(purpose, email)},
-		code,
+		store.codeDigest(purpose, email, code),
 		ttl.Milliseconds(),
 	).Err(); err != nil {
 		return fmt.Errorf("store otp: %w", err)
@@ -46,7 +59,7 @@ func (store *OTPStore) Consume(ctx context.Context, purpose, email, code string)
 		ctx,
 		store.client,
 		[]string{key(purpose, email), attemptKey(purpose, email)},
-		code,
+		store.codeDigest(purpose, email, code),
 		authdomain.MaxOTPVerificationAttempts,
 		int64((15 * time.Minute).Milliseconds()),
 	).Int()
@@ -62,6 +75,27 @@ func (store *OTPStore) Consume(ctx context.Context, purpose, email, code string)
 	default:
 		return authdomain.ErrInvalidOTP
 	}
+}
+
+func (store *OTPStore) Delete(ctx context.Context, purpose, email string) error {
+	if store == nil || store.client == nil {
+		return errors.New("otp store is not configured")
+	}
+	if err := store.client.Del(ctx, key(purpose, email), attemptKey(purpose, email)).Err(); err != nil {
+		return fmt.Errorf("delete otp: %w", err)
+	}
+	return nil
+}
+
+func (store *OTPStore) codeDigest(purpose, email, code string) string {
+	material := "auth-otp-v1\x00" + purpose + "\x00" + strings.ToLower(strings.TrimSpace(email)) + "\x00" + code
+	if store != nil && len(store.secret) > 0 {
+		mac := hmac.New(sha256.New, store.secret)
+		_, _ = mac.Write([]byte(material))
+		return hex.EncodeToString(mac.Sum(nil))
+	}
+	sum := sha256.Sum256([]byte(material))
+	return hex.EncodeToString(sum[:])
 }
 
 var _putScript = redisclient.NewScript(`

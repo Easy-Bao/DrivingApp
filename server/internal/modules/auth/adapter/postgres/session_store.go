@@ -125,7 +125,7 @@ func (repository *RefreshSessionRepository) Rotate(
 		return fmt.Errorf("revoke refresh session during rotation: %w", err)
 	}
 	if rows != 1 {
-		return fmt.Errorf("revoke refresh session during rotation: %w", pgx.ErrNoRows)
+		return domain.ErrInvalidRefreshToken
 	}
 
 	if err := transactionQueries.CreateRefreshSession(ctx, databasepostgres.CreateRefreshSessionParams{

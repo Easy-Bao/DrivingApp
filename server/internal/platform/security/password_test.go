@@ -1,6 +1,7 @@
 package security
 
 import (
+	"strings"
 	"testing"
 
 	"golang.org/x/crypto/bcrypt"
@@ -49,5 +50,19 @@ func TestVerifyPasswordAcceptsLegacyHashForMigration(t *testing.T) {
 func TestHashPasswordRejectsBcryptOverflow(t *testing.T) {
 	if _, err := HashPassword(string(make([]byte, 73))); err != ErrPasswordTooLong {
 		t.Fatalf("expected ErrPasswordTooLong, got %v", err)
+	}
+}
+
+func TestVerifyPasswordRejectsPasswordsLongerThan72Bytes(t *testing.T) {
+	exact72 := strings.Repeat("a", 72)
+	hash, err := hashPasswordAtCost(exact72, bcrypt.MinCost)
+	if err != nil {
+		t.Fatalf("hash 72-byte password: %v", err)
+	}
+	if !VerifyPassword(hash, exact72) {
+		t.Fatal("expected exact 72-byte password to verify")
+	}
+	if VerifyPassword(hash, exact72+"extra") {
+		t.Fatal("expected >72-byte password sharing 72-byte prefix to be rejected")
 	}
 }

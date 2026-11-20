@@ -34,6 +34,9 @@ func VerifyPassword(storedHash, password string) bool {
 	if strings.HasPrefix(storedHash, "$2a$") ||
 		strings.HasPrefix(storedHash, "$2b$") ||
 		strings.HasPrefix(storedHash, "$2y$") {
+		if len([]byte(password)) > 72 {
+			return false
+		}
 		return bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password)) == nil
 	}
 	legacyHash := legacyPasswordHash(password)

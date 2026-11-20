@@ -13,7 +13,10 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
-const _dummyBcryptHash = "$2a$12$sjZVk/NciE592gulJMkQWOigSaIF6q6HExHI0yRsy.XMYD7ffKW3i"
+const (
+	_dummyBcryptHash                = "$2a$12$sjZVk/NciE592gulJMkQWOigSaIF6q6HExHI0yRsy.XMYD7ffKW3i"
+	_credentialRecheckRevokeTimeout = 3 * time.Second
+)
 
 type AuthenticateService struct {
 	repository   UserStore
@@ -140,33 +143,53 @@ func (service *AuthenticateService) execute(
 	if err != nil {
 		return domain.User{}, SessionTokens{}, fmt.Errorf("issue authentication session: %w", err)
 	}
-	if err := service.ensureCredentialsUnchanged(ctx, account.ID, currentHash); err != nil {
+	if err := service.ensureCredentialsUnchanged(ctx, account, currentHash, tokens.RefreshToken); err != nil {
 		return domain.User{}, SessionTokens{}, err
 	}
 	return account, tokens, nil
 }
 
-// ensureCredentialsUnchanged closes the window where a password reset finishes
-// between the credential check and session issuance. Reset replaces the hash
-// before it revokes sessions, so a session issued after that revocation always
-// observes the new hash here and is withdrawn.
+// ensureCredentialsUnchanged closes the window where a password reset, email
+// change, or account suspension finishes between the credential check and
+// session issuance. Only the newly issued session is revoked here so a client
+// disconnect or concurrent login on another device never wipes unrelated
+// sessions.
 func (service *AuthenticateService) ensureCredentialsUnchanged(
 	ctx context.Context,
-	userID int,
+	account domain.User,
 	verifiedHash string,
+	issuedRefreshToken string,
 ) error {
 	if service.sessions == nil {
 		return nil
 	}
-	latest, err := service.repository.FindByID(ctx, userID)
-	if err == nil && latest.PasswordHash == verifiedHash {
+	latest, err := service.repository.FindByID(ctx, account.ID)
+	if err == nil &&
+		latest.PasswordHash == verifiedHash &&
+		latest.IsActive() &&
+		strings.EqualFold(strings.TrimSpace(latest.Email), strings.TrimSpace(account.Email)) {
 		return nil
 	}
-	if revokeErr := service.sessions.RevokeAll(context.WithoutCancel(ctx), userID, time.Now().UTC()); revokeErr != nil {
-		service.log().WarnContext(ctx, "revoke session after credential change failed", "error", revokeErr)
+	if issuedRefreshToken != "" {
+		baseCtx := ctx
+		if baseCtx == nil {
+			baseCtx = context.Background()
+		}
+		revokeCtx, cancelRevoke := context.WithTimeout(
+			context.WithoutCancel(baseCtx),
+			_credentialRecheckRevokeTimeout,
+		)
+		revokeErr := service.sessions.Revoke(revokeCtx, HashRefreshToken(issuedRefreshToken), time.Now().UTC())
+		cancelRevoke()
+		if revokeErr != nil {
+			service.log().WarnContext(ctx, "revoke newly issued session after credential recheck failed", "error", revokeErr)
+		}
 	}
 	if err != nil {
 		return fmt.Errorf("recheck credentials after session issuance: %w", err)
+	}
+	if !latest.IsActive() {
+		return domain.ErrAccountSuspended
 	}
 	return domain.ErrInvalidCredentials
 }
@@ -189,6 +212,9 @@ func (service *AuthenticateService) Refresh(ctx context.Context, rawToken string
 	}
 	account, err := service.repository.FindByID(ctx, current.UserID)
 	if err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			return SessionTokens{}, domain.ErrInvalidRefreshToken
+		}
 		return SessionTokens{}, UnavailableError(err)
 	}
 	if account.ID != current.UserID {

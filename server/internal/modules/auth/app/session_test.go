@@ -182,3 +182,31 @@ func TestRefreshRejectsSuspendedAccount(t *testing.T) {
 		t.Fatalf("expected ErrAccountSuspended on refresh, got %v", err)
 	}
 }
+
+func TestRefreshReturnsInvalidRefreshTokenWhenUserNoLongerExists(t *testing.T) {
+	repository := &repository{users: map[string]domain.User{
+		"deleted@example.test": {
+			ID:           15,
+			Email:        "deleted@example.test",
+			Role:         domain.Passenger,
+			PasswordHash: testPasswordHash(t, "secret-15"),
+		},
+	}}
+	sessions := newTestRefreshSessionStore()
+	service := newTestAuthenticateService(authapp.AuthenticateDependencies{
+		Repository: repository,
+		Tokens:     security.NewTokenManager("session-test-secret"),
+		Sessions:   sessions,
+	})
+
+	_, issued, err := service.ExecuteSession(context.Background(), "deleted@example.test", "secret-15")
+	if err != nil {
+		t.Fatalf("issue session: %v", err)
+	}
+	delete(repository.users, "deleted@example.test")
+
+	_, err = service.Refresh(context.Background(), issued.RefreshToken)
+	if !errors.Is(err, domain.ErrInvalidRefreshToken) {
+		t.Fatalf("Refresh() for missing user error = %v, want domain.ErrInvalidRefreshToken", err)
+	}
+}

@@ -3,11 +3,13 @@ package email_test
 import (
 	"context"
 	"errors"
+	"net/textproto"
 	"testing"
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/adapter/email"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/resilience"
+	mail "github.com/wneessen/go-mail"
 )
 
 func TestMailConfigRequiresCredentials(t *testing.T) {
@@ -128,6 +130,49 @@ func TestMailGatewayOpensCircuitAfterDeliveryFailures(t *testing.T) {
 	}
 	if calls != 3 {
 		t.Fatalf("delivery calls = %d, want 3", calls)
+	}
+}
+
+func TestMailGatewayDoesNotOpenCircuitOnPermanentRecipientErrors(t *testing.T) {
+	calls := 0
+	gateway := email.NewMailGateway(
+		validMailConfig(),
+		email.WithDelivery(func(
+			_ context.Context,
+			_ email.Config,
+			recipient string,
+			_ string,
+			_ string,
+		) error {
+			calls++
+			switch recipient {
+			case "bad-proto@example.test":
+				return &textproto.Error{Code: 550, Msg: "5.1.1 user unknown"}
+			case "bad-rcpt@example.test":
+				return &mail.SendError{Reason: mail.ErrSMTPRcptTo}
+			default:
+				return nil
+			}
+		}),
+	)
+
+	for range 3 {
+		err := gateway.Send(context.Background(), "bad-proto@example.test", "123456")
+		if err == nil || errors.Is(err, resilience.ErrCircuitOpen) {
+			t.Fatalf("550 recipient error = %v, want non-circuit error", err)
+		}
+	}
+	for range 2 {
+		err := gateway.Send(context.Background(), "bad-rcpt@example.test", "123456")
+		if err == nil || errors.Is(err, resilience.ErrCircuitOpen) {
+			t.Fatalf("RCPT TO error = %v, want non-circuit error", err)
+		}
+	}
+	if err := gateway.Send(context.Background(), "valid@example.test", "123456"); err != nil {
+		t.Fatalf("valid recipient after permanent recipient rejections failed: %v", err)
+	}
+	if calls != 6 {
+		t.Fatalf("delivery calls = %d, want 6", calls)
 	}
 }
 

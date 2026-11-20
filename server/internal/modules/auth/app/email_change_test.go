@@ -105,17 +105,23 @@ func (store *emailChangeOTPStore) Consume(_ context.Context, purpose, email, cod
 	return nil
 }
 
+func (store *emailChangeOTPStore) Delete(_ context.Context, purpose, email string) error {
+	delete(store.codes, purpose+":"+email)
+	return nil
+}
+
 var _ authapp.OTPStore = (*emailChangeOTPStore)(nil)
 
 type emailChangeSender struct {
 	recipient string
 	code      string
+	err       error
 }
 
 func (sender *emailChangeSender) Send(_ context.Context, recipient, code string) error {
 	sender.recipient = recipient
 	sender.code = code
-	return nil
+	return sender.err
 }
 
 var _ authapp.OTPSender = (*emailChangeSender)(nil)
@@ -123,9 +129,13 @@ var _ authapp.OTPSender = (*emailChangeSender)(nil)
 type emailChangeNotifier struct {
 	previousEmail string
 	newEmail      string
+	lastCtxErr    error
 }
 
-func (notifier *emailChangeNotifier) NotifyEmailChanged(_ context.Context, previousEmail, newEmail string) error {
+func (notifier *emailChangeNotifier) NotifyEmailChanged(ctx context.Context, previousEmail, newEmail string) error {
+	if ctx != nil {
+		notifier.lastCtxErr = ctx.Err()
+	}
 	notifier.previousEmail = previousEmail
 	notifier.newEmail = newEmail
 	return nil
@@ -341,6 +351,35 @@ func TestConfirmEmailChangeRetriesRevocationAfterCommit(t *testing.T) {
 	}
 	if _, err := sessions.FindActive(context.Background(), authapp.HashRefreshToken("token-for-user-42"), time.Now()); !errors.Is(err, domain.ErrInvalidRefreshToken) {
 		t.Fatalf("expected session to be revoked after retries, got %v", err)
+	}
+	if notifier.lastCtxErr != nil {
+		t.Fatalf("NotifyEmailChanged() observed canceled caller context: %v", notifier.lastCtxErr)
+	}
+}
+
+func TestRequestEmailChangeDeletesOTPWhenDeliveryFails(t *testing.T) {
+	hash, err := bcrypt.GenerateFromPassword([]byte("current-password"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatalf("hash password: %v", err)
+	}
+	users := &emailChangeUsers{accounts: map[int]domain.User{
+		42: {ID: 42, Email: "old@example.test", Role: domain.Passenger, PasswordHash: string(hash), IsVerified: true},
+	}}
+	store := &emailChangeOTPStore{}
+	sender := &emailChangeSender{err: errors.New("smtp failed")}
+	service := authapp.NewOTPService(authapp.OTPDependencies{
+		Users:        users,
+		EmailChanges: users,
+		Store:        store,
+		Gateway:      sender,
+	})
+
+	err = service.RequestEmailChange(context.Background(), 42, "current-password", "new@example.test")
+	if !errors.Is(err, domain.ErrOTPUnavailable) {
+		t.Fatalf("RequestEmailChange() error = %v, want ErrOTPUnavailable", err)
+	}
+	if len(store.codes) != 0 {
+		t.Fatalf("unsent OTP remained in store: %#v", store.codes)
 	}
 }
 

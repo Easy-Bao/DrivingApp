@@ -123,7 +123,7 @@ func newHTTPRouter(
 			Users:         authStore,
 			EmailChanges:  authStore,
 			EmailNotifier: emailGateway,
-			Store:         authredis.NewOTPStore(redisClient),
+			Store:         authredis.NewOTPStore(redisClient).WithHashSecret(config.JWTSecret),
 			Gateway:       emailGateway,
 			Tokens:        verifier,
 			Sessions:      sessionStore,

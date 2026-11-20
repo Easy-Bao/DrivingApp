@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/textproto"
 	"strings"
 	"time"
 
@@ -78,13 +79,17 @@ func (gateway *MailGateway) Send(ctx context.Context, recipient, code string) er
 		return fmt.Errorf("%w: recipient is empty", ErrInvalidConfig)
 	}
 	if err := gateway.breaker.Do(ctx, func(ctx context.Context) error {
-		return gateway.deliver(
+		err := gateway.deliver(
 			ctx,
 			gateway.config,
 			recipient,
 			gateway.config.Subject,
 			verificationBody(code),
 		)
+		if isPermanentRecipientError(err) {
+			return resilience.NonTripError{Err: err}
+		}
+		return err
 	}); err != nil {
 		return fmt.Errorf("send verification email: %w", err)
 	}
@@ -116,11 +121,40 @@ func (gateway *MailGateway) NotifyEmailChanged(ctx context.Context, previousEmai
 		newEmail,
 	)
 	if err := gateway.breaker.Do(ctx, func(ctx context.Context) error {
-		return gateway.deliver(ctx, gateway.config, previousEmail, subject, body)
+		err := gateway.deliver(ctx, gateway.config, previousEmail, subject, body)
+		if isPermanentRecipientError(err) {
+			return resilience.NonTripError{Err: err}
+		}
+		return err
 	}); err != nil {
 		return fmt.Errorf("send email change notification: %w", err)
 	}
 	return nil
+}
+
+func isPermanentRecipientError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if sendErr, ok := errors.AsType[*mail.SendError](err); ok && !sendErr.IsTemp() {
+		switch sendErr.Reason {
+		case mail.ErrSMTPRcptTo, mail.ErrGetRcpts:
+			return true
+		}
+		switch sendErr.ErrorCode() {
+		case 550, 551, 553:
+			if sendErr.Reason != mail.ErrSMTPMailFrom {
+				return true
+			}
+		}
+	}
+	if protoErr, ok := errors.AsType[*textproto.Error](err); ok {
+		switch protoErr.Code {
+		case 550, 551, 553:
+			return true
+		}
+	}
+	return false
 }
 
 func deliverWithGoMail(
@@ -145,7 +179,7 @@ func deliverWithGoMail(
 		return fmt.Errorf("set mail sender: %w", err)
 	}
 	if err := message.To(recipient); err != nil {
-		return fmt.Errorf("set mail recipient: %w", err)
+		return resilience.NonTripError{Err: fmt.Errorf("set mail recipient: %w", err)}
 	}
 	message.Subject(subject)
 	message.SetBodyString(mail.TypeTextPlain, body)

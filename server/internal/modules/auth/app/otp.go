@@ -145,6 +145,7 @@ func (service *OTPService) RegisterPassenger(
 		return domain.PendingRegistration{}, fmt.Errorf("%w: store otp: %w", domain.ErrOTPUnavailable, err)
 	}
 	if err := service.pending.Put(ctx, registration, _otpLifetime); err != nil {
+		service.deleteOTP(ctx, "verification", registration.Email)
 		service.log().WarnContext(ctx, "store pending passenger registration failed", "error", err)
 		return domain.PendingRegistration{}, fmt.Errorf(
 			"%w: store pending passenger registration: %w",
@@ -153,6 +154,7 @@ func (service *OTPService) RegisterPassenger(
 		)
 	}
 	if err := service.gateway.Send(ctx, registration.Email, code); err != nil {
+		service.deleteOTP(ctx, "verification", registration.Email)
 		service.log().WarnContext(ctx, "send otp failed", "error", err, "purpose", "verification")
 		if hasPreviousPending {
 			if restoreErr := service.pending.Put(ctx, previousPending, _otpLifetime); restoreErr != nil {
@@ -408,6 +410,7 @@ func (service *OTPService) RequestEmailChange(
 		return domain.ErrOTPUnavailable
 	}
 	if err := service.gateway.Send(ctx, newEmail, code); err != nil {
+		service.deleteOTP(ctx, purpose, userKey)
 		service.log().WarnContext(ctx, "send email change otp failed", "error", err)
 		return domain.ErrOTPUnavailable
 	}
@@ -476,8 +479,18 @@ func (service *OTPService) ConfirmEmailChange(
 	// and retry revocation without the request's cancellation.
 	revokeErr := service.revokeSessionsAfterEmailChange(ctx, userID)
 	if service.emailNotifier != nil {
-		if err := service.emailNotifier.NotifyEmailChanged(ctx, account.Email, newEmail); err != nil {
-			service.log().WarnContext(ctx, "notify previous email after account change failed", "error", err)
+		baseCtx := ctx
+		if baseCtx == nil {
+			baseCtx = context.Background()
+		}
+		notifyCtx, cancelNotify := context.WithTimeout(
+			context.WithoutCancel(baseCtx),
+			_emailChangeNotifyTimeout,
+		)
+		notifyErr := service.emailNotifier.NotifyEmailChanged(notifyCtx, account.Email, newEmail)
+		cancelNotify()
+		if notifyErr != nil {
+			service.log().WarnContext(ctx, "notify previous email after account change failed", "error", notifyErr)
 		}
 	}
 	if revokeErr != nil {
@@ -489,7 +502,29 @@ func (service *OTPService) ConfirmEmailChange(
 const (
 	_emailChangeRevokeAttempts = 3
 	_emailChangeRevokeTimeout  = 5 * time.Second
+	_emailChangeNotifyTimeout  = 10 * time.Second
+	_otpCleanupTimeout         = 2 * time.Second
 )
+
+type otpDeleter interface {
+	Delete(ctx context.Context, purpose, email string) error
+}
+
+func (service *OTPService) deleteOTP(ctx context.Context, purpose, email string) {
+	deleter, ok := service.store.(otpDeleter)
+	if !ok {
+		return
+	}
+	baseCtx := ctx
+	if baseCtx == nil {
+		baseCtx = context.Background()
+	}
+	cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(baseCtx), _otpCleanupTimeout)
+	defer cancel()
+	if err := deleter.Delete(cleanupCtx, purpose, email); err != nil {
+		service.log().WarnContext(ctx, "remove unsent otp failed", "error", err, "purpose", purpose)
+	}
+}
 
 func (service *OTPService) revokeSessionsAfterEmailChange(ctx context.Context, userID int) error {
 	if service.sessions == nil {
@@ -551,6 +586,7 @@ func (service *OTPService) requestCode(ctx context.Context, purpose, email strin
 		return fmt.Errorf("%w: store otp: %w", domain.ErrOTPUnavailable, err)
 	}
 	if err := service.gateway.Send(ctx, email, code); err != nil {
+		service.deleteOTP(ctx, purpose, email)
 		service.log().WarnContext(ctx, "send otp failed", "error", err, "purpose", purpose)
 		return fmt.Errorf("%w: send otp: %w", domain.ErrOTPUnavailable, err)
 	}

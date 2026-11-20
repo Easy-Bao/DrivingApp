@@ -268,6 +268,53 @@ func TestAuthenticationNonExistentUserAndBlankPasswordHash(t *testing.T) {
 	}
 }
 
+type failingFindByIDRepository struct {
+	*repository
+	findByIDErr error
+}
+
+func (r *failingFindByIDRepository) FindByID(context.Context, int) (domain.User, error) {
+	return domain.User{}, r.findByIDErr
+}
+
+func TestCredentialRecheckRevokesOnlyNewlyIssuedSession(t *testing.T) {
+	base := &repository{users: map[string]domain.User{
+		"user@example.test": {
+			ID:           21,
+			Email:        "user@example.test",
+			Role:         domain.Passenger,
+			PasswordHash: testPasswordHash(t, "secret-8"),
+		},
+	}}
+	sessions := newTestRefreshSessionStore()
+	existingService := newTestAuthenticateService(authapp.AuthenticateDependencies{
+		Repository: base,
+		Tokens:     issuer{},
+		Sessions:   sessions,
+	})
+	_, deviceA, err := existingService.ExecuteSession(context.Background(), "user@example.test", "secret-8")
+	if err != nil {
+		t.Fatalf("device A login: %v", err)
+	}
+
+	failingService := newTestAuthenticateService(authapp.AuthenticateDependencies{
+		Repository: &failingFindByIDRepository{
+			repository:  base,
+			findByIDErr: context.Canceled,
+		},
+		Tokens:   issuer{},
+		Sessions: sessions,
+	})
+	if _, _, err := failingService.ExecuteSession(context.Background(), "user@example.test", "secret-8"); !errors.Is(err, context.Canceled) {
+		t.Fatalf("device B login error = %v, want context.Canceled", err)
+	}
+
+	// Device A's unrelated session must still be active.
+	if _, err := existingService.Refresh(context.Background(), deviceA.RefreshToken); err != nil {
+		t.Fatalf("device A session was unexpectedly revoked: %v", err)
+	}
+}
+
 func (r *repository) UpgradePasswordHash(_ context.Context, id int, expectedHash, passwordHash string) (bool, error) {
 	for email, account := range r.users {
 		if account.ID == id && account.PasswordHash == expectedHash {
