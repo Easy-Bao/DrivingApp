@@ -12,8 +12,8 @@ import {
   ToastBanner,
   formatCentavos,
   useDataTable,
+  useToast,
   type BadgeTone,
-  type ToastTone,
 } from '@/shared'
 import { useRiders, type RiderRecord, type RiderStanding } from '@/features/users'
 
@@ -21,8 +21,7 @@ const { riders, suspendRider, reinstateRider } = useRiders()
 
 const searchQuery = ref('')
 const standingFilter = ref<'ALL' | RiderStanding>('ALL')
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('info')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('info')
 const inspectedRider = ref<RiderRecord | null>(null)
 const pendingStatusRider = ref<RiderRecord | null>(null)
 const statusReason = ref('')
@@ -78,13 +77,11 @@ function confirmStandingUpdate() {
       : suspendRider(target.id, statusReason.value)
 
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
 
-  toastTone.value = target.standing === 'Suspended' ? 'warning' : 'success'
-  toastMessage.value = result.message
+  showToast(result.message, target.standing === 'Suspended' ? 'warning' : 'success')
   pendingStatusRider.value = null
   statusReason.value = ''
 }
@@ -97,7 +94,7 @@ function confirmStandingUpdate() {
       description="Manage passenger accounts, trip activity, and standings."
     />
 
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

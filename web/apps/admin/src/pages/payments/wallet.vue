@@ -14,8 +14,8 @@ import {
   TablePagination,
   ToastBanner,
   useDataTable,
+  useToast,
 } from '@/shared'
-import type { ToastTone } from '@/shared'
 import { useWalletAccounts } from '@/features/payments'
 import type { DriverWalletRow } from '@/features/payments'
 
@@ -23,8 +23,7 @@ const { wallets, minDispatchBalanceCentavos, adjustDriverWallet } = useWalletAcc
 
 const searchQuery = ref('')
 const eligibilityFilter = ref<'All' | 'Eligible' | 'Locked'>('All')
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('success')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const showAdjustModal = ref(false)
 const showAuditConfirm = ref(false)
@@ -74,11 +73,6 @@ const dispatchLockedCount = computed(
 const totalCommissionCollectedCentavos = computed(() =>
   wallets.value.reduce((sum, wallet) => sum + wallet.totalCommissionPaidCentavos, 0),
 )
-
-function showToast(message: string, tone: ToastTone = 'success') {
-  toastMessage.value = message
-  toastTone.value = tone
-}
 
 function resetFilters() {
   searchQuery.value = ''
@@ -156,12 +150,12 @@ function exportWalletLedger() {
 
 <template>
   <div class="space-y-6">
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
-
     <PageHeader
       title="Wallets"
       :description="`Monitor driver prepaid balances and the ${formatCentavos(minDispatchBalanceCentavos)} dispatch threshold.`"
     />
+
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="bg-white p-4 border border-neutral-200">

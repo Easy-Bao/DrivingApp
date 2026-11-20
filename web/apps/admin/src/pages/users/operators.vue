@@ -11,7 +11,7 @@ import {
   TablePagination,
   ToastBanner,
   useDataTable,
-  type ToastTone,
+  useToast,
 } from '@/shared'
 import { useOperators, type OperatorAccount } from '@/features/users'
 
@@ -27,8 +27,7 @@ const {
 
 const searchQuery = ref('')
 const roleFilter = ref('ALL')
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('success')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const showInviteModal = ref(false)
 const inviteForm = reactive({
@@ -74,12 +73,10 @@ function submitInvite() {
     role: inviteForm.role,
   })
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastTone.value = 'success'
-  toastMessage.value = result.message
+  showToast(result.message, 'success')
   inviteForm.name = ''
   inviteForm.email = ''
   showInviteModal.value = false
@@ -88,23 +85,19 @@ function submitInvite() {
 function handleRoleChange(id: string, nextRole: string) {
   const result = updateOperatorRole(id, nextRole)
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastTone.value = 'info'
-  toastMessage.value = result.message
+  showToast(result.message, 'info')
 }
 
 function handleToggleMfa(id: string) {
   const result = toggleOperatorMfa(id)
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastTone.value = 'warning'
-  toastMessage.value = result.message
+  showToast(result.message, 'warning')
 }
 
 function confirmOperatorStatus() {
@@ -117,12 +110,10 @@ function confirmOperatorStatus() {
       : suspendOperator(target.id, statusReason.value)
 
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastTone.value = target.status === 'Suspended' ? 'success' : 'warning'
-  toastMessage.value = result.message
+  showToast(result.message, target.status === 'Suspended' ? 'success' : 'warning')
   pendingToggleStatus.value = null
   statusReason.value = ''
 }
@@ -145,7 +136,7 @@ function confirmOperatorStatus() {
       </template>
     </PageHeader>
 
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

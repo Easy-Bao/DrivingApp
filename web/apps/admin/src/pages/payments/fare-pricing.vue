@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { formatCentavos, ModalDialog, PageHeader, ToastBanner } from '@/shared'
-import type { ToastTone } from '@/shared'
+import { formatCentavos, ModalDialog, PageHeader, ToastBanner, useToast } from '@/shared'
 import { useFarePricing } from '@/features/payments'
 import type { FareTierRule } from '@/features/payments'
 
 const { rules, saveFareRule } = useFarePricing()
 
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('success')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 const showEditModal = ref(false)
 const editRuleId = ref('')
 const editTierTitle = ref('')
@@ -62,15 +60,12 @@ function saveRuleChanges() {
   }
 
   closeEditModal()
-  toastMessage.value = result.message ?? `Saved tariff updates for ${editTierTitle.value}`
-  toastTone.value = 'success'
+  showToast(result.message ?? `Saved tariff updates for ${editTierTitle.value}`, 'success')
 }
 </script>
 
 <template>
   <div class="space-y-6">
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
-
     <PageHeader
       title="Tariff Rates"
       description="Configure corridor base fares, distance increments, cancellation fees, and bidding ceilings."
@@ -83,6 +78,8 @@ function saveRuleChanges() {
         </span>
       </template>
     </PageHeader>
+
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div

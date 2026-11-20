@@ -13,13 +13,14 @@ import {
   SearchField,
   StatusBadge,
   ToastBanner,
+  useToast,
 } from '@/shared'
 
 const { faqs, saveFaq, togglePublished } = useFaqArticles()
 
 const audienceFilter = ref<'All' | FaqAudience>('All')
 const searchQuery = ref('')
-const toastMessage = ref<string | null>(null)
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const showEditorModal = ref(false)
 const editingId = ref<string | null>(null)
@@ -86,9 +87,9 @@ const saveFaqArticle = () => {
   }
 
   if (editingId.value) {
-    toastMessage.value = `Updated FAQ article ${editingId.value}.`
+    showToast(`Updated FAQ article ${editingId.value}.`)
   } else if (faqs.value.length > previousCount) {
-    toastMessage.value = `Published new Help Center article ${faqs.value[0]?.id ?? ''}.`
+    showToast(`Published new Help Center article ${faqs.value[0]?.id ?? ''}.`)
   }
 
   showEditorModal.value = false
@@ -97,26 +98,21 @@ const saveFaqArticle = () => {
 const handleTogglePublished = (article: FaqArticle) => {
   const result = togglePublished(article.id)
   if (!result.ok) {
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastMessage.value = `${article.id} is now ${article.isPublished ? 'Published in apps' : 'Draft (Hidden)'}.`
+  showToast(`${article.id} is now ${article.isPublished ? 'Published in apps' : 'Draft (Hidden)'}.`)
 }
 </script>
 
 <template>
   <div class="space-y-6">
-    <ToastBanner
-      v-if="toastMessage"
-      :message="toastMessage"
-      tone="success"
-      @dismiss="toastMessage = null"
-    />
-
     <PageHeader
       title="Help Center"
       description="Manage help articles synced to the Passenger and Driver mobile apps."
     />
+
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div
       class="bg-white border border-neutral-200 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"

@@ -10,7 +10,7 @@ import {
   TablePagination,
   ToastBanner,
   useDataTable,
-  type ToastTone,
+  useToast,
 } from '@/shared'
 import {
   buildDocumentPreviewSvg,
@@ -31,8 +31,7 @@ const { pendingDocs, verifyDocument, rejectDocument } = useVerificationDocuments
 
 const searchQuery = ref('')
 const docTypeFilter = ref('ALL')
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('success')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const inspectingDoc = ref<PendingDocument | null>(null)
 const docSide = ref<'front' | 'back'>('front')
@@ -118,12 +117,10 @@ function approveCurrent() {
   if (!inspectingDoc.value) return
   const result = verifyDocument(inspectingDoc.value.id)
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastTone.value = 'success'
-  toastMessage.value = result.message
+  showToast(result.message, 'success')
   closeReview()
 }
 
@@ -131,12 +128,10 @@ function rejectCurrent() {
   if (!inspectingDoc.value) return
   const result = rejectDocument(inspectingDoc.value.id, rejectionGround.value)
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastTone.value = 'warning'
-  toastMessage.value = result.message
+  showToast(result.message, 'warning')
   closeReview()
 }
 </script>
@@ -148,7 +143,7 @@ function rejectCurrent() {
       description="Review and verify submitted driver compliance documents and renewals."
     />
 
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

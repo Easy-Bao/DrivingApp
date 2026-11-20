@@ -9,7 +9,7 @@ import type {
   ReportDispatchModeFilter,
   ReportFilterValues,
 } from '@/features/reports/types'
-import { BaseSelect, ToastBanner } from '@/shared'
+import { BaseSelect, ToastBanner, useToast } from '@/shared'
 
 const props = defineProps<{
   reportTitle: string
@@ -23,7 +23,7 @@ const emit = defineEmits<{
 const dateRange = ref<ReportDateRange>(DEFAULT_REPORT_FILTERS.dateRange)
 const cityZone = ref(DEFAULT_REPORT_FILTERS.cityZone)
 const dispatchMode = ref<ReportDispatchModeFilter>(DEFAULT_REPORT_FILTERS.dispatchMode)
-const exportToast = ref<string | null>(null)
+const { message: exportToast, tone: exportToastTone, showToast, dismissToast } = useToast('info')
 
 const currentFilters = computed<ReportFilterValues>(() => ({
   dateRange: dateRange.value,
@@ -47,18 +47,13 @@ const triggerExport = () => {
   const filters = { ...currentFilters.value }
   emit('export', { format: 'CSV', filters })
   const zoneLabel = cityZone.value === 'all-zones' ? 'All Zones' : cityZone.value
-  exportToast.value = `Prepared ${props.reportTitle} (CSV) for ${zoneLabel}.`
+  showToast(`Prepared ${props.reportTitle} (CSV) for ${zoneLabel}.`)
 }
 </script>
 
 <template>
   <div class="space-y-3">
-    <ToastBanner
-      v-if="exportToast"
-      :message="exportToast"
-      tone="info"
-      @dismiss="exportToast = null"
-    />
+    <ToastBanner :message="exportToast" :tone="exportToastTone" @dismiss="dismissToast" />
 
     <div
       class="bg-white border border-neutral-200 p-4 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4"

@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Icon } from '@iconify/vue'
-import {
-  ToastBanner,
-  useSafeBack,
-  useSafeRouteParam,
-  type BadgeTone,
-  type ToastTone,
-} from '@/shared'
+import { ToastBanner, useSafeBack, useSafeRouteParam, useToast, type BadgeTone } from '@/shared'
 import {
   ApplicationDecisionModals,
   ApplicationDocumentViewerModal,
@@ -34,8 +28,7 @@ const application = computed(() =>
 const activeDoc = ref<ApplicationViewerDocument | null>(null)
 const showApproveDialog = ref(false)
 const showRejectDialog = ref(false)
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('success')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 function getStatusTone(status: DriverApplication['status']): BadgeTone {
   if (status === 'Approved') return 'success'
@@ -160,26 +153,22 @@ function handleApprove() {
   if (!application.value) return
   const result = approveApplication(application.value.id)
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
   showApproveDialog.value = false
-  toastTone.value = 'success'
-  toastMessage.value = result.message
+  showToast(result.message, 'success')
 }
 
 function handleReject(reason: string) {
   if (!application.value) return
   const result = rejectApplication(application.value.id, reason)
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
   showRejectDialog.value = false
-  toastTone.value = 'warning'
-  toastMessage.value = result.message
+  showToast(result.message, 'warning')
 }
 </script>
 
@@ -196,7 +185,7 @@ function handleReject(reason: string) {
       </button>
     </div>
 
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div v-if="application" class="space-y-6">
       <ApplicationProfileSections

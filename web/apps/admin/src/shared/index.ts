@@ -19,6 +19,7 @@ export { useEscapeKey } from '@/shared/composables/use-escape-key'
 export { useSafeBack } from '@/shared/composables/use-safe-back'
 export { useSafeRouteParam } from '@/shared/composables/use-safe-route-param'
 export { useClipboardCopy } from '@/shared/composables/use-clipboard-copy'
+export { useToast } from '@/shared/composables/use-toast'
 export { getInitials } from '@/shared/utils/text'
 export {
   getDaysUntilIsoDate,

@@ -14,6 +14,7 @@ import {
   SearchField,
   StatusBadge,
   ToastBanner,
+  useToast,
 } from '@/shared'
 
 const { reviews, moderateReview } = useReviewModeration()
@@ -21,7 +22,7 @@ const { reviews, moderateReview } = useReviewModeration()
 const searchQuery = ref('')
 const directionFilter = ref<'All' | ReviewDirection>('All')
 const stateFilter = ref<'All' | ReviewModerationState>('All')
-const toastMessage = ref<string | null>(null)
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('info')
 
 const targetReview = ref<ReviewEntry | null>(null)
 const pendingAction = ref<'hide' | 'approve'>('approve')
@@ -70,10 +71,10 @@ const confirmModeration = () => {
   if (!target) return
   const result = moderateReview(target.id, pendingAction.value, moderationReason.value)
   if (!result.ok) {
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastMessage.value = `${target.id} updated to ${target.moderationState}.`
+  showToast(`${target.id} updated to ${target.moderationState}.`, 'info')
   dialogOpen.value = false
   targetReview.value = null
   moderationReason.value = ''
@@ -82,17 +83,12 @@ const confirmModeration = () => {
 
 <template>
   <div class="space-y-6">
-    <ToastBanner
-      v-if="toastMessage"
-      :message="toastMessage"
-      tone="info"
-      @dismiss="toastMessage = null"
-    />
-
     <PageHeader
       title="Reviews"
       description="Moderate passenger and driver feedback and rating eligibility."
     />
+
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

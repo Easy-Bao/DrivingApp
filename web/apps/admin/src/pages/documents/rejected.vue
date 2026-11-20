@@ -10,7 +10,7 @@ import {
   TablePagination,
   ToastBanner,
   useDataTable,
-  type ToastTone,
+  useToast,
 } from '@/shared'
 import { useRejectedDocuments, type RejectedDocument } from '@/features/documents'
 
@@ -19,8 +19,7 @@ const { rejectedDocs, queueForReReview } = useRejectedDocuments()
 const searchQuery = ref('')
 const resubmissionFilter = ref<'ALL' | 'RESUBMITTED' | 'AWAITING'>('ALL')
 const inspectingDoc = ref<RejectedDocument | null>(null)
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('success')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const filteredRejected = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
@@ -54,12 +53,10 @@ function resetFilters() {
 function handleReopen(id: string) {
   const result = queueForReReview(id)
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastTone.value = 'success'
-  toastMessage.value = result.message
+  showToast(result.message, 'success')
   inspectingDoc.value = null
 }
 </script>
@@ -71,7 +68,7 @@ function handleReopen(id: string) {
       description="Inspect declined compliance files and re-open resubmitted scans for verification."
     />
 
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

@@ -44,4 +44,18 @@ describe('ToastBanner', () => {
     await wrapper.find('button[aria-label="Dismiss notification"]').trigger('click')
     expect(wrapper.emitted('dismiss')).toHaveLength(2)
   })
+
+  it('uses assertive alert semantics for error toasts and polite status semantics otherwise', () => {
+    const errorBanner = mount(ToastBanner, {
+      props: { message: 'Failed to save', tone: 'error', duration: 0 },
+    })
+    expect(errorBanner.attributes('role')).toBe('alert')
+    expect(errorBanner.attributes('aria-live')).toBe('assertive')
+
+    const infoBanner = mount(ToastBanner, {
+      props: { message: 'Saved', tone: 'success', duration: 0 },
+    })
+    expect(infoBanner.attributes('role')).toBe('status')
+    expect(infoBanner.attributes('aria-live')).toBe('polite')
+  })
 })

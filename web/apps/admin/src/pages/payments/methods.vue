@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { BaseSelect, ModalDialog, PageHeader, StatusBadge, ToastBanner } from '@/shared'
-import type { ToastTone } from '@/shared'
+import { BaseSelect, ModalDialog, PageHeader, StatusBadge, ToastBanner, useToast } from '@/shared'
 import { buildQrSvg, useCollectionAccounts, validateQrUploadFile } from '@/features/payments'
 import type { ChannelKind, CompanyCollectionAccount } from '@/features/payments'
 
 const { accounts, createAccount, updateAccount, rotateQrCode, toggleAccountActive } =
   useCollectionAccounts()
 
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('success')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 const modalError = ref<string | null>(null)
 
 const showAddModal = ref(false)
@@ -38,11 +36,6 @@ const qrUploadFileName = ref('')
 const activeChannelCount = computed(
   () => accounts.value.filter((account) => account.isActive).length,
 )
-
-function showToast(message: string, tone: ToastTone = 'success') {
-  toastMessage.value = message
-  toastTone.value = tone
-}
 
 function openAddModal() {
   newLabel.value = ''
@@ -162,8 +155,6 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
 
 <template>
   <div class="space-y-6">
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
-
     <PageHeader
       title="Company Payment Channels"
       description="Manage verified QRPh merchant codes and corporate bank depository accounts used for driver wallet top-ups."
@@ -183,6 +174,8 @@ function toggleAccountStatus(account: CompanyCollectionAccount) {
         </div>
       </template>
     </PageHeader>
+
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div

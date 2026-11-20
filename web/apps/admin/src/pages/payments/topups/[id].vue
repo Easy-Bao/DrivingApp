@@ -10,8 +10,8 @@ import {
   ToastBanner,
   useSafeBack,
   useSafeRouteParam,
+  useToast,
 } from '@/shared'
-import type { ToastTone } from '@/shared'
 import { useTopups } from '@/features/payments'
 
 definePage({
@@ -24,16 +24,10 @@ const { getRequestById, minDispatchBalanceCentavos, verifyAndCredit, rejectReque
 
 const request = computed(() => (requestId.value ? getRequestById(requestId.value) : undefined))
 
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('success')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 const showProofModal = ref(false)
 const showRejectConfirm = ref(false)
 const rejectReason = ref('')
-
-function showToast(message: string, tone: ToastTone = 'success') {
-  toastMessage.value = message
-  toastTone.value = tone
-}
 
 function statusTone(status: 'Pending' | 'Verified' | 'Rejected') {
   if (status === 'Verified') return 'success'
@@ -114,7 +108,7 @@ function submitRejection() {
         </div>
       </div>
 
-      <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
+      <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
       <div class="bg-white border border-neutral-200 p-5 space-y-4">
         <div

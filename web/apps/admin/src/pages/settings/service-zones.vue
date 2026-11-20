@@ -14,13 +14,14 @@ import {
   SearchField,
   StatusBadge,
   ToastBanner,
+  useToast,
 } from '@/shared'
 
 const { config } = usePlatformConfig()
 const { zones, saveServiceZone } = useServiceZones()
 
 const searchQuery = ref('')
-const toastMessage = ref<string | null>(null)
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const showModal = ref(false)
 const editingZoneId = ref<string | null>(null)
@@ -86,24 +87,19 @@ const saveZone = () => {
     modalError.value = result.error
     return
   }
-  toastMessage.value = result.message ?? 'Saved service zone.'
+  showToast(result.message ?? 'Saved service zone.')
   showModal.value = false
 }
 </script>
 
 <template>
   <div class="space-y-6">
-    <ToastBanner
-      v-if="toastMessage"
-      :message="toastMessage"
-      tone="success"
-      @dismiss="toastMessage = null"
-    />
-
     <PageHeader
       title="Service Zones"
       description="Configure geofence boundaries and localized surge multipliers."
     />
+
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

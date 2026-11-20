@@ -12,8 +12,8 @@ import {
   ToastBanner,
   formatCentavos,
   useDataTable,
+  useToast,
   type BadgeTone,
-  type ToastTone,
 } from '@/shared'
 import { useDrivers, type DriverRecord, type DriverStatus } from '@/features/users'
 
@@ -21,8 +21,7 @@ const { drivers, getEffectiveDriverStatus, suspendDriver, reactivateDriver } = u
 
 const searchQuery = ref('')
 const statusFilter = ref<'ALL' | DriverStatus>('ALL')
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('info')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('info')
 const inspectedDriver = ref<DriverRecord | null>(null)
 const pendingStatusDriver = ref<DriverRecord | null>(null)
 const statusReason = ref('')
@@ -80,13 +79,11 @@ function confirmStatusUpdate() {
       : suspendDriver(target.id, statusReason.value)
 
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
 
-  toastTone.value = target.status === 'Suspended' ? 'warning' : 'success'
-  toastMessage.value = result.message
+  showToast(result.message, target.status === 'Suspended' ? 'warning' : 'success')
   pendingStatusDriver.value = null
   statusReason.value = ''
 }
@@ -99,7 +96,7 @@ function confirmStatusUpdate() {
       description="Manage active drivers, assigned vehicles, and account statuses."
     />
 
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

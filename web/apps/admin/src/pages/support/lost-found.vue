@@ -10,13 +10,14 @@ import {
   SearchField,
   StatusBadge,
   ToastBanner,
+  useToast,
 } from '@/shared'
 
 const { lostItems, driverRosterOptions, createLostItem, confirmReturn } = useLostAndFound()
 
 const statusFilter = ref<'All' | LostFoundStatus>('All')
 const searchQuery = ref('')
-const toastMessage = ref<string | null>(null)
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const returningItem = ref<LostFoundRecord | null>(null)
 const returnDialogOpen = ref(false)
@@ -65,10 +66,10 @@ const submitReturn = () => {
   if (!target) return
   const result = confirmReturn(target.id, returnNote.value)
   if (!result.ok) {
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastMessage.value = `${target.id} closed as Returned to Owner.`
+  showToast(`${target.id} closed as Returned to Owner.`)
   returnDialogOpen.value = false
   returningItem.value = null
   returnNote.value = ''
@@ -97,24 +98,19 @@ const submitLostItem = () => {
     logError.value = result.error
     return
   }
-  toastMessage.value = `Logged lost item report for ${reporter}.`
+  showToast(`Logged lost item report for ${reporter}.`)
   showLogModal.value = false
 }
 </script>
 
 <template>
   <div class="space-y-6">
-    <ToastBanner
-      v-if="toastMessage"
-      :message="toastMessage"
-      tone="success"
-      @dismiss="toastMessage = null"
-    />
-
     <PageHeader
       title="Lost Items"
       description="Coordinate property recovery between passengers and drivers."
     />
+
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

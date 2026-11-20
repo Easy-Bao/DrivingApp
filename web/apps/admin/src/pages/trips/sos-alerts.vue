@@ -1,18 +1,17 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { SosLocationModal, useSosAlerts, type SosIncident } from '@/features/trips'
-import { ConfirmDialog, PageHeader, StatusBadge, ToastBanner } from '@/shared'
+import { ConfirmDialog, PageHeader, StatusBadge, ToastBanner, useToast } from '@/shared'
 
 const { alerts, activeAlertsCount, resolvedAlertsCount, notifyResponders, resolveAlert } =
   useSosAlerts()
 
 const statusFilter = ref<'all' | 'Active' | 'Resolved'>('all')
-const toastMessage = ref<string | null>(null)
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('info')
 const resolvingAlert = ref<SosIncident | null>(null)
 const resolveModalOpen = ref(false)
 const resolutionNote = ref('')
 const locationAlert = ref<SosIncident | null>(null)
-let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 const filterTabs = computed(() => [
   { key: 'all' as const, label: 'All', count: alerts.value.length },
@@ -23,19 +22,6 @@ const filterTabs = computed(() => [
 const filteredAlerts = computed(() => {
   if (statusFilter.value === 'all') return alerts.value
   return alerts.value.filter((alert) => alert.status === statusFilter.value)
-})
-
-function showToast(message: string) {
-  toastMessage.value = message
-  if (toastTimer !== null) clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => {
-    toastMessage.value = null
-    toastTimer = null
-  }, 3500)
-}
-
-onBeforeUnmount(() => {
-  if (toastTimer !== null) clearTimeout(toastTimer)
 })
 
 const handleNotifyResponders = (alert: SosIncident) => {
@@ -108,7 +94,7 @@ const confirmResolution = () => {
       </template>
     </PageHeader>
 
-    <ToastBanner :message="toastMessage" tone="info" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="space-y-3">
       <div

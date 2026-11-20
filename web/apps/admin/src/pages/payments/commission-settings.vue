@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { formatBpsAsPercent, formatCentavos, ModalDialog, PageHeader, ToastBanner } from '@/shared'
-import type { ToastTone } from '@/shared'
+import {
+  formatBpsAsPercent,
+  formatCentavos,
+  ModalDialog,
+  PageHeader,
+  ToastBanner,
+  useToast,
+} from '@/shared'
 import { useCommissionTiers } from '@/features/payments'
 import type { CommissionTier } from '@/features/payments'
 
 const { tiers, saveCommissionTier } = useCommissionTiers()
 
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('success')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 const showEditModal = ref(false)
 const activeTier = ref<CommissionTier | null>(null)
 const draftRateBps = ref(1500)
@@ -40,19 +45,18 @@ function submitTierUpdate() {
     return
   }
   showEditModal.value = false
-  toastMessage.value = result.message ?? `Updated ${activeTier.value.category}`
-  toastTone.value = 'success'
+  showToast(result.message ?? `Updated ${activeTier.value.category}`, 'success')
 }
 </script>
 
 <template>
   <div class="space-y-6">
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
-
     <PageHeader
       title="Commission Settings"
       description="Configure Bao-Bao platform commission basis points (bps), booking fees, and prepaid wallet minimums."
     />
+
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div

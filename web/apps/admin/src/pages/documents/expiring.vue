@@ -9,8 +9,8 @@ import {
   TablePagination,
   ToastBanner,
   useDataTable,
+  useToast,
   type BadgeTone,
-  type ToastTone,
 } from '@/shared'
 import { useExpiringDocuments, type ExpiryStatus } from '@/features/documents'
 
@@ -18,8 +18,7 @@ const { expiringDocs, sendUrgentReminder, broadcastCriticalReminders } = useExpi
 
 const searchQuery = ref('')
 const statusFilter = ref<'ALL' | 'CRITICAL' | ExpiryStatus>('ALL')
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('info')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('info')
 
 const filteredExpiring = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
@@ -69,18 +68,15 @@ function getStatusTone(status: ExpiryStatus): BadgeTone {
 function handleSendReminder(id: string) {
   const result = sendUrgentReminder(id)
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastTone.value = 'info'
-  toastMessage.value = result.message
+  showToast(result.message, 'info')
 }
 
 function handleBroadcastCritical() {
   const result = broadcastCriticalReminders()
-  toastTone.value = 'success'
-  toastMessage.value = result.message
+  showToast(result.message, 'success')
 }
 </script>
 
@@ -101,7 +97,7 @@ function handleBroadcastCritical() {
       </template>
     </PageHeader>
 
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

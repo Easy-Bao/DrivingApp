@@ -7,7 +7,14 @@ import {
   validatePlatformConfig,
   type PlatformConfig,
 } from '@/features/settings'
-import { ConfirmDialog, PageHeader, StatusBadge, ToastBanner, formatCentavos } from '@/shared'
+import {
+  ConfirmDialog,
+  PageHeader,
+  StatusBadge,
+  ToastBanner,
+  formatCentavos,
+  useToast,
+} from '@/shared'
 
 const { config, commitConfig, resetToDefaults } = usePlatformConfig()
 
@@ -42,14 +49,16 @@ const formattedMinBalance = computed(() =>
   draftMinWalletCentavos.value >= 0 ? formatCentavos(draftMinWalletCentavos.value) : '₱0.00',
 )
 
-const validationError = ref<string | null>(null)
 const auditReason = ref('')
 const confirmOpen = ref(false)
-const toastMessage = ref<string | null>(null)
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const requestSave = () => {
-  validationError.value = validatePlatformConfig(draftPayload.value)
-  if (validationError.value) return
+  const validationError = validatePlatformConfig(draftPayload.value)
+  if (validationError) {
+    showToast(validationError, 'error')
+    return
+  }
   auditReason.value = ''
   confirmOpen.value = true
 }
@@ -57,40 +66,27 @@ const requestSave = () => {
 const commitSettings = () => {
   const result = commitConfig(draftPayload.value, auditReason.value)
   if (!result.ok) {
-    validationError.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastMessage.value = `Saved platform configuration (${formatCentavos(config.value.minWalletBalanceCentavos)} min wallet, ${config.value.maxBiddingSurgeCap}x surge cap).`
+  showToast(
+    `Saved platform configuration (${formatCentavos(config.value.minWalletBalanceCentavos)} min wallet, ${config.value.maxBiddingSurgeCap}x surge cap).`,
+    'success',
+  )
   confirmOpen.value = false
   auditReason.value = ''
-  validationError.value = null
 }
 
 const handleResetDefaults = () => {
   resetToDefaults()
   draft.value = clonePlatformConfig(DEFAULT_PLATFORM_CONFIG)
   minWalletPhp.value = DEFAULT_PLATFORM_CONFIG.minWalletBalanceCentavos / 100
-  validationError.value = null
-  toastMessage.value = 'Restored default platform configuration.'
+  showToast('Restored default platform configuration.', 'success')
 }
 </script>
 
 <template>
   <div class="space-y-6">
-    <ToastBanner
-      v-if="toastMessage"
-      :message="toastMessage"
-      tone="success"
-      @dismiss="toastMessage = null"
-    />
-
-    <ToastBanner
-      v-if="validationError"
-      :message="validationError"
-      tone="error"
-      @dismiss="validationError = null"
-    />
-
     <PageHeader
       title="Preferences"
       description="Configure dispatch timeouts, wallet thresholds, and compliance gates."
@@ -115,6 +111,8 @@ const handleResetDefaults = () => {
         </button>
       </template>
     </PageHeader>
+
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div class="bg-white border border-neutral-200 p-5 space-y-4">

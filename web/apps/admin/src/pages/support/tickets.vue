@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useSupportTickets, type SupportTicket, type TicketStatus } from '@/features/support'
 import {
   BaseSelect,
@@ -11,6 +11,7 @@ import {
   TablePagination,
   ToastBanner,
   useDataTable,
+  useToast,
 } from '@/shared'
 
 const { tickets, openTicketCount, replyToTicket } = useSupportTickets()
@@ -22,8 +23,7 @@ const inspectedTicket = ref<SupportTicket | null>(null)
 const draftStatus = ref<TicketStatus>('Resolved')
 const draftReply = ref('')
 const modalError = ref<string | null>(null)
-const toastMessage = ref<string | null>(null)
-let toastTimer: ReturnType<typeof setTimeout> | null = null
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const filteredTickets = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
@@ -57,19 +57,6 @@ const {
   resetDeps: [searchQuery, statusFilter],
 })
 
-onBeforeUnmount(() => {
-  if (toastTimer !== null) clearTimeout(toastTimer)
-})
-
-function showToast(msg: string) {
-  toastMessage.value = msg
-  if (toastTimer !== null) clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => {
-    toastMessage.value = null
-    toastTimer = null
-  }, 4000)
-}
-
 const openTicketModal = (ticket: SupportTicket) => {
   inspectedTicket.value = ticket
   draftStatus.value = ticket.status === 'Open' ? 'Resolved' : ticket.status
@@ -101,17 +88,12 @@ const submitReply = () => {
 
 <template>
   <div class="space-y-6">
-    <ToastBanner
-      v-if="toastMessage"
-      :message="toastMessage"
-      tone="success"
-      @dismiss="toastMessage = null"
-    />
-
     <PageHeader
       title="Tickets"
       description="Respond to passenger and driver inquiries and account escalations."
     />
+
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

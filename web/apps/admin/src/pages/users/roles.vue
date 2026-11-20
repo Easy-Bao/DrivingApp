@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ModalDialog, PageHeader, ToastBanner, type ToastTone } from '@/shared'
+import { ModalDialog, PageHeader, ToastBanner, useToast } from '@/shared'
 import { useRoles, type RbacRole } from '@/features/users'
 
 const { roles, permissionCatalog, roleUserCounts, saveRole } = useRoles()
@@ -10,8 +10,7 @@ const editingRoleId = ref<string | null>(null)
 const formName = ref('')
 const formSummary = ref('')
 const formScopes = ref<string[]>([])
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('success')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 function openCreateRole() {
   editingRoleId.value = null
@@ -45,12 +44,10 @@ function submitRole() {
     scopes: formScopes.value,
   })
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastTone.value = 'success'
-  toastMessage.value = result.message
+  showToast(result.message, 'success')
   showRoleModal.value = false
 }
 </script>
@@ -69,7 +66,7 @@ function submitRole() {
       </template>
     </PageHeader>
 
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div

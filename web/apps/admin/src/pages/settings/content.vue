@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useLegalPolicies, type LegalDocument } from '@/features/settings'
-import { ModalDialog, PageHeader, StatusBadge, ToastBanner } from '@/shared'
+import { ModalDialog, PageHeader, StatusBadge, ToastBanner, useToast } from '@/shared'
 
 const { documents, publishDocument } = useLegalPolicies()
 
@@ -10,7 +10,7 @@ const draftTitle = ref('')
 const draftBody = ref('')
 const bumpMinor = ref(true)
 const modalError = ref<string | null>(null)
-const toastMessage = ref<string | null>(null)
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const openEditor = (doc: LegalDocument) => {
   editingDoc.value = doc
@@ -31,7 +31,7 @@ const saveDocument = () => {
     modalError.value = result.error
     return
   }
-  toastMessage.value = result.message ?? 'Published policy revision.'
+  showToast(result.message ?? 'Published policy revision.')
   editingDoc.value = null
   modalError.value = null
 }
@@ -39,17 +39,12 @@ const saveDocument = () => {
 
 <template>
   <div class="space-y-6">
-    <ToastBanner
-      v-if="toastMessage"
-      :message="toastMessage"
-      tone="success"
-      @dismiss="toastMessage = null"
-    />
-
     <PageHeader
       title="Policies"
       description="Maintain policy documents displayed in the passenger and driver apps."
     />
+
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div class="overflow-x-auto">

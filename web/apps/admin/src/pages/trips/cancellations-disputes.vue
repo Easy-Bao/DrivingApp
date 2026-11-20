@@ -16,13 +16,14 @@ import {
   ToastBanner,
   formatCentavos,
   useDataTable,
+  useToast,
 } from '@/shared'
 
 const { disputes, responsibilityLabels, resolveDispute } = useCancellationDisputes()
 
 const searchQuery = ref('')
 const statusFilter = ref<'ALL' | 'Under Review' | 'RESOLVED'>('ALL')
-const toastMessage = ref<string | null>(null)
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const reviewingCase = ref<CancellationCase | null>(null)
 const overrideResponsibility = ref<CancellationResponsibility>('operator_override')
@@ -85,11 +86,14 @@ const applyResolution = () => {
     auditNote: auditNote.value,
   })
   if (!result.ok) {
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
 
-  toastMessage.value = `${target.tripId} responsibility set to ${responsibilityLabels[overrideResponsibility.value]}.`
+  showToast(
+    `${target.tripId} responsibility set to ${responsibilityLabels[overrideResponsibility.value]}.`,
+    'success',
+  )
   reviewingCase.value = null
 }
 </script>
@@ -101,7 +105,7 @@ const applyResolution = () => {
       description="Review ride cancellations, fault responsibility, and penalty fees."
     />
 
-    <ToastBanner :message="toastMessage" tone="success" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

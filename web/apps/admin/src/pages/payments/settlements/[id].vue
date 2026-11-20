@@ -9,8 +9,8 @@ import {
   ToastBanner,
   useSafeBack,
   useSafeRouteParam,
+  useToast,
 } from '@/shared'
-import type { ToastTone } from '@/shared'
 import { useSettlements } from '@/features/payments'
 
 definePage({
@@ -31,17 +31,11 @@ const record = computed(() =>
   settlementId.value ? getSettlementById(settlementId.value) : undefined,
 )
 
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('success')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 const showReconcileConfirm = ref(false)
 const showWaiveConfirm = ref(false)
 const reconcileNote = ref('')
 const waiveNote = ref('')
-
-function showToast(message: string, tone: ToastTone = 'success') {
-  toastMessage.value = message
-  toastTone.value = tone
-}
 
 function submitReconcile() {
   if (!record.value) return
@@ -125,7 +119,7 @@ function submitWaive() {
         </div>
       </div>
 
-      <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
+      <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="bg-white border border-neutral-200 p-5 space-y-3">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
+import { ref } from 'vue'
 import { Icon } from '@iconify/vue'
 import {
   useExportCenter,
@@ -14,6 +14,7 @@ import {
   PageHeader,
   StatusBadge,
   ToastBanner,
+  useToast,
 } from '@/shared'
 
 const {
@@ -25,7 +26,7 @@ const {
   downloadGeneratedExport,
 } = useExportCenter()
 
-const actionToast = ref<string | null>(null)
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 const showScheduleModal = ref(false)
 const newName = ref('')
 const newFrequency = ref<ScheduledReport['frequency']>('Weekly')
@@ -33,25 +34,11 @@ const newFormat = ref<ScheduledExportFormat>('CSV')
 const newRecipients = ref('')
 const newWindow = ref('Every Monday at 08:00 AM PHT')
 const scheduleError = ref<string | null>(null)
-let toastTimer: ReturnType<typeof setTimeout> | null = null
-
-onBeforeUnmount(() => {
-  if (toastTimer !== null) clearTimeout(toastTimer)
-})
-
-function showToast(msg: string) {
-  actionToast.value = msg
-  if (toastTimer !== null) clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => {
-    actionToast.value = null
-    toastTimer = null
-  }, 4000)
-}
 
 function handleToggleSchedule(schedule: ScheduledReport) {
   const result = toggleSchedule(schedule.id)
   if (!result.ok) {
-    showToast(result.error)
+    showToast(result.error, 'error')
     return
   }
   showToast(`Schedule "${schedule.name}" is now ${schedule.isActive ? 'Active' : 'Paused'}.`)
@@ -91,17 +78,12 @@ function submitSchedule() {
 
 <template>
   <div class="space-y-6">
-    <ToastBanner
-      v-if="actionToast"
-      :message="actionToast"
-      tone="success"
-      @dismiss="actionToast = null"
-    />
-
     <PageHeader
       title="Exports"
       description="Download regional CSV reports and manage scheduled deliveries."
     />
+
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

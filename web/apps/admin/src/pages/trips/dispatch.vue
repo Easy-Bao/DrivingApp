@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useDispatch, type DispatchZone, type LiveDispatchItem } from '@/features/trips'
-import { BaseSelect, ModalDialog, PageHeader, StatusBadge, ToastBanner } from '@/shared'
+import { BaseSelect, ModalDialog, PageHeader, StatusBadge, ToastBanner, useToast } from '@/shared'
 
 const {
   zones,
@@ -12,8 +12,7 @@ const {
   assignDispatchDriver,
 } = useDispatch()
 
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<'success' | 'error'>('success')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 const editingZone = ref<DispatchZone | null>(null)
 const selectedSurge = ref('1.0x')
 const assigningDispatch = ref<LiveDispatchItem | null>(null)
@@ -29,12 +28,10 @@ const applySurgeOverride = () => {
   const targetName = editingZone.value.name
   const result = updateZoneSurge(targetName, selectedSurge.value)
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastTone.value = 'success'
-  toastMessage.value = `Updated dispatch surge multiplier for ${targetName} to ${selectedSurge.value}.`
+  showToast(`Updated dispatch surge multiplier for ${targetName} to ${selectedSurge.value}.`)
   editingZone.value = null
 }
 
@@ -48,12 +45,10 @@ const confirmDriverAssignment = () => {
   const targetId = assigningDispatch.value.id
   const result = assignDispatchDriver(targetId, selectedDriver.value)
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastTone.value = 'success'
-  toastMessage.value = `Manually dispatched ${selectedDriver.value} to ${targetId}.`
+  showToast(`Manually dispatched ${selectedDriver.value} to ${targetId}.`)
   assigningDispatch.value = null
 }
 </script>
@@ -65,7 +60,7 @@ const confirmDriverAssignment = () => {
       description="Monitor zone supply, adjust surge caps, and assign trips."
     />
 
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div

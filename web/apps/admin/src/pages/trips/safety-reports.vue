@@ -18,6 +18,7 @@ import {
   ToastBanner,
   exportToCsv,
   useDataTable,
+  useToast,
 } from '@/shared'
 
 const {
@@ -37,7 +38,7 @@ const inspectedReport = ref<SafetyReportRecord | null>(null)
 const draftStatus = ref<ReportStatus>('under_review')
 const moderationNote = ref('')
 const modalError = ref<string | null>(null)
-const toastMessage = ref<string | null>(null)
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const filteredReports = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
@@ -97,7 +98,7 @@ const saveModerationDecision = () => {
     modalError.value = result.error
     return
   }
-  toastMessage.value = `${targetId} updated to ${formatSafetyStatusLabel(draftStatus.value)}.`
+  showToast(`${targetId} updated to ${formatSafetyStatusLabel(draftStatus.value)}.`)
   closeModerationModal()
 }
 
@@ -135,12 +136,7 @@ const exportReports = () => {
       description="Review passenger and driver safety incidents and moderation actions."
     />
 
-    <ToastBanner
-      v-if="toastMessage"
-      :message="toastMessage"
-      tone="success"
-      @dismiss="toastMessage = null"
-    />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

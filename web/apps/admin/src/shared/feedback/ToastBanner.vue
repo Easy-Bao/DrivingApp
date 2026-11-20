@@ -74,13 +74,13 @@ const iconName = computed(() => {
 <template>
   <div
     v-if="message"
-    role="status"
-    aria-live="polite"
+    :role="tone === 'error' ? 'alert' : 'status'"
+    :aria-live="tone === 'error' ? 'assertive' : 'polite'"
     class="bg-neutral-900 text-white border border-neutral-900 p-3 text-xs font-medium flex items-center justify-between gap-3"
   >
     <div class="flex items-center gap-2 min-w-0">
       <Icon :icon="iconName" class="text-sm shrink-0" :class="iconClasses" aria-hidden="true" />
-      <span class="truncate">{{ message }}</span>
+      <span class="break-words">{{ message }}</span>
     </div>
     <button
       type="button"

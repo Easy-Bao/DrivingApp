@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { ROLE_PROFILES, lockAuthSession, updateOperatorProfile, useAuthSession } from '@/core'
-import { ModalDialog, PageHeader, StatusBadge, ToastBanner, getInitials } from '@/shared'
+import { ModalDialog, PageHeader, StatusBadge, ToastBanner, getInitials, useToast } from '@/shared'
 
 const router = useRouter()
 const authSession = useAuthSession()
@@ -32,8 +32,7 @@ const roleLabel = computed(() =>
 )
 const employeeCode = computed(() => authSession.value.userId?.toUpperCase() || 'OP-SESSION')
 
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<'success' | 'warning' | 'error' | 'info'>('success')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const showPasswordModal = ref(false)
 const currentPassword = ref('')
@@ -49,21 +48,20 @@ const saveProfile = () => {
     operatorEmail: email.value,
   })
   if (!result.ok) {
-    toastTone.value = 'error'
-    toastMessage.value = result.error
+    showToast(result.error, 'error')
     return
   }
-  toastTone.value = 'success'
-  toastMessage.value = 'Operator profile preferences updated.'
+  showToast('Operator profile preferences updated.', 'success')
 }
 
 const toggleMfaMethod = () => {
   mfaMethod.value = mfaMethod.value === 'authenticator' ? 'hardware_key' : 'authenticator'
-  toastTone.value = 'info'
-  toastMessage.value =
+  showToast(
     mfaMethod.value === 'hardware_key'
       ? 'Primary MFA switched to FIDO2 Hardware Security Key.'
-      : 'Primary MFA switched to Authenticator TOTP App.'
+      : 'Primary MFA switched to Authenticator TOTP App.',
+    'info',
+  )
 }
 
 const openPasswordModal = () => {
@@ -84,8 +82,7 @@ const submitPasswordRotation = () => {
     return
   }
   showPasswordModal.value = false
-  toastTone.value = 'success'
-  toastMessage.value = 'Session credentials rotated and active tokens refreshed.'
+  showToast('Session credentials rotated and active tokens refreshed.', 'success')
 }
 </script>
 
@@ -115,7 +112,7 @@ const submitPasswordRotation = () => {
       </template>
     </PageHeader>
 
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <form
       class="bg-white rounded-none border border-neutral-200 p-6 space-y-6"

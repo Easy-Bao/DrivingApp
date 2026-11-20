@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useBiddingSessions, type BidSession, type BidSessionStatus } from '@/features/trips'
 import {
   BaseSelect,
@@ -13,6 +13,7 @@ import {
   ToastBanner,
   formatCentavos,
   useDataTable,
+  useToast,
 } from '@/shared'
 
 const { sessions, openSessionCount, acceptanceRateLabel, bidSessionStatusTone, expireSession } =
@@ -24,8 +25,7 @@ const inspectedSession = ref<BidSession | null>(null)
 const pendingExpireSession = ref<BidSession | null>(null)
 const showExpireDialog = ref(false)
 const expireReason = ref('')
-const toastMessage = ref<string | null>(null)
-let toastTimer: ReturnType<typeof setTimeout> | null = null
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('info')
 
 const filteredSessions = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
@@ -50,19 +50,6 @@ const {
   initialPageSize: 5,
   resetDeps: [searchQuery, statusFilter],
 })
-
-onBeforeUnmount(() => {
-  if (toastTimer !== null) clearTimeout(toastTimer)
-})
-
-function showToast(msg: string) {
-  toastMessage.value = msg
-  if (toastTimer !== null) clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => {
-    toastMessage.value = null
-    toastTimer = null
-  }, 4000)
-}
 
 const hasActiveFilters = computed(() => searchQuery.value !== '' || statusFilter.value !== 'all')
 
@@ -98,7 +85,7 @@ function confirmExpireSession() {
       description="Monitor active passenger fare offers and driver bid responses."
     />
 
-    <ToastBanner :message="toastMessage" tone="info" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

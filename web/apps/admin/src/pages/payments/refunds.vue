@@ -11,8 +11,8 @@ import {
   TablePagination,
   ToastBanner,
   useDataTable,
+  useToast,
 } from '@/shared'
-import type { ToastTone } from '@/shared'
 import { useRefundClaims } from '@/features/payments'
 import type { AdjustmentClaimStatus, FareAdjustmentClaim } from '@/features/payments'
 
@@ -20,8 +20,7 @@ const { claims, resolveClaim } = useRefundClaims()
 
 const searchQuery = ref('')
 const statusFilter = ref<'All' | AdjustmentClaimStatus>('All')
-const toastMessage = ref<string | null>(null)
-const toastTone = ref<ToastTone>('success')
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const showResolveConfirm = ref(false)
 const selectedClaim = ref<FareAdjustmentClaim | null>(null)
@@ -78,21 +77,20 @@ function submitDecision() {
   if (!selectedClaim.value) return
   const result = resolveClaim(selectedClaim.value.id, decisionMode.value, resolutionNote.value)
   if (!result.ok) {
-    toastMessage.value = result.error
-    toastTone.value = 'warning'
+    showToast(result.error, 'warning')
     return
   }
   showResolveConfirm.value = false
   resolutionNote.value = ''
-  toastMessage.value = result.message ?? `Updated ${selectedClaim.value.id}`
-  toastTone.value = decisionMode.value === 'approve' ? 'success' : 'warning'
+  showToast(
+    result.message ?? `Updated ${selectedClaim.value.id}`,
+    decisionMode.value === 'approve' ? 'success' : 'warning',
+  )
 }
 </script>
 
 <template>
   <div class="space-y-6">
-    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="toastMessage = null" />
-
     <PageHeader
       title="Refunds & Fare Adjustments"
       description="Adjudicate passenger cash rebates, duplicate cancellation fees, and prepaid driver commission waivers."
@@ -105,6 +103,8 @@ function submitDecision() {
         </div>
       </template>
     </PageHeader>
+
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

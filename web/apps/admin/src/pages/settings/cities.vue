@@ -8,11 +8,12 @@ import {
   StatusBadge,
   ToastBanner,
   formatCentavos,
+  useToast,
 } from '@/shared'
 
 const { cities, saveMunicipality: commitMunicipality } = useCities()
 
-const toastMessage = ref<string | null>(null)
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 const showModal = ref(false)
 const editingMarketId = ref<string | null>(null)
 const draftName = ref('')
@@ -59,24 +60,19 @@ const saveMunicipality = () => {
     modalError.value = result.error
     return
   }
-  toastMessage.value = result.message ?? 'Saved municipal market settings.'
+  showToast(result.message ?? 'Saved municipal market settings.')
   showModal.value = false
 }
 </script>
 
 <template>
   <div class="space-y-6">
-    <ToastBanner
-      v-if="toastMessage"
-      :message="toastMessage"
-      tone="success"
-      @dismiss="toastMessage = null"
-    />
-
     <PageHeader
       title="Cities"
       description="Manage launch status, franchise gates, and baseline minimum fares."
     />
+
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="bg-white border border-neutral-200 overflow-hidden">
       <div

@@ -14,6 +14,7 @@ import {
   exportToCsv,
   formatCentavos,
   useDataTable,
+  useToast,
 } from '@/shared'
 
 const {
@@ -28,7 +29,7 @@ const {
 const searchQuery = ref('')
 const filterStatus = ref<'all' | TripStatus>('all')
 const selectedTrip = ref<TripRecord | null>(null)
-const toastMessage = ref<string | null>(null)
+const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('success')
 
 const hasActiveFilters = computed(() => searchQuery.value !== '' || filterStatus.value !== 'all')
 
@@ -79,7 +80,10 @@ const handleExport = () => {
       trip.status,
     ]),
   )
-  toastMessage.value = ok ? 'Trip history exported.' : 'No matching trips to export.'
+  showToast(
+    ok ? 'Trip history exported.' : 'No matching trips to export.',
+    ok ? 'success' : 'warning',
+  )
 }
 </script>
 
@@ -90,7 +94,7 @@ const handleExport = () => {
       description="Monitor trip records, bidding fares, and completion status."
     />
 
-    <ToastBanner :message="toastMessage" tone="success" @dismiss="toastMessage = null" />
+    <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       <div class="bg-white p-4 border border-neutral-200">
