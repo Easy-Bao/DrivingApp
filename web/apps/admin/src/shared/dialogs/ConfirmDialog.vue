@@ -93,9 +93,10 @@ function handleConfirm() {
         <textarea
           :id="reasonInputId"
           :value="reason"
+          :aria-required="requireReason || undefined"
           rows="3"
           :placeholder="reasonPlaceholder"
-          class="w-full px-3 py-2 text-xs bg-neutral-50 border border-neutral-200 focus:outline-none focus:border-neutral-900"
+          class="w-full px-3 py-2 text-xs bg-neutral-50 border border-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
           @input="emit('update:reason', ($event.target as HTMLTextAreaElement).value)"
         />
       </div>

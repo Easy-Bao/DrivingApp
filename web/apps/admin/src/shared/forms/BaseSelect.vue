@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T extends string = string">
-import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, useId } from 'vue'
 import { Icon } from '@iconify/vue'
 
 type RawOption<V extends string> = V | { label: string; value: V; disabled?: boolean }
@@ -31,16 +31,20 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: T): void
 }>()
 
+const listboxId = useId()
+
+const getOptionId = (index: number) => `${listboxId}-option-${index}`
+
 const normalizedOptions = computed<NormalizedOption<T>[]>(() =>
-  props.options.map((opt) =>
-    typeof opt === 'string'
-      ? { label: opt, value: opt, disabled: false }
-      : { label: opt.label, value: opt.value, disabled: Boolean(opt.disabled) },
+  props.options.map((option) =>
+    typeof option === 'string'
+      ? { label: option, value: option, disabled: false }
+      : { label: option.label, value: option.value, disabled: Boolean(option.disabled) },
   ),
 )
 
 const selectedLabel = computed(() => {
-  const match = normalizedOptions.value.find((opt) => opt.value === props.modelValue)
+  const match = normalizedOptions.value.find((option) => option.value === props.modelValue)
   return match ? match.label : props.placeholder
 })
 
@@ -52,6 +56,11 @@ const menuStyle = ref<Record<string, string>>({
   top: '0px',
   left: '0px',
   minWidth: '180px',
+})
+
+const activeDescendantId = computed(() => {
+  if (!isOpen.value || activeIndex.value < 0) return undefined
+  return getOptionId(activeIndex.value)
 })
 
 const updatePosition = () => {
@@ -102,8 +111,10 @@ const detachListeners = () => {
 const openMenu = async () => {
   if (props.disabled) return
   isOpen.value = true
-  const currentIdx = normalizedOptions.value.findIndex((o) => o.value === props.modelValue)
-  activeIndex.value = currentIdx >= 0 ? currentIdx : 0
+  const currentIndex = normalizedOptions.value.findIndex(
+    (option) => option.value === props.modelValue,
+  )
+  activeIndex.value = currentIndex >= 0 ? currentIndex : 0
   await nextTick()
   updatePosition()
   attachListeners()
@@ -128,9 +139,9 @@ const toggleMenu = () => {
   }
 }
 
-const selectOption = (opt: NormalizedOption<T>) => {
-  if (opt.disabled) return
-  emit('update:modelValue', opt.value)
+const selectOption = (option: NormalizedOption<T>) => {
+  if (option.disabled) return
+  emit('update:modelValue', option.value)
   closeMenu(true)
 }
 
@@ -146,11 +157,27 @@ const onOutsidePointerDown = (event: PointerEvent) => {
 const moveActive = (delta: number) => {
   const items = normalizedOptions.value
   if (items.length === 0) return
-  let idx = activeIndex.value
+  let index = activeIndex.value
   for (let step = 0; step < items.length; step++) {
-    idx = (idx + delta + items.length) % items.length
-    if (!items[idx]?.disabled) {
-      activeIndex.value = idx
+    index = (index + delta + items.length) % items.length
+    if (!items[index]?.disabled) {
+      activeIndex.value = index
+      return
+    }
+  }
+}
+
+const moveActiveToBoundary = (boundary: 'first' | 'last') => {
+  const items = normalizedOptions.value
+  if (items.length === 0) return
+  if (boundary === 'first') {
+    const firstEnabledIndex = items.findIndex((option) => !option.disabled)
+    if (firstEnabledIndex >= 0) activeIndex.value = firstEnabledIndex
+    return
+  }
+  for (let index = items.length - 1; index >= 0; index -= 1) {
+    if (!items[index]?.disabled) {
+      activeIndex.value = index
       return
     }
   }
@@ -167,6 +194,12 @@ const onDocumentKeydown = (event: KeyboardEvent) => {
   } else if (event.key === 'ArrowUp') {
     event.preventDefault()
     moveActive(-1)
+  } else if (event.key === 'Home') {
+    event.preventDefault()
+    moveActiveToBoundary('first')
+  } else if (event.key === 'End') {
+    event.preventDefault()
+    moveActiveToBoundary('last')
   } else if (event.key === 'Enter' || event.key === ' ') {
     const active = normalizedOptions.value[activeIndex.value]
     if (active && !active.disabled) {
@@ -196,6 +229,8 @@ onBeforeUnmount(() => {
     role="combobox"
     :disabled="disabled"
     :aria-expanded="isOpen"
+    :aria-controls="isOpen ? listboxId : undefined"
+    :aria-activedescendant="activeDescendantId"
     aria-haspopup="listbox"
     :aria-label="ariaLabel"
     :class="[
@@ -204,7 +239,7 @@ onBeforeUnmount(() => {
         ? 'bg-neutral-100 text-neutral-500 cursor-not-allowed'
         : 'bg-white text-neutral-900 hover:border-neutral-400 cursor-pointer',
     ]"
-    class="inline-flex items-center justify-between gap-3 px-3 py-1.5 border border-neutral-300 rounded-none text-xs font-medium focus:outline-none focus:border-neutral-900 transition-colors"
+    class="inline-flex items-center justify-between gap-3 px-3 py-1.5 border border-neutral-300 text-xs font-medium focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
     @click="toggleMenu"
     @keydown="onTriggerKeydown"
   >
@@ -220,20 +255,22 @@ onBeforeUnmount(() => {
   <Teleport to="body">
     <div
       v-if="isOpen"
+      :id="listboxId"
       ref="menuRef"
       role="listbox"
       :aria-label="ariaLabel"
       :style="menuStyle"
-      class="fixed z-[100] bg-white border border-neutral-300 rounded-none shadow-md py-0 max-h-64 overflow-y-auto focus:outline-none"
+      class="fixed z-[100] bg-white border border-neutral-300 shadow-md py-0 max-h-64 overflow-y-auto"
     >
       <button
         v-for="(option, index) in normalizedOptions"
+        :id="getOptionId(index)"
         :key="option.value"
         type="button"
         role="option"
         :aria-selected="option.value === modelValue"
         :disabled="option.disabled"
-        class="w-full text-left px-3 py-2 text-xs rounded-none flex items-center justify-between gap-2 transition-colors"
+        class="w-full text-left px-3 py-2 text-xs flex items-center justify-between gap-2 transition-colors"
         :class="
           option.value === modelValue
             ? 'bg-neutral-900 text-white font-semibold'

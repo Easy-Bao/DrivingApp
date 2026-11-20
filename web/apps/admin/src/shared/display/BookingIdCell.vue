@@ -20,7 +20,7 @@ const { copied, toastMessage, copy } = useClipboardCopy('Copied Booking ID')
       type="button"
       :title="`Copy Booking ID: ${bookingId}`"
       :aria-label="`Copy Booking ID ${bookingId}`"
-      class="inline-flex items-center justify-center p-1 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition-colors cursor-pointer shrink-0"
+      class="inline-flex items-center justify-center p-1 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-colors cursor-pointer shrink-0"
       @click="copy(bookingId)"
     >
       <Icon

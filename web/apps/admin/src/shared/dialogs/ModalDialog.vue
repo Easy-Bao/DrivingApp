@@ -1,9 +1,41 @@
+<script lang="ts">
+let openModalCount = 0
+let savedBodyOverflow: string | null = null
+
+function lockBodyScroll() {
+  if (typeof document === 'undefined') return
+  if (openModalCount === 0) {
+    savedBodyOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+  }
+  openModalCount += 1
+}
+
+function unlockBodyScroll() {
+  if (typeof document === 'undefined' || openModalCount === 0) return
+  openModalCount -= 1
+  if (openModalCount === 0) {
+    document.body.style.overflow = savedBodyOverflow ?? ''
+    savedBodyOverflow = null
+  }
+}
+</script>
+
 <script setup lang="ts">
-import { computed, useId } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useEscapeKey } from '@/shared/composables/use-escape-key'
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl'
+
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ')
 
 const props = withDefaults(
   defineProps<{
@@ -28,6 +60,9 @@ const emit = defineEmits<{
 }>()
 
 const headingId = useId()
+const dialogPanelRef = ref<HTMLDivElement | null>(null)
+let isScrollLocked = false
+let previousFocusedElement: HTMLElement | null = null
 
 const sizeClass = computed(() => {
   switch (props.size) {
@@ -55,6 +90,67 @@ function handleBackdropClick() {
   }
 }
 
+function trapFocus(event: KeyboardEvent) {
+  const panel = dialogPanelRef.value
+  if (!panel) return
+
+  const focusableElements = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+  if (focusableElements.length === 0) {
+    event.preventDefault()
+    panel.focus()
+    return
+  }
+
+  const first = focusableElements[0]!
+  const last = focusableElements[focusableElements.length - 1]!
+  const active = document.activeElement
+
+  if (event.shiftKey) {
+    if (active === first || active === panel || !panel.contains(active)) {
+      event.preventDefault()
+      last.focus()
+    }
+  } else if (active === last) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+function releaseDialogFocusAndScroll() {
+  if (isScrollLocked) {
+    unlockBodyScroll()
+    isScrollLocked = false
+  }
+  if (previousFocusedElement?.isConnected) {
+    previousFocusedElement.focus()
+  }
+  previousFocusedElement = null
+}
+
+watch(
+  () => props.open,
+  async (isOpen) => {
+    if (isOpen) {
+      if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+        previousFocusedElement = document.activeElement
+      }
+      if (!isScrollLocked) {
+        lockBodyScroll()
+        isScrollLocked = true
+      }
+      await nextTick()
+      dialogPanelRef.value?.focus()
+    } else {
+      releaseDialogFocusAndScroll()
+    }
+  },
+  { immediate: true },
+)
+
+onBeforeUnmount(() => {
+  releaseDialogFocusAndScroll()
+})
+
 useEscapeKey(() => props.open, closeDialog)
 </script>
 
@@ -69,15 +165,18 @@ useEscapeKey(() => props.open, closeDialog)
       @click.self="handleBackdropClick"
     >
       <div
+        ref="dialogPanelRef"
+        tabindex="-1"
         :class="sizeClass"
-        class="w-full bg-white border border-neutral-200 shadow-xl flex flex-col max-h-[90dvh]"
+        class="w-full bg-white border border-neutral-200 shadow-xl flex flex-col max-h-[90dvh] focus:outline-none"
+        @keydown.tab="trapFocus"
       >
         <div class="px-5 py-4 border-b border-neutral-200 shrink-0">
           <div class="flex items-start justify-between gap-3">
             <div class="flex-1 min-w-0">
-              <h3 :id="headingId" class="text-sm sm:text-base font-bold text-neutral-900">
+              <h2 :id="headingId" class="text-sm sm:text-base font-bold text-neutral-900">
                 {{ title }}
-              </h3>
+              </h2>
               <p v-if="subtitle && !$slots.subtitle" class="text-xs text-neutral-500 mt-0.5">
                 {{ subtitle }}
               </p>
@@ -87,7 +186,7 @@ useEscapeKey(() => props.open, closeDialog)
               <button
                 type="button"
                 :aria-label="closeLabel"
-                class="p-1 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition-colors cursor-pointer"
+                class="p-1.5 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-colors cursor-pointer"
                 @click="closeDialog"
               >
                 <Icon icon="lucide:x" class="text-base" aria-hidden="true" />

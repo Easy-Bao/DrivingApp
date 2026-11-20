@@ -51,4 +51,40 @@ describe('BaseSelect', () => {
     await trigger.trigger('click')
     expect(wrapper.find('[role="listbox"]').exists()).toBe(false)
   })
+
+  it('links combobox and listbox via ARIA attributes and supports Home and End keyboard navigation', async () => {
+    const wrapper = mount(BaseSelect, {
+      props: {
+        modelValue: 'Alpha',
+        ariaLabel: 'Choose tier',
+        options: ['Alpha', 'Beta', 'Gamma'],
+      },
+    })
+
+    const trigger = wrapper.find('button[role="combobox"]')
+    await trigger.trigger('click')
+
+    const listbox = wrapper.find('[role="listbox"]')
+    expect(listbox.attributes('id')).toBeTruthy()
+    expect(trigger.attributes('aria-controls')).toBe(listbox.attributes('id'))
+
+    const options = wrapper.findAll('[role="option"]')
+    expect(trigger.attributes('aria-activedescendant')).toBe(options[0]!.attributes('id'))
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'End' }))
+    await wrapper.vm.$nextTick()
+    expect(trigger.attributes('aria-activedescendant')).toBe(options[2]!.attributes('id'))
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home' }))
+    await wrapper.vm.$nextTick()
+    expect(trigger.attributes('aria-activedescendant')).toBe(options[0]!.attributes('id'))
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'End' }))
+    await wrapper.vm.$nextTick()
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['Gamma'])
+    expect(wrapper.find('[role="listbox"]').exists()).toBe(false)
+  })
 })

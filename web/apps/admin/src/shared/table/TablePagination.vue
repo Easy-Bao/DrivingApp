@@ -103,7 +103,7 @@ function goToPage(page: number) {
         <template v-for="entry in visiblePages" :key="entry">
           <span
             v-if="typeof entry === 'string'"
-            class="w-8 h-8 flex items-center justify-center text-neutral-400"
+            class="w-8 h-8 flex items-center justify-center text-neutral-500"
             aria-hidden="true"
           >
             &hellip;

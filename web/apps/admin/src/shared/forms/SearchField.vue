@@ -40,7 +40,7 @@ function handleEscape() {
   <div class="relative w-full">
     <Icon
       icon="lucide:search"
-      class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-xs"
+      class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-xs"
       aria-hidden="true"
     />
     <input
@@ -49,7 +49,7 @@ function handleEscape() {
       :value="modelValue"
       :placeholder="placeholder"
       :aria-label="ariaLabel"
-      class="w-full h-8 pl-8 pr-8 border border-neutral-200 bg-white text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-900 transition-colors"
+      class="w-full h-8 pl-8 pr-8 border border-neutral-200 bg-white text-xs text-neutral-900 placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
       @input="updateValue"
       @keydown.escape="handleEscape"
     />
@@ -57,7 +57,7 @@ function handleEscape() {
       v-if="modelValue"
       type="button"
       aria-label="Clear search"
-      class="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-900 transition-colors cursor-pointer"
+      class="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-neutral-500 hover:text-neutral-900 transition-colors cursor-pointer"
       @click="clearSearch"
     >
       <Icon icon="lucide:x" class="text-xs" aria-hidden="true" />

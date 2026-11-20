@@ -26,7 +26,7 @@ const emit = defineEmits<{
   <tr>
     <td :colspan="colspan" class="px-4 py-10 text-center">
       <div class="mx-auto max-w-sm flex flex-col items-center gap-2">
-        <Icon icon="lucide:search-x" class="text-lg text-neutral-400" aria-hidden="true" />
+        <Icon icon="lucide:search-x" class="text-lg text-neutral-500" aria-hidden="true" />
         <p class="text-xs font-semibold text-neutral-700">{{ title }}</p>
         <p v-if="description" class="text-[11px] text-neutral-500">{{ description }}</p>
         <button

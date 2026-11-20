@@ -29,5 +29,35 @@ describe('ModalDialog', () => {
 
     await wrapper.find('button[aria-label="Close dialog"]').trigger('click')
     expect(wrapper.emitted('update:open')).toHaveLength(2)
+    wrapper.unmount()
+  })
+
+  it('locks body scrolling while open and restores focus and scrolling when closed', async () => {
+    const opener = document.createElement('button')
+    document.body.appendChild(opener)
+    opener.focus()
+
+    const wrapper = mount(ModalDialog, {
+      attachTo: document.body,
+      props: {
+        open: false,
+        title: 'Focus Test Dialog',
+      },
+      slots: {
+        default: '<button type="button">Inside action</button>',
+      },
+    })
+
+    expect(document.body.style.overflow).toBe('')
+
+    await wrapper.setProps({ open: true })
+    expect(document.body.style.overflow).toBe('hidden')
+
+    await wrapper.setProps({ open: false })
+    expect(document.body.style.overflow).toBe('')
+    expect(document.activeElement).toBe(opener)
+
+    wrapper.unmount()
+    opener.remove()
   })
 })
