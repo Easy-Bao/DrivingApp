@@ -2,7 +2,7 @@
 import { Icon } from '@iconify/vue'
 import FloatingToast from '@/shared/feedback/FloatingToast.vue'
 import { formatBookingReference } from '@/shared/utils/format'
-import { useClipboardCopy } from '@/shared/utils/use-clipboard-copy'
+import { useClipboardCopy } from '@/shared/composables/use-clipboard-copy'
 
 defineProps<{
   bookingId: string

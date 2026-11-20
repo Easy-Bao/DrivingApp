@@ -31,7 +31,8 @@ const moderationReason = ref('')
 const filteredReviews = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
   return reviews.value.filter((review) => {
-    const matchesDir = directionFilter.value === 'All' || review.direction === directionFilter.value
+    const matchesDirection =
+      directionFilter.value === 'All' || review.direction === directionFilter.value
     const matchesState = stateFilter.value === 'All' || review.moderationState === stateFilter.value
     const matchesSearch =
       !query ||
@@ -40,7 +41,7 @@ const filteredReviews = computed(() => {
       review.author.toLowerCase().includes(query) ||
       review.subjectParty.toLowerCase().includes(query) ||
       review.comment.toLowerCase().includes(query)
-    return matchesDir && matchesState && matchesSearch
+    return matchesDirection && matchesState && matchesSearch
   })
 })
 

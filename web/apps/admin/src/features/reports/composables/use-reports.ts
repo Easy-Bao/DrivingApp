@@ -55,7 +55,7 @@ function cloneRecentExports(source: readonly GeneratedExportRecord[]): Generated
 
 const tripRowsRef = ref<TripReportRow[]>(SEED_TRIP_REPORTS.map((row) => ({ ...row })))
 const revenueRowsRef = ref<RevenueSummaryRow[]>(SEED_REVENUE_SUMMARIES.map((row) => ({ ...row })))
-const driverPerfRef = ref<DriverPerformanceRow[]>(
+const driverPerformanceRef = ref<DriverPerformanceRow[]>(
   SEED_DRIVER_PERFORMANCE.map((row) => ({ ...row })),
 )
 const riderCohortsRef = ref<RiderCohortRow[]>(SEED_RIDER_COHORTS.map((row) => ({ ...row })))
@@ -63,7 +63,7 @@ const demandWindowsRef = ref<DemandWindowRow[]>(SEED_DEMAND_WINDOWS.map((row) =>
 const expiryForecastRef = ref<ExpiryForecastRow[]>(SEED_EXPIRY_FORECAST.map((row) => ({ ...row })))
 const scheduledReportsRef = ref<ScheduledReport[]>(cloneScheduledReports(SEED_SCHEDULED_REPORTS))
 const recentExportsRef = ref<GeneratedExportRecord[]>(cloneRecentExports(SEED_RECENT_EXPORTS))
-let nextScheduleSeq = SEED_SCHEDULED_REPORTS.length + 1
+let nextScheduleSequence = SEED_SCHEDULED_REPORTS.length + 1
 
 const EMAIL_SEGMENT_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -82,13 +82,13 @@ function centavosToCsvPhp(centavos: number): string {
 export function resetReportsForTesting(): void {
   tripRowsRef.value = SEED_TRIP_REPORTS.map((row) => ({ ...row }))
   revenueRowsRef.value = SEED_REVENUE_SUMMARIES.map((row) => ({ ...row }))
-  driverPerfRef.value = SEED_DRIVER_PERFORMANCE.map((row) => ({ ...row }))
+  driverPerformanceRef.value = SEED_DRIVER_PERFORMANCE.map((row) => ({ ...row }))
   riderCohortsRef.value = SEED_RIDER_COHORTS.map((row) => ({ ...row }))
   demandWindowsRef.value = SEED_DEMAND_WINDOWS.map((row) => ({ ...row }))
   expiryForecastRef.value = SEED_EXPIRY_FORECAST.map((row) => ({ ...row }))
   scheduledReportsRef.value = cloneScheduledReports(SEED_SCHEDULED_REPORTS)
   recentExportsRef.value = cloneRecentExports(SEED_RECENT_EXPORTS)
-  nextScheduleSeq = SEED_SCHEDULED_REPORTS.length + 1
+  nextScheduleSequence = SEED_SCHEDULED_REPORTS.length + 1
 }
 
 export function useTripReports() {
@@ -155,7 +155,7 @@ export function useRevenueReports() {
 
 export function useDriverPerformanceReports() {
   function filterPerformanceRows(filters: ReportFilterValues): DriverPerformanceRow[] {
-    return driverPerfRef.value.filter((row) => {
+    return driverPerformanceRef.value.filter((row) => {
       const matchesZone = filters.cityZone === 'all-zones' || row.zoneKey === filters.cityZone
       const matchesMode =
         filters.dispatchMode === 'all-modes' || row.dispatchMode === filters.dispatchMode
@@ -179,7 +179,7 @@ export function useDriverPerformanceReports() {
     )
   }
 
-  return { performanceList: driverPerfRef, filterPerformanceRows, exportPerformanceRows }
+  return { performanceList: driverPerformanceRef, filterPerformanceRows, exportPerformanceRows }
 }
 
 export function useRiderCohortReports() {
@@ -376,8 +376,8 @@ export function useExportCenter() {
       return { ok: false, error: 'Enter a schedule title and valid recipient email.' }
     }
 
-    const id = `SCH-${String(nextScheduleSeq).padStart(2, '0')}`
-    nextScheduleSeq += 1
+    const id = `SCH-${String(nextScheduleSequence).padStart(2, '0')}`
+    nextScheduleSequence += 1
 
     scheduledReportsRef.value.unshift({
       id,

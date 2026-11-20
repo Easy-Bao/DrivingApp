@@ -3,12 +3,12 @@ import { onBeforeUnmount, ref } from 'vue'
 export function useClipboardCopy(successLabel = 'Copied to clipboard', durationMs = 2000) {
   const copied = ref(false)
   const toastMessage = ref<string | null>(null)
-  let timer: ReturnType<typeof setTimeout> | null = null
+  let resetTimer: ReturnType<typeof setTimeout> | null = null
 
   const clear = () => {
-    if (timer !== null) {
-      clearTimeout(timer)
-      timer = null
+    if (resetTimer !== null) {
+      clearTimeout(resetTimer)
+      resetTimer = null
     }
     copied.value = false
     toastMessage.value = null
@@ -25,13 +25,13 @@ export function useClipboardCopy(successLabel = 'Copied to clipboard', durationM
 
     copied.value = true
     toastMessage.value = successLabel
-    if (timer !== null) {
-      clearTimeout(timer)
+    if (resetTimer !== null) {
+      clearTimeout(resetTimer)
     }
-    timer = setTimeout(() => {
+    resetTimer = setTimeout(() => {
       copied.value = false
       toastMessage.value = null
-      timer = null
+      resetTimer = null
     }, durationMs)
   }
 

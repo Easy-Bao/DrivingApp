@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { loginOperator } from '@/core'
 import { resetSettingsForTesting, useAuditLogs } from '@/features/settings'
+import { escapeXml } from '@/shared'
 import {
   buildDocumentPreviewSvg,
-  escapeXml,
   isDocumentExpired,
   resetDocumentsForTesting,
   useExpiringDocuments,

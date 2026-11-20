@@ -30,15 +30,16 @@ const verifiedTotalCentavos = computed(() =>
 
 const filteredRequests = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
-  return topUpRequests.value.filter((req) => {
+  return topUpRequests.value.filter((request) => {
     const matchesQuery =
       !query ||
-      req.id.toLowerCase().includes(query) ||
-      req.driverName.toLowerCase().includes(query) ||
-      req.vehiclePlate.toLowerCase().includes(query) ||
-      req.referenceCode.toLowerCase().includes(query)
-    const matchesStatus = statusFilter.value === 'All' || req.status === statusFilter.value
-    const matchesMethod = methodFilter.value === 'All' || req.paymentMethod === methodFilter.value
+      request.id.toLowerCase().includes(query) ||
+      request.driverName.toLowerCase().includes(query) ||
+      request.vehiclePlate.toLowerCase().includes(query) ||
+      request.referenceCode.toLowerCase().includes(query)
+    const matchesStatus = statusFilter.value === 'All' || request.status === statusFilter.value
+    const matchesMethod =
+      methodFilter.value === 'All' || request.paymentMethod === methodFilter.value
     return matchesQuery && matchesStatus && matchesMethod
   })
 })
@@ -76,15 +77,15 @@ function exportRequestsCsv() {
   exportToCsv(
     'easyride-topup-verification-queue',
     ['Request ID', 'Driver', 'Plate', 'Amount PHP', 'Method', 'Channel', 'Reference', 'Status'],
-    filteredRequests.value.map((req) => [
-      req.id,
-      req.driverName,
-      req.vehiclePlate,
-      (req.amountCentavos / 100).toFixed(2),
-      req.paymentMethod,
-      req.channelProvider,
-      req.referenceCode,
-      req.status,
+    filteredRequests.value.map((request) => [
+      request.id,
+      request.driverName,
+      request.vehiclePlate,
+      (request.amountCentavos / 100).toFixed(2),
+      request.paymentMethod,
+      request.channelProvider,
+      request.referenceCode,
+      request.status,
     ]),
   )
 }

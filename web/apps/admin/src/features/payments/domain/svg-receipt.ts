@@ -1,7 +1,5 @@
 import { escapeXml } from '@/shared'
 
-export { escapeXml }
-
 export function buildReceiptPreviewSvg(params: {
   provider: string
   amountCentavos: number

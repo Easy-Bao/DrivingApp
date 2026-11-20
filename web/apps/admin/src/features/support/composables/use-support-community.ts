@@ -32,15 +32,15 @@ const reviewsRef = ref<ReviewEntry[]>(cloneReviews(SEED_REVIEWS))
 const lostItemsRef = ref<LostFoundRecord[]>(cloneLostItems(SEED_LOST_ITEMS))
 const faqsRef = ref<FaqArticle[]>(cloneFaqs(SEED_FAQS))
 
-let nextLostItemSeq = 803
-let nextFaqSeq = SEED_FAQS.length + 1
+let nextLostItemSequence = 803
+let nextFaqSequence = SEED_FAQS.length + 1
 
 export function resetSupportCommunityForTesting(): void {
   reviewsRef.value = cloneReviews(SEED_REVIEWS)
   lostItemsRef.value = cloneLostItems(SEED_LOST_ITEMS)
   faqsRef.value = cloneFaqs(SEED_FAQS)
-  nextLostItemSeq = 803
-  nextFaqSeq = SEED_FAQS.length + 1
+  nextLostItemSequence = 803
+  nextFaqSequence = SEED_FAQS.length + 1
 }
 
 export function useReviewModeration() {
@@ -111,8 +111,8 @@ export function useLostAndFound() {
       }
     }
 
-    const id = `LF-7016-${nextLostItemSeq}`
-    nextLostItemSeq += 1
+    const id = `LF-7016-${nextLostItemSequence}`
+    nextLostItemSequence += 1
 
     const driverPhone = resolveDriverPhone(driver)
 
@@ -199,8 +199,8 @@ export function useFaqArticles() {
       return { ok: true }
     }
 
-    const nextId = `FAQ-${String(nextFaqSeq).padStart(2, '0')}`
-    nextFaqSeq += 1
+    const nextId = `FAQ-${String(nextFaqSequence).padStart(2, '0')}`
+    nextFaqSequence += 1
 
     faqsRef.value.unshift({
       id: nextId,

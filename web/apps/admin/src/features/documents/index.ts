@@ -1,4 +1,4 @@
-export { buildDocumentPreviewSvg, escapeXml } from '@/features/documents/domain/doc-preview'
+export { buildDocumentPreviewSvg } from '@/features/documents/domain/document-preview'
 export { isDocumentExpired } from '@/features/documents/domain/expiry'
 export {
   resetDocumentsForTesting,

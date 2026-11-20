@@ -47,18 +47,18 @@ const ringSegments = computed(() => buildDonutSegments(props.bookingMix, circumf
             <svg viewBox="0 0 96 96" class="w-full h-full -rotate-90" aria-hidden="true">
               <circle cx="48" cy="48" r="36" fill="none" stroke="#f5f5f5" stroke-width="10" />
               <motion.circle
-                v-for="seg in ringSegments"
-                :key="seg.label"
+                v-for="segment in ringSegments"
+                :key="segment.label"
                 cx="48"
                 cy="48"
                 r="36"
                 fill="none"
-                :stroke="BOOKING_STYLES[seg.key].colorHex"
+                :stroke="BOOKING_STYLES[segment.key].colorHex"
                 stroke-width="10"
                 :initial="{ strokeDasharray: emptyDashArray, strokeDashoffset: 0 }"
                 :animate="{
-                  strokeDasharray: seg.dashArray,
-                  strokeDashoffset: seg.dashOffset,
+                  strokeDasharray: segment.dashArray,
+                  strokeDashoffset: segment.dashOffset,
                 }"
                 :transition="{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }"
               />

@@ -8,7 +8,7 @@ const XML_ESCAPE_MAP: Record<string, string> = {
 }
 
 export function escapeXml(value: string): string {
-  return value.replace(/[&<>"']/g, (ch) => XML_ESCAPE_MAP[ch] ?? ch)
+  return value.replace(/[&<>"']/g, (character) => XML_ESCAPE_MAP[character] ?? character)
 }
 
 export function formatPhp(amount: number): string {

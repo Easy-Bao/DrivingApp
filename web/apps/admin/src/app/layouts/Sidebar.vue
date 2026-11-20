@@ -14,7 +14,7 @@ import { useSettlements, useTopups } from '@/features/payments'
 import { useSupportTickets } from '@/features/support'
 import { useSafetyReports, useSosAlerts } from '@/features/trips'
 import { useDriverApplications } from '@/features/users'
-import { ConfirmDialog, useEscapeKey } from '@/shared'
+import { ConfirmDialog, getInitials, useEscapeKey } from '@/shared'
 
 const props = withDefaults(
   defineProps<{
@@ -199,15 +199,7 @@ const activeRoleLabel = computed(() => {
   return role ? ROLE_PROFILES[role].label : 'Locked'
 })
 
-const operatorInitials = computed(() => {
-  const words = authSession.value.operatorName.trim().split(/\s+/).filter(Boolean)
-  return (
-    words
-      .slice(0, 2)
-      .map((w) => w[0]?.toUpperCase() || '')
-      .join('') || 'OP'
-  )
-})
+const operatorInitials = computed(() => getInitials(authSession.value.operatorName, 'OP'))
 
 const expandedGroups = ref<Record<string, boolean>>({
   dashboard: true,

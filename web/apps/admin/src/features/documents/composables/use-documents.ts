@@ -39,26 +39,28 @@ export function useVerificationDocuments() {
   const { appendAuditLog } = useAuditLogs()
 
   function verifyDocument(id: string): DocumentActionResult {
-    const idx = pendingDocs.value.findIndex((item) => item.id === id)
-    if (idx === -1) {
+    const documentIndex = pendingDocs.value.findIndex((item) => item.id === id)
+    if (documentIndex === -1) {
       return { ok: false, error: `Pending document ${id} was not found.` }
     }
 
-    const doc = pendingDocs.value[idx]!
-    if (doc.status !== 'Pending Review') {
-      return { ok: false, error: `Document ${doc.id} has already been processed.` }
+    const documentRecord = pendingDocs.value[documentIndex]!
+    if (documentRecord.status !== 'Pending Review') {
+      return { ok: false, error: `Document ${documentRecord.id} has already been processed.` }
     }
 
-    pendingDocs.value.splice(idx, 1)
+    pendingDocs.value.splice(documentIndex, 1)
 
     appendAuditLog({
       action: 'DOCUMENT_APPROVED',
-      targetEntity: `${doc.id} · ${doc.driver}`,
-      payload: { summary: `Verified "${doc.docType}" issued by ${doc.issuingAgency}.` },
+      targetEntity: `${documentRecord.id} · ${documentRecord.driver}`,
+      payload: {
+        summary: `Verified "${documentRecord.docType}" issued by ${documentRecord.issuingAgency}.`,
+      },
       severity: 'Info',
     })
 
-    return { ok: true, message: `${doc.id} approved for ${doc.driver}.` }
+    return { ok: true, message: `${documentRecord.id} approved for ${documentRecord.driver}.` }
   }
 
   function rejectDocument(id: string, reason: string): DocumentActionResult {
@@ -67,25 +69,25 @@ export function useVerificationDocuments() {
       return { ok: false, error: 'Rejection reason is required.' }
     }
 
-    const idx = pendingDocs.value.findIndex((item) => item.id === id)
-    if (idx === -1) {
+    const documentIndex = pendingDocs.value.findIndex((item) => item.id === id)
+    if (documentIndex === -1) {
       return { ok: false, error: `Pending document ${id} was not found.` }
     }
 
-    const doc = pendingDocs.value[idx]!
-    if (doc.status !== 'Pending Review') {
-      return { ok: false, error: `Document ${doc.id} has already been processed.` }
+    const documentRecord = pendingDocs.value[documentIndex]!
+    if (documentRecord.status !== 'Pending Review') {
+      return { ok: false, error: `Document ${documentRecord.id} has already been processed.` }
     }
 
-    pendingDocs.value.splice(idx, 1)
+    pendingDocs.value.splice(documentIndex, 1)
     const session = getAuthSession()
 
     const rejectedEntry: RejectedDocument = {
-      id: doc.id,
-      driver: doc.driver,
-      driverPhone: doc.driverPhone,
-      city: doc.city,
-      docType: doc.docType,
+      id: documentRecord.id,
+      driver: documentRecord.driver,
+      driverPhone: documentRecord.driverPhone,
+      city: documentRecord.city,
+      docType: documentRecord.docType,
       rejectionReason: trimmedReason,
       rejectedBy: session.operatorName || 'System Admin',
       rejectedAt: 'Just now',
@@ -95,12 +97,12 @@ export function useVerificationDocuments() {
 
     appendAuditLog({
       action: 'DOCUMENT_REJECTED',
-      targetEntity: `${doc.id} · ${doc.driver}`,
-      payload: { docType: doc.docType, reason: trimmedReason },
+      targetEntity: `${documentRecord.id} · ${documentRecord.driver}`,
+      payload: { docType: documentRecord.docType, reason: trimmedReason },
       severity: 'Warning',
     })
 
-    return { ok: true, message: `${doc.id} rejected (${trimmedReason}).` }
+    return { ok: true, message: `${documentRecord.id} rejected (${trimmedReason}).` }
   }
 
   return {
@@ -170,13 +172,13 @@ export function useRejectedDocuments() {
   const { appendAuditLog } = useAuditLogs()
 
   function queueForReReview(id: string): DocumentActionResult {
-    const idx = rejectedDocs.value.findIndex((item) => item.id === id)
-    if (idx === -1) {
+    const documentIndex = rejectedDocs.value.findIndex((item) => item.id === id)
+    if (documentIndex === -1) {
       return { ok: false, error: `Rejected document ${id} was not found.` }
     }
 
-    const target = rejectedDocs.value[idx]!
-    rejectedDocs.value.splice(idx, 1)
+    const target = rejectedDocs.value[documentIndex]!
+    rejectedDocs.value.splice(documentIndex, 1)
 
     const existingPending = pendingDocs.value.some((item) => item.id === target.id)
     if (!existingPending) {

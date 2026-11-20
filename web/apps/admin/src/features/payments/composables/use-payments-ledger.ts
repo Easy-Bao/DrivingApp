@@ -44,7 +44,7 @@ const commissionTiers = ref<CommissionTier[]>(cloneList(INITIAL_COMMISSION_TIERS
 const fareRules = ref<FareTierRule[]>(cloneList(INITIAL_FARE_RULES))
 const collectionAccounts = ref<CompanyCollectionAccount[]>(cloneList(INITIAL_COLLECTION_ACCOUNTS))
 const refundClaims = ref<FareAdjustmentClaim[]>(cloneList(INITIAL_REFUND_CLAIMS))
-let nextLedgerSeq = 9402
+let nextLedgerSequence = 9402
 
 function syncDriverEarningStanding(driverName: string, balanceCentavos: number) {
   const { config } = usePlatformConfig()
@@ -64,7 +64,7 @@ export function resetPaymentsLedgerForTesting() {
   fareRules.value = cloneList(INITIAL_FARE_RULES)
   collectionAccounts.value = cloneList(INITIAL_COLLECTION_ACCOUNTS)
   refundClaims.value = cloneList(INITIAL_REFUND_CLAIMS)
-  nextLedgerSeq = 9402
+  nextLedgerSequence = 9402
 }
 
 export function syncTopupCreditToLedger(topup: TopUpRequest) {
@@ -84,7 +84,7 @@ export function syncTopupCreditToLedger(topup: TopUpRequest) {
   }
 
   transactions.value.unshift({
-    id: `TXN-7016-${nextLedgerSeq++}`,
+    id: `TXN-7016-${nextLedgerSequence++}`,
     referenceId: topup.id,
     driver: topup.driverName,
     type: topup.paymentMethod === 'Company QR Code' ? 'QRPh Wallet Top-Up' : 'Bank Top-Up',
@@ -140,7 +140,7 @@ export function useWalletAccounts() {
 
     const trimmedReason = input.reason.trim()
     transactions.value.unshift({
-      id: `TXN-7016-${nextLedgerSeq++}`,
+      id: `TXN-7016-${nextLedgerSequence++}`,
       referenceId: wallet.driverId,
       driver: wallet.driver,
       type: 'Operator Wallet Adjustment',

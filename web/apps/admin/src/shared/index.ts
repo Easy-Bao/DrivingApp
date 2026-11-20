@@ -18,7 +18,8 @@ export { useDataTable, type UseDataTableOptions } from '@/shared/table/use-data-
 export { useEscapeKey } from '@/shared/composables/use-escape-key'
 export { useSafeBack } from '@/shared/composables/use-safe-back'
 export { useSafeRouteParam } from '@/shared/composables/use-safe-route-param'
-export { useClipboardCopy } from '@/shared/utils/use-clipboard-copy'
+export { useClipboardCopy } from '@/shared/composables/use-clipboard-copy'
+export { getInitials } from '@/shared/utils/text'
 export {
   getDaysUntilIsoDate,
   isIsoDateExpired,

@@ -23,16 +23,16 @@ const toastMessage = ref<string | null>(null)
 const toastTone = ref<ToastTone>('success')
 
 const filteredRejected = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  return rejectedDocs.value.filter((doc) => {
-    if (resubmissionFilter.value === 'RESUBMITTED' && !doc.resubmitted) return false
-    if (resubmissionFilter.value === 'AWAITING' && doc.resubmitted) return false
-    if (!q) return true
+  const query = searchQuery.value.trim().toLowerCase()
+  return rejectedDocs.value.filter((documentRecord) => {
+    if (resubmissionFilter.value === 'RESUBMITTED' && !documentRecord.resubmitted) return false
+    if (resubmissionFilter.value === 'AWAITING' && documentRecord.resubmitted) return false
+    if (!query) return true
     return (
-      doc.id.toLowerCase().includes(q) ||
-      doc.driver.toLowerCase().includes(q) ||
-      doc.docType.toLowerCase().includes(q) ||
-      doc.rejectionReason.toLowerCase().includes(q)
+      documentRecord.id.toLowerCase().includes(query) ||
+      documentRecord.driver.toLowerCase().includes(query) ||
+      documentRecord.docType.toLowerCase().includes(query) ||
+      documentRecord.rejectionReason.toLowerCase().includes(query)
     )
   })
 })

@@ -40,15 +40,15 @@ const pendingToggleStatus = ref<OperatorAccount | null>(null)
 const statusReason = ref('')
 
 const filteredOperators = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  return operators.value.filter((op) => {
-    if (roleFilter.value !== 'ALL' && op.role !== roleFilter.value) return false
-    if (!q) return true
+  const query = searchQuery.value.trim().toLowerCase()
+  return operators.value.filter((operator) => {
+    if (roleFilter.value !== 'ALL' && operator.role !== roleFilter.value) return false
+    if (!query) return true
     return (
-      op.id.toLowerCase().includes(q) ||
-      op.name.toLowerCase().includes(q) ||
-      op.email.toLowerCase().includes(q) ||
-      op.role.toLowerCase().includes(q)
+      operator.id.toLowerCase().includes(query) ||
+      operator.name.toLowerCase().includes(query) ||
+      operator.email.toLowerCase().includes(query) ||
+      operator.role.toLowerCase().includes(query)
     )
   })
 })

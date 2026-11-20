@@ -4,6 +4,7 @@ import { Icon } from '@iconify/vue'
 import {
   ConfirmDialog,
   formatCentavos,
+  getInitials,
   ModalDialog,
   StatusBadge,
   ToastBanner,
@@ -123,7 +124,7 @@ function submitRejection() {
             <div
               class="w-10 h-10 bg-neutral-900 text-white flex items-center justify-center font-bold text-sm shrink-0"
             >
-              {{ request.driverName.charAt(0) }}
+              {{ getInitials(request.driverName, 'DR') }}
             </div>
             <div>
               <h2 class="font-bold text-sm text-neutral-900">{{ request.driverName }}</h2>

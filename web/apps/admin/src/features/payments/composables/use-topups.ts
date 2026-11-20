@@ -26,41 +26,41 @@ export function useTopups() {
   }
 
   function verifyAndCredit(id: string): boolean {
-    const req = getRequestById(id)
-    if (!req || req.status !== 'Pending') return false
+    const request = getRequestById(id)
+    if (!request || request.status !== 'Pending') return false
 
-    req.status = 'Verified'
-    req.currentBalanceCentavos += req.amountCentavos
-    syncTopupCreditToLedger(req)
+    request.status = 'Verified'
+    request.currentBalanceCentavos += request.amountCentavos
+    syncTopupCreditToLedger(request)
 
     appendAuditLog({
       action: 'WALLET_TOPUP_VERIFIED',
-      targetEntity: `${req.id} (${req.driverName})`,
+      targetEntity: `${request.id} (${request.driverName})`,
       severity: 'Info',
       payload: {
-        amountCentavos: req.amountCentavos,
-        amountFormatted: formatCentavos(req.amountCentavos),
-        referenceCode: req.referenceCode,
+        amountCentavos: request.amountCentavos,
+        amountFormatted: formatCentavos(request.amountCentavos),
+        referenceCode: request.referenceCode,
       },
     })
     return true
   }
 
   function rejectRequest(id: string, reason: string): boolean {
-    const req = getRequestById(id)
+    const request = getRequestById(id)
     const trimmedReason = reason.trim()
-    if (!req || req.status !== 'Pending' || !trimmedReason) return false
+    if (!request || request.status !== 'Pending' || !trimmedReason) return false
 
-    req.status = 'Rejected'
-    req.rejectionReason = trimmedReason
+    request.status = 'Rejected'
+    request.rejectionReason = trimmedReason
 
     appendAuditLog({
       action: 'WALLET_TOPUP_REJECTED',
-      targetEntity: `${req.id} (${req.driverName})`,
+      targetEntity: `${request.id} (${request.driverName})`,
       severity: 'Warning',
       payload: {
-        amountCentavos: req.amountCentavos,
-        referenceCode: req.referenceCode,
+        amountCentavos: request.amountCentavos,
+        referenceCode: request.referenceCode,
         reason: trimmedReason,
       },
     })

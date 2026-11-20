@@ -28,19 +28,19 @@ const pendingStatusDriver = ref<DriverRecord | null>(null)
 const statusReason = ref('')
 
 const filteredDrivers = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
+  const query = searchQuery.value.trim().toLowerCase()
   return drivers.value.filter((driver) => {
     const liveStatus = getEffectiveDriverStatus(driver)
     if (statusFilter.value !== 'ALL' && liveStatus !== statusFilter.value) {
       return false
     }
-    if (!q) return true
+    if (!query) return true
     return (
-      driver.id.toLowerCase().includes(q) ||
-      driver.name.toLowerCase().includes(q) ||
-      driver.phone.toLowerCase().includes(q) ||
-      driver.vehicle.toLowerCase().includes(q) ||
-      driver.todaZone.toLowerCase().includes(q)
+      driver.id.toLowerCase().includes(query) ||
+      driver.name.toLowerCase().includes(query) ||
+      driver.phone.toLowerCase().includes(query) ||
+      driver.vehicle.toLowerCase().includes(query) ||
+      driver.todaZone.toLowerCase().includes(query)
     )
   })
 })

@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { ROLE_PROFILES, lockAuthSession, updateOperatorProfile, useAuthSession } from '@/core'
-import { ModalDialog, PageHeader, StatusBadge, ToastBanner } from '@/shared'
+import { ModalDialog, PageHeader, StatusBadge, ToastBanner, getInitials } from '@/shared'
 
 const router = useRouter()
 const authSession = useAuthSession()
@@ -41,12 +41,7 @@ const newPassword = ref('')
 const confirmPassword = ref('')
 const passwordError = ref('')
 
-const initials = computed(() => {
-  const parts = fullName.value.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return 'AD'
-  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
-  return `${parts[0]![0]}${parts[1]![0]}`.toUpperCase()
-})
+const initials = computed(() => getInitials(fullName.value, 'AD'))
 
 const saveProfile = () => {
   const result = updateOperatorProfile({

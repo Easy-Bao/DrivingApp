@@ -27,11 +27,7 @@ export type {
   WalletLedgerEntry,
 } from '@/features/payments/types'
 
-export {
-  buildQrSvg,
-  buildReceiptPreviewSvg,
-  escapeXml,
-} from '@/features/payments/domain/svg-receipt'
+export { buildQrSvg, buildReceiptPreviewSvg } from '@/features/payments/domain/svg-receipt'
 
 export {
   computeDriverTakeHomeCentavos,

@@ -22,27 +22,29 @@ const toastMessage = ref<string | null>(null)
 const toastTone = ref<ToastTone>('info')
 
 const filteredExpiring = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  return expiringDocs.value.filter((doc) => {
-    if (statusFilter.value === 'CRITICAL' && doc.daysLeft > 14) return false
+  const query = searchQuery.value.trim().toLowerCase()
+  return expiringDocs.value.filter((documentRecord) => {
+    if (statusFilter.value === 'CRITICAL' && documentRecord.daysLeft > 14) return false
     if (
       statusFilter.value !== 'ALL' &&
       statusFilter.value !== 'CRITICAL' &&
-      doc.status !== statusFilter.value
+      documentRecord.status !== statusFilter.value
     ) {
       return false
     }
-    if (!q) return true
+    if (!query) return true
     return (
-      doc.id.toLowerCase().includes(q) ||
-      doc.driver.toLowerCase().includes(q) ||
-      doc.docType.toLowerCase().includes(q) ||
-      doc.city.toLowerCase().includes(q)
+      documentRecord.id.toLowerCase().includes(query) ||
+      documentRecord.driver.toLowerCase().includes(query) ||
+      documentRecord.docType.toLowerCase().includes(query) ||
+      documentRecord.city.toLowerCase().includes(query)
     )
   })
 })
 
-const criticalCount = computed(() => expiringDocs.value.filter((d) => d.daysLeft <= 14).length)
+const criticalCount = computed(
+  () => expiringDocs.value.filter((documentRecord) => documentRecord.daysLeft <= 14).length,
+)
 
 const hasActiveFilters = computed(() =>
   Boolean(searchQuery.value.trim() || statusFilter.value !== 'ALL'),

@@ -46,16 +46,18 @@ const checklist = reactive<VerificationChecklist>({
 })
 
 const filteredDocs = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  return pendingDocs.value.filter((doc) => {
-    if (docTypeFilter.value === 'EXPIRED' && !isDocumentExpired(doc.expiryDate)) return false
-    if (docTypeFilter.value === 'TWO_SIDED' && !doc.hasTwoSides) return false
-    if (!q) return true
+  const query = searchQuery.value.trim().toLowerCase()
+  return pendingDocs.value.filter((documentRecord) => {
+    if (docTypeFilter.value === 'EXPIRED' && !isDocumentExpired(documentRecord.expiryDate)) {
+      return false
+    }
+    if (docTypeFilter.value === 'TWO_SIDED' && !documentRecord.hasTwoSides) return false
+    if (!query) return true
     return (
-      doc.id.toLowerCase().includes(q) ||
-      doc.driver.toLowerCase().includes(q) ||
-      doc.docType.toLowerCase().includes(q) ||
-      doc.issuingAgency.toLowerCase().includes(q)
+      documentRecord.id.toLowerCase().includes(query) ||
+      documentRecord.driver.toLowerCase().includes(query) ||
+      documentRecord.docType.toLowerCase().includes(query) ||
+      documentRecord.issuingAgency.toLowerCase().includes(query)
     )
   })
 })

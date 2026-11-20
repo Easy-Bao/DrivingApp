@@ -1,4 +1,4 @@
-import { buildDocumentPreviewSvg } from '@/features/documents/domain/doc-preview'
+import { buildDocumentPreviewSvg } from '@/features/documents/domain/document-preview'
 import type {
   ExpiringDocument,
   PendingDocument,

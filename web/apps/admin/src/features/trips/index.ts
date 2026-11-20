@@ -1,3 +1,7 @@
+import { resetDispatchForTesting } from '@/features/trips/composables/use-dispatch'
+import { resetSafetyForTesting } from '@/features/trips/composables/use-safety'
+import { resetTripRecordsForTesting } from '@/features/trips/composables/use-trips'
+
 export type {
   BidOffer,
   BidOfferStatus,
@@ -38,7 +42,12 @@ export {
   type ModerateReportInput,
   type ResolveDisputeInput,
 } from '@/features/trips/composables/use-safety'
-export { resetTripsForTesting } from '@/features/trips/composables/reset'
 
 export { default as SosLocationModal } from '@/features/trips/components/SosLocationModal.vue'
 export { default as TripDetailsModal } from '@/features/trips/components/TripDetailsModal.vue'
+
+export function resetTripsForTesting(): void {
+  resetTripRecordsForTesting()
+  resetDispatchForTesting()
+  resetSafetyForTesting()
+}

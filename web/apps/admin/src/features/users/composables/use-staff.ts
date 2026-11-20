@@ -51,12 +51,12 @@ export function useOperators() {
     if (!name || !email) {
       return { ok: false, error: 'Operator name and corporate email are required.' }
     }
-    if (operators.value.some((op) => op.email.toLowerCase() === email)) {
+    if (operators.value.some((operator) => operator.email.toLowerCase() === email)) {
       return { ok: false, error: `An operator with email ${email} already exists.` }
     }
 
-    const nextNum = operators.value.length + 1
-    const newId = `ADM-${String(nextNum).padStart(3, '0')}`
+    const nextSequence = operators.value.length + 1
+    const newId = `ADM-${String(nextSequence).padStart(3, '0')}`
     const created: OperatorAccount = {
       id: newId,
       name,
@@ -83,7 +83,7 @@ export function useOperators() {
     if (id === 'ADM-001') {
       return { ok: false, error: 'Primary admin account role cannot be modified.' }
     }
-    const target = operators.value.find((op) => op.id === id)
+    const target = operators.value.find((operator) => operator.id === id)
     if (!target) {
       return { ok: false, error: `Operator ${id} was not found.` }
     }
@@ -92,14 +92,14 @@ export function useOperators() {
       return { ok: false, error: 'Select a different valid role to apply.' }
     }
 
-    const prevRole = target.role
+    const previousRole = target.role
     target.role = trimmedRole
     target.department = inferDepartment(trimmedRole)
 
     appendAuditLog({
       action: 'OPERATOR_ROLE_UPDATED',
       targetEntity: `${target.id} · ${target.name}`,
-      payload: { previousRole: prevRole, nextRole: trimmedRole },
+      payload: { previousRole, nextRole: trimmedRole },
       severity: 'Warning',
     })
 
@@ -110,7 +110,7 @@ export function useOperators() {
     if (id === 'ADM-001') {
       return { ok: false, error: 'Primary admin account MFA enforcement cannot be disabled.' }
     }
-    const target = operators.value.find((op) => op.id === id)
+    const target = operators.value.find((operator) => operator.id === id)
     if (!target) {
       return { ok: false, error: `Operator ${id} was not found.` }
     }
@@ -134,7 +134,7 @@ export function useOperators() {
     if (id === 'ADM-001') {
       return { ok: false, error: 'Primary admin account cannot be suspended.' }
     }
-    const target = operators.value.find((op) => op.id === id)
+    const target = operators.value.find((operator) => operator.id === id)
     if (!target) {
       return { ok: false, error: `Operator ${id} was not found.` }
     }
@@ -154,7 +154,7 @@ export function useOperators() {
   }
 
   function reactivateOperator(id: string): UserActionResult {
-    const target = operators.value.find((op) => op.id === id)
+    const target = operators.value.find((operator) => operator.id === id)
     if (!target) {
       return { ok: false, error: `Operator ${id} was not found.` }
     }
@@ -189,8 +189,8 @@ export function useRoles() {
 
   const roleUserCounts = computed<Record<string, number>>(() => {
     const counts: Record<string, number> = {}
-    for (const op of operators.value) {
-      counts[op.role] = (counts[op.role] ?? 0) + 1
+    for (const operator of operators.value) {
+      counts[operator.role] = (counts[operator.role] ?? 0) + 1
     }
     return counts
   })

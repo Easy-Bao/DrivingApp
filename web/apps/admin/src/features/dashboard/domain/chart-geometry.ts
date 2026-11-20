@@ -39,14 +39,14 @@ export function buildDonutSegments(
 
   let accumulatedLength = 0
   return slices.map((slice) => {
-    const segLength = (Math.max(0, slice.count) / total) * circumference
-    const remainder = Math.max(0, circumference - segLength)
+    const segmentLength = (Math.max(0, slice.count) / total) * circumference
+    const remainder = Math.max(0, circumference - segmentLength)
     const dashOffset = Number((-accumulatedLength).toFixed(2))
-    accumulatedLength += segLength
+    accumulatedLength += segmentLength
 
     return {
       ...slice,
-      dashArray: `${segLength.toFixed(2)} ${remainder.toFixed(2)}`,
+      dashArray: `${segmentLength.toFixed(2)} ${remainder.toFixed(2)}`,
       dashOffset: dashOffset === 0 ? 0 : dashOffset,
     }
   })
@@ -81,16 +81,16 @@ export function buildGridTicks(
   plotHeight: number,
 ): GridTick[] {
   return [0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
-    const val = Math.round(maxValue * ratio)
+    const value = Math.round(maxValue * ratio)
     const y = padTop + plotHeight * (1 - ratio)
     const label =
       metric === 'revenue'
-        ? val >= 1000
-          ? `₱${Math.round(val / 1000)}k`
-          : `₱${val}`
-        : val >= 1000
-          ? `${(val / 1000).toFixed(1)}k`
-          : String(val)
+        ? value >= 1000
+          ? `₱${Math.round(value / 1000)}k`
+          : `₱${value}`
+        : value >= 1000
+          ? `${(value / 1000).toFixed(1)}k`
+          : String(value)
     return { index, y, label }
   })
 }
@@ -108,8 +108,8 @@ export function buildBarSlots(
   const safeMax = Math.max(1, maxValue)
 
   return series.map((bucket, index) => {
-    const metricVal = metric === 'trips' ? bucket.trips : bucket.revenuePhp
-    const ratio = Math.max(0, metricVal / safeMax)
+    const metricValue = metric === 'trips' ? bucket.trips : bucket.revenuePhp
+    const ratio = Math.max(0, metricValue / safeMax)
     const scaleY = Math.max(2 / bounds.plotHeight, ratio)
     const barHeight = scaleY * bounds.plotHeight
     const x = bounds.padLeft + step * index + (step - barWidth) / 2
