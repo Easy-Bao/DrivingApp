@@ -10,23 +10,23 @@ import (
 )
 
 const (
-	_outboundQueueSize            = 64
-	_defaultMaxGlobalConnections  = 10_000
-	_defaultMaxUserConnections    = 8
+	_outboundQueueSize           = 64
+	_defaultMaxGlobalConnections = 10_000
+	_defaultMaxUserConnections   = 8
 )
 
 // Hub owns local WebSocket queues. Priority buffer eviction drops telemetry and
 // chat events first when a queue reaches capacity to protect critical lifecycle events
 // and avoid terminating mobile connections during cellular network jitter.
 type Hub struct {
-	mutex          sync.RWMutex
-	topics         map[string]map[*Subscription]struct{}
-	closed         bool
-	maxGlobal      int
-	maxPerSubject  int
-	totalConns     int
-	subjectConns   map[string]int
-	activeConns    sync.WaitGroup
+	mutex         sync.RWMutex
+	topics        map[string]map[*Subscription]struct{}
+	closed        bool
+	maxGlobal     int
+	maxPerSubject int
+	totalConns    int
+	subjectConns  map[string]int
+	activeConns   sync.WaitGroup
 }
 
 type HubOption func(*Hub)
