@@ -1,9 +1,11 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -272,5 +274,41 @@ func TestProfileUpdateValidatesBlankNameAndVehicleFields(t *testing.T) {
 		if rec.Code != http.StatusBadRequest {
 			t.Fatalf("path %s: status = %d, want %d: %s", path, rec.Code, http.StatusBadRequest, rec.Body.String())
 		}
+	}
+}
+
+func TestAvatarUploadReturns413WhenMultipartBodyExceedsMaxBytes(t *testing.T) {
+	manager := security.NewTokenManager("user-handler-test-secret")
+	token, err := manager.IssueWithRole("9", "passenger")
+	if err != nil {
+		t.Fatal(err)
+	}
+	service := app.NewProfileService(app.ProfileServiceDependencies{Repository: &profileUpdateStoreStub{}})
+	handler := NewHandler(Dependencies{Service: service, Verifier: manager})
+	router := chi.NewRouter()
+	router.Post("/passengers/{id}/avatar", handler.AvatarUpload)
+
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	part, err := writer.CreateFormFile("photo", "huge.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Exceeds MaxAvatarBytes (2 MiB) + 1 MiB envelope limit so ParseMultipartForm hits *http.MaxBytesError.
+	if _, err := part.Write(bytes.Repeat([]byte("A"), int(domain.MaxAvatarBytes)+(2<<20))); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/passengers/9/avatar", &body)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("status = %d, want %d: %s", rec.Code, http.StatusRequestEntityTooLarge, rec.Body.String())
 	}
 }

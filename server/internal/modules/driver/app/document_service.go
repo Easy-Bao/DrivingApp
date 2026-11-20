@@ -9,6 +9,7 @@ import (
 	"mime"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/domain"
 )
@@ -22,7 +23,10 @@ type DocumentService struct {
 
 var ErrServiceUnavailable = errors.New("driver document service is unavailable")
 
-const _defaultMaxDocumentBytes int64 = 10 << 20
+const (
+	_defaultMaxDocumentBytes int64 = 10 << 20
+	_documentCleanupTimeout        = 5 * time.Second
+)
 
 type DocumentServiceOption func(*DocumentService)
 
@@ -120,7 +124,17 @@ func (service *DocumentService) Upload(
 		return document, nil
 	}
 	persistenceErr := fmt.Errorf("persist driver document metadata: %w", err)
-	if cleanupErr := service.storage.Delete(context.WithoutCancel(ctx), key); cleanupErr != nil {
+	baseCtx := ctx
+	if baseCtx == nil {
+		baseCtx = context.Background()
+	}
+	cleanupCtx, cancelCleanup := context.WithTimeout(
+		context.WithoutCancel(baseCtx),
+		_documentCleanupTimeout,
+	)
+	cleanupErr := service.storage.Delete(cleanupCtx, key)
+	cancelCleanup()
+	if cleanupErr != nil {
 		return domain.Document{}, errors.Join(
 			persistenceErr,
 			fmt.Errorf("remove orphaned driver document: %w", cleanupErr),
@@ -239,6 +253,9 @@ func (service *DocumentService) readContent(ctx context.Context, document domain
 	}
 	content, err := service.storage.Read(ctx, document.StorageKey, service.maxDocumentBytes)
 	if err != nil {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return domain.Content{}, fmt.Errorf("read private driver document: %w", err)
+		}
 		return domain.Content{}, errors.Join(
 			domain.ErrDocumentCorrupt,
 			fmt.Errorf("read private driver document: %w", err),

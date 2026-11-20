@@ -4,11 +4,15 @@ import (
 	"errors"
 	"math"
 	"time"
+	"unicode/utf8"
 )
+
+const MaxCommentRunes = 1000
 
 var (
 	ErrReviewNotAllowed = errors.New("reviews are allowed only after a completed ride")
 	ErrInvalidRating    = errors.New("rating must be between 1 and 5")
+	ErrInvalidComment   = errors.New("review comment exceeds maximum length")
 	ErrReviewNotFound   = errors.New("passenger review not found")
 )
 
@@ -49,6 +53,13 @@ func (ride ReviewableRide) AllowsReview(passengerID, driverID int) bool {
 func ValidateRating(rating float64) error {
 	if math.IsNaN(rating) || math.IsInf(rating, 0) || rating < 1 || rating > 5 {
 		return ErrInvalidRating
+	}
+	return nil
+}
+
+func ValidateComment(comment string) error {
+	if utf8.RuneCountInString(comment) > MaxCommentRunes {
+		return ErrInvalidComment
 	}
 	return nil
 }

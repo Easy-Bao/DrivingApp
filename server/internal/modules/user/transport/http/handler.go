@@ -212,6 +212,10 @@ func (handler *Handler) AvatarUpload(w http.ResponseWriter, r *http.Request) {
 	maxBytes := handler.service.MaxAvatarBytes()
 	r.Body = http.MaxBytesReader(w, r.Body, maxBytes+(1<<20))
 	if err := r.ParseMultipartForm(maxBytes); err != nil {
+		if _, tooLarge := errors.AsType[*http.MaxBytesError](err); tooLarge {
+			response.Error(w, http.StatusRequestEntityTooLarge, "The profile photo is too large.")
+			return
+		}
 		response.Error(w, http.StatusBadRequest, "Please choose a JPEG or PNG photo under 2 MB.")
 		return
 	}
@@ -234,6 +238,10 @@ func (handler *Handler) AvatarUpload(w http.ResponseWriter, r *http.Request) {
 	}()
 	content, err := io.ReadAll(io.LimitReader(file, maxBytes+1))
 	if err != nil {
+		if _, tooLarge := errors.AsType[*http.MaxBytesError](err); tooLarge {
+			response.Error(w, http.StatusRequestEntityTooLarge, "The profile photo is too large.")
+			return
+		}
 		response.Error(w, http.StatusBadRequest, "The profile photo could not be read.")
 		return
 	}

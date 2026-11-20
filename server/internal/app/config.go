@@ -282,6 +282,12 @@ func loadSecurityConfig(getenv environmentReader) (middleware.SecurityConfig, er
 	if config.UploadBodyLimit, err = optionalInt64(getenv, "UPLOAD_BODY_LIMIT_BYTES", config.UploadBodyLimit, 1); err != nil {
 		return middleware.SecurityConfig{}, err
 	}
+	if config.UploadBodyLimit > miniostorage.MaxObjectBytes {
+		return middleware.SecurityConfig{}, fmt.Errorf(
+			"UPLOAD_BODY_LIMIT_BYTES must be at most %d",
+			miniostorage.MaxObjectBytes,
+		)
+	}
 	return config, nil
 }
 

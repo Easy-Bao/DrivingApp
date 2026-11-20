@@ -37,13 +37,6 @@ FROM users AS user_account
 LEFT JOIN passenger_profiles AS passenger_profile ON passenger_profile.user_id = user_account.id
 WHERE user_account.id = sqlc.arg('passenger_id');
 
--- name: HasReviewForRide :one
-SELECT EXISTS(
-    SELECT 1
-    FROM reviews
-    WHERE ride_id = sqlc.arg('ride_id')
-) AS exists;
-
 -- name: GetReviewByRide :one
 SELECT id, ride_id, driver_id, passenger_id, passenger_name, rating, comment, created_at
 FROM reviews
@@ -74,14 +67,17 @@ VALUES (
     sqlc.arg('rating'),
     sqlc.arg('comment')
 )
+ON CONFLICT (ride_id) WHERE ride_id IS NOT NULL DO NOTHING
 RETURNING id, ride_id, driver_id, passenger_id, passenger_name, rating, comment, created_at;
 
--- name: HasPassengerReviewForRide :one
-SELECT EXISTS(
-    SELECT 1
-    FROM passenger_reviews
-    WHERE ride_id = sqlc.arg('ride_id')
-) AS exists;
+-- name: RefreshDriverProfileRating :exec
+UPDATE driver_profiles
+SET rating = COALESCE(
+        (SELECT AVG(rating) FROM reviews WHERE driver_id = $1),
+        0
+    ),
+    updated_at = CURRENT_TIMESTAMP
+WHERE user_id = $1;
 
 -- name: GetPassengerReviewByRide :one
 SELECT id, ride_id, driver_id, passenger_id, rating, comment, created_at
@@ -104,4 +100,5 @@ VALUES (
     sqlc.arg('rating'),
     sqlc.arg('comment')
 )
+ON CONFLICT (ride_id) DO NOTHING
 RETURNING id, ride_id, driver_id, passenger_id, rating, comment, created_at;

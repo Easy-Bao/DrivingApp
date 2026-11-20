@@ -195,6 +195,7 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 		}
 		driverProfile, updateErr := transactionQueries.UpdateDriverProfile(ctx, databasepostgres.UpdateDriverProfileParams{
 			ID:          dbProfileID,
+			UserID:      dbUserID,
 			Name:        profile.Name,
 			VehicleType: profile.VehicleType,
 			PlateNumber: profile.PlateNumber,
@@ -207,10 +208,17 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 		}
 		updated = driverProfileFromUpdateRow(account, driverProfile)
 	case "passenger":
+		if _, lockErr := transactionQueries.LockPassengerProfileByUserID(ctx, dbUserID); lockErr != nil {
+			if errors.Is(lockErr, pgx.ErrNoRows) {
+				return domain.Profile{}, domain.ErrProfileNotFound
+			}
+			return domain.Profile{}, fmt.Errorf("lock passenger profile: %w", lockErr)
+		}
 		passengerProfile, updateErr := transactionQueries.UpdatePassengerProfile(
 			ctx,
 			databasepostgres.UpdatePassengerProfileParams{
 				ID:      dbProfileID,
+				UserID:  dbUserID,
 				Name:    profile.Name,
 				Address: toPostgresProfileText(profile.Address),
 				Gender:  profile.Gender,
@@ -367,6 +375,7 @@ func (repository *ProfileRepository) SaveAvatar(
 
 	updatedRows, err := transactionQueries.UpdatePassengerAvatar(ctx, databasepostgres.UpdatePassengerAvatarParams{
 		ID:                passengerProfile.ID,
+		UserID:            dbUserID,
 		AvatarStorageKey:  toPostgresProfileText(storageKey),
 		AvatarContentType: toPostgresProfileText(contentType),
 	})
@@ -423,6 +432,9 @@ func (repository *ProfileRepository) GetAvatar(ctx context.Context, userID int) 
 
 	content, err := repository.avatarStorage.Read(ctx, storageKey, domain.MaxAvatarBytes)
 	if err != nil {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return domain.Avatar{}, fmt.Errorf("read passenger avatar: %w", err)
+		}
 		return domain.Avatar{}, errors.Join(
 			domain.ErrAvatarCorrupt,
 			fmt.Errorf("read passenger avatar: %w", err),

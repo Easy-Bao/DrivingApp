@@ -124,8 +124,11 @@ func (repository *documentRepositoryFake) Review(
 }
 
 type documentStorageFake struct {
-	objects map[string][]byte
-	deleted []string
+	objects         map[string][]byte
+	deleted         []string
+	readErr         error
+	deleteHadWindow bool
+	deleteCtxErr    error
 }
 
 func newDocumentStorageFake() *documentStorageFake {
@@ -139,6 +142,9 @@ func (storage *documentStorageFake) Store(_ context.Context, content []byte) (st
 }
 
 func (storage *documentStorageFake) Read(_ context.Context, key string, maxBytes int64) ([]byte, error) {
+	if storage.readErr != nil {
+		return nil, storage.readErr
+	}
 	content, ok := storage.objects[key]
 	if !ok {
 		return nil, errors.New("object not found")
@@ -149,7 +155,11 @@ func (storage *documentStorageFake) Read(_ context.Context, key string, maxBytes
 	return append([]byte(nil), content...), nil
 }
 
-func (storage *documentStorageFake) Delete(_ context.Context, key string) error {
+func (storage *documentStorageFake) Delete(ctx context.Context, key string) error {
+	if ctx != nil {
+		_, storage.deleteHadWindow = ctx.Deadline()
+		storage.deleteCtxErr = ctx.Err()
+	}
 	delete(storage.objects, key)
 	storage.deleted = append(storage.deleted, key)
 	return nil
@@ -262,5 +272,40 @@ func TestReviewCannotRewriteAFinalDecision(t *testing.T) {
 	)
 	if !errors.Is(err, domain.ErrDocumentFinalized) {
 		t.Fatalf("second review error = %v", err)
+	}
+}
+
+func TestUploadCleanupUsesBoundedDetachedContextAndReadPreservesCancellation(t *testing.T) {
+	repository := newDocumentRepositoryFake()
+	repository.createErr = errors.New("db failure")
+	storage := newDocumentStorageFake()
+	service := newDocumentService(
+		repository,
+		storage,
+		documentapp.WithContentTypeDetector(testContentTypeDetector),
+		documentapp.WithMaxDocumentBytes(1024),
+	)
+
+	canceledCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err := service.Upload(canceledCtx, 3, "driver_license", "application/pdf", validPDF); err == nil {
+		t.Fatal("expected upload error when persistence fails")
+	}
+	if !storage.deleteHadWindow || storage.deleteCtxErr != nil {
+		t.Fatalf("cleanup context hadDeadline=%t err=%v, want bounded non-canceled context", storage.deleteHadWindow, storage.deleteCtxErr)
+	}
+
+	repository.createErr = nil
+	doc, err := service.Upload(context.Background(), 3, "driver_license", "application/pdf", validPDF)
+	if err != nil {
+		t.Fatalf("Upload() error = %v", err)
+	}
+	storage.readErr = context.Canceled
+	_, err = service.DriverContent(context.Background(), 3, doc.ID)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("DriverContent() error = %v, want context.Canceled", err)
+	}
+	if errors.Is(err, domain.ErrDocumentCorrupt) {
+		t.Fatalf("context cancellation must not be reported as ErrDocumentCorrupt: %v", err)
 	}
 }

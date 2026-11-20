@@ -105,7 +105,9 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create driver document store: %w", err)
 	}
-	privateObjectStore, err := miniostorage.NewObjectStore(ctx, postgresPool, config.MinIO)
+	objectStoreContext, cancelObjectStore := context.WithTimeout(ctx, 15*time.Second)
+	privateObjectStore, err := miniostorage.NewObjectStore(objectStoreContext, postgresPool, config.MinIO)
+	cancelObjectStore()
 	if err != nil {
 		return nil, fmt.Errorf("create MinIO private object store: %w", err)
 	}

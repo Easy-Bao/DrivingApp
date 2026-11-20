@@ -63,11 +63,12 @@ RETURNING id, name, phone, email, password_hash, role, is_verified,
 
 -- name: UpdateDriverProfile :one
 UPDATE driver_profiles
-SET name = $2,
-    vehicle_type = $3,
-    plate_number = $4,
+SET name = $3,
+    vehicle_type = $4,
+    plate_number = $5,
     updated_at = CURRENT_TIMESTAMP
 WHERE driver_profiles.id = $1
+  AND driver_profiles.user_id = $2
 RETURNING driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
     driver_profiles.vehicle_type, driver_profiles.plate_number,
     COALESCE(
@@ -111,20 +112,22 @@ RETURNING driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
 
 -- name: UpdatePassengerProfile :one
 UPDATE passenger_profiles
-SET name = $2,
-    address = $3,
-    gender = $4,
+SET name = $3,
+    address = $4,
+    gender = $5,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
+  AND user_id = $2
 RETURNING id, user_id, name, address, gender, avatar_storage_key,
     avatar_content_type, preferred_ride_type, created_at, updated_at;
 
 -- name: UpdatePassengerAvatar :execrows
 UPDATE passenger_profiles
-SET avatar_storage_key = $2,
-    avatar_content_type = $3,
+SET avatar_storage_key = $3,
+    avatar_content_type = $4,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1;
+WHERE id = $1
+  AND user_id = $2;
 
 -- name: ListNotifications :many
 SELECT id, user_id, type, title, body, is_read, created_at

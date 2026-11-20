@@ -422,12 +422,19 @@ func (store *ObjectStore) readMinIO(ctx context.Context, key string, expectedSiz
 	if info.Size <= 0 || info.Size > MaxObjectBytes || info.Size != expectedSize {
 		return nil, errors.New("MinIO object has an invalid size")
 	}
-	content, err := io.ReadAll(io.LimitReader(object, MaxObjectBytes+1))
-	if err != nil {
+	content := make([]byte, expectedSize)
+	if _, err := io.ReadFull(object, content); err != nil {
+		if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+			return nil, errors.New("MinIO object size does not match its metadata")
+		}
 		return nil, fmt.Errorf("read MinIO object: %w", err)
 	}
-	if int64(len(content)) != expectedSize {
-		return nil, errors.New("MinIO object size does not match its metadata")
+	var extra [1]byte
+	if n, err := object.Read(extra[:]); n > 0 || (err != nil && !errors.Is(err, io.EOF)) {
+		if n > 0 {
+			return nil, errors.New("MinIO object size does not match its metadata")
+		}
+		return nil, fmt.Errorf("verify MinIO object end: %w", err)
 	}
 	return content, nil
 }
@@ -465,7 +472,7 @@ func validateContent(content []byte, contentType string, sizeBytes int64, checks
 	if contentType != http.DetectContentType(content) {
 		return nil, errors.New("private object failed content validation")
 	}
-	return append([]byte(nil), content...), nil
+	return content, nil
 }
 
 func validateStorageObjectKey(key string) error {

@@ -26,6 +26,7 @@ VALUES (
     $4,
     $5
 )
+ON CONFLICT (ride_id) DO NOTHING
 RETURNING id, ride_id, driver_id, passenger_id, rating, comment, created_at
 `
 
@@ -75,6 +76,7 @@ VALUES (
     $5,
     $6
 )
+ON CONFLICT (ride_id) WHERE ride_id IS NOT NULL DO NOTHING
 RETURNING id, ride_id, driver_id, passenger_id, passenger_name, rating, comment, created_at
 `
 
@@ -228,36 +230,6 @@ func (q *Queries) GetRideReviewContext(ctx context.Context, rideID int32) (GetRi
 	return i, err
 }
 
-const hasPassengerReviewForRide = `-- name: HasPassengerReviewForRide :one
-SELECT EXISTS(
-    SELECT 1
-    FROM passenger_reviews
-    WHERE ride_id = $1
-) AS exists
-`
-
-func (q *Queries) HasPassengerReviewForRide(ctx context.Context, rideID int32) (bool, error) {
-	row := q.db.QueryRow(ctx, hasPassengerReviewForRide, rideID)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
-}
-
-const hasReviewForRide = `-- name: HasReviewForRide :one
-SELECT EXISTS(
-    SELECT 1
-    FROM reviews
-    WHERE ride_id = $1
-) AS exists
-`
-
-func (q *Queries) HasReviewForRide(ctx context.Context, rideID pgtype.Int4) (bool, error) {
-	row := q.db.QueryRow(ctx, hasReviewForRide, rideID)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
-}
-
 const listDriverReviews = `-- name: ListDriverReviews :many
 SELECT
     review.id,
@@ -334,4 +306,19 @@ func (q *Queries) ListDriverReviews(ctx context.Context, arg ListDriverReviewsPa
 		return nil, err
 	}
 	return items, nil
+}
+
+const refreshDriverProfileRating = `-- name: RefreshDriverProfileRating :exec
+UPDATE driver_profiles
+SET rating = COALESCE(
+        (SELECT AVG(rating) FROM reviews WHERE driver_id = $1),
+        0
+    ),
+    updated_at = CURRENT_TIMESTAMP
+WHERE user_id = $1
+`
+
+func (q *Queries) RefreshDriverProfileRating(ctx context.Context, driverID int32) error {
+	_, err := q.db.Exec(ctx, refreshDriverProfileRating, driverID)
+	return err
 }

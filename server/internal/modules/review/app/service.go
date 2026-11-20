@@ -67,6 +67,9 @@ func (service *Service) CreateReview(ctx context.Context, review domain.Review) 
 	if err := domain.ValidateRating(review.Rating); err != nil {
 		return domain.Review{}, err
 	}
+	if err := domain.ValidateComment(review.Comment); err != nil {
+		return domain.Review{}, err
+	}
 	if err := service.validateReviewableRide(ctx, review.RideID, review.PassengerID, review.DriverID); err != nil {
 		return domain.Review{}, err
 	}
@@ -86,6 +89,9 @@ func (service *Service) CreatePassengerReview(
 	}
 	review.Comment = strings.TrimSpace(review.Comment)
 	if err := domain.ValidateRating(review.Rating); err != nil {
+		return domain.PassengerReview{}, err
+	}
+	if err := domain.ValidateComment(review.Comment); err != nil {
 		return domain.PassengerReview{}, err
 	}
 	if err := service.validateReviewableRide(ctx, review.RideID, review.PassengerID, review.DriverID); err != nil {

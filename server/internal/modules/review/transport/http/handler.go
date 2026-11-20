@@ -2,6 +2,7 @@ package http
 
 import (
 	"errors"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -160,7 +161,7 @@ func (handler *Handler) CreatePassengerReview(writer http.ResponseWriter, reques
 
 func positivePathID(writer http.ResponseWriter, request *http.Request, message string) (int, bool) {
 	id, err := strconv.Atoi(chi.URLParam(request, "id"))
-	if err != nil || id <= 0 {
+	if err != nil || id <= 0 || int64(id) > math.MaxInt32 {
 		response.Error(writer, http.StatusBadRequest, message)
 		return 0, false
 	}
@@ -169,7 +170,9 @@ func positivePathID(writer http.ResponseWriter, request *http.Request, message s
 
 func reviewErrorStatus(err error) int {
 	switch {
-	case errors.Is(err, domain.ErrReviewNotAllowed), errors.Is(err, domain.ErrInvalidRating):
+	case errors.Is(err, domain.ErrReviewNotAllowed),
+		errors.Is(err, domain.ErrInvalidRating),
+		errors.Is(err, domain.ErrInvalidComment):
 		return http.StatusBadRequest
 	case errors.Is(err, application.ErrPersistenceUnavailable):
 		return http.StatusServiceUnavailable
@@ -184,6 +187,8 @@ func safeReviewError(err error) string {
 		return "Reviews are available after a completed ride."
 	case errors.Is(err, domain.ErrInvalidRating):
 		return "Rating must be between 1 and 5."
+	case errors.Is(err, domain.ErrInvalidComment):
+		return "Review comments must be 1000 characters or fewer."
 	case errors.Is(err, application.ErrPersistenceUnavailable):
 		return "Review service is temporarily unavailable."
 	default:

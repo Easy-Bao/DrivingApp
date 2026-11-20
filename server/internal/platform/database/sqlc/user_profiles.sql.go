@@ -327,11 +327,12 @@ func (q *Queries) UpdateDriverOnlineStatus(ctx context.Context, arg UpdateDriver
 
 const updateDriverProfile = `-- name: UpdateDriverProfile :one
 UPDATE driver_profiles
-SET name = $2,
-    vehicle_type = $3,
-    plate_number = $4,
+SET name = $3,
+    vehicle_type = $4,
+    plate_number = $5,
     updated_at = CURRENT_TIMESTAMP
 WHERE driver_profiles.id = $1
+  AND driver_profiles.user_id = $2
 RETURNING driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
     driver_profiles.vehicle_type, driver_profiles.plate_number,
     COALESCE(
@@ -345,6 +346,7 @@ RETURNING driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
 
 type UpdateDriverProfileParams struct {
 	ID          int32  `db:"id"`
+	UserID      int32  `db:"user_id"`
 	Name        string `db:"name"`
 	VehicleType string `db:"vehicle_type"`
 	PlateNumber string `db:"plate_number"`
@@ -366,6 +368,7 @@ type UpdateDriverProfileRow struct {
 func (q *Queries) UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfileParams) (UpdateDriverProfileRow, error) {
 	row := q.db.QueryRow(ctx, updateDriverProfile,
 		arg.ID,
+		arg.UserID,
 		arg.Name,
 		arg.VehicleType,
 		arg.PlateNumber,
@@ -388,20 +391,27 @@ func (q *Queries) UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfi
 
 const updatePassengerAvatar = `-- name: UpdatePassengerAvatar :execrows
 UPDATE passenger_profiles
-SET avatar_storage_key = $2,
-    avatar_content_type = $3,
+SET avatar_storage_key = $3,
+    avatar_content_type = $4,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
+  AND user_id = $2
 `
 
 type UpdatePassengerAvatarParams struct {
 	ID                int32       `db:"id"`
+	UserID            int32       `db:"user_id"`
 	AvatarStorageKey  pgtype.Text `db:"avatar_storage_key"`
 	AvatarContentType pgtype.Text `db:"avatar_content_type"`
 }
 
 func (q *Queries) UpdatePassengerAvatar(ctx context.Context, arg UpdatePassengerAvatarParams) (int64, error) {
-	result, err := q.db.Exec(ctx, updatePassengerAvatar, arg.ID, arg.AvatarStorageKey, arg.AvatarContentType)
+	result, err := q.db.Exec(ctx, updatePassengerAvatar,
+		arg.ID,
+		arg.UserID,
+		arg.AvatarStorageKey,
+		arg.AvatarContentType,
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -410,17 +420,19 @@ func (q *Queries) UpdatePassengerAvatar(ctx context.Context, arg UpdatePassenger
 
 const updatePassengerProfile = `-- name: UpdatePassengerProfile :one
 UPDATE passenger_profiles
-SET name = $2,
-    address = $3,
-    gender = $4,
+SET name = $3,
+    address = $4,
+    gender = $5,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
+  AND user_id = $2
 RETURNING id, user_id, name, address, gender, avatar_storage_key,
     avatar_content_type, preferred_ride_type, created_at, updated_at
 `
 
 type UpdatePassengerProfileParams struct {
 	ID      int32       `db:"id"`
+	UserID  int32       `db:"user_id"`
 	Name    string      `db:"name"`
 	Address pgtype.Text `db:"address"`
 	Gender  string      `db:"gender"`
@@ -429,6 +441,7 @@ type UpdatePassengerProfileParams struct {
 func (q *Queries) UpdatePassengerProfile(ctx context.Context, arg UpdatePassengerProfileParams) (PassengerProfile, error) {
 	row := q.db.QueryRow(ctx, updatePassengerProfile,
 		arg.ID,
+		arg.UserID,
 		arg.Name,
 		arg.Address,
 		arg.Gender,

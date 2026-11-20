@@ -9,9 +9,9 @@ import (
 
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/review/domain"
+	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -19,6 +19,7 @@ import (
 var _ ports.ReviewRepository = (*ReviewRepository)(nil)
 
 type ReviewRepository struct {
+	pool    *pgxpool.Pool
 	queries *databasepostgres.Queries
 }
 
@@ -26,11 +27,14 @@ func NewReviewRepository(pool *pgxpool.Pool) (*ReviewRepository, error) {
 	if pool == nil {
 		return nil, errors.New("postgresql pool is required")
 	}
-	return &ReviewRepository{queries: databasepostgres.New(pool)}, nil
+	return &ReviewRepository{
+		pool:    pool,
+		queries: databasepostgres.New(pool),
+	}, nil
 }
 
 func (repository *ReviewRepository) validate() error {
-	if repository == nil || repository.queries == nil {
+	if repository == nil || repository.pool == nil || repository.queries == nil {
 		return errors.New("postgresql review repository is not initialized")
 	}
 	return nil
@@ -159,19 +163,21 @@ func (repository *ReviewRepository) CreateReview(
 		return domain.Review{}, domain.ErrReviewNotAllowed
 	}
 	queryRideID := pgtype.Int4{Int32: rideID, Valid: true}
-	exists, err := repository.queries.HasReviewForRide(ctx, queryRideID)
+	transaction, err := repository.pool.Begin(ctx)
 	if err != nil {
-		return domain.Review{}, fmt.Errorf("check existing driver review: %w", err)
+		return domain.Review{}, fmt.Errorf("begin driver review transaction: %w", err)
 	}
-	if exists {
-		return repository.existingDriverReview(ctx, rideID)
-	}
-	passengerName, err := repository.queries.GetPassengerName(ctx, passengerID)
+	defer func() {
+		platformdatabase.Rollback(ctx, transaction)
+	}()
+
+	txQueries := repository.queries.WithTx(transaction)
+	passengerName, err := txQueries.GetPassengerName(ctx, passengerID)
 	if err != nil {
 		return domain.Review{}, fmt.Errorf("load passenger name for driver review: %w", err)
 	}
 	value.PassengerName = passengerName
-	item, err := repository.queries.CreateReview(ctx, databasepostgres.CreateReviewParams{
+	item, err := txQueries.CreateReview(ctx, databasepostgres.CreateReviewParams{
 		RideID:        queryRideID,
 		DriverID:      driverID,
 		PassengerID:   passengerID,
@@ -179,11 +185,17 @@ func (repository *ReviewRepository) CreateReview(
 		Rating:        value.Rating,
 		Comment:       reviewText(value.Comment),
 	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return repository.existingDriverReview(ctx, rideID)
+	}
 	if err != nil {
-		if isUniqueViolation(err) {
-			return repository.existingDriverReview(ctx, rideID)
-		}
 		return domain.Review{}, fmt.Errorf("create driver review: %w", err)
+	}
+	if err := txQueries.RefreshDriverProfileRating(ctx, driverID); err != nil {
+		return domain.Review{}, fmt.Errorf("refresh driver profile rating: %w", err)
+	}
+	if err := transaction.Commit(ctx); err != nil {
+		return domain.Review{}, fmt.Errorf("commit driver review transaction: %w", err)
 	}
 	review, err := fromPostgresCreatedReview(item)
 	if err != nil {
@@ -211,13 +223,6 @@ func (repository *ReviewRepository) CreatePassengerReview(
 	if err != nil {
 		return domain.PassengerReview{}, domain.ErrReviewNotAllowed
 	}
-	exists, err := repository.queries.HasPassengerReviewForRide(ctx, rideID)
-	if err != nil {
-		return domain.PassengerReview{}, fmt.Errorf("check existing passenger review: %w", err)
-	}
-	if exists {
-		return repository.existingPassengerReview(ctx, rideID)
-	}
 	item, err := repository.queries.CreatePassengerReview(ctx, databasepostgres.CreatePassengerReviewParams{
 		RideID:      rideID,
 		DriverID:    driverID,
@@ -225,10 +230,10 @@ func (repository *ReviewRepository) CreatePassengerReview(
 		Rating:      value.Rating,
 		Comment:     reviewText(value.Comment),
 	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return repository.existingPassengerReview(ctx, rideID)
+	}
 	if err != nil {
-		if isUniqueViolation(err) {
-			return repository.existingPassengerReview(ctx, rideID)
-		}
 		return domain.PassengerReview{}, fmt.Errorf("create passenger review: %w", err)
 	}
 	review, err := fromPostgresPassengerReview(item)
@@ -348,9 +353,4 @@ func textValue(value pgtype.Text) string {
 		return ""
 	}
 	return value.String
-}
-
-func isUniqueViolation(err error) bool {
-	databaseError, ok := errors.AsType[*pgconn.PgError](err)
-	return ok && databaseError.Code == "23505"
 }

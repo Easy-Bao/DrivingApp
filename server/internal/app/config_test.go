@@ -187,6 +187,9 @@ func TestLoadApplicationRejectsInvalidEnvironment(t *testing.T) {
 		"invalid reporting timezone": func(values map[string]string) {
 			values["REPORTING_TIMEZONE"] = "No/Such_Zone"
 		},
+		"oversized upload body limit": func(values map[string]string) {
+			values["UPLOAD_BODY_LIMIT_BYTES"] = "20971520"
+		},
 	}
 	for name, change := range tests {
 		t.Run(name, func(t *testing.T) {

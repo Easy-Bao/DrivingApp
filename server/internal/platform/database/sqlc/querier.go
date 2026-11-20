@@ -69,9 +69,7 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	HasActiveBidSession(ctx context.Context, arg HasActiveBidSessionParams) (bool, error)
 	HasActivePassengerRide(ctx context.Context, passengerID int32) (bool, error)
-	HasPassengerReviewForRide(ctx context.Context, rideID int32) (bool, error)
 	HasPendingBidOffer(ctx context.Context, arg HasPendingBidOfferParams) (bool, error)
-	HasReviewForRide(ctx context.Context, rideID pgtype.Int4) (bool, error)
 	ListActiveBidSessions(ctx context.Context, expiresAt pgtype.Timestamptz) ([]BidSession, error)
 	ListActiveRidesForDriver(ctx context.Context, driverID pgtype.Int4) ([]ListActiveRidesForDriverRow, error)
 	ListBidOffersBySession(ctx context.Context, sessionID int32) ([]BidOffer, error)
@@ -103,6 +101,7 @@ type Querier interface {
 	MarkRidePassengerNoShow(ctx context.Context, arg MarkRidePassengerNoShowParams) (Ride, error)
 	MarkRideSettlementOutcome(ctx context.Context, arg MarkRideSettlementOutcomeParams) (RideSettlement, error)
 	MarkUserVerified(ctx context.Context, id int32) (int64, error)
+	RefreshDriverProfileRating(ctx context.Context, driverID int32) error
 	RejectDriverPendingBidOffers(ctx context.Context, arg RejectDriverPendingBidOffersParams) ([]RejectDriverPendingBidOffersRow, error)
 	RejectOtherPendingBidOffers(ctx context.Context, arg RejectOtherPendingBidOffersParams) ([]BidOffer, error)
 	ReviewDriverDocument(ctx context.Context, arg ReviewDriverDocumentParams) (DriverDocument, error)

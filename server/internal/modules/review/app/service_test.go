@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/review/domain"
@@ -139,5 +140,25 @@ func TestPassengerCanReadOnlyTheirSubmittedReviewForACompletedRide(t *testing.T)
 	_, err = service.PassengerDriverReviewForRide(context.Background(), 7, 5)
 	if !errors.Is(err, domain.ErrReviewNotAllowed) {
 		t.Fatalf("wrong passenger error = %v, want ErrReviewNotAllowed", err)
+	}
+}
+
+func TestReviewsRejectOverlongComments(t *testing.T) {
+	driverID := 9
+	repository := &reviewRepositoryStub{
+		ride: domain.ReviewableRide{Status: "completed", PassengerID: 4, DriverID: &driverID},
+	}
+	service := NewService(repository)
+	tooLong := strings.Repeat("x", domain.MaxCommentRunes+1)
+
+	if _, err := service.CreateReview(context.Background(), domain.Review{
+		RideID: 7, PassengerID: 4, DriverID: 9, Rating: 5, Comment: tooLong,
+	}); !errors.Is(err, domain.ErrInvalidComment) {
+		t.Fatalf("CreateReview() overlong comment error = %v, want ErrInvalidComment", err)
+	}
+	if _, err := service.CreatePassengerReview(context.Background(), domain.PassengerReview{
+		RideID: 7, PassengerID: 4, DriverID: 9, Rating: 5, Comment: tooLong,
+	}); !errors.Is(err, domain.ErrInvalidComment) {
+		t.Fatalf("CreatePassengerReview() overlong comment error = %v, want ErrInvalidComment", err)
 	}
 }
