@@ -19,8 +19,8 @@ const (
 	_driverLocationKeyPrefix        = "driver:location:"
 	_driverLocationObservedAtPrefix = "driver:location:observed-at:"
 	_driverLocationTTL              = 45 * time.Second
-	_passengerLocationTTL           = 45 * time.Second
 	_locationCleanupBatchSize       = 100
+	_locationCleanupMaxBatches      = 5
 )
 
 type driverLocationRecord struct {
@@ -54,7 +54,7 @@ func (record driverLocationRecord) point() domain.DriverPoint {
 	}
 }
 
-const _cleanupExpiredDriversScript = `
+var _cleanupExpiredDriversScript = redis.NewScript(`
 local expired = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'LIMIT', '0', ARGV[2])
 for _, driver_id in ipairs(expired) do
   redis.call('ZREM', KEYS[1], driver_id)
@@ -63,9 +63,9 @@ for _, driver_id in ipairs(expired) do
   redis.call('DEL', ARGV[4] .. driver_id)
 end
 return #expired
-`
+`)
 
-const _upsertDriverLocationScript = `
+var _upsertDriverLocationScript = redis.NewScript(`
 local latest = redis.call('GET', KEYS[4])
 if latest and tonumber(latest) >= tonumber(ARGV[7]) then
   return 0
@@ -75,17 +75,50 @@ redis.call('SET', KEYS[2], ARGV[4], 'PX', ARGV[5])
 redis.call('ZADD', KEYS[3], ARGV[6], ARGV[3])
 redis.call('SET', KEYS[4], ARGV[7], 'PX', ARGV[5])
 return 1
-`
+`)
+
+var _removeStaleDriverLocationsScript = redis.NewScript(`
+local removed = 0
+for i = 3, #ARGV, 2 do
+  local driver_id = ARGV[i]
+  local expected = ARGV[i + 1]
+  local payload_key = ARGV[1] .. driver_id
+  local current = redis.call('GET', payload_key)
+  if ((not current or current == '') and expected == '') or
+     (current and expected ~= '' and current == expected) then
+    redis.call('ZREM', KEYS[1], driver_id)
+    redis.call('ZREM', KEYS[2], driver_id)
+    if current then
+      redis.call('DEL', payload_key)
+    end
+    redis.call('DEL', ARGV[2] .. driver_id)
+    removed = removed + 1
+  end
+end
+return removed
+`)
 
 type DriverLocationStore struct {
 	client *redis.Client
 	logger *slog.Logger
+	ttl    time.Duration
 }
 
 var _ locationapp.LocationStore = (*DriverLocationStore)(nil)
 
 func NewDriverLocationStore(client *redis.Client) *DriverLocationStore {
-	return &DriverLocationStore{client: client, logger: slog.Default()}
+	return &DriverLocationStore{
+		client: client,
+		logger: slog.Default(),
+		ttl:    _driverLocationTTL,
+	}
+}
+
+func (repository *DriverLocationStore) WithTTL(ttl time.Duration) *DriverLocationStore {
+	if repository != nil && ttl > 0 {
+		repository.ttl = ttl
+	}
+	return repository
 }
 
 func (repository *DriverLocationStore) WithLogger(logger *slog.Logger) *DriverLocationStore {
@@ -93,6 +126,38 @@ func (repository *DriverLocationStore) WithLogger(logger *slog.Logger) *DriverLo
 		repository.logger = logger
 	}
 	return repository
+}
+
+func (repository *DriverLocationStore) locationTTL() time.Duration {
+	if repository != nil && repository.ttl > 0 {
+		return repository.ttl
+	}
+	return _driverLocationTTL
+}
+
+func (repository *DriverLocationStore) computeRemainingTTL(
+	observedAt time.Time,
+	now time.Time,
+) (time.Duration, time.Time, bool) {
+	ttl := repository.locationTTL()
+	nowUTC := now.UTC()
+	observedUTC := observedAt.UTC()
+	if observedUTC.IsZero() {
+		observedUTC = nowUTC
+	}
+	expiresAt := observedUTC.Add(ttl)
+	remaining := expiresAt.Sub(nowUTC)
+	if remaining <= 0 {
+		return 0, time.Time{}, false
+	}
+	if remaining > ttl {
+		remaining = ttl
+		expiresAt = nowUTC.Add(ttl)
+	}
+	if remaining.Milliseconds() <= 0 {
+		return 0, time.Time{}, false
+	}
+	return remaining, expiresAt, true
 }
 
 func (repository *DriverLocationStore) log() *slog.Logger {
@@ -106,14 +171,23 @@ func (repository *DriverLocationStore) Upsert(ctx context.Context, point domain.
 	if err := repository.validate(); err != nil {
 		return err
 	}
+	now := time.Now().UTC()
+	if point.ObservedAt.IsZero() {
+		point.ObservedAt = now
+	} else {
+		point.ObservedAt = point.ObservedAt.UTC()
+	}
+	remainingTTL, expiresAt, fresh := repository.computeRemainingTTL(point.ObservedAt, now)
+	if !fresh {
+		return domain.ErrStaleLocation
+	}
 	payload, err := jsonv2.Marshal(newDriverLocationRecord(point))
 	if err != nil {
 		return fmt.Errorf("marshal driver location: %w", err)
 	}
-	expiresAt := time.Now().Add(_driverLocationTTL).UnixMilli()
-	result, err := repository.client.Eval(
+	result, err := _upsertDriverLocationScript.Run(
 		ctx,
-		_upsertDriverLocationScript,
+		repository.client,
 		[]string{
 			_driverLocationsKey,
 			driverLocationKey(point.DriverID),
@@ -124,8 +198,8 @@ func (repository *DriverLocationStore) Upsert(ctx context.Context, point domain.
 		point.Latitude,
 		point.DriverID,
 		payload,
-		_driverLocationTTL.Milliseconds(),
-		expiresAt,
+		remainingTTL.Milliseconds(),
+		expiresAt.UnixMilli(),
 		point.ObservedAt.UnixMilli(),
 	).Int()
 	if err != nil {
@@ -237,7 +311,7 @@ func (repository *DriverLocationStore) Nearby(
 	// index before searching so expired payloads cannot consume result slots.
 	cleanupStartedAt := timings.start()
 	var cleanupErr error
-	timings.expiredCount, cleanupErr = repository.cleanupExpiredDrivers(ctx)
+	timings.expiredCount, cleanupErr = repository.cleanupExpiredDriversBounded(ctx)
 	timings.cleanupDuration = timings.measure(cleanupStartedAt)
 	timings.cleanupSucceeded = cleanupErr == nil
 	if cleanupErr != nil {
@@ -278,25 +352,32 @@ func (repository *DriverLocationStore) Nearby(
 		return nil, fmt.Errorf("load nearby driver locations: %w", err)
 	}
 
+	type staleLocationCandidate struct {
+		driverID        string
+		expectedPayload string
+	}
 	result := make([]domain.DriverPoint, 0, len(locationIDs))
-	staleLocations := make([]string, 0, len(locationIDs))
+	staleLocations := make([]staleLocationCandidate, 0, len(locationIDs))
 	decodeStartedAt := timings.start()
 	for index, locationID := range locationIDs {
 		if index >= len(payloads) {
-			staleLocations = append(staleLocations, locationID)
+			staleLocations = append(staleLocations, staleLocationCandidate{driverID: locationID})
 			continue
 		}
 		rawPayload := payloads[index]
 		payload, ok := rawPayload.(string)
 		if !ok {
-			staleLocations = append(staleLocations, locationID)
+			staleLocations = append(staleLocations, staleLocationCandidate{driverID: locationID})
 			continue
 		}
 		var record driverLocationRecord
 		if err := jsonv2.Unmarshal([]byte(payload), &record); err != nil ||
 			record.DriverID == "" ||
 			record.DriverID != locationID {
-			staleLocations = append(staleLocations, locationID)
+			staleLocations = append(staleLocations, staleLocationCandidate{
+				driverID:        locationID,
+				expectedPayload: payload,
+			})
 			continue
 		}
 		point := record.point()
@@ -306,14 +387,20 @@ func (repository *DriverLocationStore) Nearby(
 	timings.validCount = len(result)
 	timings.staleCount = len(staleLocations)
 	if len(staleLocations) > 0 {
-		// Expired payloads leave geo members behind; cleanup is best effort so a
-		// transient Redis write failure does not hide valid nearby drivers.
+		// Expired or corrupt payloads leave geo members behind; guard removals
+		// against concurrent refreshes in Lua so a fresh write is never wiped.
 		staleCleanupStartedAt := timings.start()
-		if _, err := repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
-			pipe.ZRem(ctx, _driverLocationsKey, staleLocations)
-			pipe.ZRem(ctx, _driverLocationExpiryKey, staleLocations)
-			return nil
-		}); err != nil {
+		args := make([]any, 0, 2+len(staleLocations)*2)
+		args = append(args, _driverLocationKeyPrefix, _driverLocationObservedAtPrefix)
+		for _, candidate := range staleLocations {
+			args = append(args, candidate.driverID, candidate.expectedPayload)
+		}
+		if _, err := _removeStaleDriverLocationsScript.Run(
+			ctx,
+			repository.client,
+			[]string{_driverLocationsKey, _driverLocationExpiryKey},
+			args...,
+		).Int(); err != nil {
 			repository.log().WarnContext(ctx, "remove stale driver locations failed", "error", err)
 			timings.outcome = "stale_cleanup_failed"
 		} else {
@@ -326,13 +413,28 @@ func (repository *DriverLocationStore) Nearby(
 	return result, nil
 }
 
+func (repository *DriverLocationStore) cleanupExpiredDriversBounded(ctx context.Context) (int, error) {
+	totalExpired := 0
+	for range _locationCleanupMaxBatches {
+		expiredCount, err := repository.cleanupExpiredDrivers(ctx)
+		totalExpired += expiredCount
+		if err != nil {
+			return totalExpired, err
+		}
+		if expiredCount < _locationCleanupBatchSize {
+			break
+		}
+	}
+	return totalExpired, nil
+}
+
 func (repository *DriverLocationStore) cleanupExpiredDrivers(ctx context.Context) (int, error) {
 	if err := repository.validate(); err != nil {
 		return 0, err
 	}
-	expiredCount, err := repository.client.Eval(
+	expiredCount, err := _cleanupExpiredDriversScript.Run(
 		ctx,
-		_cleanupExpiredDriversScript,
+		repository.client,
 		[]string{_driverLocationExpiryKey, _driverLocationsKey},
 		time.Now().UnixMilli(),
 		_locationCleanupBatchSize,
@@ -368,7 +470,7 @@ func (repository *DriverLocationStore) UpsertPassenger(
 		ctx,
 		"passenger:location:"+rideID,
 		payload,
-		_passengerLocationTTL,
+		repository.locationTTL(),
 	).Err(); err != nil {
 		return fmt.Errorf("persist passenger location: %w", err)
 	}

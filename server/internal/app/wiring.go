@@ -63,6 +63,11 @@ type authRuntimeStore interface {
 	authapp.EmailChangeStore
 }
 
+type profileRuntimeStore interface {
+	userapplication.ProfileStore
+	IsDriverOnline(ctx context.Context, userID int, maxAge time.Duration) (bool, error)
+}
+
 type httpRouterDependencies struct {
 	config             Config
 	postgresPool       *pgxpool.Pool
@@ -73,7 +78,7 @@ type httpRouterDependencies struct {
 	rideStore          rideRuntimeStore
 	dispatchStore      dispatchRuntimeStore
 	reviewStore        reviewapplication.ReviewRepository
-	profileStore       userapplication.ProfileStore
+	profileStore       profileRuntimeStore
 	statsReader        adminapp.StatsReader
 	documentStore      documentapplication.DocumentStore
 	privateObjectStore platformstorage.ObjectStore
@@ -203,8 +208,10 @@ func newHTTPRouter(
 	)
 	trackingService := locationapplication.NewTrackingService(
 		locationapplication.TrackingDependencies{
-			Repository: locationredis.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
-			MaxAge:     config.RideLifecycle.DriverLocationMaxAge,
+			Repository: locationredis.NewDriverLocationStore(redisClient).
+				WithTTL(config.RideLifecycle.DriverLocationMaxAge).
+				WithLogger(applicationLogger),
+			MaxAge: config.RideLifecycle.DriverLocationMaxAge,
 		},
 		locationapplication.WithRideAssignments(rideAssignments),
 		locationapplication.WithDriverPresence(locationapplication.DriverPresenceReaderFunc(
@@ -213,18 +220,11 @@ func newHTTPRouter(
 				if err != nil {
 					return false, fmt.Errorf("parse driver id: %w", err)
 				}
-				profile, err := profileStore.Get(ctx, parsedDriverID)
-				if err != nil {
-					return false, err
-				}
-				if profile.Role != "driver" || !profile.IsOnline || profile.OnlineLastSeenAt == nil {
-					return false, nil
-				}
-				maxAge := config.RideLifecycle.DriverLocationMaxAge
-				if maxAge <= 0 {
-					maxAge = 45 * time.Second
-				}
-				return time.Since(*profile.OnlineLastSeenAt) <= maxAge, nil
+				return profileStore.IsDriverOnline(
+					ctx,
+					parsedDriverID,
+					config.RideLifecycle.DriverLocationMaxAge,
+				)
 			},
 		)),
 		locationapplication.WithEventPublisher(eventPublisher),

@@ -135,3 +135,35 @@ func TestProfileRepositorySaveRejectsUnsupportedRole(t *testing.T) {
 		t.Fatalf("expected error wrapping domain.ErrInvalidRole, got %v", err)
 	}
 }
+
+func TestIsDriverPresenceFresh(t *testing.T) {
+	now := time.Date(2026, time.November, 20, 10, 0, 0, 0, time.UTC)
+	fresh := pgtype.Timestamptz{Time: now.Add(-30 * time.Second), Valid: true}
+	stale := pgtype.Timestamptz{Time: now.Add(-46 * time.Second), Valid: true}
+
+	if !isDriverPresenceFresh(true, fresh, now, 0) {
+		t.Fatal("expected online driver within default 45s window to be fresh")
+	}
+	if isDriverPresenceFresh(true, stale, now, 0) {
+		t.Fatal("expected online driver older than default 45s window to be stale")
+	}
+	if !isDriverPresenceFresh(true, stale, now, time.Minute) {
+		t.Fatal("expected custom 60s window to accept 46s-old presence")
+	}
+	if isDriverPresenceFresh(false, fresh, now, time.Minute) {
+		t.Fatal("expected offline driver to be rejected")
+	}
+	if isDriverPresenceFresh(true, pgtype.Timestamptz{}, now, time.Minute) {
+		t.Fatal("expected missing online_last_seen_at to be rejected")
+	}
+}
+
+func TestProfileRepositoryIsDriverOnlineRejectsInvalidID(t *testing.T) {
+	repository := &ProfileRepository{
+		pool:    &pgxpool.Pool{},
+		queries: &databasepostgres.Queries{},
+	}
+	if _, err := repository.IsDriverOnline(context.Background(), 0, time.Minute); err == nil {
+		t.Fatal("expected invalid user id to return an error")
+	}
+}

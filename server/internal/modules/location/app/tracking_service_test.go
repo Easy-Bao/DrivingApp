@@ -16,12 +16,14 @@ import (
 )
 
 type locationRepositoryStub struct {
-	driverPoint    domain.DriverPoint
-	passengerPoint domain.DriverPoint
-	nearby         []domain.DriverPoint
-	upsertCalls    int
-	removeCalls    int
-	upsertErr      error
+	driverPoint      domain.DriverPoint
+	passengerPoint   domain.DriverPoint
+	nearby           []domain.DriverPoint
+	upsertCalls      int
+	removeCalls      int
+	lastRemoveCtx    context.Context
+	lastRemoveCtxErr error
+	upsertErr        error
 }
 
 type driverPresenceStub struct {
@@ -62,8 +64,12 @@ func (stub *locationRepositoryStub) Upsert(_ context.Context, point domain.Drive
 	stub.driverPoint = point
 	return nil
 }
-func (stub *locationRepositoryStub) Remove(context.Context, string) error {
+func (stub *locationRepositoryStub) Remove(ctx context.Context, _ string) error {
 	stub.removeCalls++
+	stub.lastRemoveCtx = ctx
+	if ctx != nil {
+		stub.lastRemoveCtxErr = ctx.Err()
+	}
 	return nil
 }
 func (stub *locationRepositoryStub) Nearby(context.Context, float64, float64, float64) ([]domain.DriverPoint, error) {
@@ -167,6 +173,81 @@ func TestIngestRemovesLocationWhenTheDriverGoesOfflineDuringPersistence(t *testi
 	}
 	if repository.removeCalls != 1 {
 		t.Fatalf("Remove() calls = %d, want 1", repository.removeCalls)
+	}
+}
+
+func TestIngestPreservesLocationWhenPostWritePresenceCheckFailsTransiently(t *testing.T) {
+	repository := &locationRepositoryStub{}
+	calls := 0
+	service := newLocationTrackingService(
+		repository,
+		WithDriverPresence(DriverPresenceReaderFunc(func(context.Context, string) (bool, error) {
+			calls++
+			if calls == 1 {
+				return true, nil
+			}
+			return false, errors.New("temporary db hiccup")
+		})),
+	)
+
+	err := service.Ingest(
+		context.Background(),
+		domain.DriverPoint{
+			DriverID:  "driver-1",
+			Latitude:  6.7,
+			Longitude: 122.1,
+		},
+	)
+	if !errors.Is(err, domain.ErrDriverPresenceUnavailable) {
+		t.Fatalf("Ingest() error = %v, want domain.ErrDriverPresenceUnavailable", err)
+	}
+	if repository.upsertCalls != 1 {
+		t.Fatalf("Upsert() calls = %d, want 1", repository.upsertCalls)
+	}
+	if repository.removeCalls != 0 {
+		t.Fatalf("Remove() calls = %d, want 0 on transient presence failure", repository.removeCalls)
+	}
+}
+
+func TestIngestDetachesCleanupContextWhenDriverGoesOfflineDuringPersistence(t *testing.T) {
+	repository := &locationRepositoryStub{}
+	ctx, cancel := context.WithCancel(context.Background())
+	calls := 0
+	service := newLocationTrackingService(
+		repository,
+		WithDriverPresence(DriverPresenceReaderFunc(func(context.Context, string) (bool, error) {
+			calls++
+			if calls == 1 {
+				return true, nil
+			}
+			// Simulate client disconnect right as driver transitions offline.
+			cancel()
+			return false, nil
+		})),
+	)
+
+	err := service.Ingest(
+		ctx,
+		domain.DriverPoint{
+			DriverID:  "driver-1",
+			Latitude:  6.7,
+			Longitude: 122.1,
+		},
+	)
+	if !errors.Is(err, domain.ErrDriverOffline) {
+		t.Fatalf("Ingest() error = %v, want domain.ErrDriverOffline", err)
+	}
+	if repository.removeCalls != 1 {
+		t.Fatalf("Remove() calls = %d, want 1", repository.removeCalls)
+	}
+	if repository.lastRemoveCtx == nil {
+		t.Fatal("expected non-nil cleanup context passed to Remove()")
+	}
+	if _, hasDeadline := repository.lastRemoveCtx.Deadline(); !hasDeadline {
+		t.Fatal("expected cleanup context to have a bounded timeout")
+	}
+	if repository.lastRemoveCtxErr != nil {
+		t.Fatalf("Remove() observed canceled context error = %v, want nil", repository.lastRemoveCtxErr)
 	}
 }
 

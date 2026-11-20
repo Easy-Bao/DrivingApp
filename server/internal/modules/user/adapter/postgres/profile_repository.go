@@ -103,6 +103,45 @@ func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domai
 	return passengerProfileFromPostgres(account, passengerProfile), nil
 }
 
+const defaultDriverPresenceMaxAge = 45 * time.Second
+
+func (repository *ProfileRepository) IsDriverOnline(
+	ctx context.Context,
+	userID int,
+	maxAge time.Duration,
+) (bool, error) {
+	if err := repository.validate(); err != nil {
+		return false, fmt.Errorf("validate profile repository: %w", err)
+	}
+	dbUserID, err := toPostgresProfileID(userID, "user id")
+	if err != nil {
+		return false, fmt.Errorf("convert driver user id: %w", err)
+	}
+	presence, err := repository.queries.GetDriverOnlinePresence(ctx, dbUserID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, fmt.Errorf("load driver online presence: %w", err)
+	}
+	return isDriverPresenceFresh(presence.IsOnline, presence.OnlineLastSeenAt, time.Now().UTC(), maxAge), nil
+}
+
+func isDriverPresenceFresh(
+	isOnline bool,
+	lastSeen pgtype.Timestamptz,
+	now time.Time,
+	maxAge time.Duration,
+) bool {
+	if !isOnline || !lastSeen.Valid {
+		return false
+	}
+	if maxAge <= 0 {
+		maxAge = defaultDriverPresenceMaxAge
+	}
+	return now.Sub(lastSeen.Time.UTC()) <= maxAge
+}
+
 func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Profile) (domain.Profile, error) {
 	if err := repository.validate(); err != nil {
 		return domain.Profile{}, fmt.Errorf("validate profile repository: %w", err)

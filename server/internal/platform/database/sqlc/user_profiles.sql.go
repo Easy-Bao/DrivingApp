@@ -29,6 +29,27 @@ func (q *Queries) DeleteNotification(ctx context.Context, arg DeleteNotification
 	return result.RowsAffected(), nil
 }
 
+const getDriverOnlinePresence = `-- name: GetDriverOnlinePresence :one
+SELECT dp.is_online, dp.online_last_seen_at
+FROM driver_profiles AS dp
+INNER JOIN users AS u ON u.id = dp.user_id
+WHERE dp.user_id = $1
+  AND u.account_status = 'active'
+LIMIT 1
+`
+
+type GetDriverOnlinePresenceRow struct {
+	IsOnline         bool               `db:"is_online"`
+	OnlineLastSeenAt pgtype.Timestamptz `db:"online_last_seen_at"`
+}
+
+func (q *Queries) GetDriverOnlinePresence(ctx context.Context, userID int32) (GetDriverOnlinePresenceRow, error) {
+	row := q.db.QueryRow(ctx, getDriverOnlinePresence, userID)
+	var i GetDriverOnlinePresenceRow
+	err := row.Scan(&i.IsOnline, &i.OnlineLastSeenAt)
+	return i, err
+}
+
 const getDriverProfileByUserIDFull = `-- name: GetDriverProfileByUserIDFull :one
 SELECT id, user_id, name, vehicle_type, plate_number,
     COALESCE(

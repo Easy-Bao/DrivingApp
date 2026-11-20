@@ -32,6 +32,7 @@ var ErrPersistenceUnavailable = errors.New("location persistence is unavailable"
 const (
 	defaultLocationMaxAge    = 45 * time.Second
 	maximumLocationClockSkew = 15 * time.Second
+	presenceCleanupTimeout   = 2 * time.Second
 	nearbyCoordinateGrid     = 1_000
 )
 
@@ -204,11 +205,25 @@ func (service *TrackingService) Ingest(ctx context.Context, point domain.DriverP
 	postWritePresenceStartedAt := timings.start()
 	if err := service.requireOnlineDriver(ctx, point.DriverID); err != nil {
 		timings.postWritePresenceDuration = timings.measure(postWritePresenceStartedAt)
-		if cleanupErr := service.repository.Remove(ctx, point.DriverID); cleanupErr != nil {
-			timings.outcome = "presence_race_cleanup_failed"
-			return fmt.Errorf("%w: remove location after presence changed: %v", err, cleanupErr)
+		if errors.Is(err, domain.ErrDriverOffline) {
+			baseCtx := ctx
+			if baseCtx == nil {
+				baseCtx = context.Background()
+			}
+			cleanupCtx, cancelCleanup := context.WithTimeout(
+				context.WithoutCancel(baseCtx),
+				presenceCleanupTimeout,
+			)
+			cleanupErr := service.repository.Remove(cleanupCtx, point.DriverID)
+			cancelCleanup()
+			if cleanupErr != nil {
+				timings.outcome = "presence_race_cleanup_failed"
+				return fmt.Errorf("%w: remove location after presence changed: %v", err, cleanupErr)
+			}
+			timings.outcome = "presence_changed_after_write"
+			return err
 		}
-		timings.outcome = "presence_changed_after_write"
+		timings.outcome = "post_write_presence_unavailable"
 		return err
 	}
 	timings.postWritePresenceDuration = timings.measure(postWritePresenceStartedAt)
