@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRoute, useRouter, RouterView } from 'vue-router'
+import { onBeforeUnmount, ref } from 'vue'
+import { RouterView, useRoute, useRouter } from 'vue-router'
 import ConsoleLayout from '@/app/layouts/ConsoleLayout.vue'
+
+interface RouteTransitionTarget {
+  meta?: Record<string, unknown>
+  name?: unknown
+  path?: string
+  params?: Record<string, unknown>
+}
 
 const currentRoute = useRoute()
 const router = useRouter()
 const transitionName = ref<'slide-left' | 'slide-right' | ''>('')
 
-const isDetailsRoute = (route: {
-  meta?: Record<string, unknown>
-  name?: unknown
-  path?: string
-  params?: Record<string, unknown>
-}) => {
+function isDetailRoute(route: RouteTransitionTarget): boolean {
   return (
     route.meta?.isDetail === true ||
     String(route.name || '').endsWith('/[id]') ||
@@ -21,20 +23,28 @@ const isDetailsRoute = (route: {
   )
 }
 
-const normalizePath = (p?: string) => ((p || '').split('?')[0] ?? '').replace(/\/+$/, '')
+function normalizeRoutePath(rawPath?: string): string {
+  return ((rawPath || '').split('?')[0] ?? '').replace(/\/+$/, '')
+}
 
-router.beforeEach((to, from) => {
-  const toIsDetail = isDetailsRoute(to)
-  const fromIsDetail = isDetailsRoute(from)
-  const toPath = normalizePath(to.path)
-  const fromPath = normalizePath(from.path)
+const unregisterTransitionGuard = router.beforeEach((to, from) => {
+  const destinationIsDetail = isDetailRoute(to)
+  const originIsDetail = isDetailRoute(from)
+  const destinationPath = normalizeRoutePath(to.path)
+  const originPath = normalizeRoutePath(from.path)
 
-  if (toIsDetail && !fromIsDetail) {
+  if (destinationIsDetail && !originIsDetail) {
     transitionName.value = 'slide-left'
-  } else if (!toIsDetail && fromIsDetail && fromPath.startsWith(toPath)) {
+  } else if (!destinationIsDetail && originIsDetail && originPath.startsWith(destinationPath)) {
     transitionName.value = 'slide-right'
   } else {
     transitionName.value = ''
+  }
+})
+
+onBeforeUnmount(() => {
+  if (typeof unregisterTransitionGuard === 'function') {
+    unregisterTransitionGuard()
   }
 })
 </script>

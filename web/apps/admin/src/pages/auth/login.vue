@@ -2,8 +2,8 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import BaseSelect from '@/shared/forms/BaseSelect.vue'
 import { ROLE_PROFILES, loginOperator, sanitizeRedirectPath, type OperatorRole } from '@/core'
+import { BaseSelect } from '@/shared'
 
 definePage({
   meta: { public: true, hideChrome: true },

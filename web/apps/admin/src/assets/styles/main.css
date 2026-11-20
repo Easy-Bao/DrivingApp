@@ -25,6 +25,15 @@
   *::after {
     border-radius: 0;
   }
+
+  html {
+    scroll-padding-top: 4.5rem;
+  }
+
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid #171717;
+    outline-offset: 2px;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -93,8 +102,8 @@ select optgroup {
 }
 
 #app {
-  min-height: 100dvh;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .slide-left-enter-active,
@@ -124,29 +133,11 @@ select optgroup {
   transform: translateX(20px);
 }
 
-.flip-left-enter-active,
-.flip-left-leave-active,
-.flip-right-enter-active,
-.flip-right-leave-active {
-  transition:
-    transform 0.2s cubic-bezier(0.2, 0, 0, 1),
-    opacity 0.2s ease-out;
-}
-
-.flip-left-enter-from {
-  opacity: 0;
-  transform: translateX(24px);
-}
-.flip-left-leave-to {
-  opacity: 0;
-  transform: translateX(-24px);
-}
-
-.flip-right-enter-from {
-  opacity: 0;
-  transform: translateX(-24px);
-}
-.flip-right-leave-to {
-  opacity: 0;
-  transform: translateX(24px);
+@media (prefers-reduced-motion: reduce) {
+  .slide-left-enter-active,
+  .slide-left-leave-active,
+  .slide-right-enter-active,
+  .slide-right-leave-active {
+    transition: none;
+  }
 }

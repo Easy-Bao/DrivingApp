@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import Sidebar from '@/app/layouts/Sidebar.vue'
 import { navigationGroups } from '@/app/navigation/menu'
-import { useEscapeKey } from '@/shared/composables/use-escape-key'
+import { useEscapeKey } from '@/shared'
 
 interface BreadcrumbMeta {
   section: string

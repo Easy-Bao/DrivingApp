@@ -2,11 +2,8 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import ModalDialog from '@/shared/dialogs/ModalDialog.vue'
-import PageHeader from '@/shared/layout/PageHeader.vue'
-import StatusBadge from '@/shared/feedback/StatusBadge.vue'
-import ToastBanner from '@/shared/feedback/ToastBanner.vue'
 import { ROLE_PROFILES, lockAuthSession, updateOperatorProfile, useAuthSession } from '@/core'
+import { ModalDialog, PageHeader, StatusBadge, ToastBanner } from '@/shared'
 
 const router = useRouter()
 const authSession = useAuthSession()
