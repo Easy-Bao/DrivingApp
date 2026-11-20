@@ -24,7 +24,6 @@ type Querier interface {
 	CreateBidSession(ctx context.Context, arg CreateBidSessionParams) (BidSession, error)
 	CreateDriverDocument(ctx context.Context, arg CreateDriverDocumentParams) (DriverDocument, error)
 	CreateDriverProfile(ctx context.Context, arg CreateDriverProfileParams) error
-	CreateDriverWalletAccount(ctx context.Context, arg CreateDriverWalletAccountParams) (DriverWalletAccount, error)
 	CreateExternalPrivateObject(ctx context.Context, arg CreateExternalPrivateObjectParams) error
 	CreatePassengerProfile(ctx context.Context, arg CreatePassengerProfileParams) error
 	CreatePassengerReview(ctx context.Context, arg CreatePassengerReviewParams) (PassengerReview, error)
@@ -36,7 +35,6 @@ type Querier interface {
 	CreateRideSettlement(ctx context.Context, arg CreateRideSettlementParams) (RideSettlement, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateWalletLedger(ctx context.Context, arg CreateWalletLedgerParams) (int64, error)
-	CreditDriverWalletAccount(ctx context.Context, arg CreditDriverWalletAccountParams) (DriverWalletAccount, error)
 	DeclineTargetedBidSession(ctx context.Context, arg DeclineTargetedBidSessionParams) (DeclineTargetedBidSessionRow, error)
 	DeleteNotification(ctx context.Context, arg DeleteNotificationParams) (int64, error)
 	DeletePrivateObjectByStorageKey(ctx context.Context, storageKey string) error
@@ -52,7 +50,6 @@ type Querier interface {
 	GetDriverProfileByUserIDFull(ctx context.Context, userID int32) (GetDriverProfileByUserIDFullRow, error)
 	GetDriverReviewByRideAndPassenger(ctx context.Context, arg GetDriverReviewByRideAndPassengerParams) (Review, error)
 	GetDriverStats(ctx context.Context, arg GetDriverStatsParams) (GetDriverStatsRow, error)
-	GetDriverWalletAccountForUpdate(ctx context.Context, driverID int32) (DriverWalletAccount, error)
 	GetNextExternalPrivateObjectForVerification(ctx context.Context, afterID int64) (GetNextExternalPrivateObjectForVerificationRow, error)
 	GetNextPrivateObjectForExternalStorageMigration(ctx context.Context) (GetNextPrivateObjectForExternalStorageMigrationRow, error)
 	GetOnlineDriverProfileForBidding(ctx context.Context, arg GetOnlineDriverProfileForBiddingParams) (GetOnlineDriverProfileForBiddingRow, error)
@@ -125,6 +122,7 @@ type Querier interface {
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) (int64, error)
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
 	UpgradeUserPasswordHash(ctx context.Context, arg UpgradeUserPasswordHashParams) (int64, error)
+	UpsertAndCreditDriverWalletAccount(ctx context.Context, arg UpsertAndCreditDriverWalletAccountParams) (DriverWalletAccount, error)
 }
 
 var _ Querier = (*Queries)(nil)

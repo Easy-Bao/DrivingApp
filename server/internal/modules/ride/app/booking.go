@@ -149,6 +149,9 @@ func (service *BookingService) CreateWithDetails(ctx context.Context, ride domai
 	ride.DistanceKm = metrics.DistanceKm
 	ride.DurationMinutes = metrics.DurationMinutes
 	ride.FareAmount = service.calculateFare(metrics.DistanceKm, metrics.DurationMinutes)
+	if ride.FareAmount <= 0 {
+		return domain.Ride{}, domain.ErrInvalidTrip
+	}
 	ride.Status = string(domain.RideRequested)
 
 	created, err := service.writer.CreateRide(ctx, ride)
@@ -198,7 +201,11 @@ func (service *BookingService) EstimateFare(
 		if err != nil {
 			return RouteMetrics{}, 0, fmt.Errorf("resolve authoritative fare route: %w", err)
 		}
-		return metrics, service.calculateFare(metrics.DistanceKm, metrics.DurationMinutes), nil
+		fare := service.calculateFare(metrics.DistanceKm, metrics.DurationMinutes)
+		if fare <= 0 {
+			return RouteMetrics{}, 0, domain.ErrInvalidTrip
+		}
+		return metrics, fare, nil
 	}
 	if err := validateTrip(
 		0,
@@ -211,7 +218,11 @@ func (service *BookingService) EstimateFare(
 		return RouteMetrics{}, 0, err
 	}
 	metrics := RouteMetrics{DistanceKm: distanceKm, DurationMinutes: durationMinutes}
-	return metrics, service.calculateFare(distanceKm, durationMinutes), nil
+	fare := service.calculateFare(distanceKm, durationMinutes)
+	if fare <= 0 {
+		return RouteMetrics{}, 0, domain.ErrInvalidTrip
+	}
+	return metrics, fare, nil
 }
 
 func (service *BookingService) resolveRouteMetrics(

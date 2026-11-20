@@ -13,11 +13,15 @@ import (
 )
 
 type eventPublisherStub struct {
-	events []event.RealtimeEvent
-	err    error
+	events         []event.RealtimeEvent
+	lastPublishErr error
+	err            error
 }
 
-func (stub *eventPublisherStub) Publish(_ context.Context, realtimeEvent event.RealtimeEvent) error {
+func (stub *eventPublisherStub) Publish(ctx context.Context, realtimeEvent event.RealtimeEvent) error {
+	if ctx != nil {
+		stub.lastPublishErr = ctx.Err()
+	}
 	stub.events = append(stub.events, realtimeEvent)
 	return stub.err
 }
@@ -580,7 +584,8 @@ func TestAcceptOfferPublishesWithdrawnOutstandingOffers(t *testing.T) {
 		t.Fatalf("published events = %#v, want matched and withdrawn offer events", publisher.events)
 	}
 	withdrawal := publisher.events[1]
-	if withdrawal.Type != event.RideOfferUpdated || withdrawal.Scope.PassengerID != "202" {
+	if withdrawal.Type != event.RideOfferUpdated || withdrawal.Scope.PassengerID != "202" ||
+		withdrawal.Scope.DriverID != "303" || withdrawal.Scope.DriverPool {
 		t.Fatalf("withdrawal event = %+v", withdrawal)
 	}
 	if withdrawal.Payload["offer"] != withdrawnOffer || withdrawal.Payload["reason"] != "driver_unavailable" {
@@ -703,5 +708,92 @@ func TestDeclineSessionDoesNotPublishFailedMutation(t *testing.T) {
 				t.Fatalf("decline = %v, events %+v", err, publisher.events)
 			}
 		})
+	}
+}
+
+func TestCreateSessionRejectsInvalidTargetDriverAndExcessiveCustomFare(t *testing.T) {
+	newService := func() *dispatchapplication.Service {
+		return dispatchapplication.NewService(dispatchapplication.Dependencies{
+			Store: &biddingStoreStub{},
+			ResolveRoute: func(context.Context, float64, float64, float64, float64, float64, float64) (dispatchapplication.RouteMetrics, error) {
+				return dispatchapplication.RouteMetrics{DistanceKm: 5, DurationMinutes: 15}, nil
+			},
+			CalculateFare: func(float64, float64) int64 { return 4000 },
+		})
+	}
+
+	for _, badTarget := range []int{0, -5, 101} {
+		target := badTarget
+		_, err := newService().CreateSession(context.Background(), dispatchdomain.BidSession{
+			PassengerID:      101,
+			PickupLatitude:   14.5,
+			PickupLongitude:  121.0,
+			DropoffLatitude:  14.6,
+			DropoffLongitude: 121.1,
+			TargetDriverID:   &target,
+		})
+		if !errors.Is(err, ridedomain.ErrInvalidTrip) {
+			t.Fatalf("TargetDriverID=%d error = %v, want ErrInvalidTrip", badTarget, err)
+		}
+	}
+
+	excessive := int64(5_000_01)
+	_, err := newService().CreateSession(context.Background(), dispatchdomain.BidSession{
+		PassengerID:      101,
+		PickupLatitude:   14.5,
+		PickupLongitude:  121.0,
+		DropoffLatitude:  14.6,
+		DropoffLongitude: 121.1,
+		CustomFareAmount: &excessive,
+	})
+	if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
+		t.Fatalf("excessive custom fare error = %v, want ErrInvalidFareOffer", err)
+	}
+}
+
+func TestPlaceAndCancelOfferDoNotBroadcastToDriverPoolAndDetachPublishContext(t *testing.T) {
+	store := &biddingStoreStub{
+		session: dispatchdomain.BidSession{
+			ID:                10,
+			PassengerID:       101,
+			OfferedFareAmount: 10000,
+			Status:            "open",
+		},
+	}
+	publisher := &eventPublisherStub{}
+	service := dispatchapplication.NewService(dispatchapplication.Dependencies{
+		Store:          store,
+		EventPublisher: publisher,
+	})
+
+	canceledCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	if _, err := service.PlaceOffer(canceledCtx, dispatchdomain.BidOffer{
+		SessionID:          10,
+		DriverID:           42,
+		ProposedFareAmount: 10000,
+	}); err != nil {
+		t.Fatalf("PlaceOffer() error = %v", err)
+	}
+	if _, err := service.CancelOffer(canceledCtx, 10, 42); err != nil {
+		t.Fatalf("CancelOffer() error = %v", err)
+	}
+	if len(publisher.events) != 2 {
+		t.Fatalf("published event count = %d, want 2", len(publisher.events))
+	}
+	for index, published := range publisher.events {
+		if published.Scope.DriverPool {
+			t.Fatalf("event[%d] leaked to DriverPool: %+v", index, published.Scope)
+		}
+		if published.Scope.PassengerID != "101" {
+			t.Fatalf("event[%d] PassengerID = %q, want 101", index, published.Scope.PassengerID)
+		}
+	}
+	if publisher.events[0].Scope.DriverID != "42" {
+		t.Fatalf("PlaceOffer DriverID = %q, want 42", publisher.events[0].Scope.DriverID)
+	}
+	if publisher.lastPublishErr != nil {
+		t.Fatalf("publish context observed caller cancellation: %v", publisher.lastPublishErr)
 	}
 }

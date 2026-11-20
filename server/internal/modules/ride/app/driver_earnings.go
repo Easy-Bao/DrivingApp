@@ -6,6 +6,24 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 )
 
+func driverEarningsQueryBounds(now time.Time, location *time.Location) (time.Time, time.Time) {
+	localNow := now.In(location)
+	today := time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, location)
+	weekStart := today.AddDate(0, 0, -(int(today.Weekday())+6)%7)
+	monthStart := time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, location)
+	start := monthStart
+	if weekStart.Before(start) {
+		start = weekStart
+	}
+	monthEnd := monthStart.AddDate(0, 1, 0)
+	weekEnd := weekStart.AddDate(0, 0, 7)
+	end := monthEnd
+	if weekEnd.After(end) {
+		end = weekEnd
+	}
+	return start.UTC(), end.UTC()
+}
+
 func summarizeDriverEarnings(
 	entries []domain.DriverEarning,
 	now time.Time,

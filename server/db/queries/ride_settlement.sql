@@ -53,24 +53,13 @@ RETURNING id, ride_id, gross_fare, commission_bps, commission_amount,
     cash_received_amount, cash_change_amount, cash_outcome, settled_at,
     created_at, updated_at;
 
--- name: GetDriverWalletAccountForUpdate :one
-SELECT id, driver_id, balance, version, created_at, updated_at
-FROM driver_wallet_accounts
-WHERE driver_id = $1
-LIMIT 1
-FOR UPDATE;
-
--- name: CreateDriverWalletAccount :one
-INSERT INTO driver_wallet_accounts (driver_id, balance)
-VALUES ($1, $2)
-RETURNING id, driver_id, balance, version, created_at, updated_at;
-
--- name: CreditDriverWalletAccount :one
-UPDATE driver_wallet_accounts
-SET balance = balance + $2,
-    version = version + 1,
-    updated_at = GREATEST(CURRENT_TIMESTAMP, created_at + interval '1 microsecond')
-WHERE id = $1
+-- name: UpsertAndCreditDriverWalletAccount :one
+INSERT INTO driver_wallet_accounts (driver_id, balance, version, updated_at)
+VALUES ($1, $2, 1, CURRENT_TIMESTAMP + interval '1 microsecond')
+ON CONFLICT (driver_id) DO UPDATE
+SET balance = driver_wallet_accounts.balance + EXCLUDED.balance,
+    version = driver_wallet_accounts.version + 1,
+    updated_at = GREATEST(CURRENT_TIMESTAMP, driver_wallet_accounts.created_at + interval '1 microsecond')
 RETURNING id, driver_id, balance, version, created_at, updated_at;
 
 -- name: CreateWalletLedger :execrows

@@ -56,7 +56,7 @@ func NewCashSettlement(
 			return CashSettlement{}, ErrInvalidSettlement
 		}
 	case CashOutcomeRefused, CashOutcomeUnpaid:
-		if collectedAmount != 0 {
+		if receivedAmount != 0 || changeAmount != 0 {
 			return CashSettlement{}, ErrInvalidSettlement
 		}
 	default:

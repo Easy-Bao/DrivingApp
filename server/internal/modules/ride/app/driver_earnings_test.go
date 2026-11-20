@@ -61,3 +61,15 @@ func TestSummarizeDriverEarningsCrossMonthBoundary(t *testing.T) {
 		t.Fatalf("unexpected weekday buckets: %#v", summary.Weekdays)
 	}
 }
+
+func TestDriverEarningsQueryBoundsIncludeCrossMonthWeek(t *testing.T) {
+	location := time.FixedZone("Asia/Manila", 8*60*60)
+	now := time.Date(2026, time.October, 2, 14, 0, 0, 0, location) // Friday Oct 2, 2026; Monday is Sep 28
+
+	start, end := driverEarningsQueryBounds(now, location)
+	wantStart := time.Date(2026, time.September, 28, 0, 0, 0, 0, location).UTC()
+	wantEnd := time.Date(2026, time.November, 1, 0, 0, 0, 0, location).UTC()
+	if !start.Equal(wantStart) || !end.Equal(wantEnd) {
+		t.Fatalf("query bounds = (%v, %v), want (%v, %v)", start, end, wantStart, wantEnd)
+	}
+}

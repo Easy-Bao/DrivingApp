@@ -71,6 +71,22 @@ func TestNewCashSettlement(t *testing.T) {
 			outcome:  CashOutcomePartial,
 			wantErr:  true,
 		},
+		{
+			name:     "refused cash cannot record non-zero tendered and change",
+			fare:     5000,
+			received: 5000,
+			change:   5000,
+			outcome:  CashOutcomeRefused,
+			wantErr:  true,
+		},
+		{
+			name:     "unpaid cash cannot record non-zero tendered and change",
+			fare:     5000,
+			received: 2000,
+			change:   2000,
+			outcome:  CashOutcomeUnpaid,
+			wantErr:  true,
+		},
 	}
 
 	for _, tt := range tests {

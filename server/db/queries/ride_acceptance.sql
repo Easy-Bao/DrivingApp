@@ -45,21 +45,38 @@ RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
     proposed_fare, status, created_at;
 
 -- name: RejectOtherPendingBidOffers :many
+WITH targets AS (
+    SELECT candidate.id
+    FROM bid_offers AS candidate
+    WHERE candidate.session_id = $1
+      AND candidate.status = 'pending'
+      AND candidate.id <> $2
+    ORDER BY candidate.id
+    FOR UPDATE
+)
 UPDATE bid_offers
 SET status = 'rejected'
-WHERE session_id = $1
-  AND status = 'pending'
-  AND id <> $2
-RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare, status, created_at;
+FROM targets
+WHERE bid_offers.id = targets.id
+RETURNING bid_offers.id, bid_offers.session_id, bid_offers.driver_id,
+    bid_offers.driver_name, bid_offers.plate_number, bid_offers.vehicle_type,
+    bid_offers.proposed_fare, bid_offers.status, bid_offers.created_at;
 
 -- name: RejectDriverPendingBidOffers :many
-WITH rejected AS (
+WITH targets AS (
+    SELECT candidate.id
+    FROM bid_offers AS candidate
+    WHERE candidate.driver_id = $1
+      AND candidate.status = 'pending'
+      AND candidate.id <> $2
+    ORDER BY candidate.id
+    FOR UPDATE
+),
+rejected AS (
     UPDATE bid_offers
     SET status = 'rejected'
-    WHERE bid_offers.driver_id = $1
-      AND bid_offers.status = 'pending'
-      AND bid_offers.id <> $2
+    FROM targets
+    WHERE bid_offers.id = targets.id
     RETURNING bid_offers.id, bid_offers.session_id, bid_offers.driver_id,
         bid_offers.driver_name, bid_offers.plate_number,
         bid_offers.vehicle_type, bid_offers.proposed_fare,

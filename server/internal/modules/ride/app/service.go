@@ -188,6 +188,9 @@ func (service *Service) authoritativeRoute(
 		}
 		return RouteMetrics{DistanceKm: distanceKm, DurationMinutes: durationMinutes}, nil
 	}
+	if pickupLatitude == dropoffLatitude && pickupLongitude == dropoffLongitude {
+		return RouteMetrics{}, domain.ErrInvalidTrip
+	}
 	if err := validateTrip(
 		pickupLatitude,
 		pickupLongitude,
@@ -382,13 +385,12 @@ func (service *Service) DriverEarnings(ctx context.Context, driverID int) (domai
 	}
 	location := service.reportingLocationOrDefault()
 	now := time.Now().In(location)
-	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, location)
-	monthEnd := monthStart.AddDate(0, 1, 0)
+	queryStart, queryEnd := driverEarningsQueryBounds(now, location)
 	entries, err := repository.DriverEarnings(
 		ctx,
 		driverID,
-		monthStart.UTC(),
-		monthEnd.UTC(),
+		queryStart,
+		queryEnd,
 	)
 	if err != nil {
 		return domain.DriverEarningsSummary{}, fmt.Errorf("load driver earnings: %w", err)

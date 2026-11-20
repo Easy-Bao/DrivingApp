@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -55,6 +57,14 @@ func (repository *Store) AcceptOffer(
 		if replay, ok := acceptedOfferReplay(ctx, transactionQueries, dbSessionID, dbOfferID, dbPassengerID); ok {
 			return replay, nil
 		}
+		if errors.Is(err, pgx.ErrNoRows) {
+			return dispatchapp.OfferAcceptance{}, classifyMissingActiveSessionForAcceptance(
+				ctx,
+				transactionQueries,
+				dbSessionID,
+				dbPassengerID,
+			)
+		}
 		return dispatchapp.OfferAcceptance{}, fmt.Errorf("find active bid session: %w", err)
 	}
 	if session.PassengerID != dbPassengerID {
@@ -72,6 +82,9 @@ func (repository *Store) AcceptOffer(
 		},
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return dispatchapp.OfferAcceptance{}, dispatchdomain.ErrOfferNotFound
+		}
 		return dispatchapp.OfferAcceptance{}, fmt.Errorf("find bid offer driver: %w", err)
 	}
 	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(
@@ -97,6 +110,9 @@ func (repository *Store) AcceptOffer(
 		},
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return dispatchapp.OfferAcceptance{}, dispatchdomain.ErrOfferNotFound
+		}
 		return dispatchapp.OfferAcceptance{}, fmt.Errorf("find pending bid offer: %w", err)
 	}
 	if session.TargetDriverID.Valid && session.TargetDriverID.Int32 != offer.DriverID {
@@ -124,6 +140,9 @@ func (repository *Store) AcceptOffer(
 	}
 	updatedOffer, err := transactionQueries.MarkBidOfferAccepted(ctx, offer.ID)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return dispatchapp.OfferAcceptance{}, dispatchdomain.ErrSessionClosed
+		}
 		return dispatchapp.OfferAcceptance{}, fmt.Errorf("accept bid offer: %w", err)
 	}
 	rejectedRows, err := transactionQueries.RejectOtherPendingBidOffers(ctx, databasepostgres.RejectOtherPendingBidOffersParams{
@@ -160,6 +179,9 @@ func (repository *Store) AcceptOffer(
 		AcceptedDriverID: pgtype.Int4{Int32: offer.DriverID, Valid: true},
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return dispatchapp.OfferAcceptance{}, dispatchdomain.ErrSessionClosed
+		}
 		return dispatchapp.OfferAcceptance{}, fmt.Errorf("accept bid session: %w", err)
 	}
 	createdRide, settlementRecord, err := createAcceptedRideAndSettlement(
@@ -195,6 +217,24 @@ func (repository *Store) AcceptOffer(
 		RejectedOffers:  rejectedOffers,
 		WithdrawnOffers: withdrawnOffers,
 	}, nil
+}
+
+func classifyMissingActiveSessionForAcceptance(
+	ctx context.Context,
+	queries *databasepostgres.Queries,
+	dbSessionID, dbPassengerID int32,
+) error {
+	existingSession, err := queries.GetBidSessionByID(ctx, dbSessionID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return dispatchdomain.ErrSessionNotFound
+		}
+		return fmt.Errorf("load bid session state: %w", err)
+	}
+	if existingSession.PassengerID != dbPassengerID {
+		return dispatchdomain.ErrUnauthorizedSession
+	}
+	return dispatchdomain.ErrSessionClosed
 }
 
 func acceptedOfferReplay(

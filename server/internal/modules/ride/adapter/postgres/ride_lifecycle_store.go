@@ -58,11 +58,11 @@ func (repository *RideRepository) MarkArrived(
 		WaitSeconds:   waitSeconds,
 	})
 	if err != nil {
-		return domain.Ride{}, rollbackRideStatusTransaction(
-			ctx,
-			transaction,
-			fmt.Errorf("mark ride arrived: %w", err),
-		)
+		mapped := fmt.Errorf("mark ride arrived: %w", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			mapped = classifyRideCommandMismatch(ctx, transactionQueries, dbRideID, dbDriverID, true)
+		}
+		return domain.Ride{}, rollbackRideStatusTransaction(ctx, transaction, mapped)
 	}
 	requestID, err := newAuditRequestID()
 	if err != nil {
@@ -123,11 +123,11 @@ func (repository *RideRepository) StartTrip(
 		DriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
 	})
 	if err != nil {
-		return domain.Ride{}, rollbackRideStatusTransaction(
-			ctx,
-			transaction,
-			fmt.Errorf("start ride: %w", err),
-		)
+		mapped := fmt.Errorf("start ride: %w", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			mapped = classifyRideCommandMismatch(ctx, transactionQueries, dbRideID, dbDriverID, true)
+		}
+		return domain.Ride{}, rollbackRideStatusTransaction(ctx, transaction, mapped)
 	}
 	return repository.commitLifecycleCommand(
 		ctx,
@@ -168,11 +168,11 @@ func (repository *RideRepository) CompleteTrip(
 		DriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
 	})
 	if err != nil {
-		return domain.Ride{}, rollbackRideStatusTransaction(
-			ctx,
-			transaction,
-			fmt.Errorf("complete ride: %w", err),
-		)
+		mapped := fmt.Errorf("complete ride: %w", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			mapped = classifyRideCommandMismatch(ctx, transactionQueries, dbRideID, dbDriverID, true)
+		}
+		return domain.Ride{}, rollbackRideStatusTransaction(ctx, transaction, mapped)
 	}
 	return repository.commitLifecycleCommand(
 		ctx,
@@ -370,11 +370,11 @@ func (repository *RideRepository) UpdateStatus(
 		ActorID:                    dbActorID,
 	})
 	if err != nil {
-		return domain.Ride{}, rollbackRideStatusTransaction(
-			ctx,
-			transaction,
-			fmt.Errorf("update ride status: %w", err),
-		)
+		mapped := fmt.Errorf("update ride status: %w", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			mapped = classifyRideCommandMismatch(ctx, transactionQueries, dbRideID, dbActorID, false)
+		}
+		return domain.Ride{}, rollbackRideStatusTransaction(ctx, transaction, mapped)
 	}
 	requestID := transition.RequestID
 	if requestID == "" {
@@ -482,6 +482,31 @@ func transitionEventType(status domain.RideStatus, requested string) string {
 		return domain.RideEventCancelled
 	}
 	return domain.RideEventStatusChanged
+}
+
+func classifyRideCommandMismatch(
+	ctx context.Context,
+	queries *databasepostgres.Queries,
+	rideID int32,
+	actorID int32,
+	driverOnly bool,
+) error {
+	existing, err := queries.GetRideByID(ctx, rideID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.ErrRideNotFound
+		}
+		return fmt.Errorf("check ride state after empty update: %w", err)
+	}
+	isDriver := existing.Ride.DriverID.Valid && existing.Ride.DriverID.Int32 == actorID
+	isPassenger := existing.Ride.PassengerID == actorID
+	if driverOnly && !isDriver {
+		return domain.ErrUnauthorizedRide
+	}
+	if !driverOnly && !isDriver && !isPassenger {
+		return domain.ErrUnauthorizedRide
+	}
+	return domain.ErrInvalidStatusTransition
 }
 
 func rollbackRideStatusTransaction(

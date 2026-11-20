@@ -18,6 +18,12 @@ import (
 
 var ErrPersistenceUnavailable = errors.New("bidding persistence is unavailable")
 
+const (
+	_dispatchEventPublishTimeout = 2 * time.Second
+	_minProposedFareCentavos     = 50_00
+	_maxProposedFareCentavos     = 5_000_00
+)
+
 type FareCalculator func(distanceKm, durationMinutes float64) int64
 
 type Dependencies struct {
@@ -83,6 +89,9 @@ func (service *Service) CreateSession(ctx context.Context, session dispatchdomai
 	if session.PickupLatitude == session.DropoffLatitude && session.PickupLongitude == session.DropoffLongitude {
 		return dispatchdomain.BidSession{}, ridedomain.ErrInvalidTrip
 	}
+	if session.TargetDriverID != nil && (*session.TargetDriverID <= 0 || *session.TargetDriverID == session.PassengerID) {
+		return dispatchdomain.BidSession{}, ridedomain.ErrInvalidTrip
+	}
 	if service.activeRideChecker != nil {
 		hasActive, err := service.activeRideChecker.HasActivePassengerRide(ctx, session.PassengerID)
 		if err != nil {
@@ -113,7 +122,8 @@ func (service *Service) CreateSession(ctx context.Context, session dispatchdomai
 	}
 	session.OfferedFareAmount = minimumFare
 	if session.CustomFareAmount != nil {
-		if *session.CustomFareAmount < minimumFare {
+		maxCustomFare := max(minimumFare, int64(_maxProposedFareCentavos))
+		if *session.CustomFareAmount < minimumFare || *session.CustomFareAmount > maxCustomFare {
 			return dispatchdomain.BidSession{}, dispatchdomain.ErrInvalidFareOffer
 		}
 		session.OfferedFareAmount = *session.CustomFareAmount
@@ -198,10 +208,10 @@ func (service *Service) PlaceOffer(ctx context.Context, offer dispatchdomain.Bid
 	}
 	session, sessionErr := service.store.Session(ctx, created.SessionID)
 	if sessionErr == nil {
-		service.publishSessionEvent(
+		service.publishOfferEvent(
 			ctx,
-			event.RideOfferUpdated,
 			session,
+			created,
 			map[string]any{"offer": created},
 		)
 	} else {
@@ -260,10 +270,10 @@ func (service *Service) AcceptOffer(
 			)
 		}
 		for _, withdrawal := range accepted.WithdrawnOffers {
-			service.publishSessionEvent(
+			service.publishOfferEvent(
 				ctx,
-				event.RideOfferUpdated,
 				withdrawal.Session,
+				withdrawal.Offer,
 				map[string]any{
 					"offer":  withdrawal.Offer,
 					"reason": "driver_unavailable",
@@ -327,10 +337,10 @@ func (service *Service) CancelOffer(ctx context.Context, sessionID, driverID int
 	}
 	session, sessionErr := service.store.Session(ctx, sessionID)
 	if sessionErr == nil {
-		service.publishSessionEvent(
+		service.publishOfferEvent(
 			ctx,
-			event.RideOfferUpdated,
 			session,
+			offer,
 			map[string]any{"offer": offer},
 		)
 	} else {
@@ -399,15 +409,30 @@ func (service *Service) Session(ctx context.Context, sessionID int) (dispatchdom
 }
 
 func withinOfferFareBounds(offeredFareAmount, proposedFareAmount int64) bool {
-	const minProposedFareCentavos = 50_00
-	const maxProposedFareCentavos = 5_000_00
 	if offeredFareAmount <= 0 {
-		return proposedFareAmount >= minProposedFareCentavos && proposedFareAmount <= maxProposedFareCentavos
+		return proposedFareAmount >= _minProposedFareCentavos && proposedFareAmount <= _maxProposedFareCentavos
 	}
 	baseFare := float64(offeredFareAmount)
-	minFare := min(offeredFareAmount, max(int64(minProposedFareCentavos), int64(math.Round(0.70*baseFare))))
-	maxFare := max(min(int64(maxProposedFareCentavos), int64(math.Round(2.0*baseFare))), minFare)
+	minFare := min(offeredFareAmount, max(int64(_minProposedFareCentavos), int64(math.Round(0.70*baseFare))))
+	maxFare := max(min(int64(_maxProposedFareCentavos), int64(math.Round(2.0*baseFare))), minFare, offeredFareAmount)
 	return proposedFareAmount >= minFare && proposedFareAmount <= maxFare
+}
+
+func (service *Service) publishOfferEvent(
+	ctx context.Context,
+	session dispatchdomain.BidSession,
+	offer dispatchdomain.BidOffer,
+	payload map[string]any,
+) {
+	service.publish(
+		ctx,
+		event.RideOfferUpdated,
+		event.Scope{
+			PassengerID: positiveIdentifier(session.PassengerID),
+			DriverID:    positiveIdentifier(offer.DriverID),
+		},
+		payload,
+	)
 }
 
 func (service *Service) publishRideEvent(
@@ -463,12 +488,21 @@ func (service *Service) publish(
 	if service.eventPublisher == nil {
 		return
 	}
-	if err := service.eventPublisher.Publish(ctx, event.RealtimeEvent{
+	baseCtx := ctx
+	if baseCtx == nil {
+		baseCtx = context.Background()
+	}
+	publishCtx, cancel := context.WithTimeout(
+		context.WithoutCancel(baseCtx),
+		_dispatchEventPublishTimeout,
+	)
+	defer cancel()
+	if err := service.eventPublisher.Publish(publishCtx, event.RealtimeEvent{
 		Type:    eventType,
 		Scope:   scope,
 		Payload: payload,
 	}); err != nil {
-		service.log().WarnContext(ctx, "publish realtime dispatch event failed", "error", err, "event_type", eventType)
+		service.log().WarnContext(publishCtx, "publish realtime dispatch event failed", "error", err, "event_type", eventType)
 	}
 }
 

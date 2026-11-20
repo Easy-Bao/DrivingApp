@@ -2,6 +2,7 @@ package http
 
 import (
 	"errors"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -253,7 +254,7 @@ func (handler *Handler) Counterparty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil || rideID <= 0 {
+	if err != nil || rideID <= 0 || int64(rideID) > math.MaxInt32 {
 		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
@@ -413,7 +414,7 @@ func (handler *Handler) CreateSafetyReport(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil || rideID <= 0 {
+	if err != nil || rideID <= 0 || int64(rideID) > math.MaxInt32 {
 		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
@@ -510,14 +511,17 @@ func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	commissionBPS := handler.service.PricingConfig().PlatformCommissionBPS
-	commission := fare * commissionBPS / 10000
+	snapshot, err := domain.NewSettlementSnapshot(fare, handler.service.PricingConfig().PlatformCommissionBPS)
+	if err != nil {
+		response.Error(w, rideErrorStatus(err), safeRideError(err))
+		return
+	}
 	response.JSON(w, http.StatusOK, map[string]any{
-		"fare_amount":          fare,
+		"fare_amount":          snapshot.FareAmount,
 		"distance_km":          metrics.DistanceKm,
 		"duration_minutes":     metrics.DurationMinutes,
-		"commission_amount":    commission,
-		"driver_payout_amount": fare - commission,
+		"commission_amount":    snapshot.CommissionAmount,
+		"driver_payout_amount": snapshot.DriverPayoutAmount,
 	})
 }
 
@@ -528,7 +532,7 @@ func (handler *Handler) driverRideCommand(w http.ResponseWriter, r *http.Request
 		return 0, 0, false
 	}
 	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
+	if err != nil || rideID <= 0 || int64(rideID) > math.MaxInt32 {
 		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return 0, 0, false
 	}

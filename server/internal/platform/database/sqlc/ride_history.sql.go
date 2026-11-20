@@ -17,11 +17,21 @@ SELECT ride.id, ride.booking_reference, ride.passenger_id, ride.driver_id, ride.
     COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
     COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
     COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
+    CAST((settlement.settled_at IS NOT NULL) AS boolean) AS cash_settled,
     settlement.commission_bps,
     COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
     COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount,
     COALESCE(NULLIF(passenger_profile.name, ''), user_account.name, '') AS passenger_name,
-    COALESCE(user_account.phone, '') AS passenger_phone,
+    CASE
+        WHEN ride.status IN ('assigned', 'accepted', 'arrived', 'in_transit')
+             OR (
+                 ride.status = 'completed'
+                 AND ride.completed_at IS NOT NULL
+                 AND ride.completed_at + interval '24 hours' > CURRENT_TIMESTAMP
+             )
+        THEN COALESCE(user_account.phone, '')
+        ELSE ''
+    END::text AS passenger_phone,
     passenger_review.rating AS passenger_rating,
     passenger_review.comment AS passenger_feedback
 FROM rides AS ride
@@ -57,6 +67,7 @@ type ListDriverRidesRow struct {
 	CashReceivedAmount int64         `db:"cash_received_amount"`
 	CashChangeAmount   int64         `db:"cash_change_amount"`
 	CashOutcome        string        `db:"cash_outcome"`
+	CashSettled        bool          `db:"cash_settled"`
 	CommissionBps      pgtype.Int4   `db:"commission_bps"`
 	CommissionAmount   int64         `db:"commission_amount"`
 	DriverPayoutAmount int64         `db:"driver_payout_amount"`
@@ -115,6 +126,7 @@ func (q *Queries) ListDriverRides(ctx context.Context, arg ListDriverRidesParams
 			&i.CashReceivedAmount,
 			&i.CashChangeAmount,
 			&i.CashOutcome,
+			&i.CashSettled,
 			&i.CommissionBps,
 			&i.CommissionAmount,
 			&i.DriverPayoutAmount,
@@ -139,6 +151,7 @@ SELECT ride.id, ride.booking_reference, ride.passenger_id, ride.driver_id, ride.
     COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
     COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
     COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
+    CAST((settlement.settled_at IS NOT NULL) AS boolean) AS cash_settled,
     settlement.commission_bps,
     COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
     COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount,
@@ -170,6 +183,7 @@ type ListPassengerRidesRow struct {
 	CashReceivedAmount       int64       `db:"cash_received_amount"`
 	CashChangeAmount         int64       `db:"cash_change_amount"`
 	CashOutcome              string      `db:"cash_outcome"`
+	CashSettled              bool        `db:"cash_settled"`
 	CommissionBps            pgtype.Int4 `db:"commission_bps"`
 	CommissionAmount         int64       `db:"commission_amount"`
 	DriverPayoutAmount       int64       `db:"driver_payout_amount"`
@@ -226,6 +240,7 @@ func (q *Queries) ListPassengerRides(ctx context.Context, arg ListPassengerRides
 			&i.CashReceivedAmount,
 			&i.CashChangeAmount,
 			&i.CashOutcome,
+			&i.CashSettled,
 			&i.CommissionBps,
 			&i.CommissionAmount,
 			&i.DriverPayoutAmount,
@@ -249,6 +264,7 @@ SELECT ride.id, ride.booking_reference, ride.passenger_id, ride.driver_id, ride.
     COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
     COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
     COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
+    CAST((settlement.settled_at IS NOT NULL) AS boolean) AS cash_settled,
     settlement.commission_bps,
     COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
     COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount,
@@ -259,6 +275,7 @@ FROM rides AS ride
 LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
 LEFT JOIN driver_profiles AS driver_profile ON driver_profile.user_id = ride.driver_id
 WHERE ride.passenger_id = $1
+  AND ride.status = 'completed'
 ORDER BY ride.id DESC
 LIMIT $2::int
 `
@@ -274,6 +291,7 @@ type ListRecentPassengerRidesRow struct {
 	CashReceivedAmount       int64       `db:"cash_received_amount"`
 	CashChangeAmount         int64       `db:"cash_change_amount"`
 	CashOutcome              string      `db:"cash_outcome"`
+	CashSettled              bool        `db:"cash_settled"`
 	CommissionBps            pgtype.Int4 `db:"commission_bps"`
 	CommissionAmount         int64       `db:"commission_amount"`
 	DriverPayoutAmount       int64       `db:"driver_payout_amount"`
@@ -324,6 +342,7 @@ func (q *Queries) ListRecentPassengerRides(ctx context.Context, arg ListRecentPa
 			&i.CashReceivedAmount,
 			&i.CashChangeAmount,
 			&i.CashOutcome,
+			&i.CashSettled,
 			&i.CommissionBps,
 			&i.CommissionAmount,
 			&i.DriverPayoutAmount,

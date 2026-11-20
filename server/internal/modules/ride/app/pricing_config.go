@@ -51,15 +51,23 @@ func (config PricingConfig) Validate() error {
 }
 
 func (config PricingConfig) FareAmount(distanceKm, durationMinutes float64) int64 {
+	if config.BaseFareAmount <= 0 || config.PerKilometerAmount < 0 || config.PerMinuteAmount < 0 {
+		return 0
+	}
 	if !isFiniteNonNegative(distanceKm) || !isFiniteNonNegative(durationMinutes) {
 		return 0
 	}
 
-	total := float64(config.BaseFareAmount) +
-		distanceKm*float64(config.PerKilometerAmount) +
-		durationMinutes*float64(config.PerMinuteAmount)
+	total := math.Round(
+		float64(config.BaseFareAmount) +
+			distanceKm*float64(config.PerKilometerAmount) +
+			durationMinutes*float64(config.PerMinuteAmount),
+	)
+	if math.IsNaN(total) || math.IsInf(total, 0) || total >= float64(math.MaxInt64) {
+		return 0
+	}
 	if total < float64(config.BaseFareAmount) {
-		total = float64(config.BaseFareAmount)
+		return config.BaseFareAmount
 	}
 	return int64(total)
 }

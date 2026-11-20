@@ -124,7 +124,7 @@ func (handler *Handler) Session(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusForbidden, "forbidden")
 		return
 	}
-	response.JSON(w, http.StatusOK, NewBidSessionResponse(item))
+	response.JSON(w, http.StatusOK, NewBidSessionResponse(filterSessionForViewer(principal.UserID, item)))
 }
 
 func (handler *Handler) Offers(w http.ResponseWriter, r *http.Request) {
@@ -200,7 +200,9 @@ func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 	}
 	sessionID, sessionErr := strconv.Atoi(chi.URLParam(r, "sessionID"))
 	offerID, offerErr := strconv.Atoi(chi.URLParam(r, "offerID"))
-	if sessionErr != nil || offerErr != nil || sessionID <= 0 || offerID <= 0 {
+	if sessionErr != nil || offerErr != nil ||
+		sessionID <= 0 || int64(sessionID) > math.MaxInt32 ||
+		offerID <= 0 || int64(offerID) > math.MaxInt32 {
 		response.Error(w, http.StatusBadRequest, "invalid bid id")
 		return
 	}
@@ -278,7 +280,7 @@ func (handler *Handler) CancelOffer(w http.ResponseWriter, r *http.Request) {
 
 func sessionIDParam(w http.ResponseWriter, r *http.Request) (int, bool) {
 	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
-	if err != nil || id <= 0 {
+	if err != nil || id <= 0 || int64(id) > math.MaxInt32 {
 		response.Error(w, http.StatusBadRequest, "invalid session id")
 		return 0, false
 	}
@@ -292,13 +294,39 @@ func canViewSession(actorID int, actorRole string, session dispatchdomain.BidSes
 	if session.PassengerID == actorID {
 		return true
 	}
-	if session.TargetDriverID != nil && *session.TargetDriverID == actorID {
+	if session.TargetDriverID != nil {
+		return *session.TargetDriverID == actorID
+	}
+	if actorRole != string(security.RoleDriver) {
+		return false
+	}
+	if session.AcceptedDriverID != nil && *session.AcceptedDriverID == actorID {
 		return true
 	}
-	if session.TargetDriverID == nil && actorRole == string(security.RoleDriver) {
+	status := strings.TrimSpace(session.Status)
+	if status == "" || strings.EqualFold(status, "open") {
 		return true
+	}
+	for _, offer := range session.Offers {
+		if offer.DriverID == actorID {
+			return true
+		}
 	}
 	return false
+}
+
+func filterSessionForViewer(actorID int, session dispatchdomain.BidSession) dispatchdomain.BidSession {
+	if session.PassengerID == actorID || len(session.Offers) == 0 {
+		return session
+	}
+	filtered := make([]dispatchdomain.BidOffer, 0, 1)
+	for _, offer := range session.Offers {
+		if offer.DriverID == actorID {
+			filtered = append(filtered, offer)
+		}
+	}
+	session.Offers = filtered
+	return session
 }
 
 func dispatchErrorStatus(err error) int {

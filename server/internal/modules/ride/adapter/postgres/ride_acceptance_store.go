@@ -2,12 +2,14 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -71,6 +73,15 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 	}
 	trip, err := transactionQueries.LockRequestedRideForAcceptance(ctx, dbRideID)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			if _, lookupErr := transactionQueries.GetRideByID(ctx, dbRideID); lookupErr != nil {
+				if errors.Is(lookupErr, pgx.ErrNoRows) {
+					return domain.Ride{}, domain.ErrRideNotFound
+				}
+				return domain.Ride{}, fmt.Errorf("check ride existence for acceptance: %w", lookupErr)
+			}
+			return domain.Ride{}, domain.ErrInvalidStatusTransition
+		}
 		return domain.Ride{}, fmt.Errorf("find requested ride: %w", err)
 	}
 	settlement, err := domain.NewSettlementSnapshot(

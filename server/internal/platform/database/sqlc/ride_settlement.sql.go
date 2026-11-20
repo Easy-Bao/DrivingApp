@@ -11,31 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createDriverWalletAccount = `-- name: CreateDriverWalletAccount :one
-INSERT INTO driver_wallet_accounts (driver_id, balance)
-VALUES ($1, $2)
-RETURNING id, driver_id, balance, version, created_at, updated_at
-`
-
-type CreateDriverWalletAccountParams struct {
-	DriverID int32 `db:"driver_id"`
-	Balance  int64 `db:"balance"`
-}
-
-func (q *Queries) CreateDriverWalletAccount(ctx context.Context, arg CreateDriverWalletAccountParams) (DriverWalletAccount, error) {
-	row := q.db.QueryRow(ctx, createDriverWalletAccount, arg.DriverID, arg.Balance)
-	var i DriverWalletAccount
-	err := row.Scan(
-		&i.ID,
-		&i.DriverID,
-		&i.Balance,
-		&i.Version,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const createWalletLedger = `-- name: CreateWalletLedger :execrows
 INSERT INTO wallet_ledgers (
     driver_id, ride_id, amount, commission_amount, kind, idempotency_key
@@ -66,56 +41,6 @@ func (q *Queries) CreateWalletLedger(ctx context.Context, arg CreateWalletLedger
 		return 0, err
 	}
 	return result.RowsAffected(), nil
-}
-
-const creditDriverWalletAccount = `-- name: CreditDriverWalletAccount :one
-UPDATE driver_wallet_accounts
-SET balance = balance + $2,
-    version = version + 1,
-    updated_at = GREATEST(CURRENT_TIMESTAMP, created_at + interval '1 microsecond')
-WHERE id = $1
-RETURNING id, driver_id, balance, version, created_at, updated_at
-`
-
-type CreditDriverWalletAccountParams struct {
-	ID      int32 `db:"id"`
-	Balance int64 `db:"balance"`
-}
-
-func (q *Queries) CreditDriverWalletAccount(ctx context.Context, arg CreditDriverWalletAccountParams) (DriverWalletAccount, error) {
-	row := q.db.QueryRow(ctx, creditDriverWalletAccount, arg.ID, arg.Balance)
-	var i DriverWalletAccount
-	err := row.Scan(
-		&i.ID,
-		&i.DriverID,
-		&i.Balance,
-		&i.Version,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getDriverWalletAccountForUpdate = `-- name: GetDriverWalletAccountForUpdate :one
-SELECT id, driver_id, balance, version, created_at, updated_at
-FROM driver_wallet_accounts
-WHERE driver_id = $1
-LIMIT 1
-FOR UPDATE
-`
-
-func (q *Queries) GetDriverWalletAccountForUpdate(ctx context.Context, driverID int32) (DriverWalletAccount, error) {
-	row := q.db.QueryRow(ctx, getDriverWalletAccountForUpdate, driverID)
-	var i DriverWalletAccount
-	err := row.Scan(
-		&i.ID,
-		&i.DriverID,
-		&i.Balance,
-		&i.Version,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
 }
 
 const getRideSettlementByRideID = `-- name: GetRideSettlementByRideID :one
@@ -314,6 +239,35 @@ func (q *Queries) UpdateRideSettlementEconomics(ctx context.Context, arg UpdateR
 		&i.CashChangeAmount,
 		&i.CashOutcome,
 		&i.SettledAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const upsertAndCreditDriverWalletAccount = `-- name: UpsertAndCreditDriverWalletAccount :one
+INSERT INTO driver_wallet_accounts (driver_id, balance, version, updated_at)
+VALUES ($1, $2, 1, CURRENT_TIMESTAMP + interval '1 microsecond')
+ON CONFLICT (driver_id) DO UPDATE
+SET balance = driver_wallet_accounts.balance + EXCLUDED.balance,
+    version = driver_wallet_accounts.version + 1,
+    updated_at = GREATEST(CURRENT_TIMESTAMP, driver_wallet_accounts.created_at + interval '1 microsecond')
+RETURNING id, driver_id, balance, version, created_at, updated_at
+`
+
+type UpsertAndCreditDriverWalletAccountParams struct {
+	DriverID int32 `db:"driver_id"`
+	Balance  int64 `db:"balance"`
+}
+
+func (q *Queries) UpsertAndCreditDriverWalletAccount(ctx context.Context, arg UpsertAndCreditDriverWalletAccountParams) (DriverWalletAccount, error) {
+	row := q.db.QueryRow(ctx, upsertAndCreditDriverWalletAccount, arg.DriverID, arg.Balance)
+	var i DriverWalletAccount
+	err := row.Scan(
+		&i.ID,
+		&i.DriverID,
+		&i.Balance,
+		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

@@ -3,10 +3,13 @@ package app
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
+
+const _realtimeEventPublishTimeout = 2 * time.Second
 
 func (service *Service) publishRide(
 	ctx context.Context,
@@ -38,12 +41,21 @@ func (service *Service) publish(
 	if service.eventPublisher == nil {
 		return
 	}
-	if err := service.eventPublisher.Publish(ctx, RealtimeEvent{
+	baseCtx := ctx
+	if baseCtx == nil {
+		baseCtx = context.Background()
+	}
+	publishCtx, cancel := context.WithTimeout(
+		context.WithoutCancel(baseCtx),
+		_realtimeEventPublishTimeout,
+	)
+	defer cancel()
+	if err := service.eventPublisher.Publish(publishCtx, RealtimeEvent{
 		Type:    eventType,
 		Scope:   scope,
 		Payload: payload,
 	}); err != nil {
-		service.log().WarnContext(ctx, "publish realtime ride event failed", "error", err, "event_type", eventType)
+		service.log().WarnContext(publishCtx, "publish realtime ride event failed", "error", err, "event_type", eventType)
 	}
 }
 

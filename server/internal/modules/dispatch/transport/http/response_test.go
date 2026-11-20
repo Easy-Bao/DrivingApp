@@ -157,4 +157,34 @@ func TestCanViewSession(t *testing.T) {
 	if canViewSession(-1, "driver", broadcastSession) {
 		t.Fatal("expected negative actorID cannot view broadcast session")
 	}
+
+	acceptedDriver := 12
+	closedBroadcast := domain.BidSession{
+		ID:               3,
+		PassengerID:      5,
+		Status:           "accepted",
+		AcceptedDriverID: &acceptedDriver,
+		Offers: []domain.BidOffer{
+			{ID: 1, DriverID: 12, ProposedFareAmount: 1500, Status: "accepted"},
+			{ID: 2, DriverID: 13, ProposedFareAmount: 1600, Status: "rejected"},
+		},
+	}
+	if !canViewSession(12, "driver", closedBroadcast) {
+		t.Fatal("expected accepted driver to view closed broadcast session")
+	}
+	if !canViewSession(13, "driver", closedBroadcast) {
+		t.Fatal("expected participating bidder to view closed broadcast session")
+	}
+	if canViewSession(14, "driver", closedBroadcast) {
+		t.Fatal("expected unrelated driver not to view closed broadcast session")
+	}
+
+	driverView := filterSessionForViewer(13, closedBroadcast)
+	if len(driverView.Offers) != 1 || driverView.Offers[0].DriverID != 13 {
+		t.Fatalf("driver view offers = %+v, want only driver 13 offer", driverView.Offers)
+	}
+	passengerView := filterSessionForViewer(5, closedBroadcast)
+	if len(passengerView.Offers) != 2 {
+		t.Fatalf("passenger view offers = %+v, want all 2 offers", passengerView.Offers)
+	}
 }

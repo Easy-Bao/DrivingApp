@@ -10,11 +10,15 @@ import (
 )
 
 type eventPublisherStub struct {
-	events []RealtimeEvent
-	err    error
+	events         []RealtimeEvent
+	lastPublishErr error
+	err            error
 }
 
-func (stub *eventPublisherStub) Publish(_ context.Context, realtimeEvent RealtimeEvent) error {
+func (stub *eventPublisherStub) Publish(ctx context.Context, realtimeEvent RealtimeEvent) error {
+	if ctx != nil {
+		stub.lastPublishErr = ctx.Err()
+	}
 	stub.events = append(stub.events, realtimeEvent)
 	return stub.err
 }
@@ -72,5 +76,26 @@ func TestPublishingFailureDoesNotRollbackPersistedStatus(t *testing.T) {
 	}
 	if updated.Status != "in_transit" || repository.updated.Status != "in_transit" {
 		t.Fatalf("persisted update was rolled back: %#v", updated)
+	}
+}
+
+func TestPublishRideDetachesCanceledCallerContext(t *testing.T) {
+	publisher := &eventPublisherStub{}
+	service := newTestRideService(&ridesRepositoryStub{}, testPricingConfig(t), publisher)
+
+	canceledCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	service.publishRide(canceledCtx, event.RideStatusChanged, domain.Ride{
+		ID:          9,
+		PassengerID: 7,
+		DriverID:    new(11),
+	}, map[string]any{"status": "in_transit"})
+
+	if len(publisher.events) != 1 {
+		t.Fatalf("published events = %d, want 1", len(publisher.events))
+	}
+	if publisher.lastPublishErr != nil {
+		t.Fatalf("publish context observed caller cancellation: %v", publisher.lastPublishErr)
 	}
 }

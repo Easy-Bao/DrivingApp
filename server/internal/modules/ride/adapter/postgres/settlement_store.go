@@ -50,13 +50,17 @@ func (repository *RideRepository) SettleCash(
 		},
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.Ride{}, classifyRideCommandMismatch(ctx, transactionQueries, dbRideID, dbDriverID, true)
+		}
 		return domain.Ride{}, fmt.Errorf("find completed ride: %w", err)
 	}
 	settlementRecord, settlement, err := repository.ensureNativeRideSettlement(ctx, transactionQueries, rideItem)
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	if settlementRecord.CashOutcome != string(domain.CashOutcomeUnpaid) ||
+	if settlementRecord.CashReceivedAt.Valid ||
+		settlementRecord.CashOutcome != string(domain.CashOutcomeUnpaid) ||
 		settlementRecord.CashReceivedAmount != 0 ||
 		settlementRecord.CashChangeAmount != 0 {
 		if !cashSettlementMatchesRecord(settlementRecord, request) {
@@ -93,7 +97,7 @@ func (repository *RideRepository) SettleCash(
 		}
 		return domain.Ride{}, fmt.Errorf("find settlement driver profile: %w", err)
 	}
-	if validated.Snapshot.DriverPayoutAmount > 0 {
+	if validated.Snapshot.DriverPayoutAmount > 0 || validated.Snapshot.CommissionAmount > 0 {
 		ledgerKind := "cash_trip"
 		if validated.Outcome == domain.CashOutcomePartial {
 			ledgerKind = "cash_trip_partial"
@@ -116,8 +120,10 @@ func (repository *RideRepository) SettleCash(
 				ledgerIdempotencyKey,
 			)
 		}
-		if err := creditNativeDriverWallet(ctx, transactionQueries, profile.UserID, validated.Snapshot.DriverPayoutAmount); err != nil {
-			return domain.Ride{}, fmt.Errorf("credit driver wallet: %w", err)
+		if validated.Snapshot.DriverPayoutAmount > 0 {
+			if err := creditNativeDriverWallet(ctx, transactionQueries, profile.UserID, validated.Snapshot.DriverPayoutAmount); err != nil {
+				return domain.Ride{}, fmt.Errorf("credit driver wallet: %w", err)
+			}
 		}
 	}
 	collectedAt := pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}
@@ -228,19 +234,9 @@ func creditNativeDriverWallet(
 	driverUserID int32,
 	amount int64,
 ) error {
-	account, err := queries.GetDriverWalletAccountForUpdate(ctx, driverUserID)
-	if errors.Is(err, pgx.ErrNoRows) {
-		account, err = queries.CreateDriverWalletAccount(ctx, databasepostgres.CreateDriverWalletAccountParams{
-			DriverID: driverUserID,
-			Balance:  0,
-		})
-	}
-	if err != nil {
-		return fmt.Errorf("load driver wallet account: %w", err)
-	}
-	if _, err := queries.CreditDriverWalletAccount(ctx, databasepostgres.CreditDriverWalletAccountParams{
-		ID:      account.ID,
-		Balance: amount,
+	if _, err := queries.UpsertAndCreditDriverWalletAccount(ctx, databasepostgres.UpsertAndCreditDriverWalletAccountParams{
+		DriverID: driverUserID,
+		Balance:  amount,
 	}); err != nil {
 		return fmt.Errorf("credit driver wallet account: %w", err)
 	}

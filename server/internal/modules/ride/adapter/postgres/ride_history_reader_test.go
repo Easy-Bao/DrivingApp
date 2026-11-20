@@ -18,6 +18,7 @@ func TestFromPostgresDriverRideMapsPassengerDetails(t *testing.T) {
 		PassengerPhone:    "+639171234567",
 		PassengerRating:   pgtype.Float8{Float64: 4.5, Valid: true},
 		PassengerFeedback: pgtype.Text{String: "  Great passenger  ", Valid: true},
+		CashSettled:       true,
 	})
 	if err != nil {
 		t.Fatalf("fromPostgresDriverRide() error = %v", err)
@@ -26,7 +27,7 @@ func TestFromPostgresDriverRideMapsPassengerDetails(t *testing.T) {
 	invalidPassengerPhone := ride.PassengerPhone != "+639171234567"
 	invalidPassengerRating := ride.PassengerRating != 4.5
 	invalidPassengerFeedback := ride.PassengerFeedback != "Great passenger"
-	if invalidPassengerName || invalidPassengerPhone || invalidPassengerRating || invalidPassengerFeedback {
+	if invalidPassengerName || invalidPassengerPhone || invalidPassengerRating || invalidPassengerFeedback || !ride.CashSettled {
 		t.Fatalf("mapped passenger details = %+v", ride)
 	}
 }

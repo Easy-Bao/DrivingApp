@@ -4,11 +4,21 @@ SELECT sqlc.embed(ride),
     COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
     COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
     COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
+    CAST((settlement.settled_at IS NOT NULL) AS boolean) AS cash_settled,
     settlement.commission_bps,
     COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
     COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount,
     COALESCE(NULLIF(passenger_profile.name, ''), user_account.name, '') AS passenger_name,
-    COALESCE(user_account.phone, '') AS passenger_phone,
+    CASE
+        WHEN ride.status IN ('assigned', 'accepted', 'arrived', 'in_transit')
+             OR (
+                 ride.status = 'completed'
+                 AND ride.completed_at IS NOT NULL
+                 AND ride.completed_at + interval '24 hours' > CURRENT_TIMESTAMP
+             )
+        THEN COALESCE(user_account.phone, '')
+        ELSE ''
+    END::text AS passenger_phone,
     passenger_review.rating AS passenger_rating,
     passenger_review.comment AS passenger_feedback
 FROM rides AS ride
@@ -34,6 +44,7 @@ SELECT sqlc.embed(ride),
     COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
     COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
     COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
+    CAST((settlement.settled_at IS NOT NULL) AS boolean) AS cash_settled,
     settlement.commission_bps,
     COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
     COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount,
@@ -56,6 +67,7 @@ SELECT sqlc.embed(ride),
     COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
     COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
     COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
+    CAST((settlement.settled_at IS NOT NULL) AS boolean) AS cash_settled,
     settlement.commission_bps,
     COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
     COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount,
@@ -66,5 +78,6 @@ FROM rides AS ride
 LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
 LEFT JOIN driver_profiles AS driver_profile ON driver_profile.user_id = ride.driver_id
 WHERE ride.passenger_id = sqlc.arg('passenger_id')
+  AND ride.status = 'completed'
 ORDER BY ride.id DESC
 LIMIT sqlc.arg('limit')::int;

@@ -1,6 +1,9 @@
 package app
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 func TestPricingConfigCalculatesFareFromLoadedValues(t *testing.T) {
 	config := PricingConfig{
@@ -34,5 +37,23 @@ func TestPricingConfigRejectsInvalidValues(t *testing.T) {
 	}
 	if err := config.Validate(); err == nil {
 		t.Fatal("expected invalid pricing configuration to be rejected")
+	}
+}
+
+func TestPricingConfigFareAmountRoundsAndGuardsOverflow(t *testing.T) {
+	config := PricingConfig{
+		BaseFareAmount:     1000,
+		PerKilometerAmount: 300,
+		PerMinuteAmount:    100,
+	}
+	// 1000 + 1.9999999999999998*300 = 1600 (not truncated to 1599).
+	if got := config.FareAmount(1.9999999999999998, 0); got != 1600 {
+		t.Fatalf("FareAmount rounded = %d, want 1600", got)
+	}
+	if got := config.FareAmount(math.MaxFloat64, 0); got != 0 {
+		t.Fatalf("FareAmount overflow = %d, want 0", got)
+	}
+	if got := config.FareAmount(math.NaN(), 1); got != 0 {
+		t.Fatalf("FareAmount NaN = %d, want 0", got)
 	}
 }
