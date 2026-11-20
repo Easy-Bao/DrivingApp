@@ -84,6 +84,7 @@ const emit = defineEmits<{
               :icon="item.icon"
               class="text-sm shrink-0"
               :class="item.isActive ? 'text-white' : 'text-neutral-500'"
+              aria-hidden="true"
             />
             <span class="truncate">{{ item.label }}</span>
           </span>

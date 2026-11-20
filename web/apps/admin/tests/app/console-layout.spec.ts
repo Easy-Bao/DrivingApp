@@ -74,4 +74,15 @@ describe('ConsoleLayout', () => {
     })
     expect(nav.find('[aria-current="page"]').text()).toBe('#APP-901')
   })
+
+  it('exposes a skip-to-main-content link targeting the main landmark', () => {
+    const wrapper = mountLayout()
+    const skipLink = wrapper.find('a[href="#main-content"]')
+    const main = wrapper.find('main#main-content')
+
+    expect(skipLink.exists()).toBe(true)
+    expect(skipLink.text().trim()).toBe('Skip to main content')
+    expect(main.exists()).toBe(true)
+    expect(main.attributes('tabindex')).toBe('-1')
+  })
 })

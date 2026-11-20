@@ -2,18 +2,14 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { motion, AnimatePresence } from 'motion-v'
+import { AnimatePresence, motion } from 'motion-v'
 import SidebarCollapsedFlyout, {
   type FlyoutState,
   type TooltipState,
 } from '@/app/layouts/SidebarCollapsedFlyout.vue'
 import { navigationGroups, type NavGroup, type NavItem } from '@/app/navigation/menu'
+import { useNavigationBadges } from '@/app/navigation/use-navigation-badges'
 import { ROLE_PROFILES, canRoleAccessPath, lockAuthSession, useAuthSession } from '@/core'
-import { useExpiringDocuments, useVerificationDocuments } from '@/features/documents'
-import { useSettlements, useTopups } from '@/features/payments'
-import { useSupportTickets } from '@/features/support'
-import { useSafetyReports, useSosAlerts } from '@/features/trips'
-import { useDriverApplications } from '@/features/users'
 import { ConfirmDialog, getInitials, useEscapeKey } from '@/shared'
 
 const props = withDefaults(
@@ -37,39 +33,8 @@ const effectivelyCollapsed = computed(() => isCollapsed.value && !props.mobileOp
 const isToggleHovered = ref(false)
 const searchQuery = ref('')
 const showSignOutConfirm = ref(false)
-const signedOutNotice = ref(false)
 const authSession = useAuthSession()
-
-const { applications } = useDriverApplications()
-const { pendingDocs } = useVerificationDocuments()
-const { expiringDocs } = useExpiringDocuments()
-const { pendingTopups } = useTopups()
-const { pendingSettlements } = useSettlements()
-const { openTicketCount } = useSupportTickets()
-const { activeAlertsCount } = useSosAlerts()
-const { openReportCount } = useSafetyReports()
-
-const dynamicBadges = computed<Record<string, string | undefined>>(() => {
-  const pendingApps = applications.value.filter((app) => app.status === 'Pending Review').length
-  const docsCount = pendingDocs.value.length
-  const expiringCount = expiringDocs.value.length
-  const sosCount = activeAlertsCount.value
-  const safetyCount = openReportCount.value
-  const topupsCount = pendingTopups.value.length
-  const settlementsCount = pendingSettlements.value.length
-  const ticketCount = openTicketCount.value
-
-  return {
-    'driver-applications': pendingApps > 0 ? String(pendingApps) : undefined,
-    'document-verification': docsCount > 0 ? String(docsCount) : undefined,
-    'expiring-documents': expiringCount > 0 ? String(expiringCount) : undefined,
-    'sos-alerts': sosCount > 0 ? String(sosCount) : undefined,
-    'safety-reports': safetyCount > 0 ? String(safetyCount) : undefined,
-    topups: topupsCount > 0 ? String(topupsCount) : undefined,
-    settlements: settlementsCount > 0 ? String(settlementsCount) : undefined,
-    'tickets-complaints': ticketCount > 0 ? String(ticketCount) : undefined,
-  }
-})
+const { dynamicBadges } = useNavigationBadges()
 
 const activeFlyout = ref<FlyoutState | null>(null)
 const collapsedTooltip = ref<TooltipState | null>(null)
@@ -232,7 +197,6 @@ function navigateTo(path: string) {
 
 function confirmSignOut() {
   showSignOutConfirm.value = false
-  signedOutNotice.value = true
   lockAuthSession()
   emit('closeMobile')
   void router.push({ name: '/auth/login', query: { redirect: route.fullPath } })
@@ -257,10 +221,10 @@ const visibleGroups = computed<NavGroup[]>(() => {
 })
 
 const activeItem = computed(() => {
-  const allItems = visibleGroups.value.flatMap((g) => g.items)
+  const allItems = visibleGroups.value.flatMap((group) => group.items)
 
-  const exact = allItems.find((item) => route.path === item.path)
-  if (exact) return exact
+  const exactMatch = allItems.find((item) => route.path === item.path)
+  if (exactMatch) return exactMatch
 
   if (route.path === '/' || route.path === '/dashboard' || route.path === '/dashboard/overview') {
     return allItems.find((item) => item.id === 'overview')
@@ -270,7 +234,7 @@ const activeItem = computed(() => {
     (item) => item.path !== '/' && route.path.startsWith(`${item.path}/`),
   )
   if (prefixMatches.length > 0) {
-    prefixMatches.sort((a, b) => b.path.length - a.path.length)
+    prefixMatches.sort((left, right) => right.path.length - left.path.length)
     return prefixMatches[0]
   }
 
@@ -297,7 +261,7 @@ watch(
   () => [route.path, visibleGroups.value] as const,
   () => {
     for (const group of visibleGroups.value) {
-      if (group.items.some((i) => isItemActive(i))) {
+      if (group.items.some((item) => isItemActive(item))) {
         expandedGroups.value[group.id] = true
       }
     }
@@ -340,72 +304,66 @@ const filteredGroups = computed(() => {
         class="h-14 sm:h-16 flex items-center border-b border-neutral-200 transition-all duration-300"
         :class="effectivelyCollapsed ? 'justify-center px-2' : 'justify-between px-4'"
       >
-        <div
-          v-if="!effectivelyCollapsed"
-          class="flex items-center space-x-3 overflow-hidden min-w-0"
+        <div v-if="!effectivelyCollapsed" class="flex flex-col overflow-hidden whitespace-nowrap">
+          <span class="font-bold text-sm text-neutral-900 leading-tight">EasyRide</span>
+          <span class="text-[11px] text-neutral-500 font-medium">Admin</span>
+        </div>
+
+        <button
+          v-if="mobileOpen"
+          type="button"
+          class="lg:hidden text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 p-2 transition-colors cursor-pointer shrink-0"
+          aria-label="Close navigation menu"
+          @click="emit('closeMobile')"
         >
-          <div class="flex flex-col overflow-hidden whitespace-nowrap">
-            <span class="font-bold text-sm text-neutral-900 leading-tight">EasyRide</span>
-            <span class="text-[11px] text-neutral-500 font-medium">Admin</span>
-          </div>
-        </div>
+          <Icon icon="lucide:x" class="text-lg" aria-hidden="true" />
+        </button>
 
-        <div class="flex items-center gap-1">
-          <button
-            v-if="mobileOpen"
-            type="button"
-            class="lg:hidden rounded-none text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 p-2 transition-colors cursor-pointer"
-            aria-label="Close navigation menu"
-            @click="emit('closeMobile')"
+        <button
+          v-else
+          type="button"
+          class="p-1.5 text-neutral-700 hover:text-neutral-900 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+          :aria-label="effectivelyCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+          :title="effectivelyCollapsed ? undefined : 'Collapse sidebar'"
+          @mouseenter="((isToggleHovered = true), showButtonTooltip('Expand', $event))"
+          @mouseleave="((isToggleHovered = false), hideButtonTooltip())"
+          @focus="((isToggleHovered = true), showButtonTooltip('Expand', $event))"
+          @blur="((isToggleHovered = false), hideButtonTooltip())"
+          @click="toggleCollapse"
+        >
+          <svg
+            v-if="effectivelyCollapsed && !isToggleHovered"
+            data-test="collapsed-brand-logo"
+            viewBox="0 0 24 24"
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="square"
+            stroke-linejoin="miter"
+            aria-hidden="true"
           >
-            <Icon icon="lucide:x" class="text-lg" aria-hidden="true" />
-          </button>
-
-          <button
+            <polygon points="12,2 21,7 21,17 12,22 3,17 3,7" />
+            <circle cx="12" cy="12" r="2.5" />
+            <line x1="12" y1="2" x2="12" y2="9.5" />
+            <line x1="20" y1="16.5" x2="14.2" y2="13.2" />
+            <line x1="4" y1="16.5" x2="9.8" y2="13.2" />
+          </svg>
+          <Icon
             v-else
-            type="button"
-            class="p-1.5 text-neutral-700 hover:text-neutral-900 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
-            :aria-label="effectivelyCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-            :title="effectivelyCollapsed ? undefined : 'Collapse sidebar'"
-            @mouseenter="((isToggleHovered = true), showButtonTooltip('Expand', $event))"
-            @mouseleave="((isToggleHovered = false), hideButtonTooltip())"
-            @focus="((isToggleHovered = true), showButtonTooltip('Expand', $event))"
-            @blur="((isToggleHovered = false), hideButtonTooltip())"
-            @click="toggleCollapse"
-          >
-            <svg
-              v-if="effectivelyCollapsed && !isToggleHovered"
-              data-test="collapsed-brand-logo"
-              viewBox="0 0 24 24"
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="square"
-              stroke-linejoin="miter"
-              aria-hidden="true"
-            >
-              <polygon points="12,2 21,7 21,17 12,22 3,17 3,7" />
-              <circle cx="12" cy="12" r="2.5" />
-              <line x1="12" y1="2" x2="12" y2="9.5" />
-              <line x1="20" y1="16.5" x2="14.2" y2="13.2" />
-              <line x1="4" y1="16.5" x2="9.8" y2="13.2" />
-            </svg>
-            <Icon
-              v-else
-              data-test="sidebar-toggle-icon"
-              :icon="effectivelyCollapsed ? 'lucide:panel-left-open' : 'lucide:panel-left-close'"
-              class="text-lg"
-            />
-          </button>
-        </div>
+            data-test="sidebar-toggle-icon"
+            :icon="effectivelyCollapsed ? 'lucide:panel-left-open' : 'lucide:panel-left-close'"
+            class="text-lg"
+            aria-hidden="true"
+          />
+        </button>
       </div>
 
       <div v-if="!effectivelyCollapsed" class="p-3 border-b border-neutral-100">
         <div class="relative">
           <Icon
             icon="lucide:search"
-            class="absolute left-2.5 top-2.5 text-neutral-400 text-sm"
+            class="pointer-events-none absolute left-2.5 top-2.5 text-neutral-500 text-sm"
             aria-hidden="true"
           />
           <input
@@ -413,14 +371,14 @@ const filteredGroups = computed(() => {
             type="text"
             aria-label="Filter navigation sections"
             placeholder="Search sections..."
-            class="w-full pl-8 pr-7 py-1.5 bg-neutral-50 border border-neutral-200 text-xs placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
+            class="w-full pl-8 pr-7 py-1.5 bg-neutral-50 border border-neutral-200 text-xs placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
             @keydown.escape="searchQuery = ''"
           />
           <button
             v-if="searchQuery"
             type="button"
             aria-label="Clear navigation filter"
-            class="absolute right-2 top-2 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+            class="absolute right-2 top-2 text-neutral-500 hover:text-neutral-900 cursor-pointer"
             @click="searchQuery = ''"
           >
             <Icon icon="lucide:x" class="text-xs" aria-hidden="true" />
@@ -440,13 +398,14 @@ const filteredGroups = computed(() => {
         <button
           v-if="!effectivelyCollapsed"
           type="button"
-          class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-neutral-400 hover:text-neutral-700 transition-colors"
+          :aria-expanded="Boolean(expandedGroups[group.id] || searchQuery)"
+          class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-neutral-500 hover:text-neutral-900 transition-colors cursor-pointer"
           @click="toggleGroup(group.id)"
         >
-          <div class="flex items-center space-x-2">
-            <Icon :icon="group.icon" class="text-sm" />
+          <span class="flex items-center gap-2">
+            <Icon :icon="group.icon" class="text-sm" aria-hidden="true" />
             <span>{{ group.title }}</span>
-          </div>
+          </span>
           <Icon
             :icon="
               expandedGroups[group.id] || searchQuery
@@ -454,6 +413,7 @@ const filteredGroups = computed(() => {
                 : 'lucide:chevron-right'
             "
             class="text-xs transition-transform"
+            aria-hidden="true"
           />
         </button>
 
@@ -477,7 +437,7 @@ const filteredGroups = computed(() => {
             @blur="scheduleCloseFlyout"
             @click="navigateTo(group.items[0]?.path || '/dashboard/overview')"
           >
-            <Icon :icon="group.icon" class="text-base shrink-0" />
+            <Icon :icon="group.icon" class="text-base shrink-0" aria-hidden="true" />
             <span
               v-if="getGroupNotificationCount(group) > 0"
               data-test="collapsed-notif-count"
@@ -506,7 +466,8 @@ const filteredGroups = computed(() => {
               v-for="item in group.items"
               :key="item.id"
               type="button"
-              class="w-full flex items-center justify-between px-3 py-2 text-xs font-medium transition-colors group relative"
+              :aria-current="isItemActive(item) ? 'page' : undefined"
+              class="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs font-medium transition-colors relative cursor-pointer"
               :class="
                 isItemActive(item)
                   ? 'text-white'
@@ -517,17 +478,15 @@ const filteredGroups = computed(() => {
               <motion.span
                 v-if="isItemActive(item)"
                 layoutId="activeSidebarIndicator"
-                class="absolute inset-0 rounded-none bg-neutral-900"
+                class="absolute inset-0 bg-neutral-900"
                 :transition="{ type: 'spring', stiffness: 380, damping: 30 }"
               />
 
-              <div class="relative z-10 flex items-center space-x-2.5 overflow-hidden">
-                <span class="truncate">{{ item.label }}</span>
-              </div>
+              <span class="relative z-10 truncate">{{ item.label }}</span>
 
               <span
                 v-if="item.badge"
-                class="relative z-10 text-[10px] px-1.5 py-0.5 rounded-none font-semibold transition-colors"
+                class="relative z-10 text-[10px] px-1.5 py-0.5 font-semibold tabular-nums transition-colors shrink-0"
                 :class="
                   isItemActive(item)
                     ? 'bg-neutral-800 text-white'
@@ -549,7 +508,7 @@ const filteredGroups = computed(() => {
       >
         <button
           type="button"
-          class="flex items-center space-x-3 overflow-hidden text-left focus:outline-none cursor-pointer"
+          class="flex items-center gap-3 overflow-hidden text-left cursor-pointer"
           aria-label="Profile"
           :aria-expanded="effectivelyCollapsed ? activeFlyout?.id === 'profile' : undefined"
           :aria-haspopup="effectivelyCollapsed ? 'menu' : undefined"
@@ -575,21 +534,14 @@ const filteredGroups = computed(() => {
         <button
           v-if="!effectivelyCollapsed"
           type="button"
-          class="text-neutral-400 hover:text-neutral-900 p-1.5 hover:bg-neutral-100 transition-colors cursor-pointer"
+          class="text-neutral-500 hover:text-neutral-900 p-1.5 hover:bg-neutral-100 transition-colors cursor-pointer"
           title="Lock session"
           aria-label="Lock session"
           @click="showSignOutConfirm = true"
         >
-          <Icon icon="lucide:lock" class="text-base" />
+          <Icon icon="lucide:lock" class="text-base" aria-hidden="true" />
         </button>
       </div>
-
-      <p
-        v-if="signedOutNotice && !effectivelyCollapsed"
-        class="mt-2 px-2 py-1 text-[10px] font-medium bg-neutral-100 text-neutral-700 border border-neutral-200"
-      >
-        Session locked.
-      </p>
     </div>
 
     <ConfirmDialog
