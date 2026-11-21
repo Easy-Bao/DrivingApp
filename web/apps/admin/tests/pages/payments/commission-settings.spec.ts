@@ -2,15 +2,15 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { resetSettingsForTesting, useAuditLogs } from '@/features/settings'
 import { resetPaymentsForTesting } from '@/features/payments'
-import CommissionSettingsPage from '@/pages/payments/commission-settings.vue'
+import CommissionSettingsPage from '@/pages/config/commissions.vue'
 
-describe('payments/commission-settings page', () => {
+describe('config/commissions page', () => {
   beforeEach(() => {
     resetSettingsForTesting()
     resetPaymentsForTesting()
   })
 
-  it('validates commission basis points and saves updated tier rules', async () => {
+  it('validates commission basis points, updates existing tiers, and supports adding new tiers', async () => {
     const wrapper = mount(CommissionSettingsPage)
     const { logs } = useAuditLogs()
 
@@ -39,5 +39,19 @@ describe('payments/commission-settings page', () => {
     expect(wrapper.text()).toContain('Updated Standard Fleet to 14% (1400 bps)')
     expect(wrapper.text()).toContain('1400 bps')
     expect(logs.value[0]?.action).toBe('COMMISSION_TIER_UPDATED')
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('+ Add Commission Tier'))!
+      .trigger('click')
+    await wrapper.find('#commission-category').setValue('Night Shift Incentive')
+    await wrapper.find('#commission-bps').setValue('1100')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Save Commission Config'))!
+      .trigger('click')
+
+    expect(wrapper.text()).toContain('Night Shift Incentive')
+    expect(logs.value[0]?.action).toBe('COMMISSION_TIER_CREATED')
   })
 })

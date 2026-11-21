@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { resetSettingsForTesting } from '@/features/settings'
 import { resetPaymentsForTesting } from '@/features/payments'
-import PaymentMethodsPage from '@/pages/payments/methods.vue'
+import PaymentMethodsPage from '@/pages/config/payment-channels.vue'
 
 describe('PaymentMethodsPage', () => {
   beforeEach(() => {

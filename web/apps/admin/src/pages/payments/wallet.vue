@@ -19,7 +19,8 @@ import {
 import { useWalletAccounts } from '@/features/payments'
 import type { DriverWalletRow } from '@/features/payments'
 
-const { wallets, minDispatchBalanceCentavos, adjustDriverWallet } = useWalletAccounts()
+const { wallets, minDispatchBalanceCentavos, minTopUpAmountCentavos, adjustDriverWallet } =
+  useWalletAccounts()
 
 const searchQuery = ref('')
 const eligibilityFilter = ref<'All' | 'Eligible' | 'Locked'>('All')
@@ -178,9 +179,17 @@ function exportWalletLedger() {
         </div>
       </div>
       <div class="bg-white p-4 border border-neutral-200">
-        <span class="text-xs text-neutral-500 font-medium">Minimum Top-Up Increment</span>
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-xs text-neutral-500 font-medium">Minimum Top-Up Increment</span>
+          <RouterLink
+            to="/config/wallet-rules"
+            class="text-[11px] font-semibold text-neutral-600 hover:text-neutral-900 hover:underline"
+          >
+            Rules
+          </RouterLink>
+        </div>
         <div class="text-xl font-bold font-mono tabular-nums text-neutral-900 mt-1">
-          {{ formatCentavos(5000) }}
+          {{ formatCentavos(minTopUpAmountCentavos) }}
         </div>
       </div>
     </div>
