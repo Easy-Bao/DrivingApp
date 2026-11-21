@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import {
   usePlatformConfig,
   useServiceZones,
@@ -97,7 +98,16 @@ const saveZone = () => {
     <PageHeader
       title="Service Zones"
       description="Configure geofence boundaries and localized surge multipliers."
-    />
+    >
+      <template #actions>
+        <RouterLink
+          to="/config/fare-pricing"
+          class="px-3 py-1.5 border border-neutral-300 bg-white text-neutral-800 text-xs font-medium hover:bg-neutral-50"
+        >
+          Global Surge Cap: {{ config.maxBiddingSurgeCap.toFixed(1) }}x
+        </RouterLink>
+      </template>
+    </PageHeader>
 
     <ToastBanner :message="toastMessage" :tone="toastTone" @dismiss="dismissToast" />
 

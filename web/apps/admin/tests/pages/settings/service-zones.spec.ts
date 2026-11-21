@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { resetSettingsForTesting, useAuditLogs } from '@/features/settings'
-import ServiceZonesPage from '@/pages/settings/service-zones.vue'
+import ServiceZonesPage from '@/pages/config/service-zones.vue'
 
 describe('settings/service-zones page', () => {
   beforeEach(() => {

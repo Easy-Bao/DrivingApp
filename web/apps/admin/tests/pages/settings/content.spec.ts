@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { resetSettingsForTesting } from '@/features/settings'
-import ContentPage from '@/pages/settings/content.vue'
+import ContentPage from '@/pages/config/legal-policies.vue'
 
 describe('settings/content page', () => {
   beforeEach(() => {

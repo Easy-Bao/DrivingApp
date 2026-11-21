@@ -1,66 +1,55 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { resetSettingsForTesting, useAuditLogs, usePlatformConfig } from '@/features/settings'
-import AppSettingsPage from '@/pages/settings/app-settings.vue'
+import { resetSettingsForTesting, useAppSystemConfig, useAuditLogs } from '@/features/settings'
+import { resetPaymentsForTesting } from '@/features/payments'
+import AppSystemPage from '@/pages/config/app-system.vue'
 
-describe('settings/app-settings page', () => {
+describe('config/app-system page', () => {
   beforeEach(() => {
     resetSettingsForTesting()
+    resetPaymentsForTesting()
   })
 
-  it('binds rating bonus threshold dynamically and updates low-balance description', async () => {
-    const wrapper = mount(AppSettingsPage)
+  it('renders independent configuration directory links and validates app version format', async () => {
+    const wrapper = mount(AppSystemPage)
 
-    expect(wrapper.text()).toContain('4.5★ Rating Bonus Factor')
-    expect(wrapper.text()).toContain('below ₱50.00')
+    expect(wrapper.text()).toContain('Fare Configuration')
+    expect(wrapper.text()).toContain('Wallet & Top-Up Rules')
+    expect(wrapper.text()).toContain('Dispatch & Ride Policy')
+    expect(wrapper.text()).toContain('Safety & SOS Config')
 
-    await wrapper.find('#rating-bonus-threshold').setValue('4.8')
-    await wrapper.find('#min-wallet-balance').setValue('75')
-
-    expect(wrapper.text()).toContain('4.8★ Rating Bonus Factor')
-    expect(wrapper.text()).toContain('below ₱75.00')
-  })
-
-  it('blocks saving when numeric settings exceed allowed platform bounds', async () => {
-    const wrapper = mount(AppSettingsPage)
-
-    await wrapper.find('#bidding-window-seconds').setValue('15')
-    await wrapper.find('#save-runtime-config').trigger('click')
+    await wrapper.find('#passenger-min-version').setValue('invalid')
+    await wrapper.find('#save-system-config').trigger('click')
 
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
-    expect(wrapper.text()).toContain('between 30 and 300')
+    expect(wrapper.text()).toContain('semantic versioning')
   })
 
-  it('commits configuration with mandatory audit reason and appends audit log entry', async () => {
-    const wrapper = mount(AppSettingsPage)
-    const { config } = usePlatformConfig()
+  it('commits maintenance mode and app release gates with mandatory audit trail and supports reset', async () => {
+    const wrapper = mount(AppSystemPage)
+    const { systemConfig } = useAppSystemConfig()
     const { logs } = useAuditLogs()
 
-    await wrapper.find('#min-wallet-balance').setValue('80')
-    await wrapper.find('#save-runtime-config').trigger('click')
+    await wrapper.find('#driver-min-version').setValue('1.5.0')
+    await wrapper.find('input[aria-label="Platform Maintenance Mode"]').setValue(true)
+    await wrapper.find('#save-system-config').trigger('click')
 
     const dialog = wrapper.find('[role="dialog"]')
     expect(dialog.exists()).toBe(true)
 
-    await dialog.find('textarea').setValue('Aligning minimum commission balance with fuel costs.')
-    const confirmBtn = wrapper
+    await dialog.find('textarea').setValue('Deploying driver telemetry update.')
+    await wrapper
       .findAll('button')
-      .find((b) => b.text().includes('Apply Runtime Settings'))
-    expect(confirmBtn).toBeDefined()
-    await confirmBtn!.trigger('click')
+      .find((b) => b.text().includes('Apply System Config'))!
+      .trigger('click')
 
-    expect(config.value.minWalletBalanceCentavos).toBe(8000)
-    expect(wrapper.text()).toContain('Saved platform configuration')
-    expect(logs.value[0]?.action).toBe('RUNTIME_CONFIG_UPDATED')
-  })
+    expect(systemConfig.value.driverMinVersion).toBe('1.5.0')
+    expect(systemConfig.value.maintenanceMode).toBe(true)
+    expect(wrapper.text()).toContain('Maintenance Active')
+    expect(logs.value[0]?.action).toBe('APP_SYSTEM_CONFIG_UPDATED')
 
-  it('restores default values when Reset Defaults is clicked', async () => {
-    const wrapper = mount(AppSettingsPage)
-
-    await wrapper.find('#min-wallet-balance').setValue('120')
-    expect(wrapper.text()).toContain('below ₱120.00')
-
-    await wrapper.find('#reset-runtime-defaults').trigger('click')
-    expect(wrapper.text()).toContain('below ₱50.00')
+    await wrapper.find('#reset-system-defaults').trigger('click')
+    expect(systemConfig.value.maintenanceMode).toBe(false)
+    expect(wrapper.text()).toContain('Normal Operation')
   })
 })

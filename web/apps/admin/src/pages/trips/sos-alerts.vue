@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { SosLocationModal, useSosAlerts, type SosIncident } from '@/features/trips'
+import { useSafetyConfig } from '@/features/settings'
 import {
   ConfirmDialog,
   PageHeader,
@@ -12,6 +13,7 @@ import {
 
 const { alerts, activeAlertsCount, resolvedAlertsCount, notifyResponders, resolveAlert } =
   useSosAlerts()
+const { primaryHotlineLabel } = useSafetyConfig()
 
 const statusFilter = ref<'all' | 'Active' | 'Resolved'>('all')
 const { message: toastMessage, tone: toastTone, showToast, dismissToast } = useToast('info')
@@ -78,7 +80,7 @@ const confirmResolution = () => {
         <span
           class="px-2 py-1 text-xs font-mono border border-neutral-200 bg-neutral-50 text-neutral-700"
         >
-          911 · CDRRMO (062-925-0911)
+          {{ primaryHotlineLabel }}
         </span>
         <SegmentedToggle
           v-model="statusFilter"

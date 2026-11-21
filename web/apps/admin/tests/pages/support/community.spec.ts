@@ -4,7 +4,7 @@ import { resetSettingsForTesting, useAuditLogs } from '@/features/settings'
 import { resetSupportForTesting } from '@/features/support'
 import RatingsReviewsPage from '@/pages/support/ratings-reviews.vue'
 import LostFoundPage from '@/pages/support/lost-found.vue'
-import FaqsPage from '@/pages/support/faqs.vue'
+import FaqsPage from '@/pages/config/help-center.vue'
 
 describe('support community pages', () => {
   beforeEach(() => {

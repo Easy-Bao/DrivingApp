@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { resetSettingsForTesting } from '@/features/settings'
-import CitiesPage from '@/pages/settings/cities.vue'
+import CitiesPage from '@/pages/config/cities.vue'
 
 describe('settings/cities page', () => {
   beforeEach(() => {
