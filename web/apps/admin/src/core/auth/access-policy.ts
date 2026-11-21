@@ -6,13 +6,33 @@ export interface RoutePolicyRule {
 }
 
 export const ROUTE_ACCESS_POLICY: readonly RoutePolicyRule[] = [
+  // Administration / Governance
+  { prefix: '/admin', roles: ['admin'] },
   { prefix: '/users/operators', roles: ['admin'] },
   { prefix: '/users/roles', roles: ['admin'] },
-  { prefix: '/settings/content', roles: ['admin'] },
-  { prefix: '/settings/app-settings', roles: ['admin'] },
-  { prefix: '/settings/audit-logs', roles: ['admin'] },
+
+  // Independent Configuration modules (scoped by operational role)
+  { prefix: '/config/fare-pricing', roles: ['admin', 'finance'] },
+  { prefix: '/config/commissions', roles: ['admin', 'finance'] },
+  { prefix: '/config/wallet-rules', roles: ['admin', 'finance'] },
+  { prefix: '/config/payment-channels', roles: ['admin', 'finance'] },
+  { prefix: '/config/dispatch-policy', roles: ['admin', 'fleet'] },
+  { prefix: '/config/service-zones', roles: ['admin', 'fleet'] },
+  { prefix: '/config/cities', roles: ['admin', 'fleet'] },
+  { prefix: '/config/vehicle-classes', roles: ['admin', 'fleet'] },
+  { prefix: '/config/document-rules', roles: ['admin', 'fleet'] },
+  { prefix: '/config/safety-sos', roles: ['admin', 'fleet', 'support'] },
+  { prefix: '/config/help-center', roles: ['admin', 'support', 'fleet'] },
+  { prefix: '/config/legal-policies', roles: ['admin'] },
+  { prefix: '/config/app-system', roles: ['admin'] },
+  { prefix: '/config', roles: ['admin'] },
+
+  // Legacy /settings/* prefixes (aligned with moved destinations)
   { prefix: '/settings/service-zones', roles: ['admin', 'fleet'] },
   { prefix: '/settings/cities', roles: ['admin', 'fleet'] },
+  { prefix: '/settings', roles: ['admin'] },
+
+  // Daily Operations
   { prefix: '/documents', roles: ['admin', 'fleet'] },
   { prefix: '/payments/refunds', roles: ['admin', 'finance', 'support'] },
   { prefix: '/payments', roles: ['admin', 'finance'] },

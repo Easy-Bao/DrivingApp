@@ -33,15 +33,25 @@ describe('ConsoleLayout', () => {
     })
   }
 
-  it('renders standard two-level breadcrumbs for collection pages', () => {
+  it('renders single-level breadcrumb for pinned Overview and two-level breadcrumbs for collection and config pages', () => {
+    const overviewWrapper = mountLayout()
+    const overviewNav = overviewWrapper.find('nav[aria-label="Breadcrumb"]')
+    expect(overviewNav.find('[aria-current="page"]').text()).toBe('Overview')
+
     mockRoute.path = '/payments/topups'
     const wrapper = mountLayout()
     const nav = wrapper.find('nav[aria-label="Breadcrumb"]')
 
     expect(nav.exists()).toBe(true)
-    expect(nav.text()).toContain('Payments')
+    expect(nav.text()).toContain('Finance')
     expect(nav.text()).toContain('Top-Ups')
     expect(nav.find('[aria-current="page"]').text()).toBe('Top-Ups')
+
+    mockRoute.path = '/config/fare-pricing'
+    const configWrapper = mountLayout()
+    const configNav = configWrapper.find('nav[aria-label="Breadcrumb"]')
+    expect(configNav.text()).toContain('Pricing & Billing')
+    expect(configNav.find('[aria-current="page"]').text()).toBe('Fare Configuration')
   })
 
   it('nests detail record breadcrumbs under their clickable parent collection', () => {
@@ -53,7 +63,7 @@ describe('ConsoleLayout', () => {
     const links = nav
       .findAll('a')
       .map((anchor) => ({ text: anchor.text().trim(), href: anchor.attributes('href') }))
-    expect(links).toContainEqual({ text: 'Payments', href: '/payments/topups' })
+    expect(links).toContainEqual({ text: 'Finance', href: '/payments/topups' })
     expect(links).toContainEqual({ text: 'Top-Ups', href: '/payments/topups' })
     expect(nav.find('[aria-current="page"]').text()).toBe('#TOP-8921')
   })
@@ -67,7 +77,7 @@ describe('ConsoleLayout', () => {
     const links = nav
       .findAll('a')
       .map((anchor) => ({ text: anchor.text().trim(), href: anchor.attributes('href') }))
-    expect(links).toContainEqual({ text: 'Users', href: '/users/drivers' })
+    expect(links).toContainEqual({ text: 'Users & Fleet', href: '/users/drivers' })
     expect(links).toContainEqual({
       text: 'Driver Applications',
       href: '/users/driver-applications',

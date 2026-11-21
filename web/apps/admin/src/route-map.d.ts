@@ -45,9 +45,121 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/admin/audit-logs': RouteRecordInfo<
+      '/admin/audit-logs',
+      '/admin/audit-logs',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/operators': RouteRecordInfo<
+      '/admin/operators',
+      '/admin/operators',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/roles': RouteRecordInfo<
+      '/admin/roles',
+      '/admin/roles',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/auth/login': RouteRecordInfo<
       '/auth/login',
       '/auth/login',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/config/app-system': RouteRecordInfo<
+      '/config/app-system',
+      '/config/app-system',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/config/cities': RouteRecordInfo<
+      '/config/cities',
+      '/config/cities',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/config/commissions': RouteRecordInfo<
+      '/config/commissions',
+      '/config/commissions',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/config/dispatch-policy': RouteRecordInfo<
+      '/config/dispatch-policy',
+      '/config/dispatch-policy',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/config/document-rules': RouteRecordInfo<
+      '/config/document-rules',
+      '/config/document-rules',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/config/fare-pricing': RouteRecordInfo<
+      '/config/fare-pricing',
+      '/config/fare-pricing',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/config/help-center': RouteRecordInfo<
+      '/config/help-center',
+      '/config/help-center',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/config/legal-policies': RouteRecordInfo<
+      '/config/legal-policies',
+      '/config/legal-policies',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/config/payment-channels': RouteRecordInfo<
+      '/config/payment-channels',
+      '/config/payment-channels',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/config/safety-sos': RouteRecordInfo<
+      '/config/safety-sos',
+      '/config/safety-sos',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/config/service-zones': RouteRecordInfo<
+      '/config/service-zones',
+      '/config/service-zones',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/config/vehicle-classes': RouteRecordInfo<
+      '/config/vehicle-classes',
+      '/config/vehicle-classes',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/config/wallet-rules': RouteRecordInfo<
+      '/config/wallet-rules',
+      '/config/wallet-rules',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -80,30 +192,9 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
-    '/payments/commission-settings': RouteRecordInfo<
-      '/payments/commission-settings',
-      '/payments/commission-settings',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
     '/payments/earnings': RouteRecordInfo<
       '/payments/earnings',
       '/payments/earnings',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '/payments/fare-pricing': RouteRecordInfo<
-      '/payments/fare-pricing',
-      '/payments/fare-pricing',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '/payments/methods': RouteRecordInfo<
-      '/payments/methods',
-      '/payments/methods',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -213,48 +304,6 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
-    '/settings/app-settings': RouteRecordInfo<
-      '/settings/app-settings',
-      '/settings/app-settings',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '/settings/audit-logs': RouteRecordInfo<
-      '/settings/audit-logs',
-      '/settings/audit-logs',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '/settings/cities': RouteRecordInfo<
-      '/settings/cities',
-      '/settings/cities',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '/settings/content': RouteRecordInfo<
-      '/settings/content',
-      '/settings/content',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '/settings/service-zones': RouteRecordInfo<
-      '/settings/service-zones',
-      '/settings/service-zones',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '/support/faqs': RouteRecordInfo<
-      '/support/faqs',
-      '/support/faqs',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
     '/support/lost-found': RouteRecordInfo<
       '/support/lost-found',
       '/support/lost-found',
@@ -346,23 +395,9 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
-    '/users/operators': RouteRecordInfo<
-      '/users/operators',
-      '/users/operators',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
     '/users/riders': RouteRecordInfo<
       '/users/riders',
       '/users/riders',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '/users/roles': RouteRecordInfo<
-      '/users/roles',
-      '/users/roles',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -396,9 +431,137 @@ declare module 'vue-router/auto-routes' {
       pathParamNames:
         | never
     }
+    'src/pages/admin/audit-logs.vue': {
+      routes:
+        | '/admin/audit-logs'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/operators.vue': {
+      routes:
+        | '/admin/operators'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/roles.vue': {
+      routes:
+        | '/admin/roles'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
     'src/pages/auth/login.vue': {
       routes:
         | '/auth/login'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/config/app-system.vue': {
+      routes:
+        | '/config/app-system'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/config/cities.vue': {
+      routes:
+        | '/config/cities'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/config/commissions.vue': {
+      routes:
+        | '/config/commissions'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/config/dispatch-policy.vue': {
+      routes:
+        | '/config/dispatch-policy'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/config/document-rules.vue': {
+      routes:
+        | '/config/document-rules'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/config/fare-pricing.vue': {
+      routes:
+        | '/config/fare-pricing'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/config/help-center.vue': {
+      routes:
+        | '/config/help-center'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/config/legal-policies.vue': {
+      routes:
+        | '/config/legal-policies'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/config/payment-channels.vue': {
+      routes:
+        | '/config/payment-channels'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/config/safety-sos.vue': {
+      routes:
+        | '/config/safety-sos'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/config/service-zones.vue': {
+      routes:
+        | '/config/service-zones'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/config/vehicle-classes.vue': {
+      routes:
+        | '/config/vehicle-classes'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/config/wallet-rules.vue': {
+      routes:
+        | '/config/wallet-rules'
       views:
         | never
       pathParamNames:
@@ -436,33 +599,9 @@ declare module 'vue-router/auto-routes' {
       pathParamNames:
         | never
     }
-    'src/pages/payments/commission-settings.vue': {
-      routes:
-        | '/payments/commission-settings'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
     'src/pages/payments/earnings.vue': {
       routes:
         | '/payments/earnings'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
-    'src/pages/payments/fare-pricing.vue': {
-      routes:
-        | '/payments/fare-pricing'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
-    'src/pages/payments/methods.vue': {
-      routes:
-        | '/payments/methods'
       views:
         | never
       pathParamNames:
@@ -588,54 +727,6 @@ declare module 'vue-router/auto-routes' {
       pathParamNames:
         | never
     }
-    'src/pages/settings/app-settings.vue': {
-      routes:
-        | '/settings/app-settings'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
-    'src/pages/settings/audit-logs.vue': {
-      routes:
-        | '/settings/audit-logs'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
-    'src/pages/settings/cities.vue': {
-      routes:
-        | '/settings/cities'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
-    'src/pages/settings/content.vue': {
-      routes:
-        | '/settings/content'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
-    'src/pages/settings/service-zones.vue': {
-      routes:
-        | '/settings/service-zones'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
-    'src/pages/support/faqs.vue': {
-      routes:
-        | '/support/faqs'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
     'src/pages/support/lost-found.vue': {
       routes:
         | '/support/lost-found'
@@ -740,25 +831,9 @@ declare module 'vue-router/auto-routes' {
       pathParamNames:
         | never
     }
-    'src/pages/users/operators.vue': {
-      routes:
-        | '/users/operators'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
     'src/pages/users/riders.vue': {
       routes:
         | '/users/riders'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
-    'src/pages/users/roles.vue': {
-      routes:
-        | '/users/roles'
       views:
         | never
       pathParamNames:

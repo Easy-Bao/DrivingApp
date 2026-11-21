@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { resetSettingsForTesting, useAuditLogs } from '@/features/settings'
 import { resetUsersForTesting } from '@/features/users'
-import OperatorsPage from '@/pages/users/operators.vue'
+import OperatorsPage from '@/pages/admin/operators.vue'
 
 describe('users/operators page', () => {
   beforeEach(() => {

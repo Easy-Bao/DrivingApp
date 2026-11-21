@@ -28,7 +28,7 @@ export const ROLE_PROFILES: Record<OperatorRole, RoleProfile> = {
     operatorName: 'System Admin',
     operatorEmail: 'admin@easyride.ph',
     userId: 'ADM-001',
-    scopeSummary: 'All routes, operators, ledger, dispatch, and settings.',
+    scopeSummary: 'All operations, independent configurations, access control, and audit logs.',
   },
   fleet: {
     role: 'fleet',
@@ -36,7 +36,7 @@ export const ROLE_PROFILES: Record<OperatorRole, RoleProfile> = {
     operatorName: 'Ramon Villanueva',
     operatorEmail: 'dispatch@easyride.ph',
     userId: 'ADM-002',
-    scopeSummary: 'Trips, live dispatch, documents, zones, and safety.',
+    scopeSummary: 'Trips, dispatch policy, service zones, vehicle classes, documents, and safety.',
   },
   finance: {
     role: 'finance',
@@ -44,7 +44,7 @@ export const ROLE_PROFILES: Record<OperatorRole, RoleProfile> = {
     operatorName: 'Clarisse Mendoza',
     operatorEmail: 'treasury@easyride.ph',
     userId: 'ADM-003',
-    scopeSummary: 'Top-ups, settlements, tariffs, commissions, and reports.',
+    scopeSummary: 'Top-ups, settlements, fare config, commissions, wallet rules, and channels.',
   },
   support: {
     role: 'support',
@@ -52,7 +52,7 @@ export const ROLE_PROFILES: Record<OperatorRole, RoleProfile> = {
     operatorName: 'Marisol Lim',
     operatorEmail: 'safety@easyride.ph',
     userId: 'ADM-004',
-    scopeSummary: 'Tickets, disputes, safety reports, and refunds.',
+    scopeSummary: 'Tickets, disputes, safety reports, SOS hotlines, help center, and refunds.',
   },
 }
 

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import router from '@/app/router'
-import { navigationGroups } from '@/app/navigation/menu'
+import { allNavigationItems } from '@/app/navigation/menu'
 import { sanitizeRedirectPath } from '@/app/router/guards'
 import {
   lockAuthSession,
@@ -15,13 +15,33 @@ describe('router security guards', () => {
   })
 
   it('resolves every sidebar navigation item path to a valid named route for admin', () => {
-    const navItems = navigationGroups.flatMap((group) => group.items)
-    expect(navItems.length).toBeGreaterThan(20)
+    expect(allNavigationItems.length).toBeGreaterThan(30)
 
-    for (const item of navItems) {
+    for (const item of allNavigationItems) {
       const resolved = router.resolve(item.path)
       expect(resolved.name, `Missing route for sidebar path ${item.path}`).toBeTruthy()
       expect(resolved.name, `Sidebar path ${item.path} hit 404 fallback`).not.toBe('/[...path]')
+    }
+  })
+
+  it('redirects legacy configuration and governance routes to their new independent namespaces', async () => {
+    const legacyPairs = [
+      ['/payments/fare-pricing', '/config/fare-pricing'],
+      ['/payments/commission-settings', '/config/commissions'],
+      ['/payments/methods', '/config/payment-channels'],
+      ['/settings/service-zones', '/config/service-zones'],
+      ['/settings/cities', '/config/cities'],
+      ['/settings/content', '/config/legal-policies'],
+      ['/settings/app-settings', '/config/app-system'],
+      ['/settings/audit-logs', '/admin/audit-logs'],
+      ['/support/faqs', '/config/help-center'],
+      ['/users/operators', '/admin/operators'],
+      ['/users/roles', '/admin/roles'],
+    ] as const
+
+    for (const [legacy, expected] of legacyPairs) {
+      await router.push(legacy)
+      expect(router.currentRoute.value.path, `Expected ${legacy} -> ${expected}`).toBe(expected)
     }
   })
 
@@ -55,7 +75,7 @@ describe('router security guards', () => {
 
     restoreDefaultDemoSession()
     setAuthSessionForTesting({ expiresAt: Date.now() - 10_000 })
-    await router.push('/settings/app-settings')
+    await router.push('/config/app-system')
     expect(router.currentRoute.value.name).toBe('/auth/login')
   })
 
@@ -79,22 +99,25 @@ describe('router security guards', () => {
     expect(router.currentRoute.value.name).toBe('/[...path]')
   })
 
-  it('enforces role-based authorization boundaries across operational roles', async () => {
+  it('enforces role-based authorization boundaries across operations, configuration, and governance', async () => {
     const fin = loginOperator('finance', '7016')
     expect(fin.ok).toBe(true)
 
-    await router.push('/payments/topups')
-    expect(router.currentRoute.value.name).toBe('/payments/topups/')
+    await router.push('/config/fare-pricing')
+    expect(router.currentRoute.value.name).toBe('/config/fare-pricing')
 
-    await router.push('/settings/app-settings')
+    await router.push('/config/wallet-rules')
+    expect(router.currentRoute.value.name).toBe('/config/wallet-rules')
+
+    await router.push('/config/app-system')
     expect(router.currentRoute.value.name).toBe('/unauthorized')
-    expect(router.currentRoute.value.query.from).toBe('/settings/app-settings')
+    expect(router.currentRoute.value.query.from).toBe('/config/app-system')
 
     const support = loginOperator('support', '7016')
     expect(support.ok).toBe(true)
 
-    await router.push('/trips/safety-reports')
-    expect(router.currentRoute.value.name).toBe('/trips/safety-reports')
+    await router.push('/config/safety-sos')
+    expect(router.currentRoute.value.name).toBe('/config/safety-sos')
 
     await router.push('/payments/topups')
     expect(router.currentRoute.value.name).toBe('/unauthorized')
@@ -102,10 +125,10 @@ describe('router security guards', () => {
     const fleet = loginOperator('fleet', '7016')
     expect(fleet.ok).toBe(true)
 
-    await router.push('/documents/verification')
-    expect(router.currentRoute.value.name).toBe('/documents/verification')
+    await router.push('/config/dispatch-policy')
+    expect(router.currentRoute.value.name).toBe('/config/dispatch-policy')
 
-    await router.push('/users/operators')
+    await router.push('/admin/operators')
     expect(router.currentRoute.value.name).toBe('/unauthorized')
   })
 })

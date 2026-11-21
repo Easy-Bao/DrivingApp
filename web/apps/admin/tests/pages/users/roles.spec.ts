@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import RolesPage from '@/pages/users/roles.vue'
+import RolesPage from '@/pages/admin/roles.vue'
 
 describe('RolesPage', () => {
   it('creates a new custom role with selected permissions', async () => {

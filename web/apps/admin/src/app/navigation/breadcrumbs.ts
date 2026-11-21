@@ -1,4 +1,4 @@
-import { navigationGroups } from '@/app/navigation/menu'
+import { navigationGroups, pinnedNavItems } from '@/app/navigation/menu'
 
 interface BreadcrumbMeta {
   section: string
@@ -18,6 +18,14 @@ const ROUTE_BREADCRUMB_LOOKUP: Record<string, BreadcrumbMeta> = {
     sectionTo: '/dashboard/overview',
     item: 'Restricted Access',
   },
+}
+
+for (const item of pinnedNavItems) {
+  ROUTE_BREADCRUMB_LOOKUP[item.path] = {
+    section: item.label,
+    sectionTo: item.path,
+    item: item.label,
+  }
 }
 
 for (const group of navigationGroups) {
@@ -60,7 +68,7 @@ export function resolveBreadcrumbs(
 
   const sectionLabel = segments[0]
     ? segments[0].charAt(0).toUpperCase() + segments[0].slice(1)
-    : 'Dashboard'
+    : 'Overview'
   const itemLabel = segments[1]
     ? segments[1].replace(/-/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase())
     : 'Overview'

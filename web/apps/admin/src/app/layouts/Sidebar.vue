@@ -7,7 +7,14 @@ import SidebarCollapsedFlyout, {
   type FlyoutState,
   type TooltipState,
 } from '@/app/layouts/SidebarCollapsedFlyout.vue'
-import { navigationGroups, type NavGroup, type NavItem } from '@/app/navigation/menu'
+import {
+  navigationGroups,
+  navigationSections,
+  pinnedNavItems,
+  type NavGroup,
+  type NavItem,
+  type NavSectionId,
+} from '@/app/navigation/menu'
 import { useNavigationBadges } from '@/app/navigation/use-navigation-badges'
 import { ROLE_PROFILES, canRoleAccessPath, lockAuthSession, useAuthSession } from '@/core'
 import { ConfirmDialog, getInitials, useEscapeKey } from '@/shared'
@@ -145,6 +152,8 @@ const cancelCloseFlyout = () => {
 
 const showButtonTooltip = (label: string, event: Event) => {
   if (!effectivelyCollapsed.value) return
+  clearFlyoutTimer()
+  activeFlyout.value = null
   const target = event.currentTarget as HTMLElement | null
   if (!target) return
   const rect = target.getBoundingClientRect()
@@ -166,16 +175,9 @@ const activeRoleLabel = computed(() => {
 
 const operatorInitials = computed(() => getInitials(authSession.value.operatorName, 'OP'))
 
-const expandedGroups = ref<Record<string, boolean>>({
-  dashboard: true,
-  users: true,
-  trips: true,
-  payments: true,
-  reports: false,
-  documents: false,
-  support: false,
-  settings: false,
-})
+const expandedGroups = ref<Record<string, boolean>>(
+  Object.fromEntries(navigationGroups.map((group) => [group.id, Boolean(group.defaultExpanded)])),
+)
 
 function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value
@@ -186,6 +188,19 @@ function toggleCollapse() {
 
 function toggleGroup(groupId: string) {
   expandedGroups.value[groupId] = !expandedGroups.value[groupId]
+}
+
+const allVisibleGroupsExpanded = computed(
+  () =>
+    visibleGroups.value.length > 0 &&
+    visibleGroups.value.every((group) => Boolean(expandedGroups.value[group.id])),
+)
+
+function toggleAllGroups() {
+  const nextState = !allVisibleGroupsExpanded.value
+  for (const group of visibleGroups.value) {
+    expandedGroups.value[group.id] = nextState
+  }
 }
 
 function navigateTo(path: string) {
@@ -202,26 +217,32 @@ function confirmSignOut() {
   void router.push({ name: '/auth/login', query: { redirect: route.fullPath } })
 }
 
+function enrichItemBadge(item: NavItem): NavItem {
+  if (item.id in dynamicBadges.value) {
+    return { ...item, badge: dynamicBadges.value[item.id] }
+  }
+  return item
+}
+
+const visiblePinnedItems = computed<NavItem[]>(() => {
+  const role = authSession.value.role
+  if (!role) return []
+  return pinnedNavItems.filter((item) => canRoleAccessPath(role, item.path)).map(enrichItemBadge)
+})
+
 const visibleGroups = computed<NavGroup[]>(() => {
   const role = authSession.value.role
   if (!role) return []
   return navigationGroups
     .map((group) => ({
       ...group,
-      items: group.items
-        .filter((item) => canRoleAccessPath(role, item.path))
-        .map((item) => {
-          if (item.id in dynamicBadges.value) {
-            return { ...item, badge: dynamicBadges.value[item.id] }
-          }
-          return item
-        }),
+      items: group.items.filter((item) => canRoleAccessPath(role, item.path)).map(enrichItemBadge),
     }))
     .filter((group) => group.items.length > 0)
 })
 
 const activeItem = computed(() => {
-  const allItems = visibleGroups.value.flatMap((group) => group.items)
+  const allItems = [...visiblePinnedItems.value, ...visibleGroups.value.flatMap((g) => g.items)]
 
   const exactMatch = allItems.find((item) => route.path === item.path)
   if (exactMatch) return exactMatch
@@ -269,23 +290,61 @@ watch(
   { immediate: true },
 )
 
-const filteredGroups = computed(() => {
-  const query = searchQuery.value.trim().toLowerCase()
-  if (!query) return visibleGroups.value
+const sectionLabelLookup: Record<NavSectionId, string> = {
+  operations: 'operations',
+  configuration: 'configuration',
+  administration: 'administration',
+}
 
-  return visibleGroups.value
-    .map((group) => {
-      const matchingItems = group.items.filter(
-        (item) =>
-          item.label.toLowerCase().includes(query) || group.title.toLowerCase().includes(query),
-      )
+function matchesItemQuery(
+  item: NavItem,
+  query: string,
+  groupTitle = '',
+  sectionLabel = '',
+): boolean {
+  if (item.label.toLowerCase().includes(query)) return true
+  if (groupTitle && groupTitle.toLowerCase().includes(query)) return true
+  if (sectionLabel && sectionLabel.toLowerCase().includes(query)) return true
+  if (item.keywords?.some((keyword) => keyword.toLowerCase().includes(query))) return true
+  return false
+}
+
+const filteredPinnedItems = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) return visiblePinnedItems.value
+  return visiblePinnedItems.value.filter((item) => matchesItemQuery(item, query))
+})
+
+const filteredSections = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+
+  return navigationSections
+    .map((section) => {
+      const sectionGroups = visibleGroups.value
+        .filter((group) => group.section === section.id)
+        .map((group) => {
+          if (!query) return group
+          const matchingItems = group.items.filter((item) =>
+            matchesItemQuery(item, query, group.title, sectionLabelLookup[section.id]),
+          )
+          return {
+            ...group,
+            items: matchingItems,
+          }
+        })
+        .filter((group) => group.items.length > 0)
+
       return {
-        ...group,
-        items: matchingItems,
+        ...section,
+        groups: sectionGroups,
       }
     })
-    .filter((group) => group.items.length > 0)
+    .filter((section) => section.groups.length > 0)
 })
+
+const hasNoSearchMatches = computed(
+  () => filteredPinnedItems.value.length === 0 && filteredSections.value.length === 0,
+)
 </script>
 
 <template>
@@ -306,7 +365,7 @@ const filteredGroups = computed(() => {
       >
         <div v-if="!effectivelyCollapsed" class="flex flex-col overflow-hidden whitespace-nowrap">
           <span class="font-bold text-sm text-neutral-900 leading-tight">EasyRide</span>
-          <span class="text-[11px] text-neutral-500 font-medium">Admin</span>
+          <span class="text-[11px] text-neutral-500 font-medium">Admin Console</span>
         </div>
 
         <button
@@ -360,28 +419,50 @@ const filteredGroups = computed(() => {
       </div>
 
       <div v-if="!effectivelyCollapsed" class="p-3 border-b border-neutral-100">
-        <div class="relative">
-          <Icon
-            icon="lucide:search"
-            class="pointer-events-none absolute left-2.5 top-2.5 text-neutral-500 text-sm"
-            aria-hidden="true"
-          />
-          <input
-            v-model="searchQuery"
-            type="text"
-            aria-label="Filter navigation sections"
-            placeholder="Search sections..."
-            class="w-full pl-8 pr-7 py-1.5 bg-neutral-50 border border-neutral-200 text-xs placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
-            @keydown.escape="searchQuery = ''"
-          />
+        <div class="flex items-center gap-1.5">
+          <div class="relative flex-1 min-w-0">
+            <Icon
+              icon="lucide:search"
+              class="pointer-events-none absolute left-2.5 top-2.5 text-neutral-500 text-sm"
+              aria-hidden="true"
+            />
+            <input
+              v-model="searchQuery"
+              type="text"
+              aria-label="Filter navigation sections"
+              placeholder="Search pages or config..."
+              class="w-full pl-8 pr-7 py-1.5 bg-neutral-50 border border-neutral-200 text-xs placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
+              @keydown.escape="searchQuery = ''"
+            />
+            <button
+              v-if="searchQuery"
+              type="button"
+              aria-label="Clear navigation filter"
+              class="absolute right-2 top-2 text-neutral-500 hover:text-neutral-900 cursor-pointer"
+              @click="searchQuery = ''"
+            >
+              <Icon icon="lucide:x" class="text-xs" aria-hidden="true" />
+            </button>
+          </div>
           <button
-            v-if="searchQuery"
+            v-if="!searchQuery"
             type="button"
-            aria-label="Clear navigation filter"
-            class="absolute right-2 top-2 text-neutral-500 hover:text-neutral-900 cursor-pointer"
-            @click="searchQuery = ''"
+            class="w-7 h-7 flex items-center justify-center border border-neutral-200 bg-neutral-50 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors cursor-pointer shrink-0"
+            :aria-label="
+              allVisibleGroupsExpanded
+                ? 'Collapse all navigation groups'
+                : 'Expand all navigation groups'
+            "
+            :title="allVisibleGroupsExpanded ? 'Collapse all groups' : 'Expand all groups'"
+            @click="toggleAllGroups"
           >
-            <Icon icon="lucide:x" class="text-xs" aria-hidden="true" />
+            <Icon
+              :icon="
+                allVisibleGroupsExpanded ? 'lucide:chevrons-down-up' : 'lucide:chevrons-up-down'
+              "
+              class="text-xs"
+              aria-hidden="true"
+            />
           </button>
         </div>
       </div>
@@ -389,115 +470,202 @@ const filteredGroups = computed(() => {
 
     <nav class="flex-1 overflow-y-auto px-3 py-3 space-y-3" aria-label="Main navigation">
       <div
-        v-if="filteredGroups.length === 0"
+        v-if="hasNoSearchMatches"
         class="px-3 py-6 text-center text-xs text-neutral-500 border border-dashed border-neutral-200"
       >
         No matching sections for "{{ searchQuery }}"
       </div>
-      <div v-for="group in filteredGroups" :key="group.id" class="space-y-1">
-        <button
-          v-if="!effectivelyCollapsed"
-          type="button"
-          :aria-expanded="Boolean(expandedGroups[group.id] || searchQuery)"
-          class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-neutral-500 hover:text-neutral-900 transition-colors cursor-pointer"
-          @click="toggleGroup(group.id)"
-        >
-          <span class="flex items-center gap-2">
-            <Icon :icon="group.icon" class="text-sm" aria-hidden="true" />
-            <span>{{ group.title }}</span>
-          </span>
-          <Icon
-            :icon="
-              expandedGroups[group.id] || searchQuery
-                ? 'lucide:chevron-down'
-                : 'lucide:chevron-right'
-            "
-            class="text-xs transition-transform"
-            aria-hidden="true"
-          />
-        </button>
 
-        <div v-else class="flex justify-center py-0.5">
+      <!-- Pinned top-level items (e.g., Overview) -->
+      <div v-if="filteredPinnedItems.length > 0" class="space-y-1">
+        <template v-for="item in filteredPinnedItems" :key="item.id">
           <button
+            v-if="!effectivelyCollapsed"
             type="button"
-            :aria-label="group.title"
-            :aria-expanded="activeFlyout?.id === group.id"
-            aria-haspopup="menu"
-            class="relative w-11 h-11 flex items-center justify-center transition-colors cursor-pointer"
+            :aria-current="isItemActive(item) ? 'page' : undefined"
+            class="w-full flex items-center justify-between gap-2 px-2.5 py-2 text-xs font-semibold transition-colors relative cursor-pointer"
             :class="
-              isGroupActive(group)
-                ? 'bg-neutral-900 text-white'
-                : activeFlyout?.id === group.id
-                  ? 'bg-neutral-100 text-neutral-900'
-                  : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+              isItemActive(item)
+                ? 'text-white'
+                : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
             "
-            @mouseenter="openGroupFlyout(group, $event)"
-            @mouseleave="scheduleCloseFlyout"
-            @focus="openGroupFlyout(group, $event)"
-            @blur="scheduleCloseFlyout"
-            @click="navigateTo(group.items[0]?.path || '/dashboard/overview')"
+            @click="navigateTo(item.path)"
           >
-            <Icon :icon="group.icon" class="text-base shrink-0" aria-hidden="true" />
-            <span
-              v-if="getGroupNotificationCount(group) > 0"
-              data-test="collapsed-notif-count"
-              class="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold leading-none tabular-nums"
-              :class="
-                isGroupActive(group)
-                  ? 'bg-white text-neutral-900 border border-neutral-900'
-                  : 'bg-neutral-900 text-white'
-              "
-            >
-              {{ getGroupNotificationCount(group) }}
+            <motion.span
+              v-if="isItemActive(item)"
+              layoutId="activeSidebarIndicator"
+              class="absolute inset-0 bg-neutral-900"
+              :transition="{ type: 'spring', stiffness: 380, damping: 30 }"
+            />
+            <span class="relative z-10 flex items-center gap-2 truncate">
+              <Icon :icon="item.icon" class="text-sm shrink-0" aria-hidden="true" />
+              <span class="truncate">{{ item.label }}</span>
             </span>
           </button>
-        </div>
 
-        <AnimatePresence>
-          <motion.div
-            v-if="!effectivelyCollapsed && (expandedGroups[group.id] || searchQuery)"
-            :initial="{ opacity: 0, height: 0 }"
-            :animate="{ opacity: 1, height: 'auto' }"
-            :exit="{ opacity: 0, height: 0 }"
-            :transition="{ duration: 0.2, ease: 'easeInOut' }"
-            class="overflow-hidden space-y-0.5 ml-4 pl-2 border-l border-neutral-200 my-0.5"
-          >
+          <div v-else class="flex justify-center py-0.5">
             <button
-              v-for="item in group.items"
-              :key="item.id"
               type="button"
+              :aria-label="item.label"
               :aria-current="isItemActive(item) ? 'page' : undefined"
-              class="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs font-medium transition-colors relative cursor-pointer"
+              class="relative w-11 h-11 flex items-center justify-center transition-colors cursor-pointer"
               :class="
                 isItemActive(item)
-                  ? 'text-white'
-                  : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+                  ? 'bg-neutral-900 text-white'
+                  : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
               "
+              @mouseenter="showButtonTooltip(item.label, $event)"
+              @mouseleave="hideButtonTooltip"
+              @focus="showButtonTooltip(item.label, $event)"
+              @blur="hideButtonTooltip"
               @click="navigateTo(item.path)"
             >
-              <motion.span
-                v-if="isItemActive(item)"
-                layoutId="activeSidebarIndicator"
-                class="absolute inset-0 bg-neutral-900"
-                :transition="{ type: 'spring', stiffness: 380, damping: 30 }"
-              />
+              <Icon :icon="item.icon" class="text-base shrink-0" aria-hidden="true" />
+            </button>
+          </div>
+        </template>
+      </div>
 
-              <span class="relative z-10 truncate">{{ item.label }}</span>
+      <!-- Structured navigation sections: Operations / Configuration / Administration -->
+      <div
+        v-for="(section, sectionIndex) in filteredSections"
+        :key="section.id"
+        :data-nav-section="section.id"
+        class="space-y-1.5"
+        :class="
+          effectivelyCollapsed
+            ? sectionIndex > 0 || filteredPinnedItems.length > 0
+              ? 'pt-2 border-t border-neutral-200'
+              : ''
+            : 'pt-2 border-t border-neutral-100'
+        "
+      >
+        <div
+          v-if="!effectivelyCollapsed"
+          class="px-2.5 pb-0.5 text-[10px] font-bold uppercase tracking-widest text-neutral-400"
+        >
+          {{ section.label }}
+        </div>
 
+        <div v-for="group in section.groups" :key="group.id" class="space-y-1">
+          <button
+            v-if="!effectivelyCollapsed"
+            type="button"
+            :aria-expanded="Boolean(expandedGroups[group.id] || searchQuery)"
+            class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+            :class="
+              isGroupActive(group) ? 'text-neutral-900' : 'text-neutral-500 hover:text-neutral-900'
+            "
+            @click="toggleGroup(group.id)"
+          >
+            <span class="flex items-center gap-2 min-w-0">
+              <Icon :icon="group.icon" class="text-sm shrink-0" aria-hidden="true" />
+              <span class="truncate">{{ group.title }}</span>
+            </span>
+            <span class="flex items-center gap-1.5 shrink-0">
               <span
-                v-if="item.badge"
-                class="relative z-10 text-[10px] px-1.5 py-0.5 font-semibold tabular-nums transition-colors shrink-0"
+                v-if="
+                  !expandedGroups[group.id] && !searchQuery && getGroupNotificationCount(group) > 0
+                "
+                data-test="folded-group-notif-count"
+                class="min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold leading-none tabular-nums bg-neutral-900 text-white"
+              >
+                {{ getGroupNotificationCount(group) }}
+              </span>
+              <Icon
+                :icon="
+                  expandedGroups[group.id] || searchQuery
+                    ? 'lucide:chevron-down'
+                    : 'lucide:chevron-right'
+                "
+                class="text-xs transition-transform"
+                aria-hidden="true"
+              />
+            </span>
+          </button>
+
+          <div v-else class="flex justify-center py-0.5">
+            <button
+              type="button"
+              :aria-label="group.title"
+              :aria-expanded="activeFlyout?.id === group.id"
+              aria-haspopup="menu"
+              class="relative w-11 h-11 flex items-center justify-center transition-colors cursor-pointer"
+              :class="
+                isGroupActive(group)
+                  ? 'bg-neutral-900 text-white'
+                  : activeFlyout?.id === group.id
+                    ? 'bg-neutral-100 text-neutral-900'
+                    : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+              "
+              @mouseenter="openGroupFlyout(group, $event)"
+              @mouseleave="scheduleCloseFlyout"
+              @focus="openGroupFlyout(group, $event)"
+              @blur="scheduleCloseFlyout"
+              @click="navigateTo(group.items[0]?.path || '/dashboard/overview')"
+            >
+              <Icon :icon="group.icon" class="text-base shrink-0" aria-hidden="true" />
+              <span
+                v-if="getGroupNotificationCount(group) > 0"
+                data-test="collapsed-notif-count"
+                class="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold leading-none tabular-nums"
                 :class="
-                  isItemActive(item)
-                    ? 'bg-neutral-800 text-white'
-                    : item.badgeClass || 'bg-neutral-100 text-neutral-700'
+                  isGroupActive(group)
+                    ? 'bg-white text-neutral-900 border border-neutral-900'
+                    : 'bg-neutral-900 text-white'
                 "
               >
-                {{ item.badge }}
+                {{ getGroupNotificationCount(group) }}
               </span>
             </button>
-          </motion.div>
-        </AnimatePresence>
+          </div>
+
+          <AnimatePresence>
+            <motion.div
+              v-if="!effectivelyCollapsed && (expandedGroups[group.id] || searchQuery)"
+              :initial="{ opacity: 0, height: 0 }"
+              :animate="{ opacity: 1, height: 'auto' }"
+              :exit="{ opacity: 0, height: 0 }"
+              :transition="{ duration: 0.2, ease: 'easeInOut' }"
+              class="overflow-hidden space-y-0.5 ml-4 pl-2 border-l border-neutral-200 my-0.5"
+            >
+              <button
+                v-for="item in group.items"
+                :key="item.id"
+                type="button"
+                :aria-current="isItemActive(item) ? 'page' : undefined"
+                class="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs font-medium transition-colors relative cursor-pointer"
+                :class="
+                  isItemActive(item)
+                    ? 'text-white'
+                    : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+                "
+                @click="navigateTo(item.path)"
+              >
+                <motion.span
+                  v-if="isItemActive(item)"
+                  layoutId="activeSidebarIndicator"
+                  class="absolute inset-0 bg-neutral-900"
+                  :transition="{ type: 'spring', stiffness: 380, damping: 30 }"
+                />
+
+                <span class="relative z-10 truncate">{{ item.label }}</span>
+
+                <span
+                  v-if="item.badge"
+                  class="relative z-10 text-[10px] px-1.5 py-0.5 font-semibold tabular-nums transition-colors shrink-0"
+                  :class="
+                    isItemActive(item)
+                      ? 'bg-neutral-800 text-white'
+                      : item.badgeClass || 'bg-neutral-100 text-neutral-700'
+                  "
+                >
+                  {{ item.badge }}
+                </span>
+              </button>
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
     </nav>
 

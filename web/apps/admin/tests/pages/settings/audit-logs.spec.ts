@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { resetSettingsForTesting } from '@/features/settings'
-import AuditLogsPage from '@/pages/settings/audit-logs.vue'
+import AuditLogsPage from '@/pages/admin/audit-logs.vue'
 
 describe('settings/audit-logs page', () => {
   beforeEach(() => {
