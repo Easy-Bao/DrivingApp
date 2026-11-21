@@ -1,17 +1,34 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { loginOperator } from '@/core'
 import {
+  DEFAULT_APP_SYSTEM_CONFIG,
+  DEFAULT_COMPLIANCE_POLICY,
+  DEFAULT_DISPATCH_POLICY,
   DEFAULT_PLATFORM_CONFIG,
+  DEFAULT_PRICING_POLICY,
+  DEFAULT_SAFETY_POLICY,
+  DEFAULT_WALLET_POLICY,
   resetSettingsForTesting,
+  useAppSystemConfig,
   useAuditLogs,
   useCities,
+  useComplianceRules,
+  useDispatchPolicy,
   useLegalPolicies,
   usePlatformConfig,
+  usePricingPolicy,
+  useSafetyConfig,
   useServiceZones,
+  useVehicleClasses,
+  useWalletPolicy,
+  validateAppSystemConfig,
+  validateDispatchPolicy,
   validateLegalDocumentInput,
   validateMunicipalityInput,
   validatePlatformConfig,
+  validatePricingPolicy,
   validateServiceZoneInput,
+  validateWalletPolicy,
 } from '@/features/settings'
 
 describe('features/settings domain & composables', () => {
@@ -35,7 +52,7 @@ describe('features/settings domain & composables', () => {
     })
   })
 
-  it('validates platform configuration bounds cleanly', () => {
+  it('validates platform, pricing, wallet, dispatch, and app system configuration bounds cleanly', () => {
     expect(validatePlatformConfig(DEFAULT_PLATFORM_CONFIG)).toBeNull()
     expect(
       validatePlatformConfig({ ...DEFAULT_PLATFORM_CONFIG, biddingWindowSeconds: 10 }),
@@ -49,11 +66,44 @@ describe('features/settings domain & composables', () => {
     expect(
       validatePlatformConfig({ ...DEFAULT_PLATFORM_CONFIG, minWalletBalanceCentavos: -100 }),
     ).toBeTruthy()
+
+    expect(validatePricingPolicy(DEFAULT_PRICING_POLICY)).toBeNull()
+    expect(
+      validatePricingPolicy({ ...DEFAULT_PRICING_POLICY, lowRatingSurgePenaltyMultiplier: 1.5 }),
+    ).toBeTruthy()
+    expect(
+      validatePricingPolicy({ ...DEFAULT_PRICING_POLICY, cancellationGraceMinutes: 20 }),
+    ).toBeTruthy()
+
+    expect(validateWalletPolicy(DEFAULT_WALLET_POLICY)).toBeNull()
+    expect(
+      validateWalletPolicy({
+        ...DEFAULT_WALLET_POLICY,
+        minWalletBalanceCentavos: 20000,
+        lowBalanceWarningCentavos: 5000,
+      }),
+    ).toBeTruthy()
+
+    expect(validateDispatchPolicy(DEFAULT_DISPATCH_POLICY)).toBeNull()
+    expect(
+      validateDispatchPolicy({
+        ...DEFAULT_DISPATCH_POLICY,
+        gpsBeaconIntervalSeconds: 30,
+        driverLocationMaxAgeSeconds: 20,
+      }),
+    ).toBeTruthy()
+
+    expect(validateAppSystemConfig(DEFAULT_APP_SYSTEM_CONFIG)).toBeNull()
+    expect(
+      validateAppSystemConfig({ ...DEFAULT_APP_SYSTEM_CONFIG, passengerMinVersion: 'v1' }),
+    ).toBeTruthy()
   })
 
-  it('commits valid runtime config changes and records an audit log for the active operator', () => {
+  it('commits valid runtime config changes and keeps sub-policies synchronized', () => {
     loginOperator('finance', '7016')
     const { config, commitConfig, resetToDefaults } = usePlatformConfig()
+    const { policy: walletPolicy } = useWalletPolicy()
+    const { policy: pricingPolicy } = usePricingPolicy()
     const { logs } = useAuditLogs()
     const initialCount = logs.value.length
 
@@ -72,7 +122,8 @@ describe('features/settings domain & composables', () => {
 
     expect(result).toEqual({ ok: true })
     expect(config.value.minWalletBalanceCentavos).toBe(7500)
-    expect(config.value.ratingBonusThreshold).toBe(4.8)
+    expect(walletPolicy.value.minWalletBalanceCentavos).toBe(7500)
+    expect(pricingPolicy.value.ratingBonusThreshold).toBe(4.8)
     expect(logs.value).toHaveLength(initialCount + 1)
     expect(logs.value[0]?.action).toBe('RUNTIME_CONFIG_UPDATED')
     expect(logs.value[0]?.actor).toBe('Clarisse Mendoza')
@@ -80,6 +131,116 @@ describe('features/settings domain & composables', () => {
 
     resetToDefaults()
     expect(config.value.minWalletBalanceCentavos).toBe(5000)
+    expect(walletPolicy.value.minWalletBalanceCentavos).toBe(5000)
+  })
+
+  it('commits independent pricing, wallet, dispatch, compliance, safety, vehicle class, and system configs', () => {
+    const { config } = usePlatformConfig()
+    const { policy: pricing, commitPricingPolicy, saveDiscountRule, discounts } = usePricingPolicy()
+    const { policy: wallet, commitWalletPolicy } = useWalletPolicy()
+    const { policy: dispatch, commitDispatchPolicy } = useDispatchPolicy()
+    const { vehicleClasses, saveVehicleClass, toggleVehicleClass } = useVehicleClasses()
+    const { commitCompliancePolicy, saveDocumentRequirement, requirements } = useComplianceRules()
+    const { primaryHotlineLabel, commitSafetyPolicy, saveHotline } = useSafetyConfig()
+    const { systemConfig, commitSystemConfig } = useAppSystemConfig()
+
+    expect(
+      commitPricingPolicy(
+        { ...pricing.value, maxBiddingSurgeCap: 2.0, lowRatingSurgePenaltyMultiplier: 0.85 },
+        'Adjusted surge and rating guardrails.',
+      ).ok,
+    ).toBe(true)
+    expect(config.value.maxBiddingSurgeCap).toBe(2.0)
+
+    expect(
+      saveDiscountRule(null, {
+        name: 'Solo Parent Discount',
+        eligibilityType: 'Promotional',
+        discountPercent: 10,
+        requiresVerificationId: true,
+        legalReference: 'City Ordinance 2026-12',
+      }).ok,
+    ).toBe(true)
+    expect(discounts.value.some((rule) => rule.name === 'Solo Parent Discount')).toBe(true)
+
+    expect(
+      commitWalletPolicy(
+        {
+          ...wallet.value,
+          minWalletBalanceCentavos: 8000,
+          lowBalanceWarningCentavos: 15000,
+          minTopUpAmountCentavos: 10000,
+        },
+        'Aligned top-up floor.',
+      ).ok,
+    ).toBe(true)
+    expect(config.value.minWalletBalanceCentavos).toBe(8000)
+
+    expect(
+      commitDispatchPolicy(
+        { ...dispatch.value, biddingWindowSeconds: 60, passengerNoShowWaitMinutes: 7 },
+        'Shortened bid timer.',
+      ).ok,
+    ).toBe(true)
+    expect(config.value.biddingWindowSeconds).toBe(60)
+
+    expect(
+      saveVehicleClass(null, {
+        name: 'Cargo Bao-Bao',
+        code: 'BAO-CRG',
+        description: 'Market goods transport.',
+        passengerCapacity: 2,
+        fareRuleId: 'baobao-express',
+        commissionTierId: 'standard-fleet',
+        isElectric: false,
+      }).ok,
+    ).toBe(true)
+    const createdClass = vehicleClasses.value.find((item) => item.code === 'BAO-CRG')
+    expect(createdClass).toBeDefined()
+    expect(toggleVehicleClass(createdClass!.id).ok).toBe(true)
+    expect(createdClass!.isActive).toBe(false)
+
+    expect(
+      commitCompliancePolicy(
+        { ...DEFAULT_COMPLIANCE_POLICY, enforceDocumentGate: false, expiryWarningLeadDays: 45 },
+        'Temporary onboarding grace.',
+      ).ok,
+    ).toBe(true)
+    expect(config.value.enforceDocumentGate).toBe(false)
+    expect(
+      saveDocumentRequirement(null, {
+        name: 'Barangay Clearance',
+        scope: 'Driver',
+        issuingAuthority: 'Barangay Hall',
+        mandatory: false,
+        requiresTwoSides: false,
+        tracksExpiry: true,
+      }).ok,
+    ).toBe(true)
+    expect(requirements.value.some((doc) => doc.name === 'Barangay Clearance')).toBe(true)
+
+    expect(
+      commitSafetyPolicy({ ...DEFAULT_SAFETY_POLICY, sosAutoEscalateSeconds: 45 }, 'Tighter SLA')
+        .ok,
+    ).toBe(true)
+    expect(
+      saveHotline(null, {
+        label: 'ZDS Command',
+        agency: 'Provincial Rescue',
+        phone: '062-999-0911',
+        coverageArea: 'Zamboanga del Sur',
+        isPrimary: true,
+      }).ok,
+    ).toBe(true)
+    expect(primaryHotlineLabel.value).toBe('ZDS Command (062-999-0911)')
+
+    expect(
+      commitSystemConfig(
+        { ...DEFAULT_APP_SYSTEM_CONFIG, driverMinVersion: '1.5.0', maintenanceMode: true },
+        'Scheduled migration.',
+      ).ok,
+    ).toBe(true)
+    expect(systemConfig.value.maintenanceMode).toBe(true)
   })
 
   it('aligns seeded audit logs with canonical operators and TOP-8921 ₱500.00 top-up', () => {

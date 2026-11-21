@@ -20,6 +20,154 @@ export interface PlatformConfig {
   autoLockLowBalanceDispatch: boolean
 }
 
+export interface PricingPolicyConfig {
+  baseFareCentavos: number
+  cancellationFeeCentavos: number
+  cancellationGraceMinutes: number
+  maxBiddingSurgeCap: number
+  enableSurgePricing: boolean
+  ratingBonusThreshold: number
+  ratingBonusMultiplier: number
+  lowRatingSurgePenaltyMultiplier: number
+  enableNightDifferential: boolean
+  nightDifferentialPercent: number
+  nightStartHour: number
+  nightEndHour: number
+}
+
+export type DiscountEligibilityType = 'Senior Citizen' | 'PWD' | 'Student' | 'Promotional'
+
+export interface FareDiscountRule {
+  id: string
+  name: string
+  eligibilityType: DiscountEligibilityType
+  discountPercent: number
+  requiresVerificationId: boolean
+  legalReference: string
+  isActive: boolean
+}
+
+export interface SaveFareDiscountInput {
+  name: string
+  eligibilityType: DiscountEligibilityType
+  discountPercent: number
+  requiresVerificationId: boolean
+  legalReference: string
+}
+
+export interface WalletPolicyConfig {
+  minWalletBalanceCentavos: number
+  lowBalanceWarningCentavos: number
+  minTopUpAmountCentavos: number
+  maxTopUpAmountCentavos: number
+  autoLockLowBalanceDispatch: boolean
+  requireReceiptProof: boolean
+  topUpVerificationSlaMinutes: number
+}
+
+export interface DispatchPolicyConfig {
+  biddingWindowSeconds: number
+  dispatchSearchRadiusKm: number
+  maxOffersPerSession: number
+  minPassengerBidPercent: number
+  maxPassengerBidPercent: number
+  gpsBeaconIntervalSeconds: number
+  driverLocationMaxAgeSeconds: number
+  passengerNoShowWaitMinutes: number
+  arrivalRadiusMeters: number
+  completionRadiusMeters: number
+  allowManualDispatchOverride: boolean
+}
+
+export interface VehicleClassConfig {
+  id: string
+  name: string
+  code: string
+  description: string
+  passengerCapacity: number
+  fareRuleId: string
+  commissionTierId: string
+  isElectric: boolean
+  isActive: boolean
+}
+
+export interface SaveVehicleClassInput {
+  name: string
+  code: string
+  description: string
+  passengerCapacity: number
+  fareRuleId: string
+  commissionTierId: string
+  isElectric: boolean
+}
+
+export interface CompliancePolicyConfig {
+  enforceDocumentGate: boolean
+  expiryWarningLeadDays: number
+  criticalExpiryDays: number
+  expiryGracePeriodDays: number
+  autoSuspendOnExpiry: boolean
+}
+
+export type DocumentScope = 'Driver' | 'Vehicle' | 'Franchise'
+
+export interface DocumentRequirementRule {
+  id: string
+  name: string
+  scope: DocumentScope
+  issuingAuthority: string
+  mandatory: boolean
+  requiresTwoSides: boolean
+  tracksExpiry: boolean
+  isActive: boolean
+}
+
+export interface SaveDocumentRequirementInput {
+  name: string
+  scope: DocumentScope
+  issuingAuthority: string
+  mandatory: boolean
+  requiresTwoSides: boolean
+  tracksExpiry: boolean
+}
+
+export interface SafetyPolicyConfig {
+  sosAutoEscalateSeconds: number
+  sosLocationPingSeconds: number
+  autoNotifyRespondersOnCritical: boolean
+  requireResolutionNote: boolean
+  autoSuspendOnCriticalReport: boolean
+}
+
+export interface EmergencyHotline {
+  id: string
+  label: string
+  agency: string
+  phone: string
+  coverageArea: string
+  isPrimary: boolean
+  isActive: boolean
+}
+
+export interface SaveEmergencyHotlineInput {
+  label: string
+  agency: string
+  phone: string
+  coverageArea: string
+  isPrimary: boolean
+}
+
+export interface AppSystemConfig {
+  reportingTimezone: string
+  supportEmail: string
+  supportPhone: string
+  passengerMinVersion: string
+  driverMinVersion: string
+  enforceMinAppVersion: boolean
+  maintenanceMode: boolean
+  maintenanceNotice: string
+}
+
 export interface AuditLogEntry {
   id: string
   actor: string
@@ -94,4 +242,4 @@ export interface SaveLegalDocumentInput {
   bumpMinor: boolean
 }
 
-export type MutationResult = { ok: true } | { ok: false; error: string }
+export type MutationResult = { ok: true; message?: string } | { ok: false; error: string }

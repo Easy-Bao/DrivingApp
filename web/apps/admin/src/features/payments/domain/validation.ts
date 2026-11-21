@@ -1,5 +1,7 @@
 import type {
+  CreateCommissionTierInput,
   CreateCompanyAccountInput,
+  CreateFareTierRuleInput,
   FareTierRule,
   SaveCommissionTierInput,
   UpdateCompanyAccountInput,
@@ -23,7 +25,12 @@ export function validateQrUploadFile(file: {
   return null
 }
 
-export function validateCommissionTierInput(input: SaveCommissionTierInput): string | null {
+export function validateCommissionTierInput(
+  input: SaveCommissionTierInput | CreateCommissionTierInput,
+): string | null {
+  if ('category' in input && !input.category.trim()) {
+    return 'Provide a commission tier title.'
+  }
   if (!Number.isFinite(input.rateBps) || input.rateBps < 100 || input.rateBps > 3500) {
     return 'Commission rate must stay between 100 bps (1.0%) and 3500 bps (35.0%).'
   }
@@ -38,22 +45,33 @@ export function validateCommissionTierInput(input: SaveCommissionTierInput): str
   return null
 }
 
-export function validateFareRuleInput(rule: FareTierRule, maxSurgeCeiling = 2.5): string | null {
+export function validateFareRuleInput(
+  rule: FareTierRule | CreateFareTierRuleInput,
+  maxSurgeCeiling = 2.5,
+): string | null {
   const ceiling = Number.isFinite(maxSurgeCeiling) ? Math.max(1, maxSurgeCeiling) : 2.5
+  if (!rule.tier.trim() || !rule.corridorScope.trim()) {
+    return 'Provide both a tariff tier name and corridor scope.'
+  }
   if (
     !Number.isFinite(rule.baseFareCentavos) ||
     rule.baseFareCentavos <= 0 ||
     !Number.isFinite(rule.perKmCentavos) ||
     rule.perKmCentavos <= 0 ||
+    !Number.isFinite(rule.perMinuteCentavos) ||
+    rule.perMinuteCentavos < 0 ||
     !Number.isFinite(rule.minimumFareCentavos) ||
     rule.minimumFareCentavos <= 0 ||
     !Number.isFinite(rule.cancellationFeeCentavos) ||
     rule.cancellationFeeCentavos < 0 ||
     !Number.isFinite(rule.maxBiddingSurgeCap) ||
     rule.maxBiddingSurgeCap < 1 ||
-    rule.maxBiddingSurgeCap > ceiling
+    rule.maxBiddingSurgeCap > ceiling ||
+    !Number.isFinite(rule.highRatingDriverBonus) ||
+    rule.highRatingDriverBonus < 1 ||
+    rule.highRatingDriverBonus > 1.2
   ) {
-    return `Verify PHP tariff rates are positive and bidding surge cap remains within 1.0x–${ceiling.toFixed(1)}x.`
+    return `Verify PHP tariff rates are positive, VIP rating bonus is 1.0x–1.2x, and bidding surge cap remains within 1.0x–${ceiling.toFixed(1)}x.`
   }
   return null
 }

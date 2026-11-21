@@ -2,9 +2,13 @@ import { ROLE_PROFILES } from '@/core'
 import { DEFAULT_PLATFORM_CONFIG } from '@/features/settings/domain/platform-config'
 import type {
   AuditLogEntry,
+  DocumentRequirementRule,
+  EmergencyHotline,
+  FareDiscountRule,
   LegalDocument,
   MunicipalityMarket,
   ServiceZone,
+  VehicleClassConfig,
 } from '@/features/settings/types'
 
 function formatPhpNumber(centavos: number): string {
@@ -57,6 +61,165 @@ export const INITIAL_AUDIT_LOGS: readonly AuditLogEntry[] = [
     severity: 'Info',
     timestamp: 'Nov 09, 2026 · 04:05 PM PHT',
     payloadDiff: '{"channel": "GCash Business (QRPh)", "merchant_code": "QRPH-PAG-8801"}',
+  },
+]
+
+export const INITIAL_FARE_DISCOUNTS: readonly FareDiscountRule[] = [
+  {
+    id: 'DISC-SENIOR',
+    name: 'Senior Citizen Statutory Discount',
+    eligibilityType: 'Senior Citizen',
+    discountPercent: 20,
+    requiresVerificationId: true,
+    legalReference: 'RA 9994 (Expanded Senior Citizens Act)',
+    isActive: true,
+  },
+  {
+    id: 'DISC-PWD',
+    name: 'PWD Statutory Fare Discount',
+    eligibilityType: 'PWD',
+    discountPercent: 20,
+    requiresVerificationId: true,
+    legalReference: 'RA 10754 (Magna Carta for PWDs)',
+    isActive: true,
+  },
+  {
+    id: 'DISC-STUDENT',
+    name: 'Student Fare Discount',
+    eligibilityType: 'Student',
+    discountPercent: 20,
+    requiresVerificationId: true,
+    legalReference: 'RA 11314 (Student Fare Discount Act)',
+    isActive: true,
+  },
+]
+
+export const INITIAL_VEHICLE_CLASSES: readonly VehicleClassConfig[] = [
+  {
+    id: 'CLS-BAOBAO-STD',
+    name: 'Standard Bao-Bao',
+    code: 'BAO-STD',
+    description: 'Bajaj RE / TVS King / Piaggio Ape units serving urban Poblacion corridors.',
+    passengerCapacity: 3,
+    fareRuleId: 'baobao-standard',
+    commissionTierId: 'standard-fleet',
+    isElectric: false,
+    isActive: true,
+  },
+  {
+    id: 'CLS-BAOBAO-EXP',
+    name: 'Terminal & Uphill Express',
+    code: 'BAO-EXP',
+    description: 'High-torque units prioritized for Dao Capitol, Airport Road, and Bus Terminal.',
+    passengerCapacity: 4,
+    fareRuleId: 'baobao-express',
+    commissionTierId: 'standard-fleet',
+    isElectric: false,
+    isActive: true,
+  },
+  {
+    id: 'CLS-EBAO-ECO',
+    name: 'Electric Bao-Bao (Eco)',
+    code: 'EBAO-ECO',
+    description: 'Zero-emission NWOW ERV2 electric units enrolled in the Pioneer Program.',
+    passengerCapacity: 3,
+    fareRuleId: 'baobao-standard',
+    commissionTierId: 'ebao-pioneer',
+    isElectric: true,
+    isActive: true,
+  },
+]
+
+export const INITIAL_DOCUMENT_REQUIREMENTS: readonly DocumentRequirementRule[] = [
+  {
+    id: 'DOC-RULE-LTO',
+    name: 'LTO Professional Driver License (Code A1)',
+    scope: 'Driver',
+    issuingAuthority: 'Land Transportation Office (LTO)',
+    mandatory: true,
+    requiresTwoSides: true,
+    tracksExpiry: true,
+    isActive: true,
+  },
+  {
+    id: 'DOC-RULE-ORCR',
+    name: 'Vehicle OR / CR Registration',
+    scope: 'Vehicle',
+    issuingAuthority: 'Land Transportation Office (LTO)',
+    mandatory: true,
+    requiresTwoSides: false,
+    tracksExpiry: true,
+    isActive: true,
+  },
+  {
+    id: 'DOC-RULE-MTOP',
+    name: 'Municipal TODA / MTOP Franchise Permit',
+    scope: 'Franchise',
+    issuingAuthority: 'Pagadian City LGU / TODA',
+    mandatory: true,
+    requiresTwoSides: false,
+    tracksExpiry: true,
+    isActive: true,
+  },
+  {
+    id: 'DOC-RULE-CLEARANCE',
+    name: 'NBI or PNP Clearance Certificate',
+    scope: 'Driver',
+    issuingAuthority: 'NBI / Philippine National Police',
+    mandatory: true,
+    requiresTwoSides: false,
+    tracksExpiry: true,
+    isActive: true,
+  },
+  {
+    id: 'DOC-RULE-INSURANCE',
+    name: 'CTPL & Passenger Accident Insurance',
+    scope: 'Vehicle',
+    issuingAuthority: 'Accredited Insurance Provider',
+    mandatory: true,
+    requiresTwoSides: false,
+    tracksExpiry: true,
+    isActive: true,
+  },
+  {
+    id: 'DOC-RULE-MVIR',
+    name: 'Annual MVIR Roadworthiness Inspection',
+    scope: 'Vehicle',
+    issuingAuthority: 'City Transport Regulatory Unit',
+    mandatory: false,
+    requiresTwoSides: false,
+    tracksExpiry: true,
+    isActive: true,
+  },
+]
+
+export const INITIAL_EMERGENCY_HOTLINES: readonly EmergencyHotline[] = [
+  {
+    id: 'HOT-CDRRMO',
+    label: '911 · CDRRMO',
+    agency: 'Pagadian City Disaster Risk Reduction & Management Office',
+    phone: '062-925-0911',
+    coverageArea: 'Pagadian City (7016)',
+    isPrimary: true,
+    isActive: true,
+  },
+  {
+    id: 'HOT-PNP',
+    label: 'Pagadian PNP Command',
+    agency: 'Philippine National Police — Pagadian City Station',
+    phone: '062-214-1492',
+    coverageArea: 'Zamboanga del Sur Core',
+    isPrimary: false,
+    isActive: true,
+  },
+  {
+    id: 'HOT-BFP',
+    label: 'BFP Fire & Rescue',
+    agency: 'Bureau of Fire Protection — Pagadian Central',
+    phone: '062-215-2610',
+    coverageArea: 'Pagadian City (7016)',
+    isPrimary: false,
+    isActive: true,
   },
 ]
 

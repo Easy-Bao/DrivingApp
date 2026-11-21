@@ -57,6 +57,15 @@ export interface CommissionTier {
   minWalletBalanceCentavos: number
   eligibilityRule: string
   settlementNote: string
+  isActive?: boolean
+}
+
+export interface CreateCommissionTierInput {
+  category: string
+  rateBps: number
+  fixedBookingFeeCentavos: number
+  minWalletBalanceCentavos: number
+  eligibilityRule: string
 }
 
 export interface SaveCommissionTierInput {
@@ -77,7 +86,10 @@ export interface FareTierRule {
   cancellationFeeCentavos: number
   maxBiddingSurgeCap: number
   highRatingDriverBonus: number
+  isActive?: boolean
 }
+
+export type CreateFareTierRuleInput = Omit<FareTierRule, 'id' | 'isActive'>
 
 export type DriverWalletStanding = 'Prepaid Credit Active' | 'Low Prepaid Wallet'
 

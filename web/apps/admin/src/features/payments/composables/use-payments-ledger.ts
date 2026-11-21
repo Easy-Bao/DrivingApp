@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { formatCentavos } from '@/shared'
-import { useAuditLogs, usePlatformConfig } from '@/features/settings'
+import { useAuditLogs, usePlatformConfig, useWalletPolicy } from '@/features/settings'
 import { buildQrSvg } from '@/features/payments/domain/svg-receipt'
 import {
   validateCommissionTierInput,
@@ -21,7 +21,9 @@ import {
 import type {
   CommissionTier,
   CompanyCollectionAccount,
+  CreateCommissionTierInput,
   CreateCompanyAccountInput,
+  CreateFareTierRuleInput,
   DriverEarningSummary,
   DriverWalletRow,
   FareAdjustmentClaim,
@@ -104,9 +106,11 @@ export function useWalletTransactions() {
 
 export function useWalletAccounts() {
   const { config } = usePlatformConfig()
+  const { policy: walletPolicy } = useWalletPolicy()
   const { appendAuditLog } = useAuditLogs()
 
   const minDispatchBalanceCentavos = computed(() => config.value.minWalletBalanceCentavos)
+  const minTopUpAmountCentavos = computed(() => walletPolicy.value.minTopUpAmountCentavos)
 
   function adjustDriverWallet(
     driverId: string,
@@ -173,6 +177,7 @@ export function useWalletAccounts() {
   return {
     wallets: computed(() => wallets.value),
     minDispatchBalanceCentavos,
+    minTopUpAmountCentavos,
     adjustDriverWallet,
   }
 }
@@ -183,6 +188,48 @@ export function useCommissionTiers() {
   const defaultStandardRateBps = computed(
     () => commissionTiers.value.find((tier) => tier.id === 'standard-fleet')?.rateBps ?? 1500,
   )
+
+  function createCommissionTier(input: CreateCommissionTierInput): PaymentMutationResult {
+    const validationError = validateCommissionTierInput(input)
+    if (validationError) {
+      return { ok: false, error: validationError }
+    }
+    const category = input.category.trim()
+    const rateBps = Math.round(input.rateBps)
+    const percentLabel = Number((rateBps / 100).toFixed(2))
+    const slug = category
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+    const id = `${slug || 'tier'}-${commissionTiers.value.length + 1}`
+
+    commissionTiers.value.push({
+      id,
+      category,
+      rateBps,
+      fixedBookingFeeCentavos: Math.round(input.fixedBookingFeeCentavos),
+      minWalletBalanceCentavos: Math.round(input.minWalletBalanceCentavos),
+      eligibilityRule: input.eligibilityRule.trim() || 'Assigned via driver tier policy.',
+      settlementNote: `${percentLabel}% (${rateBps} bps) deducted from prepaid commission wallet upon trip completion.`,
+      isActive: true,
+    })
+
+    appendAuditLog({
+      action: 'COMMISSION_TIER_CREATED',
+      targetEntity: `${id} (${category})`,
+      severity: 'Info',
+      payload: {
+        rateBps,
+        fixedBookingFeeCentavos: Math.round(input.fixedBookingFeeCentavos),
+        minWalletBalanceCentavos: Math.round(input.minWalletBalanceCentavos),
+      },
+    })
+
+    return {
+      ok: true,
+      message: `Created commission tier ${category} at ${percentLabel}% (${rateBps} bps)`,
+    }
+  }
 
   function saveCommissionTier(id: string, input: SaveCommissionTierInput): PaymentMutationResult {
     const validationError = validateCommissionTierInput(input)
@@ -220,16 +267,81 @@ export function useCommissionTiers() {
     }
   }
 
+  function toggleCommissionTierActive(id: string): PaymentMutationResult {
+    const tier = commissionTiers.value.find((row) => row.id === id)
+    if (!tier) {
+      return { ok: false, error: `Commission tier ${id} was not found.` }
+    }
+    tier.isActive = !(tier.isActive ?? true)
+    appendAuditLog({
+      action: 'COMMISSION_TIER_TOGGLED',
+      targetEntity: `${tier.id} (${tier.category})`,
+      severity: 'Warning',
+      payload: { isActive: tier.isActive },
+    })
+    return {
+      ok: true,
+      message: `${tier.category} marked ${tier.isActive ? 'Active' : 'Paused'}`,
+    }
+  }
+
   return {
     tiers: computed(() => commissionTiers.value),
     defaultStandardRateBps,
+    createCommissionTier,
     saveCommissionTier,
+    toggleCommissionTierActive,
   }
 }
 
 export function useFarePricing() {
   const { config } = usePlatformConfig()
   const { appendAuditLog } = useAuditLogs()
+
+  function createFareRule(input: CreateFareTierRuleInput): PaymentMutationResult {
+    const validationError = validateFareRuleInput(input, config.value.maxBiddingSurgeCap)
+    if (validationError) {
+      return { ok: false, error: validationError }
+    }
+
+    const tier = input.tier.trim()
+    const slug = tier
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+    const id = `${slug || 'tariff'}-${fareRules.value.length + 1}`
+
+    const created: FareTierRule = {
+      id,
+      tier,
+      corridorScope: input.corridorScope.trim(),
+      baseFareCentavos: Math.round(input.baseFareCentavos),
+      perKmCentavos: Math.round(input.perKmCentavos),
+      perMinuteCentavos: Math.round(input.perMinuteCentavos),
+      minimumFareCentavos: Math.round(input.minimumFareCentavos),
+      cancellationFeeCentavos: Math.round(input.cancellationFeeCentavos),
+      maxBiddingSurgeCap: Number(input.maxBiddingSurgeCap.toFixed(2)),
+      highRatingDriverBonus: Number(input.highRatingDriverBonus.toFixed(2)),
+      isActive: true,
+    }
+    fareRules.value.push(created)
+
+    appendAuditLog({
+      action: 'TARIFF_MATRIX_CREATED',
+      targetEntity: `${created.id} (${created.tier})`,
+      severity: 'Info',
+      payload: {
+        baseFareCentavos: created.baseFareCentavos,
+        perKmCentavos: created.perKmCentavos,
+        maxBiddingSurgeCap: created.maxBiddingSurgeCap,
+      },
+    })
+
+    return {
+      ok: true,
+      message: `Created tariff tier ${created.tier}`,
+    }
+  }
 
   function saveFareRule(updated: FareTierRule): PaymentMutationResult {
     const validationError = validateFareRuleInput(updated, config.value.maxBiddingSurgeCap)
@@ -244,11 +356,16 @@ export function useFarePricing() {
 
     fareRules.value[index] = {
       ...updated,
+      tier: updated.tier.trim(),
+      corridorScope: updated.corridorScope.trim(),
       baseFareCentavos: Math.round(updated.baseFareCentavos),
       perKmCentavos: Math.round(updated.perKmCentavos),
       perMinuteCentavos: Math.round(updated.perMinuteCentavos),
       minimumFareCentavos: Math.round(updated.minimumFareCentavos),
       cancellationFeeCentavos: Math.round(updated.cancellationFeeCentavos),
+      maxBiddingSurgeCap: Number(updated.maxBiddingSurgeCap.toFixed(2)),
+      highRatingDriverBonus: Number(updated.highRatingDriverBonus.toFixed(2)),
+      isActive: updated.isActive ?? fareRules.value[index]?.isActive ?? true,
     }
 
     appendAuditLog({
@@ -258,19 +375,40 @@ export function useFarePricing() {
       payload: {
         baseFareCentavos: fareRules.value[index].baseFareCentavos,
         perKmCentavos: fareRules.value[index].perKmCentavos,
-        maxBiddingSurgeCap: updated.maxBiddingSurgeCap,
+        maxBiddingSurgeCap: fareRules.value[index].maxBiddingSurgeCap,
+        highRatingDriverBonus: fareRules.value[index].highRatingDriverBonus,
       },
     })
 
     return {
       ok: true,
-      message: `Saved tariff updates for ${updated.tier}`,
+      message: `Saved tariff updates for ${updated.tier.trim()}`,
+    }
+  }
+
+  function toggleFareRuleActive(id: string): PaymentMutationResult {
+    const target = fareRules.value.find((rule) => rule.id === id)
+    if (!target) {
+      return { ok: false, error: `Fare rule ${id} was not found.` }
+    }
+    target.isActive = !(target.isActive ?? true)
+    appendAuditLog({
+      action: 'TARIFF_MATRIX_TOGGLED',
+      targetEntity: `${target.id} (${target.tier})`,
+      severity: 'Warning',
+      payload: { isActive: target.isActive },
+    })
+    return {
+      ok: true,
+      message: `${target.tier} marked ${target.isActive ? 'Active' : 'Paused'}`,
     }
   }
 
   return {
     rules: computed(() => fareRules.value),
+    createFareRule,
     saveFareRule,
+    toggleFareRuleActive,
   }
 }
 

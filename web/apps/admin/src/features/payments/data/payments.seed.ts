@@ -247,6 +247,7 @@ export const INITIAL_COMMISSION_TIERS: readonly CommissionTier[] = [
     minWalletBalanceCentavos: DEFAULT_PLATFORM_CONFIG.minWalletBalanceCentavos,
     eligibilityRule: 'Default Pagadian TODA franchise Bao-Bao units upon activation.',
     settlementNote: '15% deducted from driver prepaid commission wallet on trip completion.',
+    isActive: true,
   },
   {
     id: 'top-rated-incentive',
@@ -256,6 +257,7 @@ export const INITIAL_COMMISSION_TIERS: readonly CommissionTier[] = [
     minWalletBalanceCentavos: DEFAULT_PLATFORM_CONFIG.minWalletBalanceCentavos,
     eligibilityRule: 'Maintains >= 4.85★ rating and >= 95% acceptance over trailing 30 days.',
     settlementNote: 'Discounted 12% commission rate automatically awarded weekly.',
+    isActive: true,
   },
   {
     id: 'ebao-pioneer',
@@ -265,6 +267,7 @@ export const INITIAL_COMMISSION_TIERS: readonly CommissionTier[] = [
     minWalletBalanceCentavos: DEFAULT_PLATFORM_CONFIG.minWalletBalanceCentavos,
     eligibilityRule: 'Verified battery-electric Bao-Bao units operating in Pagadian.',
     settlementNote: '10% sustainability incentive tier stored as 1000 bps in settlement ledger.',
+    isActive: true,
   },
 ]
 
@@ -280,6 +283,7 @@ export const INITIAL_FARE_RULES: readonly FareTierRule[] = [
     cancellationFeeCentavos: DEFAULT_PLATFORM_CONFIG.cancellationFeeCentavos,
     maxBiddingSurgeCap: DEFAULT_PLATFORM_CONFIG.maxBiddingSurgeCap,
     highRatingDriverBonus: DEFAULT_PLATFORM_CONFIG.ratingBonusMultiplier,
+    isActive: true,
   },
   {
     id: 'baobao-express',
@@ -292,6 +296,7 @@ export const INITIAL_FARE_RULES: readonly FareTierRule[] = [
     cancellationFeeCentavos: 2000,
     maxBiddingSurgeCap: DEFAULT_PLATFORM_CONFIG.maxBiddingSurgeCap,
     highRatingDriverBonus: DEFAULT_PLATFORM_CONFIG.ratingBonusMultiplier,
+    isActive: true,
   },
 ]
 
