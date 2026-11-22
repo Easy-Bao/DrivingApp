@@ -89,4 +89,52 @@ void main() {
 
     expect(find.text('How do I edit my account?'), findsOneWidget);
   });
+
+  testWidgets(
+    'expands answers smoothly without OS touch splash and clears search',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(useMaterial3: true),
+          home: AppHelpCenterPage(
+            onBack: () {},
+            topics: const [
+              AppHelpTopic(
+                category: 'Rides',
+                question: 'How do I book a ride?',
+                answer: 'Select a destination and confirm.',
+              ),
+            ],
+          ),
+        ),
+      );
+
+      expect(find.text('Select a destination and confirm.'), findsNothing);
+      final topicFinder = find.byKey(
+        const ValueKey<String>('help-topic-How do I book a ride?'),
+      );
+      final topicInkWell = tester.widget<InkWell>(
+        find.descendant(of: topicFinder, matching: find.byType(InkWell)),
+      );
+      expect(topicInkWell.enableFeedback, isFalse);
+      expect(topicInkWell.splashFactory, NoSplash.splashFactory);
+
+      await tester.tap(topicFinder);
+      await tester.pumpAndSettle();
+      expect(find.text('Select a destination and confirm.'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('help-center-search')),
+        'missing',
+      );
+      await tester.pump();
+      expect(find.text('No help topics found'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('help-center-reset-filters')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('How do I book a ride?'), findsOneWidget);
+    },
+  );
 }
