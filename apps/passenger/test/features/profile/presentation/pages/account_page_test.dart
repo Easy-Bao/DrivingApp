@@ -135,4 +135,42 @@ void main() {
     expect(scrollRect.bottom - logoutRect.bottom, lessThanOrEqualTo(90));
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('disables OS touch splash and fits narrow large text viewports', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(1.8)),
+          child: child!,
+        ),
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider<ProfileCubit>.value(value: profileCubit),
+            BlocProvider<SessionBloc>.value(value: sessionBloc),
+          ],
+          child: AccountPage(onLogout: () {}),
+        ),
+      ),
+    );
+
+    final settingsTile = tester.widget<InkWell>(
+      find.byKey(const ValueKey<String>('passenger-account-item-Settings')),
+    );
+    expect(settingsTile.enableFeedback, isFalse);
+    expect(settingsTile.splashFactory, NoSplash.splashFactory);
+    expect(
+      settingsTile.overlayColor?.resolve({WidgetState.pressed}),
+      Colors.transparent,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }

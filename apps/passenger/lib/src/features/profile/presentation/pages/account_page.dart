@@ -14,6 +14,7 @@ import 'package:passenger/src/features/settings/settings_routes.dart';
 
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key, this.onLogout});
+
   final VoidCallback? onLogout;
 
   @override
@@ -35,14 +36,14 @@ class AccountPage extends StatelessWidget {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final horizontalPadding = constraints.maxWidth < 360
-                        ? 20.0
+                        ? AppLayout.pagePadding
                         : AppLayout.pagePaddingWide;
                     return SingleChildScrollView(
                       key: const ValueKey<String>('passenger-account-scroll'),
                       physics: const ClampingScrollPhysics(),
                       padding: EdgeInsets.fromLTRB(
                         horizontalPadding,
-                        AppLayout.pagePadding,
+                        AppSpacing.sm,
                         horizontalPadding,
                         AppFloatingTabBar.height + 10,
                       ),
@@ -52,9 +53,11 @@ class AccountPage extends StatelessWidget {
                           const AppPageHeader(title: 'Account'),
                           const SizedBox(height: AppSpacing.xxl),
                           _buildProfileSummary(context, visibleState),
-                          const SizedBox(height: 28),
-                          _buildSectionTitle(context, 'Personal information'),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: AppSpacing.xxl),
+                          _buildHairline(context),
+                          const SizedBox(height: AppSpacing.xxl),
+                          _buildSectionTitle(context, 'Account'),
+                          const SizedBox(height: AppSpacing.xs),
                           _buildMenuGroup(context, [
                             _AccountMenuItem(
                               icon: LucideIcons.user_round,
@@ -62,11 +65,6 @@ class AccountPage extends StatelessWidget {
                               subtitle: 'Name, phone, email, and profile photo',
                               onTap: () => _openProfileInfo(context),
                             ),
-                          ]),
-                          const SizedBox(height: 24),
-                          _buildSectionTitle(context, 'Places'),
-                          const SizedBox(height: 12),
-                          _buildMenuGroup(context, [
                             _AccountMenuItem(
                               icon: LucideIcons.map_pin,
                               title: 'Saved Places',
@@ -75,9 +73,9 @@ class AccountPage extends StatelessWidget {
                                   context.pushNamed(SavedPlacesRoutes.places),
                             ),
                           ]),
-                          const SizedBox(height: 24),
-                          _buildSectionTitle(context, 'App settings'),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: AppSpacing.xxl),
+                          _buildSectionTitle(context, 'Preferences'),
+                          const SizedBox(height: AppSpacing.xs),
                           _buildMenuGroup(context, [
                             _AccountMenuItem(
                               icon: LucideIcons.settings,
@@ -88,7 +86,7 @@ class AccountPage extends StatelessWidget {
                             ),
                           ]),
                           if (onLogout != null && isAuthenticated) ...[
-                            const SizedBox(height: 24),
+                            const SizedBox(height: AppSpacing.xxxl),
                             _buildLogoutButton(context),
                           ],
                         ],
@@ -106,55 +104,49 @@ class AccountPage extends StatelessWidget {
 
   Widget _buildProfileSummary(BuildContext context, ProfileState state) {
     final displayName = state.name.isEmpty ? 'Passenger' : state.name;
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
 
-    return Material(
+    return Padding(
       key: const ValueKey<String>('passenger-profile-summary'),
-      color: Colors.transparent,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            ProfileAvatar(
-              initials: _getInitials(displayName),
-              imagePath: state.avatarPath,
-              imageData: state.avatarData,
-              size: 76,
-            ),
-            const SizedBox(width: 18),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    displayName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 20,
-                      height: 1.15,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.35,
-                      color: context.colorScheme.onSurface,
-                    ),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Row(
+        children: [
+          ProfileAvatar(
+            initials: _getInitials(displayName),
+            imagePath: state.avatarPath,
+            imageData: state.avatarData,
+            size: 68,
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  displayName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: textStyles.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                    color: colorScheme.onSurface,
                   ),
-                  const SizedBox(height: 7),
-                  Text(
-                    state.phone.isEmpty
-                        ? 'Add your mobile number'
-                        : state.phone,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: context.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  state.phone.isEmpty ? 'Add your mobile number' : state.phone,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textStyles.bodyMedium?.tabular.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -169,77 +161,109 @@ class AccountPage extends StatelessWidget {
     unawaited(_pushProfileInfo(context));
   }
 
+  Widget _buildHairline(BuildContext context, {double indent = 0}) {
+    return Divider(
+      height: 1,
+      thickness: 1,
+      indent: indent,
+      color: context.colorScheme.outlineVariant.withValues(alpha: 0.7),
+    );
+  }
+
   Widget _buildMenuGroup(BuildContext context, List<_AccountMenuItem> items) {
-    return AppSurfaceCard(
-      padding: EdgeInsets.zero,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (var index = 0; index < items.length; index++) ...[
-            _buildMenuTile(context, items[index]),
-            if (index != items.length - 1)
-              Divider(
-                height: 1,
-                indent: 2,
-                endIndent: 2,
-                color: context.colorScheme.outlineVariant.withValues(
-                  alpha: 0.65,
-                ),
-              ),
-          ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var index = 0; index < items.length; index++) ...[
+          _buildMenuTile(context, items[index]),
+          if (index != items.length - 1) _buildHairline(context, indent: 52),
         ],
-      ),
+      ],
     );
   }
 
   Widget _buildMenuTile(BuildContext context, _AccountMenuItem item) {
-    return InkWell(
-      key: ValueKey<String>('passenger-account-item-${item.title}'),
-      onTap: item.onTap,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minHeight: AppSize.minimumTouchTarget + 28,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: 12,
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
+
+    return Semantics(
+      button: true,
+      label: '${item.title}. ${item.subtitle}',
+      child: InkWell(
+        key: ValueKey<String>('passenger-account-item-${item.title}'),
+        onTap: item.onTap,
+        enableFeedback: false,
+        splashFactory: NoSplash.splashFactory,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        overlayColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.focused)) {
+            return colorScheme.primary.withValues(alpha: 0.12);
+          }
+          return Colors.transparent;
+        }),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: AppSize.minimumTouchTarget + 18,
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                alignment: Alignment.center,
-                child: Icon(
-                  item.icon,
-                  size: 18,
-                  color: context.colorScheme.primary,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.lg),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.title, style: context.textStyles.titleMedium),
-                    const SizedBox(height: AppSpacing.sm / 2),
-                    Text(
-                      item.subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.textStyles.bodySmall,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Row(
+              children: [
+                ExcludeSemantics(
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: colorScheme.outlineVariant),
                     ),
-                  ],
+                    alignment: Alignment.center,
+                    child: Icon(
+                      item.icon,
+                      size: 17,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Icon(
-                LucideIcons.chevron_right,
-                color: context.colorScheme.onSurfaceVariant,
-                size: AppSize.navigationIcon,
-              ),
-            ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        style: textStyles.titleSmall?.copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        item.subtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: textStyles.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                ExcludeSemantics(
+                  child: Icon(
+                    LucideIcons.chevron_right,
+                    color: colorScheme.onSurfaceVariant,
+                    size: 17,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -247,33 +271,47 @@ class AccountPage extends StatelessWidget {
   }
 
   Widget _buildSectionTitle(BuildContext context, String title) {
-    return Text(
-      title.toUpperCase(),
-      style: context.textStyles.labelMedium?.copyWith(
-        color: context.colorScheme.onSurfaceVariant,
-        letterSpacing: 0.8,
+    return Semantics(
+      header: true,
+      child: Text(
+        title.toUpperCase(),
+        style: context.textStyles.labelSmall?.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.9,
+        ),
       ),
     );
   }
 
   Widget _buildLogoutButton(BuildContext context) {
+    final colorScheme = context.colorScheme;
     return SizedBox(
       key: const ValueKey<String>('passenger-account-logout'),
-      height: 58,
+      height: AppSize.controlHeight,
       width: double.infinity,
-      child: OutlinedButton(
+      child: OutlinedButton.icon(
         onPressed: onLogout,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: context.colorScheme.error,
-          side: BorderSide(
-            color: context.colorScheme.error.withValues(alpha: 0.35),
-          ),
-          backgroundColor: context.colorScheme.error.withValues(alpha: 0.04),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-        ),
-        child: const Text('Log Out'),
+        style:
+            OutlinedButton.styleFrom(
+              foregroundColor: colorScheme.error,
+              backgroundColor: Colors.transparent,
+              side: BorderSide(color: colorScheme.outlineVariant),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+              enableFeedback: false,
+              splashFactory: NoSplash.splashFactory,
+            ).copyWith(
+              overlayColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.focused)) {
+                  return colorScheme.error.withValues(alpha: 0.12);
+                }
+                return Colors.transparent;
+              }),
+            ),
+        icon: const Icon(LucideIcons.log_out, size: 17),
+        label: const Text('Log Out'),
       ),
     );
   }
