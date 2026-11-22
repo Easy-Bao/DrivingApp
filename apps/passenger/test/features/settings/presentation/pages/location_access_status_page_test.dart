@@ -42,6 +42,16 @@ void main() {
     await tester.pump();
 
     verify(cubit.enable).called(1);
+
+    await tester.tap(find.text('Try again'));
+    await tester.pump();
+    verify(cubit.refresh).called(1);
+
+    final primaryButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey<String>('location-access-primary-action')),
+    );
+    expect(primaryButton.style?.enableFeedback, isFalse);
+    expect(primaryButton.style?.splashFactory, NoSplash.splashFactory);
     expect(tester.takeException(), isNull);
   });
 }
