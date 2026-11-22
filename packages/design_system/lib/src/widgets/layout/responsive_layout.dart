@@ -120,28 +120,48 @@ class const AppSecondaryPage({
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
     return Scaffold(
       backgroundColor: context.canvasColor,
       appBar: AppBar(
         leading: IconButton(
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           onPressed: onBack,
-          icon: const Icon(LucideIcons.arrow_left),
+          style:
+              IconButton.styleFrom(
+                enableFeedback: false,
+                splashFactory: NoSplash.splashFactory,
+              ).copyWith(
+                overlayColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.focused)) {
+                    return colorScheme.primary.withValues(alpha: 0.12);
+                  }
+                  return Colors.transparent;
+                }),
+              ),
+          icon: Icon(
+            LucideIcons.arrow_left,
+            size: 20,
+            color: colorScheme.onSurface,
+          ),
         ),
         toolbarHeight: subtitle == null ? kToolbarHeight : 72,
         title: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(title),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.3),
+            ),
             if (subtitle case final subtitle?) ...[
               const SizedBox(height: 2),
               Text(
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                style: Theme.of(context).textTheme.labelMedium
+                    ?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
             ],
           ],

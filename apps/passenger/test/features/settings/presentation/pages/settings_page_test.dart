@@ -63,6 +63,13 @@ void main() {
     expect(helpTaps, 1);
     expect(termsTaps, 1);
     expect(aboutTaps, 1);
+    final locationTile = tester.widget<InkWell>(
+      find.byKey(
+        const ValueKey<String>('settings-destination-Location access'),
+      ),
+    );
+    expect(locationTile.enableFeedback, isFalse);
+    expect(locationTile.splashFactory, NoSplash.splashFactory);
     expect(tester.takeException(), isNull);
   });
 }
