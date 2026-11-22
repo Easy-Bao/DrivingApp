@@ -12,36 +12,52 @@ class const AddCategoryPage({
   this.initialPlace,
   this.initialLabel,
   this.initialIconName,
+  this.mapPreviewBuilder,
 }) extends StatefulWidget {
   final Place? initialPlace;
   final String? initialLabel;
   final String? initialIconName;
+  final WidgetBuilder? mapPreviewBuilder;
 
   @override
   State<AddCategoryPage> createState() => _AddCategoryPageState();
 }
 
 class _AddCategoryPageState extends State<AddCategoryPage> {
+  static const List<_PlaceIconOption> _iconOptions = <_PlaceIconOption>[
+    _PlaceIconOption(name: 'heart', label: 'Favorite', icon: LucideIcons.heart),
+    _PlaceIconOption(name: 'users', label: 'Family', icon: LucideIcons.users),
+    _PlaceIconOption(
+      name: 'graduation_cap',
+      label: 'School',
+      icon: LucideIcons.graduation_cap,
+    ),
+    _PlaceIconOption(name: 'store', label: 'Store', icon: LucideIcons.store),
+    _PlaceIconOption(name: 'star', label: 'Starred', icon: LucideIcons.star),
+    _PlaceIconOption(
+      name: 'map_pin',
+      label: 'Pinned place',
+      icon: LucideIcons.map_pin,
+    ),
+    _PlaceIconOption(name: 'house', label: 'Home', icon: LucideIcons.house),
+    _PlaceIconOption(
+      name: 'briefcase',
+      label: 'Work',
+      icon: LucideIcons.briefcase,
+    ),
+  ];
+
   final TextEditingController _controller = TextEditingController();
-  IconData selectedIcon = LucideIcons.heart;
+  IconData _selectedIcon = LucideIcons.heart;
   bool _isLocationPinned = false;
   bool _isLoadingLocation = true;
   double _lat = 0.0;
   double _lng = 0.0;
+  String? _nameError;
   AppMapController? _mapController;
   MapPointAnnotationManager? _pinAnnotationManager;
   int _pinRequestId = 0;
-
-  final List<IconData> _availableIcons = [
-    LucideIcons.heart,
-    LucideIcons.users,
-    LucideIcons.graduation_cap,
-    LucideIcons.store,
-    LucideIcons.star,
-    LucideIcons.map_pin,
-    LucideIcons.house,
-    LucideIcons.briefcase,
-  ];
+  Widget? _cachedMapView;
 
   @override
   void initState() {
@@ -51,8 +67,9 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       _controller.text = defaultLabel;
     }
     if (widget.initialIconName != null) {
-      selectedIcon = _iconDataFromName(widget.initialIconName!);
+      _selectedIcon = _iconDataFromName(widget.initialIconName!);
     }
+    _controller.addListener(_handleNameChanged);
     if (widget.initialPlace != null) {
       _lat = widget.initialPlace!.latitude;
       _lng = widget.initialPlace!.longitude;
@@ -67,8 +84,15 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   void dispose() {
     _pinRequestId++;
     unawaited(MapProvider.clearAnnotations(_pinAnnotationManager));
+    _controller.removeListener(_handleNameChanged);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _handleNameChanged() {
+    if (_nameError != null && _controller.text.trim().isNotEmpty && mounted) {
+      setState(() => _nameError = null);
+    }
   }
 
   Future<void> _initLocation() async {
@@ -146,7 +170,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     final label = _controller.text.trim();
 
     if (label.isEmpty) {
-      _showFailureSnackBar('Enter a name for this place.');
+      setState(() => _nameError = 'Enter a name for this place.');
       return;
     }
 
@@ -155,7 +179,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       return;
     }
 
-    final iconName = _iconNameFromData(selectedIcon);
+    final iconName = _iconNameFromData(_selectedIcon);
     final newPlace = SavedPlace(
       label: label,
       iconName: iconName,
@@ -174,40 +198,24 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   }
 
   String _iconNameFromData(IconData icon) {
-    if (icon == LucideIcons.heart) return 'heart';
-    if (icon == LucideIcons.users) return 'users';
-    if (icon == LucideIcons.graduation_cap) return 'graduation_cap';
-    if (icon == LucideIcons.store) return 'store';
-    if (icon == LucideIcons.star) return 'star';
-    if (icon == LucideIcons.house) return 'house';
-    if (icon == LucideIcons.briefcase) return 'briefcase';
+    for (final option in _iconOptions) {
+      if (option.icon == icon) return option.name;
+    }
     return 'map_pin';
   }
 
   IconData _iconDataFromName(String name) {
-    switch (name) {
-      case 'heart':
-        return LucideIcons.heart;
-      case 'users':
-        return LucideIcons.users;
-      case 'graduation_cap':
-        return LucideIcons.graduation_cap;
-      case 'store':
-        return LucideIcons.store;
-      case 'star':
-        return LucideIcons.star;
-      case 'house':
-        return LucideIcons.house;
-      case 'briefcase':
-        return LucideIcons.briefcase;
-      default:
-        return LucideIcons.map_pin;
+    for (final option in _iconOptions) {
+      if (option.name == name) return option.icon;
     }
+    return LucideIcons.map_pin;
   }
 
-  Widget? _cachedMapView;
-
-  Widget _getMapView() {
+  Widget _getMapView(BuildContext context) {
+    final customBuilder = widget.mapPreviewBuilder;
+    if (customBuilder != null) {
+      return customBuilder(context);
+    }
     _cachedMapView ??= MapProvider.buildMapView(
       latitude: _lat,
       longitude: _lng,
@@ -220,220 +228,378 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
+    final animationDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 180);
+    final canSave = !_isLoadingLocation && _isLocationPinned;
+
     return Scaffold(
-      backgroundColor: context.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: context.colorScheme.surface,
+        backgroundColor: context.canvasColor,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: Icon(LucideIcons.x, color: context.colorScheme.onSurface),
           onPressed: () => context.pop(),
-        ),
-        title: Text('Add place', style: context.textStyles.titleLarge),
-        actions: [
-          TextButton(
-            onPressed: _isLoadingLocation || !_isLocationPinned
-                ? null
-                : _handleSave,
-            child: Text(
-              'Save',
-              style: context.textStyles.labelLarge?.copyWith(
-                color: _isLoadingLocation
-                    ? context.colorScheme.onSurfaceVariant
-                    : context.colorScheme.onSurface,
+          tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+          style:
+              IconButton.styleFrom(
+                enableFeedback: false,
+                splashFactory: NoSplash.splashFactory,
+              ).copyWith(
+                overlayColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.focused)) {
+                    return colorScheme.primary.withValues(alpha: 0.12);
+                  }
+                  return Colors.transparent;
+                }),
               ),
+          icon: Icon(LucideIcons.x, color: colorScheme.onSurface, size: 20),
+        ),
+        title: Text(
+          'Add place',
+          style: textStyles.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.sm),
+            child: TextButton(
+              key: const ValueKey<String>('add-place-save'),
+              onPressed: canSave ? _handleSave : null,
+              style:
+                  TextButton.styleFrom(
+                    foregroundColor: colorScheme.onSurface,
+                    disabledForegroundColor: colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.42),
+                    enableFeedback: false,
+                    splashFactory: NoSplash.splashFactory,
+                  ).copyWith(
+                    overlayColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.focused)) {
+                        return colorScheme.primary.withValues(alpha: 0.12);
+                      }
+                      return Colors.transparent;
+                    }),
+                  ),
+              child: const Text('Save'),
             ),
           ),
-          const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                Container(
-                  height: 350,
-                  width: double.infinity,
-                  color: context.colorScheme.surfaceContainerHighest,
-                  child: _isLoadingLocation
-                      ? Center(
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: context.colorScheme.onSurface,
-                            ),
-                          ),
-                        )
-                      : _isLocationPinned
-                      ? _getMapView()
-                      : _buildLocationUnavailableState(),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppLayout.pagePaddingWide),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Location', style: context.textStyles.labelMedium),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                      border: Border.all(
-                        color: context.colorScheme.outlineVariant,
-                      ),
-                    ),
-                    child: Text(
-                      widget.initialPlace?.fullAddress ??
-                          (_isLoadingLocation
-                              ? 'Finding your location...'
-                              : _isLocationPinned
-                              ? 'Location pinned'
-                              : 'Location unavailable'),
-                      style: context.textStyles.bodyMedium,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Name this place',
-                    style: context.textStyles.labelMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _controller,
-                    style: context.textStyles.bodyMedium,
-                    decoration: InputDecoration(
-                      hintText: "e.g. Ate's house",
-                      hintStyle: context.textStyles.bodyMedium?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
-                      filled: true,
-                      fillColor: context.colorScheme.surfaceContainerHighest,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: AppLayout.pagePadding,
-                        vertical: 16,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        borderSide: BorderSide(
-                          color: context.colorScheme.outlineVariant,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        borderSide: BorderSide(
-                          color: context.colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Icon',
-                    style: TextStyle(
-                      color: context.colorScheme.onSurface,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 64,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _availableIcons.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 12),
-                      itemBuilder: (context, index) {
-                        final icon = _availableIcons[index];
-                        final isSelected = selectedIcon == icon;
-                        return Semantics(
-                          button: true,
-                          selected: isSelected,
-                          label: 'Select place icon ${index + 1}',
-                          child: GestureDetector(
-                            onTap: () => setState(() => selectedIcon = icon),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              width: 64,
-                              height: 64,
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? context.colorScheme.onSurface.withValues(
-                                        alpha: 0.1,
-                                      )
-                                    : context
-                                          .colorScheme
-                                          .surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.lg,
-                                ),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? context.colorScheme.onSurface
-                                      : context.colorScheme.outlineVariant,
-                                  width: isSelected ? 1.5 : 1,
-                                ),
-                              ),
-                              child: Icon(
-                                icon,
-                                color: context.colorScheme.onSurface,
-                                size: 24,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+      body: SafeArea(
+        top: false,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontalPadding = constraints.maxWidth < 360
+                ? AppLayout.pagePadding
+                : AppLayout.pagePaddingWide;
+            return SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                AppSpacing.md,
+                horizontalPadding,
+                AppSpacing.xxxl,
               ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        child: Container(
+                          height: 220,
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            border: Border.all(
+                              color: colorScheme.outlineVariant,
+                            ),
+                          ),
+                          child: _isLoadingLocation
+                              ? Center(
+                                  child: SizedBox.square(
+                                    dimension: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                )
+                              : _isLocationPinned
+                              ? _getMapView(context)
+                              : _buildLocationUnavailableState(context),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xxl),
+                      _buildFieldLabel(context, 'Location'),
+                      const SizedBox(height: AppSpacing.sm),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerLowest,
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          border: Border.all(color: colorScheme.outlineVariant),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: ExcludeSemantics(
+                                child: Icon(
+                                  LucideIcons.map_pin,
+                                  size: 16,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Text(
+                                widget.initialPlace?.fullAddress ??
+                                    (_isLoadingLocation
+                                        ? 'Finding your location...'
+                                        : _isLocationPinned
+                                        ? 'Location pinned'
+                                        : 'Location unavailable'),
+                                style: textStyles.bodyMedium?.copyWith(
+                                  color: _isLocationPinned
+                                      ? colorScheme.onSurface
+                                      : colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xxl),
+                      _buildFieldLabel(context, 'Name this place'),
+                      const SizedBox(height: AppSpacing.sm),
+                      TextField(
+                        key: const ValueKey<String>('add-place-name-field'),
+                        controller: _controller,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.done,
+                        style: textStyles.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: "e.g. Ate's house",
+                          hintStyle: textStyles.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          filled: true,
+                          fillColor: colorScheme.surfaceContainerLowest,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                            vertical: 15,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide(
+                              color: _nameError != null
+                                  ? colorScheme.error
+                                  : colorScheme.outlineVariant,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide(
+                              color: _nameError != null
+                                  ? colorScheme.error
+                                  : colorScheme.primary,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (_nameError != null) ...[
+                        const SizedBox(height: AppSpacing.xs + 2),
+                        Semantics(
+                          liveRegion: true,
+                          child: Text(
+                            _nameError!,
+                            style: textStyles.labelMedium?.copyWith(
+                              color: colorScheme.error,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: AppSpacing.xxl),
+                      _buildFieldLabel(context, 'Icon'),
+                      const SizedBox(height: AppSpacing.md),
+                      Wrap(
+                        spacing: AppSpacing.md,
+                        runSpacing: AppSpacing.md,
+                        children: [
+                          for (final option in _iconOptions)
+                            _buildIconOption(
+                              context,
+                              option: option,
+                              isSelected: _selectedIcon == option.icon,
+                              animationDuration: animationDuration,
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFieldLabel(BuildContext context, String label) {
+    return Text(
+      label.toUpperCase(),
+      style: context.textStyles.labelSmall?.copyWith(
+        color: context.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.85,
+      ),
+    );
+  }
+
+  Widget _buildIconOption(
+    BuildContext context, {
+    required _PlaceIconOption option,
+    required bool isSelected,
+    required Duration animationDuration,
+  }) {
+    final colorScheme = context.colorScheme;
+
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: option.label,
+      child: InkWell(
+        key: ValueKey<String>('add-place-icon-${option.name}'),
+        onTap: () => setState(() => _selectedIcon = option.icon),
+        enableFeedback: false,
+        splashFactory: NoSplash.splashFactory,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        overlayColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.focused)) {
+            return colorScheme.primary.withValues(alpha: 0.14);
+          }
+          return Colors.transparent;
+        }),
+        customBorder: const CircleBorder(),
+        child: AnimatedContainer(
+          duration: animationDuration,
+          curve: Curves.easeOutCubic,
+          width: AppSize.minimumTouchTarget,
+          height: AppSize.minimumTouchTarget,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? colorScheme.primary
+                : colorScheme.surfaceContainerLowest,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.outlineVariant,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Icon(
+            option.icon,
+            color: isSelected
+                ? colorScheme.onPrimary
+                : colorScheme.onSurfaceVariant,
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationUnavailableState(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ExcludeSemantics(
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerLowest,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  LucideIcons.map_pin_off,
+                  color: colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Location unavailable',
+              style: textStyles.titleSmall?.copyWith(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            TextButton.icon(
+              onPressed: () {
+                setState(() => _isLoadingLocation = true);
+                unawaited(_initLocation());
+              },
+              style:
+                  TextButton.styleFrom(
+                    foregroundColor: colorScheme.onSurface,
+                    enableFeedback: false,
+                    splashFactory: NoSplash.splashFactory,
+                  ).copyWith(
+                    overlayColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.focused)) {
+                        return colorScheme.primary.withValues(alpha: 0.12);
+                      }
+                      return Colors.transparent;
+                    }),
+                  ),
+              icon: const Icon(LucideIcons.refresh_cw, size: 15),
+              label: const Text('Retry'),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildLocationUnavailableState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            LucideIcons.map_pin_off,
-            color: context.colorScheme.onSurfaceVariant,
-            size: 28,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Location unavailable',
-            style: TextStyle(
-              color: context.colorScheme.onSurface,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextButton.icon(
-            onPressed: () {
-              setState(() => _isLoadingLocation = true);
-              unawaited(_initLocation());
-            },
-            icon: const Icon(LucideIcons.refresh_cw, size: 16),
-            label: const Text('Retry'),
-          ),
-        ],
-      ),
-    );
-  }
+class const _PlaceIconOption({
+  required this.name,
+  required this.label,
+  required this.icon,
+}) {
+  final String name;
+  final String label;
+  final IconData icon;
 }
