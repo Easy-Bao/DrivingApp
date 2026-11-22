@@ -100,6 +100,11 @@ void main() {
       find.byKey(const ValueKey<String>('saved-places-scroll')),
       findsOneWidget,
     );
+    final homeTile = tester.widget<InkWell>(
+      find.byKey(const ValueKey<String>('saved-place-Home')),
+    );
+    expect(homeTile.enableFeedback, isFalse);
+    expect(homeTile.splashFactory, NoSplash.splashFactory);
     expect(tester.takeException(), isNull);
   });
 }
