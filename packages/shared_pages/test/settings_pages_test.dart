@@ -22,6 +22,11 @@ void main() {
     );
 
     expect(find.text('EasyRide Driver'), findsOneWidget);
+    final licensesTile = tester.widget<InkWell>(
+      find.byKey(const ValueKey<String>('about-open-source-licenses')),
+    );
+    expect(licensesTile.enableFeedback, isFalse);
+    expect(licensesTile.splashFactory, NoSplash.splashFactory);
     await tester.tap(find.text('Open-source licenses'));
     expect(openedLicenses, isTrue);
 
