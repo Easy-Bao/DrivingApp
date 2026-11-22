@@ -234,4 +234,37 @@ void main() {
       expect(find.text('Jane Doe'), findsNWidgets(2));
     },
   );
+
+  testWidgets('disables OS touch splash and validates empty name inline', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildSubject());
+
+    final cameraInkWell = tester.widget<InkWell>(
+      find.byKey(const ValueKey<String>('passenger-profile-camera')),
+    );
+    expect(cameraInkWell.enableFeedback, isFalse);
+    expect(cameraInkWell.splashFactory, NoSplash.splashFactory);
+
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('passenger-profile-field-Full Name')),
+      '   ',
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('passenger-profile-save')),
+    );
+    await tester.pump();
+
+    expect(find.text('Enter your name.'), findsOneWidget);
+    verifyNever(
+      () => profileCubit.updateProfile(
+        name: any(named: 'name'),
+        address: any(named: 'address'),
+        gender: any(named: 'gender'),
+        avatarPath: any(named: 'avatarPath'),
+      ),
+    );
+  });
 }

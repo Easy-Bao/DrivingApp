@@ -100,8 +100,13 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   void _updateDirtyState() {
     if (_isApplyingProfile || !mounted) return;
     final dirty = _draftHasChanges;
-    if (_isDirty == dirty) return;
-    setState(() => _isDirty = dirty);
+    if (_isDirty == dirty && _nameError == null) return;
+    setState(() {
+      _isDirty = dirty;
+      if (_nameError != null && _nameController.text.trim().isNotEmpty) {
+        _nameError = null;
+      }
+    });
   }
 
   bool get _draftHasChanges =>
@@ -114,14 +119,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     _clearErrors();
 
     final name = _nameController.text.trim();
-    var hasError = false;
-
     if (name.isEmpty) {
-      _nameError = 'Enter your name.';
-      hasError = true;
-    }
-    if (hasError) {
-      setState(() {});
+      setState(() => _nameError = 'Enter your name.');
       return;
     }
 
@@ -185,7 +184,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           return;
         }
       } catch (_) {
-        // If file size check cannot be completed, allow proceeding.
+        // Proceed when file size cannot be resolved on the host platform.
       }
       setState(() {
         _avatarPath = picked.path;
@@ -208,6 +207,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+
     return BlocListener<SessionBloc, SessionState>(
       listenWhen: (_, current) =>
           current is GuestSession || current is SessionFailure,
@@ -232,10 +233,22 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             leading: IconButton(
               onPressed: () => Navigator.of(context).maybePop(),
               tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              style:
+                  IconButton.styleFrom(
+                    enableFeedback: false,
+                    splashFactory: NoSplash.splashFactory,
+                  ).copyWith(
+                    overlayColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.focused)) {
+                        return colorScheme.primary.withValues(alpha: 0.12);
+                      }
+                      return Colors.transparent;
+                    }),
+                  ),
               icon: Icon(
                 LucideIcons.arrow_left,
-                color: context.colorScheme.onSurface,
-                size: 22,
+                color: colorScheme.onSurface,
+                size: 20,
               ),
             ),
             title: Text(
@@ -260,9 +273,9 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                   physics: const ClampingScrollPhysics(),
                   padding: EdgeInsets.fromLTRB(
                     horizontalPadding,
-                    12,
+                    AppSpacing.lg,
                     horizontalPadding,
-                    24,
+                    AppSpacing.xxxl,
                   ),
                   child: Center(
                     child: ConstrainedBox(
@@ -271,7 +284,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _buildProfileHeader(),
-                          const SizedBox(height: AppSpacing.xxl * 1.5),
+                          const SizedBox(height: AppSpacing.xxxl),
                           _buildDetailsSection(),
                         ],
                       ),
@@ -288,61 +301,101 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
   Widget? _buildBottomBar(BuildContext context) {
     if (!_isDirty) return null;
-    return SafeArea(
-      top: false,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final horizontalPadding = constraints.maxWidth < 360
-              ? AppLayout.pagePadding
-              : AppLayout.pagePaddingWide;
-          return Container(
-            color: context.canvasColor,
-            padding: EdgeInsets.fromLTRB(
-              horizontalPadding,
-              12,
-              horizontalPadding,
-              16,
-            ),
-            child: Center(
-              heightFactor: 1,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: AppSize.controlHeight,
-                  child: FilledButton(
-                    key: const ValueKey<String>('passenger-profile-save'),
-                    onPressed: _isSaving ? null : _saveProfile,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: context.colorScheme.primary,
-                      foregroundColor: context.colorScheme.onPrimary,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
+    final colorScheme = context.colorScheme;
+    final animationDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 200);
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: animationDuration,
+      curve: Curves.easeOutCubic,
+      builder: (context, progress, child) => Opacity(
+        opacity: progress.clamp(0.0, 1.0),
+        child: Transform.translate(
+          offset: Offset(0, 12 * (1 - progress)),
+          child: child,
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final horizontalPadding = constraints.maxWidth < 360
+                  ? AppLayout.pagePadding
+                  : AppLayout.pagePaddingWide;
+              return DecoratedBox(
+                decoration: BoxDecoration(
+                  color: context.canvasColor,
+                  border: Border(
+                    top: BorderSide(
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.7),
                     ),
-                    child: _isSaving
-                        ? SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.2,
-                              color: context.colorScheme.onPrimary,
-                            ),
-                          )
-                        : const Text(
-                            'Save',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                            ),
-                          ),
                   ),
                 ),
-              ),
-            ),
-          );
-        },
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    AppSpacing.md,
+                    horizontalPadding,
+                    AppSpacing.lg,
+                  ),
+                  child: Center(
+                    heightFactor: 1,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 560),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: AppSize.controlHeight,
+                        child: FilledButton(
+                          key: const ValueKey<String>('passenger-profile-save'),
+                          onPressed: _isSaving ? null : _saveProfile,
+                          style:
+                              FilledButton.styleFrom(
+                                backgroundColor: colorScheme.primary,
+                                foregroundColor: colorScheme.onPrimary,
+                                elevation: 0,
+                                enableFeedback: false,
+                                splashFactory: NoSplash.splashFactory,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.lg,
+                                  ),
+                                ),
+                              ).copyWith(
+                                overlayColor: WidgetStateProperty.resolveWith((
+                                  states,
+                                ) {
+                                  if (states.contains(WidgetState.focused)) {
+                                    return colorScheme.onPrimary.withValues(
+                                      alpha: 0.16,
+                                    );
+                                  }
+                                  return Colors.transparent;
+                                }),
+                              ),
+                          child: _isSaving
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: colorScheme.onPrimary,
+                                  ),
+                                )
+                              : const Text('Save'),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
@@ -353,6 +406,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
         ? 'Your profile'
         : rawName;
     final displayEmail = _emailController.text.trim();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -362,19 +416,22 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             initials: _getInitials(_nameController.text),
             imagePath: _avatarPath,
             imageData: _avatarData,
-            size: 112,
+            size: 96,
             onCameraTap: _pickPhoto,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           displayName,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
-          style: context.textStyles.titleLarge,
+          style: context.textStyles.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
+          ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         Text(
           displayEmail.isEmpty
               ? 'Add an email for ride updates.'
@@ -382,7 +439,9 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
-          style: context.textStyles.bodySmall,
+          style: context.textStyles.bodySmall?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -390,6 +449,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
   Widget _buildDetailsSection() {
     return AppSurfaceCard(
+      color: context.colorScheme.surfaceContainerLowest,
       padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -401,7 +461,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           _buildEmailTile(),
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
+              52,
               0,
               AppSpacing.lg,
               AppSpacing.md,
@@ -424,73 +484,87 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     return Divider(
       height: 1,
       thickness: 1,
-      indent: 16,
-      endIndent: 16,
+      indent: 52,
+      endIndent: AppSpacing.lg,
       color: context.colorScheme.outlineVariant.withValues(alpha: 0.65),
     );
   }
 
-  Widget _buildFullNameTile() {
+  InputDecoration _bareFieldDecoration({
+    String? hintText,
+    Widget? suffixIcon,
+    BoxConstraints? suffixIconConstraints,
+  }) {
+    return InputDecoration(
+      isDense: true,
+      filled: false,
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      errorBorder: InputBorder.none,
+      focusedErrorBorder: InputBorder.none,
+      contentPadding: EdgeInsets.zero,
+      hintText: hintText,
+      hintStyle: context.textStyles.bodyMedium?.copyWith(
+        color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+      ),
+      suffixIcon: suffixIcon,
+      suffixIconConstraints: suffixIconConstraints,
+    );
+  }
+
+  Widget _buildFieldRow({
+    required IconData icon,
+    required String label,
+    required Widget child,
+    bool isReadOnly = false,
+  }) {
+    final colorScheme = context.colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
-        vertical: 14,
+        vertical: 15,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            LucideIcons.user_round,
-            size: 20,
-            color: context.colorScheme.onSurfaceVariant,
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: ExcludeSemantics(
+              child: Icon(
+                icon,
+                size: 18,
+                color: isReadOnly
+                    ? colorScheme.onSurfaceVariant.withValues(alpha: 0.72)
+                    : colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildFieldLabel('Full Name'),
-                const SizedBox(height: 4),
-                TextField(
-                  key: const ValueKey<String>(
-                    'passenger-profile-field-Full Name',
-                  ),
-                  controller: _nameController,
-                  textInputAction: TextInputAction.next,
-                  textCapitalization: TextCapitalization.words,
-                  style: context.textStyles.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    errorBorder: InputBorder.none,
-                    focusedErrorBorder: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                    hintText: 'Enter your name',
-                    hintStyle: TextStyle(
-                      fontSize: 15,
-                      color: context.colorScheme.onSurface.withValues(
-                        alpha: 0.38,
+                Row(
+                  children: [
+                    Flexible(child: _buildFieldLabel(label)),
+                    if (isReadOnly) ...[
+                      const SizedBox(width: 6),
+                      ExcludeSemantics(
+                        child: Icon(
+                          LucideIcons.lock,
+                          size: 11,
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.72,
+                          ),
+                        ),
                       ),
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
+                    ],
+                  ],
                 ),
-                if (_nameError != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    _nameError!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: context.colorScheme.error,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+                const SizedBox(height: AppSpacing.xs),
+                child,
               ],
             ),
           ),
@@ -499,81 +573,78 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     );
   }
 
-  Widget _buildPhoneTile() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: 14,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+  Widget _buildFullNameTile() {
+    return _buildFieldRow(
+      icon: LucideIcons.user_round,
+      label: 'Full Name',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            LucideIcons.phone,
-            size: 20,
-            color: context.colorScheme.onSurfaceVariant,
+          TextField(
+            key: const ValueKey<String>('passenger-profile-field-Full Name'),
+            controller: _nameController,
+            textInputAction: TextInputAction.next,
+            textCapitalization: TextCapitalization.words,
+            style: context.textStyles.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: context.colorScheme.onSurface,
+            ),
+            decoration: _bareFieldDecoration(hintText: 'Enter your name'),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildFieldLabel('Mobile Number'),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text(
-                      _phonePrefix,
-                      style: context.textStyles.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: context.colorScheme.onSurface,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 1,
-                      height: 16,
-                      color: context.colorScheme.outlineVariant,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        key: const ValueKey<String>(
-                          'passenger-profile-phone-number',
-                        ),
-                        controller: _phoneNumberController,
-                        readOnly: true,
-                        showCursor: false,
-                        keyboardType: TextInputType.phone,
-                        textInputAction: TextInputAction.next,
-                        style: context.textStyles.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          errorBorder: InputBorder.none,
-                          focusedErrorBorder: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                          hintText: '917 000 0001',
-                          hintStyle: TextStyle(
-                            fontSize: 15,
-                            color: context.colorScheme.onSurface.withValues(
-                              alpha: 0.38,
-                            ),
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+          if (_nameError != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                _nameError!,
+                style: context.textStyles.labelMedium?.copyWith(
+                  color: context.colorScheme.error,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhoneTile() {
+    final readOnlyColor = context.colorScheme.onSurfaceVariant;
+    return _buildFieldRow(
+      icon: LucideIcons.phone,
+      label: 'Mobile Number',
+      isReadOnly: true,
+      child: Row(
+        children: [
+          Text(
+            _phonePrefix,
+            style: context.textStyles.bodyLarge?.tabular.copyWith(
+              fontWeight: FontWeight.w600,
+              color: readOnlyColor,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Container(
+            width: 1,
+            height: 15,
+            color: context.colorScheme.outlineVariant,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: TextField(
+              key: const ValueKey<String>('passenger-profile-phone-number'),
+              controller: _phoneNumberController,
+              readOnly: true,
+              showCursor: false,
+              keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.next,
+              style: context.textStyles.bodyLarge?.tabular.copyWith(
+                fontWeight: FontWeight.w500,
+                color: readOnlyColor,
+              ),
+              decoration: _bareFieldDecoration(hintText: '917 000 0001'),
             ),
           ),
         ],
@@ -582,128 +653,61 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   }
 
   Widget _buildEmailTile() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: 14,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(
-            LucideIcons.mail,
-            size: 20,
-            color: context.colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildFieldLabel('Email'),
-                const SizedBox(height: 4),
-                TextField(
-                  key: const ValueKey<String>('passenger-profile-field-Email'),
-                  controller: _emailController,
-                  readOnly: true,
-                  showCursor: false,
-                  keyboardType: TextInputType.emailAddress,
-                  textCapitalization: TextCapitalization.none,
-                  textInputAction: TextInputAction.done,
-                  style: context.textStyles.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    errorBorder: InputBorder.none,
-                    focusedErrorBorder: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                    hintText: 'name@example.com',
-                    hintStyle: TextStyle(
-                      fontSize: 15,
-                      color: context.colorScheme.onSurface.withValues(
-                        alpha: 0.38,
-                      ),
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+    return _buildFieldRow(
+      icon: LucideIcons.mail,
+      label: 'Email',
+      isReadOnly: true,
+      child: TextField(
+        key: const ValueKey<String>('passenger-profile-field-Email'),
+        controller: _emailController,
+        readOnly: true,
+        showCursor: false,
+        keyboardType: TextInputType.emailAddress,
+        textCapitalization: TextCapitalization.none,
+        textInputAction: TextInputAction.done,
+        style: context.textStyles.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w500,
+          color: context.colorScheme.onSurfaceVariant,
+        ),
+        decoration: _bareFieldDecoration(hintText: 'name@example.com'),
       ),
     );
   }
 
   Widget _buildGenderTile() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: 14,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(
-            LucideIcons.venus_and_mars,
-            size: 20,
+    return _buildFieldRow(
+      icon: LucideIcons.venus_and_mars,
+      label: 'Gender',
+      child: AppSelectField<String>(
+        key: const ValueKey<String>('passenger-profile-gender'),
+        value: _gender,
+        menuTitle: 'Gender',
+        style: context.textStyles.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: context.colorScheme.onSurface,
+        ),
+        decoration: _bareFieldDecoration(
+          suffixIcon: Icon(
+            LucideIcons.chevron_down,
+            size: 17,
             color: context.colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildFieldLabel('Gender'),
-                const SizedBox(height: 4),
-                AppSelectField<String>(
-                  key: const ValueKey<String>('passenger-profile-gender'),
-                  value: _gender,
-                  menuTitle: 'Gender',
-                  style: context.textStyles.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: context.colorScheme.onSurface,
-                  ),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    errorBorder: InputBorder.none,
-                    focusedErrorBorder: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                    suffixIcon: Icon(
-                      LucideIcons.chevron_down,
-                      size: 18,
-                      color: context.colorScheme.onSurfaceVariant,
-                    ),
-                    suffixIconConstraints: const BoxConstraints(
-                      minWidth: 20,
-                      minHeight: 20,
-                    ),
-                  ),
-                  options: [
-                    for (final gender in _genderOptions)
-                      AppSelectOption<String>(value: gender, label: gender),
-                  ],
-                  onChanged: (gender) {
-                    if (gender == null) return;
-                    setState(() {
-                      _gender = gender;
-                      _isDirty = _draftHasChanges;
-                    });
-                  },
-                ),
-              ],
-            ),
+          suffixIconConstraints: const BoxConstraints(
+            minWidth: 20,
+            minHeight: 20,
           ),
+        ),
+        options: [
+          for (final gender in _genderOptions)
+            AppSelectOption<String>(value: gender, label: gender),
         ],
+        onChanged: (gender) {
+          if (gender == null) return;
+          setState(() {
+            _gender = gender;
+            _isDirty = _draftHasChanges;
+          });
+        },
       ),
     );
   }
@@ -711,10 +715,9 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   Widget _buildFieldLabel(String label) {
     return Text(
       label.toUpperCase(),
-      style: TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.8,
+      style: context.textStyles.labelSmall?.copyWith(
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.85,
         color: context.colorScheme.onSurfaceVariant,
       ),
     );

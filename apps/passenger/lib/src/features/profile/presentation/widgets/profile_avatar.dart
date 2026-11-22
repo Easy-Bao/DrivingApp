@@ -23,10 +23,11 @@ class ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cameraButtonSize = size * 0.32 < AppSize.minimumTouchTarget
+    final colorScheme = context.colorScheme;
+    final cameraButtonSize = size * 0.34 < AppSize.minimumTouchTarget
         ? AppSize.minimumTouchTarget
-        : size * 0.32;
-    final cameraIconSize = size * 0.16 < 18 ? 18.0 : size * 0.16;
+        : size * 0.34;
+    final cameraIconSize = size * 0.16 < 16 ? 16.0 : size * 0.16;
     final imagePath = this.imagePath;
     final fallbackImage = _buildImageData(context);
     final avatar = imagePath == null || imagePath.isEmpty
@@ -46,36 +47,54 @@ class ProfileAvatar extends StatelessWidget {
           DecoratedBox(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                color: context.colorScheme.outlineVariant,
-                width: 2,
-              ),
+              border: Border.all(color: colorScheme.outlineVariant),
             ),
             child: ClipOval(child: SizedBox.expand(child: avatar)),
           ),
           if (onCameraTap != null)
             Positioned(
-              right: -4,
-              bottom: -4,
-              child: Material(
-                color: context.colorScheme.primary,
-                shape: CircleBorder(
-                  side: BorderSide(
-                    color: context.colorScheme.surface,
-                    width: 2.5,
-                  ),
-                ),
+              right: -6,
+              bottom: -6,
+              child: Semantics(
+                button: true,
+                label: 'Change profile photo',
                 child: InkWell(
                   key: const ValueKey<String>('passenger-profile-camera'),
                   onTap: onCameraTap,
+                  enableFeedback: false,
+                  splashFactory: NoSplash.splashFactory,
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  hoverColor: Colors.transparent,
+                  overlayColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.focused)) {
+                      return colorScheme.primary.withValues(alpha: 0.16);
+                    }
+                    return Colors.transparent;
+                  }),
                   customBorder: const CircleBorder(),
                   child: SizedBox(
                     width: cameraButtonSize,
                     height: cameraButtonSize,
-                    child: Icon(
-                      LucideIcons.camera,
-                      size: cameraIconSize,
-                      color: context.colorScheme.onPrimary,
+                    child: Center(
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: context.canvasColor,
+                            width: 2,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          LucideIcons.camera,
+                          size: cameraIconSize,
+                          color: colorScheme.onPrimary,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -104,14 +123,15 @@ class ProfileAvatar extends StatelessWidget {
 
   Widget _buildInitials(BuildContext context) {
     return ColoredBox(
-      color: context.colorScheme.secondaryContainer,
+      color: context.colorScheme.primaryContainer,
       child: Center(
         child: Text(
           initials,
-          style: TextStyle(
-            color: context.colorScheme.onSurface,
+          style: context.textStyles.titleLarge?.copyWith(
+            color: context.colorScheme.onPrimaryContainer,
             fontSize: size * 0.28,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
           ),
         ),
       ),
