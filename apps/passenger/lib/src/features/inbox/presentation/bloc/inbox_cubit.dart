@@ -227,36 +227,49 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
   }
 
   void markNotificationAsRead(int index) {
-    if (state is InboxLoadedState) {
-      final currentList = List<InboxNotification>.from(
-        (state as InboxLoadedState).notifications,
-      );
-      if (index >= 0 && index < currentList.length) {
-        _readNotificationIds.add(currentList[index].id);
-        currentList[index] = currentList[index].copyWith(isRead: true);
-        _emitLoaded(
-          (state as InboxLoadedState).copyWith(notifications: currentList),
-        );
-      }
+    final current = state;
+    if (current is! InboxLoadedState) return;
+    if (index < 0 || index >= current.notifications.length) return;
+    markNotificationAsReadById(current.notifications[index].id);
+  }
+
+  void markNotificationAsReadById(String notificationId) {
+    final current = state;
+    if (current is! InboxLoadedState) return;
+    final index = current.notifications.indexWhere(
+      (item) => item.id == notificationId,
+    );
+    if (index < 0) return;
+    final notification = current.notifications[index];
+    if (notification.isRead && _readNotificationIds.contains(notificationId)) {
+      return;
     }
+    _readNotificationIds.add(notificationId);
+    final currentList = List<InboxNotification>.from(current.notifications);
+    currentList[index] = notification.copyWith(isRead: true);
+    _emitLoaded(current.copyWith(notifications: currentList));
   }
 
   void dismissNotification(int index) {
-    if (state is InboxLoadedState) {
-      final currentList = List<InboxNotification>.from(
-        (state as InboxLoadedState).notifications,
-      );
-      if (index >= 0 && index < currentList.length) {
-        final notification = currentList[index];
-        _localNotifications.removeWhere((item) => item.id == notification.id);
-        _dismissedNotificationIds.add(notification.id);
-        currentList.removeAt(index);
-        _emitLoaded(
-          (state as InboxLoadedState).copyWith(notifications: currentList),
-        );
-        unawaited(_deleteRemoteNotification(notification));
-      }
-    }
+    final current = state;
+    if (current is! InboxLoadedState) return;
+    if (index < 0 || index >= current.notifications.length) return;
+    dismissNotificationById(current.notifications[index].id);
+  }
+
+  void dismissNotificationById(String notificationId) {
+    final current = state;
+    if (current is! InboxLoadedState) return;
+    final index = current.notifications.indexWhere(
+      (item) => item.id == notificationId,
+    );
+    if (index < 0) return;
+    final currentList = List<InboxNotification>.from(current.notifications);
+    final notification = currentList.removeAt(index);
+    _localNotifications.removeWhere((item) => item.id == notification.id);
+    _dismissedNotificationIds.add(notification.id);
+    _emitLoaded(current.copyWith(notifications: currentList));
+    unawaited(_deleteRemoteNotification(notification));
   }
 
   Future<void> _deleteRemoteNotification(InboxNotification notification) async {

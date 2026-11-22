@@ -255,4 +255,46 @@ void main() {
         .called(1);
     await cubit.close();
   });
+
+  test('marks and dismisses notifications accurately by id', () async {
+    final repository = MockDismissibleInboxRepository();
+    final first = notification.copyWith(id: '10', isRead: false);
+    final second = notification.copyWith(
+      id: '11',
+      title: 'Driver message',
+      type: 'chat',
+      isRead: false,
+      timestamp: DateTime(2026, 8, 6),
+    );
+    when(
+      () => repository.fetchPassengerNotificationsPage(
+        'passenger-1',
+        limit: 50,
+        offset: 0,
+      ),
+    ).thenAnswer(
+      (_) async => Ok(
+        OffsetPage(items: [first, second], hasMore: false, nextOffset: null),
+      ),
+    );
+    when(() => repository.deletePassengerNotification('passenger-1', '11'))
+        .thenAnswer((_) async => const Ok(null));
+    final cubit = InboxCubit(inboxRepository: repository);
+    addTearDown(cubit.close);
+
+    await cubit.loadNotifications('passenger-1');
+    cubit.markNotificationAsReadById('11');
+
+    final afterRead = cubit.state as InboxLoadedState;
+    expect(afterRead.notifications.first.isRead, isFalse);
+    expect(afterRead.notifications.last.isRead, isTrue);
+
+    cubit.dismissNotificationById('11');
+    await Future<void>.delayed(Duration.zero);
+
+    final afterDismiss = cubit.state as InboxLoadedState;
+    expect(afterDismiss.notifications.map((n) => n.id).toList(), ['10']);
+    verify(() => repository.deletePassengerNotification('passenger-1', '11'))
+        .called(1);
+  });
 }

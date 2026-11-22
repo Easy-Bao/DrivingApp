@@ -1,162 +1,344 @@
 import 'package:design_system/design_system.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
+import 'package:passenger/src/features/inbox/presentation/formatters/inbox_presenter.dart';
 
 class InboxNotificationCard extends StatelessWidget {
   const InboxNotificationCard({
     super.key,
     required this.notification,
     required this.onTap,
+    this.presenter,
+    this.isExpanded = false,
+    this.onDelete,
+    this.showBottomDivider = true,
   });
 
   final InboxNotification notification;
   final VoidCallback onTap;
-
-  String _formatTimestamp(DateTime timestamp) {
-    final local = timestamp.toLocal();
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = DateTime(now.year, now.month, now.day - 1);
-    final dateToCheck = DateTime(local.year, local.month, local.day);
-
-    if (dateToCheck == today) {
-      final twelveHourValue = local.hour > 12
-          ? local.hour - 12
-          : (local.hour == 0 ? 12 : local.hour);
-      final meridiemPeriod = local.hour >= 12 ? 'PM' : 'AM';
-      final paddedMinute = local.minute.toString().padLeft(2, '0');
-      return '$twelveHourValue:$paddedMinute $meridiemPeriod';
-    } else if (dateToCheck == yesterday) {
-      return 'Yesterday';
-    } else {
-      final months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      return '${months[local.month - 1]} ${local.day}';
-    }
-  }
+  final InboxPresenter? presenter;
+  final bool isExpanded;
+  final VoidCallback? onDelete;
+  final bool showBottomDivider;
 
   @override
   Widget build(BuildContext context) {
-    // Existing Inbox records still contain the earlier, longer wording.
-    final message = notification.title == 'No nearby driver found'
-        ? notification.message.replaceFirst(
-            ' Your request has expired. Please try searching again.',
-            '',
-          )
-        : notification.message;
-    final isReceipt =
-        notification.type == 'ride' ||
-        notification.title.toLowerCase().contains('receipt');
-    final isDriverChat =
-        notification.type == 'driver' || notification.type == 'chat';
+    final resolvedPresenter =
+        presenter ??
+        InboxPresenter(
+          DateTime.now(),
+          alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
+        );
+    final message = resolvedPresenter.normalizedMessage(notification);
+    final category = resolvedPresenter.categoryOf(notification);
+    final isOpenableChat = resolvedPresenter.isOpenableChat(notification);
+    final isUnread = !notification.isRead;
+    final timestampLabel = resolvedPresenter.formatTimestamp(
+      notification.timestamp,
+    );
+    final isLargeText = MediaQuery.textScalerOf(context).scale(14) > 18;
 
-    final Color circleBackgroundColor;
-    final Color iconColor;
-    final IconData icon;
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
+    final icon = switch (category) {
+      InboxNotificationCategory.message => LucideIcons.message_circle,
+      InboxNotificationCategory.receipt => LucideIcons.receipt,
+      InboxNotificationCategory.ride => LucideIcons.navigation,
+      InboxNotificationCategory.general => LucideIcons.bell,
+    };
 
-    if (isDriverChat) {
-      circleBackgroundColor = context.colorScheme.primaryContainer;
-      iconColor = context.colorScheme.primary;
-      icon = LucideIcons.user;
-    } else if (isReceipt) {
-      circleBackgroundColor = context.colorScheme.tertiaryContainer;
-      iconColor = context.colorScheme.onTertiaryContainer;
-      icon = LucideIcons.receipt;
-    } else {
-      circleBackgroundColor = context.colorScheme.surfaceContainerHighest;
-      iconColor = context.colorScheme.onSurfaceVariant;
-      icon = LucideIcons.bell;
-    }
+    final animationDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 180);
 
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      side: BorderSide(color: context.colorScheme.outlineVariant),
+    final semanticPrefix = isUnread ? 'Unread. ' : '';
+    final semanticHint = isOpenableChat
+        ? 'Opens conversation'
+        : isExpanded
+        ? 'Collapses notification details'
+        : 'Shows notification details';
+
+    final titleWidget = Text(
+      notification.title,
+      maxLines: isExpanded ? null : 2,
+      overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+      style: textStyles.titleSmall?.copyWith(
+        fontSize: 15,
+        height: 1.3,
+        color: isUnread
+            ? colorScheme.onSurface
+            : colorScheme.onSurface.withValues(alpha: 0.88),
+        fontWeight: isUnread ? FontWeight.w700 : FontWeight.w500,
+      ),
+    );
+
+    final timestampWidget = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Text(
+            timestampLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textStyles.labelSmall?.tabular.copyWith(
+              color: isUnread
+                  ? colorScheme.onSurface
+                  : colorScheme.onSurfaceVariant,
+              fontWeight: isUnread ? FontWeight.w600 : FontWeight.w400,
+              letterSpacing: 0.1,
+            ),
+          ),
+        ),
+        if (isUnread) ...[
+          const SizedBox(width: 6),
+          ExcludeSemantics(
+            child: Container(
+              key: ValueKey<String>('inbox-unread-dot-${notification.id}'),
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: colorScheme.primary,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
 
     return Semantics(
       button: true,
-      label: '${notification.title}. $message',
-      hint: 'Opens notification',
-      child: Material(
-        color: context.colorScheme.surface,
-        shape: shape,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: AppSize.minimumTouchTarget,
-                  height: AppSize.minimumTouchTarget,
-                  decoration: BoxDecoration(
-                    color: circleBackgroundColor,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(icon, color: iconColor, size: 20),
+      label: '$semanticPrefix${notification.title}. $message. $timestampLabel',
+      hint: semanticHint,
+      customSemanticsActions: onDelete == null
+          ? null
+          : <CustomSemanticsAction, VoidCallback>{
+              const CustomSemanticsAction(label: 'Delete notification'):
+                  onDelete!,
+            },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Material(
+            color: isUnread
+                ? colorScheme.surfaceContainerLowest
+                : Colors.transparent,
+            borderRadius: isUnread
+                ? BorderRadius.circular(AppRadius.md)
+                : BorderRadius.zero,
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              key: ValueKey<String>('inbox-notification-${notification.id}'),
+              onTap: onTap,
+              enableFeedback: false,
+              splashFactory: NoSplash.splashFactory,
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              overlayColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.focused)) {
+                  return colorScheme.primary.withValues(alpha: 0.12);
+                }
+                return Colors.transparent;
+              }),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isUnread ? AppSpacing.md : AppSpacing.xs,
+                  vertical: 15,
                 ),
-                const SizedBox(width: AppSpacing.lg),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        notification.title,
-                        style: context.textStyles.titleMedium,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(message, style: context.textStyles.bodySmall),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      _formatTimestamp(notification.timestamp),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: context.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (!notification.isRead) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: context.colorScheme.primary,
-                          shape: BoxShape.circle,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: ExcludeSemantics(
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: isUnread
+                                ? colorScheme.primaryContainer
+                                : Colors.transparent,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isUnread
+                                  ? colorScheme.primary.withValues(alpha: 0.12)
+                                  : colorScheme.outlineVariant,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            icon,
+                            size: 17,
+                            color: isUnread
+                                ? colorScheme.primary
+                                : colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isLargeText) ...[
+                            titleWidget,
+                            const SizedBox(height: 2),
+                            timestampWidget,
+                          ] else
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(child: titleWidget),
+                                const SizedBox(width: AppSpacing.md),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: timestampWidget,
+                                ),
+                              ],
+                            ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  message,
+                                  maxLines: isExpanded ? null : 2,
+                                  overflow: isExpanded
+                                      ? TextOverflow.visible
+                                      : TextOverflow.ellipsis,
+                                  style: textStyles.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    height: 1.45,
+                                  ),
+                                ),
+                              ),
+                              if (isOpenableChat) ...[
+                                const SizedBox(width: AppSpacing.sm),
+                                ExcludeSemantics(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 2),
+                                    child: Icon(
+                                      LucideIcons.chevron_right,
+                                      size: 16,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          AnimatedSize(
+                            duration: animationDuration,
+                            curve: Curves.easeOutCubic,
+                            alignment: Alignment.topLeft,
+                            child: isExpanded && !isOpenableChat
+                                ? Padding(
+                                    padding: const EdgeInsets.only(
+                                      top: AppSpacing.md,
+                                    ),
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      child: Wrap(
+                                        spacing: AppSpacing.md,
+                                        runSpacing: AppSpacing.xs,
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
+                                        alignment: WrapAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            resolvedPresenter
+                                                .formatFullTimestamp(
+                                                  notification.timestamp,
+                                                ),
+                                            style: textStyles
+                                                .labelSmall
+                                                ?.tabular
+                                                .copyWith(
+                                                  color: colorScheme
+                                                      .onSurfaceVariant,
+                                                  letterSpacing: 0.1,
+                                                ),
+                                          ),
+                                          if (onDelete != null)
+                                            TextButton.icon(
+                                              key: ValueKey<String>(
+                                                'inbox-delete-${notification.id}',
+                                              ),
+                                              onPressed: onDelete,
+                                              style:
+                                                  TextButton.styleFrom(
+                                                    foregroundColor:
+                                                        colorScheme.error,
+                                                    enableFeedback: false,
+                                                    splashFactory:
+                                                        NoSplash.splashFactory,
+                                                    minimumSize: const Size(
+                                                      AppSize
+                                                          .minimumTouchTarget,
+                                                      AppSize
+                                                          .minimumTouchTarget,
+                                                    ),
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal:
+                                                              AppSpacing.sm,
+                                                        ),
+                                                    tapTargetSize:
+                                                        MaterialTapTargetSize
+                                                            .shrinkWrap,
+                                                  ).copyWith(
+                                                    overlayColor:
+                                                        WidgetStateProperty.resolveWith(
+                                                          (states) {
+                                                            if (states.contains(
+                                                              WidgetState
+                                                                  .focused,
+                                                            )) {
+                                                              return colorScheme
+                                                                  .error
+                                                                  .withValues(
+                                                                    alpha: 0.12,
+                                                                  );
+                                                            }
+                                                            return Colors
+                                                                .transparent;
+                                                          },
+                                                        ),
+                                                  ),
+                                              icon: const Icon(
+                                                LucideIcons.trash_2,
+                                                size: 14,
+                                              ),
+                                              label: const Text('Delete'),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+          if (showBottomDivider)
+            Divider(
+              height: 1,
+              thickness: 1,
+              indent: isUnread ? 64 : 56,
+              color: colorScheme.outlineVariant.withValues(alpha: 0.65),
+            ),
+        ],
       ),
     );
   }

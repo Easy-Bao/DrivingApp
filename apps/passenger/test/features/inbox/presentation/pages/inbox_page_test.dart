@@ -265,4 +265,316 @@ void main() {
     expect(find.text('Failed to load notifications.'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
   });
+
+  testWidgets(
+    'groups by date, filters categories, expands details, and deletes by id',
+    (tester) async {
+      final now = DateTime.now();
+      final todayTimestamp = DateTime(now.year, now.month, now.day, 10, 15);
+      final yesterdayTimestamp = todayTimestamp.subtract(
+        const Duration(days: 1),
+      );
+      final earlierTimestamp = todayTimestamp.subtract(const Duration(days: 5));
+
+      final session = MockSessionBloc();
+      when(() => session.state)
+          .thenReturn(const AuthenticatedSession(passengerId: 'p'));
+      final repository = MockInboxRepository();
+      when(() => repository.fetchPassengerNotifications('p')).thenAnswer(
+        (_) async => Ok([
+          InboxNotification(
+            id: 'chat-1',
+            title: 'New Message From Your Driver',
+            message: 'I am waiting outside the main entrance.',
+            timestamp: todayTimestamp,
+            type: 'chat',
+            isRead: false,
+            roomId: 'room-1',
+            userId: 'p',
+            peerId: 'driver-1',
+            peerName: 'Alex',
+          ),
+          InboxNotification(
+            id: 'ride-1',
+            title: 'Ride completed',
+            message: 'Your receipt for ₱245.00 is ready.',
+            timestamp: yesterdayTimestamp,
+            type: 'ride',
+            isRead: false,
+          ),
+          InboxNotification(
+            id: 'ride-2',
+            title: 'Previous trip receipt',
+            message: 'Thank you for riding with EasyRide.',
+            timestamp: earlierTimestamp,
+            type: 'ride',
+            isRead: true,
+          ),
+        ]),
+      );
+      final cubit = InboxCubit(inboxRepository: repository);
+      addTearDown(cubit.close);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: BlocProvider<SessionBloc>.value(
+            value: session,
+            child: InboxPage(
+              inboxCubit: cubit,
+              sessionService: MockSessionStore(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('TODAY'), findsOneWidget);
+      expect(find.text('YESTERDAY'), findsOneWidget);
+      expect(find.text('EARLIER'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('inbox-filter-rides')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('New Message From Your Driver'), findsNothing);
+      expect(find.text('Ride completed'), findsOneWidget);
+      expect(find.text('Previous trip receipt'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('inbox-notification-ride-1')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        (cubit.state as InboxLoadedState).notifications
+            .singleWhere((n) => n.id == 'ride-1')
+            .isRead,
+        isTrue,
+      );
+      final deleteButton = find.byKey(
+        const ValueKey<String>('inbox-delete-ride-1'),
+      );
+      expect(deleteButton, findsOneWidget);
+
+      await tester.tap(deleteButton);
+      await tester.pumpAndSettle();
+
+      expect((cubit.state as InboxLoadedState).notifications.map((n) => n.id), [
+        'chat-1',
+        'ride-2',
+      ]);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('inbox-filter-unread')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('New Message From Your Driver'), findsOneWidget);
+      expect(find.text('Previous trip receipt'), findsNothing);
+
+      await tester.drag(
+        find.byKey(const ValueKey<String>('inbox-dismissible-chat-1')),
+        const Offset(-500, 0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('All caught up'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const ValueKey<String>('inbox-reset-filter')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Previous trip receipt'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('keeps expanded unread notification visible while reading', (
+    tester,
+  ) async {
+    final session = MockSessionBloc();
+    when(() => session.state)
+        .thenReturn(const AuthenticatedSession(passengerId: 'p'));
+    final repository = MockInboxRepository();
+    when(() => repository.fetchPassengerNotifications('p')).thenAnswer(
+      (_) async => Ok([
+        InboxNotification(
+          id: 'ride-unread',
+          title: 'Ride receipt',
+          message: 'Detailed fare breakdown is now available in your inbox.',
+          timestamp: DateTime.now(),
+          type: 'ride',
+          isRead: false,
+        ),
+      ]),
+    );
+    final cubit = InboxCubit(inboxRepository: repository);
+    addTearDown(cubit.close);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        home: BlocProvider<SessionBloc>.value(
+          value: session,
+          child: InboxPage(
+            inboxCubit: cubit,
+            sessionService: MockSessionStore(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey<String>('inbox-filter-unread')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('inbox-notification-ride-unread')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('inbox-delete-ride-unread')),
+      findsOneWidget,
+    );
+    expect(
+      (cubit.state as InboxLoadedState).notifications.single.isRead,
+      isTrue,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('inbox-notification-ride-unread')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('All caught up'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('supports pull-to-refresh for authenticated inbox', (
+    tester,
+  ) async {
+    final session = MockSessionBloc();
+    when(() => session.state)
+        .thenReturn(const AuthenticatedSession(passengerId: 'p'));
+    final repository = MockInboxRepository();
+    when(() => repository.fetchPassengerNotifications('p')).thenAnswer(
+      (_) async => Ok([
+        InboxNotification(
+          id: '1',
+          title: 'Ride completed',
+          message: 'Receipt ready',
+          timestamp: DateTime.now(),
+          type: 'ride',
+          isRead: true,
+        ),
+      ]),
+    );
+    final cubit = InboxCubit(inboxRepository: repository);
+    addTearDown(cubit.close);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        home: BlocProvider<SessionBloc>.value(
+          value: session,
+          child: InboxPage(
+            inboxCubit: cubit,
+            sessionService: MockSessionStore(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.fling(
+      find.byType(CustomScrollView),
+      const Offset(0, 320),
+      800,
+    );
+    await tester.pumpAndSettle();
+
+    verify(() => repository.fetchPassengerNotifications('p')).called(2);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'filter tabs glide indicator smoothly and disable OS touch splash',
+    (tester) async {
+      final session = MockSessionBloc();
+      when(() => session.state)
+          .thenReturn(const AuthenticatedSession(passengerId: 'p'));
+      final repository = MockInboxRepository();
+      when(() => repository.fetchPassengerNotifications('p')).thenAnswer(
+        (_) async => Ok([
+          InboxNotification(
+            id: '1',
+            title: 'Ride completed',
+            message: 'Receipt ready',
+            timestamp: DateTime.now(),
+            type: 'ride',
+            isRead: false,
+          ),
+        ]),
+      );
+      final cubit = InboxCubit(inboxRepository: repository);
+      addTearDown(cubit.close);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: BlocProvider<SessionBloc>.value(
+            value: session,
+            child: InboxPage(
+              inboxCubit: cubit,
+              sessionService: MockSessionStore(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final unreadTabFinder = find.byKey(
+        const ValueKey<String>('inbox-filter-unread'),
+      );
+      final unreadTab = tester.widget<InkWell>(unreadTabFinder);
+      expect(unreadTab.enableFeedback, isFalse);
+      expect(unreadTab.splashFactory, NoSplash.splashFactory);
+      expect(
+        unreadTab.overlayColor?.resolve({WidgetState.pressed}),
+        Colors.transparent,
+      );
+      expect(
+        unreadTab.overlayColor?.resolve({WidgetState.hovered}),
+        Colors.transparent,
+      );
+
+      final notificationInkWell = tester.widget<InkWell>(
+        find.byKey(const ValueKey<String>('inbox-notification-1')),
+      );
+      expect(notificationInkWell.enableFeedback, isFalse);
+      expect(notificationInkWell.splashFactory, NoSplash.splashFactory);
+      expect(
+        notificationInkWell.overlayColor?.resolve({WidgetState.pressed}),
+        Colors.transparent,
+      );
+
+      final indicatorFinder = find.byKey(
+        const ValueKey<String>('inbox-filter-indicator'),
+      );
+      expect(indicatorFinder, findsOneWidget);
+      final initialLeft = tester.getTopLeft(indicatorFinder).dx;
+
+      await tester.tap(unreadTabFinder);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 90));
+      final midLeft = tester.getTopLeft(indicatorFinder).dx;
+
+      await tester.pumpAndSettle();
+      final finalLeft = tester.getTopLeft(indicatorFinder).dx;
+
+      expect(midLeft, greaterThan(initialLeft));
+      expect(finalLeft, greaterThan(midLeft));
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
