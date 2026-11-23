@@ -9,17 +9,19 @@ class RideOptionsLoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: context.colorScheme.surface,
+        color: colors.surfaceContainerLowest,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppRadius.sheet),
         ),
+        border: Border(top: BorderSide(color: colors.outlineVariant)),
         boxShadow: [
           BoxShadow(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.12),
-            blurRadius: 24,
-            offset: const Offset(0, -8),
+            color: colors.onSurface.withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, -6),
           ),
         ],
       ),
@@ -40,23 +42,25 @@ class RideOptionsLoadingView extends StatelessWidget {
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 14),
                     decoration: BoxDecoration(
-                      color: context.colorScheme.outlineVariant,
+                      color: colors.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
                 _buildRouteCard(context),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
                 _buildFareRow(context),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
                 _buildActionButtons(context),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
                 if (showPrimaryAction)
                   const Bone.button(
                     key: ValueKey('ride-options-loading-primary-action'),
                     width: double.infinity,
-                    height: 52,
-                    borderRadius: BorderRadius.all(Radius.circular(14)),
+                    height: AppSize.controlHeight,
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(AppRadius.lg),
+                    ),
                   ),
               ],
             ),
@@ -67,13 +71,16 @@ class RideOptionsLoadingView extends StatelessWidget {
   }
 
   Widget _buildRouteCard(BuildContext context) {
+    final colors = context.colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 14,
+      ),
       decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.5,
-        ),
-        borderRadius: BorderRadius.circular(18),
+        color: colors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: const Row(
         children: [

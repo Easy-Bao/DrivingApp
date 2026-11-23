@@ -389,5 +389,29 @@ void main() {
     expect(find.text('Choose driver'), findsOneWidget);
     expect(find.byKey(const ValueKey('trip-summary-card')), findsOneWidget);
     expect(find.byKey(const ValueKey('total-fare-amount')), findsOneWidget);
+
+    for (final key in const [
+      'custom-offer-trigger',
+      'tip-trigger',
+      'trip-note-trigger',
+    ]) {
+      final ink = tester.widget<InkWell>(find.byKey(ValueKey(key)));
+      expect(ink.enableFeedback, isFalse);
+      expect(ink.splashFactory, NoSplash.splashFactory);
+      expect(
+        ink.overlayColor?.resolve({WidgetState.pressed}),
+        Colors.transparent,
+      );
+      expect(
+        ink.overlayColor?.resolve({WidgetState.focused}),
+        isNot(Colors.transparent),
+      );
+    }
+
+    final bookButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('book-directly-button')),
+    );
+    expect(bookButton.style?.enableFeedback, isFalse);
+    expect(bookButton.style?.splashFactory, NoSplash.splashFactory);
   });
 }

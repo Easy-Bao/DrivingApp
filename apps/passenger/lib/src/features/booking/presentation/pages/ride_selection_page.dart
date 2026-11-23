@@ -474,23 +474,38 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   }
 
   Widget _buildMapBackButton(BuildContext context) {
+    final colors = context.colorScheme;
     return Tooltip(
       message: MaterialLocalizations.of(context).backButtonTooltip,
       child: Material(
-        color: context.colorScheme.surface,
-        elevation: 4,
-        shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.12),
-        shape: const CircleBorder(),
+        color: colors.surfaceContainerLowest,
+        elevation: 1,
+        shadowColor: colors.onSurface.withValues(alpha: 0.08),
+        shape: CircleBorder(side: BorderSide(color: colors.outlineVariant)),
+        clipBehavior: Clip.antiAlias,
         child: Semantics(
           button: true,
           label: 'Back',
           child: InkWell(
             onTap: () => context.pop(),
             customBorder: const CircleBorder(),
-            child: const SizedBox(
-              width: 48,
-              height: 48,
-              child: Center(child: Icon(LucideIcons.arrow_left, size: 20)),
+            enableFeedback: false,
+            splashFactory: NoSplash.splashFactory,
+            overlayColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.focused)
+                  ? colors.primary.withValues(alpha: 0.12)
+                  : Colors.transparent,
+            ),
+            child: SizedBox(
+              width: AppSize.minimumTouchTarget,
+              height: AppSize.minimumTouchTarget,
+              child: Center(
+                child: Icon(
+                  LucideIcons.arrow_left,
+                  size: 19,
+                  color: colors.onSurface,
+                ),
+              ),
             ),
           ),
         ),

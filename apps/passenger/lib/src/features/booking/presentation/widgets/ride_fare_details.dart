@@ -41,12 +41,16 @@ class RideFareDetails extends StatelessWidget {
     String value, {
     bool emphasize = false,
   }) {
-    final valueStyle = TextStyle(
-      color: context.colorScheme.onSurface,
-      fontSize: emphasize ? 16 : 14,
-      fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
-      fontFeatures: const [FontFeature.tabularFigures()],
-    );
+    final colors = context.colorScheme;
+    final valueStyle =
+        (emphasize
+                ? context.textStyles.titleSmall
+                : context.textStyles.bodyMedium)
+            ?.tabular
+            .copyWith(
+              color: colors.onSurface,
+              fontWeight: emphasize ? FontWeight.w700 : FontWeight.w600,
+            );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),
       child: Row(
@@ -55,14 +59,13 @@ class RideFareDetails extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: TextStyle(
-                color: context.colorScheme.onSurfaceVariant,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: emphasize ? colors.onSurface : colors.onSurfaceVariant,
+                fontWeight: emphasize ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppSpacing.lg),
           Flexible(
             child: Text(
               value,
@@ -79,6 +82,8 @@ class RideFareDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    final hairline = colors.outlineVariant.withValues(alpha: 0.7);
     final normalizedPassengerName = passengerName.trim();
     return Padding(
       key: const ValueKey('fare-details'),
@@ -91,96 +96,65 @@ class RideFareDetails extends StatelessWidget {
             details: 'How your total is calculated',
             onClose: onBackPressed,
           ),
+          const SizedBox(height: AppSpacing.lg),
+          Divider(height: 1, color: hairline),
           if (normalizedPassengerName.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: context.colorScheme.outlineVariant),
-              ),
-              child: _amountRow(context, 'Passenger', normalizedPassengerName),
-            ),
+            const SizedBox(height: AppSpacing.xs),
+            _amountRow(context, 'Passenger', normalizedPassengerName),
+            const SizedBox(height: AppSpacing.xs),
+            Divider(height: 1, color: hairline),
           ],
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: context.colorScheme.surface,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: context.colorScheme.outlineVariant),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'FARE CALCULATION',
-                  style: TextStyle(
-                    color: context.colorScheme.onSurfaceVariant,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _amountRow(
-                  context,
-                  'Base fare',
-                  _currency(fareResult.baseFare),
-                ),
-                _amountRow(
-                  context,
-                  'Distance',
-                  _currency(fareResult.distanceCharge),
-                ),
-                _amountRow(context, 'Time', _currency(fareResult.timeCharge)),
-                if (fareResult.surgeCharge > 0)
-                  _amountRow(
-                    context,
-                    'Dynamic surge (${_surgeMultiplier.toStringAsFixed(1)}x)',
-                    _currency(fareResult.surgeCharge),
-                  ),
-                Divider(
-                  height: 20,
-                  color: context.colorScheme.outlineVariant,
-                  thickness: 0.8,
-                ),
-                _amountRow(
-                  context,
-                  'Calculated fare',
-                  _currency(fareResult.totalFare),
-                  emphasize: true,
-                ),
-                if (_customOfferAdjustment > 0)
-                  _amountRow(
-                    context,
-                    'Custom offer adjustment',
-                    '+${_currency(_customOfferAdjustment)}',
-                  ),
-                _amountRow(
-                  context,
-                  'Tip',
-                  tipAmount == 0
-                      ? 'No tip added'
-                      : _currency(tipAmount.toDouble()),
-                ),
-              ],
+          const SizedBox(height: AppSpacing.lg),
+          Semantics(
+            header: true,
+            child: Text(
+              'FARE CALCULATION',
+              style: context.textStyles.labelSmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.9,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.sm),
+          _amountRow(context, 'Base fare', _currency(fareResult.baseFare)),
+          _amountRow(context, 'Distance', _currency(fareResult.distanceCharge)),
+          _amountRow(context, 'Time', _currency(fareResult.timeCharge)),
+          if (fareResult.surgeCharge > 0)
+            _amountRow(
+              context,
+              'Dynamic surge (${_surgeMultiplier.toStringAsFixed(1)}x)',
+              _currency(fareResult.surgeCharge),
+            ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            child: Divider(height: 1, color: hairline),
+          ),
+          _amountRow(
+            context,
+            'Calculated fare',
+            _currency(fareResult.totalFare),
+            emphasize: true,
+          ),
+          if (_customOfferAdjustment > 0)
+            _amountRow(
+              context,
+              'Custom offer adjustment',
+              '+${_currency(_customOfferAdjustment)}',
+            ),
+          _amountRow(
+            context,
+            'Tip',
+            tipAmount == 0 ? 'No tip added' : _currency(tipAmount.toDouble()),
+          ),
+          const SizedBox(height: AppSpacing.lg),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              color: context.colorScheme.surfaceContainerHighest,
+              color: colors.surfaceContainerLowest,
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(
-                color: context.colorScheme.outlineVariant,
-                width: 0.8,
-              ),
+              border: Border.all(color: colors.outlineVariant),
             ),
             child: Row(
               children: [
@@ -190,31 +164,28 @@ class RideFareDetails extends StatelessWidget {
                     children: [
                       Text(
                         'Total fare',
-                        style: TextStyle(
-                          color: context.colorScheme.onSurface,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
+                        style: context.textStyles.titleSmall?.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Pay your driver in cash',
-                        style: TextStyle(
-                          color: context.colorScheme.onSurfaceVariant,
-                          fontSize: 11,
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: AppSpacing.md),
                 Text(
                   _currency(totalFare),
-                  style: TextStyle(
-                    color: context.colorScheme.onSurface,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+                  style: context.textStyles.headlineSmall?.tabular.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.4,
                   ),
                 ),
               ],

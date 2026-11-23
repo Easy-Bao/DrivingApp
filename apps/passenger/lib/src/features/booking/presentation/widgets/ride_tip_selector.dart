@@ -17,26 +17,25 @@ class const RideTipSelector({
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Add a tip',
-          style: TextStyle(
-            color: context.colorScheme.onSurface,
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
+          style: context.textStyles.titleSmall?.copyWith(
+            color: colors.onSurface,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           'Optional, for excellent service.',
-          style: TextStyle(
-            color: context.colorScheme.onSurfaceVariant,
-            fontSize: 12,
+          style: context.textStyles.bodySmall?.copyWith(
+            color: colors.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.md),
         LayoutBuilder(
           builder: (context, constraints) {
             final columns = constraints.maxWidth < 280 ? 2 : 3;
@@ -49,8 +48,8 @@ class const RideTipSelector({
                 hoverColor: Colors.transparent,
               ),
               child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
                 children: [
                   for (final amount in tipOptions)
                     SizedBox(
@@ -67,28 +66,27 @@ class const RideTipSelector({
                         ),
                         selected: selectedTipAmount == amount,
                         onSelected: (_) => onTipSelected(amount),
-                        selectedColor: context.colorScheme.onSurface,
-                        backgroundColor: context.colorScheme.surface,
+                        selectedColor: colors.primary,
+                        backgroundColor: colors.surfaceContainerLowest,
                         side: BorderSide(
                           color: selectedTipAmount == amount
-                              ? context.colorScheme.onSurface
-                              : context.colorScheme.outlineVariant,
+                              ? colors.primary
+                              : colors.outlineVariant,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         materialTapTargetSize: MaterialTapTargetSize.padded,
-                        labelStyle: TextStyle(
-                          color: selectedTipAmount == amount
-                              ? context.colorScheme.surface
-                              : context.colorScheme.onSurface,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
+                        labelStyle: context.textStyles.titleSmall?.tabular
+                            .copyWith(
+                              color: selectedTipAmount == amount
+                                  ? colors.onPrimary
+                                  : colors.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
                         showCheckmark: false,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
+                          horizontal: AppSpacing.sm,
                           vertical: 14,
                         ),
                       ),

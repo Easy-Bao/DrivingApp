@@ -18,6 +18,7 @@ class RidePanelHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -30,36 +31,45 @@ class RidePanelHeader extends StatelessWidget {
             height: AppSize.minimumTouchTarget,
           ),
           padding: EdgeInsets.zero,
-          style: IconButton.styleFrom(
-            backgroundColor: context.colorScheme.surfaceContainerHighest,
-            shape: const CircleBorder(),
-          ),
+          style:
+              IconButton.styleFrom(
+                backgroundColor: colors.surfaceContainerLowest,
+                foregroundColor: colors.onSurface,
+                side: BorderSide(color: colors.outlineVariant),
+                shape: const CircleBorder(),
+                enableFeedback: false,
+                splashFactory: NoSplash.splashFactory,
+              ).copyWith(
+                overlayColor: WidgetStateProperty.resolveWith(
+                  (states) => states.contains(WidgetState.focused)
+                      ? colors.primary.withValues(alpha: 0.12)
+                      : Colors.transparent,
+                ),
+              ),
           icon: Icon(
             LucideIcons.chevron_down,
-            color: context.colorScheme.onSurface,
-            size: 20,
+            color: colors.onSurface,
+            size: 18,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  color: context.colorScheme.onSurface,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.2,
+                style: context.textStyles.titleLarge?.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 details,
-                style: TextStyle(
-                  color: context.colorScheme.onSurfaceVariant,
-                  fontSize: 13,
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
                   height: 1.4,
                 ),
               ),
