@@ -48,6 +48,8 @@ void main() {
         find.byKey(const ValueKey('confirm-driver-cancel-ride-button')),
       );
       expect(cancelButton.onPressed, isNull);
+      expect(cancelButton.style?.enableFeedback, isFalse);
+      expect(cancelButton.style?.splashFactory, NoSplash.splashFactory);
     },
   );
 

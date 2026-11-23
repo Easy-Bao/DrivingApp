@@ -1,6 +1,6 @@
 import 'package:design_system/design_system.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:material_ui/material_ui.dart';
 
 class const RideConfirmationSlider({
   super.key,
@@ -48,29 +48,56 @@ class _RideConfirmationSliderState extends State<RideConfirmationSlider> {
                   .toDouble();
           final canInteract = !widget.isProcessing && travel > 0;
           final colors = context.colorScheme;
+          final fillWidth =
+              RideConfirmationSlider.thumbSize + travel * progress;
 
           return Container(
             key: const ValueKey<String>('ride-confirmation-slider'),
             height: RideConfirmationSlider.thumbSize,
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: colors.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              border: Border.all(
+                color: colors.outlineVariant.withValues(alpha: 0.85),
+              ),
             ),
             child: Stack(
               children: [
+                if (progress > 0)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: fillWidth,
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: colors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                      ),
+                    ),
+                  ),
                 Center(
-                  child: ExcludeSemantics(
-                    child: Text(
-                      widget.isProcessing
-                          ? widget.processingLabel
-                          : progress > 0.8
-                          ? widget.releaseLabel
-                          : widget.label,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: colors.primary,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: RideConfirmationSlider.thumbSize + 8,
+                    ),
+                    child: ExcludeSemantics(
+                      child: Text(
+                        widget.isProcessing
+                            ? widget.processingLabel
+                            : progress > 0.8
+                            ? widget.releaseLabel
+                            : widget.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: context.textStyles.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colors.onSurface,
+                        ),
                       ),
                     ),
                   ),
@@ -163,7 +190,7 @@ class _RideConfirmationSliderState extends State<RideConfirmationSlider> {
                               : Icon(
                                   LucideIcons.chevron_right,
                                   color: colors.onPrimary,
-                                  size: 22,
+                                  size: 20,
                                 ),
                         ),
                       ),

@@ -83,6 +83,8 @@ void main() {
                 find.widgetWithText(OutlinedButton, 'Cancel ride'),
               );
               expect(cancelButton.style?.side?.resolve({}), BorderSide.none);
+              expect(cancelButton.style?.enableFeedback, isFalse);
+              expect(cancelButton.style?.splashFactory, NoSplash.splashFactory);
             }
             expect(tester.takeException(), isNull);
           },

@@ -1,4 +1,5 @@
 import 'package:design_system/design_system.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 final class CancellationChoice {
@@ -49,6 +50,7 @@ class _RideCancellationSheetState extends State<RideCancellationSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
+    final textStyles = context.textStyles;
     final isOther = _selectedReason == 'other';
     final isDialog = ModalRoute.of(context) is DialogRoute;
 
@@ -56,7 +58,7 @@ class _RideCancellationSheetState extends State<RideCancellationSheet> {
       color: colors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: isDialog
-            ? BorderRadius.circular(AppRadius.lg)
+            ? BorderRadius.circular(AppRadius.xl)
             : const BorderRadius.vertical(
                 top: Radius.circular(AppRadius.sheet),
               ),
@@ -79,7 +81,7 @@ class _RideCancellationSheetState extends State<RideCancellationSheet> {
                 if (!isDialog) ...[
                   Center(
                     child: Container(
-                      width: 36,
+                      width: 34,
                       height: 4,
                       margin: const EdgeInsets.only(
                         top: AppSpacing.xs,
@@ -87,25 +89,25 @@ class _RideCancellationSheetState extends State<RideCancellationSheet> {
                       ),
                       decoration: BoxDecoration(
                         color: colors.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                     ),
                   ),
                 ],
                 Text(
                   'Cancel ride?',
-                  style: context.textStyles.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 22,
+                  style: textStyles.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
                     color: colors.onSurface,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Choose the reason that best describes what happened.',
-                  style: context.textStyles.bodyMedium?.copyWith(
+                  style: textStyles.bodyMedium?.copyWith(
                     color: colors.onSurfaceVariant,
-                    height: 1.4,
+                    height: 1.45,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -152,49 +154,54 @@ class _RideCancellationSheetState extends State<RideCancellationSheet> {
                 ],
                 if (_validationMessage != null) ...[
                   const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    _validationMessage!,
-                    style: TextStyle(
-                      color: colors.error,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      _validationMessage!,
+                      style: textStyles.bodySmall?.copyWith(
+                        color: colors.error,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.md),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.md,
-                  ),
+                  padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(
-                    color: colors.surfaceContainerHighest.withValues(
-                      alpha: 0.5,
+                    color: colors.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(
+                      color: colors.outlineVariant.withValues(alpha: 0.75),
                     ),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 20,
-                        color: colors.onSurfaceVariant,
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: ExcludeSemantics(
+                          child: Icon(
+                            LucideIcons.info,
+                            size: 16,
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: AppSpacing.md),
+                      const SizedBox(width: AppSpacing.sm + 2),
                       Expanded(
                         child: Text.rich(
                           TextSpan(
                             text: 'If the passenger is absent, use ',
-                            style: context.textStyles.bodySmall?.copyWith(
+                            style: textStyles.bodySmall?.copyWith(
                               color: colors.onSurfaceVariant,
-                              height: 1.4,
+                              height: 1.45,
                             ),
                             children: [
                               TextSpan(
                                 text: 'Passenger No-Show',
                                 style: TextStyle(
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w600,
                                   color: colors.onSurface,
                                 ),
                               ),
@@ -213,20 +220,36 @@ class _RideCancellationSheetState extends State<RideCancellationSheet> {
                   children: [
                     Expanded(
                       child: SizedBox(
-                        height: 50,
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: colors.surfaceContainerHighest,
-                            foregroundColor: colors.onSurface,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                            ),
-                            textStyle: context.textStyles.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                            ),
-                          ),
+                        height: AppSize.controlHeight,
+                        child: OutlinedButton(
+                          style:
+                              OutlinedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: colors.onSurface,
+                                side: BorderSide(color: colors.outlineVariant),
+                                enableFeedback: false,
+                                splashFactory: NoSplash.splashFactory,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.lg,
+                                  ),
+                                ),
+                                textStyle: textStyles.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                              ).copyWith(
+                                overlayColor: WidgetStateProperty.resolveWith((
+                                  states,
+                                ) {
+                                  if (states.contains(WidgetState.focused)) {
+                                    return colors.primary.withValues(
+                                      alpha: 0.12,
+                                    );
+                                  }
+                                  return Colors.transparent;
+                                }),
+                              ),
                           onPressed: () => Navigator.pop(context),
                           child: const Text('Keep ride'),
                         ),
@@ -235,27 +258,43 @@ class _RideCancellationSheetState extends State<RideCancellationSheet> {
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: SizedBox(
-                        height: 50,
+                        height: AppSize.controlHeight,
                         child: FilledButton(
                           key: const ValueKey(
                             'confirm-driver-cancel-ride-button',
                           ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: colors.onSurface,
-                            foregroundColor: colors.surface,
-                            disabledBackgroundColor:
-                                colors.surfaceContainerHighest,
-                            disabledForegroundColor: colors.onSurfaceVariant
-                                .withValues(alpha: 0.38),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                            ),
-                            textStyle: context.textStyles.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                            ),
-                          ),
+                          style:
+                              FilledButton.styleFrom(
+                                backgroundColor: colors.primary,
+                                foregroundColor: colors.onPrimary,
+                                disabledBackgroundColor:
+                                    colors.surfaceContainerHighest,
+                                disabledForegroundColor: colors.onSurfaceVariant
+                                    .withValues(alpha: 0.38),
+                                elevation: 0,
+                                enableFeedback: false,
+                                splashFactory: NoSplash.splashFactory,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.lg,
+                                  ),
+                                ),
+                                textStyle: textStyles.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                              ).copyWith(
+                                overlayColor: WidgetStateProperty.resolveWith((
+                                  states,
+                                ) {
+                                  if (states.contains(WidgetState.focused)) {
+                                    return colors.onPrimary.withValues(
+                                      alpha: 0.16,
+                                    );
+                                  }
+                                  return Colors.transparent;
+                                }),
+                              ),
                           onPressed: _selectedReason == null ? null : _submit,
                           child: const Text('Cancel ride'),
                         ),

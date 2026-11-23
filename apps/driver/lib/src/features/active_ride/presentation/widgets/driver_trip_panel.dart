@@ -2,8 +2,9 @@ import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/ride_confirmation_slider.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/ride_passenger_row.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
+import 'package:material_ui/material_ui.dart';
 
 class const DriverTripPanel({
   super.key,
@@ -41,29 +42,43 @@ class const DriverTripPanel({
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
     final waiting = state.isWaitingAtPickup;
     final inTransit = state is TripInProgress;
     final seconds = state.waitTimeSecondsOr(0);
     final waitLabel =
         '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}';
     final remaining = ((noShowRemaining?.inMilliseconds ?? 0) / 1000).ceil();
+
     return Material(
-      color: context.colorScheme.surface,
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(AppRadius.sheet),
+      color: colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
+        side: BorderSide(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+        ),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.md,
+          AppSpacing.xl,
+          AppSpacing.xl,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Center(
               child: Container(
-                width: 32,
+                width: 34,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: context.colorScheme.outlineVariant,
+                  color: colorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -75,14 +90,19 @@ class const DriverTripPanel({
                   : inTransit
                   ? 'Head to destination'
                   : 'Head to pickup',
-              style: context.textStyles.titleLarge?.copyWith(
+              style: textStyles.titleLarge?.tabular.copyWith(
                 fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+                color: colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.xs + 2),
             Text(
               inTransit ? dropoff : pickup,
-              style: context.textStyles.bodyLarge,
+              style: textStyles.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                height: 1.35,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             Row(
@@ -90,19 +110,27 @@ class const DriverTripPanel({
                 Expanded(
                   child: Text(
                     'Agreed fare',
-                    style: context.textStyles.bodyMedium?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
+                    style: textStyles.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
+                const SizedBox(width: AppSpacing.sm),
                 Text(
                   formatPesoAmount(fare),
-                  style: context.textStyles.titleMedium,
+                  style: textStyles.titleMedium?.tabular.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
-            const Divider(height: 1),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+            ),
             const SizedBox(height: AppSpacing.lg),
             RidePassengerRow(
               name: state.passengerNameOr('Passenger'),
@@ -120,9 +148,33 @@ class const DriverTripPanel({
               const SizedBox(height: AppSpacing.md),
             ],
             if (waiting)
-              FilledButton(
-                onPressed: isBusy ? null : onAdvance,
-                child: Text(isBusy ? 'Starting trip…' : 'Start trip'),
+              SizedBox(
+                height: AppSize.controlHeight,
+                child: FilledButton(
+                  key: const ValueKey<String>('driver-trip-start-button'),
+                  onPressed: isBusy ? null : onAdvance,
+                  style:
+                      FilledButton.styleFrom(
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: colorScheme.onPrimary,
+                        elevation: 0,
+                        enableFeedback: false,
+                        splashFactory: NoSplash.splashFactory,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                        ),
+                      ).copyWith(
+                        overlayColor: WidgetStateProperty.resolveWith((states) {
+                          if (states.contains(WidgetState.focused)) {
+                            return colorScheme.onPrimary.withValues(
+                              alpha: 0.16,
+                            );
+                          }
+                          return Colors.transparent;
+                        }),
+                      ),
+                  child: Text(isBusy ? 'Starting trip…' : 'Start trip'),
+                ),
               )
             else
               RideConfirmationSlider(
@@ -146,7 +198,24 @@ class const DriverTripPanel({
             if (!inTransit) ...[
               const SizedBox(height: AppSpacing.sm),
               OutlinedButton(
-                style: OutlinedButton.styleFrom(side: BorderSide.none),
+                style:
+                    OutlinedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: colorScheme.onSurfaceVariant,
+                      side: BorderSide.none,
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith((states) {
+                        if (states.contains(WidgetState.focused)) {
+                          return colorScheme.primary.withValues(alpha: 0.12);
+                        }
+                        return Colors.transparent;
+                      }),
+                    ),
                 onPressed: isBusy ? null : onCancel,
                 child: const Text('Cancel ride'),
               ),
@@ -155,14 +224,30 @@ class const DriverTripPanel({
               if (onNoShow != null)
                 TextButton(
                   onPressed: isBusy ? null : onNoShow,
+                  style:
+                      TextButton.styleFrom(
+                        foregroundColor: colorScheme.onSurface,
+                        enableFeedback: false,
+                        splashFactory: NoSplash.splashFactory,
+                      ).copyWith(
+                        overlayColor: WidgetStateProperty.resolveWith((states) {
+                          if (states.contains(WidgetState.focused)) {
+                            return colorScheme.primary.withValues(alpha: 0.12);
+                          }
+                          return Colors.transparent;
+                        }),
+                      ),
                   child: const Text('Passenger did not arrive'),
                 )
               else
-                Text(
-                  'No-show available in ${(remaining ~/ 60).toString().padLeft(2, '0')}:${(remaining % 60).toString().padLeft(2, '0')}',
-                  textAlign: TextAlign.center,
-                  style: context.textStyles.bodySmall?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.xs),
+                  child: Text(
+                    'No-show available in ${(remaining ~/ 60).toString().padLeft(2, '0')}:${(remaining % 60).toString().padLeft(2, '0')}',
+                    textAlign: TextAlign.center,
+                    style: textStyles.bodySmall?.tabular.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
           ],
@@ -191,18 +276,25 @@ class const _TripNotice({required this.message, this.onDismiss})
         ),
         decoration: BoxDecoration(
           color: colors.errorContainer,
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Row(
           children: [
-            Icon(Icons.info_outline, size: 20, color: colors.onErrorContainer),
+            ExcludeSemantics(
+              child: Icon(
+                LucideIcons.circle_alert,
+                size: 17,
+                color: colors.onErrorContainer,
+              ),
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 message,
-                style: context.textStyles.bodyMedium?.copyWith(
+                style: context.textStyles.bodySmall?.copyWith(
                   color: colors.onErrorContainer,
                   fontWeight: FontWeight.w500,
+                  height: 1.4,
                 ),
               ),
             ),
@@ -211,9 +303,13 @@ class const _TripNotice({required this.message, this.onDismiss})
                 tooltip: 'Dismiss',
                 visualDensity: VisualDensity.compact,
                 onPressed: onDismiss,
+                style: IconButton.styleFrom(
+                  enableFeedback: false,
+                  splashFactory: NoSplash.splashFactory,
+                ),
                 icon: Icon(
-                  Icons.close,
-                  size: 18,
+                  LucideIcons.x,
+                  size: 16,
                   color: colors.onErrorContainer,
                 ),
               ),

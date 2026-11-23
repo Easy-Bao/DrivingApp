@@ -13,6 +13,7 @@ import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
@@ -492,10 +493,39 @@ class _DriverTripPageState extends State<DriverTripPage> {
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: IconButton.filledTonal(
-                      tooltip: 'Back to dashboard',
-                      onPressed: _isActing ? null : () => context.pop(),
-                      icon: const Icon(Icons.arrow_back),
+                    child: Material(
+                      color: context.colorScheme.surfaceContainerLowest,
+                      shape: CircleBorder(
+                        side: BorderSide(
+                          color: context.colorScheme.outlineVariant,
+                        ),
+                      ),
+                      elevation: 1,
+                      shadowColor: context.colorScheme.shadow,
+                      child: IconButton(
+                        key: const ValueKey<String>('driver-trip-back'),
+                        tooltip: 'Back to dashboard',
+                        onPressed: _isActing ? null : () => context.pop(),
+                        style:
+                            IconButton.styleFrom(
+                              foregroundColor: context.colorScheme.onSurface,
+                              shape: const CircleBorder(),
+                              enableFeedback: false,
+                              splashFactory: NoSplash.splashFactory,
+                            ).copyWith(
+                              overlayColor: WidgetStateProperty.resolveWith((
+                                states,
+                              ) {
+                                if (states.contains(WidgetState.focused)) {
+                                  return context.colorScheme.primary.withValues(
+                                    alpha: 0.12,
+                                  );
+                                }
+                                return Colors.transparent;
+                              }),
+                            ),
+                        icon: const Icon(LucideIcons.arrow_left, size: 20),
+                      ),
                     ),
                   ),
                 ),
