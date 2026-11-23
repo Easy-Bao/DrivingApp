@@ -1,18 +1,26 @@
 import 'dart:async';
 
+import 'package:bloc_test/bloc_test.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/app/navigation/floating_tab_bar.dart';
 import 'package:passenger/src/app/navigation/navigation_shell.dart';
+import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/auth/domain/entities/session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
+import 'package:passenger/src/features/booking/booking_routes.dart';
+import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
+import 'package:passenger/src/features/booking/domain/entities/driver.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
+import 'package:passenger/src/features/home/presentation/widgets/active_booking_banner.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
 import 'package:passenger/src/features/inbox/inbox_routes.dart';
@@ -499,6 +507,289 @@ void main() {
     expect(navigationCoordinator.selectedIndex, 0);
     expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
   });
+
+  testWidgets(
+    'blends waiting booking status into FloatingTabBar across tabs and opens active request',
+    (tester) async {
+      final sessionBloc = SessionBloc(
+        sessionRepository: _SessionRepositoryStub(),
+      )..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
+      final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
+      final realtimeClient = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://localhost/realtime'),
+        tokenProvider: () async => 'test-token',
+        connector: _RealtimeSocketConnectorStub(),
+      );
+      final navigationCoordinator = TabNavigationCoordinator();
+      final lifecycleCoordinator = AppLifecycleCoordinator();
+      final bookingBloc = _MockBookingBloc();
+      const activeSearch = ActiveDriverSearch(
+        trip: BidSessionTrip(
+          fare: 45,
+          destination: Place(
+            id: 'dest-1',
+            name: 'Robinsons Place',
+            fullAddress: 'Robinsons Place Mall',
+            latitude: 7.83,
+            longitude: 123.44,
+          ),
+          distance: '2.4 km',
+          duration: '6 min',
+          pickupAddress: 'Main Plaza',
+        ),
+        pickupLat: 7.82,
+        pickupLng: 123.43,
+        distanceKm: 2.4,
+        durationMinutes: 6,
+      );
+      const driver = DriverModel(
+        id: '7',
+        name: 'Kuya Ben',
+        vehicleType: 'Tricycle',
+        plateNumber: 'XYZ 999',
+        rating: 4.9,
+        lat: 7.821,
+        lng: 123.431,
+        distanceKm: 0.4,
+        etaMinutes: 2,
+        score: 98,
+      );
+      when(() => bookingBloc.state).thenReturn(
+        const BookingOffersReceived(
+          offers: [],
+          isDirect: true,
+          targetDriver: driver,
+          sessionId: 'session-1',
+        ),
+      );
+      when(() => bookingBloc.stream).thenAnswer((_) => const Stream.empty());
+      when(() => bookingBloc.activeDriverSearch).thenReturn(activeSearch);
+      when(() => bookingBloc.retryableDriverSearch).thenReturn(null);
+
+      Map<String, dynamic>? pushedFindingExtra;
+      final router = _createRouter(
+        inboxCubit,
+        realtimeClient,
+        navigationCoordinator,
+        lifecycleCoordinator,
+        bookingBloc: bookingBloc,
+        onFindingDriverOpened: (extra) => pushedFindingExtra = extra,
+      );
+      addTearDown(() async {
+        router.dispose();
+        await sessionBloc.close();
+        await inboxCubit.close();
+        await realtimeClient.dispose();
+        navigationCoordinator.dispose();
+        await lifecycleCoordinator.dispose();
+      });
+
+      await tester.pumpWidget(
+        BlocProvider<SessionBloc>.value(
+          value: sessionBloc,
+          child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      final tabBar = find.byType(FloatingTabBar);
+      expect(
+        find.descendant(of: tabBar, matching: find.byType(ActiveBookingBanner)),
+        findsOneWidget,
+      );
+      expect(find.text('Waiting for driver'), findsOneWidget);
+      expect(find.text('Kuya Ben • Robinsons Place'), findsOneWidget);
+
+      await tester.tap(find.text('Activity'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(
+        find.descendant(of: tabBar, matching: find.byType(ActiveBookingBanner)),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('View'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+
+      expect(find.text('Finding Driver Screen'), findsOneWidget);
+      expect(pushedFindingExtra?['distanceKm'], 2.4);
+      expect(pushedFindingExtra?['durationMinutes'], 6.0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'surfaces driver timeout indicator in FloatingTabBar without opening Inbox and supports dismiss',
+    (tester) async {
+      final sessionBloc = SessionBloc(
+        sessionRepository: _SessionRepositoryStub(),
+      )..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
+      final inboxRepo = _CountingInboxRepositoryStub();
+      final inboxCubit = InboxCubit(inboxRepository: inboxRepo);
+      final realtimeClient = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://localhost/realtime'),
+        tokenProvider: () async => 'test-token',
+        connector: _RealtimeSocketConnectorStub(),
+      );
+      final navigationCoordinator = TabNavigationCoordinator();
+      final lifecycleCoordinator = AppLifecycleCoordinator();
+      final bookingBloc = _MockBookingBloc();
+      final bookingController = StreamController<BookingState>.broadcast();
+      const retrySearch = ActiveDriverSearch(
+        trip: BidSessionTrip(
+          fare: 35,
+          destination: Place(
+            id: 'dest-2',
+            name: 'City Hall',
+            fullAddress: 'City Hall',
+            latitude: 7.84,
+            longitude: 123.45,
+          ),
+          distance: '1.8 km',
+          duration: '5 min',
+          pickupAddress: 'Main Plaza',
+        ),
+        pickupLat: 7.82,
+        pickupLng: 123.43,
+        distanceKm: 1.8,
+        durationMinutes: 5,
+      );
+
+      BookingState currentBookingState = const BookingSearching(
+        isDirect: true,
+        sessionId: 'session-2',
+      );
+      when(() => bookingBloc.state).thenAnswer((_) => currentBookingState);
+      when(() => bookingBloc.stream)
+          .thenAnswer((_) => bookingController.stream);
+      when(() => bookingBloc.activeDriverSearch).thenAnswer(
+        (_) => currentBookingState is BookingSearching ? retrySearch : null,
+      );
+      when(() => bookingBloc.retryableDriverSearch).thenAnswer(
+        (_) => currentBookingState is BookingFailure ? retrySearch : null,
+      );
+      when(() => bookingBloc.add(const ResetBookingEvent())).thenAnswer((_) {
+        currentBookingState = const BookingInitial();
+        bookingController.add(currentBookingState);
+      });
+
+      final router = _createRouter(
+        inboxCubit,
+        realtimeClient,
+        navigationCoordinator,
+        lifecycleCoordinator,
+        bookingBloc: bookingBloc,
+      );
+      addTearDown(() async {
+        router.dispose();
+        await bookingController.close();
+        await sessionBloc.close();
+        await inboxCubit.close();
+        await realtimeClient.dispose();
+        navigationCoordinator.dispose();
+        await lifecycleCoordinator.dispose();
+      });
+
+      await tester.pumpWidget(
+        BlocProvider<SessionBloc>.value(
+          value: sessionBloc,
+          child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      final initialFetches = inboxRepo.fetchCount;
+
+      currentBookingState = const BookingFailure(
+        'This request expired before a driver accepted it.',
+        isRequestExpired: true,
+        sessionId: 'session-2',
+      );
+      bookingController.add(currentBookingState);
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Driver timed out'), findsOneWidget);
+      expect(find.text('No driver responded for City Hall.'), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
+      expect(inboxRepo.fetchCount, greaterThan(initialFetches));
+
+      await tester.tap(find.byKey(const Key('active-booking-banner-dismiss')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(ActiveBookingBanner), findsNothing);
+      verify(() => bookingBloc.add(const ResetBookingEvent())).called(1);
+    },
+  );
+
+  testWidgets(
+    'shows Driver accepted banner in FloatingTabBar and resumes matched ride',
+    (tester) async {
+      final sessionBloc = SessionBloc(
+        sessionRepository: _SessionRepositoryStub(),
+      )..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
+      final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
+      final realtimeClient = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://localhost/realtime'),
+        tokenProvider: () async => 'test-token',
+        connector: _RealtimeSocketConnectorStub(),
+      );
+      final navigationCoordinator = TabNavigationCoordinator();
+      final lifecycleCoordinator = AppLifecycleCoordinator();
+      final bookingBloc = _MockBookingBloc();
+      when(() => bookingBloc.state).thenReturn(
+        const BookingDriverMatched(
+          rideId: 'ride-77',
+          matchResult: DriverMatchResult(
+            driverId: 'driver-7',
+            driverName: 'Kuya Ben',
+            vehicleType: 'Sedan',
+            plateNumber: 'ABC 123',
+            proposedFare: 50,
+          ),
+        ),
+      );
+      when(() => bookingBloc.stream).thenAnswer((_) => const Stream.empty());
+      when(() => bookingBloc.activeDriverSearch).thenReturn(null);
+      when(() => bookingBloc.retryableDriverSearch).thenReturn(null);
+
+      String? resumedRideId;
+      final router = _createRouter(
+        inboxCubit,
+        realtimeClient,
+        navigationCoordinator,
+        lifecycleCoordinator,
+        bookingBloc: bookingBloc,
+        onTrackDriverOpened: (rideId) => resumedRideId = rideId,
+      );
+      addTearDown(() async {
+        router.dispose();
+        await sessionBloc.close();
+        await inboxCubit.close();
+        await realtimeClient.dispose();
+        navigationCoordinator.dispose();
+        await lifecycleCoordinator.dispose();
+      });
+
+      await tester.pumpWidget(
+        BlocProvider<SessionBloc>.value(
+          value: sessionBloc,
+          child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Driver accepted'), findsOneWidget);
+      expect(find.text('Kuya Ben is on the way'), findsOneWidget);
+      await tester.tap(find.text('Resume Trip'));
+      await tester.pumpAndSettle();
+
+      expect(resumedRideId, 'ride-77');
+    },
+  );
 }
 
 GoRouter _createRouter(
@@ -509,14 +800,37 @@ GoRouter _createRouter(
   String initialLocation = HomeRoutes.fullHomePath,
   Widget? activityPage,
   Widget? homePage,
+  BookingBloc? bookingBloc,
+  ValueChanged<Map<String, dynamic>>? onFindingDriverOpened,
+  ValueChanged<String?>? onTrackDriverOpened,
 }) {
   return GoRouter(
     initialLocation: initialLocation,
     routes: [
+      GoRoute(
+        name: BookingRoutes.findingDriver,
+        path: '/finding-driver-test',
+        builder: (_, state) {
+          onFindingDriverOpened?.call(
+            Map<String, dynamic>.from(state.extra! as Map),
+          );
+          return const Scaffold(body: Text('Finding Driver Screen'));
+        },
+      ),
+      GoRoute(
+        name: ActiveRideRoutes.trackDriver,
+        path: '/track-driver-test',
+        builder: (_, state) {
+          onTrackDriverOpened?.call(state.extra as String?);
+          return const Scaffold(body: Text('Track Driver Screen'));
+        },
+      ),
       StatefulShellRoute(
         builder: (context, state, navigationShell) => ShellLayout(
           inboxCubit: inboxCubit,
-          bookingStates: const Stream<BookingState>.empty(),
+          bookingBloc: bookingBloc,
+          bookingStates:
+              bookingBloc?.stream ?? const Stream<BookingState>.empty(),
           realtimeClient: realtimeClient,
           lifecycleCoordinator: lifecycleCoordinator,
           navigationCoordinator: navigationCoordinator,
@@ -600,6 +914,26 @@ class _SessionRepositoryStub implements SessionRepository {
   @override
   Future<Result<Session, Failure>> restoreSession() async {
     return const Ok(Session.authenticated(passengerId: 'passenger-1'));
+  }
+}
+
+class _MockBookingBloc extends MockBloc<BookingEvent, BookingState>
+    implements BookingBloc {}
+
+class _CountingInboxRepositoryStub implements InboxRepository {
+  int fetchCount = 0;
+
+  @override
+  Future<Result<void, Failure>> markAllPassengerNotificationsAsRead(
+    String passengerId,
+  ) async => const Ok(null);
+
+  @override
+  Future<Result<List<InboxNotification>, Failure>> fetchPassengerNotifications(
+    String passengerId,
+  ) async {
+    fetchCount++;
+    return const Ok(<InboxNotification>[]);
   }
 }
 

@@ -889,6 +889,12 @@ void main() {
           .called(1);
       expect(bloc.activeBidSessionId, isNull);
       expect(pendingCancellationId, isNull);
+      expect(bloc.hasActiveBooking, isFalse);
+      expect(bloc.hasActiveDriverSearch, isFalse);
+      expect(bloc.retryableDriverSearch?.trip.destination.name, 'Destination');
+      expect(bloc.retryableDriverSearch?.trip.fare, 100);
+      expect(bloc.retryableDriverSearch?.distanceKm, 2);
+      expect(bloc.retryableDriverSearch?.durationMinutes, 5);
     });
 
     test('clears active session and allows reset when expired session remote cancellation fails', () async {
@@ -960,6 +966,7 @@ void main() {
       bloc.add(const ResetBookingEvent());
       await resetState.timeout(const Duration(seconds: 1));
       expect(bloc.state, isA<BookingInitial>());
+      expect(bloc.retryableDriverSearch, isNull);
     });
 
     test(

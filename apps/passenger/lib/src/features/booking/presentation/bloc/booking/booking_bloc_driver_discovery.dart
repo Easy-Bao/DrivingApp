@@ -8,6 +8,7 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
     if (hasActiveDriverSearch) return;
     _nearestSearchCancelled = false;
     _isAutoAcceptingOffer = false;
+    _lastFailedDriverSearch = null;
     _totalTrips = null;
     ++_reviewsRequestGeneration;
     _activeTrip = event.trip;
@@ -16,6 +17,8 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
     _pickupName = _pickupNameForTrip(event.trip);
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
+    _distanceKm = null;
+    _durationMinutes = null;
     emit(
       FindingNearestDriver(
         trip: event.trip,
@@ -62,6 +65,7 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
         return;
       }
       if (isClosed || _nearestSearchCancelled) return;
+      _captureFailedDriverSearch();
       _activeTrip = null;
       emit(
         BookingFailure(

@@ -13,11 +13,15 @@ final class ActiveDriverSearch {
     required this.trip,
     required this.pickupLat,
     required this.pickupLng,
+    this.distanceKm,
+    this.durationMinutes,
   });
 
   final BidSessionTrip trip;
   final double pickupLat;
   final double pickupLng;
+  final double? distanceKm;
+  final double? durationMinutes;
 }
 
 final class FindingNearestDriver extends BookingState {
@@ -252,5 +256,27 @@ extension BookingStateModernApi on BookingState {
     BookingDriverMatched(matchResult: DriverMatchResult(:final driverId)) =>
       DriverId.tryParse(driverId),
     _ => null,
+  };
+
+  bool get isBlockingBooking => switch (this) {
+    FindingNearestDriver() ||
+    NearestDriverFound() ||
+    BookingSearching() ||
+    BookingOffersReceived() ||
+    BookingDriverMatched() ||
+    BookingRideRecovered() ||
+    BookingSessionRecoveryInProgress() ||
+    BookingSessionRecoveryFailure() => true,
+    BookingInitial() || BookingCanceled() || BookingFailure() => false,
+  };
+
+  bool get isNoDriverOrTimedOutFailure => switch (this) {
+    BookingFailure(
+      :final isNoDriverFound,
+      :final isRequestExpired,
+      :final isDriverDeclined,
+    ) =>
+      isNoDriverFound || isRequestExpired || isDriverDeclined,
+    _ => false,
   };
 }

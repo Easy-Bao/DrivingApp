@@ -77,4 +77,66 @@ void main() {
     expect(matched.statusMessage, 'Alex is on the way.');
     expect(matched.selectedDriverId?.normalized, 'driver-7');
   });
+
+  test(
+    'classifies blocking booking states and terminal no-driver failures',
+    () {
+      expect(const BookingInitial().isBlockingBooking, isFalse);
+      expect(const BookingCanceled().isBlockingBooking, isFalse);
+      expect(const BookingFailure('failed').isBlockingBooking, isFalse);
+      expect(const BookingSearching(isDirect: true).isBlockingBooking, isTrue);
+      expect(
+        const BookingOffersReceived(
+          offers: [],
+          isDirect: true,
+        ).isBlockingBooking,
+        isTrue,
+      );
+      expect(
+        const BookingSessionRecoveryInProgress(sessionId: 's1')
+            .isBlockingBooking,
+        isTrue,
+      );
+      expect(
+        const BookingSessionRecoveryFailure(
+          sessionId: 's1',
+          message: 'offline',
+        ).isBlockingBooking,
+        isTrue,
+      );
+      expect(
+        const BookingRideRecovered(
+          sessionId: 's1',
+          rideId: 'r1',
+        ).isBlockingBooking,
+        isTrue,
+      );
+
+      expect(
+        const BookingFailure('generic').isNoDriverOrTimedOutFailure,
+        isFalse,
+      );
+      expect(
+        const BookingFailure(
+          'none',
+          isNoDriverFound: true,
+        ).isNoDriverOrTimedOutFailure,
+        isTrue,
+      );
+      expect(
+        const BookingFailure(
+          'timeout',
+          isRequestExpired: true,
+        ).isNoDriverOrTimedOutFailure,
+        isTrue,
+      );
+      expect(
+        const BookingFailure(
+          'declined',
+          isDriverDeclined: true,
+        ).isNoDriverOrTimedOutFailure,
+        isTrue,
+      );
+    },
+  );
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
@@ -14,7 +15,9 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/track_drive
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_state.dart';
 import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
+import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
+import 'package:passenger/src/features/home/presentation/widgets/active_booking_banner.dart';
 import 'package:passenger/src/features/home/presentation/widgets/active_ride_banner.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
@@ -59,6 +62,7 @@ class ShellLayout extends StatefulWidget {
     required this.lifecycleCoordinator,
     required this.navigationCoordinator,
     required this.bookingStates,
+    this.bookingBloc,
     this.trackDriverCubit,
   });
   final StatefulNavigationShell navigationShell;
@@ -66,6 +70,7 @@ class ShellLayout extends StatefulWidget {
   final RealtimeWebSocketClient realtimeClient;
   final AppLifecycleCoordinator lifecycleCoordinator;
   final TabNavigationCoordinator navigationCoordinator;
+  final BookingBloc? bookingBloc;
   final TrackDriverCubit? trackDriverCubit;
   final Stream<BookingState> bookingStates;
 
@@ -81,6 +86,7 @@ class _ShellLayoutState extends State<ShellLayout> {
   late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
   bool _isForeground = true;
   bool _activityTabBarVisible = true;
+  BookingFailure? _dismissedBookingFailure;
 
   @override
   void initState() {
@@ -96,11 +102,8 @@ class _ShellLayoutState extends State<ShellLayout> {
     _realtimeSubscription = widget.realtimeClient.events.listen(
       _handleRealtimeEvent,
     );
-    _bookingSubscription = widget.bookingStates.listen((state) {
-      if (mounted && state is BookingFailure && state.isRequestExpired) {
-        unawaited(_loadInboxNotifications(refresh: true));
-      }
-    });
+    _bookingSubscription = (widget.bookingBloc?.stream ?? widget.bookingStates)
+        .listen(_handleBookingStateChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _forceHomeForGuest();
@@ -117,6 +120,31 @@ class _ShellLayoutState extends State<ShellLayout> {
     unawaited(_bookingSubscription.cancel());
     unawaited(widget.realtimeClient.stop());
     super.dispose();
+  }
+
+  void _handleBookingStateChanged(BookingState state) {
+    if (!mounted) return;
+    if (state is BookingFailure && state.isNoDriverOrTimedOutFailure) {
+      if (_dismissedBookingFailure != null || !_activityTabBarVisible) {
+        setState(() {
+          _dismissedBookingFailure = null;
+          _activityTabBarVisible = true;
+        });
+      }
+      unawaited(_loadInboxNotifications(refresh: true));
+      return;
+    }
+    if (state is BookingSearching ||
+        state is BookingOffersReceived ||
+        state is BookingDriverMatched ||
+        state is BookingRideRecovered) {
+      if (_dismissedBookingFailure != null || !_activityTabBarVisible) {
+        setState(() {
+          _dismissedBookingFailure = null;
+          _activityTabBarVisible = true;
+        });
+      }
+    }
   }
 
   void _onLifecycleChanged(AppLifecycleStatus status) {
@@ -319,39 +347,14 @@ class _ShellLayoutState extends State<ShellLayout> {
                               final trackCubit = _resolveTrackDriverCubit(
                                 context,
                               );
+                              final bookingBloc = _resolveBookingBloc(context);
 
-                              Widget floatingTabBar = FloatingTabBar(
+                              final floatingTabBar = _buildFloatingTabBar(
+                                context,
                                 selectedIndex: selectedIndex,
-                                onDestinationSelected: _onItemTapped,
-                                inboxCubit: widget.inboxCubit,
-                                pagePosition:
-                                    widget.navigationCoordinator.pagePosition,
+                                trackCubit: trackCubit,
+                                bookingBloc: bookingBloc,
                               );
-
-                              if (trackCubit != null) {
-                                floatingTabBar =
-                                    BlocBuilder<
-                                      TrackDriverCubit,
-                                      TrackDriverState
-                                    >(
-                                      bloc: trackCubit,
-                                      builder: (context, trackState) {
-                                        return FloatingTabBar(
-                                          selectedIndex: selectedIndex,
-                                          onDestinationSelected: _onItemTapped,
-                                          inboxCubit: widget.inboxCubit,
-                                          pagePosition: widget
-                                              .navigationCoordinator
-                                              .pagePosition,
-                                          activeRideBanner:
-                                              _buildActiveRideBannerForTabBar(
-                                                context,
-                                                trackState,
-                                              ),
-                                        );
-                                      },
-                                    );
-                              }
 
                               final visible =
                                   selectedIndex != 1 ||
@@ -416,6 +419,325 @@ class _ShellLayoutState extends State<ShellLayout> {
         return null;
       }
     }
+  }
+
+  BookingBloc? _resolveBookingBloc(BuildContext context) {
+    if (widget.bookingBloc != null) return widget.bookingBloc;
+    try {
+      return BlocProvider.of<BookingBloc>(context);
+    } catch (_) {
+      try {
+        return Modular.get<BookingBloc>();
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
+  Widget _buildFloatingTabBar(
+    BuildContext context, {
+    required int selectedIndex,
+    required TrackDriverCubit? trackCubit,
+    required BookingBloc? bookingBloc,
+  }) {
+    Widget buildBar({
+      TrackDriverState? trackState,
+      BookingState? bookingState,
+    }) {
+      final Widget? banner =
+          (trackState != null
+              ? _buildActiveRideBannerForTabBar(context, trackState)
+              : null) ??
+          (bookingBloc != null && bookingState != null
+              ? _buildActiveBookingBannerForTabBar(
+                  context,
+                  bookingBloc,
+                  bookingState,
+                )
+              : null);
+      return FloatingTabBar(
+        selectedIndex: selectedIndex,
+        onDestinationSelected: _onItemTapped,
+        inboxCubit: widget.inboxCubit,
+        pagePosition: widget.navigationCoordinator.pagePosition,
+        activeRideBanner: banner,
+      );
+    }
+
+    if (trackCubit != null && bookingBloc != null) {
+      return BlocBuilder<TrackDriverCubit, TrackDriverState>(
+        bloc: trackCubit,
+        builder: (context, trackState) =>
+            BlocBuilder<BookingBloc, BookingState>(
+              bloc: bookingBloc,
+              builder: (context, bookingState) =>
+                  buildBar(trackState: trackState, bookingState: bookingState),
+            ),
+      );
+    }
+    if (trackCubit != null) {
+      return BlocBuilder<TrackDriverCubit, TrackDriverState>(
+        bloc: trackCubit,
+        builder: (context, trackState) => buildBar(trackState: trackState),
+      );
+    }
+    if (bookingBloc != null) {
+      return BlocBuilder<BookingBloc, BookingState>(
+        bloc: bookingBloc,
+        builder: (context, bookingState) =>
+            buildBar(bookingState: bookingState),
+      );
+    }
+    return buildBar();
+  }
+
+  Widget? _buildActiveBookingBannerForTabBar(
+    BuildContext context,
+    BookingBloc bookingBloc,
+    BookingState state,
+  ) {
+    final activeSearch = bookingBloc.activeDriverSearch;
+    switch (state) {
+      case BookingInitial() || BookingCanceled():
+        return null;
+      case BookingDriverMatched(:final matchResult, :final rideId):
+        return ActiveBookingBanner(
+          title: 'Driver accepted',
+          subtitle: '${matchResult.driverName} is on the way',
+          tone: ActiveBookingBannerTone.matched,
+          icon: LucideIcons.car,
+          actionLabel: 'Resume Trip',
+          showActionArrow: true,
+          onAction: () => unawaited(_resumeMatchedRideFromShell(rideId)),
+        );
+      case BookingRideRecovered(:final rideId):
+        return ActiveBookingBanner(
+          title: 'Driver accepted',
+          subtitle: 'Resume your trip to track your driver.',
+          tone: ActiveBookingBannerTone.matched,
+          icon: LucideIcons.car,
+          actionLabel: 'Resume Trip',
+          showActionArrow: true,
+          onAction: () => unawaited(_resumeMatchedRideFromShell(rideId)),
+        );
+      case BookingSessionRecoveryInProgress(:final sessionId):
+        return ActiveBookingBanner(
+          title: sessionId.isEmpty
+              ? 'Sending ride request'
+              : 'Checking your request',
+          subtitle:
+              activeSearch?.trip.destination.name ??
+              'Reconnecting to your ride request…',
+          tone: ActiveBookingBannerTone.active,
+          isLoading: true,
+          actionLabel: activeSearch != null ? 'View' : null,
+          showActionArrow: activeSearch != null,
+          onAction: activeSearch == null
+              ? null
+              : () => _openFindingDriverFromShell(activeSearch),
+        );
+      case BookingSessionRecoveryFailure(:final message):
+        return ActiveBookingBanner(
+          title: 'Request needs attention',
+          subtitle: message,
+          tone: ActiveBookingBannerTone.error,
+          icon: LucideIcons.circle_alert,
+          actionLabel: 'Retry',
+          onAction: () => bookingBloc.add(const RestoreActiveBookingEvent()),
+        );
+      case BookingSearching(
+        :final isDirect,
+        :final targetDriver,
+        :final sessionId,
+      ):
+        final destination = activeSearch?.trip.destination.name;
+        final String title = sessionId == null
+            ? 'Sending ride request'
+            : isDirect
+            ? 'Waiting for driver'
+            : 'Searching for a driver';
+        final String subtitle = _waitingSubtitle(
+          driverName: targetDriver?.displayName,
+          destinationName: destination,
+          fallback: sessionId == null
+              ? 'Confirming your trip request…'
+              : 'Waiting for a driver to respond',
+        );
+        return ActiveBookingBanner(
+          title: title,
+          subtitle: subtitle,
+          tone: ActiveBookingBannerTone.active,
+          isLoading: true,
+          actionLabel: activeSearch != null ? 'View' : null,
+          showActionArrow: activeSearch != null,
+          onAction: activeSearch == null
+              ? null
+              : () => _openFindingDriverFromShell(activeSearch),
+        );
+      case BookingOffersReceived(
+        :final offers,
+        :final isDirect,
+        :final targetDriver,
+      ):
+        final destination = activeSearch?.trip.destination.name;
+        final String title = offers.isNotEmpty
+            ? '${offers.length} driver ${offers.length == 1 ? 'offer' : 'offers'}'
+            : isDirect
+            ? 'Waiting for driver'
+            : 'Searching for a driver';
+        final String subtitle = _waitingSubtitle(
+          driverName: targetDriver?.displayName,
+          destinationName: destination,
+          fallback: offers.isNotEmpty
+              ? 'Tap to review available offers'
+              : 'Waiting for a driver to accept',
+        );
+        return ActiveBookingBanner(
+          title: title,
+          subtitle: subtitle,
+          tone: ActiveBookingBannerTone.active,
+          isLoading: offers.isEmpty,
+          icon: LucideIcons.car,
+          actionLabel: activeSearch != null ? 'View' : null,
+          showActionArrow: activeSearch != null,
+          onAction: activeSearch == null
+              ? null
+              : () => _openFindingDriverFromShell(activeSearch),
+        );
+      case FindingNearestDriver(:final trip):
+        return ActiveBookingBanner(
+          title: 'Looking for drivers',
+          subtitle: 'To ${trip.destination.name}',
+          tone: ActiveBookingBannerTone.active,
+          isLoading: true,
+          actionLabel: activeSearch != null ? 'View' : null,
+          showActionArrow: activeSearch != null,
+          onAction: activeSearch == null
+              ? null
+              : () => _openFindingDriverFromShell(activeSearch),
+        );
+      case NearestDriverFound(:final driver, :final trip):
+        return ActiveBookingBanner(
+          title: 'Nearby drivers ready',
+          subtitle: '${driver.displayName} • ${trip.destination.name}',
+          tone: ActiveBookingBannerTone.active,
+          icon: LucideIcons.car,
+          actionLabel: activeSearch != null ? 'View' : null,
+          showActionArrow: activeSearch != null,
+          onAction: activeSearch == null
+              ? null
+              : () => _openFindingDriverFromShell(activeSearch),
+        );
+      case BookingFailure():
+        if (!state.isNoDriverOrTimedOutFailure ||
+            identical(_dismissedBookingFailure, state)) {
+          return null;
+        }
+        final retrySearch = bookingBloc.retryableDriverSearch;
+        final destination = retrySearch?.trip.destination.name;
+        final String title;
+        final String subtitle;
+        final IconData icon;
+        final ActiveBookingBannerTone tone;
+        if (state.isNoDriverFound) {
+          title = 'No driver found';
+          subtitle = destination == null
+              ? 'No drivers available nearby. Try again.'
+              : 'No drivers available for $destination.';
+          icon = LucideIcons.search_x;
+          tone = ActiveBookingBannerTone.error;
+        } else if (state.isRequestExpired) {
+          title = 'Driver timed out';
+          subtitle = destination == null
+              ? 'No driver accepted your request in time.'
+              : 'No driver responded for $destination.';
+          icon = LucideIcons.timer;
+          tone = ActiveBookingBannerTone.warning;
+        } else {
+          title = 'Driver declined';
+          subtitle = state.message;
+          icon = LucideIcons.circle_alert;
+          tone = ActiveBookingBannerTone.warning;
+        }
+        return ActiveBookingBanner(
+          title: title,
+          subtitle: subtitle,
+          tone: tone,
+          icon: icon,
+          announceLiveRegion: true,
+          actionLabel: retrySearch != null ? 'Retry' : null,
+          onAction: retrySearch == null
+              ? null
+              : () => _openFindingDriverFromShell(
+                  retrySearch,
+                  bookingBloc: bookingBloc,
+                  resetFirst: true,
+                ),
+          onDismiss: () => _dismissBookingNotice(bookingBloc, state),
+        );
+    }
+  }
+
+  String _waitingSubtitle({
+    String? driverName,
+    String? destinationName,
+    required String fallback,
+  }) {
+    final driver = driverName?.trim() ?? '';
+    final destination = destinationName?.trim() ?? '';
+    if (driver.isNotEmpty && destination.isNotEmpty) {
+      return '$driver • $destination';
+    }
+    if (destination.isNotEmpty) return 'To $destination';
+    if (driver.isNotEmpty) return 'Waiting for $driver';
+    return fallback;
+  }
+
+  void _openFindingDriverFromShell(
+    ActiveDriverSearch search, {
+    BookingBloc? bookingBloc,
+    bool resetFirst = false,
+  }) {
+    if (!mounted) return;
+    if (resetFirst) {
+      bookingBloc?.add(const ResetBookingEvent());
+    }
+    final trip = search.trip;
+    unawaited(
+      context.pushNamed(
+        BookingRoutes.findingDriver,
+        extra: {
+          'fare': trip.fare,
+          'destination': trip.destination,
+          'distance': trip.distance,
+          'duration': trip.duration,
+          if (search.distanceKm != null) 'distanceKm': search.distanceKm,
+          if (search.durationMinutes != null)
+            'durationMinutes': search.durationMinutes,
+          'pickupAddress': trip.pickupAddress,
+          'pickupLat': search.pickupLat,
+          'pickupLng': search.pickupLng,
+          'passengerNote': trip.passengerNote,
+        },
+      ),
+    );
+  }
+
+  Future<void> _resumeMatchedRideFromShell(String? rideId) async {
+    if (!mounted) return;
+    final trimmed = rideId?.trim() ?? '';
+    if (trimmed.isNotEmpty) {
+      unawaited(
+        context.pushNamed(ActiveRideRoutes.trackDriver, extra: trimmed),
+      );
+      return;
+    }
+    await _resumeFromShell();
+  }
+
+  void _dismissBookingNotice(BookingBloc bookingBloc, BookingFailure failure) {
+    setState(() => _dismissedBookingFailure = failure);
+    bookingBloc.add(const ResetBookingEvent());
   }
 
   Widget? _buildActiveRideBannerForTabBar(

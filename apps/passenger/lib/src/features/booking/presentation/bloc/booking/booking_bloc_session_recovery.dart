@@ -77,6 +77,7 @@ extension _BookingBlocSessionRecovery on BookingBloc {
 
       _restoreTripContext(snapshot!);
       if (snapshot!.isExpired) {
+        _captureFailedDriverSearch();
         await _clearRecoveredRequest(sessionId);
         emit(
           BookingFailure(
@@ -90,6 +91,7 @@ extension _BookingBlocSessionRecovery on BookingBloc {
       }
 
       if (snapshot!.isDeclined) {
+        _captureFailedDriverSearch();
         await _clearRecoveredRequest(sessionId);
         emit(
           const BookingFailure(
@@ -101,6 +103,7 @@ extension _BookingBlocSessionRecovery on BookingBloc {
       }
 
       if (snapshot!.isCancelled) {
+        _lastFailedDriverSearch = null;
         await _clearRecoveredRequest(sessionId);
         emit(const BookingCanceled());
         return;
@@ -163,6 +166,13 @@ extension _BookingBlocSessionRecovery on BookingBloc {
     await _secureSessionService.deletePendingBidSessionCancellationId();
     _cleanupSubscriptions();
     _activeTrip = null;
+    _pickupLat = null;
+    _pickupLng = null;
+    _pickupName = null;
+    _dropoffLat = null;
+    _dropoffLng = null;
+    _distanceKm = null;
+    _durationMinutes = null;
   }
 
   Future<void> _recoverAcceptedSession(
@@ -187,6 +197,9 @@ extension _BookingBlocSessionRecovery on BookingBloc {
       if (isClosed || _activeBidSessionId != snapshot.id) return;
       _activeBidSessionId = null;
       _activeTrip = null;
+      _lastFailedDriverSearch = null;
+      _distanceKm = null;
+      _durationMinutes = null;
       _cleanupSubscriptions();
       emit(
         BookingRideRecovered(
@@ -264,5 +277,7 @@ extension _BookingBlocSessionRecovery on BookingBloc {
     _pickupName = pickupName;
     _dropoffLat = dropoffLatitude;
     _dropoffLng = dropoffLongitude;
+    _distanceKm = distanceKm;
+    _durationMinutes = durationMinutes;
   }
 }

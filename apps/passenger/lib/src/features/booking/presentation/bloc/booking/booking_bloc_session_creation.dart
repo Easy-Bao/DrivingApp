@@ -19,10 +19,13 @@ extension _BookingBlocSessionCreation on BookingBloc {
     _isCreatingBidSession = true;
     _cancelPendingBidSessionCreation = false;
     _isAutoAcceptingOffer = false;
+    _lastFailedDriverSearch = null;
     _setTripContext(
       event.trip,
       pickupLat: event.pickupLat,
       pickupLng: event.pickupLng,
+      distanceKm: event.distanceKm,
+      durationMinutes: event.durationMinutes,
     );
     emit(
       BookingSearching(
@@ -52,10 +55,13 @@ extension _BookingBlocSessionCreation on BookingBloc {
     if (hasActiveBooking || _isCreatingBidSession) return;
     _isCreatingBidSession = true;
     _cancelPendingBidSessionCreation = false;
+    _lastFailedDriverSearch = null;
     _setTripContext(
       event.trip,
       pickupLat: event.pickupLat,
       pickupLng: event.pickupLng,
+      distanceKm: event.distanceKm,
+      durationMinutes: event.durationMinutes,
     );
     emit(const BookingSearching(isDirect: false));
     await _requirePassengerAndCreate(
@@ -250,6 +256,11 @@ extension _BookingBlocSessionCreation on BookingBloc {
     Emitter<BookingState> emit, {
     bool expired = false,
   }) async {
+    if (expired) {
+      _captureFailedDriverSearch();
+    } else {
+      _lastFailedDriverSearch = null;
+    }
     final BookingState terminalState = expired
         ? BookingFailure(
             'This request expired before a driver accepted it.',
@@ -323,6 +334,8 @@ extension _BookingBlocSessionCreation on BookingBloc {
     _pickupName = null;
     _dropoffLat = null;
     _dropoffLng = null;
+    _distanceKm = null;
+    _durationMinutes = null;
   }
 
   String _newIdempotencyKey() => List<String>.generate(
@@ -334,6 +347,8 @@ extension _BookingBlocSessionCreation on BookingBloc {
     BidSessionTrip trip, {
     required double pickupLat,
     required double pickupLng,
+    double? distanceKm,
+    double? durationMinutes,
   }) {
     _activeTrip = trip;
     _pickupLat = pickupLat;
@@ -341,6 +356,8 @@ extension _BookingBlocSessionCreation on BookingBloc {
     _pickupName = _pickupNameForTrip(trip);
     _dropoffLat = trip.destination.latitude;
     _dropoffLng = trip.destination.longitude;
+    _distanceKm = distanceKm;
+    _durationMinutes = durationMinutes;
   }
 
   void _restoreTripContextFromRequest(BookingSessionRequest request) {
@@ -364,6 +381,8 @@ extension _BookingBlocSessionCreation on BookingBloc {
     _pickupName = request.pickupName;
     _dropoffLat = request.dropoffLatitude;
     _dropoffLng = request.dropoffLongitude;
+    _distanceKm = request.distanceKm;
+    _durationMinutes = request.durationMinutes;
   }
 
   BookingSessionRequest _bookingRequest({

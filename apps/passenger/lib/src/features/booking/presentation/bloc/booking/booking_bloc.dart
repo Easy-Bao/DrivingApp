@@ -55,12 +55,15 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final Random _idempotencyRandom = Random.secure();
   String? _activeBidSessionId;
   BidSessionTrip? _activeTrip;
+  ActiveDriverSearch? _lastFailedDriverSearch;
 
   double? _pickupLat;
   double? _pickupLng;
   String? _pickupName;
   double? _dropoffLat;
   double? _dropoffLng;
+  double? _distanceKm;
+  double? _durationMinutes;
 
   BookingBloc({
     required this._driverRepository,
@@ -135,15 +138,37 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       trip: trip,
       pickupLat: pickupLat,
       pickupLng: pickupLng,
+      distanceKm: _distanceKm,
+      durationMinutes: _durationMinutes,
     );
+  }
+
+  ActiveDriverSearch? get retryableDriverSearch {
+    if (!state.isNoDriverOrTimedOutFailure) return null;
+    return _lastFailedDriverSearch;
   }
 
   bool get hasActiveBooking =>
       state is BookingSearching ||
       state is BookingOffersReceived ||
       state is BookingDriverMatched ||
+      state is BookingRideRecovered ||
       state is BookingSessionRecoveryInProgress ||
       state is BookingSessionRecoveryFailure;
+
+  void _captureFailedDriverSearch() {
+    final trip = _activeTrip;
+    final pickupLat = _pickupLat;
+    final pickupLng = _pickupLng;
+    if (trip == null || pickupLat == null || pickupLng == null) return;
+    _lastFailedDriverSearch = ActiveDriverSearch(
+      trip: trip,
+      pickupLat: pickupLat,
+      pickupLng: pickupLng,
+      distanceKm: _distanceKm,
+      durationMinutes: _durationMinutes,
+    );
+  }
 
   String _pickupNameForTrip(BidSessionTrip trip) {
     final pickupName = trip.pickupAddress?.trim();

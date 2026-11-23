@@ -170,6 +170,7 @@ extension _BookingBlocBidSession on BookingBloc {
         ) => targetDriver?.displayName ?? 'The selected driver',
         _ => 'The selected driver',
       };
+      _captureFailedDriverSearch();
       await _clearPendingBooking(session.id);
       emit(
         BookingFailure(
@@ -180,6 +181,7 @@ extension _BookingBlocBidSession on BookingBloc {
       return;
     }
     if (session?.isCancelled == true) {
+      _lastFailedDriverSearch = null;
       await _clearPendingBooking(session!.id);
       emit(const BookingCanceled());
       return;
@@ -306,6 +308,7 @@ extension _BookingBlocBidSession on BookingBloc {
     _nearestSearchCancelled = true;
     _cleanupSubscriptions();
     _activeTrip = null;
+    _lastFailedDriverSearch = null;
     _activeBidSessionId = null;
     unawaited(_secureSessionService.deleteActiveBidSessionId());
 
@@ -349,6 +352,9 @@ extension _BookingBlocBidSession on BookingBloc {
       _activeBidSessionId = null;
       _cleanupSubscriptions();
       _activeTrip = null;
+      _lastFailedDriverSearch = null;
+      _distanceKm = null;
+      _durationMinutes = null;
       final fareAmount = acceptedBooking?.fareAmount;
       final confirmedFare = (fareAmount != null && fareAmount > 0)
           ? fareAmount / 100
@@ -434,8 +440,11 @@ extension _BookingBlocBidSession on BookingBloc {
       _cleanupSubscriptions();
       await _stopBackgroundTelemetry();
       _activeTrip = null;
+      _lastFailedDriverSearch = null;
       _pickupLat = null;
       _pickupLng = null;
+      _distanceKm = null;
+      _durationMinutes = null;
       emit(const BookingCanceled());
       return;
     }
@@ -472,11 +481,14 @@ extension _BookingBlocBidSession on BookingBloc {
     _nearestSearchCancelled = true;
     _cleanupSubscriptions();
     _activeTrip = null;
+    _lastFailedDriverSearch = null;
     _pickupLat = null;
     _pickupLng = null;
     _pickupName = null;
     _dropoffLat = null;
     _dropoffLng = null;
+    _distanceKm = null;
+    _durationMinutes = null;
     _totalTrips = null;
     ++_reviewsRequestGeneration;
     _isAutoAcceptingOffer = false;
