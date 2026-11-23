@@ -50,7 +50,10 @@ class AccountPage extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const AppPageHeader(title: 'Account'),
+                          const AppPageHeader(
+                            title: 'Account',
+                            subtitle: 'Profile, places, and preferences',
+                          ),
                           const SizedBox(height: AppSpacing.xxl),
                           _buildProfileSummary(context, visibleState),
                           const SizedBox(height: AppSpacing.xxl),

@@ -397,10 +397,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeader() {
-    return const AppPageHeader(
-      title: 'EasyRide',
-      subtitle: 'Ready to ride today?',
-    );
+    return const AppPageHeader(title: 'EasyRide', subtitle: 'Where to today?');
   }
 
   Widget _buildRecentRideHistoryHeader() {

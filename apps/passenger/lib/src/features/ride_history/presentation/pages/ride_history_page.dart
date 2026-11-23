@@ -19,7 +19,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 class RideHistoryPage extends StatefulWidget {
   const RideHistoryPage({
     this.title = 'Activity',
-    this.subtitle = 'Tap a ride to see details',
+    this.subtitle = 'Your trips and receipts',
     this.showBackButton = false,
     this.showHeaderSubtitle = true,
     this.showSummary = true,
@@ -369,7 +369,7 @@ class _RideHistoryLoadingView extends StatelessWidget {
   const _RideHistoryLoadingView({
     required this.itemCount,
     this.title = 'Activity',
-    this.subtitle = 'Tap a ride to see details',
+    this.subtitle = 'Your trips and receipts',
     this.showBackButton = false,
     this.showSubtitle = true,
     this.showSummary = true,

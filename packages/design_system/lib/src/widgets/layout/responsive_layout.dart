@@ -42,7 +42,16 @@ class const AppPageHeader({
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: titleStyle),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(child: Text(title, style: titleStyle)),
+                    if (trailing != null) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      trailing!,
+                    ],
+                  ],
+                ),
                 if (subtitle != null) ...[
                   const SizedBox(height: AppSpacing.sm / 2),
                   Text(
@@ -55,10 +64,6 @@ class const AppPageHeader({
               ],
             ),
           ),
-          if (trailing != null) ...[
-            const SizedBox(width: AppSpacing.sm),
-            trailing!,
-          ],
         ],
       ),
     );

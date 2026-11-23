@@ -21,7 +21,7 @@ class RideHistoryListView extends StatefulWidget {
     this.weeklyFare,
     this.weeklyRideCount,
     this.headerTitle = 'Activity',
-    this.headerSubtitle = 'Tap a ride to see details',
+    this.headerSubtitle = 'Your trips and receipts',
     this.showBackButton = false,
     this.showHeaderSubtitle = true,
     this.showSummary = true,
