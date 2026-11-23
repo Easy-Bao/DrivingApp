@@ -56,6 +56,22 @@ void main() {
     expect(signUpPressed, isTrue);
     expect(signInPressed, isTrue);
     expect(helpPressed, isTrue);
+
+    for (final label in const ['Sign up', 'Sign in']) {
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, label),
+      );
+      expect(button.style?.enableFeedback, isFalse);
+      expect(button.style?.splashFactory, NoSplash.splashFactory);
+      expect(
+        button.style?.overlayColor?.resolve({WidgetState.pressed}),
+        Colors.transparent,
+      );
+      expect(
+        button.style?.overlayColor?.resolve({WidgetState.focused}),
+        isNot(Colors.transparent),
+      );
+    }
   });
   testWidgets(
     'aligns equal guest buttons with a compact help row and safe area',

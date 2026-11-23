@@ -13,74 +13,88 @@ class const RecentRideHistoryPreview({
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     return ListView.separated(
       padding: const EdgeInsets.only(bottom: 20),
       physics: const BouncingScrollPhysics(),
       itemCount: rides.length,
-      separatorBuilder: (_, _) =>
-          Divider(height: 1, color: context.colorScheme.outlineVariant),
+      separatorBuilder: (_, _) => Divider(
+        height: 1,
+        indent: 54,
+        color: colors.outlineVariant.withValues(alpha: 0.7),
+      ),
       itemBuilder: (context, index) {
         final ride = rides[index];
         final pickup = ride.pickup.trim();
         final subtitle = pickup.isEmpty ? ride.displayDriverName : pickup;
 
-        return InkWell(
-          onTap: () => onRideTap(ride),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: context.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+        return Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: () => onRideTap(ride),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            enableFeedback: false,
+            splashFactory: NoSplash.splashFactory,
+            overlayColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.focused)
+                  ? colors.primary.withValues(alpha: 0.08)
+                  : Colors.transparent,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerLowest,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: colors.outlineVariant),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      LucideIcons.map_pin,
+                      color: colors.onSurface,
+                      size: 17,
+                    ),
                   ),
-                  child: Icon(
-                    LucideIcons.map_pin,
-                    color: context.colorScheme.onSurface,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        ride.destination.isEmpty
-                            ? 'Destination unavailable'
-                            : ride.destination,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: context.colorScheme.onSurface,
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ride.destination.isEmpty
+                              ? 'Destination unavailable'
+                              : ride.destination,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.textStyles.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colors.onSurface,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: context.colorScheme.onSurfaceVariant,
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  LucideIcons.chevron_right,
-                  size: 16,
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ],
+                  const SizedBox(width: AppSpacing.sm),
+                  Icon(
+                    LucideIcons.chevron_right,
+                    size: 16,
+                    color: colors.onSurfaceVariant,
+                  ),
+                ],
+              ),
             ),
           ),
         );

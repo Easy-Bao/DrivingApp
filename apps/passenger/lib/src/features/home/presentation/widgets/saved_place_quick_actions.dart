@@ -45,6 +45,13 @@ class SavedPlaceQuickActions extends StatelessWidget {
                 type: MaterialType.transparency,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(AppRadius.pill),
+                  enableFeedback: false,
+                  splashFactory: NoSplash.splashFactory,
+                  overlayColor: WidgetStateProperty.resolveWith(
+                    (states) => states.contains(WidgetState.focused)
+                        ? context.colorScheme.primary.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                  ),
                   onTap: () => onPlaceTap(orderedPlaces[index]),
                   onLongPress: onPlaceLongPress == null
                       ? null
@@ -56,7 +63,7 @@ class SavedPlaceQuickActions extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.sm),
           ],
           _AddPlaceChip(onTap: onAddPlace),
         ],
@@ -74,20 +81,22 @@ class _SavedPlaceChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     final showActiveStyle = isActive && place.hasLocation;
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
       constraints: const BoxConstraints(minHeight: AppSize.minimumTouchTarget),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 10,
+      ),
       decoration: BoxDecoration(
-        color: showActiveStyle
-            ? context.colorScheme.primary
-            : context.colorScheme.surface,
+        color: showActiveStyle ? colors.primary : colors.surface,
         border: Border.all(
-          color: showActiveStyle
-              ? context.colorScheme.primary
-              : context.colorScheme.outlineVariant,
-          width: showActiveStyle ? 1.5 : 1.0,
+          color: showActiveStyle ? colors.primary : colors.outlineVariant,
         ),
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
@@ -96,24 +105,19 @@ class _SavedPlaceChip extends StatelessWidget {
         children: [
           Icon(
             savedPlaceIconFromName(place.iconName),
-            size: 16,
-            color: showActiveStyle
-                ? context.colorScheme.onPrimary
-                : context.colorScheme.onSurface,
+            size: 15,
+            color: showActiveStyle ? colors.onPrimary : colors.onSurface,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: _maximumLabelWidth),
             child: Text(
               place.label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: showActiveStyle
-                    ? context.colorScheme.onPrimary
-                    : context.colorScheme.onSurface,
+              style: context.textStyles.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: showActiveStyle ? colors.onPrimary : colors.onSurface,
               ),
             ),
           ),
@@ -129,6 +133,7 @@ class _AddPlaceChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     return Semantics(
       button: true,
       label: 'Add saved place',
@@ -136,17 +141,25 @@ class _AddPlaceChip extends StatelessWidget {
         type: MaterialType.transparency,
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.pill),
+          enableFeedback: false,
+          splashFactory: NoSplash.splashFactory,
+          overlayColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.focused)
+                ? colors.primary.withValues(alpha: 0.12)
+                : Colors.transparent,
+          ),
           onTap: onTap,
           child: Container(
             constraints: const BoxConstraints(
               minHeight: AppSize.minimumTouchTarget,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: 10,
+            ),
             decoration: BoxDecoration(
-              color: context.colorScheme.surface.withValues(alpha: 0),
-              border: Border.all(
-                color: context.colorScheme.onSurface.withValues(alpha: 0.25),
-              ),
+              color: Colors.transparent,
+              border: Border.all(color: colors.outlineVariant),
               borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Row(
@@ -154,16 +167,15 @@ class _AddPlaceChip extends StatelessWidget {
               children: [
                 Icon(
                   LucideIcons.plus,
-                  size: 16,
-                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                  size: 15,
+                  color: colors.onSurfaceVariant,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   'Add place',
-                  style: TextStyle(
-                    fontSize: 14,
+                  style: context.textStyles.labelLarge?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                    color: colors.onSurfaceVariant,
                   ),
                 ),
               ],

@@ -18,62 +18,106 @@ class const PendingBookingBanner({
   Widget build(BuildContext context) {
     if (!isAuthenticated) return const SizedBox.shrink();
 
+    final colors = context.colorScheme;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 14, 10, 14),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.xs,
+        AppSpacing.md,
+      ),
       decoration: BoxDecoration(
-        color: context.colorScheme.secondaryContainer.withValues(alpha: 0.35),
+        color: colors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colorScheme.secondaryContainer),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Row(
         children: [
-          Icon(
-            LucideIcons.route,
-            size: 20,
-            color: context.colorScheme.onSurface,
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerLowest,
+              shape: BoxShape.circle,
+              border: Border.all(color: colors.outlineVariant),
+            ),
+            alignment: Alignment.center,
+            child: Icon(LucideIcons.route, size: 17, color: colors.onSurface),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Continue your booking',
-                  style: TextStyle(
-                    color: context.colorScheme.onSurface,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
+                  style: context.textStyles.titleSmall?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   destinationName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: context.colorScheme.onSurface.withValues(alpha: 0.7),
-                    fontSize: 12,
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
                   ),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: AppSpacing.sm),
           FilledButton(
             onPressed: onContinue,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(48, AppSize.minimumTouchTarget),
-              textStyle: const TextStyle(fontWeight: FontWeight.w700),
-            ),
+            style:
+                FilledButton.styleFrom(
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
+                  elevation: 0,
+                  enableFeedback: false,
+                  splashFactory: NoSplash.splashFactory,
+                  minimumSize: const Size(48, AppSize.minimumTouchTarget),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  textStyle: context.textStyles.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ).copyWith(
+                  overlayColor: WidgetStateProperty.resolveWith(
+                    (states) => states.contains(WidgetState.focused)
+                        ? colors.onPrimary.withValues(alpha: 0.16)
+                        : Colors.transparent,
+                  ),
+                ),
             child: const Text('Continue'),
           ),
           IconButton(
             tooltip: 'Dismiss booking draft',
             onPressed: onDismiss,
+            style:
+                IconButton.styleFrom(
+                  foregroundColor: colors.onSurfaceVariant,
+                  enableFeedback: false,
+                  splashFactory: NoSplash.splashFactory,
+                ).copyWith(
+                  overlayColor: WidgetStateProperty.resolveWith(
+                    (states) => states.contains(WidgetState.focused)
+                        ? colors.primary.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                  ),
+                ),
             constraints: const BoxConstraints(
               minWidth: AppSize.minimumTouchTarget,
               minHeight: AppSize.minimumTouchTarget,
             ),
-            icon: const Icon(LucideIcons.x, size: 18),
+            icon: const Icon(LucideIcons.x, size: 17),
           ),
         ],
       ),

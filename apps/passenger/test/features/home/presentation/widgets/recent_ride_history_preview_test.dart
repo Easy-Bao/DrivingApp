@@ -119,5 +119,17 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Charleston Road'), findsOneWidget);
+
+    final rowInk = tester.widget<InkWell>(find.byType(InkWell).first);
+    expect(rowInk.enableFeedback, isFalse);
+    expect(rowInk.splashFactory, NoSplash.splashFactory);
+    expect(
+      rowInk.overlayColor?.resolve({WidgetState.pressed}),
+      Colors.transparent,
+    );
+    expect(
+      rowInk.overlayColor?.resolve({WidgetState.focused}),
+      isNot(Colors.transparent),
+    );
   });
 }

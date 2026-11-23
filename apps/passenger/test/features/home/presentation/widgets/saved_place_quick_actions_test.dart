@@ -62,6 +62,19 @@ void main() {
 
     await tester.tap(find.text('Home'));
     expect(tappedPlace?.label, 'Home');
+
+    for (final ink in tester.widgetList<InkWell>(find.byType(InkWell))) {
+      expect(ink.enableFeedback, isFalse);
+      expect(ink.splashFactory, NoSplash.splashFactory);
+      expect(
+        ink.overlayColor?.resolve({WidgetState.pressed}),
+        Colors.transparent,
+      );
+      expect(
+        ink.overlayColor?.resolve({WidgetState.focused}),
+        isNot(Colors.transparent),
+      );
+    }
   });
 
   testWidgets('moves a newly selected default to the first chip', (

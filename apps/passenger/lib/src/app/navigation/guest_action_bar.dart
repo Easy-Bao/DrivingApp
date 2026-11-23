@@ -19,11 +19,12 @@ class const GuestActionBar({
         MediaQuery.sizeOf(context).width < 300 ||
         MediaQuery.textScalerOf(context).scale(14) > 21;
 
+    final colors = context.colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: context.colorScheme.surface,
+        color: colors.surfaceContainerLowest,
         border: Border(
-          top: BorderSide(color: context.colorScheme.outlineVariant),
+          top: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.85)),
         ),
       ),
       child: SafeArea(
@@ -62,18 +63,17 @@ class const GuestActionBar({
                   onPressed: onHelp,
                   style:
                       TextButton.styleFrom(
-                        foregroundColor: context.colorScheme.onSurface,
+                        foregroundColor: colors.onSurface,
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.sm,
                         ),
                         minimumSize: const Size(48, 48),
+                        enableFeedback: false,
                         splashFactory: NoSplash.splashFactory,
                       ).copyWith(
                         overlayColor: WidgetStateProperty.resolveWith(
                           (states) => states.contains(WidgetState.focused)
-                              ? context.colorScheme.primary.withValues(
-                                  alpha: 0.12,
-                                )
+                              ? colors.primary.withValues(alpha: 0.12)
                               : Colors.transparent,
                         ),
                       ),
@@ -84,7 +84,7 @@ class const GuestActionBar({
                         TextSpan(
                           text: 'Visit our Help Centre',
                           style: TextStyle(
-                            color: context.colorScheme.onSurface,
+                            color: colors.onSurface,
                             fontWeight: FontWeight.w600,
                             decoration: TextDecoration.underline,
                           ),
@@ -93,7 +93,7 @@ class const GuestActionBar({
                     ),
                     textAlign: TextAlign.center,
                     style: context.textStyles.bodySmall?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
+                      color: colors.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -110,24 +110,41 @@ class const GuestActionBar({
     String label,
     VoidCallback onPressed, {
     required bool primary,
-  }) => FilledButton(
-    onPressed: onPressed,
-    style: FilledButton.styleFrom(
-      minimumSize: const Size.fromHeight(AppSize.minimumTouchTarget),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.md,
-      ),
-      backgroundColor: primary
-          ? context.colorScheme.primary
-          : context.colorScheme.secondaryContainer,
-      foregroundColor: primary
-          ? context.colorScheme.onPrimary
-          : context.colorScheme.onSecondaryContainer,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-    ),
-    child: Text(label),
-  );
+  }) {
+    final colors = context.colorScheme;
+    return FilledButton(
+      onPressed: onPressed,
+      style:
+          FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(AppSize.minimumTouchTarget),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
+            elevation: 0,
+            enableFeedback: false,
+            splashFactory: NoSplash.splashFactory,
+            backgroundColor: primary
+                ? colors.primary
+                : colors.surfaceContainerLowest,
+            foregroundColor: primary ? colors.onPrimary : colors.onSurface,
+            side: primary ? null : BorderSide(color: colors.outlineVariant),
+            textStyle: context.textStyles.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+          ).copyWith(
+            overlayColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.focused)
+                  ? (primary ? colors.onPrimary : colors.primary).withValues(
+                      alpha: primary ? 0.16 : 0.12,
+                    )
+                  : Colors.transparent,
+            ),
+          ),
+      child: Text(label),
+    );
+  }
 }

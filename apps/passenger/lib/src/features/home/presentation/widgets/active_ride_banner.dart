@@ -23,13 +23,20 @@ class const ActiveRideBanner({
       type: MaterialType.transparency,
       child: InkWell(
         key: const Key('active-ride-banner'),
+        enableFeedback: false,
+        splashFactory: NoSplash.splashFactory,
+        overlayColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.focused)
+              ? colors.primary.withValues(alpha: 0.08)
+              : Colors.transparent,
+        ),
         onTap: onResume,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           child: Row(
             children: [
               _VehicleAvatarBadge(colorScheme: colors),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,9 +51,9 @@ class const ActiveRideBanner({
                         Expanded(
                           child: Text(
                             statusText,
-                            style: context.textStyles.labelMedium?.copyWith(
+                            style: context.textStyles.titleSmall?.copyWith(
                               color: colors.onSurface,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -57,9 +64,8 @@ class const ActiveRideBanner({
                     const SizedBox(height: 2),
                     Text(
                       '$driverName$vehicleSummary',
-                      style: context.textStyles.labelSmall?.copyWith(
+                      style: context.textStyles.bodySmall?.copyWith(
                         color: colors.onSurfaceVariant,
-                        fontSize: 12,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -67,7 +73,7 @@ class const ActiveRideBanner({
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               _ResumeTripButton(onResume: onResume),
             ],
           ),
@@ -87,11 +93,12 @@ class const _VehicleAvatarBadge({required this.colorScheme})
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        color: colorScheme.primaryContainer,
+        color: colorScheme.surfaceContainerLowest,
         shape: BoxShape.circle,
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       alignment: Alignment.center,
-      child: Icon(LucideIcons.car, color: colorScheme.primary, size: 18),
+      child: Icon(LucideIcons.car, color: colorScheme.onSurface, size: 17),
     );
   }
 }
@@ -104,17 +111,7 @@ class const _StatusIndicatorDot({required this.color}) extends StatelessWidget {
     return Container(
       width: 7,
       height: 7,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.35),
-            blurRadius: 4,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }
@@ -130,22 +127,32 @@ class const _ResumeTripButton({required this.onResume})
       onPressed: onResume,
       icon: const Icon(LucideIcons.arrow_right, size: 14),
       label: const Text('Resume Trip'),
-      style: FilledButton.styleFrom(
-        backgroundColor: colors.primary,
-        foregroundColor: colors.onPrimary,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: 6,
-        ),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: context.textStyles.labelSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-        ),
-      ),
+      style:
+          FilledButton.styleFrom(
+            backgroundColor: colors.primary,
+            foregroundColor: colors.onPrimary,
+            elevation: 0,
+            enableFeedback: false,
+            splashFactory: NoSplash.splashFactory,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: 8,
+            ),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            textStyle: context.textStyles.labelSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+          ).copyWith(
+            overlayColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.focused)
+                  ? colors.onPrimary.withValues(alpha: 0.16)
+                  : Colors.transparent,
+            ),
+          ),
     );
   }
 }

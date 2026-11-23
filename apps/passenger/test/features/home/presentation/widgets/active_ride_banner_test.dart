@@ -27,5 +27,19 @@ void main() {
 
     await tester.tap(find.text('Resume Trip'));
     expect(resumeCount, 1);
+
+    final bannerInk = tester.widget<InkWell>(
+      find.byKey(const Key('active-ride-banner')),
+    );
+    expect(bannerInk.enableFeedback, isFalse);
+    expect(bannerInk.splashFactory, NoSplash.splashFactory);
+    expect(
+      bannerInk.overlayColor?.resolve({WidgetState.pressed}),
+      Colors.transparent,
+    );
+    expect(
+      bannerInk.overlayColor?.resolve({WidgetState.focused}),
+      isNot(Colors.transparent),
+    );
   });
 }

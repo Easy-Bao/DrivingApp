@@ -124,6 +124,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ],
       child: Scaffold(
+        backgroundColor: context.canvasColor,
         body: Column(
           children: [
             Expanded(
@@ -137,21 +138,24 @@ class _HomePageState extends State<HomePage> {
                     child: Stack(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppLayout.pagePadding,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: MediaQuery.sizeOf(context).width < 360
+                                ? AppLayout.pagePadding
+                                : AppLayout.pagePaddingWide,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _buildHeader(),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: AppSpacing.xl),
                               _buildSearchBar(),
                               _buildPendingBookingBanner(),
                               _buildActiveBookingBanner(),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: AppSpacing.lg),
                               _buildChipRow(),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: AppSpacing.xxl),
                               _buildRecentRideHistoryHeader(),
+                              const SizedBox(height: AppSpacing.xs),
                               Expanded(child: _buildRecentRideHistoryList()),
                             ],
                           ),
@@ -417,44 +421,101 @@ class _HomePageState extends State<HomePage> {
               : () => unawaited(_canStartOrContinueBooking());
         }
 
+        final IconData statusIcon;
+        if (state is BookingRideRecovered) {
+          statusIcon = LucideIcons.car;
+        } else if (state is BookingSessionRecoveryFailure) {
+          statusIcon = LucideIcons.circle_alert;
+        } else {
+          statusIcon = LucideIcons.clock;
+        }
+
         return Padding(
-          padding: const EdgeInsets.only(top: 12),
+          padding: const EdgeInsets.only(top: AppSpacing.md),
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 12, 8, 12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
             decoration: BoxDecoration(
-              color: colors.secondaryContainer.withValues(alpha: 0.35),
+              color: colors.surfaceContainerLowest,
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: colors.secondaryContainer),
+              border: Border.all(color: colors.outlineVariant),
             ),
             child: Row(
               children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerLowest,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: colors.outlineVariant),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    statusIcon,
+                    size: 17,
+                    color: state is BookingSessionRecoveryFailure
+                        ? colors.error
+                        : colors.onSurface,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
-                        style: TextStyle(
+                        style: context.textStyles.titleSmall?.copyWith(
                           color: colors.onSurface,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
+                      const SizedBox(height: 2),
                       Text(
                         subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                        style: context.textStyles.bodySmall?.copyWith(
                           color: colors.onSurfaceVariant,
-                          fontSize: 12,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                FilledButton(onPressed: onPressed, child: Text(actionLabel)),
+                FilledButton(
+                  onPressed: onPressed,
+                  style:
+                      FilledButton.styleFrom(
+                        backgroundColor: colors.primary,
+                        foregroundColor: colors.onPrimary,
+                        minimumSize: const Size(0, 40),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm,
+                        ),
+                        elevation: 0,
+                        enableFeedback: false,
+                        splashFactory: NoSplash.splashFactory,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                        textStyle: context.textStyles.labelMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ).copyWith(
+                        overlayColor: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.focused)
+                              ? colors.onPrimary.withValues(alpha: 0.16)
+                              : Colors.transparent,
+                        ),
+                      ),
+                  child: Text(actionLabel),
+                ),
               ],
             ),
           ),
@@ -499,7 +560,17 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildRecentRideHistoryHeader() {
-    return Text('Recent activity', style: context.textStyles.titleLarge);
+    return Semantics(
+      header: true,
+      child: Text(
+        'RECENT ACTIVITY',
+        style: context.textStyles.labelSmall?.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.9,
+        ),
+      ),
+    );
   }
 
   Widget _buildRecentRideHistoryList() {
@@ -516,18 +587,22 @@ class _HomePageState extends State<HomePage> {
               .clamp(1, _recentRideHistoryPreviewLimit)
               .toInt();
           return Skeletonizer.zone(
-            child: ListView.builder(
+            child: ListView.separated(
               padding: const EdgeInsets.only(bottom: 20),
               physics: const BouncingScrollPhysics(),
               itemCount: itemCount,
+              separatorBuilder: (_, _) => Divider(
+                height: 1,
+                indent: 54,
+                color: context.colorScheme.outlineVariant.withValues(
+                  alpha: 0.7,
+                ),
+              ),
               itemBuilder: (_, _) => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+                padding: EdgeInsets.symmetric(vertical: 12),
                 child: Row(
                   children: [
-                    Bone.square(
-                      size: 36,
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                    ),
+                    Bone.circle(size: 40),
                     SizedBox(width: 14),
                     Expanded(child: Bone.multiText(lines: 2, fontSize: 13)),
                   ],
@@ -689,76 +764,135 @@ class _HomePageState extends State<HomePage> {
 
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
-        title: Text(
-          'Active Ride in Progress',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: dialogContext.colorScheme.onSurface,
+      builder: (dialogContext) {
+        final colors = dialogContext.colorScheme;
+        return AlertDialog(
+          backgroundColor: colors.surfaceContainerLowest,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            side: BorderSide(color: colors.outlineVariant),
           ),
-        ),
-        content: Text(
-          'You already have an active trip with $driverName. Please complete or cancel your ongoing ride before booking another.',
-          style: TextStyle(
-            color: dialogContext.colorScheme.onSurface.withValues(alpha: 0.7),
-            fontSize: 14,
+          icon: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerLowest,
+              shape: BoxShape.circle,
+              border: Border.all(color: colors.outlineVariant),
+            ),
+            alignment: Alignment.center,
+            child: Icon(LucideIcons.car, size: 20, color: colors.onSurface),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Dismiss'),
+          title: Text(
+            'Active Ride in Progress',
+            textAlign: TextAlign.center,
+            style: dialogContext.textStyles.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colors.onSurface,
+            ),
           ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              _resumeActiveRide();
-            },
-            child: const Text('Resume Trip'),
+          content: Text(
+            'You already have an active trip with $driverName. Please complete or cancel your ongoing ride before booking another.',
+            textAlign: TextAlign.center,
+            style: dialogContext.textStyles.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+              height: 1.45,
+            ),
           ),
-        ],
-      ),
+          actionsAlignment: MainAxisAlignment.end,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style:
+                  TextButton.styleFrom(
+                    foregroundColor: colors.onSurfaceVariant,
+                    enableFeedback: false,
+                    splashFactory: NoSplash.splashFactory,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ).copyWith(
+                    overlayColor: WidgetStateProperty.resolveWith(
+                      (states) => states.contains(WidgetState.focused)
+                          ? colors.primary.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                    ),
+                  ),
+              child: const Text('Dismiss'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _resumeActiveRide();
+              },
+              style:
+                  FilledButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
+                    elevation: 0,
+                    enableFeedback: false,
+                    splashFactory: NoSplash.splashFactory,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ).copyWith(
+                    overlayColor: WidgetStateProperty.resolveWith(
+                      (states) => states.contains(WidgetState.focused)
+                          ? colors.onPrimary.withValues(alpha: 0.16)
+                          : Colors.transparent,
+                    ),
+                  ),
+              child: const Text('Resume Trip'),
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildSearchBar() {
+    final colors = context.colorScheme;
+    final radius = BorderRadius.circular(AppRadius.lg);
     return Semantics(
       button: true,
       label: 'Search for a destination',
       hint: 'Opens destination search',
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => unawaited(_openDestinationFlow()),
-        child: Hero(
-          tag: 'search_bar_field',
-          child: Material(
-            color: context.colorScheme.surface.withValues(alpha: 0),
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              decoration: BoxDecoration(
-                color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(color: context.colorScheme.outlineVariant),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x06000000),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
+      child: Hero(
+        tag: 'search_bar_field',
+        child: Material(
+          color: colors.surfaceContainerLowest,
+          shape: RoundedRectangleBorder(
+            borderRadius: radius,
+            side: BorderSide(color: colors.outlineVariant),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            borderRadius: radius,
+            enableFeedback: false,
+            splashFactory: NoSplash.splashFactory,
+            overlayColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.focused)
+                  ? colors.primary.withValues(alpha: 0.08)
+                  : Colors.transparent,
+            ),
+            onTap: () => unawaited(_openDestinationFlow()),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: 15,
               ),
               child: Row(
                 children: [
-                  Icon(
-                    LucideIcons.search,
-                    color: context.colorScheme.onSurface,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
+                  Icon(LucideIcons.search, color: colors.onSurface, size: 19),
+                  const SizedBox(width: AppSpacing.md),
                   const Expanded(child: HomeDestinationSearchHint()),
+                  const SizedBox(width: AppSpacing.sm),
+                  Icon(
+                    LucideIcons.arrow_right,
+                    color: colors.onSurfaceVariant,
+                    size: 16,
+                  ),
                 ],
               ),
             ),
@@ -894,70 +1028,114 @@ class _HomePageState extends State<HomePage> {
     if (!await ensureSavedPlaceAuthentication(context) || !mounted) return;
     await showModalBottomSheet(
       context: context,
-      backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
-      builder: (sheetContext) => SafeArea(
-        top: false,
-        child: Container(
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-          decoration: BoxDecoration(
-            color: sheetContext.colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: sheetContext.colorScheme.outlineVariant),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: sheetContext.colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: sheetContext.colorScheme.onSurface,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        final colors = sheetContext.colorScheme;
+        return SafeArea(
+          top: false,
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              0,
+              AppSpacing.lg,
+              AppSpacing.xxl,
+            ),
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(AppRadius.sheet),
+              border: Border.all(color: colors.outlineVariant),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: AppSpacing.sm),
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.outlineVariant,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Divider(
-                height: 1,
-                color: sheetContext.colorScheme.outlineVariant,
-              ),
-              ListTile(
-                leading: Icon(
-                  LucideIcons.trash_2,
-                  color: sheetContext.colorScheme.error,
-                  size: 20,
-                ),
-                title: Text(
-                  'Remove shortcut',
-                  style: TextStyle(
-                    color: sheetContext.colorScheme.error,
-                    fontWeight: FontWeight.w600,
+                const SizedBox(height: AppSpacing.lg),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppLayout.pagePadding,
+                  ),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: sheetContext.textStyles.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colors.onSurface,
+                    ),
                   ),
                 ),
-                onTap: () async {
-                  Navigator.of(sheetContext).pop();
-                  if (!mounted) return;
-                  await BlocProvider.of<SavedPlacesCubit>(context)
-                      .removePlace(index);
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
+                const SizedBox(height: AppSpacing.lg),
+                Divider(
+                  height: 1,
+                  color: colors.outlineVariant.withValues(alpha: 0.7),
+                ),
+                Material(
+                  type: MaterialType.transparency,
+                  child: InkWell(
+                    enableFeedback: false,
+                    splashFactory: NoSplash.splashFactory,
+                    overlayColor: WidgetStateProperty.resolveWith(
+                      (states) => states.contains(WidgetState.focused)
+                          ? colors.error.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                    ),
+                    onTap: () async {
+                      Navigator.of(sheetContext).pop();
+                      if (!mounted) return;
+                      await BlocProvider.of<SavedPlacesCubit>(context)
+                          .removePlace(index);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppLayout.pagePadding,
+                        vertical: AppSpacing.md,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: colors.error.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              LucideIcons.trash_2,
+                              color: colors.error,
+                              size: 17,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Text(
+                            'Remove shortcut',
+                            style: sheetContext.textStyles.bodyLarge?.copyWith(
+                              color: colors.error,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
