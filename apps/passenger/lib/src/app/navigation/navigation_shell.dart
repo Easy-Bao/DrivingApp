@@ -21,7 +21,6 @@ import 'package:passenger/src/features/home/presentation/widgets/active_booking_
 import 'package:passenger/src/features/home/presentation/widgets/active_ride_banner.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
-import 'package:passenger/src/features/profile/profile_routes.dart';
 
 class TabBranchContainer extends StatelessWidget {
   const TabBranchContainer({
@@ -335,9 +334,6 @@ class _ShellLayoutState extends State<ShellLayout> {
                                       context.pushNamed(AuthRoutes.signup),
                                   onSignIn: () =>
                                       context.pushNamed(AuthRoutes.signin),
-                                  onHelp: () => context.pushNamed(
-                                    ProfileRoutes.helpCenter,
-                                  ),
                                 );
                               }
                               if (isWide) return const SizedBox.shrink();

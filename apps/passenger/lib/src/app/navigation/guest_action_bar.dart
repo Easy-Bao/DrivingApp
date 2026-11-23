@@ -5,11 +5,9 @@ class const GuestActionBar({
   super.key,
   required this.onSignUp,
   required this.onSignIn,
-  required this.onHelp,
 }) extends StatelessWidget {
   final VoidCallback onSignUp;
   final VoidCallback onSignIn;
-  final VoidCallback onHelp;
 
   @override
   Widget build(BuildContext context) {
@@ -30,18 +28,13 @@ class const GuestActionBar({
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppLayout.pagePadding,
-            AppSpacing.md,
-            AppLayout.pagePadding,
-            AppSpacing.xs,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppLayout.pagePadding,
+            vertical: AppSpacing.md,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (stackActions)
-                Column(
+          child: stackActions
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     signUp,
@@ -49,57 +42,13 @@ class const GuestActionBar({
                     signIn,
                   ],
                 )
-              else
-                Row(
+              : Row(
                   children: [
                     Expanded(child: signUp),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(child: signIn),
                   ],
                 ),
-              Align(
-                alignment: Alignment.center,
-                child: TextButton(
-                  onPressed: onHelp,
-                  style:
-                      TextButton.styleFrom(
-                        foregroundColor: colors.onSurface,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                        ),
-                        minimumSize: const Size(48, 48),
-                        enableFeedback: false,
-                        splashFactory: NoSplash.splashFactory,
-                      ).copyWith(
-                        overlayColor: WidgetStateProperty.resolveWith(
-                          (states) => states.contains(WidgetState.focused)
-                              ? colors.primary.withValues(alpha: 0.12)
-                              : Colors.transparent,
-                        ),
-                      ),
-                  child: Text.rich(
-                    TextSpan(
-                      text: 'Need help? ',
-                      children: [
-                        TextSpan(
-                          text: 'Visit our Help Centre',
-                          style: TextStyle(
-                            color: colors.onSurface,
-                            fontWeight: FontWeight.w600,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                    style: context.textStyles.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

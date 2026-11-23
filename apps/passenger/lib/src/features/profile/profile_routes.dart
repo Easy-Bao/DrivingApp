@@ -7,6 +7,4 @@ abstract final class ProfileRoutes {
       '${AppRoutes.passengerModulePath}$accountPath';
   static const String profileInfo = 'ProfileInfo';
   static const String profileInfoPath = 'account/profile-info';
-  static const String helpCenter = 'HelpCenter';
-  static const String helpCenterPath = 'account/help-center';
 }

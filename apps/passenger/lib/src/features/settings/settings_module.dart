@@ -1,49 +1,14 @@
 import 'package:design_system/design_system.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:passenger/src/features/settings/presentation/pages/about_page.dart';
-import 'package:passenger/src/features/settings/presentation/pages/location_access_status_page.dart';
-import 'package:passenger/src/features/settings/presentation/pages/settings_page.dart';
 import 'package:passenger/src/features/settings/presentation/pages/terms_of_service_page.dart';
 import 'package:passenger/src/features/settings/settings_routes.dart';
 
 class SettingsModule._() {
   static List<ModularRoute> routes = [
     ChildRoute(
-      name: SettingsRoutes.settings,
-      SettingsRoutes.settingsPath,
-      child: (context, GoRouterState state) => const SettingsPage(),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: SettingsRoutes.locationAccess,
-      SettingsRoutes.locationAccessPath,
-      child: (context, GoRouterState state) => const LocationAccessStatusPage(),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
       name: SettingsRoutes.terms,
       SettingsRoutes.termsPath,
       child: (context, GoRouterState state) => const TermsOfServicePage(),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: SettingsRoutes.about,
-      SettingsRoutes.aboutPath,
-      child: (context, GoRouterState state) => const AboutPage(),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: SettingsRoutes.licenses,
-      SettingsRoutes.licensesPath,
-      child: (context, GoRouterState state) => const LicensePage(
-        applicationName: 'EasyRide Passenger',
-        applicationVersion: '1.0.0',
-      ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

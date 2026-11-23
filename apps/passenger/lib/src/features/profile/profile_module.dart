@@ -13,7 +13,6 @@ import 'package:passenger/src/features/profile/presentation/bloc/profile_cubit.d
 import 'package:passenger/src/features/profile/presentation/pages/account_page.dart';
 import 'package:passenger/src/features/profile/presentation/pages/profile_info_page.dart';
 import 'package:passenger/src/features/profile/profile_routes.dart';
-import 'package:passenger/src/features/settings/presentation/pages/help_center_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileModule._() {
@@ -46,13 +45,6 @@ class ProfileModule._() {
         },
         child: const ProfileInfoPage(),
       ),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: ProfileRoutes.helpCenter,
-      ProfileRoutes.helpCenterPath,
-      child: (context, GoRouterState state) => const HelpCenterPage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

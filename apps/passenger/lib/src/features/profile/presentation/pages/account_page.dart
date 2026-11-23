@@ -10,7 +10,6 @@ import 'package:passenger/src/features/profile/presentation/bloc/profile_cubit.d
 import 'package:passenger/src/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:passenger/src/features/profile/profile_routes.dart';
 import 'package:passenger/src/features/saved_places/saved_places_routes.dart';
-import 'package:passenger/src/features/settings/settings_routes.dart';
 
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key, this.onLogout});
@@ -52,7 +51,7 @@ class AccountPage extends StatelessWidget {
                         children: [
                           const AppPageHeader(
                             title: 'Account',
-                            subtitle: 'Profile, places, and preferences',
+                            subtitle: 'Profile and saved places',
                           ),
                           const SizedBox(height: AppSpacing.xxl),
                           _buildProfileSummary(context, visibleState),
@@ -74,18 +73,6 @@ class AccountPage extends StatelessWidget {
                               subtitle: 'Home, work, and favorite destinations',
                               onTap: () =>
                                   context.pushNamed(SavedPlacesRoutes.places),
-                            ),
-                          ]),
-                          const SizedBox(height: AppSpacing.xxl),
-                          _buildSectionTitle(context, 'Preferences'),
-                          const SizedBox(height: AppSpacing.xs),
-                          _buildMenuGroup(context, [
-                            _AccountMenuItem(
-                              icon: LucideIcons.settings,
-                              title: 'Settings',
-                              subtitle: 'Location, support, and app details',
-                              onTap: () =>
-                                  context.pushNamed(SettingsRoutes.settings),
                             ),
                           ]),
                           if (onLogout != null && isAuthenticated) ...[

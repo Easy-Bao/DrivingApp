@@ -10,27 +10,24 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: ThemeData(useMaterial3: true),
-        home: AppSettingsScaffold(
-          onBack: () {},
-          children: [
-            AppSettingsSection(
-              label: 'Device',
-              children: [
-                AppSettingsNavigationTile(
-                  icon: LucideIcons.map_pin,
-                  title: 'Location access',
-                  subtitle: 'Ready for pickups',
-                  onTap: () => tapped = true,
-                ),
-              ],
-            ),
-          ],
+        home: Scaffold(
+          body: AppSettingsSection(
+            label: 'Driver details',
+            children: [
+              AppSettingsNavigationTile(
+                icon: LucideIcons.car_front,
+                title: 'Vehicle information',
+                subtitle: 'Motorcycle · Plate XYZ-123',
+                onTap: () => tapped = true,
+              ),
+            ],
+          ),
         ),
       ),
     );
 
     final destination = find.byKey(
-      const ValueKey<String>('settings-destination-Location access'),
+      const ValueKey<String>('settings-destination-Vehicle information'),
     );
     expect(tester.getSize(destination).height, greaterThanOrEqualTo(48));
 

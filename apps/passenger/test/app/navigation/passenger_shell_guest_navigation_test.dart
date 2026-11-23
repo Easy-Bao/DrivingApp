@@ -14,7 +14,6 @@ void main() {
             bottomNavigationBar: GuestActionBar(
               onSignUp: () => context.push('/auth/signup'),
               onSignIn: () => context.push('/auth/signin'),
-              onHelp: () => context.push('/help'),
             ),
           ),
         ),
@@ -26,7 +25,6 @@ void main() {
           path: '/auth/signin',
           builder: (_, _) => const Text('Sign in screen'),
         ),
-        GoRoute(path: '/help', builder: (_, _) => const Text('Help screen')),
       ],
     );
 

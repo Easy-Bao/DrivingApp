@@ -1,75 +1,9 @@
 import 'package:design_system/src/theme/theme_context.dart';
-import 'package:design_system/src/tokens/layout.dart';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
 import 'package:design_system/src/tokens/spacing.dart';
-import 'package:design_system/src/widgets/layout/responsive_layout.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
-
-class const AppSettingsScaffold({
-  super.key,
-  required this.onBack,
-  required this.children,
-  this.title = 'Settings',
-  this.heading = 'App preferences',
-  this.description = 'Manage access and support for this app.',
-}) extends StatelessWidget {
-  final VoidCallback onBack;
-  final List<Widget> children;
-  final String title;
-  final String heading;
-  final String description;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppSecondaryPage(
-      title: title,
-      onBack: onBack,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final horizontalPadding = constraints.maxWidth < 360
-              ? AppLayout.pagePadding
-              : AppLayout.pagePaddingWide;
-          return ListView(
-            physics: const ClampingScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(
-              horizontalPadding,
-              AppSpacing.md,
-              horizontalPadding,
-              40,
-            ),
-            children: [
-              Text(
-                heading,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs + 2),
-              Text(
-                description,
-                style: Theme.of(context).textTheme.bodyMedium
-                    ?.copyWith(color: context.colorScheme.onSurfaceVariant),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: context.colorScheme.outlineVariant.withValues(
-                  alpha: 0.7,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              ...children,
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
 
 class const AppSettingsSection({
   super.key,

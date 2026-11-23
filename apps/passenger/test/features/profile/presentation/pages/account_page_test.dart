@@ -55,7 +55,7 @@ void main() {
     expect(find.text('Profile Info'), findsNothing);
     expect(find.byIcon(Icons.edit), findsNothing);
     expect(find.text('Safety Center'), findsNothing);
-    expect(find.text('Location, support, and app details'), findsOneWidget);
+    expect(find.text('Settings'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -92,25 +92,27 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('keeps settings as the single support and legal destination', (
-    tester,
-  ) async {
-    var logoutCount = 0;
-    await tester.pumpWidget(buildSubject(onLogout: () => logoutCount++));
+  testWidgets(
+    'keeps only account destinations without redundant settings pages',
+    (tester) async {
+      var logoutCount = 0;
+      await tester.pumpWidget(buildSubject(onLogout: () => logoutCount++));
 
-    expect(find.text('Personal Details'), findsOneWidget);
-    expect(find.text('Saved Places'), findsOneWidget);
-    expect(find.text('Settings'), findsOneWidget);
-    expect(find.text('Help Center'), findsNothing);
-    expect(find.text('Terms of Service'), findsNothing);
-    expect(find.text('About EasyRide'), findsNothing);
-    await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('passenger-account-logout')),
-      300,
-    );
-    await tester.tap(find.byKey(const ValueKey('passenger-account-logout')));
-    expect(logoutCount, 1);
-  });
+      expect(find.text('Personal Details'), findsOneWidget);
+      expect(find.text('Saved Places'), findsOneWidget);
+      expect(find.text('Settings'), findsNothing);
+      expect(find.text('PREFERENCES'), findsNothing);
+      expect(find.text('Help Center'), findsNothing);
+      expect(find.text('Terms of Service'), findsNothing);
+      expect(find.text('About EasyRide'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('passenger-account-logout')),
+        300,
+      );
+      await tester.tap(find.byKey(const ValueKey('passenger-account-logout')));
+      expect(logoutCount, 1);
+    },
+  );
 
   testWidgets('keeps the bottom scroll clearance tight above the tab bar', (
     tester,
@@ -162,13 +164,15 @@ void main() {
       ),
     );
 
-    final settingsTile = tester.widget<InkWell>(
-      find.byKey(const ValueKey<String>('passenger-account-item-Settings')),
+    final detailsTile = tester.widget<InkWell>(
+      find.byKey(
+        const ValueKey<String>('passenger-account-item-Personal Details'),
+      ),
     );
-    expect(settingsTile.enableFeedback, isFalse);
-    expect(settingsTile.splashFactory, NoSplash.splashFactory);
+    expect(detailsTile.enableFeedback, isFalse);
+    expect(detailsTile.splashFactory, NoSplash.splashFactory);
     expect(
-      settingsTile.overlayColor?.resolve({WidgetState.pressed}),
+      detailsTile.overlayColor?.resolve({WidgetState.pressed}),
       Colors.transparent,
     );
     expect(tester.takeException(), isNull);

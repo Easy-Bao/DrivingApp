@@ -96,9 +96,9 @@ void main() {
     expect(find.text('Performance'), findsOneWidget);
     expect(find.text('Documents'), findsNothing);
     expect(find.text('Manage your verification documents'), findsNothing);
-    expect(find.text('APP SETTINGS'), findsOneWidget);
-    expect(find.text('Settings'), findsOneWidget);
-    expect(find.text('Location, support, and app details'), findsOneWidget);
+    expect(find.text('APP SETTINGS'), findsNothing);
+    expect(find.text('Settings'), findsNothing);
+    expect(find.text('Location, support, and app details'), findsNothing);
     expect(find.text('Help Center'), findsNothing);
     expect(find.text('Terms of Service'), findsNothing);
     expect(find.text('About EasyRide'), findsNothing);

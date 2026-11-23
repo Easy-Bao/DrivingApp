@@ -6,7 +6,6 @@ import 'package:driver/src/features/profile/presentation/bloc/account/account_st
 import 'package:driver/src/features/profile/domain/entities/account_snapshot.dart';
 import 'package:driver/src/features/profile/profile_routes.dart';
 import 'package:driver/src/features/performance/performance_routes.dart';
-import 'package:driver/src/features/settings/settings_routes.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -101,19 +100,6 @@ class _AccountPageState extends State<AccountPage> {
                               onTap: () => context.pushNamed(
                                 PerformanceRoutes.performance,
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.xxl),
-                        AppSettingsSection(
-                          label: 'App settings',
-                          children: [
-                            AppSettingsNavigationTile(
-                              icon: LucideIcons.settings,
-                              title: 'Settings',
-                              subtitle: 'Location, support, and app details',
-                              onTap: () =>
-                                  context.pushNamed(SettingsRoutes.settings),
                             ),
                           ],
                         ),
