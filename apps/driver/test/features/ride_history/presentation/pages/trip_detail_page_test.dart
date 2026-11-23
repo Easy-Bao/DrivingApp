@@ -79,14 +79,12 @@ void main() {
     expect(find.text('Mountain View'), findsOneWidget);
     expect(find.text('Aikido of Mountain View'), findsOneWidget);
     expect(find.byTooltip('Message passenger'), findsOneWidget);
-    expect(
-      tester
-          .widget<IconButton>(
-            find.byKey(const ValueKey('driver-trip-contact-passenger')),
-          )
-          .onPressed,
-      isNotNull,
+    final contactButton = tester.widget<IconButton>(
+      find.byKey(const ValueKey('driver-trip-contact-passenger')),
     );
+    expect(contactButton.onPressed, isNotNull);
+    expect(contactButton.style?.enableFeedback, isFalse);
+    expect(contactButton.style?.splashFactory, NoSplash.splashFactory);
     expect(find.text('Ana Maria'), findsOneWidget);
     expect(find.text('+63 917 555 0101'), findsNothing);
     expect(find.text('4.8'), findsOneWidget);

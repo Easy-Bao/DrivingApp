@@ -1,15 +1,16 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
+import 'package:driver/src/core/formatters/value_formatters.dart';
 import 'package:driver/src/features/ride_history/presentation/bloc/trip_history_cubit.dart';
 import 'package:driver/src/features/ride_history/presentation/bloc/trip_history_state.dart';
+import 'package:driver/src/features/ride_history/presentation/widgets/trip_history_filter_bar.dart';
 import 'package:driver/src/features/ride_history/ride_history_routes.dart';
-import 'package:driver/src/core/formatters/value_formatters.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class const TripHistoryPage({super.key}) extends StatefulWidget {
@@ -17,20 +18,70 @@ class const TripHistoryPage({super.key}) extends StatefulWidget {
   State<TripHistoryPage> createState() => _TripHistoryPageState();
 }
 
-class _TripHistoryPageState extends State<TripHistoryPage> {
-  String _selectedTripStatusFilter = 'ALL';
+class _TripHistoryPageState extends State<TripHistoryPage>
+    with SingleTickerProviderStateMixin {
+  static const Duration _transitionDuration = Duration(milliseconds: 220);
+
+  late final AnimationController _filterTransitionController;
+  late final Animation<double> _filterTransitionCurve;
+  DriverTripHistoryFilter _selectedFilter = DriverTripHistoryFilter.all;
+  double _slideDirection = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _filterTransitionController = AnimationController(
+      vsync: this,
+      duration: _transitionDuration,
+      value: 1,
+    );
+    _filterTransitionCurve = CurvedAnimation(
+      parent: _filterTransitionController,
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  void dispose() {
+    _filterTransitionController.dispose();
+    super.dispose();
+  }
+
+  void _selectFilter(DriverTripHistoryFilter next) {
+    if (next == _selectedFilter) return;
+    setState(() {
+      _slideDirection = next.index > _selectedFilter.index ? 1.0 : -1.0;
+      _selectedFilter = next;
+    });
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _filterTransitionController.value = 1;
+    } else {
+      unawaited(_filterTransitionController.forward(from: 0));
+    }
+  }
 
   List<Map<String, dynamic>> _filteredTripsList(
     List<Map<String, dynamic>> trips,
   ) {
-    if (_selectedTripStatusFilter == 'ALL') {
-      return trips;
-    }
-    return trips.where((tripRecord) {
-      final statusString = (tripRecord['status'] as String? ?? '')
-          .toUpperCase();
-      return statusString == _selectedTripStatusFilter;
-    }).toList();
+    return switch (_selectedFilter) {
+      DriverTripHistoryFilter.all => trips,
+      DriverTripHistoryFilter.completed =>
+        trips
+            .where(
+              (trip) =>
+                  (valueAsString(trip['status']) ?? '').toUpperCase() ==
+                  'COMPLETED',
+            )
+            .toList(growable: false),
+      DriverTripHistoryFilter.cancelled =>
+        trips
+            .where((trip) {
+              final status = (valueAsString(trip['status']) ?? '')
+                  .toUpperCase();
+              return status == 'CANCELLED' || status == 'CANCELED';
+            })
+            .toList(growable: false),
+    };
   }
 
   String _formatDate(String isoString) {
@@ -67,26 +118,6 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
     }
   }
 
-  Future<void> _showTripFilterSheet(BuildContext context) async {
-    final selectedFilter = switch (_selectedTripStatusFilter) {
-      'COMPLETED' => TripHistoryFilter.completed,
-      'CANCELLED' => TripHistoryFilter.cancelled,
-      _ => TripHistoryFilter.all,
-    };
-    final result = await showTripHistoryFilterSheet(
-      context: context,
-      selectedFilter: selectedFilter,
-    );
-    if (!mounted || result == null) return;
-    setState(() {
-      _selectedTripStatusFilter = switch (result) {
-        TripHistoryFilter.all => 'ALL',
-        TripHistoryFilter.completed => 'COMPLETED',
-        TripHistoryFilter.cancelled => 'CANCELLED',
-      };
-    });
-  }
-
   Map<String, List<Map<String, dynamic>>> _groupByDate(
     List<Map<String, dynamic>> trips,
   ) {
@@ -117,134 +148,232 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
         (state.loadMoreError != null && !isNetworkUnavailable);
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: context.canvasColor,
-        scrolledUnderElevation: 0,
-        automaticallyImplyLeading: false,
-        title: const Text('Trip History'),
-        centerTitle: false,
-        actions: [
-          IconButton(
-            icon: Icon(
-              LucideIcons.funnel,
-              color: context.colorScheme.onSurface,
-            ),
-            onPressed: () => unawaited(_showTripFilterSheet(context)),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: state.isLoading && state.trips.isEmpty
-          ? _buildInitialLoadingState()
-          : state.errorMessage != null && !hasTrips && !isNetworkUnavailable
-          ? _buildMessageState(
-              title: 'Couldn’t load trips',
-              message: state.errorMessage!,
-              icon: LucideIcons.circle_alert,
-              actionLabel: 'Try again',
-              onAction: () => BlocProvider.of<TripHistoryCubit>(context).load(),
-            )
-          : filteredTrips.isEmpty
-          ? _buildMessageState(
-              title: hasTrips ? 'No trips match this filter' : 'No trips yet',
-              message: hasTrips
-                  ? 'Try another status or clear the filter.'
-                  : 'Completed and canceled trips will appear here.',
-              icon: hasTrips ? LucideIcons.funnel : LucideIcons.history,
-              actionLabel: hasTrips ? 'Clear filter' : null,
-              onAction: hasTrips
-                  ? () => setState(() => _selectedTripStatusFilter = 'ALL')
-                  : null,
-            )
-          : RefreshIndicator(
-              color: context.colorScheme.onSurface,
-              onRefresh: () =>
-                  BlocProvider.of<TripHistoryCubit>(context).load(),
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(
-                  AppLayout.pagePadding,
-                  4,
-                  AppLayout.pagePadding,
-                  AppSpacing.xxl,
-                ),
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                itemCount:
-                    grouped.keys.length +
-                    (hasRefreshError ? 1 : 0) +
-                    (hasLoadMoreItem ? 1 : 0),
-                itemBuilder: (context, groupIndex) {
-                  if (hasRefreshError && groupIndex == 0) {
-                    return _buildRefreshError(state.errorMessage!);
-                  }
-                  final contentIndex = groupIndex - (hasRefreshError ? 1 : 0);
-                  if (hasLoadMoreItem && contentIndex == grouped.keys.length) {
-                    return _buildLoadMore(state);
-                  }
-                  final date = grouped.keys.elementAt(contentIndex);
-                  final trips = grouped[date]!;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 20, bottom: 12),
-                        child: Text(
-                          date,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: context.colorScheme.onSurfaceVariant,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
+      body: SafeArea(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: AppLayout.pageMaxWidth),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final horizontalPadding = constraints.maxWidth < 360
+                    ? AppLayout.pagePadding
+                    : AppLayout.pagePaddingWide;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding,
+                        AppSpacing.sm,
+                        horizontalPadding,
+                        0,
                       ),
-                      ...trips.map(_buildTripCard),
-                    ],
-                  );
-                },
-              ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const AppPageHeader(title: 'Trip History'),
+                          const SizedBox(height: AppSpacing.md),
+                          TripHistoryFilterBar(
+                            selectedFilter: _selectedFilter,
+                            onSelected: _selectFilter,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: state.isLoading && state.trips.isEmpty
+                          ? _buildInitialLoadingState(horizontalPadding)
+                          : state.errorMessage != null &&
+                                !hasTrips &&
+                                !isNetworkUnavailable
+                          ? _buildMessageState(
+                              horizontalPadding: horizontalPadding,
+                              title: 'Couldn’t load trips',
+                              message: state.errorMessage!,
+                              icon: LucideIcons.circle_alert,
+                              actionLabel: 'Try again',
+                              onAction: () =>
+                                  BlocProvider.of<TripHistoryCubit>(context)
+                                      .load(),
+                            )
+                          : AnimatedBuilder(
+                              animation: _filterTransitionCurve,
+                              builder: (context, child) {
+                                final progress = _filterTransitionCurve.value;
+                                final dx =
+                                    _slideDirection * 12 * (1 - progress);
+                                return Opacity(
+                                  opacity: progress.clamp(0.0, 1.0),
+                                  child: Transform.translate(
+                                    offset: Offset(dx, 0),
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: filteredTrips.isEmpty
+                                  ? _buildMessageState(
+                                      horizontalPadding: horizontalPadding,
+                                      title: hasTrips
+                                          ? 'No trips match this filter'
+                                          : 'No trips yet',
+                                      message: hasTrips
+                                          ? 'Try another status or clear the filter.'
+                                          : 'Completed and canceled trips will appear here.',
+                                      icon: hasTrips
+                                          ? LucideIcons.funnel
+                                          : LucideIcons.history,
+                                      actionLabel: hasTrips
+                                          ? 'Clear filter'
+                                          : null,
+                                      onAction: hasTrips
+                                          ? () => _selectFilter(
+                                              DriverTripHistoryFilter.all,
+                                            )
+                                          : null,
+                                    )
+                                  : RefreshIndicator(
+                                      color: context.colorScheme.onSurface,
+                                      onRefresh: () =>
+                                          BlocProvider.of<TripHistoryCubit>(
+                                            context,
+                                          ).load(),
+                                      child: ListView.builder(
+                                        padding: EdgeInsets.fromLTRB(
+                                          horizontalPadding,
+                                          AppSpacing.sm,
+                                          horizontalPadding,
+                                          AppSpacing.xxxl,
+                                        ),
+                                        physics:
+                                            const AlwaysScrollableScrollPhysics(
+                                              parent: ClampingScrollPhysics(),
+                                            ),
+                                        itemCount:
+                                            grouped.keys.length +
+                                            (hasRefreshError ? 1 : 0) +
+                                            (hasLoadMoreItem ? 1 : 0),
+                                        itemBuilder: (context, groupIndex) {
+                                          if (hasRefreshError &&
+                                              groupIndex == 0) {
+                                            return _buildRefreshError(
+                                              state.errorMessage!,
+                                            );
+                                          }
+                                          final contentIndex =
+                                              groupIndex -
+                                              (hasRefreshError ? 1 : 0);
+                                          if (hasLoadMoreItem &&
+                                              contentIndex ==
+                                                  grouped.keys.length) {
+                                            return _buildLoadMore(state);
+                                          }
+                                          final date = grouped.keys.elementAt(
+                                            contentIndex,
+                                          );
+                                          final trips = grouped[date]!;
+                                          return Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: AppSpacing.xl,
+                                                  bottom: AppSpacing.sm,
+                                                ),
+                                                child: Semantics(
+                                                  header: true,
+                                                  child: Text(
+                                                    date.toUpperCase(),
+                                                    style: context
+                                                        .textStyles
+                                                        .labelSmall
+                                                        ?.copyWith(
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: context
+                                                              .colorScheme
+                                                              .onSurfaceVariant,
+                                                          letterSpacing: 0.9,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ),
+                                              for (
+                                                var index = 0;
+                                                index < trips.length;
+                                                index++
+                                              ) ...[
+                                                _buildTripRow(trips[index]),
+                                                if (index != trips.length - 1)
+                                                  Divider(
+                                                    height: 1,
+                                                    thickness: 1,
+                                                    color: context
+                                                        .colorScheme
+                                                        .outlineVariant
+                                                        .withValues(alpha: 0.7),
+                                                  ),
+                                              ],
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ),
+                            ),
+                    ),
+                  ],
+                );
+              },
             ),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildInitialLoadingState() {
+  Widget _buildInitialLoadingState(double horizontalPadding) {
+    final hairlineColor = context.colorScheme.outlineVariant.withValues(
+      alpha: 0.7,
+    );
     return Skeletonizer.zone(
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(
-          AppLayout.pagePadding,
-          12,
-          AppLayout.pagePadding,
-          AppSpacing.xxl,
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          AppSpacing.xl,
+          horizontalPadding,
+          AppSpacing.xxxl,
         ),
         physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
+          parent: ClampingScrollPhysics(),
         ),
         itemCount: 4,
-        separatorBuilder: (_, _) => const SizedBox(height: 10),
-        itemBuilder: (_, _) => Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: context.colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: context.colorScheme.outlineVariant),
-          ),
-          child: const Row(
+        separatorBuilder: (_, _) =>
+            Divider(height: 1, thickness: 1, color: hairlineColor),
+        itemBuilder: (_, _) => const Padding(
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Bone.circle(size: 42),
-              SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Bone.text(width: 150, fontSize: 15),
-                    SizedBox(height: 6),
-                    Bone.text(width: 104, fontSize: 12),
-                  ],
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Bone.text(width: 68, fontSize: 12),
+                  Bone.text(width: 72, fontSize: 12),
+                ],
               ),
-              SizedBox(width: 12),
-              Bone.text(width: 54, fontSize: 14),
+              SizedBox(height: 12),
+              Bone.text(width: 190, fontSize: 14),
+              SizedBox(height: 8),
+              Bone.text(width: 150, fontSize: 14),
+              SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Bone.text(width: 56, fontSize: 12),
+                  Bone.text(width: 64, fontSize: 14),
+                ],
+              ),
             ],
           ),
         ),
@@ -253,51 +382,92 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
   }
 
   Widget _buildMessageState({
+    required double horizontalPadding,
     required String title,
     required String message,
     required IconData icon,
     String? actionLabel,
     VoidCallback? onAction,
   }) {
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
+
     return RefreshIndicator(
-      color: context.colorScheme.onSurface,
+      color: colorScheme.onSurface,
       onRefresh: () => BlocProvider.of<TripHistoryCubit>(context).load(),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
+          parent: ClampingScrollPhysics(),
         ),
-        padding: const EdgeInsets.fromLTRB(28, 120, 28, 120),
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          84,
+          horizontalPadding,
+          84,
+        ),
         children: [
-          Icon(icon, size: 56, color: context.colorScheme.onSurfaceVariant),
-          const SizedBox(height: 18),
+          Center(
+            child: ExcludeSemantics(
+              child: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerLowest,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: context.colorScheme.onSurface,
+            style: textStyles.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.35,
-              color: context.colorScheme.onSurfaceVariant,
+          const SizedBox(height: AppSpacing.xs + 2),
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 300),
+              child: Text(
+                message,
+                textAlign: TextAlign.center,
+                style: textStyles.bodySmall?.copyWith(
+                  height: 1.45,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
             ),
           ),
           if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: 16),
-            TextButton.icon(
-              onPressed: onAction,
-              style: TextButton.styleFrom(
-                foregroundColor: context.colorScheme.onSurface,
+            const SizedBox(height: AppSpacing.lg),
+            Center(
+              child: TextButton(
+                onPressed: onAction,
+                style:
+                    TextButton.styleFrom(
+                      foregroundColor: colorScheme.onSurface,
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith((states) {
+                        if (states.contains(WidgetState.focused)) {
+                          return colorScheme.primary.withValues(alpha: 0.12);
+                        }
+                        return Colors.transparent;
+                      }),
+                    ),
+                child: Text(actionLabel),
               ),
-              icon: const Icon(LucideIcons.refresh_cw, size: 16),
-              label: Text(actionLabel),
             ),
           ],
         ],
@@ -307,7 +477,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
 
   Widget _buildRefreshError(String message) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 4),
+      padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.xs),
       child: AppErrorBanner(
         message: message,
         onRetry: () => BlocProvider.of<TripHistoryCubit>(context).load(),
@@ -316,22 +486,23 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
   }
 
   Widget _buildLoadMore(TripHistoryState state) {
+    final colorScheme = context.colorScheme;
     if (state.isLoadingMore) {
       return Padding(
-        padding: EdgeInsets.symmetric(vertical: 18),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
         child: Center(
           child: SizedBox.square(
-            dimension: 22,
+            dimension: 20,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: context.colorScheme.onSurface,
+              color: colorScheme.onSurface,
             ),
           ),
         ),
       );
     }
     return Padding(
-      padding: const EdgeInsets.only(top: 6, bottom: 14),
+      padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.md),
       child: Column(
         children: [
           if (state.loadMoreError != null &&
@@ -339,17 +510,29 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
             Text(
               state.loadMoreError!,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: context.colorScheme.error,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+              style: context.textStyles.bodySmall?.copyWith(
+                color: colorScheme.error,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.xs),
           ],
           TextButton.icon(
             onPressed: () =>
                 BlocProvider.of<TripHistoryCubit>(context).loadMore(),
+            style:
+                TextButton.styleFrom(
+                  foregroundColor: colorScheme.onSurface,
+                  enableFeedback: false,
+                  splashFactory: NoSplash.splashFactory,
+                ).copyWith(
+                  overlayColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.focused)) {
+                      return colorScheme.primary.withValues(alpha: 0.12);
+                    }
+                    return Colors.transparent;
+                  }),
+                ),
             icon: const Icon(LucideIcons.chevron_down, size: 16),
             label: Text(
               state.loadMoreError == null ||
@@ -363,18 +546,27 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
     );
   }
 
-  Widget _buildTripCard(Map<String, dynamic> trip) {
+  Widget _buildTripRow(Map<String, dynamic> trip) {
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
     final status = (valueAsString(trip['status']) ?? 'completed').toLowerCase();
     final isCompleted = status == 'completed';
     final statusColor = isCompleted
         ? context.semanticColors.success
-        : context.colorScheme.error;
+        : colorScheme.error;
     final statusLabel = isCompleted
         ? 'Completed'
         : sentenceCase(status, 'Canceled');
     final fromName = valueAsString(trip['pickup_name']) ?? 'Pickup';
     final toName = valueAsString(trip['dropoff_name']) ?? 'Drop-off';
     final formattedFareAmount = fareInPesos(trip);
+    final fareText = formattedFareAmount == null
+        ? '—'
+        : formatPesoAmount(formattedFareAmount);
+    final tripTime = _formatTripTime(
+      trip,
+      alwaysUse24HourFormat: MediaQuery.of(context).alwaysUse24HourFormat,
+    );
 
     final distance =
         trip['distance_km'] is num &&
@@ -383,93 +575,107 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
         ? DistanceFormatter.fromKilometers(trip['distance_km'] as num)
         : '—';
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          onTap: () =>
-              context.pushNamed(RideHistoryRoutes.tripDetail, extra: trip),
-          child: Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: context.colorScheme.outlineVariant),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return InkWell(
+      key: ValueKey<String>(
+        'driver-trip-row-${valueAsString(trip['id']) ?? tripTime}',
+      ),
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      enableFeedback: false,
+      splashFactory: NoSplash.splashFactory,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
+      overlayColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.focused)) {
+          return colorScheme.primary.withValues(alpha: 0.12);
+        }
+        return Colors.transparent;
+      }),
+      onTap: () => context.pushNamed(RideHistoryRoutes.tripDetail, extra: trip),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                if (valueAsString(trip['booking_reference'])
-                    case final String reference when reference.isNotEmpty) ...[
-                  TripReference(id: reference, compact: true),
-                  const SizedBox(height: 8),
-                ],
+                Expanded(
+                  child: Text(
+                    tripTime,
+                    style: textStyles.labelMedium?.tabular.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      _formatTripTime(
-                        trip,
-                        alwaysUse24HourFormat: MediaQuery.of(context)
-                            .alwaysUse24HourFormat,
-                      ),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: context.colorScheme.onSurfaceVariant,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                    ExcludeSemantics(
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                      child: Text(
-                        statusLabel,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: statusColor,
-                        ),
+                    const SizedBox(width: 6),
+                    Text(
+                      statusLabel,
+                      style: textStyles.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: statusColor,
+                        letterSpacing: 0.1,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                CompactRouteTimeline(pickup: fromName, dropoff: toName),
-                const SizedBox(height: 14),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(child: _tripMeta('Distance', distance)),
-                      Container(
-                        width: 1,
-                        color: context.colorScheme.outlineVariant,
-                      ),
-                      Expanded(
-                        child: _tripMeta(
-                          'Fare',
-                          formattedFareAmount == null
-                              ? '—'
-                              : formatPesoAmount(formattedFareAmount),
-                        ),
-                      ),
-                    ],
+              ],
+            ),
+            if (valueAsString(trip['booking_reference'])
+                case final String reference when reference.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.xs),
+              TripReference(id: reference, compact: true),
+            ],
+            const SizedBox(height: AppSpacing.md),
+            CompactRouteTimeline(pickup: fromName, dropoff: toName),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    distance,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textStyles.bodySmall?.tabular.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  fareText,
+                  style: textStyles.titleSmall?.tabular.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                ExcludeSemantics(
+                  child: Icon(
+                    LucideIcons.chevron_right,
+                    size: 16,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -495,38 +701,5 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
     } catch (_) {
       return 'Past trip';
     }
-  }
-
-  Widget _tripMeta(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: context.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            value,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: context.colorScheme.onSurface,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

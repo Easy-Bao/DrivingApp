@@ -101,4 +101,80 @@ void main() {
 
     await cubit.close();
   });
+
+  testWidgets(
+    'filters trips inline with gliding indicator and disables platform splashes',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final repository = _MockRideHistoryRepository();
+      final sessionService = _MockSessionService();
+      final cubit =
+          TripHistoryCubit(
+            repository: repository,
+            sessionService: sessionService,
+          )..emit(
+            const TripHistoryState(
+              trips: [
+                {
+                  'id': 42,
+                  'status': 'completed',
+                  'created_at': '2026-08-19T10:00:00Z',
+                  'pickup_name': 'Mountain View',
+                  'dropoff_name': 'Vista Slope',
+                  'fare_amount': 2973,
+                  'distance_km': 1.8,
+                },
+                {
+                  'id': 43,
+                  'status': 'canceled',
+                  'created_at': '2026-08-19T11:00:00Z',
+                  'pickup_name': 'Central Station',
+                  'dropoff_name': 'Harbor Pier',
+                  'fare_amount': 1500,
+                  'distance_km': 1.2,
+                },
+              ],
+            ),
+          );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: BlocProvider.value(
+            value: cubit,
+            child: const TripHistoryPage(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mountain View'), findsOneWidget);
+      expect(find.text('Central Station'), findsOneWidget);
+
+      final cancelledTab = tester.widget<InkWell>(
+        find.byKey(const ValueKey<String>('driver-trips-filter-cancelled')),
+      );
+      expect(cancelledTab.enableFeedback, isFalse);
+      expect(cancelledTab.splashFactory, NoSplash.splashFactory);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('driver-trips-filter-cancelled')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mountain View'), findsNothing);
+      expect(find.text('Central Station'), findsOneWidget);
+
+      final rowInkWell = tester.widget<InkWell>(
+        find.byKey(const ValueKey<String>('driver-trip-row-43')),
+      );
+      expect(rowInkWell.enableFeedback, isFalse);
+      expect(rowInkWell.splashFactory, NoSplash.splashFactory);
+      expect(tester.takeException(), isNull);
+
+      await cubit.close();
+    },
+  );
 }
