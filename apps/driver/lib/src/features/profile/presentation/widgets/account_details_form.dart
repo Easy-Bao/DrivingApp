@@ -1,11 +1,11 @@
+import 'package:design_system/design_system.dart';
+import 'package:driver/src/features/profile/domain/entities/account_snapshot.dart';
 import 'package:driver/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver/src/features/profile/presentation/bloc/account/account_state.dart';
-import 'package:driver/src/features/profile/domain/entities/account_snapshot.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:design_system/design_system.dart';
+import 'package:material_ui/material_ui.dart';
 
 enum AccountDetailsSection { personal, vehicle }
 
@@ -78,47 +78,33 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
       },
       builder: (context, state) {
         final isPersonal = widget.section == AccountDetailsSection.personal;
-        return Scaffold(
-          appBar: AppBar(
-            leading: IconButton(
-              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-              onPressed: widget.onBack ?? () => context.pop(),
-              icon: const Icon(LucideIcons.arrow_left),
-            ),
-            title: Text(_pageTitle),
-            centerTitle: true,
-            actions: const [SizedBox(width: 24)],
-          ),
-          body: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: ListView(
+        return AppSecondaryPage(
+          title: _pageTitle,
+          onBack: widget.onBack ?? () => context.pop(),
+          maxWidth: 560,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final horizontalPadding = constraints.maxWidth < 360
+                  ? AppLayout.pagePadding
+                  : AppLayout.pagePaddingWide;
+              return ListView(
+                physics: const ClampingScrollPhysics(),
                 padding: EdgeInsets.fromLTRB(
-                  isPersonal
-                      ? AppLayout.pagePadding
-                      : AppLayout.pagePaddingWide,
-                  AppLayout.pagePadding,
-                  isPersonal
-                      ? AppLayout.pagePadding
-                      : AppLayout.pagePaddingWide,
-                  AppSpacing.xxl * 2,
+                  horizontalPadding,
+                  AppSpacing.xl,
+                  horizontalPadding,
+                  48,
                 ),
                 children: [
                   _buildHeader(state.account),
-                  const SizedBox(height: AppSpacing.xxl),
+                  const SizedBox(height: AppSpacing.xxxl),
                   if (isPersonal)
                     ..._buildPersonalFields(state)
                   else
-                    AppSurfaceCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: _buildVehicleFields(state),
-                      ),
-                    ),
+                    ..._buildVehicleFields(state),
                 ],
-              ),
-            ),
+              );
+            },
           ),
         );
       },
@@ -128,36 +114,46 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
   Widget _buildHeader(AccountSnapshot account) {
     final isPersonal = widget.section == AccountDetailsSection.personal;
     final displayName = account.name.trim();
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
+
     return Column(
       children: [
-        Container(
-          width: 96,
-          height: 96,
-          decoration: BoxDecoration(
-            color: context.colorScheme.secondaryContainer,
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
-          child: isPersonal
-              ? Text(
-                  _initials(displayName),
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: context.colorScheme.onSecondaryContainer,
+        ExcludeSemantics(
+          child: Container(
+            width: 76,
+            height: 76,
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLowest,
+              shape: BoxShape.circle,
+              border: Border.all(color: colorScheme.outlineVariant),
+            ),
+            alignment: Alignment.center,
+            child: isPersonal
+                ? Text(
+                    _initials(displayName),
+                    style: textStyles.headlineSmall?.copyWith(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                    ),
+                  )
+                : Icon(
+                    LucideIcons.car_front,
+                    size: 28,
+                    color: colorScheme.onSurface,
                   ),
-                )
-              : Icon(
-                  LucideIcons.car_front,
-                  size: 36,
-                  color: context.colorScheme.onSecondaryContainer,
-                ),
+          ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppSpacing.md),
         Text(
           isPersonal
               ? 'Your contact details'
               : 'Your registered service vehicle',
-          style: Theme.of(context).textTheme.bodyMedium
-              ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+          textAlign: TextAlign.center,
+          style: textStyles.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -165,8 +161,24 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
 
   List<Widget> _buildPersonalFields(AccountState state) {
     final account = state.account;
+    final colorScheme = context.colorScheme;
+    final hairline = Divider(
+      height: 1,
+      thickness: 1,
+      color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+    );
+    final insetHairline = Divider(
+      height: 1,
+      thickness: 1,
+      indent: 34,
+      color: colorScheme.outlineVariant.withValues(alpha: 0.65),
+    );
+
     return [
-      if (state.isLoading) const LinearProgressIndicator(),
+      if (state.isLoading) ...[
+        const LinearProgressIndicator(minHeight: 2),
+        const SizedBox(height: AppSpacing.lg),
+      ],
       if (state.errorMessage != null) ...[
         AppErrorBanner(
           message: state.errorMessage!,
@@ -176,35 +188,58 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
         ),
         const SizedBox(height: AppSpacing.lg),
       ],
-      const Divider(height: 1),
-      _buildContactDetail('Full name', account.name),
-      const Divider(height: 1),
-      _buildContactDetail('Mobile number', account.phone),
-      const Divider(height: 1),
-      _buildContactDetail('Email', account.email),
-      const SizedBox(height: AppSpacing.lg),
+      hairline,
+      _buildContactDetail(
+        icon: LucideIcons.user_round,
+        label: 'Full name',
+        value: account.name,
+      ),
+      insetHairline,
+      _buildContactDetail(
+        icon: LucideIcons.phone,
+        label: 'Mobile number',
+        value: account.phone,
+        isVerifiedLocked: true,
+        useTabular: true,
+      ),
+      insetHairline,
+      _buildContactDetail(
+        icon: LucideIcons.mail,
+        label: 'Email',
+        value: account.email,
+        isVerifiedLocked: true,
+      ),
+      hairline,
+      const SizedBox(height: AppSpacing.xl),
       Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: context.colorScheme.surfaceContainerHighest,
+          color: colorScheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.75),
+          ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ExcludeSemantics(
-              child: Icon(
-                LucideIcons.lock_keyhole,
-                size: 16,
-                color: context.colorScheme.onSurfaceVariant,
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: ExcludeSemantics(
+                child: Icon(
+                  LucideIcons.lock_keyhole,
+                  size: 15,
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: AppSpacing.sm + 2),
             Expanded(
               child: Text(
                 'Phone number and email are verified account identifiers and can’t be edited here.',
                 style: context.textStyles.bodySmall?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
+                  color: colorScheme.onSurfaceVariant,
+                  height: 1.45,
                 ),
               ),
             ),
@@ -214,23 +249,77 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
     ];
   }
 
-  Widget _buildContactDetail(String label, String value) {
+  Widget _buildContactDetail({
+    required IconData icon,
+    required String label,
+    required String value,
+    bool isVerifiedLocked = false,
+    bool useTabular = false,
+  }) {
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
+    final isEmpty = value.trim().isEmpty;
+    final baseValueStyle =
+        (useTabular ? textStyles.bodyLarge?.tabular : textStyles.bodyLarge)
+            ?.copyWith(
+              fontWeight: isVerifiedLocked || isEmpty
+                  ? FontWeight.w500
+                  : FontWeight.w600,
+              color: isVerifiedLocked || isEmpty
+                  ? colorScheme.onSurfaceVariant
+                  : colorScheme.onSurface,
+            );
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: context.textStyles.bodySmall?.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: ExcludeSemantics(
+              child: Icon(
+                icon,
+                size: 18,
+                color: isVerifiedLocked
+                    ? colorScheme.onSurfaceVariant.withValues(alpha: 0.72)
+                    : colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            value.trim().isEmpty ? 'Not provided' : value,
-            style: context.textStyles.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        label,
+                        style: textStyles.labelMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    if (isVerifiedLocked) ...[
+                      const SizedBox(width: 6),
+                      ExcludeSemantics(
+                        child: Icon(
+                          LucideIcons.lock,
+                          size: 11,
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.72,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(isEmpty ? 'Not provided' : value, style: baseValueStyle),
+              ],
             ),
           ),
         ],
@@ -239,51 +328,128 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
   }
 
   List<Widget> _buildVehicleFields(AccountState state) {
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
+
     return [
-      _ProfileTextField(
-        label: 'Vehicle Type',
-        controller: _vehicleTypeController,
-        readOnly: state.isSaving,
-        textInputAction: TextInputAction.next,
-      ),
-      const SizedBox(height: 22),
-      _ProfileTextField(
-        label: 'Plate Number',
-        controller: _plateNumberController,
-        readOnly: state.isSaving,
-        textInputAction: TextInputAction.done,
-        textCapitalization: TextCapitalization.characters,
-      ),
-      const SizedBox(height: 10),
-      Text(
-        'Vehicle information is updated in your active driver profile.',
-        style: Theme.of(context).textTheme.bodySmall
-            ?.copyWith(color: context.colorScheme.onSurfaceVariant),
-      ),
-      if (state.errorMessage != null) ...[
-        const SizedBox(height: 12),
-        Text(
-          state.errorMessage!,
-          style: TextStyle(color: context.colorScheme.error, fontSize: 13),
+      DecoratedBox(
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: colorScheme.outlineVariant),
         ),
-      ],
-      const SizedBox(height: 24),
-      ElevatedButton(
-        key: const ValueKey<String>('driver-account-details-save'),
-        onPressed: state.isSaving ? null : _submitSave,
-        style: ElevatedButton.styleFrom(
-          minimumSize: const Size(double.infinity, AppSize.minimumTouchTarget),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _ProfileTextField(
+              icon: LucideIcons.car_front,
+              label: 'Vehicle Type',
+              hintText: 'e.g. Sedan, Motorcycle',
+              controller: _vehicleTypeController,
+              readOnly: state.isSaving,
+              textInputAction: TextInputAction.next,
+            ),
+            Divider(
+              height: 1,
+              thickness: 1,
+              indent: 52,
+              endIndent: AppSpacing.lg,
+              color: colorScheme.outlineVariant.withValues(alpha: 0.65),
+            ),
+            _ProfileTextField(
+              icon: LucideIcons.hash,
+              label: 'Plate Number',
+              hintText: 'e.g. ABC-1234',
+              controller: _plateNumberController,
+              readOnly: state.isSaving,
+              textInputAction: TextInputAction.done,
+              textCapitalization: TextCapitalization.characters,
+              useTabular: true,
+              onSubmitted: (_) {
+                if (!state.isSaving) _submitSave();
+              },
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+        child: Text(
+          'Vehicle information is updated in your active driver profile.',
+          style: textStyles.bodySmall?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+            height: 1.45,
           ),
         ),
-        child: state.isSaving
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Text('Save Changes'),
+      ),
+      if (state.errorMessage != null) ...[
+        const SizedBox(height: AppSpacing.md),
+        Semantics(
+          liveRegion: true,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: ExcludeSemantics(
+                  child: Icon(
+                    LucideIcons.circle_alert,
+                    size: 15,
+                    color: colorScheme.error,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  state.errorMessage!,
+                  style: textStyles.bodySmall?.copyWith(
+                    color: colorScheme.error,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+      const SizedBox(height: AppSpacing.xxl),
+      SizedBox(
+        height: AppSize.controlHeight,
+        width: double.infinity,
+        child: FilledButton(
+          key: const ValueKey<String>('driver-account-details-save'),
+          onPressed: state.isSaving ? null : _submitSave,
+          style:
+              FilledButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                elevation: 0,
+                enableFeedback: false,
+                splashFactory: NoSplash.splashFactory,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                ),
+              ).copyWith(
+                overlayColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.focused)) {
+                    return colorScheme.onPrimary.withValues(alpha: 0.16);
+                  }
+                  return Colors.transparent;
+                }),
+              ),
+          child: state.isSaving
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colorScheme.onPrimary,
+                  ),
+                )
+              : const Text('Save Changes'),
+        ),
       ),
     ];
   }
@@ -296,80 +462,96 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
 }
 
 class const _ProfileTextField({
+  required this.icon,
   required this.label,
   required this.controller,
+  this.hintText,
   this.readOnly = false,
   this.textInputAction,
   this.textCapitalization = TextCapitalization.words,
+  this.useTabular = false,
+  this.onSubmitted,
 }) extends StatelessWidget {
+  final IconData icon;
   final String label;
+  final String? hintText;
   final TextEditingController controller;
   final bool readOnly;
   final TextInputAction? textInputAction;
   final TextCapitalization textCapitalization;
+  final bool useTabular;
+  final ValueChanged<String>? onSubmitted;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _ProfileFieldLabel(label),
-        const SizedBox(height: 9),
-        TextField(
-          key: ValueKey<String>('driver-account-field-$label'),
-          controller: controller,
-          readOnly: readOnly,
-          showCursor: !readOnly,
-          textInputAction: textInputAction,
-          textCapitalization: textCapitalization,
-          decoration: _fieldDecoration(context),
-        ),
-      ],
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
+    final valueStyle =
+        (useTabular ? textStyles.bodyLarge?.tabular : textStyles.bodyLarge)
+            ?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
+            );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 15,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: ExcludeSemantics(
+              child: Icon(icon, size: 18, color: colorScheme.onSurfaceVariant),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: textStyles.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                TextField(
+                  key: ValueKey<String>('driver-account-field-$label'),
+                  controller: controller,
+                  readOnly: readOnly,
+                  showCursor: !readOnly,
+                  textInputAction: textInputAction,
+                  textCapitalization: textCapitalization,
+                  onSubmitted: onSubmitted,
+                  style: valueStyle,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    filled: false,
+                    hintText: hintText,
+                    hintStyle: textStyles.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.6,
+                      ),
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
-}
-
-class const _ProfileFieldLabel(this.label) extends StatelessWidget {
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: Theme.of(context).textTheme.titleSmall
-          ?.copyWith(color: context.colorScheme.onSurfaceVariant),
-    );
-  }
-}
-
-InputDecoration _fieldDecoration(
-  BuildContext context, {
-  String? hintText,
-  String? errorText,
-}) {
-  final border = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(AppRadius.lg),
-    borderSide: BorderSide(color: context.colorScheme.outlineVariant),
-  );
-  return InputDecoration(
-    hintText: hintText,
-    errorText: errorText,
-    filled: true,
-    fillColor: context.colorScheme.surface,
-    contentPadding: const EdgeInsets.symmetric(
-      horizontal: AppLayout.pagePadding,
-      vertical: 16,
-    ),
-    border: border,
-    enabledBorder: border,
-    focusedBorder: border.copyWith(
-      borderSide: BorderSide(color: context.colorScheme.primary, width: 1.5),
-    ),
-    errorBorder: border.copyWith(
-      borderSide: BorderSide(color: context.colorScheme.error),
-    ),
-    focusedErrorBorder: border.copyWith(
-      borderSide: BorderSide(color: context.colorScheme.error, width: 1.5),
-    ),
-  );
 }

@@ -96,6 +96,11 @@ void main() {
       find.byKey(const ValueKey<String>('driver-account-details-save')),
       findsOneWidget,
     );
+    final saveButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey<String>('driver-account-details-save')),
+    );
+    expect(saveButton.style?.enableFeedback, isFalse);
+    expect(saveButton.style?.splashFactory, NoSplash.splashFactory);
     expect(tester.takeException(), isNull);
   });
 }

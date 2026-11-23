@@ -82,4 +82,53 @@ void main() {
     expect(repository.uploadCount, 1);
     expect(photo.readCount, 1);
   });
+
+  testWidgets('switches document type cleanly and disables platform splashes', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _FakeDocumentRepository();
+    final cubit = DocumentUploadCubit(repository);
+    addTearDown(cubit.close);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: BlocProvider.value(
+          value: cubit,
+          child: const DocumentUploadPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final registrationOption = find.byKey(
+      const ValueKey<String>('driver-document-type-registration'),
+    );
+    await tester.ensureVisible(registrationOption);
+    await tester.pumpAndSettle();
+    await tester.tap(registrationOption);
+    await tester.pumpAndSettle();
+
+    final chooseFinder = find.byKey(
+      const ValueKey('driver-document-choose-photo'),
+    );
+    await tester.ensureVisible(chooseFinder);
+    final chooseButton = tester.widget<OutlinedButton>(chooseFinder);
+    expect(chooseButton.style?.enableFeedback, isFalse);
+    expect(chooseButton.style?.splashFactory, NoSplash.splashFactory);
+
+    final submitFinder = find.byKey(const ValueKey('driver-document-submit'));
+    await tester.ensureVisible(submitFinder);
+    final submitButton = tester.widget<FilledButton>(submitFinder);
+    expect(submitButton.style?.enableFeedback, isFalse);
+    expect(submitButton.style?.splashFactory, NoSplash.splashFactory);
+    expect(tester.takeException(), isNull);
+  });
 }
