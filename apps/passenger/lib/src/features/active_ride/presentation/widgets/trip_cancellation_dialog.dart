@@ -1,4 +1,5 @@
 import 'package:design_system/design_system.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 class TripCancellationDialog extends StatefulWidget {
@@ -26,13 +27,14 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
     final isDialog = ModalRoute.of(context) is DialogRoute;
 
     final content = Material(
-      color: colors.surface,
+      color: colors.surfaceContainerLowest,
       shape: RoundedRectangleBorder(
         borderRadius: isDialog
-            ? BorderRadius.circular(AppRadius.lg)
+            ? BorderRadius.circular(AppRadius.xl)
             : const BorderRadius.vertical(
                 top: Radius.circular(AppRadius.sheet),
               ),
+        side: BorderSide(color: colors.outlineVariant),
       ),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(
@@ -60,7 +62,7 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
                       ),
                       decoration: BoxDecoration(
                         color: colors.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                     ),
                   ),
@@ -68,8 +70,8 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
                 Text(
                   'Cancel ride?',
                   style: context.textStyles.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
                     color: colors.onSurface,
                   ),
                 ),
@@ -78,7 +80,7 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
                   'Choose the reason that best describes what happened.',
                   style: context.textStyles.bodyMedium?.copyWith(
                     color: colors.onSurfaceVariant,
-                    height: 1.4,
+                    height: 1.45,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -107,17 +109,16 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
                     vertical: AppSpacing.md,
                   ),
                   decoration: BoxDecoration(
-                    color: colors.surfaceContainerHighest.withValues(
-                      alpha: 0.5,
-                    ),
+                    color: colors.surfaceContainerLowest,
                     borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: colors.outlineVariant),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
-                        Icons.info_outline,
-                        size: 20,
+                        LucideIcons.info,
+                        size: 18,
                         color: colors.onSurfaceVariant,
                       ),
                       const SizedBox(width: AppSpacing.md),
@@ -137,53 +138,71 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
                 Row(
                   children: [
                     Expanded(
-                      child: SizedBox(
-                        height: 50,
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: colors.surfaceContainerHighest,
-                            foregroundColor: colors.onSurface,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                      child: OutlinedButton(
+                        style:
+                            OutlinedButton.styleFrom(
+                              backgroundColor: colors.surfaceContainerLowest,
+                              foregroundColor: colors.onSurface,
+                              side: BorderSide(color: colors.outlineVariant),
+                              enableFeedback: false,
+                              splashFactory: NoSplash.splashFactory,
+                              minimumSize: const Size.fromHeight(
+                                AppSize.controlHeight,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.lg,
+                                ),
+                              ),
+                              textStyle: context.textStyles.labelLarge
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ).copyWith(
+                              overlayColor: WidgetStateProperty.resolveWith(
+                                (states) => states.contains(WidgetState.focused)
+                                    ? colors.primary.withValues(alpha: 0.12)
+                                    : Colors.transparent,
+                              ),
                             ),
-                            textStyle: context.textStyles.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                            ),
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Keep ride'),
-                        ),
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Keep ride'),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
-                      child: SizedBox(
-                        height: 50,
-                        child: FilledButton(
-                          key: const ValueKey('confirm-cancel-ride-button'),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: colors.onSurface,
-                            foregroundColor: colors.surface,
-                            disabledBackgroundColor:
-                                colors.surfaceContainerHighest,
-                            disabledForegroundColor: colors.onSurfaceVariant
-                                .withValues(alpha: 0.38),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                      child: FilledButton(
+                        key: const ValueKey('confirm-cancel-ride-button'),
+                        style:
+                            FilledButton.styleFrom(
+                              backgroundColor: colors.primary,
+                              foregroundColor: colors.onPrimary,
+                              disabledBackgroundColor:
+                                  colors.surfaceContainerHighest,
+                              disabledForegroundColor: colors.onSurfaceVariant
+                                  .withValues(alpha: 0.38),
+                              elevation: 0,
+                              enableFeedback: false,
+                              splashFactory: NoSplash.splashFactory,
+                              minimumSize: const Size.fromHeight(
+                                AppSize.controlHeight,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.lg,
+                                ),
+                              ),
+                              textStyle: context.textStyles.labelLarge
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ).copyWith(
+                              overlayColor: WidgetStateProperty.resolveWith(
+                                (states) => states.contains(WidgetState.focused)
+                                    ? colors.onPrimary.withValues(alpha: 0.16)
+                                    : Colors.transparent,
+                              ),
                             ),
-                            textStyle: context.textStyles.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                            ),
-                          ),
-                          onPressed: _selectedReason == null
-                              ? null
-                              : () => Navigator.pop(context, _selectedReason),
-                          child: const Text('Cancel ride'),
-                        ),
+                        onPressed: _selectedReason == null
+                            ? null
+                            : () => Navigator.pop(context, _selectedReason),
+                        child: const Text('Cancel ride'),
                       ),
                     ),
                   ],
@@ -212,7 +231,7 @@ Future<String?> showTripCancellationSheet(BuildContext context) {
     isScrollControlled: true,
     showDragHandle: false,
     useSafeArea: true,
-    backgroundColor: context.colorScheme.surface,
+    backgroundColor: context.colorScheme.surfaceContainerLowest,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
         top: Radius.circular(AppRadius.sheet),

@@ -40,6 +40,8 @@ class const TrackDriverPanel({
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    final hairline = colors.outlineVariant.withValues(alpha: 0.7);
     final name = driverName?.trim().isNotEmpty == true
         ? driverName!.trim()
         : ride.displayDriverName;
@@ -52,12 +54,21 @@ class const TrackDriverPanel({
     final onTrip = isInTransit ?? ride.status == 'in_transit';
 
     return Material(
-      color: context.colorScheme.surface,
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(AppRadius.sheet),
+      color: colors.surfaceContainerLowest,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
+        side: BorderSide(color: colors.outlineVariant),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+        padding: const EdgeInsets.fromLTRB(
+          AppLayout.pagePadding,
+          AppSpacing.md,
+          AppLayout.pagePadding,
+          AppSpacing.lg,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -67,29 +78,34 @@ class const TrackDriverPanel({
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: context.colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(4),
+                  color: colors.outlineVariant,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.xl),
             Wrap(
               alignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 16,
-              runSpacing: 8,
+              spacing: AppSpacing.lg,
+              runSpacing: AppSpacing.sm,
               children: [
                 Text(
                   statusTitle,
                   style: context.textStyles.titleLarge?.copyWith(
+                    color: colors.onSurface,
                     fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
                   ),
                 ),
                 if (etaText.trim().isNotEmpty)
                   Text(
                     etaText,
                     key: const ValueKey('live-trip-eta'),
-                    style: context.textStyles.titleMedium,
+                    style: context.textStyles.titleMedium?.tabular.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
               ],
             ),
@@ -97,7 +113,7 @@ class const TrackDriverPanel({
             Text(
               statusSubtitle,
               style: context.textStyles.bodyMedium?.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
+                color: colors.onSurfaceVariant,
               ),
             ),
             if (ride.farePesos case final fare?) ...[
@@ -108,40 +124,59 @@ class const TrackDriverPanel({
                     child: Text(
                       'Agreed fare',
                       style: context.textStyles.bodyMedium?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                   ),
-                  Text(
-                    formatPesoAmount(fare),
-                    style: context.textStyles.titleMedium,
+                  const SizedBox(width: AppSpacing.md),
+                  Flexible(
+                    child: Text(
+                      formatPesoAmount(fare),
+                      textAlign: TextAlign.end,
+                      style: context.textStyles.titleMedium?.tabular.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ],
             const SizedBox(height: AppSpacing.lg),
-            const Divider(height: 1),
+            Divider(height: 1, color: hairline),
             const SizedBox(height: AppSpacing.lg),
             Row(
               children: [
-                AppNetworkImage(
-                  imageUrl: driverAvatarUrl,
-                  width: 48,
-                  height: 48,
-                  borderRadius: BorderRadius.circular(24),
-                  fallbackIcon: LucideIcons.user_round,
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: colors.outlineVariant),
+                  ),
+                  child: AppNetworkImage(
+                    imageUrl: driverAvatarUrl,
+                    width: 46,
+                    height: 46,
+                    borderRadius: BorderRadius.circular(23),
+                    fallbackIcon: LucideIcons.user_round,
+                  ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name, style: context.textStyles.titleMedium),
-                      const SizedBox(height: 4),
+                      Text(
+                        name,
+                        style: context.textStyles.titleMedium?.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
                       Text(
                         vehicle,
-                        style: context.textStyles.bodyMedium?.copyWith(
-                          color: context.colorScheme.onSurfaceVariant,
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                       if (rating != null && rating.trim().isNotEmpty) ...[
@@ -151,11 +186,18 @@ class const TrackDriverPanel({
                           children: [
                             Icon(
                               Icons.star_rounded,
-                              size: 18,
+                              size: 16,
                               color: context.semanticColors.rating,
                             ),
                             const SizedBox(width: 4),
-                            Text(rating, style: context.textStyles.bodySmall),
+                            Text(
+                              rating,
+                              style: context.textStyles.labelSmall?.tabular
+                                  .copyWith(
+                                    color: colors.onSurface,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
                           ],
                         ),
                       ],
@@ -170,24 +212,77 @@ class const TrackDriverPanel({
                     child: IconButton.filledTonal(
                       tooltip: 'Message driver',
                       onPressed: onChatDriverPressed,
-                      icon: const Icon(LucideIcons.message_circle, size: 20),
+                      style:
+                          IconButton.styleFrom(
+                            enableFeedback: false,
+                            splashFactory: NoSplash.splashFactory,
+                          ).copyWith(
+                            overlayColor: WidgetStateProperty.resolveWith(
+                              (states) => states.contains(WidgetState.focused)
+                                  ? colors.primary.withValues(alpha: 0.12)
+                                  : Colors.transparent,
+                            ),
+                          ),
+                      icon: const Icon(LucideIcons.message_circle, size: 19),
                     ),
                   ),
                 ],
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
+            Divider(height: 1, color: hairline),
+            const SizedBox(height: AppSpacing.xs),
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 onPressed: onReportDriverPressed,
-                icon: const Icon(LucideIcons.flag, size: 18),
+                style:
+                    TextButton.styleFrom(
+                      foregroundColor: colors.onSurfaceVariant,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs,
+                      ),
+                      minimumSize: const Size(0, AppSize.minimumTouchTarget),
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.focused)
+                            ? colors.primary.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                      ),
+                    ),
+                icon: const Icon(LucideIcons.flag, size: 16),
                 label: const Text('Report issue'),
               ),
             ),
             if (!onTrip)
               OutlinedButton(
-                style: OutlinedButton.styleFrom(side: BorderSide.none),
+                style:
+                    OutlinedButton.styleFrom(
+                      foregroundColor: colors.error,
+                      side: BorderSide.none,
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                      minimumSize: const Size.fromHeight(
+                        AppSize.minimumTouchTarget,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
+                      textStyle: context.textStyles.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.focused)
+                            ? colors.error.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                      ),
+                    ),
                 onPressed: isCancellingTrip ? null : onCancelTripPressed,
                 child: Text(isCancellingTrip ? 'Cancelling…' : 'Cancel ride'),
               ),

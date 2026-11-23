@@ -65,6 +65,16 @@ void main() {
         find.widgetWithText(OutlinedButton, 'Cancel ride'),
       );
       expect(cancelButton.style?.side?.resolve({}), BorderSide.none);
+      expect(cancelButton.style?.enableFeedback, isFalse);
+      expect(cancelButton.style?.splashFactory, NoSplash.splashFactory);
+      expect(
+        cancelButton.style?.overlayColor?.resolve({WidgetState.pressed}),
+        Colors.transparent,
+      );
+      expect(
+        cancelButton.style?.overlayColor?.resolve({WidgetState.focused}),
+        isNot(Colors.transparent),
+      );
 
       expect(find.byTooltip('Call driver'), findsNothing);
       expect(find.textContaining('Booking ID'), findsNothing);

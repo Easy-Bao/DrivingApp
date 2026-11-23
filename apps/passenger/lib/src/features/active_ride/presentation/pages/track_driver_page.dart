@@ -23,13 +23,14 @@ import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 
 Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
+  final colors = context.colorScheme;
   return Tooltip(
     message: MaterialLocalizations.of(context).backButtonTooltip,
     child: Material(
-      color: context.colorScheme.surface,
-      elevation: 2,
-      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
-      shape: const CircleBorder(),
+      color: colors.surfaceContainerLowest,
+      elevation: 1,
+      shadowColor: colors.onSurface.withValues(alpha: 0.08),
+      shape: CircleBorder(side: BorderSide(color: colors.outlineVariant)),
       clipBehavior: Clip.antiAlias,
       child: Semantics(
         button: true,
@@ -37,13 +38,21 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
         child: InkWell(
           onTap: onPressed,
           customBorder: const CircleBorder(),
+          enableFeedback: false,
+          splashFactory: NoSplash.splashFactory,
+          overlayColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.focused)
+                ? colors.primary.withValues(alpha: 0.12)
+                : Colors.transparent,
+          ),
           child: SizedBox(
-            width: 48,
-            height: 48,
+            width: AppSize.minimumTouchTarget,
+            height: AppSize.minimumTouchTarget,
             child: Center(
               child: Icon(
                 LucideIcons.arrow_left,
-                color: context.colorScheme.onSurface,
+                size: 19,
+                color: colors.onSurface,
               ),
             ),
           ),

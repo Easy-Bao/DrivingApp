@@ -19,6 +19,7 @@ class const SafetyReportButton({
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     final canReport = rideId != null && rideId!.isNotEmpty;
     return Tooltip(
       message: 'Report a safety issue',
@@ -35,7 +36,19 @@ class const SafetyReportButton({
                 );
               }
             : null,
-        icon: const Icon(LucideIcons.flag_triangle_right),
+        style:
+            TextButton.styleFrom(
+              foregroundColor: colors.onSurfaceVariant,
+              enableFeedback: false,
+              splashFactory: NoSplash.splashFactory,
+            ).copyWith(
+              overlayColor: WidgetStateProperty.resolveWith(
+                (states) => states.contains(WidgetState.focused)
+                    ? colors.primary.withValues(alpha: 0.12)
+                    : Colors.transparent,
+              ),
+            ),
+        icon: const Icon(LucideIcons.flag_triangle_right, size: 16),
         label: const Text('Report an issue'),
       ),
     );
@@ -107,10 +120,12 @@ class const _ReportTripSummary({
         .take(2)
         .map((part) => part.characters.first.toUpperCase())
         .join();
+    final colors = context.colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
+        color: colors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -120,10 +135,22 @@ class const _ReportTripSummary({
             if (displayName.isNotEmpty) ...[
               Row(
                 children: [
-                  CircleAvatar(
-                    backgroundColor: context.colorScheme.surface,
-                    foregroundColor: context.colorScheme.onSurface,
-                    child: Text(initials),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerLowest,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: colors.outlineVariant),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      initials,
+                      style: context.textStyles.labelLarge?.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
@@ -133,14 +160,15 @@ class const _ReportTripSummary({
                         Text(
                           displayName,
                           style: context.textStyles.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
+                            color: colors.onSurface,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         if (vehicleLabel.isNotEmpty)
                           Text(
                             vehicleLabel,
                             style: context.textStyles.bodySmall?.copyWith(
-                              color: context.colorScheme.onSurfaceVariant,
+                              color: colors.onSurfaceVariant,
                             ),
                           ),
                       ],
