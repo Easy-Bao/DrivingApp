@@ -39,13 +39,16 @@ class FindingDriverStatusSheet extends StatelessWidget {
     final colors = context.colorScheme;
     return Material(
       key: const ValueKey('finding-driver-status-sheet'),
-      color: colors.surface,
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(AppRadius.sheet),
+      color: colors.surfaceContainerLowest,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
+        side: BorderSide(color: colors.outlineVariant),
       ),
       clipBehavior: Clip.antiAlias,
-      elevation: 12,
-      shadowColor: colors.onSurface.withValues(alpha: 0.12),
+      elevation: 4,
+      shadowColor: colors.onSurface.withValues(alpha: 0.08),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.sizeOf(context).height * 0.85,
@@ -53,7 +56,12 @@ class FindingDriverStatusSheet extends StatelessWidget {
         child: SafeArea(
           top: false,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+            padding: const EdgeInsets.fromLTRB(
+              AppLayout.pagePadding,
+              AppSpacing.md,
+              AppLayout.pagePadding,
+              AppSpacing.sm,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -62,7 +70,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
                   child: Container(
                     width: 36,
                     height: 4,
-                    margin: const EdgeInsets.only(bottom: 24),
+                    margin: const EdgeInsets.only(bottom: AppSpacing.xxl),
                     decoration: BoxDecoration(
                       color: colors.outlineVariant,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -71,14 +79,14 @@ class FindingDriverStatusSheet extends StatelessWidget {
                 ),
                 Center(
                   child: Container(
-                    width: 48,
-                    height: 48,
+                    width: 52,
+                    height: 52,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: colors.surfaceContainerHighest.withValues(
-                        alpha: 0.6,
-                      ),
+                      color: colors.surfaceContainerLowest,
+                      border: Border.all(color: colors.outlineVariant),
                     ),
+                    alignment: Alignment.center,
                     child: Icon(statusIcon, color: statusColor, size: 22),
                   ),
                 ),
@@ -86,24 +94,22 @@ class FindingDriverStatusSheet extends StatelessWidget {
                 Text(
                   title,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: context.textStyles.titleLarge?.copyWith(
                     color: colors.onSurface,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.4,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   message,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: context.textStyles.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
-                    fontSize: 13,
-                    height: 1.5,
+                    height: 1.45,
                   ),
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 20),
                 FindingDriverTripCard(
                   key: const ValueKey('finding-driver-trip-context'),
                   pickup: pickupAddress?.trim().isNotEmpty == true
@@ -112,32 +118,56 @@ class FindingDriverStatusSheet extends StatelessWidget {
                   destination: destination,
                   fare: fare,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.xl),
                 if (primaryAction != null && primaryActionLabel != null)
-                  SizedBox(
-                    height: 50,
-                    child: FilledButton(
-                      onPressed: isCanceling ? null : primaryAction,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: colors.onSurface,
-                        foregroundColor: colors.surface,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                  FilledButton(
+                    onPressed: isCanceling ? null : primaryAction,
+                    style:
+                        FilledButton.styleFrom(
+                          backgroundColor: colors.primary,
+                          foregroundColor: colors.onPrimary,
+                          elevation: 0,
+                          enableFeedback: false,
+                          splashFactory: NoSplash.splashFactory,
+                          minimumSize: const Size.fromHeight(
+                            AppSize.controlHeight,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                          ),
+                          textStyle: context.textStyles.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ).copyWith(
+                          overlayColor: WidgetStateProperty.resolveWith(
+                            (states) => states.contains(WidgetState.focused)
+                                ? colors.onPrimary.withValues(alpha: 0.16)
+                                : Colors.transparent,
+                          ),
                         ),
-                        textStyle: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      child: Text(primaryActionLabel!),
-                    ),
+                    child: Text(primaryActionLabel!),
                   ),
+                const SizedBox(height: AppSpacing.xs),
                 TextButton(
                   onPressed: isCanceling ? null : onCancelPressed,
-                  style: TextButton.styleFrom(
-                    foregroundColor: colors.onSurfaceVariant,
-                    minimumSize: const Size.fromHeight(48),
-                  ),
+                  style:
+                      TextButton.styleFrom(
+                        foregroundColor: colors.onSurfaceVariant,
+                        enableFeedback: false,
+                        splashFactory: NoSplash.splashFactory,
+                        minimumSize: const Size.fromHeight(
+                          AppSize.minimumTouchTarget,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                      ).copyWith(
+                        overlayColor: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.focused)
+                              ? colors.primary.withValues(alpha: 0.12)
+                              : Colors.transparent,
+                        ),
+                      ),
                   child: isCanceling
                       ? SizedBox.square(
                           dimension: 18,

@@ -158,6 +158,23 @@ void main() {
       expect(selected, same(_driver));
       expect(find.text('Choose driver'), findsNothing);
       expect(find.text('₱27.88'), findsOneWidget);
+
+      final driverInk = tester.widget<InkWell>(
+        find.descendant(
+          of: find.byKey(const ValueKey('nearby-driver-1')),
+          matching: find.byType(InkWell),
+        ),
+      );
+      expect(driverInk.enableFeedback, isFalse);
+      expect(driverInk.splashFactory, NoSplash.splashFactory);
+      expect(
+        driverInk.overlayColor?.resolve({WidgetState.pressed}),
+        Colors.transparent,
+      );
+      expect(
+        driverInk.overlayColor?.resolve({WidgetState.focused}),
+        isNot(Colors.transparent),
+      );
     },
   );
 

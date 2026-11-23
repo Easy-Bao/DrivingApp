@@ -202,7 +202,12 @@ class _DriverDropdownCardState()
                   padding: EdgeInsets.zero,
                   physics: const AlwaysScrollableScrollPhysics(),
                   itemCount: feedback.reviews.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => Divider(
+                    height: 1,
+                    color: context.colorScheme.outlineVariant.withValues(
+                      alpha: 0.7,
+                    ),
+                  ),
                   itemBuilder: (_, index) =>
                       _buildReviewRow(feedback.reviews[index]),
                 ),
@@ -212,17 +217,13 @@ class _DriverDropdownCardState()
   }
 
   Widget _buildReviewRow(DriverReview review) {
+    final colors = context.colorScheme;
     final passengerName = review.passengerName.trim();
     final comment = review.comment;
     final date = review.displayDate;
     final rating = review.rating;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colorScheme.outlineVariant),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -233,19 +234,17 @@ class _DriverDropdownCardState()
                   passengerName.isEmpty ? 'Passenger' : passengerName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: context.colorScheme.onSurface,
+                  style: context.textStyles.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colors.onSurface,
                   ),
                 ),
               ),
               if (date.isNotEmpty)
                 Text(
                   date,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: context.colorScheme.onSurfaceVariant,
+                  style: context.textStyles.labelSmall?.tabular.copyWith(
+                    color: colors.onSurfaceVariant,
                   ),
                 ),
             ],
@@ -259,17 +258,16 @@ class _DriverDropdownCardState()
                   filled ? Icons.star_rounded : Icons.star_border_rounded,
                   size: 12,
                   color: filled
-                      ? context.semanticColors.warning
-                      : context.colorScheme.onSurfaceVariant,
+                      ? context.semanticColors.rating
+                      : colors.outlineVariant,
                 );
               }),
               const SizedBox(width: 4),
               Text(
                 rating.toStringAsFixed(1),
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: context.colorScheme.onSurfaceVariant,
+                style: context.textStyles.labelSmall?.tabular.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colors.onSurfaceVariant,
                 ),
               ),
             ],
@@ -279,10 +277,9 @@ class _DriverDropdownCardState()
             '“$comment”',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 12,
-              height: 1.25,
-              color: context.colorScheme.onSurface.withValues(alpha: 0.78),
+            style: context.textStyles.bodySmall?.copyWith(
+              height: 1.35,
+              color: colors.onSurfaceVariant,
             ),
           ),
         ],
@@ -298,6 +295,7 @@ class _DriverDropdownCardState()
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     final availableWidth = MediaQuery.sizeOf(context).width;
     final isCompactScreen = availableWidth <= 600.0;
 
@@ -314,28 +312,29 @@ class _DriverDropdownCardState()
                 vertical: 8.0,
               ),
               decoration: BoxDecoration(
-                color: context.colorScheme.surface,
+                color: colors.surfaceContainerLowest,
                 borderRadius: BorderRadius.circular(AppRadius.sheet),
-                border: Border.all(
-                  color: context.colorScheme.outlineVariant,
-                  width: 1.0,
-                ),
+                border: Border.all(color: colors.outlineVariant),
                 boxShadow: [
                   BoxShadow(
-                    color: context.colorScheme.shadow.withValues(alpha: 0.08),
-                    blurRadius: 20.0,
-                    offset: const Offset(0, 6),
+                    color: colors.shadow.withValues(alpha: 0.06),
+                    blurRadius: 16.0,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.all(14.0),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 child: AnimatedSize(
-                  duration: const Duration(milliseconds: 160),
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : const Duration(milliseconds: 160),
                   curve: Curves.easeOutCubic,
                   alignment: Alignment.topCenter,
                   child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 160),
+                    duration: MediaQuery.disableAnimationsOf(context)
+                        ? Duration.zero
+                        : const Duration(milliseconds: 160),
                     switchInCurve: Curves.easeOutCubic,
                     switchOutCurve: Curves.easeInCubic,
                     layoutBuilder: (currentChild, _) => ClipRect(
@@ -380,26 +379,25 @@ class _DriverDropdownCardState()
                                     width: 44.0,
                                     height: 44.0,
                                     decoration: BoxDecoration(
-                                      color: context
-                                          .colorScheme
-                                          .secondaryContainer
-                                          .withValues(alpha: 0.2),
+                                      color: colors.surfaceContainerLowest,
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                         color: widget.isNearestDriver
-                                            ? context.colorScheme.onSurface
-                                            : context.colorScheme.surface
-                                                  .withValues(alpha: 0),
-                                        width: 2.0,
+                                            ? colors.onSurface
+                                            : colors.outlineVariant,
+                                        width: widget.isNearestDriver
+                                            ? 1.5
+                                            : 1.0,
                                       ),
                                     ),
+                                    alignment: Alignment.center,
                                     child: Icon(
                                       LucideIcons.user,
-                                      color: context.colorScheme.onSurface,
-                                      size: 21.0,
+                                      color: colors.onSurface,
+                                      size: 20.0,
                                     ),
                                   ),
-                                  const SizedBox(width: 11.0),
+                                  const SizedBox(width: AppSpacing.md),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
@@ -410,13 +408,14 @@ class _DriverDropdownCardState()
                                             Flexible(
                                               child: Text(
                                                 widget.driver.displayName,
-                                                style: TextStyle(
-                                                  fontSize: 16.0,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: context
-                                                      .colorScheme
-                                                      .onSurface,
-                                                ),
+                                                style: context
+                                                    .textStyles
+                                                    .titleMedium
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color: colors.onSurface,
+                                                    ),
                                                 overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
@@ -426,39 +425,43 @@ class _DriverDropdownCardState()
                                                 padding:
                                                     const EdgeInsets.symmetric(
                                                       horizontal: 8.0,
-                                                      vertical: 3.0,
+                                                      vertical: 2.0,
                                                     ),
                                                 decoration: BoxDecoration(
-                                                  color: context
-                                                      .colorScheme
-                                                      .onSurface
-                                                      .withValues(alpha: 0.1),
+                                                  color: colors
+                                                      .surfaceContainerLowest,
                                                   borderRadius:
                                                       BorderRadius.circular(
-                                                        12.0,
+                                                        AppRadius.pill,
                                                       ),
+                                                  border: Border.all(
+                                                    color:
+                                                        colors.outlineVariant,
+                                                  ),
                                                 ),
                                                 child: Text(
                                                   'Top Match',
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: context
-                                                        .colorScheme
-                                                        .onSurface,
-                                                  ),
+                                                  style: context
+                                                      .textStyles
+                                                      .labelSmall
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: colors.onSurface,
+                                                      ),
                                                 ),
                                               ),
                                             ],
                                           ],
                                         ),
-                                        const SizedBox(height: 4.0),
-                                        Row(
+                                        const SizedBox(height: 6.0),
+                                        Wrap(
+                                          spacing: 6,
+                                          runSpacing: 4,
                                           children: [
                                             _DriverVehicleBadge(
                                               driver: widget.driver,
                                             ),
-                                            const SizedBox(width: 8),
                                             _DriverLicensePlateBadge(
                                               plateNumber:
                                                   widget.driver.plateNumber,
@@ -470,15 +473,30 @@ class _DriverDropdownCardState()
                                   ),
                                   IconButton(
                                     onPressed: widget.onCloseDropdownPressed,
-                                    icon: Icon(
-                                      LucideIcons.x,
-                                      size: 20.0,
-                                      color: context.colorScheme.onSurface,
-                                    ),
+                                    style:
+                                        IconButton.styleFrom(
+                                          foregroundColor:
+                                              colors.onSurfaceVariant,
+                                          enableFeedback: false,
+                                          splashFactory: NoSplash.splashFactory,
+                                        ).copyWith(
+                                          overlayColor:
+                                              WidgetStateProperty.resolveWith(
+                                                (states) =>
+                                                    states.contains(
+                                                      WidgetState.focused,
+                                                    )
+                                                    ? colors.primary.withValues(
+                                                        alpha: 0.12,
+                                                      )
+                                                    : Colors.transparent,
+                                              ),
+                                        ),
+                                    icon: const Icon(LucideIcons.x, size: 19.0),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 10.0),
+                              const SizedBox(height: AppSpacing.md),
                               Row(
                                 children: [
                                   Container(
@@ -487,17 +505,16 @@ class _DriverDropdownCardState()
                                       vertical: 5.0,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: widget.driver.hasPassengerOnboard
-                                          ? context.semanticColors.warning
-                                                .withValues(alpha: 0.15)
-                                          : context.semanticColors.success
-                                                .withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(20.0),
+                                      color: colors.surfaceContainerLowest,
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
                                       border: Border.all(
                                         color: widget.driver.hasPassengerOnboard
                                             ? context.semanticColors.warning
-                                            : context.semanticColors.success,
-                                        width: 1.0,
+                                                  .withValues(alpha: 0.5)
+                                            : context.semanticColors.success
+                                                  .withValues(alpha: 0.45),
                                       ),
                                     ),
                                     child: Row(
@@ -507,7 +524,7 @@ class _DriverDropdownCardState()
                                           widget.driver.hasPassengerOnboard
                                               ? LucideIcons.users
                                               : LucideIcons.user_check,
-                                          size: 14.0,
+                                          size: 13.0,
                                           color:
                                               widget.driver.hasPassengerOnboard
                                               ? context.semanticColors.warning
@@ -518,18 +535,20 @@ class _DriverDropdownCardState()
                                           widget.driver.hasPassengerOnboard
                                               ? 'Passenger Onboard'
                                               : 'Available',
-                                          style: TextStyle(
-                                            fontSize: 11.0,
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                widget
-                                                    .driver
-                                                    .hasPassengerOnboard
-                                                ? context.semanticColors.warning
-                                                : context
-                                                      .semanticColors
-                                                      .success,
-                                          ),
+                                          style: context.textStyles.labelSmall
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                                color:
+                                                    widget
+                                                        .driver
+                                                        .hasPassengerOnboard
+                                                    ? context
+                                                          .semanticColors
+                                                          .warning
+                                                    : context
+                                                          .semanticColors
+                                                          .success,
+                                              ),
                                         ),
                                       ],
                                     ),
@@ -537,27 +556,24 @@ class _DriverDropdownCardState()
                                   const Spacer(),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 9,
-                                      vertical: 6,
+                                      horizontal: 10,
+                                      vertical: 5,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: context
-                                          .colorScheme
-                                          .surfaceContainerHighest,
+                                      color: colors.surfaceContainerLowest,
                                       borderRadius: BorderRadius.circular(
                                         AppRadius.pill,
                                       ),
                                       border: Border.all(
-                                        color:
-                                            context.colorScheme.outlineVariant,
+                                        color: colors.outlineVariant,
                                       ),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(
-                                          LucideIcons.star,
-                                          color: context.semanticColors.warning,
+                                          Icons.star_rounded,
+                                          color: context.semanticColors.rating,
                                           size: 14.0,
                                         ),
                                         const SizedBox(width: 4.0),
@@ -565,12 +581,14 @@ class _DriverDropdownCardState()
                                           widget.driver.rating.toStringAsFixed(
                                             1,
                                           ),
-                                          style: TextStyle(
-                                            fontSize: 12.0,
-                                            fontWeight: FontWeight.w800,
-                                            color:
-                                                context.colorScheme.onSurface,
-                                          ),
+                                          style: context
+                                              .textStyles
+                                              .labelSmall
+                                              ?.tabular
+                                              .copyWith(
+                                                fontWeight: FontWeight.w700,
+                                                color: colors.onSurface,
+                                              ),
                                         ),
                                         const SizedBox(width: 5.0),
                                         _buildReviewCountLabel(),
@@ -579,67 +597,107 @@ class _DriverDropdownCardState()
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 10.0),
-                              const SizedBox(height: 4),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: AppSpacing.md,
+                                ),
+                                child: Divider(
+                                  height: 1,
+                                  color: colors.outlineVariant.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                ),
+                              ),
                               Text(
                                 'Recent Feedback',
-                                style: TextStyle(
-                                  fontSize: 11.0,
-                                  fontWeight: FontWeight.w700,
-                                  color: context.colorScheme.onSurface
-                                      .withValues(alpha: 0.6),
+                                style: context.textStyles.labelSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.onSurfaceVariant,
                                 ),
                               ),
                               const SizedBox(height: 6),
                               _buildRecentFeedbackList(),
-                              const SizedBox(height: 12.0),
+                              const SizedBox(height: AppSpacing.md),
                               SizedBox(
                                 width: double.infinity,
-                                height: 48,
                                 child: OutlinedButton(
                                   onPressed: widget.onViewFullProfilePressed,
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor:
-                                        context.colorScheme.primary,
-                                    side: BorderSide(
-                                      color: context.colorScheme.outlineVariant,
-                                      width: 1.2,
-                                    ),
-                                    padding: EdgeInsets.zero,
-                                  ),
-                                  child: const Text(
-                                    'View Full Profile',
-                                    style: TextStyle(
-                                      fontSize: 13.0,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
+                                  style:
+                                      OutlinedButton.styleFrom(
+                                        backgroundColor:
+                                            colors.surfaceContainerLowest,
+                                        foregroundColor: colors.onSurface,
+                                        side: BorderSide(
+                                          color: colors.outlineVariant,
+                                        ),
+                                        enableFeedback: false,
+                                        splashFactory: NoSplash.splashFactory,
+                                        minimumSize: const Size.fromHeight(
+                                          AppSize.minimumTouchTarget,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            AppRadius.lg,
+                                          ),
+                                        ),
+                                        textStyle: context.textStyles.labelLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ).copyWith(
+                                        overlayColor:
+                                            WidgetStateProperty.resolveWith(
+                                              (states) =>
+                                                  states.contains(
+                                                    WidgetState.focused,
+                                                  )
+                                                  ? colors.primary.withValues(
+                                                      alpha: 0.12,
+                                                    )
+                                                  : Colors.transparent,
+                                            ),
+                                      ),
+                                  child: const Text('View Full Profile'),
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: AppSpacing.sm),
                               SizedBox(
                                 width: double.infinity,
-                                height: 48,
                                 child: FilledButton(
                                   onPressed: widget.onSelectDriverPressed,
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor:
-                                        context.colorScheme.primary,
-                                    foregroundColor:
-                                        context.colorScheme.onPrimary,
-                                    minimumSize: const Size(
-                                      double.infinity,
-                                      48,
-                                    ),
-                                    padding: EdgeInsets.zero,
-                                  ),
-                                  child: const Text(
-                                    'Book This Driver',
-                                    style: TextStyle(
-                                      fontSize: 13.0,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
+                                  style:
+                                      FilledButton.styleFrom(
+                                        backgroundColor: colors.primary,
+                                        foregroundColor: colors.onPrimary,
+                                        elevation: 0,
+                                        enableFeedback: false,
+                                        splashFactory: NoSplash.splashFactory,
+                                        minimumSize: const Size.fromHeight(
+                                          AppSize.minimumTouchTarget,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            AppRadius.lg,
+                                          ),
+                                        ),
+                                        textStyle: context.textStyles.labelLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ).copyWith(
+                                        overlayColor:
+                                            WidgetStateProperty.resolveWith(
+                                              (states) =>
+                                                  states.contains(
+                                                    WidgetState.focused,
+                                                  )
+                                                  ? colors.onPrimary.withValues(
+                                                      alpha: 0.16,
+                                                    )
+                                                  : Colors.transparent,
+                                            ),
+                                      ),
+                                  child: const Text('Book This Driver'),
                                 ),
                               ),
                             ],
@@ -669,29 +727,29 @@ class const _DriverVehicleBadge({required this.driver})
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     final label = driver.vehicleType.trim().isEmpty
         ? 'Vehicle'
         : driver.vehicleType.trim();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
+        color: colors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: context.colorScheme.outlineVariant),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(_icon, size: 14, color: context.colorScheme.onSurface),
+          Icon(_icon, size: 13, color: colors.onSurfaceVariant),
           const SizedBox(width: 5),
           Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: context.colorScheme.onSurface,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
+            style: context.textStyles.labelSmall?.copyWith(
+              color: colors.onSurface,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -706,23 +764,23 @@ class const _DriverLicensePlateBadge({required this.plateNumber})
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     final label = plateNumber.trim().isEmpty ? '—' : plateNumber.trim();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: context.colorScheme.surface,
+        color: colors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: context.colorScheme.outlineVariant),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Text(
         label,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: context.colorScheme.onSurface,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.6,
+        style: context.textStyles.labelSmall?.tabular.copyWith(
+          color: colors.onSurface,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
         ),
       ),
     );

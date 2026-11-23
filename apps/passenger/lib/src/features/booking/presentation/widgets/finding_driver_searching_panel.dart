@@ -105,28 +105,37 @@ class FindingDriverSearchingPanel extends StatelessWidget {
     final displayTip = formatPesoAmount(resolvedTip.toDouble());
     final displayTotal = formatPesoAmount(resolvedTotalFare);
 
+    final hairline = colorScheme.outlineVariant.withValues(alpha: 0.7);
     return Material(
       key: const ValueKey<String>('finding-driver-searching-panel'),
-      color: colorScheme.surface,
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(AppRadius.sheet),
+      color: colorScheme.surfaceContainerLowest,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
+        side: BorderSide(color: colorScheme.outlineVariant),
       ),
       clipBehavior: Clip.antiAlias,
-      elevation: 12,
-      shadowColor: colorScheme.onSurface.withValues(alpha: 0.12),
+      elevation: 4,
+      shadowColor: colorScheme.onSurface.withValues(alpha: 0.08),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          padding: const EdgeInsets.fromLTRB(
+            AppLayout.pagePadding,
+            AppSpacing.md,
+            AppLayout.pagePadding,
+            AppLayout.pagePadding,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Center(
                 child: Container(
-                  width: 40,
+                  width: 36,
                   height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
+                  margin: const EdgeInsets.only(bottom: AppSpacing.lg),
                   decoration: BoxDecoration(
                     color: colorScheme.outlineVariant,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -143,17 +152,23 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                         if (selectedDriverName != null)
                           Text(
                             'Waiting for $selectedDriverName',
-                            style: context.textStyles.titleLarge,
+                            style: context.textStyles.titleLarge?.copyWith(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.3,
+                            ),
                           )
                         else
                           _SearchingDriverTitle(
                             animate: animate,
-                            style: TextStyle(
-                              color: colorScheme.onSurface,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.3,
-                            ),
+                            style:
+                                (context.textStyles.titleLarge ??
+                                        const TextStyle())
+                                    .copyWith(
+                                      color: colorScheme.onSurface,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: -0.3,
+                                    ),
                           ),
                         const SizedBox(height: 4),
                         Text(
@@ -168,25 +183,18 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 14),
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-              ),
-              const SizedBox(height: 16),
+              Divider(height: 1, thickness: 1, color: hairline),
+              const SizedBox(height: AppSpacing.lg),
               Container(
                 key: const ValueKey<String>('finding-driver-location-card'),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
+                  horizontal: AppSpacing.lg,
                   vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: colorScheme.outlineVariant.withValues(alpha: 0.7),
-                    width: 1,
-                  ),
+                  color: colorScheme.surfaceContainerLowest,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(color: colorScheme.outlineVariant),
                 ),
                 child: Column(
                   children: [
@@ -230,20 +238,18 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                               children: [
                                 Text(
                                   'Pick up · Now',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
+                                  style: context.textStyles.labelSmall
+                                      ?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   pickupTitle,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
+                                  style: context.textStyles.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
                                     color: colorScheme.onSurface,
                                   ),
                                 ),
@@ -253,41 +259,33 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                                     pickupSubtitle,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w400,
-                                      color: colorScheme.onSurfaceVariant,
-                                      height: 1.3,
-                                    ),
+                                    style: context.textStyles.bodySmall
+                                        ?.copyWith(
+                                          color: colorScheme.onSurfaceVariant,
+                                          height: 1.35,
+                                        ),
                                   ),
                                 ],
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 10,
                                   ),
-                                  child: Divider(
-                                    height: 1,
-                                    thickness: 0.8,
-                                    color: colorScheme.outlineVariant
-                                        .withValues(alpha: 0.5),
-                                  ),
+                                  child: Divider(height: 1, color: hairline),
                                 ),
                                 Text(
                                   dropoffMeta,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
+                                  style: context.textStyles.labelSmall
+                                      ?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   destinationTitle,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
+                                  style: context.textStyles.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
                                     color: colorScheme.onSurface,
                                   ),
                                 ),
@@ -297,12 +295,11 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                                     destinationSubtitle,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w400,
-                                      color: colorScheme.onSurfaceVariant,
-                                      height: 1.3,
-                                    ),
+                                    style: context.textStyles.bodySmall
+                                        ?.copyWith(
+                                          color: colorScheme.onSurfaceVariant,
+                                          height: 1.35,
+                                        ),
                                   ),
                                 ],
                               ],
@@ -313,13 +310,7 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Divider(
-                        height: 1,
-                        thickness: 0.8,
-                        color: colorScheme.outlineVariant.withValues(
-                          alpha: 0.5,
-                        ),
-                      ),
+                      child: Divider(height: 1, color: hairline),
                     ),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -333,23 +324,21 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                                 '$displayFare | Tip: $displayTip',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
+                                style: context.textStyles.bodySmall?.tabular
+                                    .copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 'Total: $displayTotal',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  color: colorScheme.onSurface,
-                                  letterSpacing: -0.3,
-                                ),
+                                style: context.textStyles.titleMedium?.tabular
+                                    .copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: colorScheme.onSurface,
+                                    ),
                               ),
                             ],
                           ),
@@ -360,55 +349,73 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                 ),
               ),
               if (refreshError?.trim().isNotEmpty == true) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: [
                     Expanded(
                       child: Text(
                         refreshError!,
-                        style: TextStyle(
+                        style: context.textStyles.bodySmall?.copyWith(
                           color: colorScheme.error,
-                          fontSize: 12,
                         ),
                       ),
                     ),
                     if (onRetryPressed != null)
                       TextButton(
                         onPressed: onRetryPressed,
+                        style:
+                            TextButton.styleFrom(
+                              foregroundColor: colorScheme.onSurface,
+                              enableFeedback: false,
+                              splashFactory: NoSplash.splashFactory,
+                            ).copyWith(
+                              overlayColor: WidgetStateProperty.resolveWith(
+                                (states) => states.contains(WidgetState.focused)
+                                    ? colorScheme.primary.withValues(
+                                        alpha: 0.12,
+                                      )
+                                    : Colors.transparent,
+                              ),
+                            ),
                         child: const Text('Retry'),
                       ),
                   ],
                 ),
               ],
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 48,
-                child: FilledButton(
-                  key: const ValueKey<String>('cancel-booking-button'),
-                  onPressed: isCanceling ? null : onCancelPressed,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: colorScheme.onSurface,
-                    foregroundColor: colorScheme.surface,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+              const SizedBox(height: AppSpacing.lg),
+              FilledButton(
+                key: const ValueKey<String>('cancel-booking-button'),
+                onPressed: isCanceling ? null : onCancelPressed,
+                style:
+                    FilledButton.styleFrom(
+                      backgroundColor: colorScheme.onSurface,
+                      foregroundColor: colorScheme.surface,
+                      elevation: 0,
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                      minimumSize: const Size.fromHeight(AppSize.controlHeight),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
+                      textStyle: context.textStyles.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.focused)
+                            ? colorScheme.surface.withValues(alpha: 0.16)
+                            : Colors.transparent,
+                      ),
                     ),
-                  ),
-                  child: isCanceling
-                      ? SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: colorScheme.surface,
-                          ),
-                        )
-                      : const Text(
-                          'Cancel booking',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
+                child: isCanceling
+                    ? SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colorScheme.surface,
                         ),
-                ),
+                      )
+                    : const Text('Cancel booking'),
               ),
             ],
           ),

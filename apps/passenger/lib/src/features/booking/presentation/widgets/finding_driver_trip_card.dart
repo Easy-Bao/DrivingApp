@@ -41,37 +41,37 @@ class FindingDriverTripCard extends StatelessWidget {
           padding: const EdgeInsets.only(top: 2),
           child: RouteStopMarker(isPickup: isPickup, size: 18),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
+                style: context.textStyles.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
               Text(
                 value,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+                style: context.textStyles.bodyMedium?.copyWith(
                   color: colors.onSurface,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               if (details != null &&
                   details.isNotEmpty &&
                   details != value) ...[
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Text(
                   details,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: context.textStyles.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
-                    fontSize: 12,
                     height: 1.4,
                   ),
                 ),
@@ -99,12 +99,13 @@ class FindingDriverTripCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
+    final hairline = colors.outlineVariant.withValues(alpha: 0.7);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: colors.surfaceContainerHighest.withValues(alpha: 0.45),
+        color: colors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.6)),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -125,25 +126,26 @@ class FindingDriverTripCard extends StatelessWidget {
             details: destinationDetails,
           ),
           if (dropoffMeta?.isNotEmpty == true) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Padding(
               padding: const EdgeInsets.only(left: 30),
               child: Text(
                 dropoffMeta!,
-                style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
               ),
             ),
           ],
-          Divider(
-            height: 28,
-            color: colors.outlineVariant.withValues(alpha: 0.6),
-          ),
+          Divider(height: 28, color: hairline),
           if (baseFare != null && tipAmount > 0) ...[
             Text(
               '${formatPesoAmount(baseFare!)} fare · ${formatPesoAmount(tipAmount.toDouble())} tip',
-              style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
+              style: context.textStyles.bodySmall?.tabular.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
           ],
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -151,22 +153,19 @@ class FindingDriverTripCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Total fare · Cash',
-                  style: TextStyle(
+                  style: context.textStyles.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
-                    fontSize: 13,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Flexible(
                 child: Text(
                   formatPesoAmount(fare),
                   textAlign: TextAlign.end,
-                  style: TextStyle(
+                  style: context.textStyles.titleMedium?.tabular.copyWith(
                     color: colors.onSurface,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

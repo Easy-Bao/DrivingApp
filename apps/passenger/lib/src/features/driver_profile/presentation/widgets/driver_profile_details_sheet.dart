@@ -136,6 +136,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
       );
     }
 
+    final colors = context.colorScheme;
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -146,19 +147,25 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
           height: MediaQuery.sizeOf(context).height * 0.78,
           child: Container(
             decoration: BoxDecoration(
-              color: context.colorScheme.surface,
+              color: colors.surfaceContainerLowest,
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(32),
+                top: Radius.circular(AppRadius.sheet),
               ),
+              border: Border(top: BorderSide(color: colors.outlineVariant)),
               boxShadow: [
                 BoxShadow(
-                  color: context.colorScheme.onSurface.withValues(alpha: 0.15),
-                  blurRadius: 30,
-                  offset: const Offset(0, -10),
+                  color: colors.onSurface.withValues(alpha: 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, -6),
                 ),
               ],
             ),
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            padding: const EdgeInsets.fromLTRB(
+              AppLayout.pagePadding,
+              AppSpacing.md,
+              AppLayout.pagePadding,
+              AppLayout.pagePadding,
+            ),
             child: _buildProfileContent(),
           ),
         ),
@@ -167,6 +174,8 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
   }
 
   Widget _buildProfileContent() {
+    final colors = context.colorScheme;
+    final hairline = colors.outlineVariant.withValues(alpha: 0.7);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,20 +186,28 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               IconButton(
                 key: const ValueKey('driver-profile-back'),
                 onPressed: widget.onBackPressed,
-                style: IconButton.styleFrom(shape: const CircleBorder()),
-                icon: Icon(
-                  LucideIcons.arrow_left,
-                  color: context.colorScheme.onSurface,
-                ),
+                style:
+                    IconButton.styleFrom(
+                      foregroundColor: colors.onSurface,
+                      shape: const CircleBorder(),
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.focused)
+                            ? colors.primary.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                      ),
+                    ),
+                icon: const Icon(LucideIcons.arrow_left, size: 19),
                 tooltip: 'Back to driver summary',
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpacing.xs),
               Text(
                 'Driver profile',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: context.colorScheme.onSurface,
+                style: context.textStyles.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.onSurface,
                 ),
               ),
             ],
@@ -198,52 +215,46 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
         else
           Center(
             child: Container(
-              width: 40,
+              width: 36,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 24),
+              margin: const EdgeInsets.only(bottom: AppSpacing.xl),
               decoration: BoxDecoration(
-                color: context.colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
+                color: colors.outlineVariant,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
           ),
+        const SizedBox(height: AppSpacing.xs),
         Row(
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 52,
+              height: 52,
               decoration: BoxDecoration(
-                color: context.colorScheme.secondaryContainer.withValues(
-                  alpha: 0.2,
-                ),
-                borderRadius: BorderRadius.circular(18),
+                color: colors.surfaceContainerLowest,
+                shape: BoxShape.circle,
+                border: Border.all(color: colors.outlineVariant),
               ),
-              child: Icon(
-                LucideIcons.user,
-                color: context.colorScheme.onSurface,
-                size: 26,
-              ),
+              alignment: Alignment.center,
+              child: Icon(LucideIcons.user, color: colors.onSurface, size: 22),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     widget.driverName,
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      color: context.colorScheme.onSurface,
+                    style: context.textStyles.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     '${widget.vehicleType} • ${widget.plateNumber}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: context.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -251,89 +262,77 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        Divider(height: 1, color: context.colorScheme.outlineVariant),
+        const SizedBox(height: AppSpacing.lg),
+        Divider(height: 1, color: hairline),
         const SizedBox(height: 14),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _buildMetricCard(
-              icon: LucideIcons.star,
+              icon: Icons.star_rounded,
               value: widget.rating,
               label: 'Rating',
-              iconColor: context.semanticColors.warning,
+              iconColor: context.semanticColors.rating,
             ),
-            Container(
-              width: 1,
-              height: 40,
-              color: context.colorScheme.outlineVariant,
-            ),
+            Container(width: 1, height: 36, color: hairline),
             _buildMetricCard(
               icon: LucideIcons.bike,
               value: _isLoadingStats
                   ? '...'
                   : _completedTripsCount?.toString() ?? '—',
               label: 'Completed',
-              iconColor: context.colorScheme.onSurface,
+              iconColor: colors.onSurface,
             ),
-            Container(
-              width: 1,
-              height: 40,
-              color: context.colorScheme.outlineVariant,
-            ),
+            Container(width: 1, height: 36, color: hairline),
             _buildMetricCard(
               icon: LucideIcons.users,
               value: widget.onboardPassengerCount == null
                   ? '—'
                   : '${widget.onboardPassengerCount}/5',
               label: 'Onboard',
-              iconColor: context.colorScheme.onSurface,
+              iconColor: colors.onSurface,
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.md),
+        Divider(height: 1, color: hairline),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           'Passenger Reviews',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: context.colorScheme.onSurface,
+          style: context.textStyles.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: colors.onSurface,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.sm),
         Expanded(child: _buildReviews()),
       ],
     );
   }
 
   Widget _buildReviews() {
+    final colors = context.colorScheme;
+    final hairline = colors.outlineVariant.withValues(alpha: 0.7);
     if (_isLoadingStats) {
       return Skeletonizer.zone(
         key: const ValueKey<String>('driver-profile-reviews-loading-skeleton'),
-        child: ListView.builder(
+        child: ListView.separated(
           physics: const BouncingScrollPhysics(),
           padding: EdgeInsets.zero,
           itemCount: 3,
-          itemBuilder: (_, _) => Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: context.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: context.colorScheme.outlineVariant),
-            ),
-            child: const Column(
+          separatorBuilder: (_, _) => Divider(height: 1, color: hairline),
+          itemBuilder: (_, _) => const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Bone.circle(size: 32),
-                    SizedBox(width: 10),
                     Expanded(child: Bone.text(width: 110, fontSize: 14)),
                     Bone.text(width: 42, fontSize: 11),
                   ],
                 ),
-                SizedBox(height: 8),
+                SizedBox(height: 6),
                 Bone.text(width: 96, fontSize: 12),
                 SizedBox(height: 6),
                 Bone.multiText(lines: 2, fontSize: 12),
@@ -347,30 +346,30 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
       return Center(
         child: Text(
           'No passenger reviews yet.',
-          style: TextStyle(
-            color: context.colorScheme.onSurfaceVariant,
-            fontSize: 13,
+          style: context.textStyles.bodySmall?.copyWith(
+            color: colors.onSurfaceVariant,
           ),
         ),
       );
     }
 
     final showsLoader = _hasMore || _isLoadingMore;
-    return ListView.builder(
+    return ListView.separated(
       controller: _scrollController,
       physics: const BouncingScrollPhysics(),
       padding: EdgeInsets.zero,
       itemCount: _driverReviewsList.length + (showsLoader ? 1 : 0),
+      separatorBuilder: (_, _) => Divider(height: 1, color: hairline),
       itemBuilder: (context, index) {
         if (index == _driverReviewsList.length) {
           return Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
               child: SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
-                  color: context.colorScheme.onSurface,
+                  color: colors.onSurface,
                   strokeWidth: 2,
                 ),
               ),
@@ -383,38 +382,36 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
   }
 
   Widget _buildReviewCard(DriverReview reviewItem) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.colorScheme.outlineVariant),
-      ),
+    final colors = context.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                reviewItem.passengerName,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: context.colorScheme.onSurface,
+              Expanded(
+                child: Text(
+                  reviewItem.passengerName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textStyles.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colors.onSurface,
+                  ),
                 ),
               ),
+              const SizedBox(width: AppSpacing.sm),
               Text(
                 reviewItem.displayDate,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: context.colorScheme.onSurfaceVariant,
+                style: context.textStyles.labelSmall?.tabular.copyWith(
+                  color: colors.onSurfaceVariant,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Row(
             children: [
               ...List.generate(5, (starIndex) {
@@ -422,40 +419,38 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                 if (ratingValue >= starIndex + 1) {
                   return Icon(
                     Icons.star_rounded,
-                    color: context.semanticColors.warning,
-                    size: 13,
+                    color: context.semanticColors.rating,
+                    size: 14,
                   );
                 } else if (ratingValue >= starIndex + 0.5) {
                   return Icon(
                     Icons.star_half_rounded,
-                    color: context.semanticColors.warning,
-                    size: 13,
+                    color: context.semanticColors.rating,
+                    size: 14,
                   );
                 }
                 return Icon(
                   Icons.star_rounded,
-                  color: context.colorScheme.onSurface.withValues(alpha: 0.12),
-                  size: 13,
+                  color: colors.outlineVariant,
+                  size: 14,
                 );
               }),
               const SizedBox(width: 6),
               Text(
                 reviewItem.rating.toStringAsFixed(1),
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                style: context.textStyles.labelSmall?.tabular.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colors.onSurfaceVariant,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             reviewItem.comment,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.4,
-              color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+            style: context.textStyles.bodySmall?.copyWith(
+              height: 1.45,
+              color: colors.onSurfaceVariant,
             ),
           ),
         ],
@@ -469,25 +464,24 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     required String label,
     required Color iconColor,
   }) {
+    final colors = context.colorScheme;
     return Column(
       children: [
-        Icon(icon, color: iconColor, size: 24),
-        const SizedBox(height: 8),
+        Icon(icon, color: iconColor, size: 19),
+        const SizedBox(height: 6),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: context.colorScheme.onSurface,
+          style: context.textStyles.titleMedium?.tabular.copyWith(
+            fontWeight: FontWeight.w700,
+            color: colors.onSurface,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: context.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w600,
+          style: context.textStyles.labelSmall?.copyWith(
+            color: colors.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],

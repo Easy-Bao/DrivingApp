@@ -94,11 +94,38 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
         widget.acceptingOfferId != null;
     final error = widget.availability.errorMessage ?? widget.refreshError;
 
+    final colors = context.colorScheme;
+    final hairline = colors.outlineVariant.withValues(alpha: 0.7);
+    final primaryButtonStyle =
+        FilledButton.styleFrom(
+          backgroundColor: colors.primary,
+          foregroundColor: colors.onPrimary,
+          elevation: 0,
+          enableFeedback: false,
+          splashFactory: NoSplash.splashFactory,
+          minimumSize: const Size.fromHeight(AppSize.controlHeight),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          textStyle: context.textStyles.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ).copyWith(
+          overlayColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.focused)
+                ? colors.onPrimary.withValues(alpha: 0.16)
+                : Colors.transparent,
+          ),
+        );
+
     return Material(
       key: const ValueKey('finding-driver-nearby-panel'),
-      color: context.colorScheme.surface,
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(AppRadius.sheet),
+      color: colors.surfaceContainerLowest,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
+        side: BorderSide(color: colors.outlineVariant),
       ),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(
@@ -111,18 +138,36 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
             shrinkWrap: true,
             slivers: [
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                padding: const EdgeInsets.fromLTRB(
+                  AppLayout.pagePadding,
+                  AppSpacing.md,
+                  AppLayout.pagePadding,
+                  AppSpacing.md,
+                ),
                 sliver: SliverList.list(
                   children: [
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: colors.outlineVariant,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                      ),
+                    ),
                     if (widget.notice != null) ...[
                       Semantics(
                         liveRegion: true,
                         child: Text(
                           widget.notice!,
-                          style: context.textStyles.bodyMedium,
+                          style: context.textStyles.bodyMedium?.copyWith(
+                            color: colors.onSurface,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppSpacing.md),
                     ],
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,23 +181,26 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                                     ? 'Nearby drivers'
                                     : 'Waiting for driver',
                                 style: context.textStyles.titleLarge?.copyWith(
+                                  color: colors.onSurface,
                                   fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.3,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 formatPesoAmount(widget.fare),
-                                style: context.textStyles.titleMedium?.copyWith(
-                                  color: context.colorScheme.primary,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                style: context.textStyles.titleMedium?.tabular
+                                    .copyWith(
+                                      color: colors.onSurface,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                               ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
                       widget.isChoosingDriver
                           ? 'Select a driver, then send your request.'
@@ -160,13 +208,13 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                           ? 'Sending your request…'
                           : 'Your request was sent. Waiting for the driver to accept.',
                       style: context.textStyles.bodyMedium?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                     if (widget.isChoosingDriver &&
                         driverIds.isEmpty &&
                         error == null) ...[
-                      const SizedBox(height: 24),
+                      const SizedBox(height: AppSpacing.xl),
                       Row(
                         children: [
                           SizedBox(
@@ -174,26 +222,30 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: context.colorScheme.primary,
+                              color: colors.onSurface,
                               key: const ValueKey('nearby-drivers-loading'),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: AppSpacing.md),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   'Looking nearby',
-                                  style: context.textStyles.titleSmall,
+                                  style: context.textStyles.titleSmall
+                                      ?.copyWith(
+                                        color: colors.onSurface,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 2),
                                 Text(
                                   widget.availability.hasLoaded
                                       ? 'No drivers available yet. We’ll keep checking nearby.'
                                       : 'Available drivers will appear here.',
                                   style: context.textStyles.bodySmall?.copyWith(
-                                    color: context.colorScheme.onSurfaceVariant,
+                                    color: colors.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -201,10 +253,10 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.sm),
                     ],
                     if (error != null) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       Text(
                         widget.availability.hasLoaded
                             ? 'Driver availability could not be refreshed. Showing the last result.'
@@ -212,21 +264,51 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                             ? 'Couldn’t load nearby drivers. We’ll keep trying.'
                             : 'Nearby drivers could not be loaded. Your ride request is still active.',
                         key: const ValueKey('nearby-drivers-error'),
-                        style: context.textStyles.bodySmall,
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
                       ),
-                      TextButton(
-                        onPressed: widget.onRetry,
-                        child: const Text('Try again'),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: widget.onRetry,
+                          style:
+                              TextButton.styleFrom(
+                                foregroundColor: colors.onSurface,
+                                enableFeedback: false,
+                                splashFactory: NoSplash.splashFactory,
+                              ).copyWith(
+                                overlayColor: WidgetStateProperty.resolveWith(
+                                  (states) =>
+                                      states.contains(WidgetState.focused)
+                                      ? colors.primary.withValues(alpha: 0.12)
+                                      : Colors.transparent,
+                                ),
+                              ),
+                          child: const Text('Try again'),
+                        ),
                       ),
                     ],
                   ],
                 ),
               ),
+              if (driverIds.isNotEmpty)
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppLayout.pagePadding,
+                  ),
+                  sliver: SliverToBoxAdapter(
+                    child: Divider(height: 1, color: hairline),
+                  ),
+                ),
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppLayout.pagePadding,
+                ),
                 sliver: SliverList.separated(
                   itemCount: driverIds.length,
-                  separatorBuilder: (_, _) => const Divider(height: 24),
+                  separatorBuilder: (_, _) =>
+                      Divider(height: 1, color: hairline),
                   itemBuilder: (context, index) {
                     final id = driverIds[index];
                     return _DriverRow(
@@ -248,7 +330,12 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                 ),
               ),
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                padding: const EdgeInsets.fromLTRB(
+                  AppLayout.pagePadding,
+                  AppSpacing.md,
+                  AppLayout.pagePadding,
+                  AppSpacing.lg,
+                ),
                 sliver: SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -261,20 +348,38 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                                   setState(() => _requestSubmitted = true);
                                   widget.onSelectDriver(selectedDriver);
                                 },
+                          style: primaryButtonStyle,
                           child: Text(
                             _requestSubmitted
                                 ? 'Sending request…'
                                 : 'Request driver',
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.sm),
+                        const SizedBox(height: AppSpacing.xs),
                         TextButton(
                           onPressed: busy ? null : widget.onCancelPressed,
+                          style:
+                              TextButton.styleFrom(
+                                foregroundColor: colors.onSurfaceVariant,
+                                enableFeedback: false,
+                                splashFactory: NoSplash.splashFactory,
+                                minimumSize: const Size.fromHeight(
+                                  AppSize.minimumTouchTarget,
+                                ),
+                              ).copyWith(
+                                overlayColor: WidgetStateProperty.resolveWith(
+                                  (states) =>
+                                      states.contains(WidgetState.focused)
+                                      ? colors.primary.withValues(alpha: 0.12)
+                                      : Colors.transparent,
+                                ),
+                              ),
                           child: const Text('Back to trip'),
                         ),
                       ] else
                         FilledButton(
                           onPressed: busy ? null : widget.onCancelPressed,
+                          style: primaryButtonStyle,
                           child: Text(
                             widget.isCanceling
                                 ? 'Cancelling…'
@@ -315,6 +420,7 @@ class const _DriverRow({
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     final rating = offer?.driverRating ?? driver?.rating;
     final canSelect = onSelectDriver != null && driver != null;
     final details = Column(
@@ -323,26 +429,39 @@ class const _DriverRow({
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AppNetworkImage(
-              imageUrl: driver?.avatarUrl,
-              width: 40,
-              height: 40,
-              borderRadius: BorderRadius.circular(20),
-              fallbackIcon: LucideIcons.user_round,
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? colors.primary : colors.outlineVariant,
+                ),
+              ),
+              child: AppNetworkImage(
+                imageUrl: driver?.avatarUrl,
+                width: 40,
+                height: 40,
+                borderRadius: BorderRadius.circular(20),
+                fallbackIcon: LucideIcons.user_round,
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     offer?.displayDriverName ?? driver!.displayName,
-                    style: context.textStyles.titleSmall,
+                    style: context.textStyles.titleSmall?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     offer?.vehicleSummary ?? driver!.vehicleSummary,
-                    style: context.textStyles.bodySmall,
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Wrap(
@@ -352,12 +471,16 @@ class const _DriverRow({
                       if (driver != null)
                         Text(
                           '${driver!.etaMinutes} min · ${DistanceFormatter.fromKilometers(driver!.distanceKm)}',
-                          style: context.textStyles.bodySmall,
+                          style: context.textStyles.bodySmall?.tabular.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
                         ),
                       if (rating != null && rating > 0)
                         Text(
                           'Rating ${rating.toStringAsFixed(1)}',
-                          style: context.textStyles.bodySmall,
+                          style: context.textStyles.bodySmall?.tabular.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
                         ),
                     ],
                   ),
@@ -365,16 +488,16 @@ class const _DriverRow({
               ),
             ),
             if (canSelect) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Icon(
                 isSelected ? LucideIcons.circle_check : LucideIcons.circle,
                 size: 20,
-                color: context.colorScheme.primary,
+                color: isSelected ? colors.primary : colors.outlineVariant,
               ),
             ],
           ],
         ),
-        if (!canSelect) const SizedBox(height: 8),
+        if (!canSelect) const SizedBox(height: 10),
         if (offer case final BookingOffer readyOffer when !canSelect)
           Wrap(
             alignment: WrapAlignment.spaceBetween,
@@ -384,10 +507,30 @@ class const _DriverRow({
             children: [
               Text(
                 'Accepted fare · ${formatPesoAmount(readyOffer.proposedFare)}',
-                style: context.textStyles.bodyMedium,
+                style: context.textStyles.bodyMedium?.tabular.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               FilledButton(
                 onPressed: isBusy ? null : () => onChoose(readyOffer),
+                style:
+                    FilledButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
+                      elevation: 0,
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.focused)
+                            ? colors.onPrimary.withValues(alpha: 0.16)
+                            : Colors.transparent,
+                      ),
+                    ),
                 child: Text(isAccepting ? 'Confirming…' : 'Choose driver'),
               ),
             ],
@@ -396,23 +539,38 @@ class const _DriverRow({
           Text(
             'Awaiting response',
             style: context.textStyles.bodySmall?.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
+              color: colors.onSurfaceVariant,
             ),
           ),
       ],
     );
-    if (!canSelect) return details;
+    if (!canSelect) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        child: details,
+      );
+    }
     return Semantics(
       button: true,
       selected: isSelected,
       enabled: !isBusy,
       label: 'Select ${driver!.displayName}',
-      child: InkWell(
-        onTap: isBusy ? null : () => onSelectDriver!(driver!),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: details,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: isBusy ? null : () => onSelectDriver!(driver!),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          enableFeedback: false,
+          splashFactory: NoSplash.splashFactory,
+          overlayColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.focused)
+                ? colors.primary.withValues(alpha: 0.08)
+                : Colors.transparent,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: details,
+          ),
         ),
       ),
     );

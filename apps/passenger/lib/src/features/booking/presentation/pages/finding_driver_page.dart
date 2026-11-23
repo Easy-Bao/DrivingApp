@@ -884,16 +884,27 @@ class const _NearbyDriverSelectionChip({
       label:
           '${driver.displayName}, ${driver.vehicleType}, rating ${driver.rating.toStringAsFixed(1)}, $distance away',
       child: Material(
-        color: isSelected ? scheme.primary : scheme.surfaceContainerHighest,
-        elevation: isSelected ? 3 : 0,
-        shadowColor: scheme.shadow.withValues(alpha: 0.18),
+        color: isSelected ? scheme.primary : scheme.surfaceContainerLowest,
+        elevation: isSelected ? 1 : 0,
+        shadowColor: scheme.shadow.withValues(alpha: 0.12),
         borderRadius: radius,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
           borderRadius: radius,
+          enableFeedback: false,
+          splashFactory: NoSplash.splashFactory,
+          overlayColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.focused)
+                ? (isSelected ? scheme.onPrimary : scheme.primary).withValues(
+                    alpha: isSelected ? 0.16 : 0.12,
+                  )
+                : Colors.transparent,
+          ),
           child: Container(
-            constraints: const BoxConstraints(minHeight: 48),
+            constraints: const BoxConstraints(
+              minHeight: AppSize.minimumTouchTarget,
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
               border: Border.all(
@@ -904,8 +915,8 @@ class const _NearbyDriverSelectionChip({
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(_vehicleIcon, size: 18, color: foregroundColor),
-                const SizedBox(width: 8),
+                Icon(_vehicleIcon, size: 17, color: foregroundColor),
+                const SizedBox(width: AppSpacing.sm),
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -914,40 +925,38 @@ class const _NearbyDriverSelectionChip({
                       driver.displayName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: context.textStyles.labelMedium?.copyWith(
                         color: foregroundColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          LucideIcons.star,
-                          size: 12,
+                          Icons.star_rounded,
+                          size: 13,
                           color: isSelected
                               ? scheme.onPrimary
-                              : context.semanticColors.warning,
+                              : context.semanticColors.rating,
                         ),
                         const SizedBox(width: 3),
                         Text(
                           driver.rating.toStringAsFixed(1),
-                          style: TextStyle(
-                            color: foregroundColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: context.textStyles.labelSmall?.tabular
+                              .copyWith(
+                                color: foregroundColor,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                         const SizedBox(width: 7),
                         Text(
                           distance,
-                          style: TextStyle(
-                            color: foregroundColor.withValues(alpha: 0.78),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: context.textStyles.labelSmall?.tabular
+                              .copyWith(
+                                color: foregroundColor.withValues(alpha: 0.78),
+                              ),
                         ),
                       ],
                     ),
@@ -963,13 +972,14 @@ class const _NearbyDriverSelectionChip({
 }
 
 Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
+  final colors = context.colorScheme;
   return Tooltip(
     message: MaterialLocalizations.of(context).backButtonTooltip,
     child: Material(
-      color: context.colorScheme.surface,
-      elevation: 2,
-      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
-      shape: const CircleBorder(),
+      color: colors.surfaceContainerLowest,
+      elevation: 1,
+      shadowColor: colors.onSurface.withValues(alpha: 0.08),
+      shape: CircleBorder(side: BorderSide(color: colors.outlineVariant)),
       clipBehavior: Clip.antiAlias,
       child: Semantics(
         button: true,
@@ -977,13 +987,21 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
         child: InkWell(
           onTap: onPressed,
           customBorder: const CircleBorder(),
+          enableFeedback: false,
+          splashFactory: NoSplash.splashFactory,
+          overlayColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.focused)
+                ? colors.primary.withValues(alpha: 0.12)
+                : Colors.transparent,
+          ),
           child: SizedBox(
-            width: 48,
-            height: 48,
+            width: AppSize.minimumTouchTarget,
+            height: AppSize.minimumTouchTarget,
             child: Center(
               child: Icon(
                 LucideIcons.arrow_left,
-                color: context.colorScheme.onSurface,
+                size: 19,
+                color: colors.onSurface,
               ),
             ),
           ),

@@ -24,21 +24,28 @@ class const FindingDriverNearestPanel({
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     final driver = state.driver;
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+        padding: const EdgeInsets.fromLTRB(
+          AppLayout.pagePadding,
+          10,
+          AppLayout.pagePadding,
+          AppSpacing.lg,
+        ),
         decoration: BoxDecoration(
-          color: context.colorScheme.surface,
+          color: colors.surfaceContainerLowest,
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(AppRadius.sheet),
           ),
+          border: Border(top: BorderSide(color: colors.outlineVariant)),
           boxShadow: [
             BoxShadow(
-              color: context.colorScheme.onSurface.withValues(alpha: 0.08),
-              blurRadius: 24,
-              offset: const Offset(0, -8),
+              color: colors.onSurface.withValues(alpha: 0.06),
+              blurRadius: 18,
+              offset: const Offset(0, -6),
             ),
           ],
         ),
@@ -48,10 +55,10 @@ class const FindingDriverNearestPanel({
             Container(
               width: 36,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 12),
+              margin: const EdgeInsets.only(bottom: 14),
               decoration: BoxDecoration(
-                color: context.colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(99),
+                color: colors.outlineVariant,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
             Row(
@@ -60,26 +67,27 @@ class const FindingDriverNearestPanel({
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: context.colorScheme.surfaceContainerHighest,
+                    color: colors.surfaceContainerLowest,
                     shape: BoxShape.circle,
+                    border: Border.all(color: colors.outlineVariant),
                   ),
+                  alignment: Alignment.center,
                   child: Icon(
                     LucideIcons.user_round,
-                    color: context.colorScheme.onSurface,
-                    size: 21,
+                    color: colors.onSurface,
+                    size: 20,
                   ),
                 ),
-                const SizedBox(width: 11),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Nearest Driver',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: context.colorScheme.onSurfaceVariant,
+                        style: context.textStyles.labelSmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 1),
@@ -87,65 +95,66 @@ class const FindingDriverNearestPanel({
                         driver.displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: context.colorScheme.onSurface,
+                        style: context.textStyles.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: colors.onSurface,
                         ),
                       ),
                       Text(
                         driver.vehicleSummary,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: context.colorScheme.onSurfaceVariant,
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
                       formatPesoAmount(fare),
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: context.colorScheme.onSurface,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                      style: context.textStyles.titleMedium?.tabular.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colors.onSurface,
                       ),
                     ),
                     Text(
                       'Estimated Fare',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: context.colorScheme.onSurfaceVariant,
+                      style: context.textStyles.labelSmall?.copyWith(
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Divider(
+                height: 1,
+                color: colors.outlineVariant.withValues(alpha: 0.7),
+              ),
+            ),
             Row(
               children: [
                 _metric(
                   context,
                   icon: Icons.star_rounded,
                   label: '${driver.rating.toStringAsFixed(1)} Rating',
-                  color: context.semanticColors.warning,
+                  color: context.semanticColors.rating,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 _metric(
                   context,
                   icon: LucideIcons.navigation,
                   label:
                       '${DistanceFormatter.fromKilometers(driver.distanceKm)} Away',
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 _metric(
                   context,
                   icon: driver.hasPassengerOnboard
@@ -164,60 +173,114 @@ class const FindingDriverNearestPanel({
                 Expanded(
                   child: OutlinedButton(
                     onPressed: onViewFullProfilePressed,
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, AppSize.minimumTouchTarget),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
+                    style:
+                        OutlinedButton.styleFrom(
+                          backgroundColor: colors.surfaceContainerLowest,
+                          foregroundColor: colors.onSurface,
+                          side: BorderSide(color: colors.outlineVariant),
+                          enableFeedback: false,
+                          splashFactory: NoSplash.splashFactory,
+                          minimumSize: const Size(0, AppSize.controlHeight),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                          ),
+                          textStyle: context.textStyles.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ).copyWith(
+                          overlayColor: WidgetStateProperty.resolveWith(
+                            (states) => states.contains(WidgetState.focused)
+                                ? colors.primary.withValues(alpha: 0.12)
+                                : Colors.transparent,
+                          ),
+                        ),
                     child: const Text('View Profile'),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: ElevatedButton(
+                  child: FilledButton(
                     onPressed: onBookDirectPressed,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: context.colorScheme.primary,
-                      foregroundColor: context.colorScheme.onPrimary,
-                      elevation: 0,
-                      minimumSize: const Size(0, AppSize.minimumTouchTarget),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
+                    style:
+                        FilledButton.styleFrom(
+                          backgroundColor: colors.primary,
+                          foregroundColor: colors.onPrimary,
+                          elevation: 0,
+                          enableFeedback: false,
+                          splashFactory: NoSplash.splashFactory,
+                          minimumSize: const Size(0, AppSize.controlHeight),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                          ),
+                          textStyle: context.textStyles.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ).copyWith(
+                          overlayColor: WidgetStateProperty.resolveWith(
+                            (states) => states.contains(WidgetState.focused)
+                                ? colors.onPrimary.withValues(alpha: 0.16)
+                                : Colors.transparent,
+                          ),
+                        ),
                     child: const Text('Choose Driver'),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppSpacing.xs),
             Row(
               children: [
                 Expanded(
                   child: TextButton(
                     onPressed: onSearchAllDriversPressed,
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(0, AppSize.minimumTouchTarget),
-                    ),
+                    style:
+                        TextButton.styleFrom(
+                          foregroundColor: colors.onSurfaceVariant,
+                          enableFeedback: false,
+                          splashFactory: NoSplash.splashFactory,
+                          minimumSize: const Size(
+                            0,
+                            AppSize.minimumTouchTarget,
+                          ),
+                        ).copyWith(
+                          overlayColor: WidgetStateProperty.resolveWith(
+                            (states) => states.contains(WidgetState.focused)
+                                ? colors.primary.withValues(alpha: 0.12)
+                                : Colors.transparent,
+                          ),
+                        ),
                     child: const Text('Compare All Drivers'),
                   ),
                 ),
                 Expanded(
                   child: TextButton(
                     onPressed: isCanceling ? null : onCancelRidePressed,
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(0, AppSize.minimumTouchTarget),
-                    ),
+                    style:
+                        TextButton.styleFrom(
+                          foregroundColor: colors.error,
+                          enableFeedback: false,
+                          splashFactory: NoSplash.splashFactory,
+                          minimumSize: const Size(
+                            0,
+                            AppSize.minimumTouchTarget,
+                          ),
+                        ).copyWith(
+                          overlayColor: WidgetStateProperty.resolveWith(
+                            (states) => states.contains(WidgetState.focused)
+                                ? colors.error.withValues(alpha: 0.12)
+                                : Colors.transparent,
+                          ),
+                        ),
                     child: isCanceling
                         ? SizedBox(
                             width: 17,
                             height: 17,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: context.colorScheme.error,
+                              color: colors.error,
                             ),
                           )
-                        : Text(
-                            'Cancel Ride',
-                            style: TextStyle(color: context.colorScheme.error),
-                          ),
+                        : const Text('Cancel Ride'),
                   ),
                 ),
               ],
@@ -239,16 +302,15 @@ class const FindingDriverNearestPanel({
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 13, color: resolvedColor),
+          Icon(icon, size: 14, color: resolvedColor),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+              style: context.textStyles.labelSmall?.tabular.copyWith(
+                fontWeight: FontWeight.w600,
                 color: context.colorScheme.onSurface,
               ),
             ),
