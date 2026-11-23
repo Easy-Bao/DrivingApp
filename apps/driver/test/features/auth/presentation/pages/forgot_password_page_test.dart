@@ -34,7 +34,33 @@ void main() {
       find.text('The server could not complete your request. Try again.'),
       findsOneWidget,
     );
+    expect(
+      tester
+          .getTopLeft(
+            find.text('The server could not complete your request. Try again.'),
+          )
+          .dy,
+      greaterThan(tester.getBottomLeft(find.byType(TextField)).dy),
+    );
     expect(tester.takeException(), isNull);
+  });
+  testWidgets('rejects malformed email addresses without calling repository', (
+    tester,
+  ) async {
+    final repository = _MockAuthRepository();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        home: ForgotPasswordPage(
+          forgotPasswordBloc: ForgotPasswordBloc(repository),
+        ),
+      ),
+    );
+    await tester.enterText(find.byType(TextField), 'driver@invalid');
+    await tester.tap(find.text('Send code'));
+    await tester.pumpAndSettle();
+    expect(find.text('Enter a valid email address.'), findsOneWidget);
+    verifyNever(() => repository.resetPassword(email: any(named: 'email')));
   });
   testWidgets('validates inline and prevents repeat code requests', (
     tester,

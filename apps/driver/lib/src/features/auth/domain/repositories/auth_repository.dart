@@ -9,6 +9,11 @@ abstract interface class AuthRepository {
 
   Future<Result<void, Failure>> resetPassword({required String email});
 
+  Future<Result<void, Failure>> verifyResetOtp({
+    required String email,
+    required String code,
+  });
+
   Future<Result<void, Failure>> confirmPasswordReset({
     required String email,
     required String code,

@@ -5,6 +5,7 @@ import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/data/datasources/auth_endpoints.dart';
 import 'package:passenger/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MockAuthRemoteDataSource extends Mock implements AuthRemoteDataSource {}
@@ -300,4 +301,86 @@ void main() {
       verifyNever(() => secureSessionService.savePassengerId(any()));
     },
   );
+
+  group('password recovery validation failures', () {
+    test('maps HTTP 400 on resetPassword to InvalidEmailFailure with clear message', () async {
+      when(
+        () => remoteDataSource.postJson(
+          AccountAuthEndpoints.forgotPassword,
+          requestBody: {'email': 'bad@email'},
+        ),
+      ).thenThrow(
+        ServerException(
+          message: 'Enter a valid email address.',
+          statusCode: 400,
+        ),
+      );
+
+      final result = await repository.resetPassword(email: 'bad@email');
+      result.fold((failure) {
+        expect(failure, isA<InvalidEmailFailure>());
+        expect(
+          ErrorHandler.getErrorMessage(failure),
+          'Enter a valid email address.',
+        );
+      }, (_) => fail('Expected failure'));
+    });
+
+    test(
+      'maps HTTP 400 on verifyResetOtp to InvalidVerificationCodeFailure',
+      () async {
+        when(
+          () => remoteDataSource.postJson(
+            AccountAuthEndpoints.verifyResetOtp,
+            requestBody: {'email': 'passenger@example.com', 'code': '000000'},
+          ),
+        ).thenThrow(
+          ServerException(message: 'invalid or expired otp', statusCode: 400),
+        );
+
+        final result = await repository.verifyResetOtp(
+          email: 'passenger@example.com',
+          code: '000000',
+        );
+        result.fold((failure) {
+          expect(failure, isA<InvalidVerificationCodeFailure>());
+          expect(
+            ErrorHandler.getErrorMessage(failure),
+            'That verification code is invalid or expired. Try again.',
+          );
+        }, (_) => fail('Expected failure'));
+      },
+    );
+
+    test(
+      'maps HTTP 400 on confirmResetPassword to InvalidVerificationCodeFailure',
+      () async {
+        when(
+          () => remoteDataSource.postJson(
+            AccountAuthEndpoints.resetPassword,
+            requestBody: {
+              'email': 'passenger@example.com',
+              'code': '000000',
+              'newPassword': 'new-password',
+            },
+          ),
+        ).thenThrow(
+          ServerException(message: 'invalid or expired otp', statusCode: 400),
+        );
+
+        final result = await repository.confirmResetPassword(
+          email: 'passenger@example.com',
+          code: '000000',
+          newPassword: 'new-password',
+        );
+        result.fold((failure) {
+          expect(failure, isA<InvalidVerificationCodeFailure>());
+          expect(
+            ErrorHandler.getErrorMessage(failure),
+            'That verification code is invalid or expired. Request a new code and try again.',
+          );
+        }, (_) => fail('Expected failure'));
+      },
+    );
+  });
 }

@@ -120,4 +120,92 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
+
+  testWidgets(
+    'blocks advancing to password creation until OTP verifies and places errors below inputs',
+    (tester) async {
+      var verified = false;
+      var verifying = false;
+      String? error;
+      late StateSetter update;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: StatefulBuilder(
+            builder: (context, setState) {
+              update = setState;
+              return AppPasswordResetFlow(
+                email: 'person@example.com',
+                minimumPasswordLength: 8,
+                isVerifyingCode: verifying,
+                isCodeVerified: verified,
+                errorMessage: error,
+                onBack: () {},
+                onResend: () {},
+                onVerifyCode: (code) {
+                  update(() {
+                    verifying = false;
+                    if (code == '123456') {
+                      verified = true;
+                      error = null;
+                    } else {
+                      verified = false;
+                      error = 'That verification code is invalid or expired.';
+                    }
+                  });
+                },
+                onSubmit: (_, _) {
+                  update(() {
+                    error = 'Password reset failed.';
+                  });
+                },
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), '000000');
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      // Must NOT advance to password creation on invalid OTP.
+      expect(find.text('Check your email'), findsOneWidget);
+      expect(find.text('Create new password'), findsNothing);
+      final otpError = find.text(
+        'That verification code is invalid or expired.',
+      );
+      expect(otpError, findsOneWidget);
+      // Validation error must sit BELOW the OTP input field.
+      expect(
+        tester.getTopLeft(otpError).dy,
+        greaterThan(tester.getBottomLeft(find.byType(TextField)).dy),
+      );
+
+      // Valid code advances to password creation.
+      await tester.enterText(find.byType(TextField), '123456');
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      expect(find.text('Create new password'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField).first, 'new-password');
+      await tester.enterText(find.byType(TextField).last, 'new-password');
+      await tester.pump();
+      await tester.tap(find.widgetWithText(FilledButton, 'Reset password'));
+      await tester.pumpAndSettle();
+
+      // Submission error must render BELOW password inputs and requirements.
+      final submitError = find.byKey(
+        const ValueKey('password-reset-bottom-error'),
+      );
+      expect(submitError, findsOneWidget);
+      expect(
+        tester.getTopLeft(submitError).dy,
+        greaterThan(tester.getBottomLeft(find.text('Passwords match')).dy),
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 }

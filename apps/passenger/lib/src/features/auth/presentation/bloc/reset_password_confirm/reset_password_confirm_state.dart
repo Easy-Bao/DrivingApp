@@ -23,3 +23,15 @@ final class const ResetPasswordConfirmFailure(final String errorMessage)
 final class const ResetPasswordCodeResending()
     extends ResetPasswordConfirmState;
 final class const ResetPasswordCodeSent() extends ResetPasswordConfirmState;
+
+final class const ResetPasswordCodeVerifying()
+    extends ResetPasswordConfirmState;
+
+final class const ResetPasswordCodeVerified() extends ResetPasswordConfirmState;
+
+final class const ResetPasswordCodeVerificationFailure(
+  final String errorMessage,
+) extends ResetPasswordConfirmState {
+  @override
+  List<Object?> get props => [errorMessage];
+}

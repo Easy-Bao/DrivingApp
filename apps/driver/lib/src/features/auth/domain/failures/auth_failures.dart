@@ -11,3 +11,11 @@ class const InvalidCredentialsFailure() extends Failure {
 class const EmailAlreadyRegisteredFailure() extends Failure {
   this : super('This email is already registered.');
 }
+
+class const InvalidEmailFailure([
+  super.message = 'Enter a valid email address.',
+]) extends Failure {}
+
+class const InvalidVerificationCodeFailure([
+  super.message = 'That verification code is invalid or expired. Try again.',
+]) extends Failure {}

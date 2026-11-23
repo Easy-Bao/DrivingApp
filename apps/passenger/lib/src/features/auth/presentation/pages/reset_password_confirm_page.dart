@@ -46,12 +46,33 @@ class const _ResetPasswordConfirmPageContent({
           email: email,
           initialCode: code,
           minimumPasswordLength: AuthFormValidator.minimumPasswordLength,
+          isVerifyingCode: state is ResetPasswordCodeVerifying,
+          isCodeVerified:
+              state is ResetPasswordCodeVerified ||
+              state is ResetPasswordConfirmLoading ||
+              state is ResetPasswordConfirmFailure ||
+              code.trim().length == 6,
           isSubmitting: state is ResetPasswordConfirmLoading,
           isResending: state is ResetPasswordCodeResending,
-          errorMessage: state is ResetPasswordConfirmFailure
-              ? state.errorMessage
-              : null,
+          errorMessage: switch (state) {
+            ResetPasswordCodeVerificationFailure(:final errorMessage) ||
+            ResetPasswordConfirmFailure(:final errorMessage) => errorMessage,
+            _ => null,
+          },
           onBack: () => context.pop(),
+          onVerifyCode: (enteredCode) =>
+              BlocProvider.of<ResetPasswordConfirmBloc>(context).add(
+                ResetPasswordCodeVerifyRequested(
+                  email: email,
+                  code: enteredCode,
+                ),
+              ),
+          onCodeChanged: () =>
+              BlocProvider.of<ResetPasswordConfirmBloc>(context)
+                  .add(const ResetPasswordCodeVerificationReset()),
+          onStepBack: () =>
+              BlocProvider.of<ResetPasswordConfirmBloc>(context)
+                  .add(const ResetPasswordCodeVerificationReset()),
           onResend: () =>
               BlocProvider.of<ResetPasswordConfirmBloc>(context)
                   .add(ResetPasswordCodeRequested(email)),

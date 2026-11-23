@@ -10,10 +10,24 @@ part 'reset_password_confirm_state.dart';
 
 class ResetPasswordConfirmBloc(this._authRepository)
     extends Bloc<ResetPasswordConfirmEvent, ResetPasswordConfirmState> {
+  static final RegExp _otpPattern = RegExp(r'^\d{6}$');
+
   final AuthRepository _authRepository;
+  String? _verifiedCode;
 
   this : super(const ResetPasswordConfirmInitial()) {
     on<ResetPasswordCodeRequested>(_onCodeRequested, transformer: droppable());
+    on<ResetPasswordCodeVerifyRequested>(
+      _onVerifyCodeRequested,
+      transformer: droppable(),
+    );
+    on<ResetPasswordCodeVerificationReset>((_, emit) {
+      if (state is ResetPasswordCodeVerificationFailure ||
+          state is ResetPasswordConfirmFailure ||
+          state is ResetPasswordCodeVerified) {
+        emit(const ResetPasswordConfirmInitial());
+      }
+    });
     on<ResetPasswordConfirmSubmitted>(
       _onResetPasswordConfirmSubmitted,
       transformer: droppable(),
@@ -25,9 +39,11 @@ class ResetPasswordConfirmBloc(this._authRepository)
     Emitter<ResetPasswordConfirmState> emit,
   ) async {
     if (state is ResetPasswordConfirmLoading ||
+        state is ResetPasswordCodeVerifying ||
         state is ResetPasswordCodeResending) {
       return;
     }
+    _verifiedCode = null;
     emit(const ResetPasswordCodeResending());
     final result = await _authRepository.resetPassword(
       email: event.email.trim().toLowerCase(),
@@ -39,16 +55,71 @@ class ResetPasswordConfirmBloc(this._authRepository)
     );
   }
 
+  Future<void> _onVerifyCodeRequested(
+    ResetPasswordCodeVerifyRequested event,
+    Emitter<ResetPasswordConfirmState> emit,
+  ) async {
+    if (state is ResetPasswordConfirmLoading ||
+        state is ResetPasswordCodeVerifying ||
+        state is ResetPasswordCodeResending) {
+      return;
+    }
+    final normalizedEmail = event.email.trim().toLowerCase();
+    final emailError = authFormValidator.email(normalizedEmail);
+    if (emailError != null) {
+      emit(ResetPasswordCodeVerificationFailure(emailError));
+      return;
+    }
+    final normalizedCode = event.code.trim();
+    if (!_otpPattern.hasMatch(normalizedCode)) {
+      emit(
+        const ResetPasswordCodeVerificationFailure(
+          'Enter the 6-digit verification code.',
+        ),
+      );
+      return;
+    }
+    if (_verifiedCode == normalizedCode) {
+      emit(const ResetPasswordCodeVerified());
+      return;
+    }
+
+    emit(const ResetPasswordCodeVerifying());
+    final result = await _authRepository.verifyResetOtp(
+      email: normalizedEmail,
+      code: normalizedCode,
+    );
+    result.fold(
+      (failure) => emit(
+        ResetPasswordCodeVerificationFailure(safeAuthFailureMessage(failure)),
+      ),
+      (_) {
+        _verifiedCode = normalizedCode;
+        emit(const ResetPasswordCodeVerified());
+      },
+    );
+  }
+
   Future<void> _onResetPasswordConfirmSubmitted(
     ResetPasswordConfirmSubmitted event,
     Emitter<ResetPasswordConfirmState> emit,
   ) async {
     if (state is ResetPasswordConfirmLoading ||
+        state is ResetPasswordCodeVerifying ||
         state is ResetPasswordCodeResending) {
       return;
     }
     final trimmedPassword = event.newPassword;
     final normalizedEmail = event.email.trim().toLowerCase();
+    final normalizedCode = event.code.trim();
+    if (!_otpPattern.hasMatch(normalizedCode)) {
+      emit(
+        const ResetPasswordConfirmFailure(
+          'Enter the 6-digit verification code.',
+        ),
+      );
+      return;
+    }
     final validationError = authFormValidator.password(trimmedPassword);
     if (validationError != null) {
       emit(ResetPasswordConfirmFailure(validationError));
@@ -59,7 +130,7 @@ class ResetPasswordConfirmBloc(this._authRepository)
 
     final result = await _authRepository.confirmResetPassword(
       email: normalizedEmail,
-      code: event.code,
+      code: normalizedCode,
       newPassword: trimmedPassword,
     );
 

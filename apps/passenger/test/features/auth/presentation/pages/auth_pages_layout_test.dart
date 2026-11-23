@@ -43,6 +43,12 @@ class _UnusedAuthRepository implements AuthRepository {
       Future.error(UnimplementedError());
 
   @override
+  Future<Result<void, Failure>> verifyResetOtp({
+    required String email,
+    required String code,
+  }) => Future.error(UnimplementedError());
+
+  @override
   Future<Result<void, Failure>> confirmResetPassword({
     required String email,
     required String code,

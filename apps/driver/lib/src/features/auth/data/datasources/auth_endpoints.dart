@@ -1,5 +1,6 @@
 final class AccountAuthEndpoints._() {
   static const String login = '/api/v1/auth/login';
   static const String forgotPassword = '/api/v1/auth/driver/forgot-password';
+  static const String verifyResetOtp = '/api/v1/auth/driver/verify-reset-otp';
   static const String resetPassword = '/api/v1/auth/driver/reset-password';
 }

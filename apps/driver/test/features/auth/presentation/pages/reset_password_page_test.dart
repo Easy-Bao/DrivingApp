@@ -1,4 +1,5 @@
 import 'package:design_system/design_system.dart';
+import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:driver/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:driver/src/features/auth/presentation/bloc/reset_password/reset_password_bloc.dart';
 import 'package:driver/src/features/auth/presentation/pages/reset_password_page.dart';
@@ -14,6 +15,18 @@ void main() {
     'shows password guidance, visibility, and a single code failure',
     (tester) async {
       final repository = _MockAuthRepository();
+      when(
+        () => repository.verifyResetOtp(
+          email: 'driver@example.com',
+          code: '000000',
+        ),
+      ).thenAnswer((_) async => const Err(InvalidVerificationCodeFailure()));
+      when(
+        () => repository.verifyResetOtp(
+          email: 'driver@example.com',
+          code: '123456',
+        ),
+      ).thenAnswer((_) async => const Ok(null));
       when(
         () => repository.confirmPasswordReset(
           email: 'driver@example.com',
@@ -36,6 +49,17 @@ void main() {
         tester.widget<TextField>(find.byType(TextField)).autofillHints,
         contains(AutofillHints.oneTimeCode),
       );
+      await tester.enterText(find.byType(TextField), '000000');
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      expect(find.text('Check your email'), findsOneWidget);
+      expect(find.text('Create new password'), findsNothing);
+      expect(
+        find.text('That verification code is invalid or expired. Try again.'),
+        findsOneWidget,
+      );
+
       await tester.enterText(find.byType(TextField), '123456');
       await tester.pump();
       await tester.tap(find.text('Continue'));
@@ -74,6 +98,12 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(320, 568));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final repository = _MockAuthRepository();
+    when(
+      () => repository.verifyResetOtp(
+        email: 'driver@example.com',
+        code: '123456',
+      ),
+    ).thenAnswer((_) async => const Ok(null));
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.main,

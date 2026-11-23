@@ -49,7 +49,7 @@ class _ForgotPasswordPageContentState
       return;
     }
     final email = _emailController.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
+    if (email.isEmpty || !ForgotPasswordBloc.emailPattern.hasMatch(email)) {
       setState(() => _emailError = 'Enter a valid email address.');
       _emailFocus.requestFocus();
       return;
@@ -91,13 +91,6 @@ class _ForgotPasswordPageContentState
                 : const Text('Send code'),
           ),
           children: [
-            if (state is ForgotPasswordFailure) ...[
-              AppErrorBanner(
-                message: state.errorMessage,
-                onRetry: () => _submitResetLink(context),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-            ],
             Text('Email address', style: context.textStyles.labelMedium),
             const SizedBox(height: AppSpacing.sm),
             TextField(
@@ -120,6 +113,13 @@ class _ForgotPasswordPageContentState
                 prefixIcon: const Icon(LucideIcons.mail, size: 18),
               ),
             ),
+            if (state is ForgotPasswordFailure) ...[
+              const SizedBox(height: AppSpacing.md),
+              AppErrorBanner(
+                message: state.errorMessage,
+                onRetry: () => _submitResetLink(context),
+              ),
+            ],
           ],
         );
       },

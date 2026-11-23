@@ -23,3 +23,17 @@ final class const ResetPasswordCodeRequested(final String email)
   @override
   List<Object?> get props => [email];
 }
+
+final class const ResetPasswordCodeVerifyRequested({
+  required this.email,
+  required this.code,
+}) extends ResetPasswordEvent {
+  final String email;
+  final String code;
+
+  @override
+  List<Object?> get props => [email, code];
+}
+
+final class const ResetPasswordCodeVerificationReset()
+    extends ResetPasswordEvent;

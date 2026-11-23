@@ -19,3 +19,14 @@ final class const ResetPasswordFailure(final String errorMessage)
 
 final class const ResetPasswordResending() extends ResetPasswordState;
 final class const ResetPasswordCodeSent() extends ResetPasswordState;
+
+final class const ResetPasswordCodeVerifying() extends ResetPasswordState;
+
+final class const ResetPasswordCodeVerified() extends ResetPasswordState;
+
+final class const ResetPasswordCodeVerificationFailure(
+  final String errorMessage,
+) extends ResetPasswordState {
+  @override
+  List<Object?> get props => [errorMessage];
+}

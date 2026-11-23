@@ -1,3 +1,4 @@
+import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:driver/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:driver/src/features/auth/presentation/bloc/reset_password/reset_password_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -90,4 +91,45 @@ void main() {
     );
     expect(states, const [ResetPasswordResending(), ResetPasswordCodeSent()]);
   });
+
+  test(
+    'verifies reset OTP before advancing and reports invalid codes',
+    () async {
+      when(
+        () => repository.verifyResetOtp(
+          email: 'driver@example.com',
+          code: '000000',
+        ),
+      ).thenAnswer((_) async => const Err(InvalidVerificationCodeFailure()));
+      final rejected = await run(
+        const ResetPasswordCodeVerifyRequested(
+          email: 'driver@example.com',
+          code: '000000',
+        ),
+      );
+      expect(rejected, const [
+        ResetPasswordCodeVerifying(),
+        ResetPasswordCodeVerificationFailure(
+          'That verification code is invalid or expired. Try again.',
+        ),
+      ]);
+
+      when(
+        () => repository.verifyResetOtp(
+          email: 'driver@example.com',
+          code: '123456',
+        ),
+      ).thenAnswer((_) async => const Ok(null));
+      final verified = await run(
+        const ResetPasswordCodeVerifyRequested(
+          email: ' Driver@Example.com ',
+          code: ' 123456 ',
+        ),
+      );
+      expect(verified, const [
+        ResetPasswordCodeVerifying(),
+        ResetPasswordCodeVerified(),
+      ]);
+    },
+  );
 }

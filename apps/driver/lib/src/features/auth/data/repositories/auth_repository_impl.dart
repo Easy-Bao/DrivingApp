@@ -139,12 +139,43 @@ final class AuthRepositoryImpl({
       }
       return const Ok(null);
     } catch (error) {
-      return Err(
-        FailureMapper.fromException(
-          error,
-          serverMessage: 'Failed to send verification code. Please try again.',
-        ),
+      final failure = FailureMapper.fromException(
+        error,
+        serverMessage: 'Failed to send verification code. Please try again.',
+        validationMessage: 'Enter a valid email address.',
       );
+      if (failure is ValidationFailure) {
+        return const Err(InvalidEmailFailure());
+      }
+      return Err(failure);
+    }
+  }
+
+  @override
+  Future<Result<void, Failure>> verifyResetOtp({
+    required String email,
+    required String code,
+  }) async {
+    try {
+      final responseBody = await _remoteDataSource.postJson(
+        AccountAuthEndpoints.verifyResetOtp,
+        requestBody: {'email': email, 'code': code},
+      );
+      if (responseBody['success'] != true) {
+        return const Err(InvalidVerificationCodeFailure());
+      }
+      return const Ok(null);
+    } catch (error) {
+      final failure = FailureMapper.fromException(
+        error,
+        serverMessage: "Couldn't verify your code. Try again.",
+        validationMessage:
+            'That verification code is invalid or expired. Try again.',
+      );
+      if (failure is ValidationFailure) {
+        return const Err(InvalidVerificationCodeFailure());
+      }
+      return Err(failure);
     }
   }
 
@@ -166,12 +197,19 @@ final class AuthRepositoryImpl({
       }
       return const Ok(null);
     } catch (error) {
-      return Err(
-        FailureMapper.fromException(
-          error,
-          serverMessage: 'Password reset failed. Please try again.',
-        ),
+      final failure = FailureMapper.fromException(
+        error,
+        serverMessage: 'Password reset failed. Please try again.',
+        validationMessage: 'That verification code is invalid or expired. Request a new code and try again.',
       );
+      if (failure is ValidationFailure) {
+        return const Err(
+          InvalidVerificationCodeFailure(
+            'That verification code is invalid or expired. Request a new code and try again.',
+          ),
+        );
+      }
+      return Err(failure);
     }
   }
 }

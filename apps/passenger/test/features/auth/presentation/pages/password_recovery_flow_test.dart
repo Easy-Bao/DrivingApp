@@ -9,6 +9,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/auth/auth_routes.dart';
+import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/forgot_password/forgot_password_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/reset_password_confirm/reset_password_confirm_bloc.dart';
@@ -25,6 +26,18 @@ void main() {
       final pending = Completer<Result<void, Failure>>();
       when(() => repository.resetPassword(email: 'passenger@example.com'))
           .thenAnswer((_) => pending.future);
+      when(
+        () => repository.verifyResetOtp(
+          email: 'passenger@example.com',
+          code: '000000',
+        ),
+      ).thenAnswer((_) async => const Err(InvalidVerificationCodeFailure()));
+      when(
+        () => repository.verifyResetOtp(
+          email: 'passenger@example.com',
+          code: '123456',
+        ),
+      ).thenAnswer((_) async => const Ok(null));
       when(
         () => repository.confirmResetPassword(
           email: 'passenger@example.com',
@@ -90,6 +103,18 @@ void main() {
         tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
         isNull,
       );
+      // Invalid OTP must stay on Check your email and show error below OTP input.
+      await tester.enterText(find.byType(TextField), '000000');
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      expect(find.text('Check your email'), findsOneWidget);
+      expect(find.text('Create new password'), findsNothing);
+      expect(
+        find.text('That verification code is invalid or expired. Try again.'),
+        findsOneWidget,
+      );
+
       await tester.enterText(find.byType(TextField), '123456');
       await tester.pump();
       await tester.tap(find.text('Continue'));

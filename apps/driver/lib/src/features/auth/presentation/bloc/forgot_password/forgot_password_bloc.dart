@@ -10,6 +10,10 @@ export 'forgot_password_state.dart';
 
 class ForgotPasswordBloc(this._authRepository)
     extends Bloc<ForgotPasswordEvent, ForgotPasswordState> {
+  static final RegExp emailPattern = RegExp(
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+  );
+
   final AuthRepository _authRepository;
 
   this : super(const ForgotPasswordInitial()) {
@@ -24,7 +28,7 @@ class ForgotPasswordBloc(this._authRepository)
     Emitter<ForgotPasswordState> emit,
   ) async {
     final normalizedEmail = event.email.trim().toLowerCase();
-    if (normalizedEmail.isEmpty || !normalizedEmail.contains('@')) {
+    if (normalizedEmail.isEmpty || !emailPattern.hasMatch(normalizedEmail)) {
       emit(const ForgotPasswordFailure('Enter a valid email address.'));
       return;
     }

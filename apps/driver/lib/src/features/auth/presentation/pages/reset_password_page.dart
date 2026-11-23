@@ -42,12 +42,32 @@ class _ResetPasswordContent extends StatelessWidget {
         builder: (context, state) => AppPasswordResetFlow(
           email: email,
           minimumPasswordLength: ResetPasswordBloc.minimumPasswordLength,
+          isVerifyingCode: state is ResetPasswordCodeVerifying,
+          isCodeVerified:
+              state is ResetPasswordCodeVerified ||
+              state is ResetPasswordLoading ||
+              state is ResetPasswordFailure,
           isSubmitting: state is ResetPasswordLoading,
           isResending: state is ResetPasswordResending,
-          errorMessage: state is ResetPasswordFailure
-              ? state.errorMessage
-              : null,
+          errorMessage: switch (state) {
+            ResetPasswordCodeVerificationFailure(:final errorMessage) ||
+            ResetPasswordFailure(:final errorMessage) => errorMessage,
+            _ => null,
+          },
           onBack: () => context.pop(),
+          onVerifyCode: (enteredCode) =>
+              BlocProvider.of<ResetPasswordBloc>(context).add(
+                ResetPasswordCodeVerifyRequested(
+                  email: email,
+                  code: enteredCode,
+                ),
+              ),
+          onCodeChanged: () =>
+              BlocProvider.of<ResetPasswordBloc>(context)
+                  .add(const ResetPasswordCodeVerificationReset()),
+          onStepBack: () =>
+              BlocProvider.of<ResetPasswordBloc>(context)
+                  .add(const ResetPasswordCodeVerificationReset()),
           onResend: () =>
               BlocProvider.of<ResetPasswordBloc>(context)
                   .add(ResetPasswordCodeRequested(email)),

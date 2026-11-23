@@ -4,8 +4,8 @@ import 'package:design_system/src/theme/theme_context.dart';
 import 'package:design_system/src/tokens/spacing.dart';
 import 'package:design_system/src/widgets/inputs/verification_code_field.dart';
 import 'package:design_system/src/widgets/layout/auth_layout.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:material_ui/material_ui.dart';
 
 class AppPasswordResetFlow extends StatefulWidget {
   const AppPasswordResetFlow({
@@ -15,7 +15,13 @@ class AppPasswordResetFlow extends StatefulWidget {
     required this.onBack,
     required this.onSubmit,
     required this.onResend,
+    this.onVerifyCode,
+    this.onCodeChanged,
+    this.onPasswordChanged,
+    this.onStepBack,
     this.initialCode = '',
+    this.isVerifyingCode = false,
+    this.isCodeVerified = false,
     this.isSubmitting = false,
     this.isResending = false,
     this.errorMessage,
@@ -26,7 +32,13 @@ class AppPasswordResetFlow extends StatefulWidget {
   final VoidCallback onBack;
   final void Function(String code, String password) onSubmit;
   final VoidCallback onResend;
+  final ValueChanged<String>? onVerifyCode;
+  final VoidCallback? onCodeChanged;
+  final VoidCallback? onPasswordChanged;
+  final VoidCallback? onStepBack;
   final String initialCode;
+  final bool isVerifyingCode;
+  final bool isCodeVerified;
   final bool isSubmitting;
   final bool isResending;
   final String? errorMessage;
@@ -45,23 +57,30 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
   late bool _passwordStep;
   bool _showPassword = false;
   bool _showConfirmation = false;
+  bool _dismissedError = false;
+  String? _codeError;
   String? _passwordError;
   String? _confirmationError;
   Timer? _resendTimer;
   int _secondsRemaining = 60;
 
-  bool get _busy => widget.isSubmitting || widget.isResending;
+  bool get _busy =>
+      widget.isSubmitting || widget.isVerifyingCode || widget.isResending;
   bool get _completeCode => RegExp(r'^\d{6}$').hasMatch(_code.text);
   bool get _longEnough => _password.text.length >= widget.minimumPasswordLength;
   bool get _passwordsMatch =>
       _confirmation.text.isNotEmpty && _password.text == _confirmation.text;
+  String? get _activeErrorMessage =>
+      _dismissedError ? null : widget.errorMessage;
 
   @override
   void initState() {
     super.initState();
     _code = TextEditingController(text: widget.initialCode);
-    _passwordStep = _completeCode;
-    _code.addListener(_refresh);
+    _passwordStep = widget.onVerifyCode == null
+        ? _completeCode
+        : widget.isCodeVerified && _completeCode;
+    _code.addListener(_handleCodeChanged);
     _password.addListener(_refresh);
     _confirmation.addListener(_refresh);
     _startResendTimer();
@@ -70,12 +89,38 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
   @override
   void didUpdateWidget(covariant AppPasswordResetFlow oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.errorMessage != oldWidget.errorMessage ||
+        (oldWidget.isVerifyingCode && !widget.isVerifyingCode) ||
+        (oldWidget.isSubmitting && !widget.isSubmitting)) {
+      _dismissedError = false;
+    }
+    if (!oldWidget.isCodeVerified &&
+        widget.isCodeVerified &&
+        !_passwordStep &&
+        _completeCode) {
+      FocusScope.of(context).unfocus();
+      _passwordStep = true;
+      _codeError = null;
+      _dismissedError = true;
+    }
     if (oldWidget.isResending &&
         !widget.isResending &&
         widget.errorMessage == null) {
       _code.clear();
+      _passwordStep = false;
+      _codeError = null;
       _startResendTimer();
     }
+  }
+
+  void _handleCodeChanged() {
+    final hadInlineError = _codeError != null || !_dismissedError;
+    _codeError = null;
+    _dismissedError = true;
+    if (hadInlineError) {
+      widget.onCodeChanged?.call();
+    }
+    setState(() {});
   }
 
   void _refresh() => setState(() {});
@@ -93,7 +138,7 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
   @override
   void dispose() {
     _resendTimer?.cancel();
-    _code.removeListener(_refresh);
+    _code.removeListener(_handleCodeChanged);
     _password.removeListener(_refresh);
     _confirmation.removeListener(_refresh);
     _code.dispose();
@@ -106,8 +151,26 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
   }
 
   void _continue() {
-    if (!_completeCode || _busy) return;
+    if (_busy) return;
+    if (!_completeCode) {
+      setState(() => _codeError = 'Enter the 6-digit verification code.');
+      _codeFocus.requestFocus();
+      return;
+    }
     FocusScope.of(context).unfocus();
+    setState(() {
+      _codeError = null;
+      _dismissedError = false;
+    });
+    final verifyCode = widget.onVerifyCode;
+    if (verifyCode != null) {
+      if (widget.isCodeVerified) {
+        setState(() => _passwordStep = true);
+      } else {
+        verifyCode(_code.text);
+      }
+      return;
+    }
     setState(() => _passwordStep = true);
   }
 
@@ -115,7 +178,11 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
     if (_busy) return;
     if (_passwordStep) {
       FocusScope.of(context).unfocus();
-      setState(() => _passwordStep = false);
+      setState(() {
+        _passwordStep = false;
+        _dismissedError = true;
+      });
+      widget.onStepBack?.call();
     } else {
       widget.onBack();
     }
@@ -124,6 +191,7 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
   void _submit() {
     if (_busy) return;
     setState(() {
+      _dismissedError = false;
       _passwordError = _longEnough
           ? null
           : 'Use at least ${widget.minimumPasswordLength} characters.';
@@ -139,118 +207,131 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
   }
 
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: !_passwordStep && !_busy,
-    onPopInvokedWithResult: (didPop, _) {
-      if (!didPop) _back();
-    },
-    child: AppAuthLayout(
-      onBack: _back,
-      title: _passwordStep ? 'Create new password' : 'Check your email',
-      description: _passwordStep
-          ? 'Choose a strong password for your account.'
-          : 'We sent a 6-digit verification code to ${widget.email}.',
-      footer: FilledButton(
-        onPressed: _busy || (!_passwordStep && !_completeCode)
-            ? null
-            : _passwordStep
-            ? _submit
-            : _continue,
-        child: widget.isSubmitting
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  color: context.colorScheme.onPrimary,
-                  strokeWidth: 2,
-                ),
-              )
-            : Text(_passwordStep ? 'Reset password' : 'Continue'),
-      ),
-      children: [
-        if (widget.errorMessage != null) ...[
-          Semantics(
-            liveRegion: true,
-            child: Text(
-              widget.errorMessage!,
-              style: context.textStyles.bodySmall?.copyWith(
-                color: context.colorScheme.error,
+  Widget build(BuildContext context) {
+    final codeError = _codeError ?? _activeErrorMessage;
+    final submitError = _activeErrorMessage;
+    final showButtonSpinner = _passwordStep
+        ? widget.isSubmitting
+        : widget.isVerifyingCode;
+
+    return PopScope(
+      canPop: !_passwordStep && !_busy,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _back();
+      },
+      child: AppAuthLayout(
+        onBack: _back,
+        title: _passwordStep ? 'Create new password' : 'Check your email',
+        description: _passwordStep
+            ? 'Choose a strong password for your account.'
+            : 'We sent a 6-digit verification code to ${widget.email}.',
+        footer: FilledButton(
+          onPressed: _busy || (!_passwordStep && !_completeCode)
+              ? null
+              : _passwordStep
+              ? _submit
+              : _continue,
+          child: showButtonSpinner
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: context.colorScheme.onPrimary,
+                    strokeWidth: 2,
+                  ),
+                )
+              : Text(_passwordStep ? 'Reset password' : 'Continue'),
+        ),
+        children: [
+          if (!_passwordStep) ...[
+            Semantics(
+              liveRegion: codeError != null,
+              child: AppVerificationCodeField(
+                controller: _code,
+                focusNode: _codeFocus,
+                enabled: !_busy,
+                errorText: codeError,
+                onSubmitted: (_) => _continue(),
               ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-        ],
-        if (!_passwordStep) ...[
-          AppVerificationCodeField(
-            controller: _code,
-            focusNode: _codeFocus,
-            enabled: !_busy,
-            onSubmitted: (_) => _continue(),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text(
-                'Didn’t get a code?',
-                style: context.textStyles.bodySmall?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              TextButton(
-                onPressed: _secondsRemaining == 0 && !_busy
-                    ? widget.onResend
-                    : null,
-                child: Text(
-                  widget.isResending
-                      ? 'Sending…'
-                      : _secondsRemaining == 0
-                      ? 'Resend code'
-                      : 'Resend in ${_secondsRemaining ~/ 60}:${(_secondsRemaining % 60).toString().padLeft(2, '0')}',
-                ),
-              ),
-            ],
-          ),
-        ] else ...[
-          AutofillGroup(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                _passwordField(
-                  label: 'New password',
-                  controller: _password,
-                  focus: _passwordFocus,
-                  visible: _showPassword,
-                  onToggle: () =>
-                      setState(() => _showPassword = !_showPassword),
-                  error: _passwordError,
-                  confirmation: false,
+                Text(
+                  'Didn’t get a code?',
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                _passwordField(
-                  label: 'Confirm password',
-                  controller: _confirmation,
-                  focus: _confirmationFocus,
-                  visible: _showConfirmation,
-                  onToggle: () =>
-                      setState(() => _showConfirmation = !_showConfirmation),
-                  error: _confirmationError,
-                  confirmation: true,
+                TextButton(
+                  onPressed: _secondsRemaining == 0 && !_busy
+                      ? widget.onResend
+                      : null,
+                  child: Text(
+                    widget.isResending
+                        ? 'Sending…'
+                        : _secondsRemaining == 0
+                        ? 'Resend code'
+                        : 'Resend in ${_secondsRemaining ~/ 60}:${(_secondsRemaining % 60).toString().padLeft(2, '0')}',
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          _requirement(
-            'At least ${widget.minimumPasswordLength} characters',
-            _longEnough,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _requirement('Passwords match', _passwordsMatch),
+          ] else ...[
+            AutofillGroup(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _passwordField(
+                    label: 'New password',
+                    controller: _password,
+                    focus: _passwordFocus,
+                    visible: _showPassword,
+                    onToggle: () =>
+                        setState(() => _showPassword = !_showPassword),
+                    error: _passwordError,
+                    confirmation: false,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  _passwordField(
+                    label: 'Confirm password',
+                    controller: _confirmation,
+                    focus: _confirmationFocus,
+                    visible: _showConfirmation,
+                    onToggle: () =>
+                        setState(() => _showConfirmation = !_showConfirmation),
+                    error: _confirmationError,
+                    confirmation: true,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            _requirement(
+              'At least ${widget.minimumPasswordLength} characters',
+              _longEnough,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _requirement('Passwords match', _passwordsMatch),
+            if (submitError != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  submitError,
+                  key: const ValueKey('password-reset-bottom-error'),
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: context.colorScheme.error,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ],
-      ],
-    ),
-  );
+      ),
+    );
+  }
 
   Widget _passwordField({
     required String label,
@@ -277,13 +358,17 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
             ? TextInputAction.done
             : TextInputAction.next,
         onSubmitted: confirmation ? (_) => _submit() : null,
-        onChanged: (_) => setState(() {
-          if (confirmation) {
-            _confirmationError = null;
-          } else {
-            _passwordError = null;
-          }
-        }),
+        onChanged: (_) {
+          setState(() {
+            _dismissedError = true;
+            if (confirmation) {
+              _confirmationError = null;
+            } else {
+              _passwordError = null;
+            }
+          });
+          widget.onPasswordChanged?.call();
+        },
         decoration: InputDecoration(
           hintText: confirmation
               ? 'Re-enter your password'
