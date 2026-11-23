@@ -224,6 +224,37 @@ void main() {
       expect(cubit.state.nearbyPlaceNames, isEmpty);
       await cubit.close();
     });
+
+    test('clearAccountContext drops recent locations and allows reloading at the same coordinates', () async {
+      var calls = 0;
+      when(
+        () => repo.loadHomeData(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer((_) async {
+        calls++;
+        return Ok(
+          HomeData(
+            currentAddress: resolvedAddress,
+            recentLocations: calls == 1 ? mockLocations : const [],
+          ),
+        );
+      });
+
+      final cubit = _makeCubit(repo, currentLocationRepo);
+      await cubit.loadHomeData(lat: 7.828282, lng: 123.434343);
+      expect(cubit.state.recentLocations, mockLocations);
+
+      cubit.clearAccountContext();
+      expect(cubit.state.recentLocations, isEmpty);
+      expect(cubit.state.currentAddress, resolvedAddress);
+
+      await cubit.loadHomeData(lat: 7.828282, lng: 123.434343);
+      expect(calls, 2);
+      expect(cubit.state.recentLocations, isEmpty);
+      await cubit.close();
+    });
   });
 
   group('HomeCubit — updateAddress()', () {

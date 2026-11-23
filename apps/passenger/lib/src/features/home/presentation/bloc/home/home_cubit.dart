@@ -189,6 +189,15 @@ class HomeCubit({
     );
   }
 
+  /// Drops account-scoped home data on logout while preserving device-level
+  /// location state until the next guest snapshot resolves.
+  void clearAccountContext() {
+    _dataRevision++;
+    _lastLat = null;
+    _lastLng = null;
+    emit(state.copyWith(recentLocations: const []));
+  }
+
   Future<void> startLocationTracking() async {
     if (_isTrackingLocation) {
       await refreshCurrentLocation();

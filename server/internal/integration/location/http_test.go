@@ -35,7 +35,7 @@ func TestLocationHTTPRejectsInvalidCoordinatesAsClientErrors(t *testing.T) {
 	}
 }
 
-func TestLocationHTTPRejectsUnauthenticatedRequests(t *testing.T) {
+func TestLocationHTTPAllowsGuestLookupsAndRejectsInvalidTokens(t *testing.T) {
 	router := newLocationRouter()
 
 	for _, path := range []string{
@@ -43,13 +43,19 @@ func TestLocationHTTPRejectsUnauthenticatedRequests(t *testing.T) {
 		"/api/v1/location/nearby?lat=7.8&lng=123.4",
 		"/api/v1/location/reverse?lat=7.8&lng=123.4",
 	} {
-		request := httptest.NewRequest(http.MethodGet, path, nil)
-		response := httptest.NewRecorder()
+		guestRequest := httptest.NewRequest(http.MethodGet, path, nil)
+		guestResponse := httptest.NewRecorder()
+		router.ServeHTTP(guestResponse, guestRequest)
+		if guestResponse.Code != http.StatusOK {
+			t.Fatalf("guest %s status = %d, want %d", path, guestResponse.Code, http.StatusOK)
+		}
 
-		router.ServeHTTP(response, request)
-
-		if response.Code != http.StatusUnauthorized {
-			t.Fatalf("%s status = %d, want %d", path, response.Code, http.StatusUnauthorized)
+		invalidRequest := httptest.NewRequest(http.MethodGet, path, nil)
+		invalidRequest.Header.Set("Authorization", "Bearer invalid-token")
+		invalidResponse := httptest.NewRecorder()
+		router.ServeHTTP(invalidResponse, invalidRequest)
+		if invalidResponse.Code != http.StatusUnauthorized {
+			t.Fatalf("invalid token %s status = %d, want %d", path, invalidResponse.Code, http.StatusUnauthorized)
 		}
 	}
 }

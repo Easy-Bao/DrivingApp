@@ -24,21 +24,45 @@ type Principal struct {
 func RequireAuth(tokenManager *security.TokenManager) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			identity, ok := IdentityFromRequest(request, tokenManager)
+			authenticatedRequest, ok := authenticateRequest(request, tokenManager)
 			if !ok {
 				response.Error(writer, http.StatusUnauthorized, "Your session has expired. Please sign in again to continue.")
 				return
 			}
-			userID, err := strconv.Atoi(identity.Subject)
-			if err != nil || userID <= 0 {
+			next.ServeHTTP(writer, authenticatedRequest)
+		})
+	}
+}
+
+func OptionalAuth(tokenManager *security.TokenManager) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			if strings.TrimSpace(request.Header.Get("Authorization")) == "" {
+				next.ServeHTTP(writer, request)
+				return
+			}
+			authenticatedRequest, ok := authenticateRequest(request, tokenManager)
+			if !ok {
 				response.Error(writer, http.StatusUnauthorized, "Your session has expired. Please sign in again to continue.")
 				return
 			}
-			contextValue := context.WithValue(request.Context(), _identityKey, identity)
-			contextValue = context.WithValue(contextValue, _principalKey, Principal{UserID: userID, Role: identity.Role})
-			next.ServeHTTP(writer, request.WithContext(contextValue))
+			next.ServeHTTP(writer, authenticatedRequest)
 		})
 	}
+}
+
+func authenticateRequest(request *http.Request, tokenManager *security.TokenManager) (*http.Request, bool) {
+	identity, ok := IdentityFromRequest(request, tokenManager)
+	if !ok {
+		return nil, false
+	}
+	userID, err := strconv.Atoi(identity.Subject)
+	if err != nil || userID <= 0 {
+		return nil, false
+	}
+	contextValue := context.WithValue(request.Context(), _identityKey, identity)
+	contextValue = context.WithValue(contextValue, _principalKey, Principal{UserID: userID, Role: identity.Role})
+	return request.WithContext(contextValue), true
 }
 
 func RequireRole(roles ...string) func(http.Handler) http.Handler {

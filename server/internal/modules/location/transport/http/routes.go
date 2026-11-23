@@ -28,11 +28,19 @@ func NewRouter(
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
 	locationPolicy := router.routeSecurity.Middleware(middleware.RouteLocationQuery)
+	optionalAuth := middleware.OptionalAuth(router.verifier)
 	authenticate := middleware.RequireAuth(router.verifier)
+
+	// Read-only place lookups support rate-limited guest browsing while still
+	// rejecting malformed or expired tokens when an Authorization header is sent.
+	mux.With(locationPolicy, optionalAuth).Group(func(lookup chi.Router) {
+		lookup.Get(api.V1Prefix+"/location/search", router.handler.Search)
+		lookup.Get(api.V1Prefix+"/location/nearby", router.handler.Nearby)
+		lookup.Get(api.V1Prefix+"/location/reverse", router.handler.Reverse)
+	})
+
+	// Routing and travel-matrix endpoints remain strictly authenticated.
 	mux.With(locationPolicy, authenticate).Group(func(protected chi.Router) {
-		protected.Get(api.V1Prefix+"/location/search", router.handler.Search)
-		protected.Get(api.V1Prefix+"/location/nearby", router.handler.Nearby)
-		protected.Get(api.V1Prefix+"/location/reverse", router.handler.Reverse)
 		protected.Post(api.V1Prefix+"/location/route", router.handler.Route)
 		protected.Post(api.V1Prefix+"/location/matrix", router.handler.Matrix)
 	})

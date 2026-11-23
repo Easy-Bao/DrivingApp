@@ -85,8 +85,11 @@ class _HomePageState extends State<HomePage> {
         ),
         BlocListener<SessionBloc, SessionState>(
           listenWhen: (_, current) => current is GuestSession,
-          listener: (context, _) =>
-              BlocProvider.of<SavedPlacesCubit>(context).clear(),
+          listener: (context, _) {
+            BlocProvider.of<SavedPlacesCubit>(context).clear();
+            _homeCubit.clearAccountContext();
+            _refreshLocationSnapshot();
+          },
         ),
         BlocListener<SessionBloc, SessionState>(
           listenWhen: (_, current) => current is AuthenticatedSession,

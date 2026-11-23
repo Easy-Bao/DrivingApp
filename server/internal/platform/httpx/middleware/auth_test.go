@@ -165,3 +165,67 @@ func TestRequireAdminUsesTheVerifiedPrincipalAtTheRouteBoundary(t *testing.T) {
 		})
 	}
 }
+
+func TestOptionalAuthAllowsAnonymousAndValidatesPresentedTokens(t *testing.T) {
+	manager := security.NewTokenManager("optional-auth-middleware-test-secret")
+	validToken, err := manager.IssueWithRole("12", security.RolePassenger)
+	if err != nil {
+		t.Fatal(err)
+	}
+	nonNumericToken, err := manager.IssueWithRole("guest", security.RolePassenger)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var observedPrincipal Principal
+	var hadPrincipal bool
+	protected := OptionalAuth(manager)(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		observedPrincipal, hadPrincipal = PrincipalFromRequest(request)
+		writer.WriteHeader(http.StatusNoContent)
+	}))
+
+	tests := []struct {
+		name          string
+		authorization string
+		wantStatus    int
+		wantPrincipal bool
+		wantUserID    int
+	}{
+		{name: "anonymous request", wantStatus: http.StatusNoContent},
+		{name: "whitespace authorization", authorization: "   ", wantStatus: http.StatusNoContent},
+		{
+			name:          "valid bearer token",
+			authorization: "Bearer " + validToken,
+			wantStatus:    http.StatusNoContent,
+			wantPrincipal: true,
+			wantUserID:    12,
+		},
+		{name: "invalid bearer token", authorization: "Bearer invalid", wantStatus: http.StatusUnauthorized},
+		{name: "non-numeric subject", authorization: "Bearer " + nonNumericToken, wantStatus: http.StatusUnauthorized},
+		{name: "unsupported scheme", authorization: "Basic " + validToken, wantStatus: http.StatusUnauthorized},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			observedPrincipal = Principal{}
+			hadPrincipal = false
+			request := httptest.NewRequest(http.MethodGet, "/", nil)
+			if test.authorization != "" {
+				request.Header.Set("Authorization", test.authorization)
+			}
+			response := httptest.NewRecorder()
+
+			protected.ServeHTTP(response, request)
+
+			if response.Code != test.wantStatus {
+				t.Fatalf("status = %d, want %d", response.Code, test.wantStatus)
+			}
+			if hadPrincipal != test.wantPrincipal {
+				t.Fatalf("hadPrincipal = %t, want %t", hadPrincipal, test.wantPrincipal)
+			}
+			if test.wantPrincipal && observedPrincipal.UserID != test.wantUserID {
+				t.Fatalf("principal user id = %d, want %d", observedPrincipal.UserID, test.wantUserID)
+			}
+		})
+	}
+}

@@ -65,6 +65,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                   listenWhen: (_, current) =>
                       current is GuestSession || current is SessionFailure,
                   listener: (context, _) {
+                    MapProvider.clearLookupCaches();
                     BlocProvider.of<BookingDraftCubit>(context).clear();
                     unawaited(
                       BlocProvider.of<TrackDriverCubit>(context)
