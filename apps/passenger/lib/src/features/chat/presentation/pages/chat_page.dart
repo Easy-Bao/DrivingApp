@@ -261,24 +261,39 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
           if (state.messages.isNotEmpty || state.isPeerTyping) _scrollDown();
         },
         builder: (context, state) {
+          final colors = context.colorScheme;
+          final hairline = colors.outlineVariant.withValues(alpha: 0.7);
           final chatHistoryMessages = state.messages;
           final canSendMessage = state.isConnected && !state.isRoomLocked;
 
           return Scaffold(
-            backgroundColor: context.colorScheme.surface,
+            backgroundColor: context.canvasColor,
             appBar: AppBar(
-              backgroundColor: context.colorScheme.surface,
+              backgroundColor: context.canvasColor,
+              surfaceTintColor: Colors.transparent,
               scrolledUnderElevation: 0,
               leading: Center(
                 child: IconButton(
                   onPressed: () => context.pop(),
                   tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                   padding: EdgeInsets.zero,
-                  style: IconButton.styleFrom(shape: const CircleBorder()),
+                  style:
+                      IconButton.styleFrom(
+                        foregroundColor: colors.onSurface,
+                        shape: const CircleBorder(),
+                        enableFeedback: false,
+                        splashFactory: NoSplash.splashFactory,
+                      ).copyWith(
+                        overlayColor: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.focused)
+                              ? colors.primary.withValues(alpha: 0.12)
+                              : Colors.transparent,
+                        ),
+                      ),
                   icon: Icon(
                     LucideIcons.arrow_left,
-                    color: context.colorScheme.onSurface,
-                    size: 20,
+                    color: colors.onSurface,
+                    size: 19,
                   ),
                 ),
               ),
@@ -287,7 +302,19 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                   IconButton(
                     tooltip: 'Call driver',
                     onPressed: _isCalling ? null : _callPeer,
-                    icon: const Icon(LucideIcons.phone),
+                    style:
+                        IconButton.styleFrom(
+                          foregroundColor: colors.onSurface,
+                          enableFeedback: false,
+                          splashFactory: NoSplash.splashFactory,
+                        ).copyWith(
+                          overlayColor: WidgetStateProperty.resolveWith(
+                            (states) => states.contains(WidgetState.focused)
+                                ? colors.primary.withValues(alpha: 0.12)
+                                : Colors.transparent,
+                          ),
+                        ),
+                    icon: const Icon(LucideIcons.phone, size: 19),
                   ),
               ],
               title: ChatPeerHeader(
@@ -299,7 +326,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
             ),
             body: Column(
               children: [
-                Divider(height: 1, color: context.colorScheme.outlineVariant),
+                Divider(height: 1, color: hairline),
                 if (state.isRoomLocked && chatHistoryMessages.isNotEmpty)
                   _buildClosedBanner(),
                 if (state.errorMessage != null &&
@@ -312,7 +339,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                       ? _buildEmptyState(state)
                       : ListView.builder(
                           controller: _scrollController,
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(AppSpacing.lg),
                           physics: const BouncingScrollPhysics(),
                           itemCount:
                               chatHistoryMessages.length +
@@ -337,39 +364,56 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                     height: AppSize.minimumTouchTarget,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                      ),
                       physics: const BouncingScrollPhysics(),
                       itemCount: _quickReplies.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 8),
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(width: AppSpacing.sm),
                       itemBuilder: (context, itemIndex) => Semantics(
                         button: true,
                         label: 'Send quick reply ${_quickReplies[itemIndex]}',
-                        child: Material(
-                          type: MaterialType.transparency,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
-                            onTap: () => _send(_quickReplies[itemIndex]),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
+                        child: Center(
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
                               ),
-                              decoration: BoxDecoration(
-                                color:
-                                    context.colorScheme.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.lg,
-                                ),
-                                border: Border.all(
-                                  color: context.colorScheme.outlineVariant,
-                                ),
+                              enableFeedback: false,
+                              splashFactory: NoSplash.splashFactory,
+                              overlayColor: WidgetStateProperty.resolveWith(
+                                (states) => states.contains(WidgetState.focused)
+                                    ? colors.primary.withValues(alpha: 0.12)
+                                    : Colors.transparent,
                               ),
-                              child: Text(
-                                _quickReplies[itemIndex],
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.colorScheme.onSurface,
+                              onTap: () => _send(_quickReplies[itemIndex]),
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  minHeight: 40,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colors.surfaceContainerLowest,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
+                                  border: Border.all(
+                                    color: colors.outlineVariant,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  _quickReplies[itemIndex],
+                                  style: context.textStyles.labelMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: colors.onSurface,
+                                      ),
                                 ),
                               ),
                             ),
@@ -378,21 +422,21 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                       ),
                     ),
                   ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 if (state.isRoomLocked)
                   _buildEndedFooter(context)
                 else
                   SafeArea(
                     child: Container(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.md,
+                        AppSpacing.sm,
+                        AppSpacing.md,
+                        AppSpacing.md,
+                      ),
                       decoration: BoxDecoration(
-                        color: context.colorScheme.surface,
-                        border: Border(
-                          top: BorderSide(
-                            color: context.colorScheme.outlineVariant
-                                .withValues(alpha: 0.5),
-                          ),
-                        ),
+                        color: colors.surfaceContainerLowest,
+                        border: Border(top: BorderSide(color: hairline)),
                       ),
                       child: Row(
                         children: [
@@ -401,61 +445,85 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                             onPressed: canSendMessage && !state.isSendingImage
                                 ? () => _pickImage(ImageSource.camera)
                                 : null,
-                            icon: const Icon(Icons.camera_alt_outlined),
+                            style:
+                                IconButton.styleFrom(
+                                  foregroundColor: colors.onSurfaceVariant,
+                                  enableFeedback: false,
+                                  splashFactory: NoSplash.splashFactory,
+                                ).copyWith(
+                                  overlayColor: WidgetStateProperty.resolveWith(
+                                    (states) =>
+                                        states.contains(WidgetState.focused)
+                                        ? colors.primary.withValues(alpha: 0.12)
+                                        : Colors.transparent,
+                                  ),
+                                ),
+                            icon: const Icon(LucideIcons.camera, size: 19),
                           ),
                           IconButton(
                             tooltip: 'Attach photo file',
                             onPressed: canSendMessage && !state.isSendingImage
                                 ? () => _pickImage(ImageSource.gallery)
                                 : null,
+                            style:
+                                IconButton.styleFrom(
+                                  foregroundColor: colors.onSurfaceVariant,
+                                  enableFeedback: false,
+                                  splashFactory: NoSplash.splashFactory,
+                                ).copyWith(
+                                  overlayColor: WidgetStateProperty.resolveWith(
+                                    (states) =>
+                                        states.contains(WidgetState.focused)
+                                        ? colors.primary.withValues(alpha: 0.12)
+                                        : Colors.transparent,
+                                  ),
+                                ),
                             icon: state.isSendingImage
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
+                                ? SizedBox(
+                                    width: 18,
+                                    height: 18,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
+                                      color: colors.onSurface,
                                     ),
                                   )
-                                : const Icon(Icons.attach_file),
+                                : const Icon(LucideIcons.paperclip, size: 19),
                           ),
                           Expanded(
                             child: Container(
-                              height: 48,
+                              height: 46,
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
+                                horizontal: AppSpacing.lg,
                               ),
                               decoration: BoxDecoration(
-                                color:
-                                    context.colorScheme.surfaceContainerHighest,
+                                color: context.canvasColor,
                                 borderRadius: BorderRadius.circular(
-                                  AppRadius.lg,
+                                  AppRadius.pill,
                                 ),
                                 border: Border.all(
-                                  color: context.colorScheme.outlineVariant,
+                                  color: colors.outlineVariant,
                                 ),
                               ),
                               child: TextField(
                                 controller: _messageController,
                                 readOnly: !canSendMessage,
                                 textInputAction: TextInputAction.send,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: context.colorScheme.onSurface,
+                                style: context.textStyles.bodyMedium?.copyWith(
+                                  color: colors.onSurface,
                                 ),
                                 decoration: InputDecoration(
                                   isDense: true,
                                   filled: false,
-                                  fillColor: context.colorScheme.surface
-                                      .withValues(alpha: 0),
+                                  fillColor: Colors.transparent,
                                   hintText: state.isRoomLocked
                                       ? state.lockReasonMessage
                                       : state.isConnected
                                       ? 'Type a message...'
                                       : 'Reconnect to send a message',
-                                  hintStyle: TextStyle(
-                                    color: context.colorScheme.onSurfaceVariant,
-                                    fontSize: 14,
-                                  ),
+                                  hintStyle: context.textStyles.bodyMedium
+                                      ?.copyWith(
+                                        color: colors.onSurfaceVariant,
+                                      ),
                                   border: InputBorder.none,
                                   enabledBorder: InputBorder.none,
                                   focusedBorder: InputBorder.none,
@@ -472,26 +540,43 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: AppSpacing.sm),
                           Container(
                             decoration: BoxDecoration(
                               color: canSendMessage
-                                  ? context.colorScheme.onSurface
-                                  : context.colorScheme.surfaceContainerHighest,
+                                  ? colors.primary
+                                  : colors.surfaceContainerHighest,
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
                               icon: const Icon(
                                 LucideIcons.send_horizontal,
-                                size: 20,
+                                size: 18,
                               ),
+                              style:
+                                  IconButton.styleFrom(
+                                    enableFeedback: false,
+                                    splashFactory: NoSplash.splashFactory,
+                                  ).copyWith(
+                                    overlayColor:
+                                        WidgetStateProperty.resolveWith(
+                                          (states) =>
+                                              states.contains(
+                                                WidgetState.focused,
+                                              )
+                                              ? colors.onPrimary.withValues(
+                                                  alpha: 0.16,
+                                                )
+                                              : Colors.transparent,
+                                        ),
+                                  ),
                               constraints: const BoxConstraints(
                                 minWidth: AppSize.minimumTouchTarget,
                                 minHeight: AppSize.minimumTouchTarget,
                               ),
                               color: !canSendMessage
-                                  ? context.colorScheme.onSurfaceVariant
-                                  : context.colorScheme.onPrimary,
+                                  ? colors.onSurfaceVariant
+                                  : colors.onPrimary,
                               onPressed: !canSendMessage
                                   ? null
                                   : () => unawaited(
@@ -512,23 +597,27 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   }
 
   Widget _buildEndedFooter(BuildContext context) {
+    final colors = context.colorScheme;
     return SafeArea(
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: 14,
+        ),
         decoration: BoxDecoration(
-          color: context.colorScheme.surface,
+          color: colors.surfaceContainerLowest,
           border: Border(
             top: BorderSide(
-              color: context.colorScheme.outlineVariant.withValues(alpha: 0.3),
+              color: colors.outlineVariant.withValues(alpha: 0.7),
             ),
           ),
         ),
         child: Text(
           'This conversation has ended',
           textAlign: TextAlign.center,
-          style: context.textStyles.bodyMedium?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
+          style: context.textStyles.bodySmall?.copyWith(
+            color: colors.onSurfaceVariant,
           ),
         ),
       ),
@@ -536,26 +625,52 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   }
 
   Widget _buildEmptyState(ChatState state) {
+    final colors = context.colorScheme;
     if (state.isConnecting || state.isLoadingHistory) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: colors.onSurface,
+        ),
+      );
     }
     if (!state.isAccessDenied &&
         state.errorMessage != null &&
         !AppNetworkStatusScope.isUnavailableOf(context)) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppSpacing.xxl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 state.errorMessage!,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: context.colorScheme.onSurfaceVariant),
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               OutlinedButton(
                 onPressed: _retryConnection,
+                style:
+                    OutlinedButton.styleFrom(
+                      backgroundColor: colors.surfaceContainerLowest,
+                      foregroundColor: colors.onSurface,
+                      side: BorderSide(color: colors.outlineVariant),
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                      minimumSize: const Size(0, AppSize.minimumTouchTarget),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.focused)
+                            ? colors.primary.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                      ),
+                    ),
                 child: const Text('Try again'),
               ),
             ],
@@ -566,18 +681,27 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     return Center(
       child: Text(
         'No message yet',
-        style: TextStyle(color: context.colorScheme.onSurfaceVariant),
+        style: context.textStyles.bodyMedium?.copyWith(
+          color: colors.onSurfaceVariant,
+        ),
       ),
     );
   }
 
   Widget _buildClosedBanner() {
+    final colors = context.colorScheme;
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        0,
+      ),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
+        color: colors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -585,15 +709,15 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
           Text(
             'Chat is closed for this trip',
             style: context.textStyles.bodyMedium?.copyWith(
-              color: context.colorScheme.onSurface,
-              fontWeight: FontWeight.w700,
+              color: colors.onSurface,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             'This conversation has ended. Previous messages remain available to view.',
             style: context.textStyles.bodySmall?.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
+              color: colors.onSurfaceVariant,
             ),
           ),
         ],
@@ -605,34 +729,56 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     if (AppNetworkStatusScope.isUnavailableOf(context)) {
       return const SizedBox.shrink();
     }
+    final colors = context.colorScheme;
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        0,
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
-        color: context.colorScheme.error.withValues(alpha: 0.08),
+        color: colors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: context.colorScheme.error.withValues(alpha: 0.22),
-        ),
+        border: Border.all(color: colors.error.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               state.errorMessage!,
-              style: TextStyle(
-                color: context.colorScheme.onSurface,
-                fontSize: 12,
+              style: context.textStyles.bodySmall?.copyWith(
+                color: colors.onSurface,
               ),
             ),
           ),
-          TextButton(onPressed: _retryConnection, child: const Text('Retry')),
+          TextButton(
+            onPressed: _retryConnection,
+            style:
+                TextButton.styleFrom(
+                  foregroundColor: colors.onSurface,
+                  enableFeedback: false,
+                  splashFactory: NoSplash.splashFactory,
+                ).copyWith(
+                  overlayColor: WidgetStateProperty.resolveWith(
+                    (states) => states.contains(WidgetState.focused)
+                        ? colors.primary.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                  ),
+                ),
+            child: const Text('Retry'),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildBubble(ChatMessage message, {required bool animate}) {
+    final colors = context.colorScheme;
     final isMe = message.senderId == widget.userId;
     final formattedTime = _formatMessageTime(message.createdAt);
 
@@ -651,7 +797,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
               margin: const EdgeInsets.symmetric(vertical: 4),
               padding: message.hasImage
                   ? EdgeInsets.zero
-                  : const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  : const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.sizeOf(context).width * 0.75,
               ),
@@ -659,13 +805,16 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                   ? null
                   : BoxDecoration(
                       color: isMe
-                          ? context.colorScheme.onSurface
-                          : context.colorScheme.surfaceContainerHighest,
+                          ? colors.primary
+                          : colors.surfaceContainerLowest,
+                      border: isMe
+                          ? null
+                          : Border.all(color: colors.outlineVariant),
                       borderRadius: BorderRadius.only(
                         topLeft: const Radius.circular(AppRadius.lg),
                         topRight: const Radius.circular(AppRadius.lg),
-                        bottomLeft: Radius.circular(isMe ? 20 : 4),
-                        bottomRight: Radius.circular(isMe ? 4 : 20),
+                        bottomLeft: Radius.circular(isMe ? AppRadius.lg : 4),
+                        bottomRight: Radius.circular(isMe ? 4 : AppRadius.lg),
                       ),
                     ),
               child: message.hasImage
@@ -677,13 +826,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                     )
                   : Text(
                       message.text,
-                      style: TextStyle(
-                        color: isMe
-                            ? context.colorScheme.surface
-                            : context.colorScheme.onSurface,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        height: 1.3,
+                      style: context.textStyles.bodyMedium?.copyWith(
+                        color: isMe ? colors.onPrimary : colors.onSurface,
+                        height: 1.35,
                       ),
                     ),
             ),
@@ -694,11 +839,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                 children: [
                   Text(
                     formattedTime,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: context.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                    style: context.textStyles.labelSmall?.tabular.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   if (isMe) ...[
@@ -719,7 +862,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
           ],
         ),
       ),
@@ -728,7 +871,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
 
   Widget _buildTyping() {
     return AppChatTypingIndicator(
-      bubbleColor: context.colorScheme.surfaceContainerHighest,
+      bubbleColor: context.colorScheme.surfaceContainerLowest,
       dotColor: context.colorScheme.onSurfaceVariant,
       semanticLabel: '${widget.peerName ?? 'Driver'} is typing',
     );

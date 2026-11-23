@@ -82,6 +82,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(sources, [0, 1]);
     verifyNever(() => repository.sendImage(any(), any()));
+
+    final cameraButton = tester.widget<IconButton>(
+      find.byWidgetPredicate(
+        (widget) => widget is IconButton && widget.tooltip == 'Take photo',
+      ),
+    );
+    expect(cameraButton.style?.enableFeedback, isFalse);
+    expect(cameraButton.style?.splashFactory, NoSplash.splashFactory);
+
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
