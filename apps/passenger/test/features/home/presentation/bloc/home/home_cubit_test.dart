@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
+import 'package:maps/maps.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/home/domain/entities/current_location.dart';
 import 'package:passenger/src/features/home/domain/entities/home_data.dart';
@@ -158,6 +159,71 @@ void main() {
         await cubit.close();
       },
     );
+
+    test('populates sanitized deduplicated nearby place names and clears them on clearLocation', () async {
+      when(
+        () => repo.loadHomeData(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer(
+        (_) async => const Ok(
+          HomeData(currentAddress: 'Tuburan, Pagadian', recentLocations: []),
+        ),
+      );
+
+      final cubit = HomeCubit(
+        repository: repo,
+        currentLocationRepository: currentLocationRepo,
+        nearbyPlacesLoader: ({required latitude, required longitude}) async =>
+            const [
+              Place(
+                id: '1',
+                name: '  Plaza   Luz  ',
+                fullAddress: 'Plaza Luz',
+                latitude: 7.827,
+                longitude: 123.436,
+              ),
+              Place(
+                id: '2',
+                name: 'plaza luz',
+                fullAddress: 'Plaza Luz',
+                latitude: 7.827,
+                longitude: 123.436,
+              ),
+              Place(
+                id: '3',
+                name: '7.8275, 123.4365',
+                fullAddress: 'Coordinates',
+                latitude: 7.8275,
+                longitude: 123.4365,
+              ),
+              Place(
+                id: '4',
+                name: 'Unnamed Road',
+                fullAddress: 'Unnamed Road',
+                latitude: 7.828,
+                longitude: 123.437,
+              ),
+              Place(
+                id: '5',
+                name: 'Gaisano Capital',
+                fullAddress: 'Gaisano Capital',
+                latitude: 7.829,
+                longitude: 123.438,
+              ),
+            ],
+      );
+
+      await cubit.loadHomeData(lat: 7.828282, lng: 123.434343);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.nearbyPlaceNames, ['Plaza Luz', 'Gaisano Capital']);
+
+      cubit.clearLocation();
+      expect(cubit.state.nearbyPlaceNames, isEmpty);
+      await cubit.close();
+    });
   });
 
   group('HomeCubit — updateAddress()', () {

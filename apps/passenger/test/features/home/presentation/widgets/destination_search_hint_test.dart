@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/home/presentation/widgets/destination_search_hint.dart';
@@ -42,12 +44,15 @@ void main() {
       ),
     );
 
+    expect(find.byKey(const ValueKey('search-hint-edge-mask')), findsNothing);
+
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(milliseconds: 100));
 
     final currentTop = tester.getTopLeft(find.text('Search Robinsons')).dy;
     final nextTop = tester.getTopLeft(find.text('Search School')).dy;
 
+    expect(find.byKey(const ValueKey('search-hint-edge-mask')), findsOneWidget);
     expect(find.text('Search Robinsons'), findsOneWidget);
     expect(find.text('Search School'), findsOneWidget);
     expect(nextTop, lessThan(currentTop));
@@ -71,4 +76,87 @@ void main() {
     expect(find.text('Search Robinsons'), findsOneWidget);
     expect(find.text('Search School'), findsNothing);
   });
+
+  testWidgets(
+    'rotates nearby suggestions randomly without consecutive duplicates',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HomeDestinationSearchHint(
+              suggestions: const [
+                'Plaza Luz',
+                'Search City Hall',
+                'Gaisano Capital',
+                'Plaza Luz',
+              ],
+              random: Random(7),
+              changeInterval: const Duration(milliseconds: 500),
+              transitionDuration: const Duration(milliseconds: 200),
+            ),
+          ),
+        ),
+      );
+
+      final allowed = {
+        'Search Plaza Luz',
+        'Search City Hall',
+        'Search Gaisano Capital',
+      };
+      String displayedLabel() => tester.widget<Text>(find.byType(Text)).data!;
+
+      final seen = <String>[displayedLabel()];
+      expect(allowed, contains(seen.last));
+
+      for (var step = 0; step < 6; step++) {
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pump(const Duration(milliseconds: 250));
+        final next = displayedLabel();
+        expect(allowed, contains(next));
+        expect(
+          next,
+          isNot(seen.last),
+          reason: 'consecutive nearby hints must not repeat',
+        );
+        seen.add(next);
+      }
+
+      expect(seen.toSet(), allowed);
+    },
+  );
+
+  testWidgets(
+    'glides into nearby suggestions when they arrive asynchronously',
+    (tester) async {
+      Widget buildWidget(List<String> suggestions) => MaterialApp(
+        home: Scaffold(
+          body: HomeDestinationSearchHint(
+            suggestions: suggestions,
+            random: Random(3),
+            changeInterval: const Duration(seconds: 5),
+            transitionDuration: const Duration(milliseconds: 300),
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(buildWidget(const []));
+      expect(find.text('Search Robinsons'), findsOneWidget);
+
+      await tester.pumpWidget(
+        buildWidget(const ['Pagadian Rotonda', 'Plaza Luz']),
+      );
+      await tester.pump(const Duration(milliseconds: 120));
+      expect(
+        find.byKey(const ValueKey('search-hint-edge-mask')),
+        findsOneWidget,
+      );
+
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(find.text('Search Robinsons'), findsNothing);
+      expect(
+        tester.widget<Text>(find.byType(Text)).data,
+        anyOf('Search Pagadian Rotonda', 'Search Plaza Luz'),
+      );
+    },
+  );
 }

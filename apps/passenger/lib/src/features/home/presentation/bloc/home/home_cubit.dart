@@ -1,23 +1,56 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger/src/features/home/domain/entities/current_location.dart';
 import 'package:passenger/src/features/home/domain/repositories/current_location_repository.dart';
 import 'package:passenger/src/features/home/domain/repositories/home_repository.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_state.dart';
 
+typedef NearbyPlacesLoader = Future<List<Place>> Function({
+  required double latitude,
+  required double longitude,
+});
+
 const _pickupLocationUnavailableMessage =
     'Unable to find your pickup location. Tap to retry.';
 const _locationFailureGracePeriod = Duration(milliseconds: 300);
+const _maxNearbySearchHints = 16;
+final _coordinateNamePattern = RegExp(
+  r'^-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?$',
+);
+const _ignoredPlaceNames = <String>{
+  'current location',
+  'unnamed road',
+  'unknown',
+};
+
+Future<List<Place>> _defaultNearbyPlacesLoader({
+  required double latitude,
+  required double longitude,
+}) async {
+  try {
+    return await MapProvider.getNearbyPOIs(
+      latitude: latitude,
+      longitude: longitude,
+    );
+  } catch (_) {
+    return const [];
+  }
+}
 
 class HomeCubit({
   required this._repository,
   required this._currentLocationRepository,
+  NearbyPlacesLoader? nearbyPlacesLoader,
 }) extends Cubit<HomeState> {
   final HomeRepository _repository;
   final CurrentLocationRepository _currentLocationRepository;
+  final NearbyPlacesLoader _nearbyPlacesLoader =
+      nearbyPlacesLoader ?? _defaultNearbyPlacesLoader;
 
   StreamSubscription<Result<CurrentLocation, Failure>>? _locationSubscription;
   CurrentLocation? _pendingTrackedLocation;
@@ -49,6 +82,7 @@ class HomeCubit({
     if (state.currentAddress.isEmpty && state.recentLocations.isEmpty) {
       emit(state.copyWith(isLoading: true, locationErrorMessage: ''));
     }
+    final nearbyFuture = _loadNearbyPlaceNames(lat: lat, lng: lng);
     try {
       final result = await _repository.loadHomeData(lat: lat, lng: lng);
 
@@ -80,6 +114,9 @@ class HomeCubit({
           );
         },
       );
+      unawaited(
+        _applyNearbyPlaceNames(nearbyFuture, dataRevision: dataRevision),
+      );
     } catch (error) {
       dev.log('Error executing home data load: $error');
       if (isClosed || dataRevision != _dataRevision) return;
@@ -90,6 +127,47 @@ class HomeCubit({
         ),
       );
     }
+  }
+
+  Future<List<String>> _loadNearbyPlaceNames({
+    required double lat,
+    required double lng,
+  }) async {
+    try {
+      final places = await _nearbyPlacesLoader(latitude: lat, longitude: lng);
+      return _extractNearbyPlaceNames(places);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<void> _applyNearbyPlaceNames(
+    Future<List<String>> future, {
+    required int dataRevision,
+  }) async {
+    final names = await future;
+    if (isClosed || dataRevision != _dataRevision || names.isEmpty) return;
+    if (listEquals(names, state.nearbyPlaceNames)) return;
+    emit(state.copyWith(nearbyPlaceNames: names));
+  }
+
+  List<String> _extractNearbyPlaceNames(List<Place> places) {
+    final seen = <String>{};
+    final names = <String>[];
+    for (final place in places) {
+      final cleaned = place.name.trim().replaceAll(RegExp(r'\s+'), ' ');
+      if (cleaned.length < 2) continue;
+      final lower = cleaned.toLowerCase();
+      if (_ignoredPlaceNames.contains(lower) ||
+          _coordinateNamePattern.hasMatch(cleaned)) {
+        continue;
+      }
+      if (seen.add(lower)) {
+        names.add(cleaned);
+        if (names.length >= _maxNearbySearchHints) break;
+      }
+    }
+    return List<String>.unmodifiable(names);
   }
 
   void updateAddress(String address) {
@@ -106,6 +184,7 @@ class HomeCubit({
         isLoading: false,
         currentAddress: '',
         locationErrorMessage: '',
+        nearbyPlaceNames: const [],
       ),
     );
   }

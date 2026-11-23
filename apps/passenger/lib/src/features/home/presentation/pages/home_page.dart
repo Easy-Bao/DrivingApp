@@ -22,6 +22,7 @@ import 'package:passenger/src/features/booking/presentation/bloc/booking/booking
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
+import 'package:passenger/src/features/home/presentation/bloc/home/home_state.dart';
 import 'package:passenger/src/features/home/presentation/widgets/destination_search_hint.dart';
 import 'package:passenger/src/features/home/presentation/widgets/pending_booking_banner.dart';
 import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_empty_state.dart';
@@ -733,7 +734,23 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Icon(LucideIcons.search, color: colors.onSurface, size: 19),
                   const SizedBox(width: AppSpacing.md),
-                  const Expanded(child: HomeDestinationSearchHint()),
+                  Expanded(
+                    child: BlocSelector<HomeCubit, HomeState, List<String>>(
+                      selector: (state) {
+                        if (state.nearbyPlaceNames.isNotEmpty) {
+                          return state.nearbyPlaceNames;
+                        }
+                        if (state.recentLocations.isEmpty) {
+                          return const [];
+                        }
+                        return state.recentLocations
+                            .map((location) => location.title)
+                            .toList(growable: false);
+                      },
+                      builder: (context, suggestions) =>
+                          HomeDestinationSearchHint(suggestions: suggestions),
+                    ),
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Icon(
                     LucideIcons.arrow_right,
