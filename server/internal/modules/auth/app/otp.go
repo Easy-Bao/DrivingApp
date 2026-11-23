@@ -293,11 +293,57 @@ func (service *OTPService) ResetPassword(ctx context.Context, email, code, passw
 	)
 }
 
+func (service *OTPService) VerifyPasswordResetOTP(ctx context.Context, email, code string) error {
+	return service.VerifyPasswordResetOTPForRole(
+		ctx,
+		email,
+		code,
+		domain.Passenger,
+	)
+}
+
+func (service *OTPService) VerifyPasswordResetOTPForRole(
+	ctx context.Context,
+	email string,
+	code string,
+	role domain.Role,
+) error {
+	if service == nil || service.store == nil || service.users == nil {
+		return domain.ErrOTPUnavailable
+	}
+	normalizedEmail, ok := normalizeValidEmail(email)
+	if !ok {
+		return domain.ErrInvalidEmail
+	}
+	code = strings.TrimSpace(code)
+	if code == "" {
+		return domain.ErrOTPRequired
+	}
+	if err := service.store.Verify(ctx, "reset", normalizedEmail, code); err != nil {
+		if errors.Is(err, domain.ErrInvalidOTP) || errors.Is(err, domain.ErrOTPMaxAttemptsExceeded) {
+			return err
+		}
+		service.log().WarnContext(ctx, "verify password reset otp failed", "error", err)
+		return domain.ErrOTPUnavailable
+	}
+	if _, err := service.accountForRole(ctx, normalizedEmail, role); err != nil {
+		if errors.Is(err, domain.ErrAccountSuspended) || errors.Is(err, domain.ErrOTPUnavailable) {
+			return err
+		}
+		return domain.ErrInvalidOTP
+	}
+	return nil
+}
+
 func (service *OTPService) RequestPasswordResetForRole(ctx context.Context, email string, role domain.Role) error {
 	if service == nil {
 		return domain.ErrOTPUnavailable
 	}
-	account, err := service.accountForRole(ctx, email, role)
+	normalizedEmail, ok := normalizeValidEmail(email)
+	if !ok {
+		return domain.ErrInvalidEmail
+	}
+	account, err := service.accountForRole(ctx, normalizedEmail, role)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidCredentials) || errors.Is(err, domain.ErrAccountSuspended) {
 			return nil
@@ -317,6 +363,10 @@ func (service *OTPService) ResetPasswordForRole(
 	if service == nil || service.store == nil || service.users == nil {
 		return domain.ErrOTPUnavailable
 	}
+	normalizedEmail, ok := normalizeValidEmail(email)
+	if !ok {
+		return domain.ErrInvalidEmail
+	}
 	if len(password) < 8 || len([]byte(password)) > 72 {
 		return domain.ErrInvalidCredentials
 	}
@@ -324,7 +374,6 @@ func (service *OTPService) ResetPasswordForRole(
 	if code == "" {
 		return domain.ErrOTPRequired
 	}
-	normalizedEmail := strings.ToLower(strings.TrimSpace(email))
 	if err := service.store.Consume(ctx, "reset", normalizedEmail, code); err != nil {
 		if errors.Is(err, domain.ErrInvalidOTP) || errors.Is(err, domain.ErrOTPMaxAttemptsExceeded) {
 			return err

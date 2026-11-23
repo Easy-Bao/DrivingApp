@@ -96,6 +96,14 @@ func (store *emailChangeOTPStore) Put(_ context.Context, purpose, email, code st
 	return nil
 }
 
+func (store *emailChangeOTPStore) Verify(_ context.Context, purpose, email, code string) error {
+	key := purpose + ":" + email
+	if store.codes[key] != code {
+		return domain.ErrInvalidOTP
+	}
+	return nil
+}
+
 func (store *emailChangeOTPStore) Consume(_ context.Context, purpose, email, code string) error {
 	key := purpose + ":" + email
 	if store.codes[key] != code {

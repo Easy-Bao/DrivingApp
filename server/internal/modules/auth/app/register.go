@@ -227,11 +227,26 @@ var _e164Phone = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)
 
 func normalizeValidEmail(raw string) (string, bool) {
 	email := strings.ToLower(strings.TrimSpace(raw))
-	if email == "" || len(email) > 254 {
+	if email == "" || len(email) > 254 || strings.ContainsAny(email, " \t\r\n") {
 		return "", false
 	}
 	address, err := mail.ParseAddress(email)
 	if err != nil || !strings.EqualFold(address.Address, email) {
+		return "", false
+	}
+	at := strings.LastIndexByte(email, '@')
+	if at <= 0 || at >= len(email)-1 {
+		return "", false
+	}
+	domainPart := email[at+1:]
+	if !strings.Contains(domainPart, ".") ||
+		strings.HasPrefix(domainPart, ".") ||
+		strings.HasSuffix(domainPart, ".") ||
+		strings.Contains(domainPart, "..") {
+		return "", false
+	}
+	lastDot := strings.LastIndexByte(domainPart, '.')
+	if len(domainPart[lastDot+1:]) < 2 {
 		return "", false
 	}
 	return email, true

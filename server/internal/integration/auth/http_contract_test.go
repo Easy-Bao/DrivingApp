@@ -417,3 +417,101 @@ func TestResetPasswordRoutesAcceptValidOTP(t *testing.T) {
 		t.Fatal("password reset did not store the new password")
 	}
 }
+
+func TestVerifyResetOTPRoutesGuardInvalidEmailAndInvalidCodeBeforePasswordReset(t *testing.T) {
+	tests := []struct {
+		name       string
+		forgotPath string
+		verifyPath string
+		resetPath  string
+		role       domain.Role
+	}{
+		{
+			name:       "passenger",
+			forgotPath: "/api/v1/auth/passenger/forgot-password",
+			verifyPath: "/api/v1/auth/passenger/verify-reset-otp",
+			resetPath:  "/api/v1/auth/passenger/reset-password",
+			role:       domain.Passenger,
+		},
+		{
+			name:       "driver",
+			forgotPath: "/api/v1/auth/driver/forgot-password",
+			verifyPath: "/api/v1/auth/driver/verify-reset-otp",
+			resetPath:  "/api/v1/auth/driver/reset-password",
+			role:       domain.Driver,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			email := test.name + "-verify-reset@example.test"
+			repository := &repository{users: map[string]domain.User{
+				email: {
+					ID:           73,
+					Email:        email,
+					Role:         test.role,
+					PasswordHash: testPasswordHash(t, "old-password"),
+				},
+			}}
+			otp := authapp.NewOTPService(authapp.OTPDependencies{
+				Users:        repository,
+				Store:        &resetOTPStore{code: "654321"},
+				Sessions:     newTestRefreshSessionStore(),
+				HashPassword: testHashPassword,
+			})
+			mux := chi.NewRouter()
+			authhttp.NewRouter(
+				authhttp.RouterDependencies{OTP: otp},
+				authhttp.WithOTPAttemptStore(middleware.NewMemoryCounterStore()),
+			).RegisterRoutes(mux)
+
+			invalidEmailReq := httptest.NewRequest(
+				http.MethodPost,
+				test.forgotPath,
+				bytes.NewBufferString(`{"email":"not-an-email"}`),
+			)
+			invalidEmailReq.RemoteAddr = "192.0.2.25:4321"
+			invalidEmailRes := httptest.NewRecorder()
+			mux.ServeHTTP(invalidEmailRes, invalidEmailReq)
+			if invalidEmailRes.Code != http.StatusBadRequest {
+				t.Fatalf("forgot-password(invalid email) status = %d, want %d", invalidEmailRes.Code, http.StatusBadRequest)
+			}
+
+			wrongCodeReq := httptest.NewRequest(
+				http.MethodPost,
+				test.verifyPath,
+				bytes.NewBufferString(`{"email":"`+email+`","code":"000000"}`),
+			)
+			wrongCodeReq.RemoteAddr = "192.0.2.25:4321"
+			wrongCodeRes := httptest.NewRecorder()
+			mux.ServeHTTP(wrongCodeRes, wrongCodeReq)
+			if wrongCodeRes.Code != http.StatusBadRequest {
+				t.Fatalf("verify-reset-otp(invalid code) status = %d, want %d", wrongCodeRes.Code, http.StatusBadRequest)
+			}
+
+			validCodeReq := httptest.NewRequest(
+				http.MethodPost,
+				test.verifyPath,
+				bytes.NewBufferString(`{"email":"`+email+`","code":"654321"}`),
+			)
+			validCodeReq.RemoteAddr = "192.0.2.25:4321"
+			validCodeRes := httptest.NewRecorder()
+			mux.ServeHTTP(validCodeRes, validCodeReq)
+			if validCodeRes.Code != http.StatusOK {
+				t.Fatalf("verify-reset-otp(valid code) status = %d, want %d, body = %s", validCodeRes.Code, http.StatusOK, validCodeRes.Body.String())
+			}
+
+			resetReq := httptest.NewRequest(
+				http.MethodPost,
+				test.resetPath,
+				bytes.NewBufferString(`{"email":"`+email+`","code":"654321","newPassword":"new-password"}`),
+			)
+			resetReq.RemoteAddr = "192.0.2.25:4321"
+			resetRes := httptest.NewRecorder()
+			mux.ServeHTTP(resetRes, resetReq)
+			if resetRes.Code != http.StatusOK {
+				t.Fatalf("reset-password(after verify) status = %d, want %d, body = %s", resetRes.Code, http.StatusOK, resetRes.Body.String())
+			}
+		})
+	}
+}

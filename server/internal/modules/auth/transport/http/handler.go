@@ -265,6 +265,35 @@ func (handler *Handler) forgotPasswordForRole(w http.ResponseWriter, r *http.Req
 	response.JSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]bool{"success": true}})
 }
 
+func (handler *Handler) VerifyResetOTP(w http.ResponseWriter, r *http.Request) {
+	handler.verifyResetOTPForRole(w, r, domain.Passenger)
+}
+
+func (handler *Handler) DriverVerifyResetOTP(w http.ResponseWriter, r *http.Request) {
+	handler.verifyResetOTPForRole(w, r, domain.Driver)
+}
+
+func (handler *Handler) verifyResetOTPForRole(w http.ResponseWriter, r *http.Request, role domain.Role) {
+	if handler.otp == nil {
+		response.Error(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
+		return
+	}
+	var input OTPVerification
+	if !decode(w, r, &input) {
+		return
+	}
+	if err := handler.otp.VerifyPasswordResetOTPForRole(
+		r.Context(),
+		input.Email,
+		input.Code,
+		role,
+	); err != nil {
+		writeOTPError(w, err)
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]bool{"verified": true}})
+}
+
 func (handler *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	handler.resetPasswordForRole(w, r, domain.Passenger)
 }
@@ -321,6 +350,8 @@ func safeAuthError(err error) string {
 		return "That email or phone number is already registered."
 	case errors.Is(err, domain.ErrInvalidCredentials):
 		return "The email or password is incorrect."
+	case errors.Is(err, domain.ErrInvalidEmail):
+		return "Enter a valid email address."
 	case errors.Is(err, domain.ErrInvalidRole):
 		return "Choose a valid account type."
 	case errors.Is(err, domain.ErrOTPRequired):

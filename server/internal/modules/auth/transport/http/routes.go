@@ -89,10 +89,20 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	mux.With(authentication).Post(api.V1Prefix+"/auth/passenger/forgot-password", router.handler.ForgotPassword)
 	mux.With(authentication).Method(
 		http.MethodPost,
+		api.V1Prefix+"/auth/passenger/verify-reset-otp",
+		router.limitOTPAttempts(router.handler.VerifyResetOTP),
+	)
+	mux.With(authentication).Method(
+		http.MethodPost,
 		api.V1Prefix+"/auth/passenger/reset-password",
 		router.limitOTPAttempts(router.handler.ResetPassword),
 	)
 	mux.With(authentication).Post(api.V1Prefix+"/auth/driver/forgot-password", router.handler.DriverForgotPassword)
+	mux.With(authentication).Method(
+		http.MethodPost,
+		api.V1Prefix+"/auth/driver/verify-reset-otp",
+		router.limitOTPAttempts(router.handler.DriverVerifyResetOTP),
+	)
 	mux.With(authentication).Method(
 		http.MethodPost,
 		api.V1Prefix+"/auth/driver/reset-password",

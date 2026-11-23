@@ -74,6 +74,21 @@ func (store *resetOTPStore) Put(_ context.Context, _, _, code string, _ time.Dur
 	return nil
 }
 
+func (store *resetOTPStore) Verify(_ context.Context, _, _, code string) error {
+	if store.code == "" {
+		return domain.ErrInvalidOTP
+	}
+	if code != store.code {
+		store.attempts++
+		if store.attempts >= domain.MaxOTPVerificationAttempts {
+			store.code = ""
+			return domain.ErrOTPMaxAttemptsExceeded
+		}
+		return domain.ErrInvalidOTP
+	}
+	return nil
+}
+
 func (store *resetOTPStore) Consume(_ context.Context, _, _, code string) error {
 	if store.code == "" {
 		return domain.ErrInvalidOTP

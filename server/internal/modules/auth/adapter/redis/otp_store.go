@@ -51,6 +51,32 @@ func (store *OTPStore) Put(ctx context.Context, purpose, email, code string, ttl
 	return nil
 }
 
+func (store *OTPStore) Verify(ctx context.Context, purpose, email, code string) error {
+	if store == nil || store.client == nil {
+		return errors.New("otp store is not configured")
+	}
+	result, err := _verifyScript.Run(
+		ctx,
+		store.client,
+		[]string{key(purpose, email), attemptKey(purpose, email)},
+		store.codeDigest(purpose, email, code),
+		authdomain.MaxOTPVerificationAttempts,
+		int64((15 * time.Minute).Milliseconds()),
+	).Int()
+	if err != nil {
+		return fmt.Errorf("verify otp: %w", err)
+	}
+	switch result {
+	case 1:
+		return nil
+	case -2:
+		slog.WarnContext(ctx, "OTP code invalidated after maximum verification attempts", "purpose", purpose)
+		return authdomain.ErrOTPMaxAttemptsExceeded
+	default:
+		return authdomain.ErrInvalidOTP
+	}
+}
+
 func (store *OTPStore) Consume(ctx context.Context, purpose, email, code string) error {
 	if store == nil || store.client == nil {
 		return errors.New("otp store is not configured")
@@ -101,6 +127,28 @@ func (store *OTPStore) codeDigest(purpose, email, code string) string {
 var _putScript = redisclient.NewScript(`
 redis.call("SET", KEYS[1], ARGV[1], "PX", ARGV[2])
 redis.call("DEL", KEYS[2])
+return 1
+`)
+
+var _verifyScript = redisclient.NewScript(`
+local value = redis.call("GET", KEYS[1])
+if not value then
+  redis.call("DEL", KEYS[2])
+  return 0
+end
+if value ~= ARGV[1] then
+  local attempts = redis.call("INCR", KEYS[2])
+  if attempts == 1 then
+    local ttl = redis.call("PTTL", KEYS[1])
+    if ttl <= 0 then ttl = tonumber(ARGV[3]) end
+    redis.call("PEXPIRE", KEYS[2], ttl)
+  end
+  if attempts >= tonumber(ARGV[2]) then
+    redis.call("DEL", KEYS[1], KEYS[2])
+    return -2
+  end
+  return -1
+end
 return 1
 `)
 

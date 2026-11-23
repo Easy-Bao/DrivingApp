@@ -37,6 +37,14 @@ func (store *otpMemoryStore) Put(_ context.Context, purpose, email, code string,
 	store.values[purpose+":"+strings.ToLower(email)] = code
 	return nil
 }
+func (store *otpMemoryStore) Verify(_ context.Context, purpose, email, code string) error {
+	key := purpose + ":" + strings.ToLower(email)
+	if store.values[key] != code {
+		return domain.ErrInvalidOTP
+	}
+	return nil
+}
+
 func (store *otpMemoryStore) Consume(_ context.Context, purpose, email, code string) error {
 	key := purpose + ":" + strings.ToLower(email)
 	if store.values[key] != code {
@@ -374,5 +382,46 @@ func TestResetPasswordDoesNotEnumerateAccountsWithoutValidOTP(t *testing.T) {
 	})
 	if err := dbErrService.RequestPasswordResetForRole(context.Background(), "user@example.test", domain.Passenger); !errors.Is(err, domain.ErrOTPUnavailable) {
 		t.Fatalf("RequestPasswordResetForRole(db error) = %v, want ErrOTPUnavailable", err)
+	}
+}
+
+func TestPasswordResetRejectsMalformedEmailAndVerifiesCodeWithoutConsuming(t *testing.T) {
+	repository := &otpRepository{account: domain.User{
+		ID:            11,
+		Email:         "passenger@example.test",
+		Role:          domain.Passenger,
+		AccountStatus: "active",
+		PasswordHash:  "$2a$12$somehash",
+	}}
+	store := &otpMemoryStore{values: map[string]string{}}
+	gateway := &otpGateway{}
+	service := authapp.NewOTPService(authapp.OTPDependencies{
+		Users:    repository,
+		Store:    store,
+		Gateway:  gateway,
+		Tokens:   otpIssuer{},
+		Sessions: newTestRefreshSessionStore(),
+	})
+
+	for _, badEmail := range []string{"", "not-an-email", "user@localhost", "user@domain."} {
+		if err := service.RequestPasswordResetForRole(context.Background(), badEmail, domain.Passenger); !errors.Is(err, domain.ErrInvalidEmail) {
+			t.Fatalf("RequestPasswordResetForRole(%q) = %v, want ErrInvalidEmail", badEmail, err)
+		}
+		if err := service.VerifyPasswordResetOTPForRole(context.Background(), badEmail, "123456", domain.Passenger); !errors.Is(err, domain.ErrInvalidEmail) {
+			t.Fatalf("VerifyPasswordResetOTPForRole(%q) = %v, want ErrInvalidEmail", badEmail, err)
+		}
+	}
+
+	if err := service.RequestPasswordResetForRole(context.Background(), "passenger@example.test", domain.Passenger); err != nil {
+		t.Fatalf("RequestPasswordResetForRole(valid) = %v, want nil", err)
+	}
+	if err := service.VerifyPasswordResetOTPForRole(context.Background(), "passenger@example.test", "000000", domain.Passenger); !errors.Is(err, domain.ErrInvalidOTP) {
+		t.Fatalf("VerifyPasswordResetOTPForRole(wrong code) = %v, want ErrInvalidOTP", err)
+	}
+	if err := service.VerifyPasswordResetOTPForRole(context.Background(), "passenger@example.test", gateway.sent, domain.Passenger); err != nil {
+		t.Fatalf("VerifyPasswordResetOTPForRole(valid code) = %v, want nil", err)
+	}
+	if err := service.ResetPasswordForRole(context.Background(), "passenger@example.test", gateway.sent, "new-secret-8", domain.Passenger); err != nil {
+		t.Fatalf("ResetPasswordForRole(after verify) = %v, want nil", err)
 	}
 }
