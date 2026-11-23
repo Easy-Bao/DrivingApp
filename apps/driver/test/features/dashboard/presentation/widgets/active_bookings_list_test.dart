@@ -35,6 +35,11 @@ void main() {
     expect(find.text('Onboard\nDestination 0'), findsOneWidget);
     expect(find.text('Awaiting pickup\nPickup 4'), findsOneWidget);
     await tester.ensureVisible(find.text('Passenger 4'));
+    final bookingRow = tester.widget<InkWell>(
+      find.byKey(const ValueKey<String>('driver-active-booking-ride-4')),
+    );
+    expect(bookingRow.enableFeedback, isFalse);
+    expect(bookingRow.splashFactory, NoSplash.splashFactory);
     await tester.tap(find.text('Passenger 4'));
     expect(selected, 'ride-4');
     expect(tester.takeException(), isNull);

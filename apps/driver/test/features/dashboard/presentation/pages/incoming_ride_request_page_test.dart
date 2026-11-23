@@ -71,6 +71,16 @@ void main() {
     expect(find.text('A passenger chose you'), findsOneWidget);
     expect(find.text('Pickup street'), findsOneWidget);
     expect(find.text('Destination street'), findsOneWidget);
+    final acceptButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey<String>('driver-request-accept')),
+    );
+    expect(acceptButton.style?.enableFeedback, isFalse);
+    expect(acceptButton.style?.splashFactory, NoSplash.splashFactory);
+    final declineButton = tester.widget<OutlinedButton>(
+      find.byKey(const ValueKey<String>('driver-request-decline')),
+    );
+    expect(declineButton.style?.enableFeedback, isFalse);
+    expect(declineButton.style?.splashFactory, NoSplash.splashFactory);
     await tester.tap(find.text('Accept ride'));
     await tester.pump();
     expect(find.text('Sending response…'), findsOneWidget);

@@ -1,12 +1,13 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
+import 'package:driver/src/core/formatters/value_formatters.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
-import 'package:driver/src/core/formatters/value_formatters.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
+import 'package:material_ui/material_ui.dart';
 
 class IncomingRideRequestPage extends StatefulWidget {
   const IncomingRideRequestPage({
@@ -129,125 +130,376 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
     builder: (context, state) {
       final bid = _request(state);
       if (bid == null) _close();
-      final colors = context.colorScheme;
+      final colorScheme = context.colorScheme;
+      final textStyles = context.textStyles;
       final expiry = DateTime.tryParse(valueAsString(bid?['expires_at']) ?? '');
       final seconds = expiry
           ?.difference(DateTime.now())
           .inSeconds
           .clamp(0, 3599);
       final fare = bid == null ? null : fareInPesos(bid);
+      final isDirect = bid?['target_driver_id'] != null;
       final awaitingAssignment =
           _accepted ||
           state.submittedOffers.any(
             (offer) => valueAsString(offer['id']) == widget.sessionId,
           );
+      final hairline = Divider(
+        height: 1,
+        thickness: 1,
+        color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+      );
+
       return PopScope(
         canPop: _closing,
         child: Scaffold(
-          appBar: AppBar(
-            automaticallyImplyLeading: false,
-            title: const Text('Ride request'),
-          ),
+          backgroundColor: context.canvasColor,
           body: SafeArea(
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(
-                  maxWidth: AppLayout.contentMaxWidth,
+                  maxWidth: AppLayout.pageMaxWidth,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(AppSpacing.xxl),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              bid?['target_driver_id'] != null
-                                  ? 'A passenger chose you'
-                                  : 'A passenger needs a ride',
-                              style: context.textStyles.headlineSmall,
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              seconds == null
-                                  ? 'Review the trip before accepting.'
-                                  : 'Respond within $seconds seconds',
-                              style: context.textStyles.bodyMedium?.copyWith(
-                                color: colors.onSurfaceVariant,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final horizontalPadding = constraints.maxWidth < 360
+                        ? AppLayout.pagePadding
+                        : AppLayout.pagePaddingWide;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            horizontalPadding,
+                            AppSpacing.lg,
+                            horizontalPadding,
+                            AppSpacing.md,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Semantics(
+                                  header: true,
+                                  child: Text(
+                                    'RIDE REQUEST',
+                                    style: textStyles.labelSmall?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: AppSpacing.xxl),
-                            Text(
-                              fare == null
-                                  ? 'Fare unavailable'
-                                  : formatPesoAmount(fare),
-                              style: context.textStyles.displaySmall,
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            const Text('Trip fare'),
-                            const SizedBox(height: AppSpacing.xxl),
-                            CompactRouteTimeline(
-                              pickup:
-                                  valueAsString(bid?['pickup_name']) ??
-                                  'Pickup unavailable',
-                              dropoff:
-                                  valueAsString(bid?['dropoff_name']) ??
-                                  'Destination unavailable',
-                            ),
-                            if (valueAsString(bid?['passenger_note'])
-                                case final String note) ...[
-                              const SizedBox(height: AppSpacing.lg),
-                              Text(
-                                'Passenger note',
-                                style: context.textStyles.titleSmall,
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
-                              Text(note),
+                              if (seconds != null)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.surfaceContainerLowest,
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.pill,
+                                    ),
+                                    border: Border.all(
+                                      color: seconds <= 10
+                                          ? colorScheme.error.withValues(
+                                              alpha: 0.45,
+                                            )
+                                          : colorScheme.outlineVariant,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      ExcludeSemantics(
+                                        child: Icon(
+                                          LucideIcons.clock,
+                                          size: 13,
+                                          color: seconds <= 10
+                                              ? colorScheme.error
+                                              : colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        '${seconds}s',
+                                        style: textStyles.labelSmall?.tabular
+                                            .copyWith(
+                                              fontWeight: FontWeight.w700,
+                                              color: seconds <= 10
+                                                  ? colorScheme.error
+                                                  : colorScheme.onSurface,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                             ],
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(AppSpacing.lg),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (awaitingAssignment) ...[
-                            const LinearProgressIndicator(),
-                            const SizedBox(height: AppSpacing.md),
-                            const Text(
-                              'Confirming your trip…',
-                              textAlign: TextAlign.center,
+                        hairline,
+                        Expanded(
+                          child: SingleChildScrollView(
+                            physics: const ClampingScrollPhysics(),
+                            padding: EdgeInsets.fromLTRB(
+                              horizontalPadding,
+                              AppSpacing.xxl,
+                              horizontalPadding,
+                              AppSpacing.xxl,
                             ),
-                          ] else ...[
-                            FilledButton(
-                              onPressed:
-                                  _submitting || bid == null || fare == null
-                                  ? null
-                                  : () =>
-                                        unawaited(_respond(bid, accept: true)),
-                              child: Text(
-                                _submitting
-                                    ? 'Sending response…'
-                                    : 'Accept ride',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  isDirect
+                                      ? 'A passenger chose you'
+                                      : 'A passenger needs a ride',
+                                  style: textStyles.headlineSmall?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.3,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.xs + 2),
+                                Text(
+                                  seconds == null
+                                      ? 'Review the trip before accepting.'
+                                      : 'Respond within $seconds seconds',
+                                  style: textStyles.bodyMedium?.tabular
+                                      .copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                ),
+                                const SizedBox(height: AppSpacing.xxl),
+                                Text(
+                                  'Trip fare',
+                                  style: textStyles.labelMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.xs),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    fare == null
+                                        ? 'Fare unavailable'
+                                        : formatPesoAmount(fare),
+                                    style: textStyles.displayLarge?.tabular
+                                        .copyWith(
+                                          fontSize: 40,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: -1.4,
+                                          color: colorScheme.onSurface,
+                                        ),
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.xxl),
+                                hairline,
+                                const SizedBox(height: AppSpacing.xl),
+                                Semantics(
+                                  header: true,
+                                  child: Text(
+                                    'ROUTE',
+                                    style: textStyles.labelSmall?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.9,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                CompactRouteTimeline(
+                                  pickup:
+                                      valueAsString(bid?['pickup_name']) ??
+                                      'Pickup unavailable',
+                                  dropoff:
+                                      valueAsString(bid?['dropoff_name']) ??
+                                      'Destination unavailable',
+                                ),
+                                if (valueAsString(bid?['passenger_note'])
+                                    case final String note) ...[
+                                  const SizedBox(height: AppSpacing.xl),
+                                  hairline,
+                                  const SizedBox(height: AppSpacing.xl),
+                                  Text(
+                                    'Passenger note',
+                                    style: textStyles.labelMedium?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.sm),
+                                  Container(
+                                    padding: const EdgeInsets.only(
+                                      left: AppSpacing.md,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      border: Border(
+                                        left: BorderSide(
+                                          color: colorScheme.outlineVariant,
+                                          width: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      note,
+                                      style: textStyles.bodyMedium?.copyWith(
+                                        color: colorScheme.onSurface,
+                                        height: 1.45,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: context.canvasColor,
+                            border: Border(
+                              top: BorderSide(
+                                color: colorScheme.outlineVariant.withValues(
+                                  alpha: 0.7,
+                                ),
                               ),
                             ),
-                            const SizedBox(height: AppSpacing.sm),
-                            OutlinedButton(
-                              onPressed: _submitting || bid == null
-                                  ? null
-                                  : () =>
-                                        unawaited(_respond(bid, accept: false)),
-                              child: const Text('Decline'),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              horizontalPadding,
+                              AppSpacing.lg,
+                              horizontalPadding,
+                              AppSpacing.lg,
                             ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                if (awaitingAssignment) ...[
+                                  const LinearProgressIndicator(minHeight: 3),
+                                  const SizedBox(height: AppSpacing.md),
+                                  Text(
+                                    'Confirming your trip…',
+                                    textAlign: TextAlign.center,
+                                    style: textStyles.titleSmall?.copyWith(
+                                      color: colorScheme.onSurface,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ] else ...[
+                                  SizedBox(
+                                    height: AppSize.controlHeight,
+                                    child: FilledButton(
+                                      key: const ValueKey<String>(
+                                        'driver-request-accept',
+                                      ),
+                                      onPressed:
+                                          _submitting ||
+                                              bid == null ||
+                                              fare == null
+                                          ? null
+                                          : () => unawaited(
+                                              _respond(bid, accept: true),
+                                            ),
+                                      style:
+                                          FilledButton.styleFrom(
+                                            backgroundColor:
+                                                colorScheme.primary,
+                                            foregroundColor:
+                                                colorScheme.onPrimary,
+                                            elevation: 0,
+                                            enableFeedback: false,
+                                            splashFactory:
+                                                NoSplash.splashFactory,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    AppRadius.lg,
+                                                  ),
+                                            ),
+                                          ).copyWith(
+                                            overlayColor:
+                                                WidgetStateProperty.resolveWith(
+                                                  (states) {
+                                                    if (states.contains(
+                                                      WidgetState.focused,
+                                                    )) {
+                                                      return colorScheme
+                                                          .onPrimary
+                                                          .withValues(
+                                                            alpha: 0.16,
+                                                          );
+                                                    }
+                                                    return Colors.transparent;
+                                                  },
+                                                ),
+                                          ),
+                                      child: Text(
+                                        _submitting
+                                            ? 'Sending response…'
+                                            : 'Accept ride',
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.sm + 2),
+                                  SizedBox(
+                                    height: AppSize.controlHeight,
+                                    child: OutlinedButton(
+                                      key: const ValueKey<String>(
+                                        'driver-request-decline',
+                                      ),
+                                      onPressed: _submitting || bid == null
+                                          ? null
+                                          : () => unawaited(
+                                              _respond(bid, accept: false),
+                                            ),
+                                      style:
+                                          OutlinedButton.styleFrom(
+                                            foregroundColor:
+                                                colorScheme.onSurface,
+                                            backgroundColor: Colors.transparent,
+                                            side: BorderSide(
+                                              color: colorScheme.outlineVariant,
+                                            ),
+                                            enableFeedback: false,
+                                            splashFactory:
+                                                NoSplash.splashFactory,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    AppRadius.lg,
+                                                  ),
+                                            ),
+                                          ).copyWith(
+                                            overlayColor:
+                                                WidgetStateProperty.resolveWith(
+                                                  (states) {
+                                                    if (states.contains(
+                                                      WidgetState.focused,
+                                                    )) {
+                                                      return colorScheme.primary
+                                                          .withValues(
+                                                            alpha: 0.12,
+                                                          );
+                                                    }
+                                                    return Colors.transparent;
+                                                  },
+                                                ),
+                                          ),
+                                      child: const Text('Decline'),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),

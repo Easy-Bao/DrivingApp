@@ -21,6 +21,7 @@ import 'package:driver/src/core/notifications/incoming_request_alert.dart';
 import 'package:driver/src/core/formatters/value_formatters.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -1019,18 +1020,29 @@ class _DashboardPageState extends State<DashboardPage>
                     appBar: AppBar(
                       automaticallyImplyLeading: false,
                       backgroundColor: context.canvasColor,
-                      titleSpacing: 20,
-                      toolbarHeight: 76,
+                      titleSpacing: AppLayout.pagePadding,
+                      toolbarHeight: 72,
                       title: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'EasyRide',
-                            style: context.textStyles.titleLarge,
+                            style: context.textStyles.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.4,
+                              color: context.colorScheme.onSurface,
+                            ),
                           ),
-                          const SizedBox(height: AppSpacing.sm / 2),
-                          Text('Driver', style: context.textStyles.labelMedium),
+                          const SizedBox(height: 2),
+                          Text(
+                            'DRIVER',
+                            style: context.textStyles.labelSmall?.copyWith(
+                              color: context.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -1042,6 +1054,7 @@ class _DashboardPageState extends State<DashboardPage>
                             maxWidth: AppLayout.contentMaxWidth,
                           ),
                           child: RefreshIndicator(
+                            color: context.colorScheme.onSurface,
                             onRefresh: () async {
                               await Future.wait([
                                 BlocProvider.of<DashboardCubit>(context)
@@ -1050,15 +1063,17 @@ class _DashboardPageState extends State<DashboardPage>
                               ]);
                             },
                             child: CustomScrollView(
-                              physics: const AlwaysScrollableScrollPhysics(),
+                              physics: const AlwaysScrollableScrollPhysics(
+                                parent: ClampingScrollPhysics(),
+                              ),
                               slivers: [
                                 SliverList.list(
                                   children: [
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: AppSpacing.sm),
                                     _buildOnlineCardBanner(context, state),
-                                    const SizedBox(height: 16),
+                                    const SizedBox(height: AppSpacing.md),
                                     _buildStatsRow(context, state),
-                                    const SizedBox(height: 24),
+                                    const SizedBox(height: AppSpacing.xxl),
                                   ],
                                 ),
                                 if (state.activeRides.isNotEmpty)
@@ -1087,7 +1102,9 @@ class _DashboardPageState extends State<DashboardPage>
                                   SliverFillRemaining(
                                     hasScrollBody: false,
                                     child: Padding(
-                                      padding: const EdgeInsets.all(24),
+                                      padding: const EdgeInsets.all(
+                                        AppSpacing.xxl,
+                                      ),
                                       child: Center(
                                         child: _buildStatusIndicator(state),
                                       ),
@@ -1139,22 +1156,68 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   Widget _buildStatusIndicator(DashboardState state) {
+    final colorScheme = context.colorScheme;
+    final onlineColor = context.semanticColors.online;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        ExcludeSemantics(
+          child: AnimatedBuilder(
+            animation: _pulseAnimationController,
+            builder: (context, child) {
+              final borderOpacity = state.isOnline
+                  ? 0.25 + _pulseAnimationController.value * 0.25
+                  : 1.0;
+              return Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: state.isOnline
+                      ? onlineColor.withValues(alpha: 0.06)
+                      : colorScheme.surfaceContainerLowest,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: state.isOnline
+                        ? onlineColor.withValues(alpha: borderOpacity)
+                        : colorScheme.outlineVariant,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: child,
+              );
+            },
+            child: Icon(
+              state.isOnline ? LucideIcons.radio : LucideIcons.car_front,
+              size: 22,
+              color: state.isOnline
+                  ? onlineColor
+                  : colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           state.isOnline ? 'Ready for your next ride' : "You're offline",
           textAlign: TextAlign.center,
-          style: context.textStyles.titleMedium,
+          style: context.textStyles.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+            color: colorScheme.onSurface,
+          ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          state.isOnline
-              ? 'New ride requests will appear here.'
-              : 'Switch online when you’re ready to drive.',
-          textAlign: TextAlign.center,
-          style: context.textStyles.bodyMedium?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
+        const SizedBox(height: AppSpacing.xs + 2),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 280),
+          child: Text(
+            state.isOnline
+                ? 'New ride requests will appear here.'
+                : 'Switch online when you’re ready to drive.',
+            textAlign: TextAlign.center,
+            style: context.textStyles.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              height: 1.45,
+            ),
           ),
         ),
       ],

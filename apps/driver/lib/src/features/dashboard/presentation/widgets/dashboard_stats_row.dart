@@ -1,8 +1,8 @@
-import 'package:material_ui/material_ui.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:skeletonizer/skeletonizer.dart';
-import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:foundation/foundation.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class DashboardStatsRow extends StatelessWidget {
   const DashboardStatsRow({
@@ -49,7 +49,7 @@ class DashboardStatsRow extends StatelessWidget {
                   icon: LucideIcons.wallet,
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: _buildStatCard(
                   context,
@@ -69,6 +69,7 @@ class DashboardStatsRow extends StatelessWidget {
   }
 
   Widget _buildErrorState(BuildContext context) {
+    final colorScheme = context.colorScheme;
     return Padding(
       padding: const EdgeInsets.only(
         left: AppLayout.pagePadding,
@@ -77,26 +78,41 @@ class DashboardStatsRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            LucideIcons.circle_alert,
-            size: 16,
-            color: context.colorScheme.onSurfaceVariant,
+          ExcludeSemantics(
+            child: Icon(
+              LucideIcons.circle_alert,
+              size: 15,
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: AppSpacing.xs + 2),
           Expanded(
             child: Text(
               hasExistingStats
                   ? 'Showing last loaded stats.'
                   : (errorMessage ?? "Today's stats are unavailable."),
               style: context.textStyles.bodySmall?.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ),
           TextButton.icon(
             key: const ValueKey<String>('driver-dashboard-stats-retry'),
             onPressed: onRetry,
-            icon: const Icon(LucideIcons.refresh_cw, size: 16),
+            style:
+                TextButton.styleFrom(
+                  foregroundColor: colorScheme.onSurface,
+                  enableFeedback: false,
+                  splashFactory: NoSplash.splashFactory,
+                ).copyWith(
+                  overlayColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.focused)) {
+                      return colorScheme.primary.withValues(alpha: 0.12);
+                    }
+                    return Colors.transparent;
+                  }),
+                ),
+            icon: const Icon(LucideIcons.refresh_cw, size: 15),
             label: const Text('Retry'),
           ),
         ],
@@ -110,18 +126,19 @@ class DashboardStatsRow extends StatelessWidget {
     required String value,
     required IconData icon,
   }) {
+    final colorScheme = context.colorScheme;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: context.colorScheme.surface,
+        color: colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colorScheme.outlineVariant),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
@@ -129,37 +146,40 @@ class DashboardStatsRow extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: context.textStyles.labelSmall?.copyWith(
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.3,
                     fontWeight: FontWeight.w600,
-                    color: context.colorScheme.onSurfaceVariant,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: context.colorScheme.surfaceContainerHighest,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  size: 14,
-                  color: context.colorScheme.onSurfaceVariant,
+              ExcludeSemantics(
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: colorScheme.outlineVariant),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    icon,
+                    size: 13,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.md),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: context.textStyles.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: context.colorScheme.onSurface,
+            style: context.textStyles.headlineSmall?.tabular.copyWith(
+              fontWeight: FontWeight.w700,
+              color: colorScheme.onSurface,
               letterSpacing: -0.5,
-              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],
@@ -179,16 +199,14 @@ class DashboardStatsRow extends StatelessWidget {
                 context,
                 labelWidth: 94,
                 valueWidth: 76,
-                icon: LucideIcons.wallet,
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: _buildInitialSkeletonCard(
                 context,
                 labelWidth: 64,
                 valueWidth: 32,
-                icon: LucideIcons.car,
               ),
             ),
           ],
@@ -201,15 +219,15 @@ class DashboardStatsRow extends StatelessWidget {
     BuildContext context, {
     required double labelWidth,
     required double valueWidth,
-    required IconData icon,
   }) {
+    final colorScheme = context.colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: context.colorScheme.surface,
+        color: colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colorScheme.outlineVariant),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,11 +235,12 @@ class DashboardStatsRow extends StatelessWidget {
           Row(
             children: [
               Expanded(child: Bone.text(width: labelWidth, fontSize: 11)),
-              Bone.icon(size: 20),
+              const SizedBox(width: AppSpacing.xs),
+              const Bone.circle(size: 28),
             ],
           ),
-          const SizedBox(height: 12),
-          Bone.text(width: valueWidth, fontSize: 24),
+          const SizedBox(height: AppSpacing.md),
+          Bone.text(width: valueWidth, fontSize: 22),
         ],
       ),
     );
