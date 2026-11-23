@@ -129,6 +129,11 @@ void main() {
     await tester.scrollUntilVisible(find.text('Rating breakdown'), 200);
     await tester.pumpAndSettle();
     expect(find.text('5 star'), findsNothing);
+    final ratingToggle = tester.widget<InkWell>(
+      find.byKey(const ValueKey<String>('driver-performance-rating-toggle')),
+    );
+    expect(ratingToggle.enableFeedback, isFalse);
+    expect(ratingToggle.splashFactory, NoSplash.splashFactory);
     await tester.tap(find.text('Rating breakdown'));
     await tester.pumpAndSettle();
     expect(find.text('5 star'), findsOneWidget);
