@@ -362,6 +362,47 @@ void main() {
       expect(firstRod.label.text, '-₱50.00');
     },
   );
+
+  testWidgets(
+    'gliding period indicator updates and disables platform splashes',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: BlocProvider(
+            create: (_) => EarningsCubit(
+              repository: _FakeEarningsRepository(),
+              sessionService: sessionService,
+            )..load(),
+            child: const EarningsPage(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final dayTab = tester.widget<InkWell>(
+        find.byKey(const ValueKey<String>('driver-earnings-period-daily')),
+      );
+      expect(dayTab.enableFeedback, isFalse);
+      expect(dayTab.splashFactory, NoSplash.splashFactory);
+
+      final initialAlign = tester.widget<AnimatedAlign>(
+        find.byKey(const ValueKey<String>('driver-earnings-period-indicator')),
+      );
+      expect(initialAlign.alignment, const Alignment(0, 0));
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('driver-earnings-period-monthly')),
+      );
+      await tester.pumpAndSettle();
+
+      final monthlyAlign = tester.widget<AnimatedAlign>(
+        find.byKey(const ValueKey<String>('driver-earnings-period-indicator')),
+      );
+      expect(monthlyAlign.alignment, const Alignment(1, 0));
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 class _FakeNegativeEarningsRepository implements EarningsRepository {

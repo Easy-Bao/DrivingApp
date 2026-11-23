@@ -1,10 +1,12 @@
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/earnings/domain/entities/earnings_summary.dart';
 import 'package:driver/src/features/earnings/presentation/bloc/earnings_cubit.dart';
+import 'package:driver/src/features/earnings/presentation/widgets/earnings_period_bar.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class EarningsPage extends StatefulWidget {
@@ -46,40 +48,52 @@ class _EarningsPageState extends State<EarningsPage> {
     final state = context.watch<EarningsCubit>().state;
     final summary = state.data?.summaryFor(_selectedPeriod);
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: context.canvasColor,
-        title: const Text('Earnings'),
-      ),
       body: SafeArea(
-        top: false,
         child: summary == null && state.errorMessage != null
             ? _buildErrorState(state.errorMessage!)
             : RefreshIndicator(
+                color: context.colorScheme.onSurface,
                 onRefresh: context.read<EarningsCubit>().load,
                 child: LayoutBuilder(
-                  builder: (context, constraints) => ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: constraints.maxWidth < 360
-                          ? AppSpacing.md
-                          : AppSpacing.lg,
-                      vertical: AppSpacing.md,
-                    ),
-                    children: [
-                      Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 720),
-                          child: summary == null
-                              ? _buildLoadingState()
-                              : _buildContent(
-                                  summary,
-                                  errorMessage: state.errorMessage,
-                                ),
-                        ),
+                  builder: (context, constraints) {
+                    final horizontalPadding = constraints.maxWidth < 360
+                        ? AppSpacing.lg
+                        : AppLayout.pagePaddingWide;
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: ClampingScrollPhysics(),
                       ),
-                    ],
-                  ),
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding,
+                        AppSpacing.sm,
+                        horizontalPadding,
+                        AppSpacing.xxxl,
+                      ),
+                      children: [
+                        Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: AppLayout.pageMaxWidth,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const AppPageHeader(title: 'Earnings'),
+                                const SizedBox(height: AppSpacing.xl),
+                                if (summary == null)
+                                  _buildLoadingState()
+                                else
+                                  _buildContent(
+                                    summary,
+                                    errorMessage: state.errorMessage,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
       ),
@@ -114,15 +128,26 @@ class _EarningsPageState extends State<EarningsPage> {
   }) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      if (errorMessage != null)
+      if (errorMessage != null) ...[
         AppErrorBanner(
           message: errorMessage,
           onRetry: context.read<EarningsCubit>().load,
           onDismiss: context.read<EarningsCubit>().dismissError,
         ),
+        const SizedBox(height: AppSpacing.lg),
+      ],
       _buildSummary(summary),
-      const SizedBox(height: AppSpacing.lg),
-      _buildPeriodTabs(),
+      const SizedBox(height: AppSpacing.xl),
+      EarningsPeriodBar(
+        selectedPeriod: _selectedPeriod,
+        onSelected: (period) {
+          if (period == _selectedPeriod) return;
+          setState(() {
+            _selectedPeriod = period;
+            _showAll = false;
+          });
+        },
+      ),
       const SizedBox(height: AppSpacing.xl),
       Semantics(
         label:
@@ -136,16 +161,17 @@ class _EarningsPageState extends State<EarningsPage> {
                   _barChartData(constraints.maxWidth, summary.days),
                   duration: isLoading || MediaQuery.disableAnimationsOf(context)
                       ? Duration.zero
-                      : const Duration(milliseconds: 200),
+                      : const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
                 ),
               ),
             ),
           ),
         ),
       ),
-      const SizedBox(height: AppSpacing.lg),
+      const SizedBox(height: AppSpacing.xl),
       _buildStats(summary),
-      const SizedBox(height: AppSpacing.lg),
+      const SizedBox(height: AppSpacing.xxl),
       _buildRecent(summary),
     ],
   );
@@ -156,89 +182,100 @@ class _EarningsPageState extends State<EarningsPage> {
     onRetry: context.read<EarningsCubit>().load,
   );
 
-  Widget _buildSummary(EarningsPeriodSummary summary) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        _periodCaption(summary),
-        style: context.textStyles.bodySmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
-      ),
-      const SizedBox(height: AppSpacing.sm),
-      FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.centerLeft,
-        child: Text(
-          formatPesoAmount(summary.total),
-          style: context.textStyles.displayMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            letterSpacing: -1.5,
-            color: summary.total < 0
-                ? context.colorScheme.error
-                : context.colorScheme.onSurface,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
-        ),
-      ),
-      const SizedBox(height: AppSpacing.xs),
-      Text(
-        'From ${_rideCount(summary.tripsCount)}',
-        style: context.textStyles.bodySmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
-      ),
-      if (summary.total < 0) ...[
-        const SizedBox(height: AppSpacing.sm),
-        Text(
-          'Adjustment',
-          style: context.textStyles.labelMedium?.copyWith(
-            color: context.colorScheme.error,
-          ),
-        ),
-        const Text('Fee deductions or dispute adjustments applied'),
-      ],
-    ],
-  );
+  Widget _buildSummary(EarningsPeriodSummary summary) {
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
 
-  Widget _buildPeriodTabs() => Container(
-    padding: const EdgeInsets.all(AppSpacing.xs),
-    decoration: BoxDecoration(
-      color: context.colorScheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-    ),
-    child: Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final (index, label) in ['Day', 'Week', 'Month'].indexed)
-          Expanded(
-            child: Semantics(
-              selected: _selectedPeriod.index == index,
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  minimumSize: const Size(48, 48),
-                  backgroundColor: _selectedPeriod.index == index
-                      ? context.colorScheme.surface
-                      : Colors.transparent,
-                  foregroundColor: _selectedPeriod.index == index
-                      ? context.colorScheme.onSurface
-                      : context.colorScheme.onSurfaceVariant,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
-                ),
-                onPressed: () => setState(() {
-                  _selectedPeriod = EarningsPeriod.values[index];
-                  _showAll = false;
-                }),
-                child: Text(label),
-              ),
+        Text(
+          _periodCaption(summary),
+          style: textStyles.bodySmall?.tabular.copyWith(
+            color: colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs + 2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            formatPesoAmount(summary.total),
+            style: textStyles.displayLarge?.tabular.copyWith(
+              fontSize: 36,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -1.2,
+              color: summary.total < 0
+                  ? colorScheme.error
+                  : colorScheme.onSurface,
             ),
           ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'From ${_rideCount(summary.tripsCount)}',
+          style: textStyles.bodySmall?.tabular.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+        if (summary.total < 0) ...[
+          const SizedBox(height: AppSpacing.md),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(
+                color: colorScheme.error.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: ExcludeSemantics(
+                    child: Icon(
+                      LucideIcons.circle_alert,
+                      size: 16,
+                      color: colorScheme.error,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm + 2),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Adjustment',
+                        style: textStyles.labelMedium?.copyWith(
+                          color: colorScheme.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Fee deductions or dispute adjustments applied',
+                        style: textStyles.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
-    ),
-  );
+    );
+  }
 
   Widget _buildStats(EarningsPeriodSummary summary) {
+    final colorScheme = context.colorScheme;
+    final hairlineColor = colorScheme.outlineVariant.withValues(alpha: 0.7);
     final active = summary.days.where((day) => day.tripsCount > 0).length;
     final stats = [
       ('Trips', '${summary.tripsCount}'),
@@ -255,159 +292,261 @@ class _EarningsPageState extends State<EarningsPage> {
         '$active of ${summary.days.length}',
       ),
     ];
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
       decoration: BoxDecoration(
-        border: Border.symmetric(
-          horizontal: BorderSide(color: context.colorScheme.outlineVariant),
-        ),
+        border: Border.symmetric(horizontal: BorderSide(color: hairlineColor)),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final stacked =
               constraints.maxWidth < 300 ||
               MediaQuery.textScalerOf(context).scale(14) > 20;
-          final children = [
+          final items = [
             for (final (label, value) in stats)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: context.textStyles.bodySmall?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      value,
-                      style: context.textStyles.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    value,
+                    style: context.textStyles.titleMedium?.tabular.copyWith(
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.2,
+                      color: colorScheme.onSurface,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
           ];
-          return stacked
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: children,
-                )
-              : Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final child in children) Expanded(child: child),
-                  ],
-                );
+
+          if (stacked) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var index = 0; index < items.length; index++) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xs,
+                    ),
+                    child: items[index],
+                  ),
+                  if (index != items.length - 1)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.sm,
+                      ),
+                      child: Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: hairlineColor,
+                      ),
+                    ),
+                ],
+              ],
+            );
+          }
+
+          return IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var index = 0; index < items.length; index++) ...[
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        left: index == 0 ? 0 : AppSpacing.md,
+                        right: index == items.length - 1 ? 0 : AppSpacing.md,
+                      ),
+                      child: items[index],
+                    ),
+                  ),
+                  if (index != items.length - 1)
+                    VerticalDivider(
+                      width: 1,
+                      thickness: 1,
+                      color: hairlineColor,
+                    ),
+                ],
+              ],
+            ),
+          );
         },
       ),
     );
   }
 
   Widget _buildRecent(EarningsPeriodSummary summary) {
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
     final recent = summary.days
         .where((day) => day.tripsCount > 0 || day.amount != 0)
         .toList()
         .reversed
         .toList();
+    final visible = _showAll ? recent : recent.take(3).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
             Expanded(
-              child: Text(
-                'Recent',
-                style: context.textStyles.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
+              child: Semantics(
+                header: true,
+                child: Text(
+                  'Recent',
+                  style: textStyles.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
+                  ),
                 ),
               ),
             ),
             if (recent.length > 3)
               TextButton(
+                key: const ValueKey<String>('driver-earnings-toggle-recent'),
                 onPressed: () => setState(() => _showAll = !_showAll),
+                style:
+                    TextButton.styleFrom(
+                      foregroundColor: colorScheme.onSurface,
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith((states) {
+                        if (states.contains(WidgetState.focused)) {
+                          return colorScheme.primary.withValues(alpha: 0.12);
+                        }
+                        return Colors.transparent;
+                      }),
+                    ),
                 child: Text(_showAll ? 'Show less' : 'See all'),
               ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
-        if (recent.isEmpty)
-          Text(
-            'No completed rides this period.',
-            style: context.textStyles.bodyMedium?.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        for (final day in _showAll ? recent : recent.take(3))
+        const SizedBox(height: AppSpacing.sm),
+        if (visible.isEmpty)
           Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  backgroundColor: context.colorScheme.surfaceContainerHighest,
-                  foregroundColor: context.colorScheme.onSurface,
-                  child: ExcludeSemantics(
-                    child: Icon(
-                      day.amount < 0
-                          ? Icons.remove_rounded
-                          : Icons.check_rounded,
-                      size: 20,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final amount = Text(
-                        '${day.amount > 0 ? '+' : ''}${formatPesoAmount(day.amount)}',
-                        style: context.textStyles.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      );
-                      final details = Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            day.startDate == null
-                                ? day.day
-                                : '${_selectedPeriod == EarningsPeriod.monthly ? 'Week of ' : ''}${_dateLabel(day.startDate!)}',
-                            style: context.textStyles.titleSmall,
-                          ),
-                          if (day.tripsCount > 0)
-                            Text(
-                              _rideCount(day.tripsCount),
-                              style: context.textStyles.bodySmall?.copyWith(
-                                color: context.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                        ],
-                      );
-                      if (MediaQuery.textScalerOf(context).scale(14) > 20 ||
-                          constraints.maxWidth < 220) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [details, amount],
-                        );
-                      }
-                      return Row(
-                        children: [
-                          Expanded(child: details),
-                          const SizedBox(width: AppSpacing.sm),
-                          amount,
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Text(
+              'No completed rides this period.',
+              style: textStyles.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
+        for (var index = 0; index < visible.length; index++) ...[
+          _buildRecentRow(visible[index]),
+          if (index != visible.length - 1)
+            Divider(
+              height: 1,
+              thickness: 1,
+              indent: 52,
+              color: colorScheme.outlineVariant.withValues(alpha: 0.65),
+            ),
+        ],
       ],
+    );
+  }
+
+  Widget _buildRecentRow(EarnDayBucket day) {
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
+    final isNegative = day.amount < 0;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          ExcludeSemantics(
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isNegative
+                      ? colorScheme.error.withValues(alpha: 0.35)
+                      : colorScheme.outlineVariant,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                isNegative ? LucideIcons.minus : LucideIcons.arrow_up_right,
+                size: 16,
+                color: isNegative ? colorScheme.error : colorScheme.onSurface,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final amount = Text(
+                  '${day.amount > 0 ? '+' : ''}${formatPesoAmount(day.amount)}',
+                  style: textStyles.titleSmall?.tabular.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: isNegative
+                        ? colorScheme.error
+                        : colorScheme.onSurface,
+                  ),
+                );
+                final details = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      day.startDate == null
+                          ? day.day
+                          : '${_selectedPeriod == EarningsPeriod.monthly ? 'Week of ' : ''}${_dateLabel(day.startDate!)}',
+                      style: textStyles.titleSmall?.copyWith(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    if (day.tripsCount > 0) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        _rideCount(day.tripsCount),
+                        style: textStyles.bodySmall?.tabular.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+                if (MediaQuery.textScalerOf(context).scale(14) > 20 ||
+                    constraints.maxWidth < 220) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      details,
+                      const SizedBox(height: AppSpacing.xs),
+                      amount,
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: details),
+                    const SizedBox(width: AppSpacing.sm),
+                    amount,
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -415,6 +554,7 @@ class _EarningsPageState extends State<EarningsPage> {
     double availableWidth,
     List<EarnDayBucket> dailyData,
   ) {
+    final colorScheme = context.colorScheme;
     final chartDays = dailyData.isEmpty
         ? const [EarnDayBucket(day: '—', amount: 0)]
         : dailyData;
@@ -426,7 +566,7 @@ class _EarningsPageState extends State<EarningsPage> {
     final maxY = maxAmount > 0 ? maxAmount * 1.25 : 1.0;
     final placeholderHeight = maxAmount > 0 ? maxAmount * 0.025 : 0.025;
     final barWidth = (availableWidth / (chartDays.length * 2.2))
-        .clamp(14.0, 34.0)
+        .clamp(14.0, 32.0)
         .toDouble();
 
     return BarChartData(
@@ -434,16 +574,15 @@ class _EarningsPageState extends State<EarningsPage> {
       maxY: maxY,
       alignment: BarChartAlignment.spaceEvenly,
       groupsSpace: 8,
-      backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
+      backgroundColor: colorScheme.surface.withValues(alpha: 0),
       borderData: FlBorderData(show: false),
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
         horizontalInterval: maxY / 4,
         getDrawingHorizontalLine: (value) => FlLine(
-          color: context.colorScheme.outlineVariant.withValues(alpha: 0.6),
-          strokeWidth: 1,
-          dashArray: [3, 5],
+          color: colorScheme.outlineVariant.withValues(alpha: 0.45),
+          strokeWidth: 0.75,
         ),
       ),
       titlesData: FlTitlesData(
@@ -455,7 +594,7 @@ class _EarningsPageState extends State<EarningsPage> {
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            reservedSize: 24,
+            reservedSize: 26,
             getTitlesWidget: (value, meta) {
               final index = value.round();
               if (index < 0 || index >= chartDays.length) {
@@ -464,18 +603,18 @@ class _EarningsPageState extends State<EarningsPage> {
               final day = chartDays[index];
               return SideTitleWidget(
                 meta: meta,
-                space: 5,
+                space: 6,
                 child: Text(
                   day.day,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: context.textStyles.labelSmall?.copyWith(
                     fontWeight: day.isCurrent
-                        ? FontWeight.w800
-                        : FontWeight.w600,
+                        ? FontWeight.w700
+                        : FontWeight.w500,
                     color: day.isCurrent
-                        ? context.colorScheme.onSurface
-                        : context.colorScheme.onSurfaceVariant,
+                        ? colorScheme.onSurface
+                        : colorScheme.onSurfaceVariant,
                   ),
                 ),
               );
@@ -504,6 +643,7 @@ class _EarningsPageState extends State<EarningsPage> {
     double placeholderHeight,
     double barWidth,
   ) {
+    final colorScheme = context.colorScheme;
     final isNegative = day.amount < 0;
     final amount = day.amount.isFinite && !isNegative ? day.amount : 0.0;
     final barValue = isNegative
@@ -511,18 +651,18 @@ class _EarningsPageState extends State<EarningsPage> {
         : (amount > 0 ? amount : placeholderHeight);
     final rodColor = isNegative
         ? (day.isCurrent
-              ? context.colorScheme.error
-              : context.colorScheme.error.withValues(alpha: 0.5))
-        : (day.isCurrent
-              ? context.colorScheme.primary
-              : (day.amount == 0
-                    ? context.colorScheme.outlineVariant
-                    : context.colorScheme.primary));
+              ? colorScheme.error
+              : colorScheme.error.withValues(alpha: 0.55))
+        : (day.amount == 0
+              ? colorScheme.outlineVariant.withValues(alpha: 0.6)
+              : (day.isCurrent
+                    ? colorScheme.primary
+                    : colorScheme.primary.withValues(alpha: 0.72)));
     final labelColor = isNegative
-        ? context.colorScheme.error
+        ? colorScheme.error
         : (day.isCurrent
-              ? context.colorScheme.primary
-              : context.colorScheme.onSurfaceVariant);
+              ? colorScheme.onSurface
+              : colorScheme.onSurfaceVariant);
 
     return BarChartGroupData(
       x: index,
@@ -531,22 +671,21 @@ class _EarningsPageState extends State<EarningsPage> {
           toY: barValue,
           width: barWidth,
           color: rodColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(5)),
           label: BarChartRodLabel(
             show: day.amount != 0,
             text: formatPesoAmount(day.amount),
-            style: context.textStyles.labelSmall?.copyWith(
+            style: context.textStyles.labelSmall?.tabular.copyWith(
               color: labelColor,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               fontSize: 10,
-              fontFeatures: const [FontFeature.tabularFigures()],
             ),
             offset: const Offset(0, 6),
           ),
           backDrawRodData: BackgroundBarChartRodData(
             show: false,
             toY: maxAmount,
-            color: context.colorScheme.onSurface.withValues(alpha: 0.05),
+            color: colorScheme.onSurface.withValues(alpha: 0.05),
           ),
         ),
       ],
