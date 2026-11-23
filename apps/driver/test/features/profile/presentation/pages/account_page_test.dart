@@ -89,14 +89,14 @@ void main() {
     expect(find.byType(AppBar), findsNothing);
     expect(find.text('Account'), findsOneWidget);
     expect(find.text('Personal details'), findsOneWidget);
-    expect(find.text('Driver details'), findsOneWidget);
+    expect(find.text('DRIVER DETAILS'), findsOneWidget);
     expect(find.textContaining('Motorcycle'), findsOneWidget);
     expect(find.textContaining('XYZ-123'), findsOneWidget);
     expect(find.text('Ratings, trips, and earnings'), findsOneWidget);
     expect(find.text('Performance'), findsOneWidget);
     expect(find.text('Documents'), findsNothing);
     expect(find.text('Manage your verification documents'), findsNothing);
-    expect(find.text('App settings'), findsOneWidget);
+    expect(find.text('APP SETTINGS'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Location, support, and app details'), findsOneWidget);
     expect(find.text('Help Center'), findsNothing);
@@ -110,6 +110,50 @@ void main() {
     expect(find.byTooltip('Refresh account'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'disables platform touch splashes and stays readable at 2x scale',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!,
+          ),
+          home: BlocProvider(
+            create: (_) => AccountCubit(repository: repository)..load(),
+            child: const AccountPage(onLogout: _noopLogout),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final summaryInkWell = tester.widget<InkWell>(
+        find.byKey(const ValueKey<String>('driver-profile-summary')),
+      );
+      expect(summaryInkWell.enableFeedback, isFalse);
+      expect(summaryInkWell.splashFactory, NoSplash.splashFactory);
+
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey<String>('driver-account-logout')),
+        200,
+      );
+      final logoutButton = tester.widget<OutlinedButton>(
+        find.descendant(
+          of: find.byKey(const ValueKey<String>('driver-account-logout')),
+          matching: find.byType(OutlinedButton),
+        ),
+      );
+      expect(logoutButton.style?.enableFeedback, isFalse);
+      expect(logoutButton.style?.splashFactory, NoSplash.splashFactory);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('uses the fixed default account surface contract', (
     tester,

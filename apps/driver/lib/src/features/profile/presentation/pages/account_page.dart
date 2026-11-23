@@ -38,31 +38,29 @@ class _AccountPageState extends State<AccountPage> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final horizontalPadding = constraints.maxWidth < 360
-                      ? 20.0
+                      ? AppLayout.pagePadding
                       : AppLayout.pagePaddingWide;
                   return SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
+                    key: const ValueKey<String>('driver-account-scroll'),
+                    physics: const ClampingScrollPhysics(),
                     padding: EdgeInsets.fromLTRB(
                       horizontalPadding,
-                      AppLayout.pagePadding,
+                      AppSpacing.sm,
                       horizontalPadding,
-                      AppSpacing.lg,
+                      AppSpacing.xxxl,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const AppPageHeader(
-                          title: 'Account',
-                          useLargeTitle: false,
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
+                        const AppPageHeader(title: 'Account'),
+                        const SizedBox(height: AppSpacing.xxl),
                         _buildProfileSummary(context, state.account),
                         if (state.isLoading) ...[
-                          const SizedBox(height: 20),
-                          const LinearProgressIndicator(),
+                          const SizedBox(height: AppSpacing.md),
+                          const LinearProgressIndicator(minHeight: 2),
                         ],
                         if (state.errorMessage != null) ...[
-                          const SizedBox(height: 20),
+                          const SizedBox(height: AppSpacing.lg),
                           AppErrorBanner(
                             message: state.errorMessage!,
                             onRetry: () => unawaited(
@@ -73,7 +71,15 @@ class _AccountPageState extends State<AccountPage> {
                                     .dismissError(),
                           ),
                         ],
-                        const SizedBox(height: AppSpacing.lg),
+                        const SizedBox(height: AppSpacing.xxl),
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: context.colorScheme.outlineVariant.withValues(
+                            alpha: 0.7,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xxl),
                         AppSettingsSection(
                           label: 'Driver details',
                           children: [
@@ -89,7 +95,7 @@ class _AccountPageState extends State<AccountPage> {
                               ),
                             ),
                             AppSettingsNavigationTile(
-                              icon: LucideIcons.wallet_cards,
+                              icon: LucideIcons.trending_up,
                               title: 'Performance',
                               subtitle: 'Ratings, trips, and earnings',
                               onTap: () => context.pushNamed(
@@ -98,7 +104,7 @@ class _AccountPageState extends State<AccountPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: AppSpacing.lg),
+                        const SizedBox(height: AppSpacing.xxl),
                         AppSettingsSection(
                           label: 'App settings',
                           children: [
@@ -111,7 +117,7 @@ class _AccountPageState extends State<AccountPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: AppSpacing.lg),
+                        const SizedBox(height: AppSpacing.xxxl),
                         _buildLogoutButton(context),
                       ],
                     ),
@@ -127,51 +133,69 @@ class _AccountPageState extends State<AccountPage> {
 
   Widget _buildProfileSummary(BuildContext context, AccountSnapshot account) {
     final displayName = account.name.isEmpty ? 'Driver' : account.name;
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
 
-    return Material(
-      color: Colors.transparent,
+    return Semantics(
+      button: true,
+      label: '$displayName. View personal details',
       child: InkWell(
         key: const ValueKey<String>('driver-profile-summary'),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        enableFeedback: false,
+        splashFactory: NoSplash.splashFactory,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        overlayColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.focused)) {
+            return colorScheme.primary.withValues(alpha: 0.12);
+          }
+          return Colors.transparent;
+        }),
         onTap: () => unawaited(
           _openEditableDestination(context, ProfileRoutes.personalDetails),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
           child: Row(
             children: [
-              Container(
-                key: const ValueKey<String>('driver-profile-avatar'),
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: context.colorScheme.primary,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  _getInitials(displayName),
-                  style: context.textStyles.titleLarge?.copyWith(
-                    color: context.colorScheme.onPrimary,
-                    fontWeight: FontWeight.w800,
+              ExcludeSemantics(
+                child: Container(
+                  key: const ValueKey<String>('driver-profile-avatar'),
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerLowest,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: colorScheme.outlineVariant),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    _getInitials(displayName),
+                    style: textStyles.titleLarge?.copyWith(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       displayName,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: context.textStyles.titleMedium?.copyWith(
+                      style: textStyles.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: context.colorScheme.onSurface,
+                        letterSpacing: -0.3,
+                        color: colorScheme.onSurface,
                       ),
                     ),
-
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       account.phone.isEmpty
@@ -179,23 +203,28 @@ class _AccountPageState extends State<AccountPage> {
                           : account.phone,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
+                      style: textStyles.bodyMedium?.tabular.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     Text(
                       'Personal details',
-                      style: Theme.of(context).textTheme.bodySmall
-                          ?.copyWith(color: context.colorScheme.primary),
+                      style: textStyles.labelMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Icon(
-                LucideIcons.chevron_right,
-                size: 21,
-                color: context.colorScheme.onSurfaceVariant,
+              const SizedBox(width: AppSpacing.sm),
+              ExcludeSemantics(
+                child: Icon(
+                  LucideIcons.chevron_right,
+                  size: 17,
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -225,33 +254,49 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Widget _buildLogoutButton(BuildContext context) {
-    return SizedBox(
-      key: const ValueKey<String>('driver-account-logout'),
-      height: 48,
-      width: double.infinity,
-      child: OutlinedButton(
-        onPressed: _isLoggingOut ? null : () => _handleLogout(context),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: context.colorScheme.error,
-          side: BorderSide(
-            color: context.colorScheme.error.withValues(alpha: 0.35),
-          ),
-          backgroundColor: context.colorScheme.error.withValues(alpha: 0.04),
+    final colorScheme = context.colorScheme;
+    final buttonStyle =
+        OutlinedButton.styleFrom(
+          foregroundColor: colorScheme.error,
+          backgroundColor: Colors.transparent,
+          side: BorderSide(color: colorScheme.outlineVariant),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
-        ),
-        child: _isLoggingOut
-            ? SizedBox(
-                width: 22,
-                height: 22,
+          enableFeedback: false,
+          splashFactory: NoSplash.splashFactory,
+        ).copyWith(
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) {
+              return colorScheme.error.withValues(alpha: 0.12);
+            }
+            return Colors.transparent;
+          }),
+        );
+
+    return SizedBox(
+      key: const ValueKey<String>('driver-account-logout'),
+      height: AppSize.controlHeight,
+      width: double.infinity,
+      child: _isLoggingOut
+          ? OutlinedButton(
+              onPressed: null,
+              style: buttonStyle,
+              child: SizedBox(
+                width: 20,
+                height: 20,
                 child: CircularProgressIndicator(
-                  strokeWidth: 2.4,
-                  color: context.colorScheme.error,
+                  strokeWidth: 2,
+                  color: colorScheme.error,
                 ),
-              )
-            : const Text('Log out'),
-      ),
+              ),
+            )
+          : OutlinedButton.icon(
+              onPressed: () => _handleLogout(context),
+              style: buttonStyle,
+              icon: const Icon(LucideIcons.log_out, size: 17),
+              label: const Text('Log out'),
+            ),
     );
   }
 
