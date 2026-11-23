@@ -363,7 +363,14 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     final totalFare = fare + _selectedTipAmount;
 
     final bookingBloc = BlocProvider.of<BookingBloc>(context);
-    if (bookingBloc.hasActiveBooking || bookingBloc.hasActiveDriverSearch) {
+    if (bookingBloc.state.isBlockingBooking ||
+        bookingBloc.hasActiveBooking ||
+        bookingBloc.hasActiveDriverSearch) {
+      AppSnackBar.show(
+        context,
+        'You already have a booking request in progress.',
+        isError: true,
+      );
       return;
     }
 

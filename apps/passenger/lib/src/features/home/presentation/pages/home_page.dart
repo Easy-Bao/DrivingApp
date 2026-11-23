@@ -341,21 +341,27 @@ class _HomePageState extends State<HomePage> {
       (bloc) => bloc.state.isAuthenticated,
     );
 
-    return BlocBuilder<BookingDraftCubit, BookingDraftState>(
-      buildWhen: (previous, current) => previous.draft != current.draft,
-      builder: (context, state) {
-        final draft = state.draft;
-        if (draft == null) return const SizedBox.shrink();
+    return BlocBuilder<BookingBloc, BookingState>(
+      bloc: _bookingBloc,
+      builder: (context, _) {
+        if (_hasBlockingBooking()) return const SizedBox.shrink();
+        return BlocBuilder<BookingDraftCubit, BookingDraftState>(
+          buildWhen: (previous, current) => previous.draft != current.draft,
+          builder: (context, state) {
+            final draft = state.draft;
+            if (draft == null) return const SizedBox.shrink();
 
-        return Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: PendingBookingBanner(
-            isAuthenticated: isAuthenticated,
-            destinationName: draft.destination.name,
-            onContinue: () => unawaited(_continuePendingBooking(draft)),
-            onDismiss: () =>
-                BlocProvider.of<BookingDraftCubit>(context).clear(),
-          ),
+            return Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: PendingBookingBanner(
+                isAuthenticated: isAuthenticated,
+                destinationName: draft.destination.name,
+                onContinue: () => unawaited(_continuePendingBooking(draft)),
+                onDismiss: () =>
+                    BlocProvider.of<BookingDraftCubit>(context).clear(),
+              ),
+            );
+          },
         );
       },
     );
@@ -545,6 +551,10 @@ class _HomePageState extends State<HomePage> {
         ) !=
         null;
   }
+
+  bool _hasBlockingBooking() =>
+      _bookingBloc.state.isBlockingBooking ||
+      _bookingBloc.hasActiveDriverSearch;
 
   void _resumeActiveRide() => unawaited(_resumeActiveRideById());
 
@@ -755,31 +765,194 @@ class _HomePageState extends State<HomePage> {
       }
       return false;
     }
-    final activeSearch = _bookingBloc.activeDriverSearch;
-    if (activeSearch != null) {
+    if (_hasBlockingBooking()) {
       _isNavigationInFlight = true;
       try {
-        final trip = activeSearch.trip;
-        if (!mounted) return false;
-        await context.pushNamed(
-          BookingRoutes.findingDriver,
-          extra: {
-            'fare': trip.fare,
-            'destination': trip.destination,
-            'distance': trip.distance,
-            'duration': trip.duration,
-            'pickupAddress': trip.pickupAddress,
-            'pickupLat': activeSearch.pickupLat,
-            'pickupLng': activeSearch.pickupLng,
-            'passengerNote': trip.passengerNote,
-          },
-        );
+        await _showActiveBookingBlockedDialog();
       } finally {
         _isNavigationInFlight = false;
       }
       return false;
     }
     return mounted;
+  }
+
+  Future<void> _openActiveDriverSearch(ActiveDriverSearch activeSearch) async {
+    if (!mounted) return;
+    final trip = activeSearch.trip;
+    await context.pushNamed(
+      BookingRoutes.findingDriver,
+      extra: {
+        'fare': trip.fare,
+        'destination': trip.destination,
+        'distance': trip.distance,
+        'duration': trip.duration,
+        if (activeSearch.distanceKm != null)
+          'distanceKm': activeSearch.distanceKm,
+        if (activeSearch.durationMinutes != null)
+          'durationMinutes': activeSearch.durationMinutes,
+        'pickupAddress': trip.pickupAddress,
+        'pickupLat': activeSearch.pickupLat,
+        'pickupLng': activeSearch.pickupLng,
+        'passengerNote': trip.passengerNote,
+      },
+    );
+  }
+
+  Future<void> _showActiveBookingBlockedDialog() async {
+    final bookingState = _bookingBloc.state;
+    final activeSearch = _bookingBloc.activeDriverSearch;
+    final isMatchedOrRecovered =
+        bookingState is BookingDriverMatched ||
+        bookingState is BookingRideRecovered;
+    final isRecoveryFailure = bookingState is BookingSessionRecoveryFailure;
+    final isRecovering = bookingState is BookingSessionRecoveryInProgress;
+
+    final String title;
+    final String content;
+    final IconData icon;
+    final String? primaryLabel;
+    VoidCallback? primaryAction;
+
+    if (isMatchedOrRecovered) {
+      title = 'Driver Accepted Your Trip';
+      content = 'Your driver has already accepted your ride. Please resume or complete your ongoing trip before booking another.';
+      icon = LucideIcons.car;
+      primaryLabel = 'Resume Trip';
+      final String? matchedRideId = switch (bookingState) {
+        BookingDriverMatched(:final rideId) => rideId,
+        BookingRideRecovered(:final rideId) => rideId,
+        _ => null,
+      };
+      primaryAction = () {
+        final trimmed = matchedRideId?.trim() ?? '';
+        if (trimmed.isNotEmpty) {
+          unawaited(
+            context.pushNamed(ActiveRideRoutes.trackDriver, extra: trimmed),
+          );
+        } else {
+          _resumeActiveRide();
+        }
+      };
+    } else if (isRecoveryFailure) {
+      title = 'Booking Request in Progress';
+      content = 'We are still confirming your active ride request. Retry checking its status before booking another.';
+      icon = LucideIcons.circle_alert;
+      primaryLabel = 'Retry';
+      primaryAction = () => _bookingBloc.add(const RestoreActiveBookingEvent());
+    } else if (isRecovering) {
+      title = 'Booking Request in Progress';
+      content = 'We are checking your current ride request. Please wait a moment before booking another.';
+      icon = LucideIcons.clock;
+      primaryLabel = activeSearch != null ? 'View Request' : null;
+      primaryAction = activeSearch == null
+          ? null
+          : () => unawaited(_openActiveDriverSearch(activeSearch));
+    } else {
+      final destinationName = activeSearch?.trip.destination.name.trim() ?? '';
+      title = 'Booking Request in Progress';
+      content = destinationName.isNotEmpty
+          ? 'You already have a ride request to $destinationName waiting for a driver. View or cancel it before booking another.'
+          : 'You already have a ride request waiting for a driver. Please wait for a response or cancel it before booking another.';
+      icon = LucideIcons.clock;
+      primaryLabel = activeSearch != null ? 'View Request' : null;
+      primaryAction = activeSearch == null
+          ? null
+          : () => unawaited(_openActiveDriverSearch(activeSearch));
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final colors = dialogContext.colorScheme;
+        return AlertDialog(
+          backgroundColor: colors.surfaceContainerLowest,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            side: BorderSide(color: colors.outlineVariant),
+          ),
+          icon: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerLowest,
+              shape: BoxShape.circle,
+              border: Border.all(color: colors.outlineVariant),
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              icon,
+              size: 20,
+              color: isRecoveryFailure ? colors.error : colors.onSurface,
+            ),
+          ),
+          title: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: dialogContext.textStyles.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colors.onSurface,
+            ),
+          ),
+          content: Text(
+            content,
+            textAlign: TextAlign.center,
+            style: dialogContext.textStyles.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+              height: 1.45,
+            ),
+          ),
+          actionsAlignment: MainAxisAlignment.end,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style:
+                  TextButton.styleFrom(
+                    foregroundColor: colors.onSurfaceVariant,
+                    enableFeedback: false,
+                    splashFactory: NoSplash.splashFactory,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ).copyWith(
+                    overlayColor: WidgetStateProperty.resolveWith(
+                      (states) => states.contains(WidgetState.focused)
+                          ? colors.primary.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                    ),
+                  ),
+              child: const Text('Dismiss'),
+            ),
+            if (primaryLabel != null && primaryAction != null)
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  primaryAction?.call();
+                },
+                style:
+                    FilledButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
+                      elevation: 0,
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.focused)
+                            ? colors.onPrimary.withValues(alpha: 0.16)
+                            : Colors.transparent,
+                      ),
+                    ),
+                child: Text(primaryLabel),
+              ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _openDestinationFlow() async {

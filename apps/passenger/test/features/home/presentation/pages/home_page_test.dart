@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/app/navigation/navigation_observer.dart';
@@ -18,6 +19,8 @@ import 'package:passenger/src/features/auth/domain/entities/session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
+import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
+import 'package:passenger/src/features/booking/domain/entities/booking_draft.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/home/domain/entities/current_location.dart';
@@ -951,6 +954,260 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Retry activity'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'blocks destination search and saved places while waiting for a driver',
+    (tester) async {
+      final locationRepository = _MockCurrentLocationRepository();
+      final homeRepository = _MockHomeRepository();
+      final homeCubit = HomeCubit(
+        repository: homeRepository,
+        currentLocationRepository: locationRepository,
+      );
+      final sessionBloc = SessionBloc(
+        sessionRepository: _MockSessionRepository(),
+      );
+      sessionBloc.add(
+        const SessionAuthenticatedRequested(passengerId: 'passenger-1'),
+      );
+      await sessionBloc.stream.first;
+      final locationAccess = _MockLocationAccessCubit();
+      final bookingBloc = _MockBookingBloc();
+      final history = _MockRideHistoryBloc();
+      final savedPlaces = _MockSavedPlacesCubit();
+      final draft = BookingDraftCubit()
+        ..save(
+          const BookingDraft(
+            destination: Place(
+              id: 'draft-1',
+              name: 'Old Draft Place',
+              fullAddress: 'Old Draft Place',
+              latitude: 7.83,
+              longitude: 123.44,
+            ),
+          ),
+        );
+      final lifecycle = AppLifecycleCoordinator();
+
+      const activeSearch = ActiveDriverSearch(
+        trip: BidSessionTrip(
+          fare: 45,
+          destination: Place(
+            id: 'dest-1',
+            name: 'Robinsons Place',
+            fullAddress: 'Robinsons Place',
+            latitude: 7.83,
+            longitude: 123.44,
+          ),
+          distance: '2.4 km',
+          duration: '6 min',
+          pickupAddress: 'Main Plaza',
+        ),
+        pickupLat: 7.82,
+        pickupLng: 123.43,
+        distanceKm: 2.4,
+        durationMinutes: 6,
+      );
+
+      when(locationRepository.getCurrentLocation).thenAnswer(
+        (_) async => const Ok(CurrentLocation(latitude: 7.8, longitude: 123.4)),
+      );
+      when(locationRepository.watchCurrentLocation)
+          .thenAnswer((_) => const Stream.empty());
+      when(
+        () => homeRepository.loadHomeData(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer(
+        (_) async =>
+            const Ok(HomeData(currentAddress: 'Pickup', recentLocations: [])),
+      );
+      when(() => locationAccess.state).thenReturn(const LocationAccessReady());
+      when(() => bookingBloc.state).thenReturn(
+        const BookingOffersReceived(
+          offers: [],
+          isDirect: true,
+          sessionId: 'session-1',
+        ),
+      );
+      when(() => bookingBloc.hasActiveDriverSearch).thenReturn(true);
+      when(() => bookingBloc.activeDriverSearch).thenReturn(activeSearch);
+      when(() => history.state).thenReturn(const RideHistoryInitial());
+      when(() => savedPlaces.state).thenReturn(
+        const SavedPlacesState(
+          isLoading: false,
+          places: [
+            SavedPlace(
+              label: 'Work',
+              iconName: 'briefcase',
+              savedAddress: '100 Silicon Way',
+              latitude: 37.39,
+              longitude: -122.08,
+            ),
+          ],
+        ),
+      );
+      when(savedPlaces.loadPlaces).thenAnswer((_) async {});
+
+      var searchOpened = false;
+      Map<String, dynamic>? findingExtra;
+      final router = GoRouter(
+        initialLocation: '/home',
+        routes: [
+          GoRoute(
+            path: '/home',
+            name: HomeRoutes.home,
+            builder: (_, _) => HomePage(
+              bookingBloc: bookingBloc,
+              lifecycleCoordinator: lifecycle,
+            ),
+          ),
+          GoRoute(
+            path: '/search',
+            name: BookingRoutes.searchDestination,
+            builder: (_, _) {
+              searchOpened = true;
+              return const Scaffold(body: Text('Search Screen'));
+            },
+          ),
+          GoRoute(
+            path: '/finding',
+            name: BookingRoutes.findingDriver,
+            builder: (_, state) {
+              findingExtra = Map<String, dynamic>.from(state.extra! as Map);
+              return const Scaffold(body: Text('Finding Screen'));
+            },
+          ),
+        ],
+      );
+      addTearDown(() async {
+        router.dispose();
+        await homeCubit.close();
+        await sessionBloc.close();
+        await draft.close();
+        await lifecycle.dispose();
+      });
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SessionBloc>.value(value: sessionBloc),
+            BlocProvider<LocationAccessCubit>.value(value: locationAccess),
+            BlocProvider<HomeCubit>.value(value: homeCubit),
+            BlocProvider<BookingDraftCubit>.value(value: draft),
+            BlocProvider<RideHistoryBloc>.value(value: history),
+            BlocProvider<SavedPlacesCubit>.value(value: savedPlaces),
+          ],
+          child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Pending draft banner is hidden while an active booking is waiting.
+      expect(find.text('Continue your booking'), findsNothing);
+
+      // Tapping search blocks new booking and shows dialog instead of Search.
+      await tester.tap(find.text('Search Robinsons'));
+      await tester.pumpAndSettle();
+      expect(searchOpened, isFalse);
+      expect(find.text('Booking Request in Progress'), findsOneWidget);
+      expect(find.textContaining('Robinsons Place'), findsOneWidget);
+
+      await tester.tap(find.text('Dismiss'));
+      await tester.pumpAndSettle();
+
+      // Tapping saved place also blocks new booking and lets user view active request.
+      await tester.tap(find.text('Work'));
+      await tester.pumpAndSettle();
+      expect(find.text('Booking Request in Progress'), findsOneWidget);
+
+      await tester.tap(find.text('View Request'));
+      await tester.pumpAndSettle();
+      expect(find.text('Finding Screen'), findsOneWidget);
+      expect(findingExtra?['distanceKm'], 2.4);
+      expect(findingExtra?['durationMinutes'], 6.0);
+    },
+  );
+
+  testWidgets(
+    'blocks booking even when activeDriverSearch is null during recovery or match',
+    (tester) async {
+      final locationRepository = _MockCurrentLocationRepository();
+      final homeRepository = _MockHomeRepository();
+      final homeCubit = HomeCubit(
+        repository: homeRepository,
+        currentLocationRepository: locationRepository,
+      );
+      final sessionBloc = SessionBloc(
+        sessionRepository: _MockSessionRepository(),
+      );
+      final locationAccess = _MockLocationAccessCubit();
+      final bookingBloc = _MockBookingBloc();
+      final history = _MockRideHistoryBloc();
+      final savedPlaces = _MockSavedPlacesCubit();
+      final draft = BookingDraftCubit();
+      final lifecycle = AppLifecycleCoordinator();
+
+      when(locationRepository.getCurrentLocation).thenAnswer(
+        (_) async => const Ok(CurrentLocation(latitude: 7.8, longitude: 123.4)),
+      );
+      when(locationRepository.watchCurrentLocation)
+          .thenAnswer((_) => const Stream.empty());
+      when(
+        () => homeRepository.loadHomeData(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer(
+        (_) async =>
+            const Ok(HomeData(currentAddress: 'Pickup', recentLocations: [])),
+      );
+      when(() => locationAccess.state).thenReturn(const LocationAccessReady());
+      when(() => bookingBloc.state).thenReturn(
+        const BookingRideRecovered(sessionId: 'session-9', rideId: 'ride-9'),
+      );
+      when(() => bookingBloc.hasActiveDriverSearch).thenReturn(false);
+      when(() => bookingBloc.activeDriverSearch).thenReturn(null);
+      when(() => history.state).thenReturn(const RideHistoryInitial());
+      when(() => savedPlaces.state).thenReturn(const SavedPlacesState());
+      when(savedPlaces.loadPlaces).thenAnswer((_) async {});
+
+      addTearDown(() async {
+        await homeCubit.close();
+        await sessionBloc.close();
+        await draft.close();
+        await lifecycle.dispose();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<SessionBloc>.value(value: sessionBloc),
+              BlocProvider<LocationAccessCubit>.value(value: locationAccess),
+              BlocProvider<HomeCubit>.value(value: homeCubit),
+              BlocProvider<BookingDraftCubit>.value(value: draft),
+              BlocProvider<RideHistoryBloc>.value(value: history),
+              BlocProvider<SavedPlacesCubit>.value(value: savedPlaces),
+            ],
+            child: HomePage(
+              bookingBloc: bookingBloc,
+              lifecycleCoordinator: lifecycle,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Search Robinsons'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Driver Accepted Your Trip'), findsOneWidget);
+      expect(find.text('Resume Trip'), findsOneWidget);
     },
   );
 }

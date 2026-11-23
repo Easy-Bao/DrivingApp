@@ -159,6 +159,128 @@ void main() {
     expect(find.text('Driver search'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'blocks booking and informs passenger when a request is already in progress',
+    (tester) async {
+      const destination = maps.Place(
+        id: 'dropoff',
+        name: 'Charleston Park',
+        fullAddress: 'Charleston Park',
+        latitude: 37.42,
+        longitude: -122.08,
+      );
+      const fare = FareEstimate(
+        baseFare: 20,
+        distanceCharge: 5,
+        timeCharge: 3.6,
+        surgeCharge: 0,
+        totalFare: 28.6,
+      );
+      final booking = _BookingBloc();
+      final session = _SessionBloc();
+      final profile = _ProfileCubit();
+      final fares = _FareRepository();
+      final locations = _LocationRepository();
+      final drafts = BookingDraftCubit();
+      addTearDown(drafts.close);
+      when(() => booking.state).thenReturn(
+        const BookingOffersReceived(
+          offers: [],
+          isDirect: true,
+          sessionId: 'active-1',
+        ),
+      );
+      when(() => booking.hasActiveBooking).thenReturn(true);
+      when(() => booking.hasActiveDriverSearch).thenReturn(true);
+      when(() => session.state)
+          .thenReturn(const AuthenticatedSession(passengerId: '1'));
+      when(() => profile.state).thenReturn(const ProfileState());
+      when(
+        () => profile.loadProfile(refreshRemote: any(named: 'refreshRemote')),
+      ).thenAnswer((_) async {});
+      when(() => locations.getRoute(body: any(named: 'body'))).thenAnswer(
+        (_) async => const maps.Route(
+          polylinePoints: [],
+          distanceKm: 1.234,
+          durationSeconds: 321,
+        ),
+      );
+      when(
+        () => fares.estimateFare(
+          distanceKm: any(named: 'distanceKm'),
+          durationMinutes: any(named: 'durationMinutes'),
+          originLatitude: any(named: 'originLatitude'),
+          originLongitude: any(named: 'originLongitude'),
+          destinationLatitude: any(named: 'destinationLatitude'),
+          destinationLongitude: any(named: 'destinationLongitude'),
+        ),
+      ).thenAnswer((_) async => const Ok(fare));
+      MapboxMapsFlutterPlatform.instance = _MapPlatform();
+      final scope = ModularTestScope.fresh().withInstance(
+        AppLifecycleCoordinator(),
+      );
+      scope.setUp();
+      addTearDown(() async {
+        await scope.get<AppLifecycleCoordinator>().dispose();
+        scope.tearDown();
+      });
+      await maps.MapProvider.initialize(
+        nativeService: maps.MapNativeService(
+          placeServiceBaseUri: Uri.parse('http://test.local'),
+          apiClient: locations,
+        ),
+      );
+      maps.MapProvider.clearLookupCaches();
+
+      var findingOpened = false;
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => MultiBlocProvider(
+              providers: [
+                BlocProvider<BookingBloc>.value(value: booking),
+                BlocProvider<SessionBloc>.value(value: session),
+                BlocProvider<ProfileCubit>.value(value: profile),
+                BlocProvider<BookingDraftCubit>.value(value: drafts),
+              ],
+              child: RideSelectionPage(
+                destination: destination,
+                fareRepository: fares,
+                pickupLatitude: 37.4,
+                pickupLongitude: -122.1,
+                pickupAddress: 'Mountain View',
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/search',
+            name: BookingRoutes.findingDriver,
+            builder: (_, _) {
+              findingOpened = true;
+              return const Scaffold(body: Text('Driver search'));
+            },
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('book-directly-button')));
+      await tester.pumpAndSettle();
+
+      expect(findingOpened, isFalse);
+      expect(
+        find.text('You already have a booking request in progress.'),
+        findsOneWidget,
+      );
+    },
+  );
 }
 
 final class _MapPlatform extends MapboxMapsFlutterPlatform {
