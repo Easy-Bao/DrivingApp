@@ -54,6 +54,9 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
 
   @override
   Widget build(BuildContext context) {
+    final horizontalPadding = MediaQuery.sizeOf(context).width < 360
+        ? AppLayout.pagePadding
+        : AppLayout.pagePaddingWide;
     final presenter = RideHistoryPresenter(
       widget.referenceTime,
       alwaysUse24HourFormat: MediaQuery.of(context).alwaysUse24HourFormat,
@@ -74,11 +77,11 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            AppLayout.pagePadding,
-            8,
-            AppLayout.pagePadding,
-            18,
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            AppSpacing.sm,
+            horizontalPadding,
+            AppSpacing.xl,
           ),
           sliver: SliverToBoxAdapter(
             child: RideHistoryHeader(
@@ -90,12 +93,11 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
             ),
           ),
         ),
-        if (widget.activeRides.isNotEmpty) ..._activeRideSlivers(presenter),
+        if (widget.activeRides.isNotEmpty)
+          ..._activeRideSlivers(presenter, horizontalPadding),
         if (widget.showSummary)
           SliverPadding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppLayout.pagePadding,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
             sliver: SliverToBoxAdapter(
               child: RideHistorySummary(
                 weeklyFare: widget.weeklyFare ?? fallbackWeeklyFare,
@@ -106,11 +108,11 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
           ),
         if (widget.showFilters)
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              AppLayout.pagePadding,
-              12,
-              AppLayout.pagePadding,
-              18,
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              AppSpacing.md,
+              horizontalPadding,
+              AppSpacing.lg,
             ),
             sliver: SliverToBoxAdapter(
               child: RideHistoryFilters(
@@ -120,21 +122,29 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
             ),
           ),
         if (filteredRides.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: RideHistoryFilteredEmpty(filter: _selectedFilter),
-          )
+          if (widget.activeRides.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 64),
+                child: RideHistoryFilteredEmpty(filter: _selectedFilter),
+              ),
+            )
+          else
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: RideHistoryFilteredEmpty(filter: _selectedFilter),
+            )
         else
-          ..._historySlivers(groupedRides, presenter),
+          ..._historySlivers(groupedRides, presenter, horizontalPadding),
         if (filteredRides.isNotEmpty &&
             (widget.hasMore ||
                 (widget.loadMoreError != null &&
                     !AppNetworkStatusScope.isUnavailableOf(context))))
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              AppLayout.pagePadding,
-              10,
-              AppLayout.pagePadding,
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              AppSpacing.md,
+              horizontalPadding,
               0,
             ),
             sliver: SliverToBoxAdapter(child: _buildLoadMore()),
@@ -146,13 +156,14 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
   }
 
   Widget _buildLoadMore() {
+    final colors = context.colorScheme;
     if (widget.isLoadingMore) {
       return Center(
         child: SizedBox.square(
           dimension: 22,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: context.colorScheme.onSurface,
+            color: colors.onSurface,
           ),
         ),
       );
@@ -164,19 +175,31 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
           Text(
             widget.loadMoreError!,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: context.colorScheme.error,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+            style: context.textStyles.bodySmall?.copyWith(
+              color: colors.error,
+              fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 6),
         ],
         TextButton.icon(
           onPressed: widget.onLoadMore,
-          style: TextButton.styleFrom(
-            foregroundColor: context.colorScheme.onSurface,
-          ),
+          style:
+              TextButton.styleFrom(
+                foregroundColor: colors.onSurface,
+                enableFeedback: false,
+                splashFactory: NoSplash.splashFactory,
+                minimumSize: const Size(0, AppSize.minimumTouchTarget),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+              ).copyWith(
+                overlayColor: WidgetStateProperty.resolveWith(
+                  (states) => states.contains(WidgetState.focused)
+                      ? colors.primary.withValues(alpha: 0.12)
+                      : Colors.transparent,
+                ),
+              ),
           icon: const Icon(LucideIcons.chevron_down, size: 16),
           label: Text(
             widget.loadMoreError == null ||
@@ -214,21 +237,24 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
     };
   }
 
-  List<Widget> _activeRideSlivers(RideHistoryPresenter presenter) {
+  List<Widget> _activeRideSlivers(
+    RideHistoryPresenter presenter,
+    double horizontalPadding,
+  ) {
     return [
-      const SliverPadding(
+      SliverPadding(
         padding: EdgeInsets.fromLTRB(
-          AppLayout.pagePadding,
+          horizontalPadding,
           0,
-          AppLayout.pagePadding,
-          8,
+          horizontalPadding,
+          AppSpacing.sm,
         ),
-        sliver: SliverToBoxAdapter(
+        sliver: const SliverToBoxAdapter(
           child: RideHistorySectionLabel(label: 'Active ride'),
         ),
       ),
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: AppLayout.pagePadding),
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
         sliver: SliverList.builder(
           itemCount: widget.activeRides.length,
           itemBuilder: (context, index) {
@@ -244,24 +270,27 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
           },
         ),
       ),
-      const SliverToBoxAdapter(child: SizedBox(height: 8)),
+      const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
     ];
   }
 
   List<Widget> _historySlivers(
     Map<String, List<RideHistory>> groupedRides,
     RideHistoryPresenter presenter,
+    double horizontalPadding,
   ) {
     final slivers = <Widget>[];
-    for (final entry in groupedRides.entries) {
+    final entries = groupedRides.entries.toList();
+    for (var groupIndex = 0; groupIndex < entries.length; groupIndex++) {
+      final entry = entries[groupIndex];
       slivers
         ..add(
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              AppLayout.pagePadding,
-              0,
-              AppLayout.pagePadding,
-              8,
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              groupIndex == 0 ? 0 : AppSpacing.lg,
+              horizontalPadding,
+              AppSpacing.xs,
             ),
             sliver: SliverToBoxAdapter(
               child: RideHistorySectionLabel(label: entry.key),
@@ -270,20 +299,28 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
         )
         ..add(
           SliverPadding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppLayout.pagePadding,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
             sliver: SliverList.builder(
               itemCount: entry.value.length,
               itemBuilder: (context, index) {
                 final ride = entry.value[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: PastRideCard(
-                    ride: ride,
-                    presenter: presenter,
-                    onTap: () => widget.onRideTap(ride),
-                  ),
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (index > 0)
+                      Divider(
+                        height: 1,
+                        indent: 54,
+                        color: context.colorScheme.outlineVariant.withValues(
+                          alpha: 0.7,
+                        ),
+                      ),
+                    PastRideCard(
+                      ride: ride,
+                      presenter: presenter,
+                      onTap: () => widget.onRideTap(ride),
+                    ),
+                  ],
                 );
               },
             ),

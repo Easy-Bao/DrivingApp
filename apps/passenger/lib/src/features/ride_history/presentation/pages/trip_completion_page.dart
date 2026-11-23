@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
@@ -96,184 +97,381 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
             !state.isLoadingReview &&
             state.reviewErrorMessage == null;
         final busy = state.isSubmittingReview;
+        final horizontalPadding = MediaQuery.sizeOf(context).width < 360
+            ? AppLayout.pagePadding
+            : AppLayout.pagePaddingWide;
         return PopScope(
           canPop: false,
           onPopInvokedWithResult: (didPop, _) {
             if (!didPop && !busy) _leave();
           },
           child: Scaffold(
-            backgroundColor: colors.surface,
+            backgroundColor: context.canvasColor,
             appBar: AppBar(
-              backgroundColor: colors.surface,
+              backgroundColor: context.canvasColor,
+              surfaceTintColor: Colors.transparent,
               scrolledUnderElevation: 0,
               leading: IconButton(
                 tooltip: 'Close',
                 onPressed: busy ? null : _leave,
-                icon: const Icon(Icons.close),
+                style:
+                    IconButton.styleFrom(
+                      foregroundColor: colors.onSurface,
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.focused)
+                            ? colors.primary.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                      ),
+                    ),
+                icon: const Icon(LucideIcons.x, size: 20),
               ),
-              title: const Text('Ride completed'),
+              title: Text(
+                'Ride completed',
+                style: context.textStyles.titleMedium?.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             body: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.xxl),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: AppSpacing.xxl),
-                    Text(
-                      'How was your ride?',
-                      textAlign: TextAlign.center,
-                      style: context.textStyles.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppLayout.pageMaxWidth,
+                  ),
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      AppSpacing.xl,
+                      horizontalPadding,
+                      AppSpacing.xxl,
                     ),
-                    const SizedBox(height: AppSpacing.xxl),
-                    Center(
-                      child: CircleAvatar(
-                        radius: 32,
-                        backgroundColor: colors.surfaceContainerHighest,
-                        foregroundColor: colors.onSurface,
-                        child: const Icon(Icons.person_outline, size: 32),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      ride.displayDriverName,
-                      textAlign: TextAlign.center,
-                      style: context.textStyles.titleMedium,
-                    ),
-                    if (canRate) ...[
-                      const SizedBox(height: AppSpacing.lg),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          for (var star = 1; star <= 5; star++)
-                            IconButton(
-                              tooltip: '$star star${star == 1 ? '' : 's'}',
-                              onPressed: reviewReady && !busy && review == null
-                                  ? () => setState(() => _rating = star)
-                                  : null,
-                              icon: Icon(
-                                star <= (review?.rating.round() ?? _rating)
-                                    ? Icons.star_rounded
-                                    : Icons.star_outline_rounded,
-                                size: 34,
-                                color:
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: colors.surfaceContainerLowest,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: colors.outlineVariant),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              LucideIcons.user,
+                              size: 26,
+                              color: colors.onSurface,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        Text(
+                          'How was your ride?',
+                          textAlign: TextAlign.center,
+                          style: context.textStyles.headlineSmall?.copyWith(
+                            color: colors.onSurface,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          ride.displayDriverName,
+                          textAlign: TextAlign.center,
+                          style: context.textStyles.bodyMedium?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                        if (canRate) ...[
+                          const SizedBox(height: AppSpacing.xl),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              for (var star = 1; star <= 5; star++)
+                                IconButton(
+                                  tooltip: '$star star${star == 1 ? '' : 's'}',
+                                  style:
+                                      IconButton.styleFrom(
+                                        enableFeedback: false,
+                                        splashFactory: NoSplash.splashFactory,
+                                      ).copyWith(
+                                        overlayColor:
+                                            WidgetStateProperty.resolveWith(
+                                              (states) =>
+                                                  states.contains(
+                                                    WidgetState.focused,
+                                                  )
+                                                  ? colors.primary.withValues(
+                                                      alpha: 0.12,
+                                                    )
+                                                  : Colors.transparent,
+                                            ),
+                                      ),
+                                  onPressed:
+                                      reviewReady && !busy && review == null
+                                      ? () => setState(() => _rating = star)
+                                      : null,
+                                  icon: Icon(
                                     star <= (review?.rating.round() ?? _rating)
-                                    ? context.semanticColors.rating
-                                    : colors.outlineVariant,
+                                        ? Icons.star_rounded
+                                        : Icons.star_outline_rounded,
+                                    size: 34,
+                                    color:
+                                        star <=
+                                            (review?.rating.round() ?? _rating)
+                                        ? context.semanticColors.rating
+                                        : colors.outlineVariant,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          if (state.isLoading || state.isLoadingReview)
+                            const Padding(
+                              padding: EdgeInsets.only(top: AppSpacing.sm),
+                              child: Center(
+                                child: CircularProgressIndicator.adaptive(),
+                              ),
+                            )
+                          else if (state.reviewErrorMessage != null) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              state.reviewErrorMessage!,
+                              textAlign: TextAlign.center,
+                              style: context.textStyles.bodySmall?.copyWith(
+                                color: colors.error,
                               ),
                             ),
-                        ],
-                      ),
-                      if (state.isLoading || state.isLoadingReview)
-                        const Center(
-                          child: CircularProgressIndicator.adaptive(),
-                        )
-                      else if (state.reviewErrorMessage != null) ...[
-                        Text(
-                          state.reviewErrorMessage!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: colors.error),
-                        ),
-                        TextButton(
-                          onPressed: () =>
-                              widget.detailsCubit.loadMyReview(ride.id),
-                          child: const Text('Try again'),
-                        ),
-                      ] else if (review != null)
-                        Text(
-                          'Thank you for your feedback',
-                          textAlign: TextAlign.center,
-                          style: context.textStyles.bodyMedium,
-                        )
-                      else if (_rating > 0) ...[
-                        const SizedBox(height: AppSpacing.lg),
-                        TextField(
-                          controller: _commentController,
-                          enabled: !busy,
-                          minLines: 2,
-                          maxLines: 4,
-                          maxLength: 500,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: InputDecoration(
-                            labelText: 'Comment (optional)',
-                            hintText: _rating <= 3
-                                ? 'What could have been better?'
-                                : 'What went well?',
-                            border: const OutlineInputBorder(),
-                          ),
-                        ),
-                      ],
-                      if (state.ratingErrorMessage != null)
-                        Semantics(
-                          liveRegion: true,
-                          child: Text(
-                            state.ratingErrorMessage!,
-                            style: TextStyle(color: colors.error),
-                          ),
-                        ),
-                    ],
-                    const SizedBox(height: AppSpacing.xxl),
-                    Container(
-                      padding: const EdgeInsets.all(AppSpacing.lg),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: colors.outlineVariant),
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              const Expanded(child: Text('Total')),
-                              Text(
-                                ride.farePesos == null
-                                    ? 'Unavailable'
-                                    : formatPesoAmount(ride.farePesos!),
-                                style: context.textStyles.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w700,
+                            TextButton(
+                              onPressed: () =>
+                                  widget.detailsCubit.loadMyReview(ride.id),
+                              style:
+                                  TextButton.styleFrom(
+                                    foregroundColor: colors.onSurface,
+                                    enableFeedback: false,
+                                    splashFactory: NoSplash.splashFactory,
+                                  ).copyWith(
+                                    overlayColor:
+                                        WidgetStateProperty.resolveWith(
+                                          (states) =>
+                                              states.contains(
+                                                WidgetState.focused,
+                                              )
+                                              ? colors.primary.withValues(
+                                                  alpha: 0.12,
+                                                )
+                                              : Colors.transparent,
+                                        ),
+                                  ),
+                              child: const Text('Try again'),
+                            ),
+                          ] else if (review != null) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              'Thank you for your feedback',
+                              textAlign: TextAlign.center,
+                              style: context.textStyles.bodyMedium?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                          ] else if (_rating > 0) ...[
+                            const SizedBox(height: AppSpacing.lg),
+                            TextField(
+                              controller: _commentController,
+                              enabled: !busy,
+                              minLines: 2,
+                              maxLines: 4,
+                              maxLength: 500,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: InputDecoration(
+                                labelText: 'Comment (optional)',
+                                hintText: _rating <= 3
+                                    ? 'What could have been better?'
+                                    : 'What went well?',
+                                filled: true,
+                                fillColor: colors.surfaceContainerLowest,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
+                                  borderSide: BorderSide(
+                                    color: colors.outlineVariant,
+                                  ),
                                 ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
+                                  borderSide: BorderSide(
+                                    color: colors.outlineVariant,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
+                                  borderSide: BorderSide(color: colors.primary),
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (state.ratingErrorMessage != null) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            Semantics(
+                              liveRegion: true,
+                              child: Text(
+                                state.ratingErrorMessage!,
+                                textAlign: TextAlign.center,
+                                style: context.textStyles.bodySmall?.copyWith(
+                                  color: colors.error,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                        const SizedBox(height: AppSpacing.xxl),
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.lg,
+                            AppSpacing.lg,
+                            AppSpacing.lg,
+                            AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colors.surfaceContainerLowest,
+                            border: Border.all(color: colors.outlineVariant),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Total',
+                                      style: context.textStyles.bodyMedium
+                                          ?.copyWith(
+                                            color: colors.onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  Flexible(
+                                    child: Text(
+                                      ride.farePesos == null
+                                          ? 'Unavailable'
+                                          : formatPesoAmount(ride.farePesos!),
+                                      textAlign: TextAlign.end,
+                                      style: context
+                                          .textStyles
+                                          .titleMedium
+                                          ?.tabular
+                                          .copyWith(
+                                            color: colors.onSurface,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              Divider(
+                                height: 1,
+                                color: colors.outlineVariant.withValues(
+                                  alpha: 0.7,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: busy
+                                    ? null
+                                    : () => context.pushNamed(
+                                        RideHistoryRoutes.rideDetails,
+                                        extra: (
+                                          ride: ride,
+                                          showRatingAction: false,
+                                        ),
+                                      ),
+                                style:
+                                    TextButton.styleFrom(
+                                      foregroundColor: colors.onSurface,
+                                      enableFeedback: false,
+                                      splashFactory: NoSplash.splashFactory,
+                                      minimumSize: const Size(
+                                        double.infinity,
+                                        AppSize.minimumTouchTarget,
+                                      ),
+                                    ).copyWith(
+                                      overlayColor:
+                                          WidgetStateProperty.resolveWith(
+                                            (states) =>
+                                                states.contains(
+                                                  WidgetState.focused,
+                                                )
+                                                ? colors.primary.withValues(
+                                                    alpha: 0.08,
+                                                  )
+                                                : Colors.transparent,
+                                          ),
+                                    ),
+                                child: const Text('View receipt'),
                               ),
                             ],
                           ),
-                          const SizedBox(height: AppSpacing.sm),
-                          const Divider(height: 1),
-                          TextButton(
-                            onPressed: busy
-                                ? null
-                                : () => context.pushNamed(
-                                    RideHistoryRoutes.rideDetails,
-                                    extra: (
-                                      ride: ride,
-                                      showRatingAction: false,
-                                    ),
-                                  ),
-                            child: const Text('View receipt'),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
             bottomNavigationBar: SafeArea(
               top: false,
               child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  AppSpacing.md,
+                  horizontalPadding,
+                  AppSpacing.lg,
+                ),
                 child: FilledButton(
                   onPressed:
                       busy || (_rating > 0 && review == null && !reviewReady)
                       ? null
                       : _done,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(AppSize.controlHeight),
-                    shape: const StadiumBorder(),
-                  ),
+                  style:
+                      FilledButton.styleFrom(
+                        backgroundColor: colors.primary,
+                        foregroundColor: colors.onPrimary,
+                        elevation: 0,
+                        enableFeedback: false,
+                        splashFactory: NoSplash.splashFactory,
+                        minimumSize: const Size.fromHeight(
+                          AppSize.controlHeight,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                        ),
+                        textStyle: context.textStyles.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ).copyWith(
+                        overlayColor: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.focused)
+                              ? colors.onPrimary.withValues(alpha: 0.16)
+                              : Colors.transparent,
+                        ),
+                      ),
                   child: busy
-                      ? const SizedBox.square(
+                      ? SizedBox.square(
                           dimension: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: colors.onPrimary,
+                          ),
                         )
                       : const Text('Done'),
                 ),

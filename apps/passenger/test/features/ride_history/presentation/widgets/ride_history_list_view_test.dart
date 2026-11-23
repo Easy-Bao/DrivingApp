@@ -162,6 +162,26 @@ void main() {
           .height,
       greaterThanOrEqualTo(38),
     );
+
+    final filterInk = tester.widget<InkWell>(
+      find.byKey(const ValueKey<String>('activity-filter-all')),
+    );
+    expect(filterInk.enableFeedback, isFalse);
+    expect(filterInk.splashFactory, NoSplash.splashFactory);
+    expect(
+      filterInk.overlayColor?.resolve({WidgetState.pressed}),
+      Colors.transparent,
+    );
+    expect(
+      filterInk.overlayColor?.resolve({WidgetState.focused}),
+      isNot(Colors.transparent),
+    );
+
+    final rowInk = tester.widget<InkWell>(
+      find.byKey(const ValueKey<String>('past-ride-readable-ride')),
+    );
+    expect(rowInk.enableFeedback, isFalse);
+    expect(rowInk.splashFactory, NoSplash.splashFactory);
   });
 
   testWidgets('keeps an active ride prominent and actionable', (tester) async {

@@ -17,24 +17,40 @@ class RideHistorySummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _SummaryCard(
-            label: 'This week',
-            value: formatPesoAmount(weeklyFare),
-            valueKey: const ValueKey<String>('activity-weekly-fare'),
-          ),
+    final colors = context.colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            Expanded(
+              child: _SummaryMetric(
+                label: 'This week',
+                value: formatPesoAmount(weeklyFare),
+                valueKey: const ValueKey<String>('activity-weekly-fare'),
+              ),
+            ),
+            VerticalDivider(
+              width: 1,
+              thickness: 1,
+              indent: AppSpacing.md,
+              endIndent: AppSpacing.md,
+              color: colors.outlineVariant.withValues(alpha: 0.7),
+            ),
+            Expanded(
+              child: _SummaryMetric(
+                label: 'Rides taken',
+                value: weeklyRideCount.toString(),
+                valueKey: const ValueKey<String>('activity-weekly-ride-count'),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _SummaryCard(
-            label: 'Rides taken',
-            value: weeklyRideCount.toString(),
-            valueKey: const ValueKey<String>('activity-weekly-ride-count'),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -48,23 +64,59 @@ class RideHistoryFilters extends StatelessWidget {
   final RideHistoryFilter selectedFilter;
   final ValueChanged<RideHistoryFilter> onSelected;
 
+  static const _tabs = RideHistoryFilter.values;
+
+  double _indicatorAlignmentX(int index) {
+    if (_tabs.length <= 1) return 0;
+    return -1.0 + (2.0 * index / (_tabs.length - 1));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+    final colors = context.colorScheme;
+    final selectedIndex = _tabs.indexOf(selectedFilter);
+    final duration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 220);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: colors.outlineVariant.withValues(alpha: 0.7),
+          ),
+        ),
+      ),
+      child: Stack(
         children: [
-          for (final filter in RideHistoryFilter.values) ...[
-            _RideHistoryFilterChip(
-              filter: filter,
-              isSelected: filter == selectedFilter,
-              onTap: () => onSelected(filter),
+          Row(
+            children: [
+              for (final filter in _tabs)
+                Expanded(
+                  child: _RideHistoryFilterTab(
+                    filter: filter,
+                    isSelected: filter == selectedFilter,
+                    onTap: () => onSelected(filter),
+                  ),
+                ),
+            ],
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: IgnorePointer(
+              child: AnimatedAlign(
+                duration: duration,
+                curve: Curves.easeOutCubic,
+                alignment: Alignment(_indicatorAlignmentX(selectedIndex), 1),
+                child: FractionallySizedBox(
+                  widthFactor: 1 / _tabs.length,
+                  child: Container(height: 2, color: colors.onSurface),
+                ),
+              ),
             ),
-            if (filter != RideHistoryFilter.values.last)
-              const SizedBox(width: 8),
-          ],
+          ),
         ],
       ),
     );
@@ -77,11 +129,15 @@ class RideHistorySectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-        color: context.colorScheme.onSurfaceVariant,
-        fontWeight: FontWeight.w600,
+    return Semantics(
+      header: true,
+      child: Text(
+        label,
+        style: context.textStyles.labelMedium?.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.25,
+        ),
       ),
     );
   }
@@ -93,6 +149,7 @@ class RideHistoryFilteredEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     final message = switch (filter) {
       RideHistoryFilter.all =>
         'Your completed and cancelled rides will appear here.',
@@ -100,33 +157,49 @@ class RideHistoryFilteredEmpty extends StatelessWidget {
       RideHistoryFilter.cancelled => 'No cancelled rides.',
     };
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 28, 32, 112),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            LucideIcons.route,
-            size: 34,
-            color: context.colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 48),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerLowest,
+                shape: BoxShape.circle,
+                border: Border.all(color: colors.outlineVariant),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                LucideIcons.route,
+                size: 20,
+                color: colors.onSurfaceVariant,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.md),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 320),
+              child: Text(
+                message,
+                textAlign: TextAlign.center,
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  height: 1.45,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
+class _SummaryMetric extends StatelessWidget {
+  const _SummaryMetric({
     required this.label,
     required this.value,
     required this.valueKey,
@@ -137,22 +210,12 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final colors = context.colorScheme;
 
-    return Container(
-      height: 88,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colorScheme.outlineVariant),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 14,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,20 +225,21 @@ class _SummaryCard extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: textTheme.labelMedium?.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
+            style: context.textStyles.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
               fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             value,
             key: valueKey,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: textTheme.titleLarge?.copyWith(
-              color: context.colorScheme.onSurface,
-              fontWeight: FontWeight.w800,
+            style: context.textStyles.titleLarge?.tabular.copyWith(
+              color: colors.onSurface,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -184,8 +248,8 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _RideHistoryFilterChip extends StatelessWidget {
-  const _RideHistoryFilterChip({
+class _RideHistoryFilterTab extends StatelessWidget {
+  const _RideHistoryFilterTab({
     required this.filter,
     required this.isSelected,
     required this.onTap,
@@ -202,7 +266,10 @@ class _RideHistoryFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(AppRadius.pill);
+    final colors = context.colorScheme;
+    final duration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 180);
 
     return Semantics(
       button: true,
@@ -212,52 +279,40 @@ class _RideHistoryFilterChip extends StatelessWidget {
         child: InkWell(
           key: ValueKey<String>('activity-filter-${filter.name}'),
           onTap: onTap,
-          borderRadius: radius,
-          splashColor: context.colorScheme.primary.withValues(alpha: 0.12),
-          highlightColor: context.colorScheme.primary.withValues(alpha: 0.06),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOutCubic,
-            constraints: const BoxConstraints(minHeight: 48, minWidth: 64),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? context.colorScheme.primary
-                  : context.colorScheme.surface,
-              borderRadius: radius,
-              border: Border.all(
-                color: isSelected
-                    ? context.colorScheme.primary
-                    : context.colorScheme.outlineVariant,
-                width: 1.0,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: context.colorScheme.primary.withValues(
-                          alpha: 0.2,
-                        ),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : const [
-                      BoxShadow(
-                        color: Color(0x06000000),
-                        blurRadius: 8,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
+          enableFeedback: false,
+          splashFactory: NoSplash.splashFactory,
+          overlayColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.focused)
+                ? colors.primary.withValues(alpha: 0.08)
+                : Colors.transparent,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: AppSize.minimumTouchTarget,
             ),
             child: Center(
-              widthFactor: 1.0,
-              child: Text(
-                _label,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: isSelected
-                      ? context.colorScheme.onPrimary
-                      : context.colorScheme.onSurfaceVariant,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xs,
+                  vertical: AppSpacing.sm,
+                ),
+                child: AnimatedDefaultTextStyle(
+                  duration: duration,
+                  curve: Curves.easeOutCubic,
+                  style: (context.textStyles.labelLarge ?? const TextStyle())
+                      .copyWith(
+                        color: isSelected
+                            ? colors.onSurface
+                            : colors.onSurfaceVariant,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                      ),
+                  child: Text(
+                    _label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ),

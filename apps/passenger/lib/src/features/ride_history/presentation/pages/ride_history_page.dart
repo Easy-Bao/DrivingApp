@@ -54,6 +54,7 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: context.canvasColor,
       body: BlocBuilder<RideHistoryBloc, RideHistoryState>(
         builder: (context, rideHistoryState) {
           return SafeArea(
@@ -260,15 +261,19 @@ class _RideHistoryMessageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    final horizontalPadding = MediaQuery.sizeOf(context).width < 360
+        ? AppLayout.pagePadding
+        : AppLayout.pagePaddingWide;
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            AppLayout.pagePadding,
-            8,
-            AppLayout.pagePadding,
-            18,
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            AppSpacing.sm,
+            horizontalPadding,
+            AppSpacing.xl,
           ),
           sliver: SliverToBoxAdapter(
             child: RideHistoryHeader(
@@ -292,50 +297,61 @@ class _RideHistoryMessageView extends StatelessWidget {
               children: [
                 if (icon case final icon?) ...[
                   Container(
-                    width: 72,
-                    height: 72,
+                    width: 60,
+                    height: 60,
                     decoration: BoxDecoration(
-                      color: context.colorScheme.surface,
+                      color: colors.surfaceContainerLowest,
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: context.colorScheme.outlineVariant,
-                        width: 1,
-                      ),
+                      border: Border.all(color: colors.outlineVariant),
                     ),
                     alignment: Alignment.center,
-                    child: Icon(
-                      icon,
-                      size: 30,
-                      color: context.colorScheme.onSurface,
-                    ),
+                    child: Icon(icon, size: 24, color: colors.onSurfaceVariant),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.lg),
                 ],
                 Text(
                   title,
                   textAlign: TextAlign.center,
-                  style: context.textStyles.titleLarge?.copyWith(
-                    color: context.colorScheme.onSurface,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
+                  style: context.textStyles.titleMedium?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 280),
                   child: Text(
                     message,
                     textAlign: TextAlign.center,
                     style: context.textStyles.bodyMedium?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
-                      height: 1.4,
+                      color: colors.onSurfaceVariant,
+                      height: 1.45,
                     ),
                   ),
                 ),
                 if (actionLabel != null && onAction != null) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   TextButton.icon(
                     onPressed: onAction,
+                    style:
+                        TextButton.styleFrom(
+                          foregroundColor: colors.onSurface,
+                          enableFeedback: false,
+                          splashFactory: NoSplash.splashFactory,
+                          minimumSize: const Size(
+                            0,
+                            AppSize.minimumTouchTarget,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                        ).copyWith(
+                          overlayColor: WidgetStateProperty.resolveWith(
+                            (states) => states.contains(WidgetState.focused)
+                                ? colors.primary.withValues(alpha: 0.12)
+                                : Colors.transparent,
+                          ),
+                        ),
                     icon: const Icon(LucideIcons.refresh_cw, size: 16),
                     label: Text(actionLabel!),
                   ),
@@ -369,15 +385,18 @@ class _RideHistoryLoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final horizontalPadding = MediaQuery.sizeOf(context).width < 360
+        ? AppLayout.pagePadding
+        : AppLayout.pagePaddingWide;
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            AppLayout.pagePadding,
-            8,
-            AppLayout.pagePadding,
-            18,
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            AppSpacing.sm,
+            horizontalPadding,
+            AppSpacing.xl,
           ),
           sliver: SliverToBoxAdapter(
             child: RideHistoryHeader(
@@ -388,9 +407,7 @@ class _RideHistoryLoadingView extends StatelessWidget {
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppLayout.pagePadding,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
           sliver: Skeletonizer.sliver(
             key: const ValueKey<String>('activity-loading-skeleton'),
             child: SliverList(
@@ -400,22 +417,28 @@ class _RideHistoryLoadingView extends StatelessWidget {
                     key: ValueKey<String>('activity-loading-summary'),
                     child: _ActivitySkeletonSummary(),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppSpacing.md),
                 ],
                 if (showFilters) ...[
                   const KeyedSubtree(
                     key: ValueKey<String>('activity-loading-filters'),
                     child: _ActivitySkeletonFilters(),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: AppSpacing.lg),
                 ],
                 for (var index = 0; index < itemCount; index++) ...[
                   if (index == 0) ...[
                     const Bone.text(width: 92, fontSize: 12),
-                    const SizedBox(height: 8),
-                  ],
-                  const _ActivitySkeletonRideCard(),
-                  const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.xs),
+                  ] else
+                    Divider(
+                      height: 1,
+                      indent: 54,
+                      color: context.colorScheme.outlineVariant.withValues(
+                        alpha: 0.7,
+                      ),
+                    ),
+                  const _ActivitySkeletonRideRow(),
                 ],
               ]),
             ),
@@ -434,37 +457,50 @@ class _ActivitySkeletonSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Expanded(child: _ActivitySkeletonSummaryCard(valueWidth: 64)),
-        SizedBox(width: 8),
-        Expanded(child: _ActivitySkeletonSummaryCard(valueWidth: 28)),
-      ],
+    final colors = context.colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            const Expanded(child: _ActivitySkeletonMetric(valueWidth: 68)),
+            VerticalDivider(
+              width: 1,
+              thickness: 1,
+              indent: AppSpacing.md,
+              endIndent: AppSpacing.md,
+              color: colors.outlineVariant.withValues(alpha: 0.7),
+            ),
+            const Expanded(child: _ActivitySkeletonMetric(valueWidth: 30)),
+          ],
+        ),
+      ),
     );
   }
 }
 
-class _ActivitySkeletonSummaryCard extends StatelessWidget {
-  const _ActivitySkeletonSummaryCard({required this.valueWidth});
+class _ActivitySkeletonMetric extends StatelessWidget {
+  const _ActivitySkeletonMetric({required this.valueWidth});
 
   final double valueWidth;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 88,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colorScheme.outlineVariant),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 14,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Bone.text(width: 72, fontSize: 14),
-          const SizedBox(height: 4),
+          const Bone.text(width: 68, fontSize: 12),
+          const SizedBox(height: AppSpacing.xs),
           Bone.text(width: valueWidth, fontSize: 22),
         ],
       ),
@@ -477,60 +513,54 @@ class _ActivitySkeletonFilters extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Bone.button(
-          width: 48,
-          height: 38,
-          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: context.colorScheme.outlineVariant.withValues(alpha: 0.7),
+          ),
         ),
-        SizedBox(width: 8),
-        Bone.button(
-          width: 88,
-          height: 38,
-          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+      ),
+      child: const SizedBox(
+        height: AppSize.minimumTouchTarget,
+        child: Row(
+          children: [
+            Expanded(child: Center(child: Bone.text(width: 32, fontSize: 14))),
+            Expanded(child: Center(child: Bone.text(width: 72, fontSize: 14))),
+            Expanded(child: Center(child: Bone.text(width: 68, fontSize: 14))),
+          ],
         ),
-        SizedBox(width: 8),
-        Bone.button(
-          width: 84,
-          height: 38,
-          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
-        ),
-      ],
+      ),
     );
   }
 }
 
-class _ActivitySkeletonRideCard extends StatelessWidget {
-  const _ActivitySkeletonRideCard();
+class _ActivitySkeletonRideRow extends StatelessWidget {
+  const _ActivitySkeletonRideRow();
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colorScheme.outlineVariant),
-      ),
-      child: const Row(
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 14),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Bone.circle(size: 42),
+          Bone.circle(size: 40),
           SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Bone.text(width: 146, fontSize: 16),
+                Bone.text(width: 146, fontSize: 15),
                 SizedBox(height: 4),
-                Bone.text(width: 104, fontSize: 14),
+                Bone.text(width: 104, fontSize: 13),
               ],
             ),
           ),
-          SizedBox(width: 8),
-          Bone.text(width: 48, fontSize: 15),
-          SizedBox(width: 3),
-          Bone.icon(size: 18),
+          SizedBox(width: AppSpacing.sm),
+          Bone.text(width: 48, fontSize: 14),
+          SizedBox(width: AppSpacing.xs),
+          Bone.icon(size: 16),
         ],
       ),
     );

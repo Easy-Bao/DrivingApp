@@ -18,6 +18,7 @@ class ActiveRideCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     final status = RideStatus.fromString(ride.status);
     final destination = presenter.destinationLabel(ride);
     final statusLabel = switch (status) {
@@ -32,44 +33,51 @@ class ActiveRideCard extends StatelessWidget {
       button: true,
       label: '$statusLabel to $destination',
       child: Material(
-        color: context.colorScheme.surface,
+        color: colors.surfaceContainerLowest,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          side: BorderSide(color: context.colorScheme.outlineVariant),
+          side: BorderSide(color: colors.outlineVariant),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           key: ValueKey<String>('active-ride-${ride.id}'),
+          enableFeedback: false,
+          splashFactory: NoSplash.splashFactory,
+          overlayColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.focused)
+                ? colors.primary.withValues(alpha: 0.08)
+                : Colors.transparent,
+          ),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 38,
+                      height: 38,
                       decoration: BoxDecoration(
-                        color: context.colorScheme.onSurface.withValues(
-                          alpha: 0.08,
-                        ),
+                        color: colors.surfaceContainerLowest,
                         shape: BoxShape.circle,
+                        border: Border.all(color: colors.outlineVariant),
                       ),
+                      alignment: Alignment.center,
                       child: Icon(
                         LucideIcons.navigation,
-                        size: 18,
-                        color: context.colorScheme.onSurface,
+                        size: 16,
+                        color: colors.onSurface,
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Text(
                         statusLabel,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: context.colorScheme.onSurface,
-                          fontWeight: FontWeight.w800,
+                        style: context.textStyles.titleSmall?.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -77,38 +85,38 @@ class ActiveRideCard extends StatelessWidget {
                       presenter.fareLabel(ride),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: context.colorScheme.onSurface,
-                        fontWeight: FontWeight.w800,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                      style: context.textStyles.titleMedium?.tabular.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppSpacing.xs),
                     Icon(
                       LucideIcons.chevron_right,
-                      color: context.colorScheme.onSurfaceVariant,
-                      size: 18,
+                      color: colors.onSurfaceVariant,
+                      size: 16,
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 Text(
                   destination,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: context.colorScheme.onSurface,
-                    fontWeight: FontWeight.w700,
+                  style: context.textStyles.bodyLarge?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 if (ride.pickup.trim().isNotEmpty) ...[
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   Text(
                     'From ${ride.pickup.trim()}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ],
@@ -133,11 +141,12 @@ class PastRideCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     final status = RideStatus.fromString(ride.status);
     final isCancelled = status == RideStatus.cancelled;
     final statusLabel = isCancelled ? 'Cancelled' : 'Completed';
     final statusColor = isCancelled
-        ? context.colorScheme.error
+        ? colors.error
         : context.semanticColors.success;
     final destination = presenter.destinationLabel(ride);
     final metadata = presenter.rideMetadata(ride);
@@ -146,84 +155,95 @@ class PastRideCard extends StatelessWidget {
       button: true,
       label: '$statusLabel ride to $destination',
       child: Material(
-        color: context.colorScheme.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          side: BorderSide(color: context.colorScheme.outlineVariant),
-        ),
-        clipBehavior: Clip.antiAlias,
+        type: MaterialType.transparency,
         child: InkWell(
           key: ValueKey<String>('past-ride-${ride.id}'),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          enableFeedback: false,
+          splashFactory: NoSplash.splashFactory,
+          overlayColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.focused)
+                ? colors.primary.withValues(alpha: 0.08)
+                : Colors.transparent,
+          ),
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isCancelled ? LucideIcons.x : LucideIcons.check,
-                    color: statusColor,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        destination,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: context.colorScheme.onSurface,
-                          fontWeight: FontWeight.w700,
-                        ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 68),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerLowest,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isCancelled
+                            ? colors.error.withValues(alpha: 0.35)
+                            : colors.outlineVariant,
                       ),
-                      if (metadata.isNotEmpty) ...[
-                        const SizedBox(height: 3),
-                        Text(
-                          metadata,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: context.colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
-                              ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 86),
-                  child: Text(
-                    presenter.fareLabel(ride),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.end,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: context.colorScheme.onSurface,
-                      fontWeight: FontWeight.w800,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      isCancelled ? LucideIcons.x : LucideIcons.check,
+                      color: statusColor,
+                      size: 16,
                     ),
                   ),
-                ),
-                const SizedBox(width: 3),
-                Icon(
-                  LucideIcons.chevron_right,
-                  color: context.colorScheme.onSurfaceVariant,
-                  size: 18,
-                ),
-              ],
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          destination,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.textStyles.bodyLarge?.copyWith(
+                            color: colors.onSurface,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (metadata.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            metadata,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.textStyles.bodySmall?.tabular
+                                .copyWith(color: colors.onSurfaceVariant),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 88),
+                    child: Text(
+                      presenter.fareLabel(ride),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: context.textStyles.titleSmall?.tabular.copyWith(
+                        color: isCancelled
+                            ? colors.onSurfaceVariant
+                            : colors.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Icon(
+                    LucideIcons.chevron_right,
+                    color: colors.onSurfaceVariant,
+                    size: 16,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

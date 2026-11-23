@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart' hide Route;
@@ -141,40 +142,99 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     double? fare,
   ) {
     final colors = context.colorScheme;
-    return AppSurfaceCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              const Expanded(child: Text('Total fare')),
-              Text(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Expanded(
+              child: Text(
+                'Total fare',
+                style: context.textStyles.bodyLarge?.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Flexible(
+              child: Text(
                 fare == null ? 'Fare unavailable' : formatPesoAmount(fare),
                 key: const ValueKey('receipt-total-fare'),
-                style: context.textStyles.titleLarge?.copyWith(
+                textAlign: TextAlign.end,
+                style: context.textStyles.titleLarge?.tabular.copyWith(
+                  color: colors.onSurface,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-            ],
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'Cash · ${_cashPaymentStatus(snapshot)}',
+          style: context.textStyles.bodySmall?.copyWith(
+            color: colors.onSurfaceVariant,
           ),
-          const SizedBox(height: AppSpacing.md),
+        ),
+        if (snapshot?.cashSettled == true &&
+            (snapshot?.cashReceivedAmount ?? 0) > 0) ...[
+          const SizedBox(height: AppSpacing.xs),
           Text(
-            'Cash · ${_cashPaymentStatus(snapshot)}',
-            style: context.textStyles.bodySmall?.copyWith(
+            'Cash received ${formatPesoAmount(snapshot!.cashReceivedAmount! / 100)}'
+            '${(snapshot.cashChangeAmount ?? 0) > 0 ? ' · Change ${formatPesoAmount(snapshot.cashChangeAmount! / 100)}' : ''}',
+            style: context.textStyles.bodySmall?.tabular.copyWith(
               color: colors.onSurfaceVariant,
             ),
           ),
-          if (snapshot?.cashSettled == true &&
-              (snapshot?.cashReceivedAmount ?? 0) > 0) ...[
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Cash received ${formatPesoAmount(snapshot!.cashReceivedAmount! / 100)}'
-              '${(snapshot.cashChangeAmount ?? 0) > 0 ? ' · Change ${formatPesoAmount(snapshot.cashChangeAmount! / 100)}' : ''}',
-              style: context.textStyles.bodySmall,
-            ),
-          ],
         ],
+      ],
+    );
+  }
+
+  Widget _buildSectionLabel(BuildContext context, String label) {
+    return Semantics(
+      header: true,
+      child: Text(
+        label,
+        style: context.textStyles.labelSmall?.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.85,
+        ),
       ),
+    );
+  }
+
+  Widget _buildContactButton(
+    BuildContext context, {
+    required String tooltip,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    final colors = context.colorScheme;
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+      style:
+          IconButton.styleFrom(
+            backgroundColor: colors.surfaceContainerLowest,
+            foregroundColor: colors.onSurface,
+            side: BorderSide(color: colors.outlineVariant),
+            shape: const CircleBorder(),
+            enableFeedback: false,
+            splashFactory: NoSplash.splashFactory,
+          ).copyWith(
+            overlayColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.focused)
+                  ? colors.primary.withValues(alpha: 0.12)
+                  : Colors.transparent,
+            ),
+          ),
+      icon: Icon(icon, size: 18),
     );
   }
 
@@ -254,6 +314,18 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
         snapshot?.displayDriverName ??
         'Driver';
 
+    final colors = context.colorScheme;
+    final hairline = colors.outlineVariant.withValues(alpha: 0.7);
+    final statusLabel = switch (status) {
+      'completed' => 'Completed',
+      'cancelled' || 'canceled' => 'Canceled',
+      'assigned' || 'accepted' => 'Awaiting pickup',
+      'arrived' => 'At pickup',
+      'in_transit' => 'In progress',
+      'requested' => 'Requested',
+      _ => 'Unknown',
+    };
+
     return TripReceiptLayout(
       dateLabel: _receiptDate(context, snapshot, ride),
       onBack: () => context.pop(),
@@ -272,219 +344,310 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
               TripReference(id: reference, expanded: true, compact: true),
               const SizedBox(height: AppSpacing.lg),
             ],
-            Text('Driver', style: context.textStyles.labelSmall),
-            const SizedBox(height: AppSpacing.sm),
-            AppSurfaceCard(
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor:
-                        context.colorScheme.surfaceContainerHighest,
-                    foregroundColor: context.colorScheme.onSurface,
-                    child: Text(_driverInitials(driverName)),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(driverName, style: context.textStyles.titleMedium),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          ride?.displayVehicleSummary ??
-                              snapshot?.displayVehicleSummary ??
-                              'Vehicle details unavailable',
-                          style: context.textStyles.bodySmall?.copyWith(
-                            color: context.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (_showLostFoundChat)
-                    IconButton.outlined(
-                      tooltip: 'Message driver',
-                      onPressed: _initiateLostFoundChat,
-                      icon: const Icon(Icons.chat_bubble_outline, size: 20),
-                    ),
-                  if (_showLostFoundChat &&
-                      _counterpartyData?.phone.trim().isNotEmpty == true)
-                    IconButton.outlined(
-                      tooltip: 'Call driver',
-                      onPressed: _callDriver,
-                      icon: const Icon(Icons.phone_outlined, size: 20),
-                    ),
-                ],
-              ),
-            ),
-            if (_contactError != null)
-              Text(
-                _contactError!,
-                style: TextStyle(color: context.colorScheme.error),
-              ),
-            const SizedBox(height: AppSpacing.xl),
+            _buildSectionLabel(context, 'DRIVER'),
+            const SizedBox(height: AppSpacing.md),
             Row(
               children: [
-                Expanded(
-                  child: Text('Route', style: context.textStyles.labelSmall),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerLowest,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: colors.outlineVariant),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    _driverInitials(driverName),
+                    style: context.textStyles.titleSmall?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        driverName,
+                        style: context.textStyles.titleMedium?.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        ride?.displayVehicleSummary ??
+                            snapshot?.displayVehicleSummary ??
+                            'Vehicle details unavailable',
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_showLostFoundChat) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  _buildContactButton(
+                    context,
+                    tooltip: 'Message driver',
+                    icon: LucideIcons.message_circle,
+                    onPressed: _initiateLostFoundChat,
+                  ),
+                ],
+                if (_showLostFoundChat &&
+                    _counterpartyData?.phone.trim().isNotEmpty == true) ...[
+                  const SizedBox(width: AppSpacing.xs),
+                  _buildContactButton(
+                    context,
+                    tooltip: 'Call driver',
+                    icon: LucideIcons.phone,
+                    onPressed: _callDriver,
+                  ),
+                ],
+              ],
+            ),
+            if (_contactError != null) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                _contactError!,
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: colors.error,
+                ),
+              ),
+            ],
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+              child: Divider(height: 1, color: hairline),
+            ),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.xs,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              alignment: WrapAlignment.spaceBetween,
+              children: [
+                _buildSectionLabel(context, 'ROUTE'),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.sm,
                     vertical: AppSpacing.xs,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        (isCompleted
-                                ? context.semanticColors.success
-                                : context.colorScheme.onSurfaceVariant)
-                            .withValues(alpha: 0.1),
+                    color: colors.surfaceContainerLowest,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: isCompleted
+                          ? context.semanticColors.success.withValues(
+                              alpha: 0.4,
+                            )
+                          : colors.outlineVariant,
+                    ),
                   ),
                   child: Text(
-                    switch (status) {
-                      'completed' => 'Completed',
-                      'cancelled' || 'canceled' => 'Canceled',
-                      'assigned' || 'accepted' => 'Awaiting pickup',
-                      'arrived' => 'At pickup',
-                      'in_transit' => 'In progress',
-                      'requested' => 'Requested',
-                      _ => 'Unknown',
-                    },
+                    statusLabel,
                     style: context.textStyles.labelSmall?.copyWith(
                       color: isCompleted
                           ? context.semanticColors.success
-                          : context.colorScheme.onSurfaceVariant,
+                          : colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.sm),
-            AppSurfaceCard(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  if (pickupLatitude != null &&
-                      pickupLongitude != null &&
-                      dropoffLatitude != null &&
-                      dropoffLongitude != null)
-                    SizedBox(
-                      height: 180,
-                      child: RideDetailsMap(
-                        key: ValueKey((
-                          pickupLatitude,
-                          pickupLongitude,
-                          dropoffLatitude,
-                          dropoffLongitude,
-                        )),
-                        pickupLatitude: pickupLatitude,
-                        pickupLongitude: pickupLongitude,
-                        dropoffLatitude: dropoffLatitude,
-                        dropoffLongitude: dropoffLongitude,
-                      ),
-                    ),
-                  if (snapshot?.distanceKm != null ||
-                      snapshot?.durationMinutes != null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        AppSpacing.sm,
-                        AppSpacing.lg,
-                        0,
-                      ),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          [
-                            if (snapshot?.distanceKm case final distance?)
-                              distance < 1
-                                  ? '${(distance * 1000).round()} m'
-                                  : '${distance.toStringAsFixed(1)} km',
-                            if (snapshot?.durationMinutes case final duration?)
-                              '${duration.round()} min',
-                          ].join(' · '),
-                          style: context.textStyles.labelSmall,
-                        ),
-                      ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.all(AppSpacing.xxl),
-                    child: CompactRouteTimeline(
-                      pickup:
-                          ride?.pickup ??
-                          snapshot?.pickupName ??
-                          'Pickup location',
-                      dropoff:
-                          ride?.destination ??
-                          snapshot?.dropoffName ??
-                          'Destination location',
-                    ),
+            const SizedBox(height: AppSpacing.md),
+            if (pickupLatitude != null &&
+                pickupLongitude != null &&
+                dropoffLatitude != null &&
+                dropoffLongitude != null) ...[
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(color: colors.outlineVariant),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: SizedBox(
+                  height: 180,
+                  child: RideDetailsMap(
+                    key: ValueKey((
+                      pickupLatitude,
+                      pickupLongitude,
+                      dropoffLatitude,
+                      dropoffLongitude,
+                    )),
+                    pickupLatitude: pickupLatitude,
+                    pickupLongitude: pickupLongitude,
+                    dropoffLatitude: dropoffLatitude,
+                    dropoffLongitude: dropoffLongitude,
                   ),
-                ],
+                ),
               ),
+              const SizedBox(height: AppSpacing.md),
+            ],
+            if (snapshot?.distanceKm != null ||
+                snapshot?.durationMinutes != null) ...[
+              Text(
+                [
+                  if (snapshot?.distanceKm case final distance?)
+                    distance < 1
+                        ? '${(distance * 1000).round()} m'
+                        : '${distance.toStringAsFixed(1)} km',
+                  if (snapshot?.durationMinutes case final duration?)
+                    '${duration.round()} min',
+                ].join(' · '),
+                style: context.textStyles.labelSmall?.tabular.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+            ],
+            CompactRouteTimeline(
+              pickup: ride?.pickup ?? snapshot?.pickupName ?? 'Pickup location',
+              dropoff:
+                  ride?.destination ??
+                  snapshot?.dropoffName ??
+                  'Destination location',
             ),
             if (isCompleted &&
                 snapshot?.driverId?.isNotEmpty == true &&
                 rideId != null) ...[
-              const SizedBox(height: AppSpacing.md),
-              if (_detailsCubit.state.submittedReview case final review?)
-                AppSurfaceCard(
-                  child: Row(
-                    children: [
-                      const Expanded(child: Text('Ride rating')),
-                      Text(review.rating.toStringAsFixed(0)),
-                      const SizedBox(width: AppSpacing.xs),
-                      Icon(
-                        Icons.star_rounded,
-                        size: 20,
-                        color: context.semanticColors.rating,
-                      ),
-                    ],
-                  ),
-                )
-              else if (widget.showRatingAction &&
-                  !_detailsCubit.state.isLoadingReview)
-                TextButton(
-                  onPressed: () async {
-                    await context.pushNamed(
-                      ActiveRideRoutes.tripCompletion,
-                      extra: (ride: snapshot!, returnToReceipt: true),
-                    );
-                    if (mounted) {
-                      await _detailsCubit.loadMyReview(rideId, refresh: true);
-                    }
-                  },
-                  child: const Text('Rate this ride'),
+              if (_detailsCubit.state.submittedReview case final review?) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                  child: Divider(height: 1, color: hairline),
                 ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Ride rating',
+                        style: context.textStyles.bodyLarge?.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      review.rating.toStringAsFixed(0),
+                      style: context.textStyles.titleSmall?.tabular.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Icon(
+                      Icons.star_rounded,
+                      size: 18,
+                      color: context.semanticColors.rating,
+                    ),
+                  ],
+                ),
+              ] else if (widget.showRatingAction &&
+                  !_detailsCubit.state.isLoadingReview) ...[
+                const SizedBox(height: AppSpacing.lg),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () async {
+                      await context.pushNamed(
+                        ActiveRideRoutes.tripCompletion,
+                        extra: (ride: snapshot!, returnToReceipt: true),
+                      );
+                      if (mounted) {
+                        await _detailsCubit.loadMyReview(rideId, refresh: true);
+                      }
+                    },
+                    style:
+                        TextButton.styleFrom(
+                          foregroundColor: colors.onSurface,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
+                          minimumSize: const Size(
+                            0,
+                            AppSize.minimumTouchTarget,
+                          ),
+                          side: BorderSide(color: colors.outlineVariant),
+                          backgroundColor: colors.surfaceContainerLowest,
+                          enableFeedback: false,
+                          splashFactory: NoSplash.splashFactory,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                        ).copyWith(
+                          overlayColor: WidgetStateProperty.resolveWith(
+                            (states) => states.contains(WidgetState.focused)
+                                ? colors.primary.withValues(alpha: 0.12)
+                                : Colors.transparent,
+                          ),
+                        ),
+                    icon: Icon(
+                      Icons.star_outline_rounded,
+                      size: 18,
+                      color: colors.onSurface,
+                    ),
+                    label: const Text('Rate this ride'),
+                  ),
+                ),
+              ],
             ],
             if (isCompleted) ...[
-              const SizedBox(height: AppSpacing.xxl),
-              Text(
-                'Fare breakdown',
-                style: context.textStyles.labelSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                child: Divider(height: 1, color: hairline),
               ),
+              _buildSectionLabel(context, 'FARE BREAKDOWN'),
               const SizedBox(height: AppSpacing.md),
               _buildReceiptSummary(context, snapshot, fare),
             ],
-            const SizedBox(height: AppSpacing.lg),
-            TextButton(
-              onPressed: rideId == null || rideId.isEmpty
-                  ? null
-                  : () => showSafetyReportSheet(
-                      context,
-                      rideId: rideId,
-                      driverName: driverName,
-                      vehiclePlate:
-                          ride?.vehiclePlate ?? snapshot?.plateNumber ?? '',
-                      vehicleType:
-                          ride?.vehicleType ?? snapshot?.vehicleType ?? '',
-                      trackRepository: widget.trackRepository,
+            Padding(
+              padding: const EdgeInsets.only(
+                top: AppSpacing.xl,
+                bottom: AppSpacing.sm,
+              ),
+              child: Divider(height: 1, color: hairline),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: rideId == null || rideId.isEmpty
+                    ? null
+                    : () => showSafetyReportSheet(
+                        context,
+                        rideId: rideId,
+                        driverName: driverName,
+                        vehiclePlate:
+                            ride?.vehiclePlate ?? snapshot?.plateNumber ?? '',
+                        vehicleType:
+                            ride?.vehicleType ?? snapshot?.vehicleType ?? '',
+                        trackRepository: widget.trackRepository,
+                      ),
+                style:
+                    TextButton.styleFrom(
+                      foregroundColor: colors.onSurfaceVariant,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs,
+                      ),
+                      minimumSize: const Size(0, AppSize.minimumTouchTarget),
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.focused)
+                            ? colors.primary.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                      ),
                     ),
-              child: const Text('Report an issue'),
+                icon: const Icon(LucideIcons.flag, size: 16),
+                label: const Text('Report an issue'),
+              ),
             ),
           ],
         ),
