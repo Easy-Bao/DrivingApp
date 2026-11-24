@@ -176,6 +176,23 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     return (latitude: latitude, longitude: longitude);
   }
 
+  double? get _effectiveDistanceKm =>
+      widget.distanceKm ??
+      double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), ''));
+
+  double? get _effectiveDurationMinutes =>
+      widget.durationMinutes ??
+      double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), ''));
+
+  BidSessionTrip _tripMetadata() => BidSessionTrip(
+    fare: widget.fare,
+    destination: widget.destination,
+    distance: widget.distance,
+    duration: widget.duration,
+    pickupAddress: widget.pickupAddress,
+    passengerNote: widget.passengerNote,
+  );
+
   List<DriverModel> _uniqueNearbyDrivers(NearestDriverFound state) {
     final byId = <String, DriverModel>{state.driver.id: state.driver};
     for (final driver in state.nearbyDrivers) {
@@ -200,7 +217,15 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
         (bookingBloc.state as BookingFailure).isRequestExpired;
     if (!bookingBloc.hasActiveDriverSearch && !isExpiredRequest) {
       BlocProvider.of<NearbyDriversCubit>(context);
-      bookingBloc.add(const ResetBookingEvent());
+      bookingBloc.add(
+        StartNearbyDriverSearchEvent(
+          trip: _tripMetadata(),
+          pickupLat: pickup.latitude,
+          pickupLng: pickup.longitude,
+          distanceKm: _effectiveDistanceKm,
+          durationMinutes: _effectiveDurationMinutes,
+        ),
+      );
     }
   }
 
@@ -328,12 +353,8 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     final pickupLat = pickup.latitude;
     final pickupLng = pickup.longitude;
 
-    final distanceNum =
-        widget.distanceKm ??
-        double.tryParse(widget.distance.replaceAll(RegExp(r'[^0-9.]'), ''));
-    final durationNum =
-        widget.durationMinutes ??
-        double.tryParse(widget.duration.replaceAll(RegExp(r'[^0-9.]'), ''));
+    final distanceNum = _effectiveDistanceKm;
+    final durationNum = _effectiveDurationMinutes;
     if (distanceNum == null || durationNum == null) return;
 
     setState(() {
@@ -341,19 +362,10 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
       _isViewingDriverProfile = false;
     });
 
-    final tripMetadata = BidSessionTrip(
-      fare: widget.fare,
-      destination: widget.destination,
-      distance: widget.distance,
-      duration: widget.duration,
-      pickupAddress: widget.pickupAddress,
-      passengerNote: widget.passengerNote,
-    );
-
     BlocProvider.of<BookingBloc>(context).add(
       StartDirectBookingEvent(
         targetDriver: driver,
-        trip: tripMetadata,
+        trip: _tripMetadata(),
         pickupLat: pickupLat,
         pickupLng: pickupLng,
         distanceKm: distanceNum,
@@ -402,6 +414,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
             ),
           );
         },
+        onBackPressed: _returnHome,
         onCancelPressed: _handleCancel,
         acceptingOfferId: _acceptingOfferId,
         isCanceling: _isLeaving,
@@ -412,7 +425,20 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
   void _showNearbyDrivers() {
     final booking = BlocProvider.of<BookingBloc>(context);
     if (booking.hasActiveBooking) return;
-    booking.add(const ResetBookingEvent());
+    final pickup = _pickupCoordinate;
+    if (pickup != null) {
+      booking.add(
+        StartNearbyDriverSearchEvent(
+          trip: _tripMetadata(),
+          pickupLat: pickup.latitude,
+          pickupLng: pickup.longitude,
+          distanceKm: _effectiveDistanceKm,
+          durationMinutes: _effectiveDurationMinutes,
+        ),
+      );
+    } else {
+      booking.add(const ResetBookingEvent());
+    }
     unawaited(BlocProvider.of<NearbyDriversCubit>(context).refresh());
   }
 
@@ -722,7 +748,8 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               isChoosingDriver: true,
                               notice: state.message,
                             );
-                          } else if (state is BookingInitial) {
+                          } else if (state is BookingInitial ||
+                              state is BookingFindingNearbyDrivers) {
                             return _buildNearbyDriversPanel(
                               fare: fare,
                               isChoosingDriver: true,

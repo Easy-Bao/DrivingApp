@@ -16,6 +16,7 @@ class FindingDriverNearbyPanel extends StatefulWidget {
     required this.onSelectDriver,
     this.isChoosingDriver = false,
     required this.onAcceptOfferPressed,
+    this.onBackPressed,
     required this.onCancelPressed,
     this.acceptingOfferId,
     this.isCanceling = false,
@@ -31,6 +32,7 @@ class FindingDriverNearbyPanel extends StatefulWidget {
   final ValueChanged<Driver> onSelectDriver;
   final bool isChoosingDriver;
   final ValueChanged<BookingOffer> onAcceptOfferPressed;
+  final VoidCallback? onBackPressed;
   final VoidCallback onCancelPressed;
   final String? acceptingOfferId;
   final bool isCanceling;
@@ -356,26 +358,48 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xs),
-                        TextButton(
-                          onPressed: busy ? null : widget.onCancelPressed,
-                          style:
-                              TextButton.styleFrom(
-                                foregroundColor: colors.onSurfaceVariant,
-                                enableFeedback: false,
-                                splashFactory: NoSplash.splashFactory,
-                                minimumSize: const Size.fromHeight(
-                                  AppSize.minimumTouchTarget,
-                                ),
-                              ).copyWith(
-                                overlayColor: WidgetStateProperty.resolveWith(
-                                  (states) =>
-                                      states.contains(WidgetState.focused)
-                                      ? colors.primary.withValues(alpha: 0.12)
-                                      : Colors.transparent,
-                                ),
-                              ),
+                        if (widget.onBackPressed != null)
+                          _buildChoosingFooterActions(
+                            context,
+                            busy: busy,
+                            onBack: widget.onBackPressed!,
+                            onCancel: widget.onCancelPressed,
+                            isCanceling: widget.isCanceling,
+                          )
+                        else
+                          TextButton(
+                            onPressed: busy ? null : widget.onCancelPressed,
+                            style: _secondaryTextButtonStyle(
+                              colors.onSurfaceVariant,
+                              colors.primary,
+                            ),
+                            child: const Text('Back to trip'),
+                          ),
+                      ] else if (widget.isChoosingDriver) ...[
+                        FilledButton(
+                          onPressed: busy
+                              ? null
+                              : (widget.onBackPressed ??
+                                    widget.onCancelPressed),
+                          style: primaryButtonStyle,
                           child: const Text('Back to trip'),
                         ),
+                        if (widget.onBackPressed != null) ...[
+                          const SizedBox(height: AppSpacing.xs),
+                          TextButton(
+                            key: const ValueKey('nearby-drivers-cancel-search'),
+                            onPressed: busy ? null : widget.onCancelPressed,
+                            style: _secondaryTextButtonStyle(
+                              colors.error,
+                              colors.error,
+                            ),
+                            child: Text(
+                              widget.isCanceling
+                                  ? 'Cancelling…'
+                                  : 'Cancel search',
+                            ),
+                          ),
+                        ],
                       ] else
                         FilledButton(
                           onPressed: busy ? null : widget.onCancelPressed,
@@ -383,8 +407,6 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                           child: Text(
                             widget.isCanceling
                                 ? 'Cancelling…'
-                                : widget.isChoosingDriver
-                                ? 'Back to trip'
                                 : 'Cancel request',
                           ),
                         ),
@@ -396,6 +418,58 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
           ),
         ),
       ),
+    );
+  }
+
+  ButtonStyle _secondaryTextButtonStyle(Color foreground, Color focusColor) {
+    return TextButton.styleFrom(
+      foregroundColor: foreground,
+      enableFeedback: false,
+      splashFactory: NoSplash.splashFactory,
+      minimumSize: const Size.fromHeight(AppSize.minimumTouchTarget),
+    ).copyWith(
+      overlayColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.focused)
+            ? focusColor.withValues(alpha: 0.12)
+            : Colors.transparent,
+      ),
+    );
+  }
+
+  Widget _buildChoosingFooterActions(
+    BuildContext context, {
+    required bool busy,
+    required VoidCallback onBack,
+    required VoidCallback onCancel,
+    required bool isCanceling,
+  }) {
+    final colors = context.colorScheme;
+    final backButton = TextButton(
+      onPressed: busy ? null : onBack,
+      style: _secondaryTextButtonStyle(colors.onSurfaceVariant, colors.primary),
+      child: const Text('Back to trip'),
+    );
+    final cancelButton = TextButton(
+      key: const ValueKey('nearby-drivers-cancel-search'),
+      onPressed: busy ? null : onCancel,
+      style: _secondaryTextButtonStyle(colors.error, colors.error),
+      child: Text(isCanceling ? 'Cancelling…' : 'Cancel search'),
+    );
+    final stack =
+        MediaQuery.sizeOf(context).width < 320 ||
+        MediaQuery.textScalerOf(context).scale(14) > 21;
+    if (stack) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [backButton, cancelButton],
+      );
+    }
+    return Row(
+      children: [
+        Expanded(child: backButton),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(child: cancelButton),
+      ],
     );
   }
 }

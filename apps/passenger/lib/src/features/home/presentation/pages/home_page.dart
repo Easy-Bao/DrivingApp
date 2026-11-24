@@ -802,6 +802,19 @@ class _HomePageState extends State<HomePage> {
       primaryAction = activeSearch == null
           ? null
           : () => unawaited(_openActiveDriverSearch(activeSearch));
+    } else if (bookingState is BookingFindingNearbyDrivers) {
+      final destinationName =
+          activeSearch?.trip.destination.name.trim() ??
+          bookingState.trip.destination.name.trim();
+      title = 'Driver Search in Progress';
+      content = destinationName.isNotEmpty
+          ? 'You are already looking for a driver to $destinationName. View or cancel it before starting another booking.'
+          : 'You are already looking for a driver. View or cancel your current search before starting another booking.';
+      icon = LucideIcons.clock;
+      primaryLabel = activeSearch != null ? 'View Search' : null;
+      primaryAction = activeSearch == null
+          ? null
+          : () => unawaited(_openActiveDriverSearch(activeSearch));
     } else {
       final destinationName = activeSearch?.trip.destination.name.trim() ?? '';
       title = 'Booking Request in Progress';

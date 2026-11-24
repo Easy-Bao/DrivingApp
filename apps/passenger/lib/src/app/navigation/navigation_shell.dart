@@ -142,7 +142,8 @@ class _ShellLayoutState extends State<ShellLayout> {
       unawaited(_loadInboxNotifications(refresh: true));
       return;
     }
-    if (state is BookingSearching ||
+    if (state is BookingFindingNearbyDrivers ||
+        state is BookingSearching ||
         state is BookingOffersReceived ||
         state is BookingDriverMatched ||
         state is BookingRideRecovered) {
@@ -726,6 +727,19 @@ class _ShellLayoutState extends State<ShellLayout> {
           onAction: activeSearch == null
               ? null
               : () => _openFindingDriverFromShell(activeSearch),
+        );
+      case BookingFindingNearbyDrivers(:final trip):
+        return ActiveBookingBanner(
+          title: 'Looking for drivers',
+          subtitle: 'To ${trip.destination.name}',
+          tone: ActiveBookingBannerTone.active,
+          isLoading: true,
+          actionLabel: activeSearch != null ? 'View' : null,
+          showActionArrow: activeSearch != null,
+          onAction: activeSearch == null
+              ? null
+              : () => _openFindingDriverFromShell(activeSearch),
+          onDismiss: () => bookingBloc.add(const CancelBookingEvent()),
         );
       case FindingNearestDriver(:final trip):
         return ActiveBookingBanner(

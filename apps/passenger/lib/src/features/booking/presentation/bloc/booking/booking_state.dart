@@ -36,6 +36,22 @@ final class FindingNearestDriver extends BookingState {
   final double pickupLng;
 }
 
+final class BookingFindingNearbyDrivers extends BookingState {
+  const BookingFindingNearbyDrivers({
+    required this.trip,
+    required this.pickupLat,
+    required this.pickupLng,
+    this.distanceKm,
+    this.durationMinutes,
+  });
+
+  final BidSessionTrip trip;
+  final double pickupLat;
+  final double pickupLng;
+  final double? distanceKm;
+  final double? durationMinutes;
+}
+
 final class NearestDriverFound extends BookingState {
   const NearestDriverFound({
     required this.driver,
@@ -213,6 +229,7 @@ extension BookingStateModernApi on BookingState {
   String get statusMessage => switch (this) {
     BookingInitial() => 'Ready to request a short hop.',
     FindingNearestDriver() => 'Locating nearest driver.',
+    BookingFindingNearbyDrivers() => 'Looking for nearby drivers.',
     NearestDriverFound(:final driver) => '${driver.displayName} is nearby.',
     BookingSearching(:final sessionId) when sessionId == null =>
       'Sending your request.',
@@ -242,6 +259,10 @@ extension BookingStateModernApi on BookingState {
       pickupLat,
       pickupLng,
     ),
+    BookingFindingNearbyDrivers(:final pickupLat, :final pickupLng) => (
+      pickupLat,
+      pickupLng,
+    ),
     NearestDriverFound(:final pickupLat, :final pickupLng) => (
       pickupLat,
       pickupLng,
@@ -260,6 +281,7 @@ extension BookingStateModernApi on BookingState {
 
   bool get isBlockingBooking => switch (this) {
     FindingNearestDriver() ||
+    BookingFindingNearbyDrivers() ||
     NearestDriverFound() ||
     BookingSearching() ||
     BookingOffersReceived() ||

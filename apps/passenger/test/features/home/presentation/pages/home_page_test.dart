@@ -1210,4 +1210,111 @@ void main() {
       expect(find.text('Resume Trip'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'blocks destination search while nearby driver search is active',
+    (tester) async {
+      final locationRepository = _MockCurrentLocationRepository();
+      final homeRepository = _MockHomeRepository();
+      final homeCubit = HomeCubit(
+        repository: homeRepository,
+        currentLocationRepository: locationRepository,
+      );
+      final sessionBloc = SessionBloc(
+        sessionRepository: _MockSessionRepository(),
+      );
+      final locationAccess = _MockLocationAccessCubit();
+      final bookingBloc = _MockBookingBloc();
+      final history = _MockRideHistoryBloc();
+      final savedPlaces = _MockSavedPlacesCubit();
+      final draft = BookingDraftCubit();
+      final lifecycle = AppLifecycleCoordinator();
+
+      const trip = BidSessionTrip(
+        fare: 27.72,
+        destination: Place(
+          id: 'dest-cafe',
+          name: 'Cafe at Mountain View',
+          fullAddress: 'Mountain View',
+          latitude: 7.83,
+          longitude: 123.44,
+        ),
+        distance: '1.4 km',
+        duration: '5 min',
+        pickupAddress: 'Main Plaza',
+      );
+      const activeSearch = ActiveDriverSearch(
+        trip: trip,
+        pickupLat: 7.82,
+        pickupLng: 123.43,
+        distanceKm: 1.4,
+        durationMinutes: 5,
+      );
+
+      when(locationRepository.getCurrentLocation).thenAnswer(
+        (_) async => const Ok(CurrentLocation(latitude: 7.8, longitude: 123.4)),
+      );
+      when(locationRepository.watchCurrentLocation)
+          .thenAnswer((_) => const Stream.empty());
+      when(
+        () => homeRepository.loadHomeData(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer(
+        (_) async =>
+            const Ok(HomeData(currentAddress: 'Pickup', recentLocations: [])),
+      );
+      when(() => locationAccess.state).thenReturn(const LocationAccessReady());
+      when(() => bookingBloc.state).thenReturn(
+        const BookingFindingNearbyDrivers(
+          trip: trip,
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          distanceKm: 1.4,
+          durationMinutes: 5,
+        ),
+      );
+      when(() => bookingBloc.hasActiveDriverSearch).thenReturn(true);
+      when(() => bookingBloc.activeDriverSearch).thenReturn(activeSearch);
+      when(() => history.state).thenReturn(const RideHistoryInitial());
+      when(() => savedPlaces.state).thenReturn(const SavedPlacesState());
+      when(savedPlaces.loadPlaces).thenAnswer((_) async {});
+
+      addTearDown(() async {
+        await homeCubit.close();
+        await sessionBloc.close();
+        await draft.close();
+        await lifecycle.dispose();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<SessionBloc>.value(value: sessionBloc),
+              BlocProvider<LocationAccessCubit>.value(value: locationAccess),
+              BlocProvider<HomeCubit>.value(value: homeCubit),
+              BlocProvider<BookingDraftCubit>.value(value: draft),
+              BlocProvider<RideHistoryBloc>.value(value: history),
+              BlocProvider<SavedPlacesCubit>.value(value: savedPlaces),
+            ],
+            child: HomePage(
+              bookingBloc: bookingBloc,
+              lifecycleCoordinator: lifecycle,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Search Robinsons'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Driver Search in Progress'), findsOneWidget);
+      expect(find.textContaining('Cafe at Mountain View'), findsOneWidget);
+      expect(find.text('View Search'), findsOneWidget);
+    },
+  );
 }

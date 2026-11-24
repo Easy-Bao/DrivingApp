@@ -974,6 +974,111 @@ void main() {
       expect(find.byType(PendingBookingBanner), findsNothing);
     },
   );
+
+  testWidgets(
+    'shows active nearby driver search in FloatingTabBar and supports view and cancel',
+    (tester) async {
+      final sessionBloc = SessionBloc(
+        sessionRepository: _SessionRepositoryStub(),
+      )..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
+      final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
+      final realtimeClient = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://localhost/realtime'),
+        tokenProvider: () async => 'test-token',
+        connector: _RealtimeSocketConnectorStub(),
+      );
+      final navigationCoordinator = TabNavigationCoordinator();
+      final lifecycleCoordinator = AppLifecycleCoordinator();
+      const trip = BidSessionTrip(
+        fare: 27.72,
+        destination: Place(
+          id: 'dest-cafe',
+          name: 'Cafe at Mountain View',
+          fullAddress: 'Mountain View',
+          latitude: 7.83,
+          longitude: 123.44,
+        ),
+        distance: '1.4 km',
+        duration: '5 min',
+        pickupAddress: 'Main Plaza',
+      );
+      const activeSearch = ActiveDriverSearch(
+        trip: trip,
+        pickupLat: 7.82,
+        pickupLng: 123.43,
+        distanceKm: 1.4,
+        durationMinutes: 5,
+      );
+      final bookingBloc = _MockBookingBloc();
+      when(() => bookingBloc.state).thenReturn(
+        const BookingFindingNearbyDrivers(
+          trip: trip,
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          distanceKm: 1.4,
+          durationMinutes: 5,
+        ),
+      );
+      when(() => bookingBloc.stream).thenAnswer((_) => const Stream.empty());
+      when(() => bookingBloc.hasActiveDriverSearch).thenReturn(true);
+      when(() => bookingBloc.activeDriverSearch).thenReturn(activeSearch);
+      when(() => bookingBloc.retryableDriverSearch).thenReturn(null);
+
+      Map<String, dynamic>? openedExtra;
+      final router = _createRouter(
+        inboxCubit,
+        realtimeClient,
+        navigationCoordinator,
+        lifecycleCoordinator,
+        bookingBloc: bookingBloc,
+        onFindingDriverOpened: (extra) => openedExtra = extra,
+      );
+      addTearDown(() async {
+        router.dispose();
+        await sessionBloc.close();
+        await inboxCubit.close();
+        await realtimeClient.dispose();
+        navigationCoordinator.dispose();
+        await lifecycleCoordinator.dispose();
+      });
+
+      await tester.pumpWidget(
+        BlocProvider<SessionBloc>.value(
+          value: sessionBloc,
+          child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        find.descendant(
+          of: find.byType(FloatingTabBar),
+          matching: find.byType(ActiveBookingBanner),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Looking for drivers'), findsOneWidget);
+      expect(find.text('To Cafe at Mountain View'), findsOneWidget);
+
+      await tester.tap(find.text('View'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Finding Driver Screen'), findsOneWidget);
+      expect(
+        (openedExtra?['destination'] as Place?)?.name,
+        'Cafe at Mountain View',
+      );
+
+      router.pop();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.byKey(const Key('active-booking-banner-dismiss')));
+      await tester.pump();
+      verify(() => bookingBloc.add(const CancelBookingEvent())).called(1);
+    },
+  );
 }
 
 GoRouter _createRouter(

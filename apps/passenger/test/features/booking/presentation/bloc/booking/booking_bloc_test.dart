@@ -1532,5 +1532,46 @@ void main() {
             .called(1);
       },
     );
+
+    test('keeps nearby driver search active and blocking until explicitly canceled', () async {
+      final bloc = _makeBookingBloc(
+        driverRepo: driverRepo,
+        bookingRepository: bookingRepository,
+        driverProfileRepository: driverProfileRepository,
+        secureSessionService: secureSessionService,
+      );
+      addTearDown(bloc.close);
+
+      final searching = bloc.stream.firstWhere(
+        (state) => state is BookingFindingNearbyDrivers,
+      );
+      bloc.add(
+        const StartNearbyDriverSearchEvent(
+          trip: testTrip,
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          distanceKm: 2,
+          durationMinutes: 5,
+        ),
+      );
+      await searching.timeout(const Duration(seconds: 1));
+
+      expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+      expect(bloc.hasActiveDriverSearch, isTrue);
+      expect(bloc.state.isBlockingBooking, isTrue);
+      expect(bloc.activeDriverSearch?.trip.destination.name, 'Destination');
+      expect(bloc.activeDriverSearch?.distanceKm, 2);
+      expect(bloc.activeDriverSearch?.durationMinutes, 5);
+
+      final canceled = bloc.stream.firstWhere(
+        (state) => state is BookingCanceled,
+      );
+      bloc.add(const CancelBookingEvent());
+      await canceled.timeout(const Duration(seconds: 1));
+
+      expect(bloc.hasActiveDriverSearch, isFalse);
+      expect(bloc.state.isBlockingBooking, isFalse);
+      expect(bloc.activeDriverSearch, isNull);
+    });
   });
 }

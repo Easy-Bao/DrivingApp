@@ -1,6 +1,32 @@
 part of 'booking_bloc.dart';
 
 extension _BookingBlocDriverDiscovery on BookingBloc {
+  void _onStartNearbyDriverSearch(
+    StartNearbyDriverSearchEvent event,
+    Emitter<BookingState> emit,
+  ) {
+    if (hasActiveBooking || _isCreatingBidSession) return;
+    _nearestSearchCancelled = false;
+    _isAutoAcceptingOffer = false;
+    _lastFailedDriverSearch = null;
+    _setTripContext(
+      event.trip,
+      pickupLat: event.pickupLat,
+      pickupLng: event.pickupLng,
+      distanceKm: event.distanceKm,
+      durationMinutes: event.durationMinutes,
+    );
+    emit(
+      BookingFindingNearbyDrivers(
+        trip: event.trip,
+        pickupLat: event.pickupLat,
+        pickupLng: event.pickupLng,
+        distanceKm: event.distanceKm,
+        durationMinutes: event.durationMinutes,
+      ),
+    );
+  }
+
   Future<void> _onLocateNearestDriver(
     LocateNearestDriverEvent event,
     Emitter<BookingState> emit,

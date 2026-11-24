@@ -53,6 +53,7 @@ void main() {
     'nearby availability adds, moves, and removes driver pins before any booking offer',
     (tester) async {
       registerFallbackValue(const ClearMapAnnotationsEvent());
+      registerFallbackValue(const ResetBookingEvent());
       MapboxMapsFlutterPlatform.instance = _MapPlatform();
       final booking = _Booking();
       final nearby = _Nearby();
@@ -100,6 +101,8 @@ void main() {
         ),
       );
       await tester.pump();
+      verify(() => booking.add(any(that: isA<StartNearbyDriverSearchEvent>())))
+          .called(1);
       Driver driverAt(double latitude) => Driver(
         id: 'nearby',
         name: 'Online driver',

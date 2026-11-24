@@ -85,6 +85,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       _onLocateNearestDriver,
       transformer: droppable(),
     );
+    on<StartNearbyDriverSearchEvent>(_onStartNearbyDriverSearch);
     on<LoadDriverReviewsEvent>(
       _onLoadDriverReviews,
       transformer: restartable(),
@@ -115,6 +116,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
   bool get hasActiveDriverSearch =>
       state is FindingNearestDriver ||
+      state is BookingFindingNearbyDrivers ||
       state is NearestDriverFound ||
       state is BookingSearching ||
       state is BookingOffersReceived ||

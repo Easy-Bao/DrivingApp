@@ -84,6 +84,14 @@ void main() {
       expect(const BookingInitial().isBlockingBooking, isFalse);
       expect(const BookingCanceled().isBlockingBooking, isFalse);
       expect(const BookingFailure('failed').isBlockingBooking, isFalse);
+      const nearbySearch = BookingFindingNearbyDrivers(
+        trip: trip,
+        pickupLat: 8.056,
+        pickupLng: 123.742,
+      );
+      expect(nearbySearch.isBlockingBooking, isTrue);
+      expect(nearbySearch.statusMessage, 'Looking for nearby drivers.');
+      expect(nearbySearch.pickupCoordinates, (8.056, 123.742));
       expect(const BookingSearching(isDirect: true).isBlockingBooking, isTrue);
       expect(
         const BookingOffersReceived(

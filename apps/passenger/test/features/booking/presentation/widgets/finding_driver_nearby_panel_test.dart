@@ -40,6 +40,8 @@ Future<void> _pump(
   double scale = 1,
   bool isChoosingDriver = false,
   ValueChanged<Driver>? onSelectDriver,
+  VoidCallback? onBackPressed,
+  VoidCallback? onCancelPressed,
   String? acceptingOfferId,
   Driver? requestedDriver,
 }) async {
@@ -63,7 +65,8 @@ Future<void> _pump(
             isChoosingDriver: isChoosingDriver,
             onSelectDriver: onSelectDriver ?? (_) {},
             onAcceptOfferPressed: onChoose ?? (_) {},
-            onCancelPressed: () {},
+            onBackPressed: onBackPressed,
+            onCancelPressed: onCancelPressed ?? () {},
             acceptingOfferId: acceptingOfferId,
           ),
         ),
@@ -313,4 +316,40 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Request driver'), findsOneWidget);
   });
+
+  testWidgets(
+    'separates Back to trip from Cancel search while choosing a driver',
+    (tester) async {
+      var backTaps = 0;
+      var cancelTaps = 0;
+
+      await _pump(
+        tester,
+        isChoosingDriver: true,
+        availability: const NearbyDriversState(hasLoaded: true),
+        onBackPressed: () => backTaps++,
+        onCancelPressed: () => cancelTaps++,
+      );
+
+      await tester.tap(find.text('Back to trip'));
+      expect(backTaps, 1);
+      expect(cancelTaps, 0);
+
+      await tester.tap(find.text('Cancel search'));
+      expect(backTaps, 1);
+      expect(cancelTaps, 1);
+
+      await _pump(
+        tester,
+        isChoosingDriver: true,
+        onBackPressed: () => backTaps++,
+        onCancelPressed: () => cancelTaps++,
+      );
+      await tester.ensureVisible(find.text('Back to trip'));
+      await tester.tap(find.text('Back to trip'));
+      await tester.tap(find.text('Cancel search'));
+      expect(backTaps, 2);
+      expect(cancelTaps, 2);
+    },
+  );
 }
