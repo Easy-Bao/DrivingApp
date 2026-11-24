@@ -107,8 +107,7 @@ func (breaker *CircuitBreaker) Do(ctx context.Context, operation func(context.Co
 			breaker.release(generation, isProbe)
 			return fmt.Errorf("execute circuit-protected operation: %w", err)
 		}
-		var nonTrip NonTripError
-		if errors.As(err, &nonTrip) {
+		if nonTrip, ok := errors.AsType[NonTripError](err); ok {
 			breaker.release(generation, isProbe)
 			return fmt.Errorf("execute circuit-protected operation: %w", nonTrip.Unwrap())
 		}
