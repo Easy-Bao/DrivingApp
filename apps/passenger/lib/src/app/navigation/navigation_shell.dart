@@ -9,6 +9,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/app/navigation/floating_tab_bar.dart';
 import 'package:passenger/src/app/navigation/guest_action_bar.dart';
+import 'package:passenger/src/app/navigation/guest_help_bottom_sheet.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_cubit.dart';
@@ -21,6 +22,7 @@ import 'package:passenger/src/features/home/presentation/widgets/active_booking_
 import 'package:passenger/src/features/home/presentation/widgets/active_ride_banner.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
+import 'package:passenger/src/features/settings/settings_routes.dart';
 
 class TabBranchContainer extends StatelessWidget {
   const TabBranchContainer({
@@ -334,6 +336,8 @@ class _ShellLayoutState extends State<ShellLayout> {
                                       context.pushNamed(AuthRoutes.signup),
                                   onSignIn: () =>
                                       context.pushNamed(AuthRoutes.signin),
+                                  onHelp: () =>
+                                      unawaited(_openGuestHelp(context)),
                                 );
                               }
                               if (isWide) return const SizedBox.shrink();
@@ -402,6 +406,17 @@ class _ShellLayoutState extends State<ShellLayout> {
         ),
       ),
     );
+  }
+
+  Future<void> _openGuestHelp(BuildContext context) async {
+    final action = await showGuestHelpBottomSheet(context);
+    if (!context.mounted || action == null) return;
+    switch (action) {
+      case GuestHelpAction.resetPassword:
+        unawaited(context.pushNamed(AuthRoutes.forgotPassword));
+      case GuestHelpAction.termsOfService:
+        unawaited(context.pushNamed(SettingsRoutes.terms));
+    }
   }
 
   TrackDriverCubit? _resolveTrackDriverCubit(BuildContext context) {

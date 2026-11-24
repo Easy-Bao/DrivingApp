@@ -1,13 +1,16 @@
 import 'package:design_system/design_system.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
 class const GuestActionBar({
   super.key,
   required this.onSignUp,
   required this.onSignIn,
+  required this.onHelp,
 }) extends StatelessWidget {
   final VoidCallback onSignUp;
   final VoidCallback onSignIn;
+  final VoidCallback onHelp;
 
   @override
   Widget build(BuildContext context) {
@@ -28,12 +31,18 @@ class const GuestActionBar({
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppLayout.pagePadding,
-            vertical: AppSpacing.md,
+          padding: const EdgeInsets.fromLTRB(
+            AppLayout.pagePadding,
+            AppSpacing.md,
+            AppLayout.pagePadding,
+            AppSpacing.xs,
           ),
-          child: stackActions
-              ? Column(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (stackActions)
+                Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -42,13 +51,67 @@ class const GuestActionBar({
                     signIn,
                   ],
                 )
-              : Row(
+              else
+                Row(
                   children: [
                     Expanded(child: signUp),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(child: signIn),
                   ],
                 ),
+              const SizedBox(height: AppSpacing.sm),
+              Align(
+                alignment: Alignment.center,
+                child: TextButton(
+                  key: const ValueKey<String>('guest-action-bar-help'),
+                  onPressed: onHelp,
+                  style:
+                      TextButton.styleFrom(
+                        foregroundColor: colors.onSurfaceVariant,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
+                        minimumSize: const Size(
+                          AppSize.minimumTouchTarget,
+                          AppSize.minimumTouchTarget,
+                        ),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        enableFeedback: false,
+                        splashFactory: NoSplash.splashFactory,
+                      ).copyWith(
+                        overlayColor: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.focused)
+                              ? colors.primary.withValues(alpha: 0.12)
+                              : Colors.transparent,
+                        ),
+                      ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ExcludeSemantics(
+                        child: Icon(
+                          LucideIcons.info,
+                          size: 14,
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Flexible(
+                        child: Text(
+                          'Need help?',
+                          textAlign: TextAlign.center,
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
