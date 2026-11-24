@@ -61,6 +61,7 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
           driverId.isEmpty ||
           cubit.state.isLoading ||
           cubit.state.isLoadingReview ||
+          !cubit.state.hasLoadedReview ||
           cubit.state.reviewErrorMessage != null) {
         return;
       }
@@ -95,6 +96,7 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
         final reviewReady =
             !state.isLoading &&
             !state.isLoadingReview &&
+            state.hasLoadedReview &&
             state.reviewErrorMessage == null;
         final busy = state.isSubmittingReview;
         final horizontalPadding = MediaQuery.sizeOf(context).width < 360
@@ -230,7 +232,10 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
                                 ),
                             ],
                           ),
-                          if (state.isLoading || state.isLoadingReview)
+                          if (state.isLoading ||
+                              state.isLoadingReview ||
+                              (!state.hasLoadedReview &&
+                                  state.reviewErrorMessage == null))
                             const Padding(
                               padding: EdgeInsets.only(top: AppSpacing.sm),
                               child: Center(

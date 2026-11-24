@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/ride_counterparty.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
+import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 import 'package:passenger/src/features/ride_history/presentation/pages/ride_details_page.dart';
@@ -116,4 +120,134 @@ void main() {
       },
     );
   }
+
+  testWidgets(
+    'keeps existing rating instead of showing Rate this ride when review resolves before ride details',
+    (tester) async {
+      final trackRepository = _TrackRepository();
+      final sessionStore = _SessionStore();
+      final profileRepository = _ProfileRepository();
+      final rideCompleter = Completer<Result<RideSnapshot, Failure>>();
+      final counterpartyCompleter =
+          Completer<Result<RideCounterparty, Failure>>();
+
+      when(() => sessionStore.readPassengerId())
+          .thenAnswer((_) async => 'passenger-1');
+      when(() => trackRepository.fetchRide('901'))
+          .thenAnswer((_) => rideCompleter.future);
+      when(() => trackRepository.fetchCounterparty('901'))
+          .thenAnswer((_) => counterpartyCompleter.future);
+      when(() => profileRepository.fetchMyRideReview('901')).thenAnswer(
+        (_) async => const Ok(
+          DriverReview(
+            passengerName: 'Passenger',
+            comment: 'Great ride',
+            rating: 5,
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: RideDetailsPage(
+            trackRepository: trackRepository,
+            sessionService: sessionStore,
+            profileRepository: profileRepository,
+            initialRide: const RideSnapshot(
+              id: '901',
+              status: 'completed',
+              pickupName: 'Mountain View',
+              dropoffName: 'Cafe',
+              driverId: 'driver-1',
+              driverName: 'Xyrel D. Tenefrancia',
+              fareAmount: 2631,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Rate this ride'), findsNothing);
+
+      rideCompleter.complete(
+        const Ok(
+          RideSnapshot(
+            id: '901',
+            status: 'completed',
+            pickupName: 'Mountain View',
+            dropoffName: 'Cafe',
+            driverId: 'driver-1',
+            driverName: 'Xyrel D. Tenefrancia',
+            fareAmount: 2631,
+          ),
+        ),
+      );
+      counterpartyCompleter.complete(
+        const Err(ServerFailure('Contact unavailable')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ride rating'), findsOneWidget);
+      expect(find.text('5'), findsOneWidget);
+      expect(find.text('Rate this ride'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'shows Rate this ride only after unrated review status finishes loading',
+    (tester) async {
+      final trackRepository = _TrackRepository();
+      final sessionStore = _SessionStore();
+      final profileRepository = _ProfileRepository();
+      final reviewCompleter = Completer<Result<DriverReview?, Failure>>();
+
+      when(() => sessionStore.readPassengerId())
+          .thenAnswer((_) async => 'passenger-1');
+      when(() => trackRepository.fetchRide('902')).thenAnswer(
+        (_) async => const Ok(
+          RideSnapshot(
+            id: '902',
+            status: 'completed',
+            pickupName: 'Mountain View',
+            dropoffName: 'Cafe',
+            driverId: 'driver-1',
+            driverName: 'Xyrel D. Tenefrancia',
+            fareAmount: 2631,
+          ),
+        ),
+      );
+      when(() => trackRepository.fetchCounterparty('902')).thenAnswer(
+        (_) async => const Err(ServerFailure('Contact unavailable')),
+      );
+      when(() => profileRepository.fetchMyRideReview('902'))
+          .thenAnswer((_) => reviewCompleter.future);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: RideDetailsPage(
+            trackRepository: trackRepository,
+            sessionService: sessionStore,
+            profileRepository: profileRepository,
+            initialRide: const RideSnapshot(
+              id: '902',
+              status: 'completed',
+              pickupName: 'Mountain View',
+              dropoffName: 'Cafe',
+              driverId: 'driver-1',
+              driverName: 'Xyrel D. Tenefrancia',
+              fareAmount: 2631,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.text('Rate this ride'), findsNothing);
+
+      reviewCompleter.complete(const Ok(null));
+      await tester.pumpAndSettle();
+      expect(find.text('Rate this ride'), findsOneWidget);
+    },
+  );
 }

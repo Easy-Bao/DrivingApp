@@ -547,7 +547,9 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                   ],
                 ),
               ] else if (widget.showRatingAction &&
-                  !_detailsCubit.state.isLoadingReview) ...[
+                  _detailsCubit.state.hasLoadedReview &&
+                  !_detailsCubit.state.isLoadingReview &&
+                  _detailsCubit.state.reviewErrorMessage == null) ...[
                 const SizedBox(height: AppSpacing.lg),
                 Align(
                   alignment: Alignment.centerLeft,

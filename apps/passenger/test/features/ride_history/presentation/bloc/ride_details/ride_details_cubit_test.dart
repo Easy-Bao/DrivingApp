@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
+import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 
@@ -219,6 +220,57 @@ void main() {
         cubit.state.errorMessage,
         'Cannot reach the server. Check that the server is running and try again.',
       );
+      await cubit.close();
+    },
+  );
+
+  test(
+    'preserves an existing ride review when loadMyReview completes before load',
+    () async {
+      final rideCompleter = Completer<Result<RideSnapshot, Failure>>();
+      final counterpartyCompleter =
+          Completer<Result<RideCounterparty, Failure>>();
+      const ride = RideSnapshot(
+        id: '808',
+        status: 'completed',
+        pickupName: 'Pickup',
+        dropoffName: 'Dropoff',
+        driverId: 'driver-8',
+      );
+      const existingReview = DriverReview(
+        passengerName: 'Passenger',
+        comment: 'Smooth trip',
+        rating: 5,
+      );
+
+      when(() => repository.fetchRide('808'))
+          .thenAnswer((_) => rideCompleter.future);
+      when(() => repository.fetchCounterparty('808'))
+          .thenAnswer((_) => counterpartyCompleter.future);
+      when(() => profileRepository.fetchMyRideReview('808'))
+          .thenAnswer((_) async => const Ok(existingReview));
+
+      final cubit = RideDetailsCubit(
+        repository: repository,
+        sessionService: sessionService,
+        profileRepository: profileRepository,
+      );
+
+      final loadFuture = cubit.load('808');
+      await cubit.loadMyReview('808');
+
+      expect(cubit.state.hasLoadedReview, isTrue);
+      expect(cubit.state.submittedReview, existingReview);
+
+      rideCompleter.complete(const Ok(ride));
+      counterpartyCompleter.complete(
+        const Err(ServerFailure('Contact unavailable')),
+      );
+      await loadFuture;
+
+      expect(cubit.state.ride, ride);
+      expect(cubit.state.hasLoadedReview, isTrue);
+      expect(cubit.state.submittedReview, existingReview);
       await cubit.close();
     },
   );

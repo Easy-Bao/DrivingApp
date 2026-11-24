@@ -16,6 +16,7 @@ final class RideDetailsState extends Equatable {
     this.passengerId = '',
     this.errorMessage,
     this.submittedReview,
+    this.hasLoadedReview = false,
     this.isLoadingReview = false,
     this.isSubmittingReview = false,
     this.reviewErrorMessage,
@@ -28,6 +29,7 @@ final class RideDetailsState extends Equatable {
   final String passengerId;
   final String? errorMessage;
   final DriverReview? submittedReview;
+  final bool hasLoadedReview;
   final bool isLoadingReview;
   final bool isSubmittingReview;
   final String? reviewErrorMessage;
@@ -42,6 +44,8 @@ final class RideDetailsState extends Equatable {
     RideCounterparty? counterparty,
     String? errorMessage,
     DriverReview? submittedReview,
+    bool clearSubmittedReview = false,
+    bool? hasLoadedReview,
     bool? isLoadingReview,
     bool? isSubmittingReview,
     String? reviewErrorMessage,
@@ -56,7 +60,10 @@ final class RideDetailsState extends Equatable {
       counterparty: counterparty ?? this.counterparty,
       passengerId: passengerId,
       errorMessage: errorMessage ?? this.errorMessage,
-      submittedReview: submittedReview ?? this.submittedReview,
+      submittedReview: clearSubmittedReview
+          ? null
+          : submittedReview ?? this.submittedReview,
+      hasLoadedReview: hasLoadedReview ?? this.hasLoadedReview,
       isLoadingReview: isLoadingReview ?? this.isLoadingReview,
       isSubmittingReview: isSubmittingReview ?? this.isSubmittingReview,
       reviewErrorMessage: clearReviewErrorMessage
@@ -77,6 +84,7 @@ final class RideDetailsState extends Equatable {
     passengerId,
     errorMessage,
     submittedReview,
+    hasLoadedReview,
     isLoadingReview,
     isSubmittingReview,
     reviewErrorMessage,
@@ -128,7 +136,22 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
   }
 
   Future<void> _load(String rideId) async {
-    emit(RideDetailsState(rideId: rideId, isLoading: true));
+    final sameRide = state.rideId == rideId;
+    if (!sameRide) {
+      _loadedReviewRideId = null;
+    }
+    emit(
+      RideDetailsState(
+        rideId: rideId,
+        isLoading: true,
+        submittedReview: sameRide ? state.submittedReview : null,
+        hasLoadedReview: sameRide && state.hasLoadedReview,
+        isLoadingReview: sameRide && state.isLoadingReview,
+        isSubmittingReview: sameRide && state.isSubmittingReview,
+        reviewErrorMessage: sameRide ? state.reviewErrorMessage : null,
+        ratingErrorMessage: sameRide ? state.ratingErrorMessage : null,
+      ),
+    );
 
     try {
       final passengerIdFuture = _sessionService.readPassengerId();
@@ -149,6 +172,7 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
       );
 
       if (isClosed) return;
+      final preserveReview = state.rideId == rideId;
       emit(
         RideDetailsState(
           rideId: rideId,
@@ -163,14 +187,31 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
                       ),
                 )
               : null,
+          submittedReview: preserveReview ? state.submittedReview : null,
+          hasLoadedReview: preserveReview && state.hasLoadedReview,
+          isLoadingReview: preserveReview && state.isLoadingReview,
+          isSubmittingReview: preserveReview && state.isSubmittingReview,
+          reviewErrorMessage: preserveReview ? state.reviewErrorMessage : null,
+          ratingErrorMessage: preserveReview ? state.ratingErrorMessage : null,
         ),
       );
     } catch (error, stackTrace) {
       if (!isClosed) {
+        final preserveReview = state.rideId == rideId;
         emit(
           RideDetailsState(
             rideId: rideId,
             errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),
+            submittedReview: preserveReview ? state.submittedReview : null,
+            hasLoadedReview: preserveReview && state.hasLoadedReview,
+            isLoadingReview: preserveReview && state.isLoadingReview,
+            isSubmittingReview: preserveReview && state.isSubmittingReview,
+            reviewErrorMessage: preserveReview
+                ? state.reviewErrorMessage
+                : null,
+            ratingErrorMessage: preserveReview
+                ? state.ratingErrorMessage
+                : null,
           ),
         );
       }
@@ -218,7 +259,14 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
     switch (result) {
       case Ok<DriverReview?, DomainFailure>(:final value):
         _loadedReviewRideId = rideId;
-        emit(state.copyWith(submittedReview: value, isLoadingReview: false));
+        emit(
+          state.copyWith(
+            submittedReview: value,
+            clearSubmittedReview: value == null,
+            hasLoadedReview: true,
+            isLoadingReview: false,
+          ),
+        );
       case Err<DriverReview?, DomainFailure>(:final failure):
         emit(
           state.copyWith(
@@ -272,6 +320,7 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
               comment: trimmedComment,
               rating: rating.toDouble(),
             ),
+            hasLoadedReview: true,
             isSubmittingReview: false,
           ),
         );

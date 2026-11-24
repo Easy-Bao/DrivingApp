@@ -214,4 +214,24 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Done'), findsOneWidget);
   });
+
+  testWidgets('closing after tapping stars does not submit a rating', (
+    tester,
+  ) async {
+    await open(tester);
+    await tester.tap(find.byTooltip('5 stars'));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Home'), findsOneWidget);
+    verifyNever(
+      () => profile.submitReview(
+        driverId: any(named: 'driverId'),
+        rideId: any(named: 'rideId'),
+        rating: any(named: 'rating'),
+        comment: any(named: 'comment'),
+      ),
+    );
+  });
 }
