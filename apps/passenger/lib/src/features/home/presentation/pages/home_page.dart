@@ -17,14 +17,11 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/track_drive
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_state.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
-import 'package:passenger/src/features/booking/domain/entities/booking_draft.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
-import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_state.dart';
 import 'package:passenger/src/features/home/presentation/widgets/destination_search_hint.dart';
-import 'package:passenger/src/features/home/presentation/widgets/pending_booking_banner.dart';
 import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_empty_state.dart';
 import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_preview.dart';
 import 'package:passenger/src/features/home/presentation/widgets/saved_place_quick_actions.dart';
@@ -153,7 +150,6 @@ class _HomePageState extends State<HomePage> {
                               _buildHeader(),
                               const SizedBox(height: AppSpacing.xl),
                               _buildSearchBar(),
-                              _buildPendingBookingBanner(),
                               const SizedBox(height: AppSpacing.lg),
                               _buildChipRow(),
                               const SizedBox(height: AppSpacing.xxl),
@@ -338,65 +334,6 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
-  }
-
-  Widget _buildPendingBookingBanner() {
-    final isAuthenticated = context.select<SessionBloc, bool>(
-      (bloc) => bloc.state.isAuthenticated,
-    );
-
-    return BlocBuilder<BookingBloc, BookingState>(
-      bloc: _bookingBloc,
-      builder: (context, _) {
-        if (_hasBlockingBooking()) return const SizedBox.shrink();
-        return BlocBuilder<BookingDraftCubit, BookingDraftState>(
-          buildWhen: (previous, current) => previous.draft != current.draft,
-          builder: (context, state) {
-            final draft = state.draft;
-            if (draft == null) return const SizedBox.shrink();
-
-            return Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: PendingBookingBanner(
-                isAuthenticated: isAuthenticated,
-                destinationName: draft.destination.name,
-                onContinue: () => unawaited(_continuePendingBooking(draft)),
-                onDismiss: () =>
-                    BlocProvider.of<BookingDraftCubit>(context).clear(),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> _continuePendingBooking(BookingDraft draft) async {
-    if (!await _canStartOrContinueBooking() || !mounted) return;
-    _isNavigationInFlight = true;
-    try {
-      final pickupAddress = draft.pickupAddress;
-      final position = LocationService.lastPosition;
-      BlocProvider.of<BookingDraftCubit>(context).clear();
-      await context.pushNamed(
-        BookingRoutes.rideSelection,
-        extra: {
-          'destination': draft.destination,
-          'tipAmount': draft.tipAmount,
-          'notes': draft.notes,
-        },
-        queryParameters: {
-          if (pickupAddress != null && pickupAddress.isNotEmpty)
-            'pickupAddress': pickupAddress,
-          if (position != null) ...{
-            'pickupLat': position.latitude.toString(),
-            'pickupLng': position.longitude.toString(),
-          },
-        },
-      );
-    } finally {
-      _isNavigationInFlight = false;
-    }
   }
 
   Widget _buildHeader() {

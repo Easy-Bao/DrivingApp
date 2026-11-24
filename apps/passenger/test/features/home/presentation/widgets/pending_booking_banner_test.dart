@@ -25,14 +25,16 @@ void main() {
   testWidgets('shows a pending booking to authenticated passengers', (
     tester,
   ) async {
+    var continued = 0;
+    var dismissed = 0;
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: PendingBookingBanner(
             isAuthenticated: true,
             destinationName: 'Stanford Faculty Club',
-            onContinue: () {},
-            onDismiss: () {},
+            onContinue: () => continued++,
+            onDismiss: () => dismissed++,
           ),
         ),
       ),
@@ -41,5 +43,10 @@ void main() {
     expect(find.text('Continue your booking'), findsOneWidget);
     expect(find.text('Stanford Faculty Club'), findsOneWidget);
     expect(find.text('Continue'), findsOneWidget);
+
+    await tester.tap(find.text('Continue'));
+    await tester.tap(find.byKey(const Key('pending-booking-banner-dismiss')));
+    expect(continued, 1);
+    expect(dismissed, 1);
   });
 }

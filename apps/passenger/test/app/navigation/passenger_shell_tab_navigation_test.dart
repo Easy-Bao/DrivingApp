@@ -17,10 +17,13 @@ import 'package:passenger/src/features/auth/domain/repositories/session_reposito
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
+import 'package:passenger/src/features/booking/domain/entities/booking_draft.dart';
 import 'package:passenger/src/features/booking/domain/entities/driver.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/home/presentation/widgets/active_booking_banner.dart';
+import 'package:passenger/src/features/home/presentation/widgets/pending_booking_banner.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
 import 'package:passenger/src/features/inbox/inbox_routes.dart';
@@ -790,6 +793,187 @@ void main() {
       expect(resumedRideId, 'ride-77');
     },
   );
+
+  testWidgets(
+    'merges pending booking draft into FloatingTabBar across tabs and supports continue and dismiss',
+    (tester) async {
+      final sessionBloc = SessionBloc(
+        sessionRepository: _SessionRepositoryStub(),
+      )..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
+      final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
+      final realtimeClient = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://localhost/realtime'),
+        tokenProvider: () async => 'test-token',
+        connector: _RealtimeSocketConnectorStub(),
+      );
+      final navigationCoordinator = TabNavigationCoordinator();
+      final lifecycleCoordinator = AppLifecycleCoordinator();
+      final draftCubit = BookingDraftCubit()
+        ..save(
+          const BookingDraft(
+            destination: Place(
+              id: 'dest-cafe',
+              name: 'Cafe at Mountain View',
+              fullAddress: 'Mountain View',
+              latitude: 7.83,
+              longitude: 123.44,
+            ),
+            pickupAddress: 'Main Plaza',
+            tipAmount: 15,
+            notes: 'Gate 2',
+          ),
+        );
+
+      Map<String, dynamic>? openedExtra;
+      Map<String, String>? openedQuery;
+      final router = _createRouter(
+        inboxCubit,
+        realtimeClient,
+        navigationCoordinator,
+        lifecycleCoordinator,
+        bookingDraftCubit: draftCubit,
+        onRideSelectionOpened: (extra, query) {
+          openedExtra = extra;
+          openedQuery = query;
+        },
+      );
+      addTearDown(() async {
+        router.dispose();
+        await sessionBloc.close();
+        await inboxCubit.close();
+        await draftCubit.close();
+        await realtimeClient.dispose();
+        navigationCoordinator.dispose();
+        await lifecycleCoordinator.dispose();
+      });
+
+      await tester.pumpWidget(
+        BlocProvider<SessionBloc>.value(
+          value: sessionBloc,
+          child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byType(FloatingTabBar),
+          matching: find.byType(PendingBookingBanner),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Continue your booking'), findsOneWidget);
+      expect(find.text('Cafe at Mountain View'), findsOneWidget);
+
+      await tester.tap(find.text('Activity'));
+      await tester.pumpAndSettle();
+      expect(find.text('Continue your booking'), findsOneWidget);
+
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ride Selection Screen'), findsOneWidget);
+      expect(draftCubit.state.draft, isNull);
+      expect(
+        (openedExtra?['destination'] as Place?)?.name,
+        'Cafe at Mountain View',
+      );
+      expect(openedExtra?['tipAmount'], 15);
+      expect(openedExtra?['notes'], 'Gate 2');
+      expect(openedQuery?['pickupAddress'], 'Main Plaza');
+
+      router.pop();
+      await tester.pumpAndSettle();
+      expect(find.byType(PendingBookingBanner), findsNothing);
+
+      draftCubit.save(
+        const BookingDraft(
+          destination: Place(
+            id: 'dest-park',
+            name: 'Charleston Park',
+            fullAddress: 'Mountain View',
+            latitude: 7.84,
+            longitude: 123.45,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Charleston Park'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('pending-booking-banner-dismiss')));
+      await tester.pumpAndSettle();
+      expect(draftCubit.state.draft, isNull);
+      expect(find.byType(PendingBookingBanner), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'keeps active booking banner prioritized over a pending booking draft',
+    (tester) async {
+      final sessionBloc = SessionBloc(
+        sessionRepository: _SessionRepositoryStub(),
+      )..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
+      final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
+      final realtimeClient = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://localhost/realtime'),
+        tokenProvider: () async => 'test-token',
+        connector: _RealtimeSocketConnectorStub(),
+      );
+      final navigationCoordinator = TabNavigationCoordinator();
+      final lifecycleCoordinator = AppLifecycleCoordinator();
+      final bookingBloc = _MockBookingBloc();
+      when(() => bookingBloc.state).thenReturn(
+        const BookingSearching(sessionId: 'session-1', isDirect: false),
+      );
+      when(() => bookingBloc.stream).thenAnswer((_) => const Stream.empty());
+      when(() => bookingBloc.hasActiveDriverSearch).thenReturn(true);
+      when(() => bookingBloc.activeDriverSearch).thenReturn(null);
+      when(() => bookingBloc.retryableDriverSearch).thenReturn(null);
+
+      final draftCubit = BookingDraftCubit()
+        ..save(
+          const BookingDraft(
+            destination: Place(
+              id: 'dest-cafe',
+              name: 'Cafe at Mountain View',
+              fullAddress: 'Mountain View',
+              latitude: 7.83,
+              longitude: 123.44,
+            ),
+          ),
+        );
+
+      final router = _createRouter(
+        inboxCubit,
+        realtimeClient,
+        navigationCoordinator,
+        lifecycleCoordinator,
+        bookingBloc: bookingBloc,
+        bookingDraftCubit: draftCubit,
+      );
+      addTearDown(() async {
+        router.dispose();
+        await sessionBloc.close();
+        await inboxCubit.close();
+        await draftCubit.close();
+        await realtimeClient.dispose();
+        navigationCoordinator.dispose();
+        await lifecycleCoordinator.dispose();
+      });
+
+      await tester.pumpWidget(
+        BlocProvider<SessionBloc>.value(
+          value: sessionBloc,
+          child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(ActiveBookingBanner), findsOneWidget);
+      expect(find.byType(PendingBookingBanner), findsNothing);
+    },
+  );
 }
 
 GoRouter _createRouter(
@@ -801,8 +985,11 @@ GoRouter _createRouter(
   Widget? activityPage,
   Widget? homePage,
   BookingBloc? bookingBloc,
+  BookingDraftCubit? bookingDraftCubit,
   ValueChanged<Map<String, dynamic>>? onFindingDriverOpened,
   ValueChanged<String?>? onTrackDriverOpened,
+  void Function(Map<String, dynamic> extra, Map<String, String> query)?
+  onRideSelectionOpened,
 }) {
   return GoRouter(
     initialLocation: initialLocation,
@@ -818,6 +1005,17 @@ GoRouter _createRouter(
         },
       ),
       GoRoute(
+        name: BookingRoutes.rideSelection,
+        path: '/ride-selection-test',
+        builder: (_, state) {
+          onRideSelectionOpened?.call(
+            Map<String, dynamic>.from(state.extra! as Map),
+            state.uri.queryParameters,
+          );
+          return const Scaffold(body: Text('Ride Selection Screen'));
+        },
+      ),
+      GoRoute(
         name: ActiveRideRoutes.trackDriver,
         path: '/track-driver-test',
         builder: (_, state) {
@@ -829,6 +1027,7 @@ GoRouter _createRouter(
         builder: (context, state, navigationShell) => ShellLayout(
           inboxCubit: inboxCubit,
           bookingBloc: bookingBloc,
+          bookingDraftCubit: bookingDraftCubit,
           bookingStates:
               bookingBloc?.stream ?? const Stream<BookingState>.empty(),
           realtimeClient: realtimeClient,

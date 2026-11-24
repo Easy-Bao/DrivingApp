@@ -19,107 +19,120 @@ class const PendingBookingBanner({
     if (!isAuthenticated) return const SizedBox.shrink();
 
     final colors = context.colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.xs,
-        AppSpacing.md,
-      ),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: colors.surfaceContainerLowest,
-              shape: BoxShape.circle,
-              border: Border.all(color: colors.outlineVariant),
-            ),
-            alignment: Alignment.center,
-            child: Icon(LucideIcons.route, size: 17, color: colors.onSurface),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Continue your booking',
-                  style: context.textStyles.titleSmall?.copyWith(
-                    color: colors.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        key: const Key('pending-booking-banner'),
+        enableFeedback: false,
+        splashFactory: NoSplash.splashFactory,
+        overlayColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.focused)
+              ? colors.primary.withValues(alpha: 0.08)
+              : Colors.transparent,
+        ),
+        onTap: onContinue,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerLowest,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colors.outlineVariant),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  destinationName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.textStyles.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
+                alignment: Alignment.center,
+                child: Icon(
+                  LucideIcons.route,
+                  size: 17,
+                  color: colors.onSurface,
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          FilledButton(
-            onPressed: onContinue,
-            style:
-                FilledButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  foregroundColor: colors.onPrimary,
-                  elevation: 0,
-                  enableFeedback: false,
-                  splashFactory: NoSplash.splashFactory,
-                  minimumSize: const Size(48, AppSize.minimumTouchTarget),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  textStyle: context.textStyles.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ).copyWith(
-                  overlayColor: WidgetStateProperty.resolveWith(
-                    (states) => states.contains(WidgetState.focused)
-                        ? colors.onPrimary.withValues(alpha: 0.16)
-                        : Colors.transparent,
-                  ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Continue your booking',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textStyles.titleSmall?.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      destinationName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
-            child: const Text('Continue'),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              FilledButton(
+                onPressed: onContinue,
+                style:
+                    FilledButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
+                      elevation: 0,
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
+                      ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      textStyle: context.textStyles.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.focused)
+                            ? colors.onPrimary.withValues(alpha: 0.16)
+                            : Colors.transparent,
+                      ),
+                    ),
+                child: const Text('Continue'),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              IconButton(
+                key: const Key('pending-booking-banner-dismiss'),
+                tooltip: 'Dismiss booking draft',
+                onPressed: onDismiss,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                style:
+                    IconButton.styleFrom(
+                      foregroundColor: colors.onSurfaceVariant,
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.focused)
+                            ? colors.primary.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                      ),
+                    ),
+                icon: const Icon(LucideIcons.x, size: 16),
+              ),
+            ],
           ),
-          IconButton(
-            tooltip: 'Dismiss booking draft',
-            onPressed: onDismiss,
-            style:
-                IconButton.styleFrom(
-                  foregroundColor: colors.onSurfaceVariant,
-                  enableFeedback: false,
-                  splashFactory: NoSplash.splashFactory,
-                ).copyWith(
-                  overlayColor: WidgetStateProperty.resolveWith(
-                    (states) => states.contains(WidgetState.focused)
-                        ? colors.primary.withValues(alpha: 0.12)
-                        : Colors.transparent,
-                  ),
-                ),
-            constraints: const BoxConstraints(
-              minWidth: AppSize.minimumTouchTarget,
-              minHeight: AppSize.minimumTouchTarget,
-            ),
-            icon: const Icon(LucideIcons.x, size: 17),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/app/navigation/floating_tab_bar.dart';
 import 'package:passenger/src/app/navigation/guest_action_bar.dart';
@@ -17,9 +18,12 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/track_drive
 import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
+import 'package:passenger/src/features/booking/domain/entities/booking_draft.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/home/presentation/widgets/active_booking_banner.dart';
 import 'package:passenger/src/features/home/presentation/widgets/active_ride_banner.dart';
+import 'package:passenger/src/features/home/presentation/widgets/pending_booking_banner.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 import 'package:passenger/src/features/settings/settings_routes.dart';
@@ -64,6 +68,7 @@ class ShellLayout extends StatefulWidget {
     required this.navigationCoordinator,
     required this.bookingStates,
     this.bookingBloc,
+    this.bookingDraftCubit,
     this.trackDriverCubit,
   });
   final StatefulNavigationShell navigationShell;
@@ -72,6 +77,7 @@ class ShellLayout extends StatefulWidget {
   final AppLifecycleCoordinator lifecycleCoordinator;
   final TabNavigationCoordinator navigationCoordinator;
   final BookingBloc? bookingBloc;
+  final BookingDraftCubit? bookingDraftCubit;
   final TrackDriverCubit? trackDriverCubit;
   final Stream<BookingState> bookingStates;
 
@@ -87,6 +93,7 @@ class _ShellLayoutState extends State<ShellLayout> {
   late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
   bool _isForeground = true;
   bool _activityTabBarVisible = true;
+  bool _isContinuingBookingDraft = false;
   BookingFailure? _dismissedBookingFailure;
 
   @override
@@ -348,12 +355,15 @@ class _ShellLayoutState extends State<ShellLayout> {
                                 context,
                               );
                               final bookingBloc = _resolveBookingBloc(context);
+                              final bookingDraftCubit =
+                                  _resolveBookingDraftCubit(context);
 
                               final floatingTabBar = _buildFloatingTabBar(
                                 context,
                                 selectedIndex: selectedIndex,
                                 trackCubit: trackCubit,
                                 bookingBloc: bookingBloc,
+                                bookingDraftCubit: bookingDraftCubit,
                               );
 
                               final visible =
@@ -445,15 +455,30 @@ class _ShellLayoutState extends State<ShellLayout> {
     }
   }
 
+  BookingDraftCubit? _resolveBookingDraftCubit(BuildContext context) {
+    if (widget.bookingDraftCubit != null) return widget.bookingDraftCubit;
+    try {
+      return BlocProvider.of<BookingDraftCubit>(context);
+    } catch (_) {
+      try {
+        return Modular.get<BookingDraftCubit>();
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
   Widget _buildFloatingTabBar(
     BuildContext context, {
     required int selectedIndex,
     required TrackDriverCubit? trackCubit,
     required BookingBloc? bookingBloc,
+    required BookingDraftCubit? bookingDraftCubit,
   }) {
     Widget buildBar({
       TrackDriverState? trackState,
       BookingState? bookingState,
+      BookingDraft? draft,
     }) {
       final Widget? banner =
           (trackState != null
@@ -465,6 +490,15 @@ class _ShellLayoutState extends State<ShellLayout> {
                   bookingBloc,
                   bookingState,
                 )
+              : null) ??
+          (bookingDraftCubit != null && draft != null
+              ? _buildPendingBookingBannerForTabBar(
+                  context,
+                  draft: draft,
+                  draftCubit: bookingDraftCubit,
+                  trackState: trackState,
+                  bookingBloc: bookingBloc,
+                )
               : null);
       return FloatingTabBar(
         selectedIndex: selectedIndex,
@@ -475,31 +509,109 @@ class _ShellLayoutState extends State<ShellLayout> {
       );
     }
 
-    if (trackCubit != null && bookingBloc != null) {
-      return BlocBuilder<TrackDriverCubit, TrackDriverState>(
-        bloc: trackCubit,
-        builder: (context, trackState) =>
-            BlocBuilder<BookingBloc, BookingState>(
-              bloc: bookingBloc,
-              builder: (context, bookingState) =>
-                  buildBar(trackState: trackState, bookingState: bookingState),
-            ),
+    Widget withDraft({
+      TrackDriverState? trackState,
+      BookingState? bookingState,
+    }) {
+      if (bookingDraftCubit == null) {
+        return buildBar(trackState: trackState, bookingState: bookingState);
+      }
+      return BlocBuilder<BookingDraftCubit, BookingDraftState>(
+        bloc: bookingDraftCubit,
+        buildWhen: (previous, current) => previous.draft != current.draft,
+        builder: (context, draftState) => buildBar(
+          trackState: trackState,
+          bookingState: bookingState,
+          draft: draftState.draft,
+        ),
       );
     }
-    if (trackCubit != null) {
-      return BlocBuilder<TrackDriverCubit, TrackDriverState>(
-        bloc: trackCubit,
-        builder: (context, trackState) => buildBar(trackState: trackState),
-      );
-    }
-    if (bookingBloc != null) {
+
+    Widget withBooking({TrackDriverState? trackState}) {
+      if (bookingBloc == null) return withDraft(trackState: trackState);
       return BlocBuilder<BookingBloc, BookingState>(
         bloc: bookingBloc,
         builder: (context, bookingState) =>
-            buildBar(bookingState: bookingState),
+            withDraft(trackState: trackState, bookingState: bookingState),
       );
     }
-    return buildBar();
+
+    if (trackCubit == null) return withBooking();
+    return BlocBuilder<TrackDriverCubit, TrackDriverState>(
+      bloc: trackCubit,
+      builder: (context, trackState) => withBooking(trackState: trackState),
+    );
+  }
+
+  Widget? _buildPendingBookingBannerForTabBar(
+    BuildContext context, {
+    required BookingDraft draft,
+    required BookingDraftCubit draftCubit,
+    required TrackDriverState? trackState,
+    required BookingBloc? bookingBloc,
+  }) {
+    if (trackState != null && !trackState.isTerminal && trackState.isTracking) {
+      return null;
+    }
+    if (bookingBloc != null &&
+        (bookingBloc.state.isBlockingBooking ||
+            bookingBloc.hasActiveDriverSearch)) {
+      return null;
+    }
+    return PendingBookingBanner(
+      isAuthenticated: true,
+      destinationName: draft.destination.name,
+      onContinue: () => unawaited(
+        _continuePendingBookingFromShell(
+          draft,
+          draftCubit,
+          trackState: trackState,
+          bookingBloc: bookingBloc,
+        ),
+      ),
+      onDismiss: draftCubit.clear,
+    );
+  }
+
+  Future<void> _continuePendingBookingFromShell(
+    BookingDraft draft,
+    BookingDraftCubit draftCubit, {
+    required TrackDriverState? trackState,
+    required BookingBloc? bookingBloc,
+  }) async {
+    if (!mounted || _isContinuingBookingDraft) return;
+    if (trackState != null && !trackState.isTerminal && trackState.isTracking) {
+      return;
+    }
+    if (bookingBloc != null &&
+        (bookingBloc.state.isBlockingBooking ||
+            bookingBloc.hasActiveDriverSearch)) {
+      return;
+    }
+    _isContinuingBookingDraft = true;
+    try {
+      final pickupAddress = draft.pickupAddress;
+      final position = LocationService.lastPosition;
+      draftCubit.clear();
+      await context.pushNamed(
+        BookingRoutes.rideSelection,
+        extra: {
+          'destination': draft.destination,
+          'tipAmount': draft.tipAmount,
+          'notes': draft.notes,
+        },
+        queryParameters: {
+          if (pickupAddress != null && pickupAddress.isNotEmpty)
+            'pickupAddress': pickupAddress,
+          if (position != null) ...{
+            'pickupLat': position.latitude.toString(),
+            'pickupLng': position.longitude.toString(),
+          },
+        },
+      );
+    } finally {
+      _isContinuingBookingDraft = false;
+    }
   }
 
   Widget? _buildActiveBookingBannerForTabBar(
