@@ -10,12 +10,14 @@ class AppAuthLayout extends StatelessWidget {
     required this.title,
     required this.description,
     required this.children,
+    this.descriptionHighlight,
     this.onBack,
     this.footer,
   });
 
   final String title;
   final String description;
+  final String? descriptionHighlight;
   final List<Widget> children;
   final VoidCallback? onBack;
   final Widget? footer;
@@ -88,12 +90,7 @@ class AppAuthLayout extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: AppSpacing.sm),
-                          Text(
-                            description,
-                            style: context.textStyles.bodyMedium?.copyWith(
-                              color: context.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
+                          _buildDescription(context),
                           const SizedBox(height: AppSpacing.xxxl),
                           ...children,
                           if (footer != null) ...[
@@ -111,6 +108,36 @@ class AppAuthLayout extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDescription(BuildContext context) {
+    final baseStyle = context.textStyles.bodyMedium?.copyWith(
+      color: context.colorScheme.onSurfaceVariant,
+      height: 1.45,
+    );
+    final highlight = descriptionHighlight?.trim() ?? '';
+    final start = highlight.isEmpty ? -1 : description.indexOf(highlight);
+    if (start < 0) {
+      return Text(description, style: baseStyle);
+    }
+    final end = start + highlight.length;
+    return Text.rich(
+      TextSpan(
+        children: [
+          if (start > 0) TextSpan(text: description.substring(0, start)),
+          TextSpan(
+            text: description.substring(start, end),
+            style: TextStyle(
+              color: context.colorScheme.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (end < description.length)
+            TextSpan(text: description.substring(end)),
+        ],
+      ),
+      style: baseStyle,
     );
   }
 }

@@ -224,7 +224,8 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
         title: _passwordStep ? 'Create new password' : 'Check your email',
         description: _passwordStep
             ? 'Choose a strong password for your account.'
-            : 'We sent a 6-digit verification code to ${widget.email}.',
+            : 'We sent a 6-digit verification code to ${widget.email.trim()}.',
+        descriptionHighlight: _passwordStep ? null : widget.email.trim(),
         footer: FilledButton(
           onPressed: _busy || (!_passwordStep && !_completeCode)
               ? null

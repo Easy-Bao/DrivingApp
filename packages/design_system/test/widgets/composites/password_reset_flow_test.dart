@@ -24,6 +24,17 @@ void main() {
         ),
       );
       expect(find.text('Check your email'), findsOneWidget);
+      final descriptionWidget = tester.widget<Text>(
+        find.textContaining('verification code to person@example.com'),
+      );
+      final rootSpan = descriptionWidget.textSpan as TextSpan?;
+      final spans = rootSpan?.children?.whereType<TextSpan>().toList();
+      expect(spans, isNotNull);
+      final emailSpan = spans!.firstWhere(
+        (span) => span.text == 'person@example.com',
+      );
+      expect(emailSpan.style?.color, AppTheme.main.colorScheme.onSurface);
+      expect(emailSpan.style?.fontWeight, FontWeight.w600);
       expect(find.text('New password'), findsNothing);
       expect(
         tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,

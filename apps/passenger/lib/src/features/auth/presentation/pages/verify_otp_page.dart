@@ -106,7 +106,8 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
           onBack: () => context.pop(),
           title: 'Check your email',
           description:
-              'We sent a 6-digit verification code to ${widget.email}.',
+              'We sent a 6-digit verification code to ${widget.email.trim()}.',
+          descriptionHighlight: widget.email.trim(),
           footer: FilledButton(
             onPressed: _otpController.text.length == 6 && !busy
                 ? () => _triggerVerify(_otpController.text)
