@@ -100,3 +100,16 @@ final class const UpdateOffersEvent(
 final class const DriverMatchedEvent(this.matchResult) extends BookingEvent {
   final DriverMatchResult matchResult;
 }
+
+final class const _NearbyDriversPollCompletedEvent({
+  required this.generation,
+  required this.result,
+}) extends BookingEvent {
+  final int generation;
+  final Result<List<DriverModel>, DomainFailure> result;
+}
+
+final class const _NearbyDriverSearchTimedOutEvent({required this.generation})
+    extends BookingEvent {
+  final int generation;
+}

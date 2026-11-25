@@ -305,6 +305,7 @@ extension _BookingBlocBidSession on BookingBloc {
     DriverMatchedEvent event,
     Emitter<BookingState> emit,
   ) async {
+    ++_bookingFlowGeneration;
     _nearestSearchCancelled = true;
     _cleanupSubscriptions();
     _activeTrip = null;
@@ -392,6 +393,8 @@ extension _BookingBlocBidSession on BookingBloc {
     CancelBookingEvent event,
     Emitter<BookingState> emit,
   ) async {
+    _stopNearbyDriverSearch();
+    ++_bookingFlowGeneration;
     _nearestSearchCancelled = true;
     if (_isCreatingBidSession) {
       _cancelPendingBidSessionCreation = true;
@@ -475,8 +478,10 @@ extension _BookingBlocBidSession on BookingBloc {
         state is! BookingCanceled) {
       return;
     }
+    final generation = ++_bookingFlowGeneration;
     if (_activeBidSessionId != null) {
       await _clearPendingBooking(_activeBidSessionId!);
+      if (isClosed || generation != _bookingFlowGeneration) return;
     }
     _nearestSearchCancelled = true;
     _cleanupSubscriptions();
@@ -494,10 +499,12 @@ extension _BookingBlocBidSession on BookingBloc {
     _isAutoAcceptingOffer = false;
     await _secureSessionService.deletePendingBidSessionCreation();
     await _secureSessionService.deletePendingBidSessionCancellationId();
+    if (isClosed || generation != _bookingFlowGeneration) return;
     emit(const BookingInitial());
   }
 
   void _cleanupSubscriptions() {
+    _stopNearbyDriverSearch();
     unawaited(_offerRefreshTask?.dispose());
     _offerRefreshTask = null;
     _isRefreshingOffers = false;

@@ -29,6 +29,16 @@ part 'booking_bloc_bid_session.dart';
 part 'booking_bloc_session_recovery.dart';
 
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
+  static const Duration defaultNearbyDriverSearchTimeout = Duration(
+    seconds: 15,
+  );
+  static const Duration defaultNearbyDriverEmptyPollInterval = Duration(
+    seconds: 3,
+  );
+  static const Duration defaultNearbyDriverActivePollInterval = Duration(
+    seconds: 10,
+  );
+
   final DriverRepository _driverRepository;
   final BookingRepository _bookingRepository;
   final DriverProfileRepository _driverProfileRepository;
@@ -39,19 +49,32 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final int _nearestDriverMaxAttempts;
   final Duration _nearestDriverRetryDelay;
   final Duration _offerRefreshInterval;
+  final Duration _nearbyDriverSearchTimeout;
+  final Duration _nearbyDriverEmptyPollInterval;
+  final Duration _nearbyDriverActivePollInterval;
+  final DateTime Function() _now;
 
   StreamSubscription<RealtimeEvent>? _realtimeEventsSubscription;
   StreamSubscription<RealtimeConnectionState>? _realtimeStateSubscription;
   AppLifecyclePeriodicTask? _offerRefreshTask;
+  Timer? _nearbyDriverPollTimer;
+  Timer? _nearbyDriverTimeoutTimer;
+  StreamSubscription<AppLifecycleStatus>? _nearbyDriverLifecycleSubscription;
 
   int? _totalTrips;
   int _reviewsRequestGeneration = 0;
+  int _nearbySearchGeneration = 0;
+  int _bookingFlowGeneration = 0;
   bool _nearestSearchCancelled = false;
   bool _isAutoAcceptingOffer = false;
   bool _isCreatingBidSession = false;
   bool _cancelPendingBidSessionCreation = false;
   bool _isRefreshingOffers = false;
+  bool _isFetchingNearbyDrivers = false;
+  bool _nearbySearchTimedOutWaitingForLookup = false;
   bool _realtimeWasConnected = false;
+  Duration _nearbySearchRemainingTimeout = Duration.zero;
+  DateTime? _nearbySearchTimerStartedAt;
   final Random _idempotencyRandom = Random.secure();
   String? _activeBidSessionId;
   BidSessionTrip? _activeTrip;
@@ -76,16 +99,31 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     int nearestDriverMaxAttempts = 5,
     this._nearestDriverRetryDelay = const Duration(seconds: 3),
     Duration offerRefreshInterval = const Duration(seconds: 3),
+    Duration nearbyDriverSearchTimeout = defaultNearbyDriverSearchTimeout,
+    Duration nearbyDriverEmptyPollInterval =
+        defaultNearbyDriverEmptyPollInterval,
+    Duration nearbyDriverActivePollInterval =
+        defaultNearbyDriverActivePollInterval,
+    DateTime Function()? now,
   }) : assert(nearestDriverMaxAttempts > 0),
        assert(offerRefreshInterval > Duration.zero),
+       assert(nearbyDriverSearchTimeout > Duration.zero),
+       assert(nearbyDriverEmptyPollInterval > Duration.zero),
+       assert(nearbyDriverActivePollInterval > Duration.zero),
        _nearestDriverMaxAttempts = nearestDriverMaxAttempts,
        _offerRefreshInterval = offerRefreshInterval,
+       _nearbyDriverSearchTimeout = nearbyDriverSearchTimeout,
+       _nearbyDriverEmptyPollInterval = nearbyDriverEmptyPollInterval,
+       _nearbyDriverActivePollInterval = nearbyDriverActivePollInterval,
+       _now = now ?? DateTime.now,
        super(const BookingInitial()) {
     on<LocateNearestDriverEvent>(
       _onLocateNearestDriver,
       transformer: droppable(),
     );
     on<StartNearbyDriverSearchEvent>(_onStartNearbyDriverSearch);
+    on<_NearbyDriversPollCompletedEvent>(_onNearbyDriversPollCompleted);
+    on<_NearbyDriverSearchTimedOutEvent>(_onNearbyDriverSearchTimedOut);
     on<LoadDriverReviewsEvent>(
       _onLoadDriverReviews,
       transformer: restartable(),
@@ -106,6 +144,10 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       final sessionId = _activeBidSessionId;
       if (sessionId != null) {
         unawaited(_loadOfferSnapshot(sessionId, source: 'manual'));
+        return;
+      }
+      if (state is BookingFindingNearbyDrivers) {
+        unawaited(_pollNearbyDrivers(generation: _nearbySearchGeneration));
       }
     });
     on<UpdateOffersEvent>(_onUpdateOffers);
@@ -182,6 +224,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   @override
   Future<void> close() async {
     _cleanupSubscriptions();
+    await _nearbyDriverLifecycleSubscription?.cancel();
+    _nearbyDriverLifecycleSubscription = null;
     await _realtimeEventsSubscription?.cancel();
     _realtimeEventsSubscription = null;
     await _realtimeStateSubscription?.cancel();

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
@@ -42,6 +44,8 @@ class NearbyDriversCubit extends Cubit<NearbyDriversState> {
   late final AppLifecyclePeriodicTask _refreshTask;
 
   void start() => _refreshTask.start();
+
+  void stop() => unawaited(_refreshTask.dispose());
 
   Future<void> refresh() async {
     if (isClosed || state.isLoading || !_lifecycleCoordinator.isForeground) {

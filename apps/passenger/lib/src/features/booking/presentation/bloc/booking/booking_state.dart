@@ -43,6 +43,10 @@ final class BookingFindingNearbyDrivers extends BookingState {
     required this.pickupLng,
     this.distanceKm,
     this.durationMinutes,
+    this.drivers = const [],
+    this.hasLoaded = false,
+    this.isLoading = false,
+    this.errorMessage,
   });
 
   final BidSessionTrip trip;
@@ -50,6 +54,32 @@ final class BookingFindingNearbyDrivers extends BookingState {
   final double pickupLng;
   final double? distanceKm;
   final double? durationMinutes;
+  final List<DriverModel> drivers;
+  final bool hasLoaded;
+  final bool isLoading;
+  final String? errorMessage;
+
+  BookingFindingNearbyDrivers copyWith({
+    List<DriverModel>? drivers,
+    bool? hasLoaded,
+    bool? isLoading,
+    String? errorMessage,
+    bool clearErrorMessage = false,
+  }) {
+    return BookingFindingNearbyDrivers(
+      trip: trip,
+      pickupLat: pickupLat,
+      pickupLng: pickupLng,
+      distanceKm: distanceKm,
+      durationMinutes: durationMinutes,
+      drivers: drivers ?? this.drivers,
+      hasLoaded: hasLoaded ?? this.hasLoaded,
+      isLoading: isLoading ?? this.isLoading,
+      errorMessage: clearErrorMessage
+          ? null
+          : errorMessage ?? this.errorMessage,
+    );
+  }
 }
 
 final class NearestDriverFound extends BookingState {

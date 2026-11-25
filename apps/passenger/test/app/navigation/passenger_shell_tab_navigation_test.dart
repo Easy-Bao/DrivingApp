@@ -1079,6 +1079,108 @@ void main() {
       verify(() => bookingBloc.add(const CancelBookingEvent())).called(1);
     },
   );
+
+  testWidgets(
+    'updates floating tab bar from Looking for drivers to No driver found when nearby search times out',
+    (tester) async {
+      final sessionBloc = SessionBloc(
+        sessionRepository: _SessionRepositoryStub(),
+      )..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
+      final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
+      final realtimeClient = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://localhost/realtime'),
+        tokenProvider: () async => 'test-token',
+        connector: _RealtimeSocketConnectorStub(),
+      );
+      final navigationCoordinator = TabNavigationCoordinator();
+      final lifecycleCoordinator = AppLifecycleCoordinator();
+      final bookingBloc = _MockBookingBloc();
+      final bookingController = StreamController<BookingState>.broadcast();
+      const trip = BidSessionTrip(
+        fare: 27.72,
+        destination: Place(
+          id: 'dest-cafe',
+          name: 'Cafe at Mountain View',
+          fullAddress: 'Mountain View',
+          latitude: 7.83,
+          longitude: 123.44,
+        ),
+        distance: '1.4 km',
+        duration: '5 min',
+        pickupAddress: 'Main Plaza',
+      );
+      const searchContext = ActiveDriverSearch(
+        trip: trip,
+        pickupLat: 7.82,
+        pickupLng: 123.43,
+        distanceKm: 1.4,
+        durationMinutes: 5,
+      );
+      BookingState currentState = const BookingFindingNearbyDrivers(
+        trip: trip,
+        pickupLat: 7.82,
+        pickupLng: 123.43,
+        distanceKm: 1.4,
+        durationMinutes: 5,
+        hasLoaded: true,
+      );
+      when(() => bookingBloc.state).thenAnswer((_) => currentState);
+      when(() => bookingBloc.stream)
+          .thenAnswer((_) => bookingController.stream);
+      when(() => bookingBloc.hasActiveDriverSearch)
+          .thenAnswer((_) => currentState is BookingFindingNearbyDrivers);
+      when(() => bookingBloc.activeDriverSearch).thenAnswer(
+        (_) =>
+            currentState is BookingFindingNearbyDrivers ? searchContext : null,
+      );
+      when(() => bookingBloc.retryableDriverSearch).thenAnswer(
+        (_) => currentState is BookingFailure ? searchContext : null,
+      );
+
+      final router = _createRouter(
+        inboxCubit,
+        realtimeClient,
+        navigationCoordinator,
+        lifecycleCoordinator,
+        bookingBloc: bookingBloc,
+      );
+      addTearDown(() async {
+        router.dispose();
+        await bookingController.close();
+        await sessionBloc.close();
+        await inboxCubit.close();
+        await realtimeClient.dispose();
+        navigationCoordinator.dispose();
+        await lifecycleCoordinator.dispose();
+      });
+
+      await tester.pumpWidget(
+        BlocProvider<SessionBloc>.value(
+          value: sessionBloc,
+          child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Looking for drivers'), findsOneWidget);
+
+      currentState = const BookingFailure(
+        'No drivers nearby',
+        isNoDriverFound: true,
+      );
+      bookingController.add(currentState);
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('No driver found'), findsOneWidget);
+      expect(
+        find.text('No drivers available for Cafe at Mountain View.'),
+        findsOneWidget,
+      );
+      expect(find.text('Retry'), findsOneWidget);
+    },
+  );
 }
 
 GoRouter _createRouter(

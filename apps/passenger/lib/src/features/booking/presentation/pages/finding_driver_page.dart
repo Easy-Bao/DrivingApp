@@ -91,7 +91,7 @@ class FindingDriverPage extends StatelessWidget {
               lifecycleCoordinator: lifecycleCoordinator,
               latitude: pickupLatitude!,
               longitude: pickupLongitude!,
-            )..start(),
+            ),
           ),
         BlocProvider<LiveMapBloc>(create: (_) => liveMapBloc),
       ],
@@ -163,7 +163,6 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
   List<DriverModel> _nearbyDrivers = [];
   bool _isLeaving = false;
   bool _isReturningHome = false;
-  bool _isNoDriverFound = false;
   String? _driverSearchError;
   String? _acceptingOfferId;
   bool _locationUnavailable = false;
@@ -212,11 +211,10 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
       return;
     }
     final bookingBloc = BlocProvider.of<BookingBloc>(context);
+    final currentState = bookingBloc.state;
     final isExpiredRequest =
-        bookingBloc.state is BookingFailure &&
-        (bookingBloc.state as BookingFailure).isRequestExpired;
+        currentState is BookingFailure && currentState.isRequestExpired;
     if (!bookingBloc.hasActiveDriverSearch && !isExpiredRequest) {
-      BlocProvider.of<NearbyDriversCubit>(context);
       bookingBloc.add(
         StartNearbyDriverSearchEvent(
           trip: _tripMetadata(),
@@ -226,7 +224,19 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
           durationMinutes: _effectiveDurationMinutes,
         ),
       );
+    } else if (currentState is BookingSearching ||
+        currentState is BookingOffersReceived ||
+        (currentState is BookingFailure && currentState.isDriverDeclined)) {
+      BlocProvider.of<NearbyDriversCubit>(context).start();
     }
+  }
+
+  List<DriverModel> _currentNearbyDrivers(BuildContext context) {
+    final bookingState = BlocProvider.of<BookingBloc>(context).state;
+    if (bookingState is BookingFindingNearbyDrivers) {
+      return bookingState.drivers;
+    }
+    return BlocProvider.of<NearbyDriversCubit>(context).state.drivers;
   }
 
   void _showDriverProfile(DriverModel driver) {
@@ -261,9 +271,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
         routeColor: context.colorScheme.onSurface,
       ),
     );
-    _syncNearbyDriverPins(
-      BlocProvider.of<NearbyDriversCubit>(context).state.drivers,
-    );
+    _syncNearbyDriverPins(_currentNearbyDrivers(context));
     _schedulePickupFocus();
   }
 
@@ -319,9 +327,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     if (_lastViewportPadding == insets) return;
     _lastViewportPadding = insets;
     try {
-      final drivers = BlocProvider.of<NearbyDriversCubit>(context)
-          .state
-          .drivers;
+      final drivers = _currentNearbyDrivers(context);
       if (drivers.isEmpty) {
         await MapProvider.moveCamera(
           controller,
@@ -382,9 +388,14 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     String? notice,
     String? refreshError,
     DriverModel? requestedDriver,
+    NearbyDriversState? availabilityOverride,
   }) {
-    return BlocBuilder<NearbyDriversCubit, NearbyDriversState>(
-      builder: (context, availability) => FindingDriverNearbyPanel(
+    Widget buildPanel(
+      BuildContext context,
+      NearbyDriversState availability, {
+      required VoidCallback onRetry,
+    }) {
+      return FindingDriverNearbyPanel(
         availability: availability,
         offers: offers,
         fare: fare,
@@ -394,11 +405,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
         isSendingRequest: isSendingRequest,
         refreshError: refreshError,
         requestedDriver: requestedDriver,
-        onRetry: () {
-          unawaited(BlocProvider.of<NearbyDriversCubit>(context).refresh());
-          BlocProvider.of<BookingBloc>(context)
-              .add(const RefreshBookingSessionEvent());
-        },
+        onRetry: onRetry,
         onAcceptOfferPressed: (offer) {
           if (_isLeaving || _acceptingOfferId != null) return;
           setState(() => _acceptingOfferId = offer.offerId);
@@ -418,6 +425,28 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
         onCancelPressed: _handleCancel,
         acceptingOfferId: _acceptingOfferId,
         isCanceling: _isLeaving,
+      );
+    }
+
+    if (availabilityOverride != null) {
+      return buildPanel(
+        context,
+        availabilityOverride,
+        onRetry: () =>
+            BlocProvider.of<BookingBloc>(context)
+                .add(const RefreshBookingSessionEvent()),
+      );
+    }
+
+    return BlocBuilder<NearbyDriversCubit, NearbyDriversState>(
+      builder: (context, availability) => buildPanel(
+        context,
+        availability,
+        onRetry: () {
+          unawaited(BlocProvider.of<NearbyDriversCubit>(context).refresh());
+          BlocProvider.of<BookingBloc>(context)
+              .add(const RefreshBookingSessionEvent());
+        },
       ),
     );
   }
@@ -438,8 +467,8 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
       );
     } else {
       booking.add(const ResetBookingEvent());
+      unawaited(BlocProvider.of<NearbyDriversCubit>(context).refresh());
     }
-    unawaited(BlocProvider.of<NearbyDriversCubit>(context).refresh());
   }
 
   void _handleCancel() {
@@ -462,8 +491,8 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
   void _handleNoDriverFound() {
     if (!mounted) return;
     setState(() {
-      _isNoDriverFound = true;
       _driverSearchError = null;
+      _isLeaving = false;
       _nearbyDrivers = [];
       _selectedDriver = null;
       _isViewingDriverProfile = false;
@@ -478,7 +507,6 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     }
 
     setState(() {
-      _isNoDriverFound = false;
       _driverSearchError = null;
       _isLeaving = false;
       _selectedDriver = null;
@@ -517,15 +545,34 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
               listenWhen: (previous, current) =>
                   !listEquals(previous.drivers, current.drivers),
               listener: (context, state) {
-                if (BlocProvider.of<BookingBloc>(context).state
-                    is! NearestDriverFound) {
+                final bookingState = BlocProvider.of<BookingBloc>(context)
+                    .state;
+                if (bookingState is! NearestDriverFound &&
+                    bookingState is! BookingFindingNearbyDrivers) {
+                  _syncNearbyDriverPins(state.drivers);
+                }
+              },
+            ),
+            BlocListener<BookingBloc, BookingState>(
+              listenWhen: (previous, current) {
+                if (current is! BookingFindingNearbyDrivers) return false;
+                if (previous is! BookingFindingNearbyDrivers) return true;
+                return !listEquals(previous.drivers, current.drivers);
+              },
+              listener: (context, state) {
+                if (state is BookingFindingNearbyDrivers) {
                   _syncNearbyDriverPins(state.drivers);
                 }
               },
             ),
             BlocListener<BookingBloc, BookingState>(
               listener: (context, state) {
-                if (state is NearestDriverFound) {
+                if (state is BookingFindingNearbyDrivers) {
+                  BlocProvider.of<NearbyDriversCubit>(context).stop();
+                } else if (state is BookingSearching ||
+                    state is BookingOffersReceived) {
+                  BlocProvider.of<NearbyDriversCubit>(context).start();
+                } else if (state is NearestDriverFound) {
                   final nearbyDrivers = _uniqueNearbyDrivers(state);
                   setState(() {
                     _nearbyDrivers = nearbyDrivers;
@@ -598,11 +645,26 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                 } else if (state is BookingFailure) {
                   _acceptingOfferId = null;
                   if (state.isNoDriverFound) {
+                    BlocProvider.of<NearbyDriversCubit>(context).stop();
                     _handleNoDriverFound();
+                  } else if (state.isRequestExpired) {
+                    BlocProvider.of<NearbyDriversCubit>(context).stop();
+                    setState(() {
+                      _driverSearchError = null;
+                      _isLeaving = false;
+                    });
+                  } else if (state.isDriverDeclined) {
+                    final nearbyCubit = BlocProvider.of<NearbyDriversCubit>(
+                      context,
+                    )..start();
+                    unawaited(nearbyCubit.refresh());
+                    setState(() {
+                      _driverSearchError = state.message;
+                      _isLeaving = false;
+                    });
                   } else {
                     setState(() {
                       _driverSearchError = state.message;
-                      _isNoDriverFound = false;
                       _isLeaving = false;
                     });
                   }
@@ -748,11 +810,21 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               isChoosingDriver: true,
                               notice: state.message,
                             );
-                          } else if (state is BookingInitial ||
-                              state is BookingFindingNearbyDrivers) {
+                          } else if (state is BookingInitial) {
                             return _buildNearbyDriversPanel(
                               fare: fare,
                               isChoosingDriver: true,
+                            );
+                          } else if (state is BookingFindingNearbyDrivers) {
+                            return _buildNearbyDriversPanel(
+                              fare: fare,
+                              isChoosingDriver: true,
+                              availabilityOverride: NearbyDriversState(
+                                drivers: state.drivers,
+                                hasLoaded: state.hasLoaded,
+                                isLoading: state.isLoading,
+                                errorMessage: state.errorMessage,
+                              ),
                             );
                           } else if (state is FindingNearestDriver) {
                             return FindingDriverSearchingPanel(
@@ -768,17 +840,14 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                               onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
                             );
-                          } else if ((state is BookingFailure &&
-                                  state.isNoDriverFound &&
-                                  _isNoDriverFound) ||
-                              (state is BookingFailure &&
+                          } else if (state is BookingFailure &&
+                              (state.isNoDriverFound ||
                                   state.isRequestExpired)) {
                             final isExpired = state.isRequestExpired;
                             return FindingDriverNoDriverPanel(
                               fare: widget.fare,
                               destination: widget.destination,
                               pickupAddress: pickupAddress,
-
                               requestExpired: isExpired,
                               onRetryPressed: _retryFindingDriver,
                               onCancelPressed: _handleCancel,

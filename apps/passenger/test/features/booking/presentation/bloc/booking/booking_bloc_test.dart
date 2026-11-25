@@ -38,6 +38,13 @@ BookingBloc _makeBookingBloc({
   int nearestDriverMaxAttempts = 5,
   Duration nearestDriverRetryDelay = const Duration(seconds: 2),
   Duration offerRefreshInterval = const Duration(seconds: 3),
+  Duration nearbyDriverSearchTimeout =
+      BookingBloc.defaultNearbyDriverSearchTimeout,
+  Duration nearbyDriverEmptyPollInterval =
+      BookingBloc.defaultNearbyDriverEmptyPollInterval,
+  Duration nearbyDriverActivePollInterval =
+      BookingBloc.defaultNearbyDriverActivePollInterval,
+  DateTime Function()? now,
 }) => BookingBloc(
   driverRepository: driverRepo,
   bookingRepository: bookingRepository,
@@ -47,6 +54,10 @@ BookingBloc _makeBookingBloc({
   nearestDriverMaxAttempts: nearestDriverMaxAttempts,
   nearestDriverRetryDelay: nearestDriverRetryDelay,
   offerRefreshInterval: offerRefreshInterval,
+  nearbyDriverSearchTimeout: nearbyDriverSearchTimeout,
+  nearbyDriverEmptyPollInterval: nearbyDriverEmptyPollInterval,
+  nearbyDriverActivePollInterval: nearbyDriverActivePollInterval,
+  now: now,
 );
 
 void main() {
@@ -1534,6 +1545,12 @@ void main() {
     );
 
     test('keeps nearby driver search active and blocking until explicitly canceled', () async {
+      when(
+        () => driverRepo.getNearbyDrivers(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer((_) async => const Ok([]));
       final bloc = _makeBookingBloc(
         driverRepo: driverRepo,
         bookingRepository: bookingRepository,
@@ -1573,5 +1590,320 @@ void main() {
       expect(bloc.state.isBlockingBooking, isFalse);
       expect(bloc.activeDriverSearch, isNull);
     });
+  });
+
+  group('BookingBloc — Nearby driver search 15s timeout', () {
+    const nearDriver = DriverModel(
+      id: '11',
+      name: 'Kuya Ben',
+      vehicleType: 'Tricycle',
+      plateNumber: 'ABC 123',
+      rating: 4.9,
+      lat: 7.821,
+      lng: 123.431,
+      distanceKm: 0.3,
+      etaMinutes: 2,
+      score: 1,
+    );
+    const farDriver = DriverModel(
+      id: '12',
+      name: 'Kuya Dan',
+      vehicleType: 'Tricycle',
+      plateNumber: 'XYZ 456',
+      rating: 4.7,
+      lat: 7.825,
+      lng: 123.435,
+      distanceKm: 0.9,
+      etaMinutes: 4,
+      score: 2,
+    );
+
+    testWidgets(
+      'declares no driver found after 15 seconds when nearby discovery stays empty',
+      (tester) async {
+        var lookupCount = 0;
+        when(() => driverRepo.getNearbyDrivers(lat: 7.82, lng: 123.43))
+            .thenAnswer((_) async {
+              lookupCount++;
+              return const Ok([]);
+            });
+        final lifecycle = AppLifecycleCoordinator();
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+          lifecycleCoordinator: lifecycle,
+        );
+
+        bloc.add(
+          const StartNearbyDriverSearchEvent(
+            trip: testTrip,
+            pickupLat: 7.82,
+            pickupLng: 123.43,
+            distanceKm: 2,
+            durationMinutes: 5,
+          ),
+        );
+        await tester.pump();
+        expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+        expect((bloc.state as BookingFindingNearbyDrivers).hasLoaded, isTrue);
+        expect(lookupCount, 1);
+
+        await tester.pump(const Duration(seconds: 14));
+        expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+        expect(bloc.hasActiveDriverSearch, isTrue);
+        expect(lookupCount, 5);
+
+        await tester.pump(const Duration(seconds: 1));
+        expect(bloc.state, isA<BookingFailure>());
+        final failure = bloc.state as BookingFailure;
+        expect(failure.isNoDriverFound, isTrue);
+        expect(failure.message, 'No drivers nearby');
+        expect(bloc.hasActiveDriverSearch, isFalse);
+        expect(bloc.state.isBlockingBooking, isFalse);
+        expect(
+          bloc.retryableDriverSearch?.trip.destination.name,
+          'Destination',
+        );
+        expect(bloc.retryableDriverSearch?.distanceKm, 2);
+        expect(bloc.retryableDriverSearch?.durationMinutes, 5);
+
+        final countAtTimeout = lookupCount;
+        await tester.pump(const Duration(seconds: 10));
+        expect(lookupCount, countAtTimeout);
+
+        unawaited(bloc.close());
+        unawaited(lifecycle.dispose());
+        await tester.pump();
+      },
+    );
+
+    testWidgets(
+      'cancels the 15s timeout when drivers appear and restarts it if they all go offline',
+      (tester) async {
+        final responses = <List<DriverModel>>[
+          const [],
+          const [farDriver, nearDriver, nearDriver],
+          const [nearDriver],
+          const [],
+        ];
+        var callIndex = 0;
+        when(() => driverRepo.getNearbyDrivers(lat: 7.82, lng: 123.43))
+            .thenAnswer((_) async {
+              final result = callIndex < responses.length
+                  ? responses[callIndex]
+                  : const <DriverModel>[];
+              callIndex++;
+              return Ok(result);
+            });
+        final lifecycle = AppLifecycleCoordinator();
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+          lifecycleCoordinator: lifecycle,
+        );
+
+        bloc.add(
+          const StartNearbyDriverSearchEvent(
+            trip: testTrip,
+            pickupLat: 7.82,
+            pickupLng: 123.43,
+            distanceKm: 2,
+            durationMinutes: 5,
+          ),
+        );
+        await tester.pump();
+        expect((bloc.state as BookingFindingNearbyDrivers).drivers, isEmpty);
+
+        // Second poll at 3s discovers drivers and cancels the 15s timeout.
+        await tester.pump(const Duration(seconds: 3));
+        expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+        expect((bloc.state as BookingFindingNearbyDrivers).drivers, [
+          nearDriver,
+          farDriver,
+        ]);
+
+        // At 10s later (t=13s) third poll still has nearDriver.
+        await tester.pump(const Duration(seconds: 10));
+        expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+        expect((bloc.state as BookingFindingNearbyDrivers).drivers, [
+          nearDriver,
+        ]);
+
+        // Well past original 15s (t=20s), still active with nearDriver.
+        await tester.pump(const Duration(seconds: 7));
+        expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+
+        // At t=23s (10s after t=13s), fourth poll returns empty -> fresh 15s timeout starts.
+        await tester.pump(const Duration(seconds: 3));
+        expect((bloc.state as BookingFindingNearbyDrivers).drivers, isEmpty);
+
+        await tester.pump(const Duration(seconds: 14));
+        expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+
+        await tester.pump(const Duration(seconds: 1));
+        expect(bloc.state, isA<BookingFailure>());
+        expect((bloc.state as BookingFailure).isNoDriverFound, isTrue);
+
+        unawaited(bloc.close());
+        unawaited(lifecycle.dispose());
+        await tester.pump();
+      },
+    );
+
+    testWidgets(
+      'does not falsely declare no driver found during an availability error',
+      (tester) async {
+        var shouldFail = true;
+        when(() => driverRepo.getNearbyDrivers(lat: 7.82, lng: 123.43))
+            .thenAnswer((_) async {
+              if (shouldFail) {
+                return const Err(NetworkFailure('Offline'));
+              }
+              return const Ok([]);
+            });
+        final lifecycle = AppLifecycleCoordinator();
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+          lifecycleCoordinator: lifecycle,
+        );
+
+        bloc.add(
+          const StartNearbyDriverSearchEvent(
+            trip: testTrip,
+            pickupLat: 7.82,
+            pickupLng: 123.43,
+            distanceKm: 2,
+            durationMinutes: 5,
+          ),
+        );
+        await tester.pump();
+        expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+        expect(
+          (bloc.state as BookingFindingNearbyDrivers).errorMessage,
+          isNotNull,
+        );
+
+        await tester.pump(const Duration(seconds: 20));
+        expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+        expect(
+          (bloc.state as BookingFindingNearbyDrivers).errorMessage,
+          isNotNull,
+        );
+
+        // Once availability recovers with empty results, the 15s countdown runs.
+        shouldFail = false;
+        bloc.add(const RefreshBookingSessionEvent());
+        await tester.pump();
+        expect(
+          (bloc.state as BookingFindingNearbyDrivers).errorMessage,
+          isNull,
+        );
+
+        await tester.pump(const Duration(seconds: 14));
+        expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+
+        await tester.pump(const Duration(seconds: 1));
+        expect(bloc.state, isA<BookingFailure>());
+        expect((bloc.state as BookingFailure).isNoDriverFound, isTrue);
+
+        unawaited(bloc.close());
+        unawaited(lifecycle.dispose());
+        await tester.pump();
+      },
+    );
+
+    testWidgets(
+      'pauses the 15s countdown in background and finishes remaining time on resume',
+      (tester) async {
+        var currentTime = DateTime.utc(2026, 11, 25, 10, 0, 0);
+        when(() => driverRepo.getNearbyDrivers(lat: 7.82, lng: 123.43))
+            .thenAnswer((_) async => const Ok([]));
+        final lifecycle = AppLifecycleCoordinator();
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+          lifecycleCoordinator: lifecycle,
+          now: () => currentTime,
+        );
+
+        bloc.add(
+          const StartNearbyDriverSearchEvent(
+            trip: testTrip,
+            pickupLat: 7.82,
+            pickupLng: 123.43,
+            distanceKm: 2,
+            durationMinutes: 5,
+          ),
+        );
+        await tester.pump();
+
+        // Advance 5 seconds in foreground, then background the app for 30s.
+        currentTime = currentTime.add(const Duration(seconds: 5));
+        await tester.pump(const Duration(seconds: 5));
+        lifecycle.update(isForeground: false);
+        await tester.pump(const Duration(seconds: 30));
+        expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+
+        // Returning to foreground resumes the remaining 10 seconds.
+        currentTime = currentTime.add(const Duration(seconds: 30));
+        lifecycle.update(isForeground: true);
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 9));
+        expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+
+        await tester.pump(const Duration(seconds: 1));
+        expect(bloc.state, isA<BookingFailure>());
+        expect((bloc.state as BookingFailure).isNoDriverFound, isTrue);
+
+        unawaited(bloc.close());
+        unawaited(lifecycle.dispose());
+        await tester.pump();
+      },
+    );
+
+    testWidgets(
+      'reset followed immediately by StartNearbyDriverSearchEvent does not clobber the new search',
+      (tester) async {
+        when(() => driverRepo.getNearbyDrivers(lat: 7.82, lng: 123.43))
+            .thenAnswer((_) async => const Ok([]));
+        final lifecycle = AppLifecycleCoordinator();
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+          lifecycleCoordinator: lifecycle,
+        );
+
+        bloc.add(const ResetBookingEvent());
+        bloc.add(
+          const StartNearbyDriverSearchEvent(
+            trip: testTrip,
+            pickupLat: 7.82,
+            pickupLng: 123.43,
+            distanceKm: 2,
+            durationMinutes: 5,
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+        expect(bloc.hasActiveDriverSearch, isTrue);
+
+        unawaited(bloc.close());
+        unawaited(lifecycle.dispose());
+        await tester.pump();
+      },
+    );
   });
 }

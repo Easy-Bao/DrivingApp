@@ -728,7 +728,21 @@ class _ShellLayoutState extends State<ShellLayout> {
               ? null
               : () => _openFindingDriverFromShell(activeSearch),
         );
-      case BookingFindingNearbyDrivers(:final trip):
+      case BookingFindingNearbyDrivers(:final trip, :final drivers):
+        if (drivers.isNotEmpty) {
+          return ActiveBookingBanner(
+            title: 'Nearby drivers ready',
+            subtitle: '${drivers.first.displayName} • ${trip.destination.name}',
+            tone: ActiveBookingBannerTone.active,
+            icon: LucideIcons.car,
+            actionLabel: activeSearch != null ? 'View' : null,
+            showActionArrow: activeSearch != null,
+            onAction: activeSearch == null
+                ? null
+                : () => _openFindingDriverFromShell(activeSearch),
+            onDismiss: () => bookingBloc.add(const CancelBookingEvent()),
+          );
+        }
         return ActiveBookingBanner(
           title: 'Looking for drivers',
           subtitle: 'To ${trip.destination.name}',

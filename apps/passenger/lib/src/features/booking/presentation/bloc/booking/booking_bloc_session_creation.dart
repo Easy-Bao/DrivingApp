@@ -6,6 +6,8 @@ extension _BookingBlocSessionCreation on BookingBloc {
     Emitter<BookingState> emit,
   ) async {
     if (hasActiveBooking || _isCreatingBidSession) return;
+    _stopNearbyDriverSearch();
+    ++_bookingFlowGeneration;
     final targetDriver = event.targetDriver;
     final targetDriverId = int.tryParse(targetDriver.id);
     if (targetDriverId == null || targetDriverId <= 0) {
@@ -53,6 +55,8 @@ extension _BookingBlocSessionCreation on BookingBloc {
     Emitter<BookingState> emit,
   ) async {
     if (hasActiveBooking || _isCreatingBidSession) return;
+    _stopNearbyDriverSearch();
+    ++_bookingFlowGeneration;
     _isCreatingBidSession = true;
     _cancelPendingBidSessionCreation = false;
     _lastFailedDriverSearch = null;
