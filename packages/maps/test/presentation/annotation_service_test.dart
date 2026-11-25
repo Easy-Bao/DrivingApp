@@ -134,6 +134,50 @@ void main() {
       },
     );
   });
+
+  group('marker replacement', () {
+    test('skips redundant image upload when marker style is unchanged and isolates concurrent maps', () async {
+      final annotationsA = _TestAnnotations();
+      final annotationsB = _TestAnnotations();
+      final controllerA = AppMapController(
+        mapbox.MapboxMap(_TestMap(annotationsA)),
+      );
+      final controllerB = AppMapController(
+        mapbox.MapboxMap(_TestMap(annotationsB)),
+      );
+
+      final managerA = await MapAnnotationService.addMarker(
+        controllerA,
+        7.8,
+        123.4,
+        isOrigin: true,
+      );
+      final managerB = await MapAnnotationService.addMarker(
+        controllerB,
+        7.9,
+        123.5,
+        isOrigin: true,
+      );
+
+      await MapAnnotationService.replaceMarker(
+        managerA,
+        7.81,
+        123.41,
+        isOrigin: true,
+      );
+      expect(annotationsA.point.updatedAnnotations, hasLength(1));
+      expect(annotationsA.point.updatedAnnotations.single.image, isNull);
+
+      await MapAnnotationService.replaceMarker(
+        managerB,
+        7.91,
+        123.51,
+        isOrigin: false,
+      );
+      expect(annotationsB.point.updatedAnnotations, hasLength(1));
+      expect(annotationsB.point.updatedAnnotations.single.image, isNotNull);
+    });
+  });
 }
 
 class _TestMap(this.annotations) implements MapboxMapPlatformInterface {
@@ -220,17 +264,32 @@ class _TestPolyline implements PolylineAnnotationManagerPlatformInterface {
 
 class _TestPoint implements PointAnnotationManagerPlatformInterface {
   int deleteAllCalls = 0;
+  final List<PointAnnotation> _annotations = [];
+  final List<PointAnnotation> updatedAnnotations = [];
 
   @override
   String get id => '2';
 
   @override
-  Future<PointAnnotation> create(PointAnnotationOptions options) async =>
-      PointAnnotation(id: 'point', geometry: options.geometry);
+  Future<PointAnnotation> create(PointAnnotationOptions options) async {
+    final annotation = PointAnnotation(id: 'point', geometry: options.geometry);
+    _annotations.add(annotation);
+    return annotation;
+  }
+
+  @override
+  Future<List<PointAnnotation>> getAnnotations() async =>
+      List<PointAnnotation>.from(_annotations);
+
+  @override
+  Future<void> update(PointAnnotation annotation) async {
+    updatedAnnotations.add(annotation);
+  }
 
   @override
   Future<void> deleteAll() async {
     deleteAllCalls++;
+    _annotations.clear();
   }
 
   @override

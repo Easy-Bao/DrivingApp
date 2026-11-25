@@ -73,7 +73,12 @@ class MapAnnotationService._() {
   static final Expando<Future<void>> _annotationManagerCleanup = Expando(
     'MapAnnotationService.annotationManagerCleanup',
   );
-  static final Map<String, int> _animationGenerationByManagerKey = {};
+  static final Expando<int> _animationGenerationByManager = Expando(
+    'MapAnnotationService.animationGenerationByManager',
+  );
+  static final Expando<String> _markerImageKeyByManager = Expando(
+    'MapAnnotationService.markerImageKeyByManager',
+  );
 
   static Future<mapbox.PointAnnotationManager> addMarker(
     AppMapController controller,
@@ -91,6 +96,10 @@ class MapAnnotationService._() {
     _annotationManagerOwners[annotationManager] = mapController;
 
     try {
+      final imageKey = _markerCacheKey(
+        color ?? TripMapMarkerStyle.colorFor(isOrigin: isOrigin),
+        label: label,
+      );
       final options = await _markerOptions(
         latitude,
         longitude,
@@ -103,6 +112,7 @@ class MapAnnotationService._() {
         'maps.marker.platform_create',
         () => annotationManager.create(options),
       );
+      _markerImageKeyByManager[annotationManager] = imageKey;
       if (onTap != null) {
         annotationManager.tapEvents(onTap: (_) => onTap());
       }
@@ -123,10 +133,21 @@ class MapAnnotationService._() {
     double? bearing,
     bool animate = false,
   }) => traceTimelineStage('maps.marker.replace', () async {
+    final generation =
+        (_animationGenerationByManager[annotationManager] ?? 0) + 1;
+    _animationGenerationByManager[annotationManager] = generation;
+    final imageKey = _markerCacheKey(
+      color ?? TripMapMarkerStyle.colorFor(isOrigin: isOrigin),
+      label: label,
+    );
+
     final annotations = await traceTimelineStage(
       'maps.marker.read_annotations',
       annotationManager.getAnnotations,
     );
+    if (_animationGenerationByManager[annotationManager] != generation) {
+      return;
+    }
     if (annotations.isEmpty) {
       final options = await _markerOptions(
         latitude,
@@ -136,10 +157,14 @@ class MapAnnotationService._() {
         color: color,
         bearing: bearing ?? 0,
       );
+      if (_animationGenerationByManager[annotationManager] != generation) {
+        return;
+      }
       await traceTimelineStage(
         'maps.marker.platform_create',
         () => annotationManager.create(options),
       );
+      _markerImageKeyByManager[annotationManager] = imageKey;
       return;
     }
 
@@ -158,22 +183,21 @@ class MapAnnotationService._() {
                 targetLatitude: latitude,
                 targetLongitude: longitude,
               ));
-    final options = await _markerOptions(
-      latitude,
-      longitude,
-      label: label,
-      isOrigin: isOrigin,
-      color: color,
-      bearing: targetBearing,
-    );
-    annotation.image = options.image;
-    annotation.iconAnchor = options.iconAnchor;
-    annotation.iconSize = options.iconSize;
-    annotation.iconRotate = options.iconRotate;
-    annotation.symbolSortKey = options.symbolSortKey;
-    final generation =
-        (_animationGenerationByManagerKey[annotationManager.id] ?? 0) + 1;
-    _animationGenerationByManagerKey[annotationManager.id] = generation;
+    final imageChanged =
+        _markerImageKeyByManager[annotationManager] != imageKey;
+    if (imageChanged) {
+      final markerColor =
+          color ?? TripMapMarkerStyle.colorFor(isOrigin: isOrigin);
+      annotation.image = await _createMarkerImage(markerColor, label: label);
+      if (_animationGenerationByManager[annotationManager] != generation) {
+        return;
+      }
+      _markerImageKeyByManager[annotationManager] = imageKey;
+    }
+    annotation.iconAnchor = mapbox.IconAnchor.BOTTOM;
+    annotation.iconSize = label == null ? TripMapMarkerStyle.pinIconSize : 1.0;
+    annotation.iconRotate = targetBearing;
+    annotation.symbolSortKey = isOrigin ? 10 : 20;
     if (animate) {
       await traceTimelineStage(
         'maps.marker.animate_8_updates',
@@ -188,13 +212,16 @@ class MapAnnotationService._() {
         ),
       );
     } else {
-      annotation.geometry = options.geometry;
+      annotation.geometry = mapbox.Point(
+        coordinates: mapbox.Position(longitude, latitude),
+      );
       await traceTimelineStage(
         'maps.marker.platform_update',
         () => annotationManager.update(annotation),
       );
     }
-    if (annotations.length > 1) {
+    if (annotations.length > 1 &&
+        _animationGenerationByManager[annotationManager] == generation) {
       await traceTimelineStage(
         'maps.marker.platform_delete_extras',
         () => annotationManager.deleteMulti(annotations.skip(1).toList()),
@@ -215,16 +242,18 @@ class MapAnnotationService._() {
     final startLongitude = annotation.geometry.coordinates.lng.toDouble();
     const frameCount = 8;
     for (var frame = 1; frame <= frameCount; frame++) {
-      if (_animationGenerationByManagerKey[annotationManager.id] !=
-          generation) {
+      if (_animationGenerationByManager[annotationManager] != generation) {
         return;
       }
       final progress = Curves.easeInOut.transform(frame / frameCount);
+      final nextLongitude =
+          ui.lerpDouble(startLongitude, targetLongitude, progress) ??
+          targetLongitude;
+      final nextLatitude =
+          ui.lerpDouble(startLatitude, targetLatitude, progress) ??
+          targetLatitude;
       annotation.geometry = mapbox.Point(
-        coordinates: mapbox.Position(
-          ui.lerpDouble(startLongitude, targetLongitude, progress)!,
-          ui.lerpDouble(startLatitude, targetLatitude, progress)!,
-        ),
+        coordinates: mapbox.Position(nextLongitude, nextLatitude),
       );
       annotation.iconRotate = MapMarkerMotion.interpolateBearing(
         startBearing,
@@ -234,14 +263,10 @@ class MapAnnotationService._() {
       await annotationManager.update(annotation);
       if (frame < frameCount) {
         await Future<void>.delayed(const Duration(milliseconds: 50));
-        if (_animationGenerationByManagerKey[annotationManager.id] !=
-            generation) {
+        if (_animationGenerationByManager[annotationManager] != generation) {
           return;
         }
       }
-    }
-    if (_animationGenerationByManagerKey[annotationManager.id] == generation) {
-      _animationGenerationByManagerKey.remove(annotationManager.id);
     }
   }
 
@@ -265,12 +290,16 @@ class MapAnnotationService._() {
     );
   }
 
+  static String _markerCacheKey(Color color, {String? label}) {
+    final cacheLabel = label == null || label.trim().isEmpty ? '' : label;
+    return '${color.toARGB32()}_$cacheLabel';
+  }
+
   static Future<Uint8List> _createMarkerImage(
     Color color, {
     String? label,
   }) async {
-    final cacheLabel = label == null || label.trim().isEmpty ? '' : label;
-    final cacheKey = '${color.toARGB32()}_$cacheLabel';
+    final cacheKey = _markerCacheKey(color, label: label);
     final cachedImage = _markerImageCache.remove(cacheKey);
     if (cachedImage != null) {
       _markerImageCache[cacheKey] = cachedImage;
@@ -345,13 +374,11 @@ class MapAnnotationService._() {
       );
     }
 
-    final image = await recorder.endRecording().toImage(
-      width.toInt(),
-      height.toInt(),
+    return _encodePictureAsPng(
+      recorder.endRecording(),
+      width: width.toInt(),
+      height: height.toInt(),
     );
-    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    image.dispose();
-    return bytes!.buffer.asUint8List();
   }
 
   static void _drawLabelText(
@@ -421,13 +448,30 @@ class MapAnnotationService._() {
       Paint()..color = TripMapMarkerStyle.markerSurface,
     );
     canvas.drawCircle(center, 4, Paint()..color = color);
-    final image = await recorder.endRecording().toImage(
-      width.toInt(),
-      height.toInt(),
+    return _encodePictureAsPng(
+      recorder.endRecording(),
+      width: width.toInt(),
+      height: height.toInt(),
     );
-    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    image.dispose();
-    return bytes!.buffer.asUint8List();
+  }
+
+  static Future<Uint8List> _encodePictureAsPng(
+    ui.Picture picture, {
+    required int width,
+    required int height,
+  }) async {
+    ui.Image? image;
+    try {
+      image = await picture.toImage(width, height);
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (bytes == null) {
+        throw StateError('Failed to encode marker image as PNG.');
+      }
+      return bytes.buffer.asUint8List();
+    } finally {
+      image?.dispose();
+      picture.dispose();
+    }
   }
 
   static Future<mapbox.PolylineAnnotationManager> addPolyline(
@@ -601,7 +645,11 @@ class MapAnnotationService._() {
   static Future<void> _clearAnnotations(
     mapbox.BaseAnnotationManager manager,
   ) async {
-    _animationGenerationByManagerKey.remove(manager.id);
+    if (manager is mapbox.PointAnnotationManager) {
+      _animationGenerationByManager[manager] =
+          (_animationGenerationByManager[manager] ?? 0) + 1;
+      _markerImageKeyByManager[manager] = null;
+    }
     final owner = _annotationManagerOwners[manager];
     _annotationManagerOwners[manager] = null;
     try {
