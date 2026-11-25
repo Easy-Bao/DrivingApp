@@ -14,6 +14,7 @@ export 'src/lifecycle/periodic_task.dart';
 export 'src/navigation/route_data.dart';
 export 'src/navigation/safe_route_extra.dart';
 export 'src/network/api_base_uri.dart';
+export 'src/network/api_client_factory.dart';
 export 'src/network/availability_coordinator.dart';
 export 'src/network/bearer_auth_interceptor.dart';
 export 'src/network/idempotency_interceptor.dart';
