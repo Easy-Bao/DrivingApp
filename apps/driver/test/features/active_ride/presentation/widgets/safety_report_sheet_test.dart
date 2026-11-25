@@ -1,9 +1,9 @@
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/safety_report_sheet.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockRideRepository extends Mock implements RideRepository {}

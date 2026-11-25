@@ -1,8 +1,8 @@
+import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/features/auth/data/datasources/auth_endpoints.dart';
 import 'package:driver/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:driver/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
-import 'package:driver/src/core/session/session_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
@@ -206,7 +206,7 @@ void main() {
           requestBody: {'email': 'bad@email'},
         ),
       ).thenThrow(
-        ServerException(
+        const ServerException(
           message: 'Enter a valid email address.',
           statusCode: 400,
         ),
@@ -231,7 +231,10 @@ void main() {
             requestBody: {'email': 'driver@example.com', 'code': '000000'},
           ),
         ).thenThrow(
-          ServerException(message: 'invalid or expired otp', statusCode: 400),
+          const ServerException(
+            message: 'invalid or expired otp',
+            statusCode: 400,
+          ),
         );
 
         final result = await repository.verifyResetOtp(
@@ -261,7 +264,10 @@ void main() {
             },
           ),
         ).thenThrow(
-          ServerException(message: 'invalid or expired otp', statusCode: 400),
+          const ServerException(
+            message: 'invalid or expired otp',
+            statusCode: 400,
+          ),
         );
 
         final result = await repository.confirmPasswordReset(

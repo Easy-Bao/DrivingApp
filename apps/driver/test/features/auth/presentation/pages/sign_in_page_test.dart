@@ -1,14 +1,14 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
-import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:driver/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:driver/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:driver/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:driver/src/features/auth/presentation/pages/sign_in_page.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockAuthRepository extends Mock implements AuthRepository {}

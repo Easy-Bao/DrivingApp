@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:design_system/design_system.dart';
+import 'package:driver/src/core/location/location_access_cubit.dart';
+import 'package:driver/src/core/location/location_access_state.dart';
 import 'package:driver/src/features/active_ride/active_ride_routes.dart';
 import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
@@ -9,15 +11,13 @@ import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
 import 'package:driver/src/features/dashboard/presentation/pages/dashboard_page.dart';
-import 'package:driver/src/core/location/location_access_cubit.dart';
-import 'package:driver/src/core/location/location_access_state.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 // ignore: depend_on_referenced_packages
 import 'package:go_router/go_router.dart' show GoRouter, ShellRoute;
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Dashboard extends MockCubit<DashboardState> implements DashboardCubit {}

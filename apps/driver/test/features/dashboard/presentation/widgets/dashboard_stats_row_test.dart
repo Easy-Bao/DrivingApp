@@ -1,6 +1,6 @@
 import 'package:driver/src/features/dashboard/presentation/widgets/dashboard_stats_row.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 void main() {
@@ -8,7 +8,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: DashboardStatsRow(
             isLoadingStats: false,
@@ -182,10 +182,10 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: MediaQuery(
-          data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
-          child: const Scaffold(
+          data: MediaQueryData(textScaler: TextScaler.linear(1.5)),
+          child: Scaffold(
             body: DashboardStatsRow(
               isLoadingStats: false,
               earnings: 12500.5,

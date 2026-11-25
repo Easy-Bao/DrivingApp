@@ -2,16 +2,15 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:design_system/design_system.dart';
+import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/features/active_ride/domain/services/ride_completion_handler.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/presentation/pages/driver_trip_page.dart';
 import 'package:driver/src/features/chat/chat.dart';
-import 'package:driver/src/core/session/session_store.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
@@ -19,6 +18,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mapbox_maps_flutter_platform_interface/mapbox_maps_flutter_platform_interface_internal.dart';
 import 'package:maps/maps.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _RideCubit extends MockCubit<RideState> implements RideFlowCubit {}

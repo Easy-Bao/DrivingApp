@@ -1,9 +1,9 @@
+import 'package:design_system/design_system.dart';
 import 'package:driver/src/app/navigation/bottom_navigation.dart';
 import 'package:driver/src/app/navigation/navigation_shell.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:design_system/design_system.dart';
 
 void main() {
   test('driver tab coordinator tracks navigation and back history', () {

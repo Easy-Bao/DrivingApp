@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('flags long-open active trips without changing their status', () {
@@ -34,7 +34,7 @@ void main() {
 
   test('uses authoritative creation and expired waiting timestamps', () {
     final now = DateTime.utc(2026, 10, 24, 12);
-    final snapshot = RideSnapshot.fromJson({
+    final snapshot = RideSnapshot.fromJson(const {
       'id': 1,
       'status': 'accepted',
       'created_at': '2026-10-24T19:00:00+08:00',

@@ -1,8 +1,8 @@
+import 'package:driver/src/core/session/session_store.dart';
+import 'package:driver/src/core/session/storage_keys.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:driver/src/core/session/storage_keys.dart';
-import 'package:driver/src/core/session/session_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}

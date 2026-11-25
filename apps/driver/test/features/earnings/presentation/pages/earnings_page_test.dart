@@ -1,17 +1,17 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
+import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/features/earnings/domain/entities/earnings_summary.dart';
 import 'package:driver/src/features/earnings/domain/repositories/earnings_repository.dart';
 import 'package:driver/src/features/earnings/presentation/bloc/earnings_cubit.dart';
 import 'package:driver/src/features/earnings/presentation/pages/earnings_page.dart';
-import 'package:driver/src/core/session/session_store.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -105,10 +105,14 @@ void main() {
       MaterialApp(
         theme: AppTheme.main,
         home: BlocProvider(
-          create: (_) => EarningsCubit(
-            repository: _FakeEarningsRepository(),
-            sessionService: sessionService,
-          )..load(),
+          create: (_) {
+            final cubit = EarningsCubit(
+              repository: _FakeEarningsRepository(),
+              sessionService: sessionService,
+            );
+            unawaited(cubit.load());
+            return cubit;
+          },
           child: const EarningsPage(),
         ),
       ),
@@ -152,10 +156,14 @@ void main() {
       MaterialApp(
         theme: AppTheme.main,
         home: BlocProvider(
-          create: (_) => EarningsCubit(
-            repository: _FakeEarningsRepository(),
-            sessionService: sessionService,
-          )..load(),
+          create: (_) {
+            final cubit = EarningsCubit(
+              repository: _FakeEarningsRepository(),
+              sessionService: sessionService,
+            );
+            unawaited(cubit.load());
+            return cubit;
+          },
           child: const EarningsPage(),
         ),
       ),
@@ -196,10 +204,14 @@ void main() {
           child: child!,
         ),
         home: BlocProvider(
-          create: (_) => EarningsCubit(
-            repository: _FakeEarningsRepository(),
-            sessionService: sessionService,
-          )..load(),
+          create: (_) {
+            final cubit = EarningsCubit(
+              repository: _FakeEarningsRepository(),
+              sessionService: sessionService,
+            );
+            unawaited(cubit.load());
+            return cubit;
+          },
           child: const EarningsPage(),
         ),
       ),
@@ -218,10 +230,14 @@ void main() {
       MaterialApp(
         theme: AppTheme.main,
         home: BlocProvider(
-          create: (_) => cubit = EarningsCubit(
-            repository: repository,
-            sessionService: sessionService,
-          )..load(),
+          create: (_) {
+            cubit = EarningsCubit(
+              repository: repository,
+              sessionService: sessionService,
+            );
+            unawaited(cubit.load());
+            return cubit;
+          },
           child: const EarningsPage(),
         ),
       ),
@@ -277,10 +293,14 @@ void main() {
               child: child!,
             ),
             home: BlocProvider(
-              create: (_) => EarningsCubit(
-                repository: repository,
-                sessionService: sessionService,
-              )..load(),
+              create: (_) {
+                final cubit = EarningsCubit(
+                  repository: repository,
+                  sessionService: sessionService,
+                );
+                unawaited(cubit.load());
+                return cubit;
+              },
               child: const EarningsPage(),
             ),
           ),
@@ -340,10 +360,14 @@ void main() {
         MaterialApp(
           theme: AppTheme.main,
           home: BlocProvider(
-            create: (_) => EarningsCubit(
-              repository: _FakeNegativeEarningsRepository(),
-              sessionService: sessionService,
-            )..load(),
+            create: (_) {
+              final cubit = EarningsCubit(
+                repository: _FakeNegativeEarningsRepository(),
+                sessionService: sessionService,
+              );
+              unawaited(cubit.load());
+              return cubit;
+            },
             child: const EarningsPage(),
           ),
         ),
@@ -370,10 +394,14 @@ void main() {
         MaterialApp(
           theme: AppTheme.main,
           home: BlocProvider(
-            create: (_) => EarningsCubit(
-              repository: _FakeEarningsRepository(),
-              sessionService: sessionService,
-            )..load(),
+            create: (_) {
+              final cubit = EarningsCubit(
+                repository: _FakeEarningsRepository(),
+                sessionService: sessionService,
+              );
+              unawaited(cubit.load());
+              return cubit;
+            },
             child: const EarningsPage(),
           ),
         ),

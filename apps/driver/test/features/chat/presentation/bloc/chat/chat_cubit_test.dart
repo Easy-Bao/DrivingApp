@@ -1,11 +1,10 @@
-import 'package:driver/src/features/chat/chat.dart';
-
 import 'dart:async';
 
+import 'package:driver/src/features/chat/chat.dart';
 import 'package:driver/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
+import 'package:mocktail/mocktail.dart';
 
 class MockChatRepository extends Mock implements ChatRepository {}
 

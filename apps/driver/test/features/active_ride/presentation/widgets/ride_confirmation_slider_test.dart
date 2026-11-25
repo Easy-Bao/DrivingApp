@@ -1,7 +1,7 @@
 import 'package:driver/src/features/active_ride/presentation/widgets/ride_confirmation_slider.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   testWidgets('completing a trip requires a deliberate slide', (tester) async {

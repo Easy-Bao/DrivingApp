@@ -1,15 +1,15 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:driver/src/features/active_ride/data/datasources/ride_counterparty_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/datasources/ride_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/datasources/telemetry_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/repositories/ride_repository_impl.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
+import 'package:mocktail/mocktail.dart';
 
 class MockRideRemoteDataSource extends Mock implements RideRemoteDataSource {}
 

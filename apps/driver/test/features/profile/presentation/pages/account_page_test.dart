@@ -1,17 +1,19 @@
+import 'dart:async';
+
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/core/session/session_store.dart';
-import 'package:driver/src/features/profile/presentation/bloc/account/account_cubit.dart';
-import 'package:driver/src/features/profile/presentation/pages/account_page.dart';
 import 'package:driver/src/features/profile/domain/entities/account_snapshot.dart';
 import 'package:driver/src/features/profile/domain/repositories/profile_repository.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:driver/src/features/profile/presentation/bloc/account/account_cubit.dart';
+import 'package:driver/src/features/profile/presentation/pages/account_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/testing.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:foundation/foundation.dart';
 
 class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
@@ -77,7 +79,11 @@ void main() {
       MaterialApp(
         theme: AppTheme.main,
         home: BlocProvider(
-          create: (_) => AccountCubit(repository: repository)..load(),
+          create: (_) {
+            final cubit = AccountCubit(repository: repository);
+            unawaited(cubit.load());
+            return cubit;
+          },
           child: const AccountPage(onLogout: _noopLogout),
         ),
       ),
@@ -126,7 +132,11 @@ void main() {
             child: child!,
           ),
           home: BlocProvider(
-            create: (_) => AccountCubit(repository: repository)..load(),
+            create: (_) {
+              final cubit = AccountCubit(repository: repository);
+              unawaited(cubit.load());
+              return cubit;
+            },
             child: const AccountPage(onLogout: _noopLogout),
           ),
         ),
@@ -162,7 +172,11 @@ void main() {
       MaterialApp(
         theme: AppTheme.main,
         home: BlocProvider(
-          create: (_) => AccountCubit(repository: repository)..load(),
+          create: (_) {
+            final cubit = AccountCubit(repository: repository);
+            unawaited(cubit.load());
+            return cubit;
+          },
           child: const AccountPage(onLogout: _noopLogout),
         ),
       ),

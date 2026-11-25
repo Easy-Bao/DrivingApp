@@ -1,14 +1,14 @@
 import 'package:design_system/design_system.dart';
+import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:driver/src/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:driver/src/features/profile/domain/entities/account_snapshot.dart';
 import 'package:driver/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver/src/features/profile/presentation/bloc/account/account_state.dart';
 import 'package:driver/src/features/profile/presentation/pages/personal_details_page.dart';
-import 'package:driver/src/core/session/session_store.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -48,7 +48,7 @@ void main() {
           theme: AppTheme.main,
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context)
-                .copyWith(textScaler: TextScaler.linear(2)),
+                .copyWith(textScaler: const TextScaler.linear(2)),
             child: child!,
           ),
           home: BlocProvider<AccountCubit>.value(

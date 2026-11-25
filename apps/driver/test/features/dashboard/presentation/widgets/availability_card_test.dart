@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/availability_card.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   testWidgets('online status uses a neutral card and semantic status pill', (

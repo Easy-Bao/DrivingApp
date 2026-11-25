@@ -3,8 +3,8 @@ import 'package:driver/src/features/performance/data/datasources/performance_rem
 import 'package:driver/src/features/performance/data/repositories/performance_repository_impl.dart';
 import 'package:driver/src/features/performance/domain/entities/performance_stats.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
+import 'package:mocktail/mocktail.dart';
 
 class MockPerformanceRemoteDataSource extends Mock
     implements PerformanceRemoteDataSource {}

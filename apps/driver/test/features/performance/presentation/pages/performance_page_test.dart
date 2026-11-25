@@ -1,13 +1,15 @@
+import 'dart:async';
+
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/core/session/session_store.dart';
-import 'package:driver/src/features/performance/presentation/bloc/performance_cubit.dart';
 import 'package:driver/src/features/performance/domain/entities/performance_stats.dart';
 import 'package:driver/src/features/performance/domain/repositories/performance_repository.dart';
+import 'package:driver/src/features/performance/presentation/bloc/performance_cubit.dart';
 import 'package:driver/src/features/performance/presentation/pages/performance_page.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockPerformanceRepository extends Mock
@@ -49,10 +51,14 @@ void main() {
       MaterialApp(
         theme: AppTheme.main,
         home: BlocProvider<PerformanceCubit>(
-          create: (_) => PerformanceCubit(
-            repository: repository,
-            sessionService: sessionService,
-          )..load(),
+          create: (_) {
+            final cubit = PerformanceCubit(
+              repository: repository,
+              sessionService: sessionService,
+            );
+            unawaited(cubit.load());
+            return cubit;
+          },
           child: PerformancePage(onBack: () {}, onRefresh: () async {}),
         ),
       ),
@@ -114,10 +120,14 @@ void main() {
           child: child!,
         ),
         home: BlocProvider(
-          create: (_) => PerformanceCubit(
-            repository: repository,
-            sessionService: sessionService,
-          )..load(),
+          create: (_) {
+            final cubit = PerformanceCubit(
+              repository: repository,
+              sessionService: sessionService,
+            );
+            unawaited(cubit.load());
+            return cubit;
+          },
           child: PerformancePage(onBack: () {}),
         ),
       ),

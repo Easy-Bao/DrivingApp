@@ -1,13 +1,13 @@
 import 'package:design_system/design_system.dart';
+import 'package:driver/src/features/profile/domain/entities/account_snapshot.dart';
+import 'package:driver/src/features/profile/domain/repositories/profile_repository.dart';
 import 'package:driver/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver/src/features/profile/presentation/bloc/account/account_state.dart';
-import 'package:driver/src/features/profile/domain/entities/account_snapshot.dart';
 import 'package:driver/src/features/profile/presentation/pages/vehicle_information_page.dart';
-import 'package:driver/src/features/profile/domain/repositories/profile_repository.dart';
-import 'package:foundation/foundation.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
+import 'package:material_ui/material_ui.dart';
 
 class _FakeProfileRepository(this.account) implements ProfileRepository {
   AccountSnapshot account;
