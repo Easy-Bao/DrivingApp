@@ -1,7 +1,7 @@
 import 'package:design_system/design_system.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   testWidgets(
@@ -26,16 +26,13 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.main,
-          home: Scaffold(
+          home: const Scaffold(
             body: Center(
               child: SizedBox(
                 width: 280,
                 child: MediaQuery(
-                  data: const MediaQueryData(textScaler: TextScaler.linear(2)),
-                  child: const TripReference(
-                    id: '701629644613868',
-                    expanded: true,
-                  ),
+                  data: MediaQueryData(textScaler: TextScaler.linear(2)),
+                  child: TripReference(id: '701629644613868', expanded: true),
                 ),
               ),
             ),

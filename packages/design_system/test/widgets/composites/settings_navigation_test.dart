@@ -1,7 +1,7 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:design_system/design_system.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   testWidgets('settings destinations keep a full touch target', (tester) async {

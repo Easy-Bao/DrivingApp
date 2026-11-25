@@ -1,6 +1,6 @@
 import 'package:design_system/design_system.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   testWidgets('renders pickup and destination icons', (tester) async {
@@ -37,9 +37,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.main,
-        home: MediaQuery(
-          data: const MediaQueryData(textScaler: TextScaler.linear(2)),
-          child: const Scaffold(
+        home: const MediaQuery(
+          data: MediaQueryData(textScaler: TextScaler.linear(2)),
+          child: Scaffold(
             body: CompactRouteTimeline(
               pickup: 'Mountain View',
               dropoff: 'Pasadena Inn',
