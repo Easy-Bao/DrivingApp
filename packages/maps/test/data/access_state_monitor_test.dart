@@ -38,4 +38,32 @@ void main() {
     await changes.close();
     await monitor.dispose();
   });
+
+  test(
+    'does not overwrite a newer stream event with a stale in-flight read',
+    () async {
+      final changes = StreamController<String>();
+      final staleRead = Completer<String>();
+      final monitor = AccessStateMonitor<String>(
+        stateChanges: () => changes.stream,
+        readState: () => staleRead.future,
+      );
+      final emitted = <String>[];
+      final subscription = monitor.changes.listen(emitted.add);
+
+      final startFuture = monitor.start();
+      changes.add('service-disabled');
+      await Future<void>.delayed(Duration.zero);
+
+      staleRead.complete('ready');
+      final resolved = await startFuture;
+
+      expect(resolved, 'service-disabled');
+      expect(emitted, ['service-disabled']);
+
+      await subscription.cancel();
+      await changes.close();
+      await monitor.dispose();
+    },
+  );
 }

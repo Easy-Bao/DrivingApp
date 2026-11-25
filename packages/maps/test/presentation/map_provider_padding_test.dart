@@ -7,6 +7,22 @@ import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
 
 void main() {
+  MapboxMapsFlutterPlatform? previousPlatform;
+
+  setUp(() {
+    try {
+      previousPlatform = MapboxMapsFlutterPlatform.instance;
+    } on AssertionError {
+      previousPlatform = null;
+    }
+  });
+
+  tearDown(() {
+    if (previousPlatform case final platform?) {
+      MapboxMapsFlutterPlatform.instance = platform;
+    }
+  });
+
   testWidgets('loading rebuild does not request a new camera transition', (
     tester,
   ) async {

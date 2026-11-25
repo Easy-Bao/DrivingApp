@@ -19,6 +19,11 @@ void main() {
     );
   });
 
+  setUp(() {
+    MapProvider.clearLookupCaches();
+    apiClient.reset();
+  });
+
   test('uses the fixed light map style', () {
     expect(MapProvider.styleUriFor(), 'mapbox://styles/mapbox/streets-v12');
   });
@@ -46,6 +51,9 @@ void main() {
   test('clears lookup caches for a foreground refresh', () async {
     const latitude = 10.123456;
     const longitude = 20.654321;
+
+    await MapProvider.getNearbyPOIs(latitude: latitude, longitude: longitude);
+    expect(apiClient.nearbyCallCount, 1);
 
     MapProvider.clearLookupCaches();
     await MapProvider.getNearbyPOIs(latitude: latitude, longitude: longitude);
@@ -86,6 +94,7 @@ void main() {
   test(
     'coalesces the same route request and keeps route preferences separate',
     () async {
+      apiClient.holdNextRoute();
       final first = MapProvider.getRoute(
         7.82420001,
         123.43500001,
@@ -118,7 +127,6 @@ void main() {
   );
 
   test('retries a transient route network failure once', () async {
-    final callsBeforeRetry = apiClient.routeCallCount;
     apiClient.failNextRoute = true;
 
     final route = await MapProvider.getRoute(
@@ -129,31 +137,39 @@ void main() {
     );
 
     expect(route, isNotNull);
-    expect(apiClient.routeCallCount, callsBeforeRetry + 2);
+    expect(apiClient.routeCallCount, 2);
   });
 
   test('evicts old route results after the bounded cache fills', () async {
-    MapProvider.clearLookupCaches();
-    final callsBeforeLookup = apiClient.routeCallCount;
-
     for (var index = 0; index < 25; index++) {
       final route = await MapProvider.getRoute(1 + index * 0.001, 2, 3, 4);
       expect(route, isNotNull);
     }
-    expect(apiClient.routeCallCount, callsBeforeLookup + 25);
+    expect(apiClient.routeCallCount, 25);
 
     await MapProvider.getRoute(1, 2, 3, 4);
-    expect(apiClient.routeCallCount, callsBeforeLookup + 26);
-    MapProvider.clearLookupCaches();
+    expect(apiClient.routeCallCount, 26);
   });
 }
 
 class _DelayedLocationRemoteDataSource extends MockLocationRemoteDataSource {
-  final Completer<Route> _pendingRoute = Completer<Route>();
+  Completer<Route>? _pendingRoute;
   int routeCallCount = 0;
   int nearbyCallCount = 0;
   int matrixCallCount = 0;
   bool failNextRoute = false;
+
+  void reset() {
+    _pendingRoute = null;
+    routeCallCount = 0;
+    nearbyCallCount = 0;
+    matrixCallCount = 0;
+    failNextRoute = false;
+  }
+
+  void holdNextRoute() {
+    _pendingRoute = Completer<Route>();
+  }
 
   @override
   Future<Map<String, dynamic>> getNearbyPois({
@@ -187,11 +203,20 @@ class _DelayedLocationRemoteDataSource extends MockLocationRemoteDataSource {
         type: DioExceptionType.connectionError,
       );
     }
-    if (routeCallCount == 1) return _pendingRoute.future;
+    final pending = _pendingRoute;
+    if (pending != null && !pending.isCompleted) {
+      return pending.future;
+    }
     return Future.value(_route);
   }
 
-  void completePendingRoute() => _pendingRoute.complete(_route);
+  void completePendingRoute() {
+    final pending = _pendingRoute;
+    _pendingRoute = null;
+    if (pending != null && !pending.isCompleted) {
+      pending.complete(_route);
+    }
+  }
 
   static const _route = Route(
     polylinePoints: [

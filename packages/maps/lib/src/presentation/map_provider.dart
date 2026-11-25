@@ -126,12 +126,15 @@ class MapProvider._() {
         latitude: latitude,
         longitude: longitude,
       );
-      return await result.fold((failure) {
-        debugPrint(
-          'MapProvider.getPlaceFromCoordinates failure: ${failure.runtimeType}',
-        );
-        return null;
-      }, (place) => place);
+      switch (result) {
+        case Ok(:final value):
+          return value;
+        case Err(:final failure):
+          debugPrint(
+            'MapProvider.getPlaceFromCoordinates failure: ${failure.runtimeType}',
+          );
+          return null;
+      }
     } catch (_) {
       debugPrint('MapProvider.getPlaceFromCoordinates error.');
       return null;
@@ -491,6 +494,7 @@ class _AppMapViewState extends State<_AppMapView> {
   AppMapController? _mapController;
   bool _mapLoaded = false;
   bool _mapLoadFailed = false;
+  bool _chromeHidden = false;
   (String, int)? _preparingMap;
   int _mapGeneration = 0;
 
@@ -501,7 +505,65 @@ class _AppMapViewState extends State<_AppMapView> {
       _mapController = null;
       _mapLoaded = false;
       _mapLoadFailed = false;
+      _chromeHidden = false;
+      _preparingMap = null;
+      return;
     }
+
+    final controller = _mapController;
+    if (controller == null) return;
+    if (widget.interactive != oldWidget.interactive) {
+      unawaited(_applyGestureSettings(controller.native, widget.interactive));
+    }
+    if (widget.showUserLocation != oldWidget.showUserLocation) {
+      unawaited(
+        _applyUserLocationSettings(controller.native, widget.showUserLocation),
+      );
+    }
+  }
+
+  Future<void> _hideMapChrome(AppMapController controller) async {
+    if (_chromeHidden) return;
+    await Future.wait([
+      controller.native.logo.updateSettings(
+        mapbox.LogoSettings(enabled: false),
+      ),
+      controller.native.attribution.updateSettings(
+        mapbox.AttributionSettings(enabled: false),
+      ),
+      controller.native.scaleBar.updateSettings(
+        mapbox.ScaleBarSettings(enabled: false),
+      ),
+    ]);
+    _chromeHidden = true;
+  }
+
+  Future<void> _applyGestureSettings(
+    mapbox.MapboxMap controller,
+    bool interactive,
+  ) {
+    return controller.gestures.updateSettings(
+      mapbox.GesturesSettings(
+        scrollEnabled: interactive,
+        rotateEnabled: interactive,
+        pitchEnabled: interactive,
+        doubleTapToZoomInEnabled: interactive,
+        quickZoomEnabled: interactive,
+      ),
+    );
+  }
+
+  Future<void> _applyUserLocationSettings(
+    mapbox.MapboxMap controller,
+    bool enabled,
+  ) {
+    return controller.location.updateSettings(
+      mapbox.LocationComponentSettings(
+        enabled: enabled,
+        pulsingEnabled: false,
+        showAccuracyRing: false,
+      ),
+    );
   }
 
   Future<void> _finishLoading((String, int) identity) async {
@@ -515,17 +577,7 @@ class _AppMapViewState extends State<_AppMapView> {
     try {
       final controller = _mapController;
       if (controller != null) {
-        await Future.wait([
-          controller.native.logo.updateSettings(
-            mapbox.LogoSettings(enabled: false),
-          ),
-          controller.native.attribution.updateSettings(
-            mapbox.AttributionSettings(enabled: false),
-          ),
-          controller.native.scaleBar.updateSettings(
-            mapbox.ScaleBarSettings(enabled: false),
-          ),
-        ]);
+        await _hideMapChrome(controller);
       }
       if (!mounted || identity != (widget.styleUri, _mapGeneration)) return;
       setState(() {
@@ -586,31 +638,16 @@ class _AppMapViewState extends State<_AppMapView> {
         }
 
         if (!widget.interactive) {
-          unawaited(
-            controller.gestures.updateSettings(
-              mapbox.GesturesSettings(
-                scrollEnabled: false,
-                rotateEnabled: false,
-                pitchEnabled: false,
-                doubleTapToZoomInEnabled: false,
-                quickZoomEnabled: false,
-              ),
-            ),
-          );
+          unawaited(_applyGestureSettings(controller, false));
         }
 
         final currentController = AppMapController(controller);
         _mapController = currentController;
         if (widget.showUserLocation) {
-          unawaited(
-            controller.location.updateSettings(
-              mapbox.LocationComponentSettings(
-                enabled: true,
-                pulsingEnabled: false,
-                showAccuracyRing: false,
-              ),
-            ),
-          );
+          unawaited(_applyUserLocationSettings(controller, true));
+        }
+        if (_mapLoaded && !_chromeHidden) {
+          unawaited(_hideMapChrome(currentController));
         }
         widget.onMapCreated?.call(currentController);
       },
@@ -640,6 +677,8 @@ class _AppMapViewState extends State<_AppMapView> {
                           onPressed: () => setState(() {
                             _mapController = null;
                             _mapLoadFailed = false;
+                            _chromeHidden = false;
+                            _preparingMap = null;
                             _mapGeneration++;
                           }),
                           child: const Text('Retry'),

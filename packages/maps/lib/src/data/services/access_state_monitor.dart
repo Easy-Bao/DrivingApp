@@ -17,18 +17,26 @@ final class AccessStateMonitor<T>({
   StreamSubscription<T>? _stateSubscription;
   Future<T>? _refreshInFlight;
   T? _lastState;
+  int _eventVersion = 0;
+  bool _disposed = false;
 
   Stream<T> get changes => _changesController.stream;
 
   Future<T> start() async {
+    if (_disposed) {
+      throw StateError('AccessStateMonitor has been disposed.');
+    }
     _stateSubscription ??= _stateChanges().listen(
-      _publish,
+      _handleStreamEvent,
       onError: (_, _) => unawaited(_refreshAfterStreamError()),
     );
     return refresh();
   }
 
   Future<T> refresh() {
+    if (_disposed) {
+      throw StateError('AccessStateMonitor has been disposed.');
+    }
     final inFlight = _refreshInFlight;
     if (inFlight != null) return inFlight;
 
@@ -41,13 +49,25 @@ final class AccessStateMonitor<T>({
     });
   }
 
+  void _handleStreamEvent(T state) {
+    if (_disposed) return;
+    _eventVersion++;
+    _publish(state);
+  }
+
   Future<T> _readAndPublish() async {
+    final readVersion = _eventVersion;
     final state = await _readState();
+    if (_disposed) return state;
+    if (_eventVersion != readVersion) {
+      return _lastState ?? state;
+    }
     _publish(state);
     return state;
   }
 
   Future<void> _refreshAfterStreamError() async {
+    if (_disposed) return;
     try {
       await refresh();
     } catch (_) {
@@ -56,13 +76,16 @@ final class AccessStateMonitor<T>({
   }
 
   void _publish(T state) {
-    if (_lastState == state || _changesController.isClosed) return;
+    if (_disposed || _lastState == state || _changesController.isClosed) return;
     _lastState = state;
     _changesController.add(state);
   }
 
   Future<void> dispose() async {
+    if (_disposed) return;
+    _disposed = true;
     await _stateSubscription?.cancel();
+    _stateSubscription = null;
     await _changesController.close();
   }
 }
