@@ -5,11 +5,10 @@ import 'dart:ui' as ui;
 
 import 'package:design_system/design_system.dart'
     show AppPalette, AppStatusColors;
-import 'package:material_ui/material_ui.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
-
 import 'package:maps/src/presentation/camera_service.dart';
+import 'package:material_ui/material_ui.dart';
 
 typedef MapPointAnnotationManager = mapbox.PointAnnotationManager;
 typedef MapPolylineAnnotationManager = mapbox.PolylineAnnotationManager;
@@ -27,7 +26,7 @@ class TripMapMarkerStyle._() {
   }
 }
 
-abstract final class MapMarkerMotion {
+class MapMarkerMotion._() {
   static double bearingBetween({
     required double startLatitude,
     required double startLongitude,

@@ -1,3 +1,5 @@
+import 'package:equatable/equatable.dart';
+
 typedef DemandHeatmapTileLoader<T> = Future<List<T>> Function(
   MapViewportBounds bounds,
 );
@@ -74,7 +76,7 @@ final class DemandHeatmapViewportCoordinator<T> {
       }
     } finally {
       if (identical(_inFlightTiles[tile], request)) {
-        _inFlightTiles.remove(tile);
+        final _ = _inFlightTiles.remove(tile);
       }
     }
   }
@@ -104,7 +106,8 @@ final class DemandHeatmapViewportCoordinator<T> {
   int _tileIndex(double coordinate) => (coordinate / tileSizeDegrees).floor();
 }
 
-class const _HeatmapTile(this.latitudeIndex, this.longitudeIndex) {
+class const _HeatmapTile(this.latitudeIndex, this.longitudeIndex)
+    extends Equatable {
   final int latitudeIndex;
   final int longitudeIndex;
 
@@ -124,11 +127,5 @@ class const _HeatmapTile(this.latitudeIndex, this.longitudeIndex) {
   double _clampLongitude(double value) => value > 180 ? 180 : value;
 
   @override
-  bool operator ==(Object other) =>
-      other is _HeatmapTile &&
-      other.latitudeIndex == latitudeIndex &&
-      other.longitudeIndex == longitudeIndex;
-
-  @override
-  int get hashCode => Object.hash(latitudeIndex, longitudeIndex);
+  List<Object> get props => [latitudeIndex, longitudeIndex];
 }

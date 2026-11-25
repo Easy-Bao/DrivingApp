@@ -1,18 +1,18 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:material_ui/material_ui.dart' hide Route;
 import 'package:foundation/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/src/data/datasources/device_location_service.dart';
+import 'package:maps/src/data/services/nearby_place_resolver.dart';
+import 'package:maps/src/data/services/route_request_key.dart';
 import 'package:maps/src/domain/entities/place.dart';
 import 'package:maps/src/domain/entities/route.dart';
 import 'package:maps/src/domain/failures/place_failure.dart';
 import 'package:maps/src/presentation/annotation_service.dart';
 import 'package:maps/src/presentation/camera_service.dart';
 import 'package:maps/src/presentation/native_service.dart';
-import 'package:maps/src/data/services/nearby_place_resolver.dart';
-import 'package:maps/src/data/services/route_request_key.dart';
+import 'package:material_ui/material_ui.dart' hide Route;
 
 export 'package:maps/src/presentation/annotation_service.dart';
 export 'package:maps/src/presentation/camera_service.dart';
@@ -508,8 +508,9 @@ class _AppMapViewState extends State<_AppMapView> {
     if (!mounted ||
         _mapLoaded ||
         _preparingMap == identity ||
-        identity != (widget.styleUri, _mapGeneration))
+        identity != (widget.styleUri, _mapGeneration)) {
       return;
+    }
     _preparingMap = identity;
     try {
       final controller = _mapController;
@@ -562,8 +563,9 @@ class _AppMapViewState extends State<_AppMapView> {
         if (!mounted ||
             _mapLoaded ||
             _mapLoadFailed ||
-            mapIdentity != (widget.styleUri, _mapGeneration))
+            mapIdentity != (widget.styleUri, _mapGeneration)) {
           return;
+        }
         setState(() => _mapLoadFailed = true);
       },
       onCameraChangeListener: (cameraChangedEventData) {
@@ -579,8 +581,9 @@ class _AppMapViewState extends State<_AppMapView> {
         }
       },
       onMapCreated: (controller) {
-        if (!mounted || mapIdentity != (widget.styleUri, _mapGeneration))
+        if (!mounted || mapIdentity != (widget.styleUri, _mapGeneration)) {
           return;
+        }
 
         if (!widget.interactive) {
           unawaited(

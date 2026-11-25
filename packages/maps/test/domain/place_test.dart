@@ -50,11 +50,11 @@ void main() {
       throwsA(isA<FormatException>()),
     );
     expect(
-      () => Place.fromJson({'longitude': double.infinity}),
+      () => Place.fromJson(const {'longitude': double.infinity}),
       throwsA(isA<FormatException>()),
     );
     expect(
-      () => Place.fromJson({'distance_km': double.nan}),
+      () => Place.fromJson(const {'distance_km': double.nan}),
       throwsA(isA<FormatException>()),
     );
   });

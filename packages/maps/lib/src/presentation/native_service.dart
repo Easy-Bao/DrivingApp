@@ -77,10 +77,10 @@ class MapNativeService({
   }) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
-      return Ok([]);
+      return const Ok([]);
     }
     if (trimmed.length > _maxSearchQueryLength) {
-      return Err(const PlaceParseError(message: 'Search query is too long.'));
+      return const Err(PlaceParseError(message: 'Search query is too long.'));
     }
 
     try {
@@ -96,10 +96,10 @@ class MapNativeService({
         'searchPlaces network failure: ${e.type.name}',
         name: 'MapNativeService',
       );
-      return Err(const PlaceNetworkError());
+      return const Err(PlaceNetworkError());
     } catch (_) {
       dev.log('searchPlaces parse error', name: 'MapNativeService');
-      return Err(const PlaceParseError());
+      return const Err(PlaceParseError());
     }
   }
 
@@ -118,10 +118,10 @@ class MapNativeService({
         'reverseGeocode network failure: ${e.type.name}',
         name: 'MapNativeService',
       );
-      return Err(const PlaceNetworkError());
+      return const Err(PlaceNetworkError());
     } catch (_) {
       dev.log('reverseGeocode parse error', name: 'MapNativeService');
-      return Err(const PlaceParseError());
+      return const Err(PlaceParseError());
     }
   }
 
@@ -158,10 +158,10 @@ class MapNativeService({
         'getRoute network failure: ${e.type.name}',
         name: 'MapNativeService',
       );
-      return Err(const PlaceNetworkError());
+      return const Err(PlaceNetworkError());
     } catch (_) {
       dev.log('getRoute parse error', name: 'MapNativeService');
-      return Err(const PlaceParseError());
+      return const Err(PlaceParseError());
     }
   }
 
@@ -181,8 +181,8 @@ class MapNativeService({
       );
       final values = response['distances_km'];
       if (values is! List) {
-        return Err(
-          const PlaceParseError(message: 'Invalid travel matrix response.'),
+        return const Err(
+          PlaceParseError(message: 'Invalid travel matrix response.'),
         );
       }
       return Ok(
@@ -193,10 +193,10 @@ class MapNativeService({
         'getDrivingDistances network failure: ${e.type.name}',
         name: 'MapNativeService',
       );
-      return Err(const PlaceNetworkError());
+      return const Err(PlaceNetworkError());
     } catch (_) {
       dev.log('getDrivingDistances parse error', name: 'MapNativeService');
-      return Err(const PlaceParseError());
+      return const Err(PlaceParseError());
     }
   }
 
@@ -218,10 +218,10 @@ class MapNativeService({
         'getNearbyPois network failure: ${e.type.name}',
         name: 'MapNativeService',
       );
-      return Err(const PlaceNetworkError());
+      return const Err(PlaceNetworkError());
     } catch (_) {
       dev.log('getNearbyPois parse error', name: 'MapNativeService');
-      return Err(const PlaceParseError());
+      return const Err(PlaceParseError());
     }
   }
 

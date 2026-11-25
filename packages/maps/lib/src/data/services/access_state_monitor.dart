@@ -5,10 +5,10 @@ typedef AccessStateReader<T> = Future<T> Function();
 
 /// Coalesces access reads and deduplicates native service state updates.
 final class AccessStateMonitor<T>({
-  required AccessStateStream<T> stateChanges,
-  required AccessStateReader<T> readState,
+  required this._stateChanges,
+  required this._readState,
 }) {
-  this : _stateChanges = stateChanges, _readState = readState;
+  this;
 
   final AccessStateStream<T> _stateChanges;
   final AccessStateReader<T> _readState;

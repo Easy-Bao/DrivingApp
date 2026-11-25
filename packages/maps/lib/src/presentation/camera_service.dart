@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
-import 'package:material_ui/material_ui.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+import 'package:material_ui/material_ui.dart';
 
 class const LatLng(this.latitude, this.longitude) {
   final double latitude;
