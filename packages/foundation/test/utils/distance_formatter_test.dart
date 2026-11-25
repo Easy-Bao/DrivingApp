@@ -9,6 +9,7 @@ void main() {
     });
 
     test('uses compact kilometres at and above one kilometre', () {
+      expect(DistanceFormatter.fromKilometers(0.9996), '1 km');
       expect(DistanceFormatter.fromKilometers(1), '1 km');
       expect(DistanceFormatter.fromKilometers(4.24), '4.2 km');
     });

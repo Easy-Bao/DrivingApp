@@ -18,7 +18,7 @@ String formatPesoAmount(num amount) {
   }
 
   final formatted = '$buffer.$decimalPart';
-  if (isNegative && absoluteAmount >= 0.005) {
+  if (isNegative && formatted != '0.00') {
     return '-₱$formatted';
   }
   return '₱$formatted';

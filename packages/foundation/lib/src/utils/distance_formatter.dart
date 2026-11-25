@@ -9,7 +9,11 @@ class DistanceFormatter._() {
     }
 
     if (distance < 1) {
-      return '${(distance * 1000).round()} m';
+      final meters = (distance * 1000).round();
+      if (meters < 1000) {
+        return '$meters m';
+      }
+      return '1 km';
     }
 
     final roundedDistance = distance.toStringAsFixed(1);

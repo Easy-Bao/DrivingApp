@@ -1,10 +1,16 @@
+import 'package:foundation/src/network/offset_page.dart';
+
 abstract class const SafeRouteExtra._() {
-  static Map<String, dynamic> asMap(dynamic extra) {
+  static Map<String, dynamic> asMap(Object? extra) {
     if (extra is Map<String, dynamic>) {
       return extra;
     }
     if (extra is Map) {
-      return Map<String, dynamic>.from(extra);
+      try {
+        return decodeObjectMap(extra);
+      } on FormatException {
+        return <String, dynamic>{};
+      }
     }
     return <String, dynamic>{};
   }
@@ -17,7 +23,8 @@ abstract class const SafeRouteExtra._() {
     if (map == null) return fallback;
     final value = map[key];
     if (value is String) return value;
-    return value?.toString() ?? fallback;
+    if (value is num || value is bool) return value.toString();
+    return fallback;
   }
 
   static double getDouble(
@@ -27,8 +34,14 @@ abstract class const SafeRouteExtra._() {
   ]) {
     if (map == null) return fallback;
     final value = map[key];
-    if (value is num) return value.toDouble();
-    if (value is String) return double.tryParse(value) ?? fallback;
+    if (value is num) {
+      final parsed = value.toDouble();
+      return parsed.isFinite ? parsed : fallback;
+    }
+    if (value is String) {
+      final parsed = double.tryParse(value);
+      return parsed != null && parsed.isFinite ? parsed : fallback;
+    }
     return fallback;
   }
 
@@ -36,7 +49,7 @@ abstract class const SafeRouteExtra._() {
     if (map == null) return fallback;
     final value = map[key];
     if (value is int) return value;
-    if (value is num) return value.toInt();
+    if (value is num) return value.isFinite ? value.toInt() : fallback;
     if (value is String) return int.tryParse(value) ?? fallback;
     return fallback;
   }

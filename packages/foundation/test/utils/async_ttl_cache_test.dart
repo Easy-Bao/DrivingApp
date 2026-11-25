@@ -103,4 +103,27 @@ void main() {
       expect(loadCount, 2);
     },
   );
+
+  test('evicts the oldest entry when maxEntries is exceeded', () async {
+    var now = DateTime(2026, 8, 28, 12);
+    final cache = AsyncTtlCache<String, int>(
+      ttl: const Duration(minutes: 5),
+      maxEntries: 2,
+      clock: () => now,
+    );
+
+    await cache.getOrLoad('first', () async => 1);
+    now = now.add(const Duration(seconds: 1));
+    await cache.getOrLoad('second', () async => 2);
+    now = now.add(const Duration(seconds: 1));
+    await cache.getOrLoad('third', () async => 3);
+
+    var reloadedFirst = false;
+    final value = await cache.getOrLoad('first', () async {
+      reloadedFirst = true;
+      return 10;
+    });
+    expect(reloadedFirst, isTrue);
+    expect(value, 10);
+  });
 }

@@ -68,21 +68,22 @@ class AsyncTtlCache<K, V>({
   }
 
   void _store(K key, V value) {
-    _values[key] = _AsyncTtlCacheEntry(value: value, createdAt: _clock());
+    final now = _clock();
+    _values.removeWhere((_, entry) => !now.isBefore(entry.createdAt.add(ttl)));
+    _values.remove(key);
+    _values[key] = _AsyncTtlCacheEntry(value: value, createdAt: now);
     while (_values.length > maxEntries) {
-      late K oldestKey;
-      var hasOldest = false;
+      K? oldestKey;
       DateTime? oldestCreatedAt;
-
       for (final entry in _values.entries) {
-        if (!hasOldest || entry.value.createdAt.isBefore(oldestCreatedAt!)) {
+        final currentOldest = oldestCreatedAt;
+        if (currentOldest == null ||
+            entry.value.createdAt.isBefore(currentOldest)) {
           oldestKey = entry.key;
           oldestCreatedAt = entry.value.createdAt;
-          hasOldest = true;
         }
       }
-
-      if (!hasOldest) return;
+      if (oldestKey == null) return;
       _values.remove(oldestKey);
     }
   }
