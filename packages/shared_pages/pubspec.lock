@@ -195,7 +195,7 @@ packages:
     source: sdk
     version: "0.0.0"
   flutter_lucide:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: flutter_lucide
       sha256: "94eef4b98cab292e8bf1105c753a6a8a4331eba085cbf9eccd59759c45218cc2"
