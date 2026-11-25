@@ -118,4 +118,32 @@ void main() {
     expect(metric.cancelledCount, 1);
     expect(metric.statusCodes, isEmpty);
   });
+
+  test('normalizes UUIDv7 and ULID segments and bounds tracked routes', () {
+    final metrics = HttpRequestMetrics(maxTrackedRoutes: 2);
+    metrics.record(
+      RequestOptions(
+        baseUrl: 'https://api.example',
+        path: '/api/v1/rides/0190f3f2-7c92-7b1e-8c42-123456789abc',
+      ),
+    );
+    metrics.record(
+      RequestOptions(
+        baseUrl: 'https://api.example',
+        path: '/api/v1/rides/01ARZ3NDEKTSV4RRFFQ69G5FAV',
+      ),
+    );
+    metrics.record(
+      RequestOptions(baseUrl: 'https://api.example', path: '/api/v1/a'),
+    );
+    metrics.record(
+      RequestOptions(baseUrl: 'https://api.example', path: '/api/v1/b'),
+    );
+
+    expect(metrics.snapshot(), hasLength(2));
+    expect(
+      metrics.snapshot().map((m) => m.path),
+      containsAll(['/api/v1/a', '/api/v1/b']),
+    );
+  });
 }

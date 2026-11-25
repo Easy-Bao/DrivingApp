@@ -2,8 +2,10 @@ import 'dart:developer' as developer;
 
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:foundation/src/network/retry_interceptor.dart';
 import 'package:foundation/src/telemetry/correlation_id.dart';
+
+const bool _isReleaseMode = bool.fromEnvironment('dart.vm.product');
 
 final class const HttpRequestMetric({
   required this.method,
@@ -59,9 +61,12 @@ final class const HttpRequestMetric({
 
 /// Captures development-time request volume and timing without retaining
 /// headers, bodies, query values, or raw numeric/UUID path identifiers.
-final class HttpRequestMetrics() {
+final class HttpRequestMetrics({int maxTrackedRoutes = 256}) {
+  this : assert(maxTrackedRoutes > 0), _maxTrackedRoutes = maxTrackedRoutes;
+
   static final HttpRequestMetrics instance = HttpRequestMetrics();
 
+  final int _maxTrackedRoutes;
   final Map<({String method, String path}), _RequestMetricAccumulator>
   _metrics = <({String method, String path}), _RequestMetricAccumulator>{};
 
@@ -69,11 +74,7 @@ final class HttpRequestMetrics() {
       _metrics.values.fold(0, (total, metric) => total + metric.count);
 
   void record(RequestOptions options) {
-    final key = (
-      method: options.method.toUpperCase(),
-      path: _normalizePath(options.uri.path),
-    );
-    final metric = _metrics.putIfAbsent(key, _RequestMetricAccumulator.new);
+    final metric = _metricFor(options);
     metric.recordRequest(options);
   }
 
@@ -122,11 +123,18 @@ final class HttpRequestMetrics() {
   void clear() => _metrics.clear();
 
   _RequestMetricAccumulator _metricFor(RequestOptions options) {
-    final key = (
-      method: options.method.toUpperCase(),
-      path: _normalizePath(options.uri.path),
-    );
-    return _metrics.putIfAbsent(key, _RequestMetricAccumulator.new);
+    final cachedPath = options.extra[_normalizedPathKey];
+    final normalizedPath = cachedPath is String
+        ? cachedPath
+        : _normalizePath(options.uri.path);
+    options.extra[_normalizedPathKey] = normalizedPath;
+    final key = (method: options.method.toUpperCase(), path: normalizedPath);
+    final existing = _metrics[key];
+    if (existing != null) return existing;
+    while (_metrics.length >= _maxTrackedRoutes) {
+      _metrics.remove(_metrics.keys.first);
+    }
+    return _metrics[key] = _RequestMetricAccumulator();
   }
 }
 
@@ -135,25 +143,34 @@ final class RequestMetricsInterceptor(this._metrics) extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    final requestId = kReleaseMode
-        ? null
-        : _ensureRequestCorrelationId(options.headers);
-    _metrics.record(options);
-    if (!kReleaseMode) {
-      final arguments = <String, Object?>{
-        'method': options.method.toUpperCase(),
-        'path': _normalizePath(options.uri.path),
-        'retry_attempt': options.extra['retryAttempt'] as int? ?? 0,
-        'request_bytes':
-            _knownBodyBytes(options.data) ??
-            _contentLength(options.headers) ??
-            -1,
-      };
-      if (requestId != null) arguments['request_id'] = requestId;
-      final task = developer.TimelineTask()
-        ..start('http.request', arguments: arguments);
-      options.extra[_requestTimelineTaskKey] = task;
+    if (_isReleaseMode) {
+      handler.next(options);
+      return;
     }
+
+    final requestId = _ensureRequestCorrelationId(options.headers);
+    final previousTask = options.extra.remove(_requestTimelineTaskKey);
+    if (previousTask is developer.TimelineTask) {
+      previousTask.finish(arguments: const {'outcome': 'superseded'});
+    }
+    _metrics.record(options);
+    final normalizedPath =
+        options.extra[_normalizedPathKey] as String? ??
+        _normalizePath(options.uri.path);
+    final retryAttempt = options.extra[retryAttemptExtraKey];
+    final arguments = <String, Object?>{
+      'method': options.method.toUpperCase(),
+      'path': normalizedPath,
+      'retry_attempt': retryAttempt is int ? retryAttempt : 0,
+      'request_bytes':
+          _knownBodyBytes(options.data) ??
+          _contentLength(options.headers) ??
+          -1,
+    };
+    if (requestId != null) arguments['request_id'] = requestId;
+    final task = developer.TimelineTask()
+      ..start('http.request', arguments: arguments);
+    options.extra[_requestTimelineTaskKey] = task;
     handler.next(options);
   }
 
@@ -162,30 +179,36 @@ final class RequestMetricsInterceptor(this._metrics) extends Interceptor {
     Response<dynamic> response,
     ResponseInterceptorHandler handler,
   ) {
-    _metrics.recordResponse(response);
-    _finishRequestTimeline(
-      response.requestOptions,
-      outcome: 'response',
-      statusCode: response.statusCode,
-      responseBytes: _contentLength(response.headers.map),
-      requestId: _requestCorrelationId(response.requestOptions.headers),
-    );
+    if (!_isReleaseMode) {
+      _metrics.recordResponse(response);
+      _finishRequestTimeline(
+        response.requestOptions,
+        outcome: 'response',
+        statusCode: response.statusCode,
+        responseBytes: _contentLength(response.headers.map),
+        requestId: _requestCorrelationId(response.requestOptions.headers),
+      );
+    }
     handler.next(response);
   }
 
   @override
-  void onError(DioException error, ErrorInterceptorHandler handler) {
-    _metrics.recordError(error);
-    _finishRequestTimeline(
-      error.requestOptions,
-      outcome: error.type == DioExceptionType.cancel ? 'cancelled' : 'error',
-      statusCode: error.response?.statusCode,
-      responseBytes: error.response == null
-          ? null
-          : _contentLength(error.response!.headers.map),
-      requestId: _requestCorrelationId(error.requestOptions.headers),
-    );
-    handler.next(error);
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    if (!_isReleaseMode) {
+      _metrics.recordError(err);
+      final responseBytes = switch (err.response) {
+        final response? => _contentLength(response.headers.map),
+        null => null,
+      };
+      _finishRequestTimeline(
+        err.requestOptions,
+        outcome: err.type == DioExceptionType.cancel ? 'cancelled' : 'error',
+        statusCode: err.response?.statusCode,
+        responseBytes: responseBytes,
+        requestId: _requestCorrelationId(err.requestOptions.headers),
+      );
+    }
+    handler.next(err);
   }
 
   void _finishRequestTimeline(
@@ -223,7 +246,8 @@ final class _RequestMetricAccumulator {
 
   void recordRequest(RequestOptions options) {
     count++;
-    if ((options.extra['retryAttempt'] as int? ?? 0) > 0) retryCount++;
+    final retryAttempt = options.extra[retryAttemptExtraKey];
+    if (retryAttempt is int && retryAttempt > 0) retryCount++;
 
     final requestBytesForAttempt =
         _knownBodyBytes(options.data) ?? _contentLength(options.headers);
@@ -277,6 +301,7 @@ final class _RequestMetricAccumulator {
 
 const _requestTimerKey = 'foundation.requestMetrics.stopwatch';
 const _requestTimelineTaskKey = 'foundation.requestMetrics.timelineTask';
+const _normalizedPathKey = 'foundation.requestMetrics.normalizedPath';
 const _requestIdHeader = 'X-Request-ID';
 
 String? _ensureRequestCorrelationId(Map<String, dynamic> headers) {
@@ -333,7 +358,8 @@ String _normalizePath(String path) {
 
 String _normalizeSegment(String segment) {
   if (_numericIdentifier.hasMatch(segment) ||
-      _uuidIdentifier.hasMatch(segment)) {
+      _uuidIdentifier.hasMatch(segment) ||
+      _ulidIdentifier.hasMatch(segment)) {
     return ':id';
   }
   return segment;
@@ -341,7 +367,8 @@ String _normalizeSegment(String segment) {
 
 final RegExp _numericIdentifier = RegExp(r'^\d+$');
 final RegExp _uuidIdentifier = RegExp(
-  r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+  r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
   caseSensitive: false,
 );
+final RegExp _ulidIdentifier = RegExp(r'^[0-9A-HJKMNP-TV-Z]{26}$');
 final RegExp _safeRequestId = RegExp(r'^[A-Za-z0-9._-]{8,128}$');
