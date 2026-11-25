@@ -86,9 +86,14 @@ class _AppSelectFieldState<T> extends State<AppSelectField<T>> {
   }
 
   Future<T?> _showAnchoredMenu() {
-    final box = context.findRenderObject()! as RenderBox;
-    final overlay =
-        Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
+    final renderObject = context.findRenderObject();
+    final overlayRenderObject = Navigator.of(context).overlay?.context
+        .findRenderObject();
+    if (renderObject is! RenderBox || overlayRenderObject is! RenderBox) {
+      return Future<T?>.value();
+    }
+    final box = renderObject;
+    final overlay = overlayRenderObject;
     final origin = box.localToGlobal(
       Offset(0, box.size.height + 4),
       ancestor: overlay,
@@ -139,8 +144,9 @@ class _AppSelectFieldState<T> extends State<AppSelectField<T>> {
           widget.decoration.suffixIcon ??
           Icon(_isMenuOpen ? LucideIcons.chevron_up : LucideIcons.chevron_down),
     );
-    final borderRadius = decoration.border is OutlineInputBorder
-        ? (decoration.border! as OutlineInputBorder).borderRadius
+    final border = decoration.border;
+    final borderRadius = border is OutlineInputBorder
+        ? border.borderRadius
         : BorderRadius.circular(AppRadius.lg);
 
     return Semantics(
@@ -159,7 +165,7 @@ class _AppSelectFieldState<T> extends State<AppSelectField<T>> {
               type: MaterialType.transparency,
               child: InkWell(
                 onTap: enabled ? _openMenu : null,
-                canRequestFocus: enabled,
+                canRequestFocus: false,
                 borderRadius: borderRadius,
                 child: InputDecorator(
                   decoration: decoration,

@@ -24,7 +24,7 @@ class const AppChatMessageTransition({
 class _AppChatMessageTransitionState extends State<AppChatMessageTransition>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _curve;
+  late final CurvedAnimation _curve;
   late final Animation<Offset> _position;
   late final Animation<double> _scale;
 
@@ -56,6 +56,7 @@ class _AppChatMessageTransitionState extends State<AppChatMessageTransition>
 
   @override
   void dispose() {
+    _curve.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -149,11 +150,13 @@ class _AppChatTypingIndicatorState extends State<AppChatTypingIndicator>
         final phase = (_controller.value + index * 0.18) % 1;
         final triangle = phase < 0.5 ? phase * 2 : (1 - phase) * 2;
         final pulse = Curves.easeInOut.transform(triangle);
-        final color = Color.lerp(
-          widget.dotColor.withValues(alpha: 0.45),
-          widget.dotColor,
-          pulse,
-        )!;
+        final color =
+            Color.lerp(
+              widget.dotColor.withValues(alpha: 0.45),
+              widget.dotColor,
+              pulse,
+            ) ??
+            widget.dotColor;
 
         return Transform.translate(
           key: ValueKey<String>('app-chat-typing-dot-$index'),

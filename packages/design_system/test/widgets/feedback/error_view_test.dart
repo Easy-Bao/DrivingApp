@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:design_system/design_system.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
@@ -85,9 +87,11 @@ void main() {
     tester,
   ) async {
     final previousOnError = FlutterError.onError;
+    final previousPlatformOnError = PlatformDispatcher.instance.onError;
     final previousErrorWidgetBuilder = ErrorWidget.builder;
     addTearDown(() {
       FlutterError.onError = previousOnError;
+      PlatformDispatcher.instance.onError = previousPlatformOnError;
       ErrorWidget.builder = previousErrorWidgetBuilder;
     });
 

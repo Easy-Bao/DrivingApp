@@ -58,11 +58,12 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
   bool _showPassword = false;
   bool _showConfirmation = false;
   bool _dismissedError = false;
+  bool _suppressingCodeListener = false;
   String? _codeError;
   String? _passwordError;
   String? _confirmationError;
   Timer? _resendTimer;
-  int _secondsRemaining = 60;
+  final ValueNotifier<int> _secondsRemaining = ValueNotifier<int>(60);
 
   bool get _busy =>
       widget.isSubmitting || widget.isVerifyingCode || widget.isResending;
@@ -96,6 +97,8 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
     }
     if (!oldWidget.isCodeVerified &&
         widget.isCodeVerified &&
+        !oldWidget.isResending &&
+        widget.errorMessage == null &&
         !_passwordStep &&
         _completeCode) {
       FocusScope.of(context).unfocus();
@@ -106,7 +109,12 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
     if (oldWidget.isResending &&
         !widget.isResending &&
         widget.errorMessage == null) {
-      _code.clear();
+      _suppressingCodeListener = true;
+      try {
+        _code.clear();
+      } finally {
+        _suppressingCodeListener = false;
+      }
       _passwordStep = false;
       _codeError = null;
       _startResendTimer();
@@ -114,6 +122,7 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
   }
 
   void _handleCodeChanged() {
+    if (_suppressingCodeListener) return;
     final hadInlineError = _codeError != null || !_dismissedError;
     _codeError = null;
     _dismissedError = true;
@@ -127,17 +136,26 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
 
   void _startResendTimer() {
     _resendTimer?.cancel();
-    _secondsRemaining = 60;
+    _secondsRemaining.value = 60;
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _secondsRemaining--;
-      if (_secondsRemaining == 0) timer.cancel();
-      if (mounted && !_passwordStep) setState(() {});
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      final next = _secondsRemaining.value - 1;
+      if (next <= 0) {
+        _secondsRemaining.value = 0;
+        timer.cancel();
+      } else {
+        _secondsRemaining.value = next;
+      }
     });
   }
 
   @override
   void dispose() {
     _resendTimer?.cancel();
+    _secondsRemaining.dispose();
     _code.removeListener(_handleCodeChanged);
     _password.removeListener(_refresh);
     _confirmation.removeListener(_refresh);
@@ -265,16 +283,19 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
                     color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                TextButton(
-                  onPressed: _secondsRemaining == 0 && !_busy
-                      ? widget.onResend
-                      : null,
-                  child: Text(
-                    widget.isResending
-                        ? 'Sending…'
-                        : _secondsRemaining == 0
-                        ? 'Resend code'
-                        : 'Resend in ${_secondsRemaining ~/ 60}:${(_secondsRemaining % 60).toString().padLeft(2, '0')}',
+                ValueListenableBuilder<int>(
+                  valueListenable: _secondsRemaining,
+                  builder: (context, secondsRemaining, _) => TextButton(
+                    onPressed: secondsRemaining == 0 && !_busy
+                        ? widget.onResend
+                        : null,
+                    child: Text(
+                      widget.isResending
+                          ? 'Sending…'
+                          : secondsRemaining == 0
+                          ? 'Resend code'
+                          : 'Resend in ${secondsRemaining ~/ 60}:${(secondsRemaining % 60).toString().padLeft(2, '0')}',
+                    ),
                   ),
                 ),
               ],

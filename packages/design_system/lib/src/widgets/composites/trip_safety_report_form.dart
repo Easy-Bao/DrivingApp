@@ -1,4 +1,7 @@
-import 'package:design_system/design_system.dart';
+import 'package:design_system/src/theme/theme_context.dart';
+import 'package:design_system/src/tokens/radius.dart';
+import 'package:design_system/src/tokens/size.dart';
+import 'package:design_system/src/tokens/spacing.dart';
 import 'package:material_ui/material_ui.dart';
 
 class const SafetyReportReason({required this.value, required this.label}) {

@@ -219,4 +219,50 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
+
+  testWidgets('resend failure does not advance to the password step', (
+    tester,
+  ) async {
+    var resending = false;
+    var verified = false;
+    String? error;
+    late StateSetter update;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        home: StatefulBuilder(
+          builder: (context, setState) {
+            update = setState;
+            return AppPasswordResetFlow(
+              email: 'person@example.com',
+              minimumPasswordLength: 8,
+              isResending: resending,
+              isCodeVerified: verified,
+              errorMessage: error,
+              onBack: () {},
+              onResend: () {},
+              onVerifyCode: (_) {},
+              onSubmit: (_, _) {},
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), '123456');
+    await tester.pump();
+    update(() => resending = true);
+    await tester.pump();
+    update(() {
+      resending = false;
+      verified = true;
+      error = 'Delivery failed.';
+    });
+    await tester.pump();
+
+    expect(find.text('Check your email'), findsOneWidget);
+    expect(find.text('Create new password'), findsNothing);
+    expect(find.text('Delivery failed.'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 }

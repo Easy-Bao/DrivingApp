@@ -35,6 +35,7 @@ class _AppTabBranchContainerState extends State<AppTabBranchContainer> {
   int _activeIndex = 0;
   int? _gestureStartIndex;
   int? _previewIndex;
+  int? _pendingExternalTarget;
   bool _isUserDragging = false;
 
   @override
@@ -53,6 +54,7 @@ class _AppTabBranchContainerState extends State<AppTabBranchContainer> {
     if (_isUserDragging || targetIndex == _activeIndex) return;
 
     _activeIndex = targetIndex;
+    _pendingExternalTarget = targetIndex;
     _settleExternalNavigation(targetIndex);
     _animateToPage(targetIndex);
   }
@@ -79,9 +81,14 @@ class _AppTabBranchContainerState extends State<AppTabBranchContainer> {
               : const NeverScrollableScrollPhysics(),
           children: widget.children,
           onPageChanged: (index) {
-            if (_isUserDragging || index != widget.currentIndex) return;
+            if (_isUserDragging || index != _safeIndex(widget.currentIndex)) {
+              return;
+            }
             _activeIndex = index;
-            widget.onNavigationSettled(index);
+            if (_pendingExternalTarget == index) {
+              _pendingExternalTarget = null;
+              widget.onNavigationSettled(index);
+            }
           },
         ),
       ),
@@ -155,7 +162,12 @@ class _AppTabBranchContainerState extends State<AppTabBranchContainer> {
 
   void _settleExternalNavigation(int targetIndex) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _safeIndex(widget.currentIndex) != targetIndex) return;
+      if (!mounted ||
+          _pendingExternalTarget != targetIndex ||
+          _safeIndex(widget.currentIndex) != targetIndex) {
+        return;
+      }
+      _pendingExternalTarget = null;
       widget.onNavigationSettled(targetIndex);
     });
   }
