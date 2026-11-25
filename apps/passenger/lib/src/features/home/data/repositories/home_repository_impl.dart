@@ -22,7 +22,7 @@ final class HomeRepositoryImpl({required this._homeRemoteDataSource})
       );
       final rawAddress = response['current_address'];
       if (rawAddress != null && rawAddress is! String) {
-        throw DataParsingException(
+        throw const DataParsingException(
           message: 'Passenger home address has an invalid format.',
         );
       }
@@ -39,7 +39,7 @@ final class HomeRepositoryImpl({required this._homeRemoteDataSource})
 
   List<RecentLocation> _parseRecentLocations(Object? rawLocations) {
     if (rawLocations is! List) {
-      throw DataParsingException(
+      throw const DataParsingException(
         message: 'Passenger home activity has an invalid format.',
       );
     }

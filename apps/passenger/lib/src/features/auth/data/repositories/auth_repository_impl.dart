@@ -133,7 +133,7 @@ final class AuthRepositoryImpl implements AuthRepository {
     final token = _stringValue(responseData['token']);
     final passengerData = responseData['user'];
     if (token.isEmpty || passengerData is! Map) {
-      throw DataParsingException(
+      throw const DataParsingException(
         message: 'Authentication response did not contain a valid session.',
       );
     }
@@ -141,7 +141,7 @@ final class AuthRepositoryImpl implements AuthRepository {
     final passenger = Map<String, dynamic>.from(passengerData);
     final passengerId = _stringValue(passenger['id']);
     if (passengerId.isEmpty) {
-      throw DataParsingException(
+      throw const DataParsingException(
         message: 'Authentication response did not contain a passenger ID.',
       );
     }
@@ -149,7 +149,7 @@ final class AuthRepositoryImpl implements AuthRepository {
     final passengerEmail = _stringValue(passenger['email']);
     final refreshToken = _stringValue(responseData['refreshToken']);
     if (refreshToken.isEmpty) {
-      throw DataParsingException(
+      throw const DataParsingException(
         message: 'Authentication response did not contain a refresh token.',
       );
     }

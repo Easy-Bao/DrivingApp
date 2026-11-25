@@ -310,7 +310,7 @@ void main() {
           requestBody: {'email': 'bad@email'},
         ),
       ).thenThrow(
-        ServerException(
+        const ServerException(
           message: 'Enter a valid email address.',
           statusCode: 400,
         ),
@@ -335,7 +335,10 @@ void main() {
             requestBody: {'email': 'passenger@example.com', 'code': '000000'},
           ),
         ).thenThrow(
-          ServerException(message: 'invalid or expired otp', statusCode: 400),
+          const ServerException(
+            message: 'invalid or expired otp',
+            statusCode: 400,
+          ),
         );
 
         final result = await repository.verifyResetOtp(
@@ -365,7 +368,10 @@ void main() {
             },
           ),
         ).thenThrow(
-          ServerException(message: 'invalid or expired otp', statusCode: 400),
+          const ServerException(
+            message: 'invalid or expired otp',
+            statusCode: 400,
+          ),
         );
 
         final result = await repository.confirmResetPassword(

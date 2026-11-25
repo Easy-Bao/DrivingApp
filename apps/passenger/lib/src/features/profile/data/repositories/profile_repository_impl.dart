@@ -157,7 +157,7 @@ final class ProfileRepositoryImpl implements ProfileRepository {
   Future<String> _passengerId() async {
     final passengerId = await sessionService.readPassengerId() ?? '';
     if (passengerId.isEmpty) {
-      throw CacheException(message: 'Passenger ID is not registered.');
+      throw const CacheException(message: 'Passenger ID is not registered.');
     }
     return passengerId;
   }
