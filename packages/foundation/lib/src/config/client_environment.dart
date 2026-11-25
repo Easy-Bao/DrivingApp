@@ -1,5 +1,5 @@
-import '../errors/exceptions.dart';
-import '../network/api_base_uri.dart';
+import 'package:foundation/src/errors/exceptions.dart';
+import 'package:foundation/src/network/api_base_uri.dart';
 
 /// Applications provide the values loaded from their own bundled `.env` asset
 /// and any build-time `--dart-define` overrides. Keeping the source outside

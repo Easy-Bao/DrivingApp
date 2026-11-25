@@ -6,11 +6,11 @@ import 'package:foundation/src/lifecycle/lifecycle_coordinator.dart';
 typedef AppLifecycleTaskCallback = FutureOr<void> Function();
 
 final class AppLifecyclePeriodicTask({
-  required AppLifecycleCoordinator lifecycleCoordinator,
+  required this._lifecycleCoordinator,
   required Duration interval,
-  required AppLifecycleTaskCallback onTick,
-  bool runImmediately = false,
-  bool runImmediatelyOnResume = true,
+  required this._onTick,
+  this._runImmediately = false,
+  this._runImmediatelyOnResume = true,
 }) {
   final AppLifecycleCoordinator _lifecycleCoordinator;
   final Duration _interval;
@@ -21,19 +21,14 @@ final class AppLifecyclePeriodicTask({
   StreamSubscription<AppLifecycleStatus>? _lifecycleSubscription;
   Timer? _timer;
   bool _started = false;
+  bool _disposed = false;
   bool _isRunning = false;
   bool _runAfterCurrentTick = false;
 
-  this
-    : assert(interval > Duration.zero),
-      _lifecycleCoordinator = lifecycleCoordinator,
-      _interval = interval,
-      _onTick = onTick,
-      _runImmediately = runImmediately,
-      _runImmediatelyOnResume = runImmediatelyOnResume;
+  this : assert(interval > Duration.zero), _interval = interval;
 
   void start() {
-    if (_started) return;
+    if (_disposed || _started) return;
     _started = true;
     _lifecycleSubscription = _lifecycleCoordinator.changes.listen(
       _onLifecycleChanged,
@@ -95,6 +90,7 @@ final class AppLifecyclePeriodicTask({
   }
 
   Future<void> dispose() async {
+    _disposed = true;
     _started = false;
     _runAfterCurrentTick = false;
     _timer?.cancel();

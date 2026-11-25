@@ -26,7 +26,7 @@ String parseString(Object? value, [String defaultValue = '']) {
   return value.toString();
 }
 
-abstract final class SafeParse {
+class SafeParse._() {
   static double toDouble(Object? value, [double defaultValue = 0.0]) =>
       parseDouble(value, defaultValue);
 

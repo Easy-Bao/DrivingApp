@@ -1,10 +1,11 @@
+import 'package:equatable/equatable.dart';
 import 'package:foundation/src/errors/failure.dart';
 
 typedef DomainFailure = Failure;
 
 /// A closed success/failure value for data-layer work that must not leak
 /// transport exceptions into presentation code.
-sealed class Result<T, F extends DomainFailure> {
+sealed class Result<T, F extends DomainFailure> extends Equatable {
   const Result();
 
   bool get isOk => this is Ok<T, F>;
@@ -48,12 +49,7 @@ final class Ok<T, F extends DomainFailure> extends Result<T, F> {
   final T value;
 
   @override
-  bool operator ==(Object other) {
-    return other is Ok<T, F> && other.value == value;
-  }
-
-  @override
-  int get hashCode => value.hashCode;
+  List<Object?> get props => [value];
 }
 
 final class Err<T, F extends DomainFailure> extends Result<T, F> {
@@ -62,10 +58,5 @@ final class Err<T, F extends DomainFailure> extends Result<T, F> {
   final F failure;
 
   @override
-  bool operator ==(Object other) {
-    return other is Err<T, F> && other.failure == failure;
-  }
-
-  @override
-  int get hashCode => failure.hashCode;
+  List<Object?> get props => [failure];
 }

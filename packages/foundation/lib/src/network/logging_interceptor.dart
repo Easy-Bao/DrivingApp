@@ -17,15 +17,15 @@ class LoggingInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioException error, ErrorInterceptorHandler handler) {
-    dev.log(HttpLogFormatter.error(error), name: 'HTTP');
-    handler.next(error);
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    dev.log(HttpLogFormatter.error(err), name: 'HTTP');
+    handler.next(err);
   }
 }
 
 /// Formats diagnostics without including headers, query parameters, or body
 /// data that could contain credentials or other request secrets.
-final class HttpLogFormatter {
+class HttpLogFormatter._() {
   static String request(RequestOptions options) {
     return 'REQUEST[${options.method}] => PATH: ${_path(options.uri)}';
   }
