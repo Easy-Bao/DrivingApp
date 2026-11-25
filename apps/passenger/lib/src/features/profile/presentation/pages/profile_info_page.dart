@@ -44,6 +44,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   String _initialName = '';
   String _initialGender = 'Prefer not to say';
   String _initialAvatarPath = '';
+  String _displayedName = '';
 
   bool _isApplyingProfile = false;
   bool _isDirty = false;
@@ -54,7 +55,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   void initState() {
     super.initState();
     _applyProfile(BlocProvider.of<ProfileCubit>(context).state);
-    _nameController.addListener(_updateDirtyState);
+    _nameController.addListener(_onNameChanged);
   }
 
   @override
@@ -93,17 +94,22 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     _initialName = name;
     _initialGender = _gender;
     _initialAvatarPath = _avatarPath;
+    _displayedName = name;
+    _nameError = null;
     _isDirty = false;
     _isApplyingProfile = false;
   }
 
-  void _updateDirtyState() {
+  void _onNameChanged() {
     if (_isApplyingProfile || !mounted) return;
+    final trimmed = _nameController.text.trim();
     final dirty = _draftHasChanges;
-    if (_isDirty == dirty && _nameError == null) return;
+    final clearError = _nameError != null && trimmed.isNotEmpty;
+    if (_isDirty == dirty && !clearError && _displayedName == trimmed) return;
     setState(() {
+      _displayedName = trimmed;
       _isDirty = dirty;
-      if (_nameError != null && _nameController.text.trim().isNotEmpty) {
+      if (clearError) {
         _nameError = null;
       }
     });
@@ -114,9 +120,23 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       _gender != _initialGender ||
       _avatarPath != _initialAvatarPath;
 
+  void _discardChanges() {
+    if (!_isDirty || _isSaving) return;
+    setState(() {
+      _isApplyingProfile = true;
+      _nameController.text = _initialName;
+      _gender = _initialGender;
+      _avatarPath = _initialAvatarPath;
+      _displayedName = _initialName;
+      _nameError = null;
+      _isDirty = false;
+      _isApplyingProfile = false;
+    });
+  }
+
   Future<void> _saveProfile() async {
     if (!_isDirty || _isSaving) return;
-    _clearErrors();
+    _nameError = null;
 
     final name = _nameController.text.trim();
     if (name.isEmpty) {
@@ -147,10 +167,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
     _applyProfile(BlocProvider.of<ProfileCubit>(context).state);
     setState(() {});
-  }
-
-  void _clearErrors() {
-    _nameError = null;
+    AppSnackBar.show(context, 'Profile updated.');
   }
 
   Future<void> _pickPhoto() async {
@@ -224,9 +241,13 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             previous.avatarUrl != current.avatarUrl ||
             previous.avatarData != current.avatarData,
         listener: (_, state) {
-          if (!_isDirty && !_isSaving) _applyProfile(state);
+          if (!_isDirty && !_isSaving) {
+            _applyProfile(state);
+            if (mounted) setState(() {});
+          }
         },
         child: Scaffold(
+          backgroundColor: context.canvasColor,
           appBar: AppBar(
             backgroundColor: context.canvasColor,
             scrolledUnderElevation: 0,
@@ -253,12 +274,21 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             ),
             title: Text(
               'Profile Info',
-              style: context.textStyles.titleLarge?.copyWith(
+              style: context.textStyles.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                letterSpacing: -0.3,
+                letterSpacing: -0.2,
+                color: colorScheme.onSurface,
               ),
             ),
             centerTitle: true,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Divider(
+                height: 1,
+                thickness: 1,
+                color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+              ),
+            ),
           ),
           bottomNavigationBar: _buildBottomBar(context),
           body: SafeArea(
@@ -273,7 +303,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                   physics: const ClampingScrollPhysics(),
                   padding: EdgeInsets.fromLTRB(
                     horizontalPadding,
-                    AppSpacing.lg,
+                    AppSpacing.xxl,
                     horizontalPadding,
                     AppSpacing.xxxl,
                   ),
@@ -283,9 +313,32 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _buildProfileHeader(),
+                          _buildProfileHero(context),
                           const SizedBox(height: AppSpacing.xxxl),
-                          _buildDetailsSection(),
+                          _buildSectionHeader(context, title: 'Profile'),
+                          const SizedBox(height: AppSpacing.sm),
+                          _buildProfileCard(context),
+                          const SizedBox(height: AppSpacing.xxl),
+                          _buildSectionHeader(
+                            context,
+                            title: 'Contact',
+                            trailing: _buildVerifiedTag(context),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          _buildContactCard(context),
+                          const SizedBox(height: AppSpacing.sm),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.xs,
+                            ),
+                            child: Text(
+                              'Email and phone changes require verification.',
+                              style: context.textStyles.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -295,6 +348,369 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildProfileHero(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final rawName = _displayedName;
+    final displayName = rawName.isEmpty || rawName.contains('@')
+        ? 'Your profile'
+        : rawName;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        ProfileAvatar(
+          key: const ValueKey<String>('passenger-profile-avatar'),
+          initials: _getInitials(rawName),
+          imagePath: _avatarPath,
+          imageData: _avatarData,
+          size: 88,
+          onCameraTap: _pickPhoto,
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Text(
+          displayName,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: context.textStyles.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.4,
+            color: colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        OutlinedButton(
+          key: const ValueKey<String>('passenger-profile-change-photo'),
+          onPressed: _isSaving ? null : _pickPhoto,
+          style:
+              OutlinedButton.styleFrom(
+                backgroundColor: colorScheme.surfaceContainerLowest,
+                foregroundColor: colorScheme.onSurface,
+                side: BorderSide(color: colorScheme.outlineVariant),
+                enableFeedback: false,
+                splashFactory: NoSplash.splashFactory,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: 8,
+                ),
+                minimumSize: const Size(0, 36),
+                tapTargetSize: MaterialTapTargetSize.padded,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                textStyle: context.textStyles.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ).copyWith(
+                overlayColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.focused)) {
+                    return colorScheme.primary.withValues(alpha: 0.12);
+                  }
+                  return Colors.transparent;
+                }),
+              ),
+          child: const Text('Change photo'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(
+    BuildContext context, {
+    required String title,
+    Widget? trailing,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+      child: Row(
+        children: [
+          Expanded(
+            child: Semantics(
+              header: true,
+              child: Text(
+                title.toUpperCase(),
+                style: context.textStyles.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.9,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+          if (trailing != null) ...[
+            const SizedBox(width: AppSpacing.sm),
+            trailing,
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVerifiedTag(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ExcludeSemantics(
+          child: Icon(
+            LucideIcons.lock,
+            size: 11,
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          'Verified',
+          style: context.textStyles.labelSmall?.copyWith(
+            fontWeight: FontWeight.w500,
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileCard(BuildContext context) {
+    return AppSurfaceCard(
+      key: const ValueKey<String>('passenger-profile-editable-card'),
+      color: context.colorScheme.surfaceContainerLowest,
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildFullNameRow(context),
+          _buildRowDivider(context),
+          _buildGenderRow(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactCard(BuildContext context) {
+    return AppSurfaceCard(
+      key: const ValueKey<String>('passenger-profile-contact-card'),
+      color: context.colorScheme.surfaceContainerLow,
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildPhoneRow(context),
+          _buildRowDivider(context),
+          _buildEmailRow(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRowDivider(BuildContext context) {
+    return Divider(
+      height: 1,
+      thickness: 1,
+      indent: AppSpacing.lg,
+      endIndent: AppSpacing.lg,
+      color: context.colorScheme.outlineVariant.withValues(alpha: 0.7),
+    );
+  }
+
+  Widget _buildFieldRow(
+    BuildContext context, {
+    required String label,
+    required Widget child,
+    Widget? trailing,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 14,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: context.textStyles.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              if (trailing != null) ...[
+                const SizedBox(width: AppSpacing.sm),
+                trailing,
+              ],
+            ],
+          ),
+          const SizedBox(height: 6),
+          child,
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _bareFieldDecoration({
+    String? hintText,
+    Widget? suffixIcon,
+    BoxConstraints? suffixIconConstraints,
+  }) {
+    return InputDecoration(
+      isDense: true,
+      filled: false,
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      errorBorder: InputBorder.none,
+      focusedErrorBorder: InputBorder.none,
+      contentPadding: EdgeInsets.zero,
+      hintText: hintText,
+      hintStyle: context.textStyles.bodyLarge?.copyWith(
+        color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
+      ),
+      suffixIcon: suffixIcon,
+      suffixIconConstraints: suffixIconConstraints,
+    );
+  }
+
+  Widget _buildFullNameRow(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return _buildFieldRow(
+      context,
+      label: 'Full name',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            key: const ValueKey<String>('passenger-profile-field-Full Name'),
+            controller: _nameController,
+            textInputAction: TextInputAction.done,
+            textCapitalization: TextCapitalization.words,
+            style: context.textStyles.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
+            ),
+            decoration: _bareFieldDecoration(hintText: 'Enter your name'),
+          ),
+          if (_nameError != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                _nameError!,
+                style: context.textStyles.labelMedium?.copyWith(
+                  color: colorScheme.error,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGenderRow(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return _buildFieldRow(
+      context,
+      label: 'Gender',
+      child: AppSelectField<String>(
+        key: const ValueKey<String>('passenger-profile-gender'),
+        value: _gender,
+        menuTitle: 'Gender',
+        style: context.textStyles.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: colorScheme.onSurface,
+        ),
+        decoration: _bareFieldDecoration(
+          suffixIcon: Icon(
+            LucideIcons.chevron_down,
+            size: 18,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          suffixIconConstraints: const BoxConstraints(
+            minWidth: 20,
+            minHeight: 20,
+          ),
+        ),
+        options: [
+          for (final gender in _genderOptions)
+            AppSelectOption<String>(value: gender, label: gender),
+        ],
+        onChanged: (gender) {
+          if (gender == null) return;
+          setState(() {
+            _gender = gender;
+            _isDirty = _draftHasChanges;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildPhoneRow(BuildContext context) {
+    final readOnlyColor = context.colorScheme.onSurfaceVariant;
+    return _buildFieldRow(
+      context,
+      label: 'Mobile number',
+      child: Row(
+        children: [
+          Text(
+            _phonePrefix,
+            style: context.textStyles.bodyLarge?.tabular.copyWith(
+              fontWeight: FontWeight.w600,
+              color: readOnlyColor,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Container(
+            width: 1,
+            height: 16,
+            color: context.colorScheme.outlineVariant,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: TextField(
+              key: const ValueKey<String>('passenger-profile-phone-number'),
+              controller: _phoneNumberController,
+              readOnly: true,
+              showCursor: false,
+              keyboardType: TextInputType.phone,
+              style: context.textStyles.bodyLarge?.tabular.copyWith(
+                fontWeight: FontWeight.w500,
+                color: readOnlyColor,
+              ),
+              decoration: _bareFieldDecoration(hintText: '917 000 0001'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailRow(BuildContext context) {
+    return _buildFieldRow(
+      context,
+      label: 'Email',
+      child: TextField(
+        key: const ValueKey<String>('passenger-profile-field-Email'),
+        controller: _emailController,
+        readOnly: true,
+        showCursor: false,
+        keyboardType: TextInputType.emailAddress,
+        textCapitalization: TextCapitalization.none,
+        style: context.textStyles.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w500,
+          color: context.colorScheme.onSurfaceVariant,
+        ),
+        decoration: _bareFieldDecoration(hintText: 'name@example.com'),
       ),
     );
   }
@@ -327,6 +743,76 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               final horizontalPadding = constraints.maxWidth < 360
                   ? AppLayout.pagePadding
                   : AppLayout.pagePaddingWide;
+              final compactActions =
+                  constraints.maxWidth < 320 ||
+                  MediaQuery.textScalerOf(context).scale(14) > 21;
+
+              final discardButton = OutlinedButton(
+                key: const ValueKey<String>('passenger-profile-discard'),
+                onPressed: _isSaving ? null : _discardChanges,
+                style:
+                    OutlinedButton.styleFrom(
+                      backgroundColor: colorScheme.surfaceContainerLowest,
+                      foregroundColor: colorScheme.onSurface,
+                      side: BorderSide(color: colorScheme.outlineVariant),
+                      elevation: 0,
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                      minimumSize: const Size.fromHeight(AppSize.controlHeight),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
+                      textStyle: context.textStyles.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith((states) {
+                        if (states.contains(WidgetState.focused)) {
+                          return colorScheme.primary.withValues(alpha: 0.12);
+                        }
+                        return Colors.transparent;
+                      }),
+                    ),
+                child: const Text('Discard'),
+              );
+
+              final saveButton = FilledButton(
+                key: const ValueKey<String>('passenger-profile-save'),
+                onPressed: _isSaving ? null : _saveProfile,
+                style:
+                    FilledButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      elevation: 0,
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                      minimumSize: const Size.fromHeight(AppSize.controlHeight),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
+                      textStyle: context.textStyles.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith((states) {
+                        if (states.contains(WidgetState.focused)) {
+                          return colorScheme.onPrimary.withValues(alpha: 0.16);
+                        }
+                        return Colors.transparent;
+                      }),
+                    ),
+                child: _isSaving
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colorScheme.onPrimary,
+                        ),
+                      )
+                    : const Text('Save changes'),
+              );
+
               return DecoratedBox(
                 decoration: BoxDecoration(
                   color: context.canvasColor,
@@ -347,48 +833,23 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                     heightFactor: 1,
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 560),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: AppSize.controlHeight,
-                        child: FilledButton(
-                          key: const ValueKey<String>('passenger-profile-save'),
-                          onPressed: _isSaving ? null : _saveProfile,
-                          style:
-                              FilledButton.styleFrom(
-                                backgroundColor: colorScheme.primary,
-                                foregroundColor: colorScheme.onPrimary,
-                                elevation: 0,
-                                enableFeedback: false,
-                                splashFactory: NoSplash.splashFactory,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.lg,
-                                  ),
-                                ),
-                              ).copyWith(
-                                overlayColor: WidgetStateProperty.resolveWith((
-                                  states,
-                                ) {
-                                  if (states.contains(WidgetState.focused)) {
-                                    return colorScheme.onPrimary.withValues(
-                                      alpha: 0.16,
-                                    );
-                                  }
-                                  return Colors.transparent;
-                                }),
-                              ),
-                          child: _isSaving
-                              ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: colorScheme.onPrimary,
-                                  ),
-                                )
-                              : const Text('Save'),
-                        ),
-                      ),
+                      child: compactActions
+                          ? Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                saveButton,
+                                const SizedBox(height: AppSpacing.sm),
+                                discardButton,
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                Expanded(child: discardButton),
+                                const SizedBox(width: AppSpacing.md),
+                                Expanded(flex: 2, child: saveButton),
+                              ],
+                            ),
                     ),
                   ),
                 ),
@@ -396,329 +857,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             },
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildProfileHeader() {
-    final rawName = _nameController.text.trim();
-    final displayName = rawName.isEmpty || rawName.contains('@')
-        ? 'Your profile'
-        : rawName;
-    final displayEmail = _emailController.text.trim();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Center(
-          child: ProfileAvatar(
-            key: const ValueKey<String>('passenger-profile-avatar'),
-            initials: _getInitials(_nameController.text),
-            imagePath: _avatarPath,
-            imageData: _avatarData,
-            size: 96,
-            onCameraTap: _pickPhoto,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        Text(
-          displayName,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: context.textStyles.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.3,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          displayEmail.isEmpty
-              ? 'Add an email for ride updates.'
-              : displayEmail,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: context.textStyles.bodySmall?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailsSection() {
-    return AppSurfaceCard(
-      color: context.colorScheme.surfaceContainerLowest,
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildFullNameTile(),
-          _buildDivider(),
-          _buildPhoneTile(),
-          _buildDivider(),
-          _buildEmailTile(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              52,
-              0,
-              AppSpacing.lg,
-              AppSpacing.md,
-            ),
-            child: Text(
-              'Email and phone changes require verification.',
-              style: context.textStyles.bodySmall?.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          _buildDivider(),
-          _buildGenderTile(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Divider(
-      height: 1,
-      thickness: 1,
-      indent: 52,
-      endIndent: AppSpacing.lg,
-      color: context.colorScheme.outlineVariant.withValues(alpha: 0.65),
-    );
-  }
-
-  InputDecoration _bareFieldDecoration({
-    String? hintText,
-    Widget? suffixIcon,
-    BoxConstraints? suffixIconConstraints,
-  }) {
-    return InputDecoration(
-      isDense: true,
-      filled: false,
-      border: InputBorder.none,
-      enabledBorder: InputBorder.none,
-      focusedBorder: InputBorder.none,
-      errorBorder: InputBorder.none,
-      focusedErrorBorder: InputBorder.none,
-      contentPadding: EdgeInsets.zero,
-      hintText: hintText,
-      hintStyle: context.textStyles.bodyMedium?.copyWith(
-        color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-      ),
-      suffixIcon: suffixIcon,
-      suffixIconConstraints: suffixIconConstraints,
-    );
-  }
-
-  Widget _buildFieldRow({
-    required IconData icon,
-    required String label,
-    required Widget child,
-    bool isReadOnly = false,
-  }) {
-    final colorScheme = context.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: 15,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: ExcludeSemantics(
-              child: Icon(
-                icon,
-                size: 18,
-                color: isReadOnly
-                    ? colorScheme.onSurfaceVariant.withValues(alpha: 0.72)
-                    : colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Flexible(child: _buildFieldLabel(label)),
-                    if (isReadOnly) ...[
-                      const SizedBox(width: 6),
-                      ExcludeSemantics(
-                        child: Icon(
-                          LucideIcons.lock,
-                          size: 11,
-                          color: colorScheme.onSurfaceVariant.withValues(
-                            alpha: 0.72,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                child,
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFullNameTile() {
-    return _buildFieldRow(
-      icon: LucideIcons.user_round,
-      label: 'Full Name',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            key: const ValueKey<String>('passenger-profile-field-Full Name'),
-            controller: _nameController,
-            textInputAction: TextInputAction.next,
-            textCapitalization: TextCapitalization.words,
-            style: context.textStyles.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: context.colorScheme.onSurface,
-            ),
-            decoration: _bareFieldDecoration(hintText: 'Enter your name'),
-          ),
-          if (_nameError != null) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                _nameError!,
-                style: context.textStyles.labelMedium?.copyWith(
-                  color: context.colorScheme.error,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPhoneTile() {
-    final readOnlyColor = context.colorScheme.onSurfaceVariant;
-    return _buildFieldRow(
-      icon: LucideIcons.phone,
-      label: 'Mobile Number',
-      isReadOnly: true,
-      child: Row(
-        children: [
-          Text(
-            _phonePrefix,
-            style: context.textStyles.bodyLarge?.tabular.copyWith(
-              fontWeight: FontWeight.w600,
-              color: readOnlyColor,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Container(
-            width: 1,
-            height: 15,
-            color: context.colorScheme.outlineVariant,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: TextField(
-              key: const ValueKey<String>('passenger-profile-phone-number'),
-              controller: _phoneNumberController,
-              readOnly: true,
-              showCursor: false,
-              keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.next,
-              style: context.textStyles.bodyLarge?.tabular.copyWith(
-                fontWeight: FontWeight.w500,
-                color: readOnlyColor,
-              ),
-              decoration: _bareFieldDecoration(hintText: '917 000 0001'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmailTile() {
-    return _buildFieldRow(
-      icon: LucideIcons.mail,
-      label: 'Email',
-      isReadOnly: true,
-      child: TextField(
-        key: const ValueKey<String>('passenger-profile-field-Email'),
-        controller: _emailController,
-        readOnly: true,
-        showCursor: false,
-        keyboardType: TextInputType.emailAddress,
-        textCapitalization: TextCapitalization.none,
-        textInputAction: TextInputAction.done,
-        style: context.textStyles.bodyLarge?.copyWith(
-          fontWeight: FontWeight.w500,
-          color: context.colorScheme.onSurfaceVariant,
-        ),
-        decoration: _bareFieldDecoration(hintText: 'name@example.com'),
-      ),
-    );
-  }
-
-  Widget _buildGenderTile() {
-    return _buildFieldRow(
-      icon: LucideIcons.venus_and_mars,
-      label: 'Gender',
-      child: AppSelectField<String>(
-        key: const ValueKey<String>('passenger-profile-gender'),
-        value: _gender,
-        menuTitle: 'Gender',
-        style: context.textStyles.bodyLarge?.copyWith(
-          fontWeight: FontWeight.w600,
-          color: context.colorScheme.onSurface,
-        ),
-        decoration: _bareFieldDecoration(
-          suffixIcon: Icon(
-            LucideIcons.chevron_down,
-            size: 17,
-            color: context.colorScheme.onSurfaceVariant,
-          ),
-          suffixIconConstraints: const BoxConstraints(
-            minWidth: 20,
-            minHeight: 20,
-          ),
-        ),
-        options: [
-          for (final gender in _genderOptions)
-            AppSelectOption<String>(value: gender, label: gender),
-        ],
-        onChanged: (gender) {
-          if (gender == null) return;
-          setState(() {
-            _gender = gender;
-            _isDirty = _draftHasChanges;
-          });
-        },
-      ),
-    );
-  }
-
-  Widget _buildFieldLabel(String label) {
-    return Text(
-      label.toUpperCase(),
-      style: context.textStyles.labelSmall?.copyWith(
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.85,
-        color: context.colorScheme.onSurfaceVariant,
       ),
     );
   }

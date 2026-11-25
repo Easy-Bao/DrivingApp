@@ -38,23 +38,50 @@ class ProfileAvatar extends StatelessWidget {
             errorBuilder: (_, _, _) => fallbackImage ?? _buildInitials(context),
           );
 
+    final avatarCircle = Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: colorScheme.surfaceContainerLowest,
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: ClipOval(child: SizedBox.expand(child: avatar)),
+    );
+
     return SizedBox(
       width: size,
       height: size,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: colorScheme.outlineVariant),
-            ),
-            child: ClipOval(child: SizedBox.expand(child: avatar)),
-          ),
+          if (onCameraTap != null)
+            Material(
+              type: MaterialType.transparency,
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: onCameraTap,
+                customBorder: const CircleBorder(),
+                enableFeedback: false,
+                splashFactory: NoSplash.splashFactory,
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                hoverColor: Colors.transparent,
+                overlayColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.focused)) {
+                    return colorScheme.primary.withValues(alpha: 0.12);
+                  }
+                  return Colors.transparent;
+                }),
+                child: avatarCircle,
+              ),
+            )
+          else
+            avatarCircle,
           if (onCameraTap != null)
             Positioned(
-              right: -6,
-              bottom: -6,
+              right: -4,
+              bottom: -4,
               child: Semantics(
                 button: true,
                 label: 'Change profile photo',
@@ -78,14 +105,14 @@ class ProfileAvatar extends StatelessWidget {
                     height: cameraButtonSize,
                     child: Center(
                       child: Container(
-                        width: 34,
-                        height: 34,
+                        width: 32,
+                        height: 32,
                         decoration: BoxDecoration(
                           color: colorScheme.primary,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: context.canvasColor,
-                            width: 2,
+                            width: 2.5,
                           ),
                         ),
                         alignment: Alignment.center,

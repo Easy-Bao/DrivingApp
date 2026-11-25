@@ -98,7 +98,7 @@ void main() {
       find.byKey(const ValueKey<String>('passenger-profile-save')),
     );
     await tester.pump();
-    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(seconds: 4));
 
     verify(
       () => profileCubit.updateProfile(
@@ -114,6 +114,68 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets('shows confirmation feedback when saving succeeds', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildSubject());
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('passenger-profile-field-Full Name')),
+      'Updated Passenger',
+    );
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const ValueKey<String>('passenger-profile-save')),
+    );
+    await tester.pump();
+
+    expect(find.text('Profile updated.'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 4));
+  });
+
+  testWidgets(
+    'fits narrow large-text viewports cleanly when unsaved actions appear',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(1.8)),
+            child: child!,
+          ),
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<ProfileCubit>.value(value: profileCubit),
+              BlocProvider<SessionBloc>.value(value: sessionBloc),
+            ],
+            child: const ProfileInfoPage(),
+          ),
+        ),
+      );
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('passenger-profile-field-Full Name')),
+        'Alex Rivera',
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('passenger-profile-save')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('passenger-profile-discard')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('camera action adds a photo draft and reveals Save', (
     tester,
@@ -197,13 +259,57 @@ void main() {
     expect(emailField.readOnly, isTrue);
   });
 
-  testWidgets('renders fields within a single container card with dividers', (
+  testWidgets(
+    'separates editable profile fields from verified contact details cleanly',
+    (tester) async {
+      await tester.pumpWidget(buildSubject());
+
+      expect(find.text('PROFILE'), findsOneWidget);
+      expect(find.text('CONTACT'), findsOneWidget);
+      expect(find.text('Verified'), findsOneWidget);
+      expect(
+        find.text('Email and phone changes require verification.'),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('passenger-profile-editable-card')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('passenger-profile-contact-card')),
+        findsOneWidget,
+      );
+      expect(find.byType(AppSurfaceCard), findsNWidgets(2));
+    },
+  );
+
+  testWidgets('updates hero name live and discards unsaved edits cleanly', (
     tester,
   ) async {
     await tester.pumpWidget(buildSubject());
 
-    expect(find.byType(AppSurfaceCard), findsOneWidget);
-    expect(find.byType(Divider), findsNWidgets(3));
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('passenger-profile-field-Full Name')),
+      'Alex Rivera',
+    );
+    await tester.pump();
+
+    expect(find.text('Alex Rivera'), findsNWidgets(2));
+    expect(
+      find.byKey(const ValueKey<String>('passenger-profile-discard')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('passenger-profile-discard')),
+    );
+    await tester.pump();
+
+    expect(find.text('Test Passenger'), findsNWidgets(2));
+    expect(
+      find.byKey(const ValueKey<String>('passenger-profile-save')),
+      findsNothing,
+    );
   });
 
   testWidgets(
