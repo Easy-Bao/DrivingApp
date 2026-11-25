@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
-
 import 'package:foundation/foundation.dart';
+import 'package:maps/src/domain/geo_math.dart';
 
 enum RoutePreference { fastest, shortest }
 
@@ -70,7 +70,9 @@ class const Route({
       rawPolyline,
       rawWaypoints,
     );
-    final points = rawPoints.map(_readPoint).whereType<List<double>>().toList();
+    final points = List<List<double>>.unmodifiable(
+      rawPoints.map(_readPoint).whereType<List<double>>(),
+    );
 
     final durationSeconds = SafeParse.toNullableDouble(rawDurationSeconds);
     final durationMinutes = SafeParse.toNullableDouble(rawDurationMinutes);
@@ -139,7 +141,7 @@ List<double>? _readPoint(Object? rawPoint) {
   final longitude = SafeParse.toNullableDouble(longitudeValue);
   final latitude = SafeParse.toNullableDouble(latitudeValue);
   if (longitude == null || latitude == null) return null;
-  return [longitude, latitude];
+  return List<double>.unmodifiable([longitude, latitude]);
 }
 
 String _readString(Object? value, [String fallback = '']) {
@@ -190,13 +192,7 @@ extension RoutePolylinePointsApi on List<List<double>> {
 }
 
 bool _isValidPolylinePoint(List<double> point) {
-  return point.length >= 2 &&
-      point[0].isFinite &&
-      point[1].isFinite &&
-      point[1] >= -90 &&
-      point[1] <= 90 &&
-      point[0] >= -180 &&
-      point[0] <= 180;
+  return point.length >= 2 && GeoMath.isValidCoordinate(point[1], point[0]);
 }
 
 Float64List _buildCoordinateBuffer(List<List<double>> points) {

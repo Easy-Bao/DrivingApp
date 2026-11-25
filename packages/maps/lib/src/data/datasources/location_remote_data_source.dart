@@ -42,7 +42,13 @@ class LocationRemoteDataSource(this._dio) implements LocationRepository {
       queryParameters: {'lat': latitude, 'lng': longitude},
       options: _transientReadOptions,
     );
-    return PlaceDto.fromJson(response.data ?? {}).toDomain();
+    final data = response.data;
+    if (data == null || data.isEmpty) {
+      throw const DataParsingException(
+        message: 'Empty reverse geocode response.',
+      );
+    }
+    return PlaceDto.fromJson(data).toDomain();
   }
 
   @override
@@ -66,7 +72,11 @@ class LocationRemoteDataSource(this._dio) implements LocationRepository {
       data: body,
       options: _transientReadOptions,
     );
-    return RouteDto.fromJson(response.data ?? {}).toDomain();
+    final data = response.data;
+    if (data == null || data.isEmpty) {
+      throw const DataParsingException(message: 'Empty route response.');
+    }
+    return RouteDto.fromJson(data).toDomain();
   }
 
   @override

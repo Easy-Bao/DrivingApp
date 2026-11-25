@@ -1,5 +1,4 @@
 import 'dart:developer' as dev;
-import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
@@ -8,6 +7,7 @@ import 'package:maps/src/data/datasources/location_remote_data_source.dart';
 import 'package:maps/src/domain/entities/place.dart';
 import 'package:maps/src/domain/entities/route.dart';
 import 'package:maps/src/domain/failures/place_failure.dart';
+import 'package:maps/src/domain/geo_math.dart';
 import 'package:maps/src/domain/repositories/location_repository.dart';
 
 class MapNativeService({
@@ -35,29 +35,12 @@ class MapNativeService({
                 ),
           );
 
-  static double _toRadians(double degree) => degree * math.pi / 180.0;
-
   static double calculateHaversine(
     double latitude1,
     double longitude1,
     double latitude2,
     double longitude2,
-  ) {
-    const double earthRadiusKm = 6371.0;
-    final double deltaLatitude = _toRadians(latitude2 - latitude1);
-    final double deltaLongitude = _toRadians(longitude2 - longitude1);
-
-    final double haversineA =
-        (math.sin(deltaLatitude / 2.0) * math.sin(deltaLatitude / 2.0) +
-                math.cos(_toRadians(latitude1)) *
-                    math.cos(_toRadians(latitude2)) *
-                    math.sin(deltaLongitude / 2.0) *
-                    math.sin(deltaLongitude / 2.0))
-            .clamp(0.0, 1.0)
-            .toDouble();
-
-    return earthRadiusKm * 2.0 * math.asin(math.sqrt(haversineA));
-  }
+  ) => GeoMath.haversineKm(latitude1, longitude1, latitude2, longitude2);
 
   Future<double> haversineDistance({
     required double latitude1,
@@ -83,46 +66,24 @@ class MapNativeService({
       return const Err(PlaceParseError(message: 'Search query is too long.'));
     }
 
-    try {
+    return _runRequest('searchPlaces', () async {
       final responseData = await _apiClient.searchPlaces(
         query: trimmed,
         userLatitude: userLatitude ?? proximityLatitude,
         userLongitude: userLongitude ?? proximityLongitude,
       );
-
-      return Ok(_parsePlaces(responseData));
-    } on DioException catch (e) {
-      dev.log(
-        'searchPlaces network failure: ${e.type.name}',
-        name: 'MapNativeService',
-      );
-      return const Err(PlaceNetworkError());
-    } catch (_) {
-      dev.log('searchPlaces parse error', name: 'MapNativeService');
-      return const Err(PlaceParseError());
-    }
+      return _parsePlaces(responseData);
+    });
   }
 
   Future<Result<Place, PlaceFailure>> reverseGeocode({
     required double latitude,
     required double longitude,
-  }) async {
-    try {
-      final place = await _apiClient.reverseGeocode(
-        latitude: latitude,
-        longitude: longitude,
-      );
-      return Ok(place);
-    } on DioException catch (e) {
-      dev.log(
-        'reverseGeocode network failure: ${e.type.name}',
-        name: 'MapNativeService',
-      );
-      return const Err(PlaceNetworkError());
-    } catch (_) {
-      dev.log('reverseGeocode parse error', name: 'MapNativeService');
-      return const Err(PlaceParseError());
-    }
+  }) {
+    return _runRequest(
+      'reverseGeocode',
+      () => _apiClient.reverseGeocode(latitude: latitude, longitude: longitude),
+    );
   }
 
   Future<Result<Route, PlaceFailure>> getRoute({
@@ -133,8 +94,8 @@ class MapNativeService({
     RoutePreference preference = RoutePreference.fastest,
     RouteProfile profile = RouteProfile.driving,
     List<({double latitude, double longitude})> excludePoints = const [],
-  }) async {
-    try {
+  }) {
+    return _runRequest('getRoute', () async {
       final body = <String, dynamic>{
         'origin': {'lat': originLatitude, 'lng': originLongitude},
         'destination': {
@@ -151,18 +112,8 @@ class MapNativeService({
             .map((point) => {'lat': point.latitude, 'lng': point.longitude})
             .toList();
       }
-      final route = await _apiClient.getRoute(body: body);
-      return Ok(route);
-    } on DioException catch (e) {
-      dev.log(
-        'getRoute network failure: ${e.type.name}',
-        name: 'MapNativeService',
-      );
-      return const Err(PlaceNetworkError());
-    } catch (_) {
-      dev.log('getRoute parse error', name: 'MapNativeService');
-      return const Err(PlaceParseError());
-    }
+      return _apiClient.getRoute(body: body);
+    });
   }
 
   Future<Result<List<double>, PlaceFailure>> getDrivingDistances({
@@ -170,7 +121,11 @@ class MapNativeService({
     required double originLongitude,
     required List<({double latitude, double longitude})> destinations,
   }) async {
-    try {
+    if (destinations.isEmpty) {
+      return const Ok([]);
+    }
+
+    return _runRequest('getDrivingDistances', () async {
       final response = await _apiClient.getTravelMatrix(
         body: {
           'origin': {'lat': originLatitude, 'lng': originLongitude},
@@ -179,50 +134,74 @@ class MapNativeService({
               .toList(),
         },
       );
-      final values = response['distances_km'];
-      if (values is! List) {
-        return const Err(
-          PlaceParseError(message: 'Invalid travel matrix response.'),
-        );
-      }
-      return Ok(
-        values.whereType<num>().map((value) => value.toDouble()).toList(),
+      return _parseTravelMatrixDistances(
+        response['distances_km'],
+        expectedCount: destinations.length,
       );
-    } on DioException catch (e) {
-      dev.log(
-        'getDrivingDistances network failure: ${e.type.name}',
-        name: 'MapNativeService',
-      );
-      return const Err(PlaceNetworkError());
-    } catch (_) {
-      dev.log('getDrivingDistances parse error', name: 'MapNativeService');
-      return const Err(PlaceParseError());
-    }
+    });
   }
 
   Future<Result<List<Place>, PlaceFailure>> getNearbyPois({
     required double latitude,
     required double longitude,
     int page = 1,
-  }) async {
-    try {
+  }) {
+    return _runRequest('getNearbyPois', () async {
       final responseData = await _apiClient.getNearbyPois(
         latitude: latitude,
         longitude: longitude,
         page: page,
       );
+      return _parsePlaces(responseData);
+    });
+  }
 
-      return Ok(_parsePlaces(responseData));
+  Future<Result<T, PlaceFailure>> _runRequest<T>(
+    String operation,
+    Future<T> Function() action,
+  ) async {
+    try {
+      return Ok(await action());
     } on DioException catch (e) {
       dev.log(
-        'getNearbyPois network failure: ${e.type.name}',
+        '$operation network failure: ${e.type.name}',
         name: 'MapNativeService',
       );
       return const Err(PlaceNetworkError());
+    } on FormatException catch (e) {
+      dev.log('$operation parse error', name: 'MapNativeService');
+      return Err(
+        PlaceParseError(
+          message: e.message.isNotEmpty
+              ? e.message
+              : 'Failed to parse location response.',
+        ),
+      );
     } catch (_) {
-      dev.log('getNearbyPois parse error', name: 'MapNativeService');
+      dev.log('$operation parse error', name: 'MapNativeService');
       return const Err(PlaceParseError());
     }
+  }
+
+  static List<double> _parseTravelMatrixDistances(
+    Object? rawDistances, {
+    required int expectedCount,
+  }) {
+    if (rawDistances is! List || rawDistances.length != expectedCount) {
+      throw const FormatException('Invalid travel matrix response.');
+    }
+    final distances = <double>[];
+    for (final entry in rawDistances) {
+      if (entry is! num) {
+        throw const FormatException('Invalid travel matrix response.');
+      }
+      final value = entry.toDouble();
+      if (!value.isFinite || value < 0) {
+        throw const FormatException('Invalid travel matrix response.');
+      }
+      distances.add(value);
+    }
+    return List<double>.unmodifiable(distances);
   }
 
   static List<Place> _parsePlaces(Map<String, dynamic> responseData) {

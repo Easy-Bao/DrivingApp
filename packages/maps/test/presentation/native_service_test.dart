@@ -253,6 +253,115 @@ void main() {
     });
 
     test(
+      'getDrivingDistances rejects null or misaligned matrix entries',
+      () async {
+        dio.httpClientAdapter = _MockHttpClientAdapter((options) {
+          return ResponseBody.fromString(
+            jsonEncode({
+              'distances_km': [null, 3.5],
+            }),
+            200,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        });
+
+        final result = await service.getDrivingDistances(
+          originLatitude: 7.8282,
+          originLongitude: 123.4361,
+          destinations: const [
+            (latitude: 7.83, longitude: 123.44),
+            (latitude: 7.84, longitude: 123.45),
+          ],
+        );
+
+        expect(result.isErr, isTrue);
+        result.fold(
+          (failure) => expect(failure, isA<PlaceParseError>()),
+          (_) => fail('Expected misaligned matrix response to be rejected'),
+        );
+      },
+    );
+
+    test('getDrivingDistances rejects mismatched destination count', () async {
+      dio.httpClientAdapter = _MockHttpClientAdapter((options) {
+        return ResponseBody.fromString(
+          jsonEncode({
+            'distances_km': [1.25],
+          }),
+          200,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        );
+      });
+
+      final result = await service.getDrivingDistances(
+        originLatitude: 7.8282,
+        originLongitude: 123.4361,
+        destinations: const [
+          (latitude: 7.83, longitude: 123.44),
+          (latitude: 7.84, longitude: 123.45),
+        ],
+      );
+
+      expect(result.isErr, isTrue);
+      result.fold(
+        (failure) => expect(failure, isA<PlaceParseError>()),
+        (_) => fail('Expected length-mismatched matrix response to fail'),
+      );
+    });
+
+    test('reverseGeocode rejects empty JSON object response', () async {
+      dio.httpClientAdapter = _MockHttpClientAdapter((options) {
+        return ResponseBody.fromString(
+          jsonEncode(<String, dynamic>{}),
+          200,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        );
+      });
+
+      final result = await service.reverseGeocode(
+        latitude: 7.8282,
+        longitude: 123.4361,
+      );
+
+      expect(result.isErr, isTrue);
+      result.fold(
+        (failure) => expect(failure, isA<PlaceParseError>()),
+        (_) => fail('Expected empty reverse geocode response to fail'),
+      );
+    });
+
+    test('getRoute rejects empty JSON object response', () async {
+      dio.httpClientAdapter = _MockHttpClientAdapter((options) {
+        return ResponseBody.fromString(
+          jsonEncode(<String, dynamic>{}),
+          200,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        );
+      });
+
+      final result = await service.getRoute(
+        originLatitude: 7.8242,
+        originLongitude: 123.435,
+        destinationLatitude: 7.83,
+        destinationLongitude: 123.44,
+      );
+
+      expect(result.isErr, isTrue);
+      result.fold(
+        (failure) => expect(failure, isA<PlaceParseError>()),
+        (_) => fail('Expected empty route response to fail'),
+      );
+    });
+
+    test(
       'getRoute sends nested coordinates and parses backend route fields',
       () async {
         dio.httpClientAdapter = _MockHttpClientAdapter((options) {

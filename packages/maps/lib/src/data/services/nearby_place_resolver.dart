@@ -1,6 +1,5 @@
-import 'dart:math' as math;
-
 import 'package:maps/src/domain/entities/place.dart';
+import 'package:maps/src/domain/geo_math.dart';
 
 /// Map providers may omit `distance_km` for valid results. Keeping the
 /// fallback here makes both clients apply the same radius and distance rules.
@@ -17,7 +16,7 @@ class NearbyPlaceResolver._() {
         .map((place) {
           final distanceKm =
               place.distanceKm ??
-              _haversineKm(
+              GeoMath.haversineKm(
                 latitude,
                 longitude,
                 place.latitude,
@@ -33,27 +32,4 @@ class NearbyPlaceResolver._() {
         .whereType<Place>()
         .toList(growable: false);
   }
-
-  static double _haversineKm(
-    double latitude,
-    double longitude,
-    double otherLatitude,
-    double otherLongitude,
-  ) {
-    const earthRadiusKm = 6371.0;
-    final latitudeDelta = _toRadians(otherLatitude - latitude);
-    final longitudeDelta = _toRadians(otherLongitude - longitude);
-    final originLatitude = _toRadians(latitude);
-    final destinationLatitude = _toRadians(otherLatitude);
-
-    final rawA =
-        math.pow(math.sin(latitudeDelta / 2), 2) +
-        math.cos(originLatitude) *
-            math.cos(destinationLatitude) *
-            math.pow(math.sin(longitudeDelta / 2), 2);
-    final a = rawA.clamp(0.0, 1.0).toDouble();
-    return earthRadiusKm * 2 * math.asin(math.sqrt(a));
-  }
-
-  static double _toRadians(double degrees) => degrees * math.pi / 180;
 }
