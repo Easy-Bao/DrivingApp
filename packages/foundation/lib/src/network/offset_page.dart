@@ -28,7 +28,7 @@ class const OffsetPage<T>({
     final nextOffset = rawNextOffset as int?;
     final rawNextCursor = json['next_cursor'];
     final usesCursor = json.containsKey('next_cursor');
-    if (usesCursor && rawNextCursor is! String) {
+    if (usesCursor && rawNextCursor != null && rawNextCursor is! String) {
       throw const FormatException('Page response has an invalid next cursor.');
     }
     final nextCursor = rawNextCursor is String && rawNextCursor.isNotEmpty
@@ -43,7 +43,7 @@ class const OffsetPage<T>({
       );
     }
     return OffsetPage<T>(
-      items: rawItems.map(decodeItem).toList(growable: false),
+      items: List<T>.unmodifiable(rawItems.map(decodeItem)),
       hasMore: rawHasMore,
       nextOffset: nextOffset,
       nextCursor: nextCursor,

@@ -159,6 +159,66 @@ void main() {
       );
     },
   );
+
+  test('does not retry requests rejected by an open circuit breaker', () async {
+    var attempts = 0;
+    final coordinator = NetworkAvailabilityCoordinator(
+      failureThreshold: 1,
+      cooldown: const Duration(minutes: 1),
+    );
+    coordinator.recordFailure();
+    final dio = Dio(BaseOptions(baseUrl: 'https://api.example.test'))
+      ..httpClientAdapter = _FailingHttpClientAdapter(() => attempts++);
+    dio.interceptors
+      ..add(NetworkAvailabilityInterceptor(coordinator))
+      ..add(
+        RetryInterceptor(
+          dio,
+          retrySafeReadsByDefault: true,
+          retryDelay: (_) => Duration.zero,
+        ),
+      );
+    addTearDown(() async {
+      dio.close(force: true);
+      await coordinator.dispose();
+    });
+
+    await expectLater(
+      dio.get<void>('/api/v1/dashboard'),
+      throwsA(
+        isA<DioException>().having(
+          (error) => error.error,
+          'error',
+          isA<NetworkCircuitOpenException>(),
+        ),
+      ),
+    );
+    expect(attempts, 0);
+  });
+
+  test('does not retry after a CancelToken is cancelled', () async {
+    var attempts = 0;
+    final cancelToken = CancelToken();
+    final dio = Dio(BaseOptions(baseUrl: 'https://api.example.test'))
+      ..httpClientAdapter = _FailingHttpClientAdapter(() {
+        attempts++;
+        cancelToken.cancel('aborted');
+      });
+    dio.interceptors.add(
+      RetryInterceptor(
+        dio,
+        retrySafeReadsByDefault: true,
+        retryDelay: (_) => Duration.zero,
+      ),
+    );
+    addTearDown(() => dio.close(force: true));
+
+    await expectLater(
+      dio.get<void>('/api/v1/dashboard', cancelToken: cancelToken),
+      throwsA(isA<DioException>()),
+    );
+    expect(attempts, 1);
+  });
 }
 
 class _NetworkThenHttpErrorAdapter implements HttpClientAdapter {

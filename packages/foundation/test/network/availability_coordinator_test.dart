@@ -121,6 +121,7 @@ void main() {
         failureThreshold: 1,
         now: () => now,
       );
+      addTearDown(coordinator.dispose);
       final interceptor = NetworkAvailabilityInterceptor(coordinator);
       coordinator.recordFailure();
       now = now.add(const Duration(seconds: 6));
@@ -214,6 +215,67 @@ void main() {
       );
     },
   );
+
+  test(
+    'normalizes parameterized 5xx endpoints and expires stale service failures',
+    () {
+      var now = DateTime(2026, 8, 31, 12);
+      final coordinator = NetworkAvailabilityCoordinator(
+        serviceFailureTtl: const Duration(seconds: 30),
+        now: () => now,
+      );
+      addTearDown(coordinator.dispose);
+
+      final failReq = RequestOptions(
+        baseUrl: 'https://api.example.test',
+        path: '/api/v1/rides/42/cancel',
+        method: 'POST',
+      );
+      coordinator.recordResponse(
+        Response<dynamic>(requestOptions: failReq, statusCode: 503),
+      );
+      expect(coordinator.status, NetworkAvailabilityStatus.serviceUnavailable);
+
+      // A successful call to another ride ID on the same route clears it.
+      final okReq = RequestOptions(
+        baseUrl: 'https://api.example.test',
+        path: '/api/v1/rides/99/cancel',
+        method: 'POST',
+      );
+      coordinator.recordResponse(
+        Response<dynamic>(requestOptions: okReq, statusCode: 200),
+      );
+      expect(coordinator.status, NetworkAvailabilityStatus.available);
+
+      // Unretried 5xx failures also expire after serviceFailureTtl.
+      coordinator.recordResponse(
+        Response<dynamic>(requestOptions: failReq, statusCode: 502),
+      );
+      expect(coordinator.status, NetworkAvailabilityStatus.serviceUnavailable);
+      now = now.add(const Duration(seconds: 31));
+      coordinator.recordSuccess();
+      expect(coordinator.status, NetworkAvailabilityStatus.available);
+    },
+  );
+
+  test('recovers a stalled half-open probe after probeTimeout', () {
+    var now = DateTime(2026, 8, 31, 12);
+    final coordinator = NetworkAvailabilityCoordinator(
+      failureThreshold: 1,
+      cooldown: const Duration(seconds: 5),
+      probeTimeout: const Duration(seconds: 30),
+      now: () => now,
+    );
+    addTearDown(coordinator.dispose);
+
+    coordinator.recordFailure();
+    now = now.add(const Duration(seconds: 6));
+    expect(coordinator.tryAcquireRequest(), isTrue);
+    expect(coordinator.tryAcquireRequest(), isFalse);
+
+    now = now.add(const Duration(seconds: 31));
+    expect(coordinator.tryAcquireRequest(), isTrue);
+  });
 }
 
 class _FailingHttpClientAdapter(this.onAttempt, {this.innerError})

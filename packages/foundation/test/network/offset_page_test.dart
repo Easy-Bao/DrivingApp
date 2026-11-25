@@ -49,6 +49,15 @@ void main() {
       'next_cursor': '',
     }, (value) => value! as int);
     expect(end.nextCursor, isNull);
+    final nullCursorEnd = OffsetPage<int>.fromJson(const {
+      'items': <int>[],
+      'has_more': false,
+      'next_offset': null,
+      'next_cursor': null,
+    }, (value) => value! as int);
+    expect(nullCursorEnd.nextCursor, isNull);
+    expect(nullCursorEnd.hasMore, isFalse);
+    expect(() => page.items[0] = 99, throwsUnsupportedError);
     for (final metadata in [
       {'has_more': true, 'next_cursor': ''},
       {'has_more': false, 'next_cursor': 'boundary'},

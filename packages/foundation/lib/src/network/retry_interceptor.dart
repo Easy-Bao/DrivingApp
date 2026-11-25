@@ -2,17 +2,19 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:dio/dio.dart';
+import 'package:foundation/src/errors/exceptions.dart';
 
 enum RequestRetryPolicy { transientRead }
 
 const requestRetryPolicyExtraKey = 'requestRetryPolicy';
+const retryAttemptExtraKey = 'retryAttempt';
 
 typedef RetryDelay = Duration Function(int retryAttempt);
 
 class RetryInterceptor(
   this.dio, {
   RetryDelay? retryDelay,
-  bool retrySafeReadsByDefault = false,
+  this._retrySafeReadsByDefault = false,
 }) extends Interceptor {
   static final Random _random = Random();
 
@@ -20,18 +22,22 @@ class RetryInterceptor(
   final bool _retrySafeReadsByDefault;
   final RetryDelay _retryDelay;
 
-  this
-    : _retrySafeReadsByDefault = retrySafeReadsByDefault,
-      _retryDelay = retryDelay ?? _defaultRetryDelay;
+  this : _retryDelay = retryDelay ?? _defaultRetryDelay;
 
   @override
   Future<void> onError(
-    DioException error,
+    DioException err,
     ErrorInterceptorHandler handler,
   ) async {
-    final requestOptions = error.requestOptions;
-    final retryPolicy =
-        requestOptions.extra[requestRetryPolicyExtraKey] as RequestRetryPolicy?;
+    if (err.error is NetworkCircuitOpenException) {
+      return super.onError(err, handler);
+    }
+
+    final requestOptions = err.requestOptions;
+    final rawRetryPolicy = requestOptions.extra[requestRetryPolicyExtraKey];
+    final retryPolicy = rawRetryPolicy is RequestRetryPolicy
+        ? rawRetryPolicy
+        : null;
     final method = requestOptions.method.toUpperCase();
     final isSafeReadMethod = switch (method) {
       'GET' || 'HEAD' || 'OPTIONS' => true,
@@ -41,11 +47,12 @@ class RetryInterceptor(
         isSafeReadMethod ||
         (method == 'POST' && retryPolicy == RequestRetryPolicy.transientRead);
     final isNetworkError =
-        error.type == DioExceptionType.connectionError ||
-        error.type == DioExceptionType.connectionTimeout ||
-        error.type == DioExceptionType.receiveTimeout ||
-        error.error is SocketException;
-    final retryAttempt = requestOptions.extra['retryAttempt'] as int? ?? 0;
+        err.type == DioExceptionType.connectionError ||
+        err.type == DioExceptionType.connectionTimeout ||
+        err.type == DioExceptionType.receiveTimeout ||
+        err.error is SocketException;
+    final rawAttempt = requestOptions.extra[retryAttemptExtraKey];
+    final retryAttempt = rawAttempt is int ? rawAttempt : 0;
 
     final shouldRetry =
         retryPolicy == RequestRetryPolicy.transientRead ||
@@ -53,17 +60,34 @@ class RetryInterceptor(
     if (shouldRetry &&
         isRetryableMethod &&
         isNetworkError &&
-        retryAttempt < 2) {
-      requestOptions.extra['retryAttempt'] = retryAttempt + 1;
+        retryAttempt < 2 &&
+        !(requestOptions.cancelToken?.isCancelled ?? false)) {
       await Future<void>.delayed(_retryDelay(retryAttempt + 1));
+      if (requestOptions.cancelToken?.isCancelled ?? false) {
+        return super.onError(err, handler);
+      }
+      final retryOptions = requestOptions.copyWith(
+        extra: {
+          ...requestOptions.extra,
+          retryAttemptExtraKey: retryAttempt + 1,
+        },
+      );
       try {
-        final response = await dio.fetch(requestOptions);
+        final response = await dio.fetch<Object?>(retryOptions);
         return handler.resolve(response);
       } on DioException catch (retryError) {
         return handler.next(retryError);
-      } catch (_) {}
+      } catch (unexpectedError, stackTrace) {
+        return handler.next(
+          DioException(
+            requestOptions: retryOptions,
+            error: unexpectedError,
+            stackTrace: stackTrace,
+          ),
+        );
+      }
     }
-    super.onError(error, handler);
+    super.onError(err, handler);
   }
 
   static Duration _defaultRetryDelay(int retryAttempt) {

@@ -25,26 +25,42 @@ typedef NetworkNow = DateTime Function();
 final class NetworkAvailabilityCoordinator({
   int failureThreshold = 2,
   Duration cooldown = const Duration(seconds: 5),
+  Duration serviceFailureTtl = const Duration(seconds: 30),
+  Duration probeTimeout = const Duration(seconds: 30),
   NetworkNow? now,
 }) {
   this
     : assert(failureThreshold > 0),
       assert(cooldown > Duration.zero),
+      assert(serviceFailureTtl > Duration.zero),
+      assert(probeTimeout > Duration.zero),
       _failureThreshold = failureThreshold,
       _cooldown = cooldown,
+      _serviceFailureTtl = serviceFailureTtl,
+      _probeTimeout = probeTimeout,
       _now = now ?? DateTime.now;
+
+  static const int _maxTrackedFailedEndpoints = 64;
+  static final RegExp _numericSegment = RegExp(r'^\d+$');
+  static final RegExp _uuidSegment = RegExp(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+    caseSensitive: false,
+  );
 
   final int _failureThreshold;
   final Duration _cooldown;
+  final Duration _serviceFailureTtl;
+  final Duration _probeTimeout;
   final NetworkNow _now;
   final _changes = StreamController<NetworkAvailabilityStatus>.broadcast(
     sync: true,
   );
   NetworkAvailabilityStatus _status = NetworkAvailabilityStatus.available;
-  final Set<(String, String)> _failedEndpoints = {};
+  final Map<(String, String), DateTime> _failedEndpoints = {};
   int _consecutiveFailures = 0;
   DateTime? _circuitOpenUntil;
   bool _probeInFlight = false;
+  DateTime? _probeStartedAt;
   int _successGeneration = 0;
   NetworkErrorCategory? _lastFailureCategory;
 
@@ -66,16 +82,27 @@ final class NetworkAvailabilityCoordinator({
   bool tryAcquireRequest() {
     final openUntil = _circuitOpenUntil;
     if (openUntil == null) return true;
-    if (_now().isBefore(openUntil) || _probeInFlight) return false;
+    final currentTime = _now();
+    if (currentTime.isBefore(openUntil)) return false;
+    if (_probeInFlight) {
+      final startedAt = _probeStartedAt;
+      if (startedAt == null ||
+          currentTime.difference(startedAt) < _probeTimeout) {
+        return false;
+      }
+    }
     _probeInFlight = true;
+    _probeStartedAt = currentTime;
     return true;
   }
 
   void recordSuccess() {
+    _pruneExpiredEndpointFailures();
     _successGeneration++;
     _consecutiveFailures = 0;
     _circuitOpenUntil = null;
     _probeInFlight = false;
+    _probeStartedAt = null;
     _lastFailureCategory = null;
     _setStatus(
       _failedEndpoints.isEmpty
@@ -85,7 +112,8 @@ final class NetworkAvailabilityCoordinator({
   }
 
   /// HTTP failures affect service availability without opening the connection
-  /// circuit. Only a response from the affected endpoint clears its failure.
+  /// circuit. Normalized endpoint failures expire automatically or clear as
+  /// soon as the endpoint responds normally.
   void recordResponse(Response<dynamic> response) {
     final code = response.statusCode;
     if (code == null) {
@@ -94,11 +122,16 @@ final class NetworkAvailabilityCoordinator({
     }
     final request = response.requestOptions;
     final endpoint = (
-      request.method,
-      request.uri.replace(query: '').toString(),
+      request.method.toUpperCase(),
+      _normalizeEndpointKey(request.uri),
     );
+    _pruneExpiredEndpointFailures();
     if (code >= 500 && code < 600) {
-      _failedEndpoints.add(endpoint);
+      _failedEndpoints.remove(endpoint);
+      _failedEndpoints[endpoint] = _now().add(_serviceFailureTtl);
+      while (_failedEndpoints.length > _maxTrackedFailedEndpoints) {
+        _failedEndpoints.remove(_failedEndpoints.keys.first);
+      }
     } else {
       _failedEndpoints.remove(endpoint);
     }
@@ -109,6 +142,7 @@ final class NetworkAvailabilityCoordinator({
   /// requests that ended before reaching the server (e.g. cancellation).
   void releaseProbe() {
     _probeInFlight = false;
+    _probeStartedAt = null;
   }
 
   void recordFailure({int? requestGeneration, NetworkErrorCategory? category}) {
@@ -118,6 +152,7 @@ final class NetworkAvailabilityCoordinator({
       return;
     }
     _probeInFlight = false;
+    _probeStartedAt = null;
     if (category != null) _lastFailureCategory = category;
     _consecutiveFailures++;
     if (_consecutiveFailures >= _failureThreshold) {
@@ -129,6 +164,29 @@ final class NetworkAvailabilityCoordinator({
   }
 
   Future<void> dispose() => _changes.close();
+
+  void _pruneExpiredEndpointFailures() {
+    if (_failedEndpoints.isEmpty) return;
+    final currentTime = _now();
+    _failedEndpoints.removeWhere(
+      (_, expiresAt) => !currentTime.isBefore(expiresAt),
+    );
+  }
+
+  static String _normalizeEndpointKey(Uri uri) {
+    final normalizedPath = uri.path
+        .split('/')
+        .where((segment) => segment.isNotEmpty)
+        .map(
+          (segment) =>
+              _numericSegment.hasMatch(segment) ||
+                  _uuidSegment.hasMatch(segment)
+              ? ':id'
+              : segment,
+        )
+        .join('/');
+    return uri.replace(path: '/$normalizedPath', query: '').toString();
+  }
 
   void _setStatus(NetworkAvailabilityStatus next) {
     if (_status == next || _changes.isClosed) return;
@@ -185,17 +243,17 @@ final class const NetworkAvailabilityInterceptor(this.coordinator)
   }
 
   @override
-  void onError(DioException error, ErrorInterceptorHandler handler) {
-    if (NetworkAvailabilityCoordinator.isNetworkFailure(error)) {
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    if (NetworkAvailabilityCoordinator.isNetworkFailure(err)) {
       coordinator.recordFailure(
-        requestGeneration: error.requestOptions.extra[_generationKey] as int?,
-        category: NetworkErrorDiagnostic.fromError(error).category,
+        requestGeneration: err.requestOptions.extra[_generationKey] as int?,
+        category: NetworkErrorDiagnostic.fromError(err).category,
       );
-    } else if (error.response != null) {
-      coordinator.recordResponse(error.response!);
-    } else if (error.error is! NetworkCircuitOpenException) {
+    } else if (err.response case final response?) {
+      coordinator.recordResponse(response);
+    } else if (err.error is! NetworkCircuitOpenException) {
       coordinator.releaseProbe();
     }
-    handler.next(error);
+    handler.next(err);
   }
 }
