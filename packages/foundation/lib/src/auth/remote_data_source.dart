@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import 'package:foundation/src/errors/exceptions.dart';
 import 'package:foundation/src/errors/network_diagnostic.dart';
+import 'package:foundation/src/network/offset_page.dart';
 
 abstract interface class AuthRemoteDataSource {
   Future<Map<String, dynamic>> postJson(
@@ -29,11 +30,17 @@ final class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final response = await _dio.post<Object?>(path, data: requestBody);
       final responseData = response.data;
       if (responseData is! Map) {
-        throw DataParsingException(
+        throw const DataParsingException(
           message: 'Authentication service returned an invalid response.',
         );
       }
-      return Map<String, dynamic>.from(responseData);
+      try {
+        return decodeObjectMap(responseData);
+      } on FormatException {
+        throw const DataParsingException(
+          message: 'Authentication service returned an invalid response.',
+        );
+      }
     } on DioException catch (error) {
       throw ServerException(
         statusCode: error.response?.statusCode ?? (_isTimeout(error) ? 504 : 0),
@@ -51,17 +58,23 @@ final class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final responseBody = await postJson(path, requestBody: requestBody);
     final responseData = responseBody['data'];
     if (responseBody['success'] != true || responseData is! Map) {
-      throw DataParsingException(
+      throw const DataParsingException(
         message: 'Authentication service returned an invalid response.',
       );
     }
-    return Map<String, dynamic>.from(responseData);
+    try {
+      return decodeObjectMap(responseData);
+    } on FormatException {
+      throw const DataParsingException(
+        message: 'Authentication service returned an invalid response.',
+      );
+    }
   }
 
   String _safeErrorMessage(DioException error) {
     final statusCode = error.response?.statusCode;
     if (statusCode == null) {
-      return 'Cannot reach the authentication service. Check that the local services are running.';
+      return 'Cannot reach the authentication service. Check your connection and try again.';
     }
     if (statusCode >= 500) {
       return 'The authentication service is temporarily unavailable. Please try again.';

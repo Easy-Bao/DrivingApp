@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
-
-import 'endpoints.dart';
+import 'package:foundation/src/auth/endpoints.dart';
+import 'package:foundation/src/network/bearer_auth_interceptor.dart';
+import 'package:foundation/src/network/offset_page.dart';
 
 /// Access tokens are intentionally decoded only to read their expiry. The
 /// server remains responsible for validating the token signature and claims.
@@ -38,13 +40,28 @@ final class RefreshableTokenProvider({
   bool _sessionExpiryNotified = false;
   bool _deferredExpiryPending = false;
 
+  static const Duration _maxRetryAfter = Duration(minutes: 5);
+
   bool get isDeferredExpiryPending => _deferredExpiryPending;
 
+  /// Resets transient cooldown and expiry flags after a fresh sign-in.
+  void reset() {
+    _refreshBlockedUntil = null;
+    _sessionExpiryNotified = false;
+    _deferredExpiryPending = false;
+  }
+
+  // ignore: use_setters_to_change_properties
   void registerActiveMissionChecker(FutureOr<bool> Function() checker) {
     _hasActiveMission = checker;
   }
 
   Future<String?> getToken() async {
+    final pendingRefresh = _refreshInFlight;
+    if (pendingRefresh != null) {
+      return pendingRefresh;
+    }
+
     final token = (await _readAccessToken())?.trim();
     if (token == null || token.isEmpty) {
       final refreshToken = (await _readRefreshToken())?.trim();
@@ -94,7 +111,7 @@ final class RefreshableTokenProvider({
         AuthEndpoints.refresh,
         data: {'refreshToken': refreshToken},
         options: Options(
-          extra: {'skipAuthToken': true, 'skipAuthRefresh': true},
+          extra: {skipAuthTokenExtraKey: true, skipAuthRefreshExtraKey: true},
         ),
       );
       final payload = _extractPayload(response.data);
@@ -111,6 +128,7 @@ final class RefreshableTokenProvider({
       );
       _refreshBlockedUntil = null;
       _sessionExpiryNotified = false;
+      _deferredExpiryPending = false;
       return accessToken;
     } on DioException catch (error) {
       final statusCode = error.response?.statusCode;
@@ -118,6 +136,11 @@ final class RefreshableTokenProvider({
         _refreshBlockedUntil = DateTime.now().toUtc().add(_retryAfter(error));
       } else if (statusCode == 401 || statusCode == 403) {
         await _expireSession();
+        if (_deferredExpiryPending) {
+          _refreshBlockedUntil = DateTime.now().toUtc().add(
+            _refreshFailureCooldown,
+          );
+        }
       }
       return null;
     } catch (_) {
@@ -129,18 +152,27 @@ final class RefreshableTokenProvider({
 
   Map<String, dynamic>? _extractPayload(Object? responseData) {
     if (responseData is! Map) return null;
-    final data = responseData['data'];
-    if (data is Map) return Map<String, dynamic>.from(data);
-    return Map<String, dynamic>.from(responseData);
+    try {
+      final root = decodeObjectMap(responseData);
+      final data = root['data'];
+      if (data is Map) return decodeObjectMap(data);
+      return root;
+    } on FormatException {
+      return null;
+    }
   }
 
   Future<void> _expireSession() async {
     final checker = _hasActiveMission;
     if (checker != null) {
-      var inProgress = false;
+      var inProgress = true;
       try {
         inProgress = await checker();
-      } catch (_) {}
+      } catch (_) {
+        // Fail safe when mission status cannot be read so an active trip is
+        // never interrupted by a transient checker failure.
+        inProgress = true;
+      }
       if (inProgress) {
         _deferredExpiryPending = true;
         return;
@@ -168,10 +200,22 @@ final class RefreshableTokenProvider({
   }
 
   Duration _retryAfter(DioException error) {
-    final rawValue = error.response?.headers.value('retry-after');
-    final seconds = int.tryParse(rawValue?.trim() ?? '');
-    if (seconds != null && seconds > 0) {
-      return Duration(seconds: seconds);
+    final rawValue = error.response?.headers.value('retry-after')?.trim();
+    if (rawValue != null && rawValue.isNotEmpty) {
+      final seconds = int.tryParse(rawValue);
+      if (seconds != null && seconds > 0) {
+        final duration = Duration(seconds: seconds);
+        return duration > _maxRetryAfter ? _maxRetryAfter : duration;
+      }
+      try {
+        final parsedDate = HttpDate.parse(rawValue).toUtc();
+        final remaining = parsedDate.difference(DateTime.now().toUtc());
+        if (remaining > Duration.zero) {
+          return remaining > _maxRetryAfter ? _maxRetryAfter : remaining;
+        }
+      } on HttpException {
+        // Ignore unparseable Retry-After date and fall back to default cooldown.
+      }
     }
     return _refreshFailureCooldown;
   }
@@ -179,7 +223,7 @@ final class RefreshableTokenProvider({
   DateTime? _readExpiry(String token) {
     try {
       final parts = token.split('.');
-      if (parts.length < 2) return null;
+      if (parts.length != 3) return null;
       final payload = jsonDecode(
         utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
       );

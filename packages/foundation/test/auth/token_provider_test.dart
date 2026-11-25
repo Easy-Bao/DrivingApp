@@ -152,6 +152,68 @@ void main() {
     expect(sessionExpiredCalled, true);
     expect(provider.isDeferredExpiryPending, false);
   });
+
+  test('coalesces concurrent refresh attempts into one network call', () async {
+    var refreshCalls = 0;
+    final refreshClient = Dio(BaseOptions(baseUrl: 'https://api.example.test'))
+      ..httpClientAdapter = _ResponseAdapter((_) {
+        refreshCalls++;
+        return ResponseBody.fromString(
+          jsonEncode({
+            'data': {'token': 'rotated-token', 'refreshToken': 'refresh-2'},
+          }),
+          200,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        );
+      });
+    addTearDown(() => refreshClient.close(force: true));
+
+    final provider = RefreshableTokenProvider(
+      readAccessToken: () async => 'expired-token',
+      readRefreshToken: () async => 'refresh-1',
+      saveAccessToken: (_) async {},
+      saveRefreshToken: (_) async {},
+      clearSession: () async {},
+      refreshClient: refreshClient,
+    );
+
+    final results = await Future.wait([
+      provider.refreshAccessToken(),
+      provider.refreshAccessToken(),
+      provider.refreshAccessToken(),
+    ]);
+
+    expect(results, ['rotated-token', 'rotated-token', 'rotated-token']);
+    expect(refreshCalls, 1);
+  });
+
+  test('fails safe to defer expiry if active mission checker throws and resets cleanly', () async {
+    var clearCount = 0;
+    final refreshClient = Dio(BaseOptions(baseUrl: 'https://api.example.test'))
+      ..httpClientAdapter = _ResponseAdapter((_) {
+        return ResponseBody.fromString('Unauthorized', 401);
+      });
+    addTearDown(() => refreshClient.close(force: true));
+
+    final provider = RefreshableTokenProvider(
+      readAccessToken: () async => 'expired-token',
+      readRefreshToken: () async => 'refresh-1',
+      saveAccessToken: (_) async {},
+      saveRefreshToken: (_) async {},
+      clearSession: () async => clearCount++,
+      refreshClient: refreshClient,
+      hasActiveMission: () => throw StateError('checker failure'),
+    );
+
+    expect(await provider.refreshAccessToken(), isNull);
+    expect(clearCount, 0);
+    expect(provider.isDeferredExpiryPending, isTrue);
+
+    provider.reset();
+    expect(provider.isDeferredExpiryPending, isFalse);
+  });
 }
 
 String _jwt(DateTime expiresAt) {
