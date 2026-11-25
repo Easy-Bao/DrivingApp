@@ -38,7 +38,6 @@ class const CompactRouteTimeline({
                   isPickup: true,
                   label: pickupLabel,
                   value: pickup,
-                  layoutScale: layoutScale,
                 ),
               ),
               Expanded(
@@ -46,7 +45,6 @@ class const CompactRouteTimeline({
                   isPickup: false,
                   label: dropoffLabel,
                   value: dropoff,
-                  layoutScale: layoutScale,
                 ),
               ),
             ],
@@ -61,12 +59,10 @@ class const _RouteStopRow({
   required this.isPickup,
   required this.label,
   required this.value,
-  required this.layoutScale,
 }) extends StatelessWidget {
   final bool isPickup;
   final String label;
   final String value;
-  final double layoutScale;
 
   @override
   Widget build(BuildContext context) {

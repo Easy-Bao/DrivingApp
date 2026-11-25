@@ -50,7 +50,11 @@ class _AppChatMessageTransitionState extends State<AppChatMessageTransition>
   void didUpdateWidget(covariant AppChatMessageTransition oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.animate && !oldWidget.animate) {
-      unawaited(_controller.forward(from: 0));
+      if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+        _controller.value = 1;
+      } else {
+        unawaited(_controller.forward(from: 0));
+      }
     }
   }
 
@@ -63,6 +67,9 @@ class _AppChatMessageTransitionState extends State<AppChatMessageTransition>
 
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+      return widget.child;
+    }
     return FadeTransition(
       opacity: _curve,
       child: SlideTransition(
@@ -111,6 +118,19 @@ class _AppChatTypingIndicatorState extends State<AppChatTypingIndicator>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    if (disableAnimations && _controller.isAnimating) {
+      _controller.stop();
+      _controller.value = 0;
+    } else if (!disableAnimations && !_controller.isAnimating) {
+      unawaited(_controller.repeat());
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -118,6 +138,8 @@ class _AppChatTypingIndicatorState extends State<AppChatTypingIndicator>
 
   @override
   Widget build(BuildContext context) {
+    final disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     return Semantics(
       container: true,
       label: widget.semanticLabel,
@@ -134,7 +156,8 @@ class _AppChatTypingIndicatorState extends State<AppChatTypingIndicator>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                for (var index = 0; index < 3; index++) _buildDot(index),
+                for (var index = 0; index < 3; index++)
+                  _buildDot(index, disableAnimations: disableAnimations),
               ],
             ),
           ),
@@ -143,7 +166,23 @@ class _AppChatTypingIndicatorState extends State<AppChatTypingIndicator>
     );
   }
 
-  Widget _buildDot(int index) {
+  Widget _buildDot(int index, {required bool disableAnimations}) {
+    if (disableAnimations) {
+      return Padding(
+        key: ValueKey<String>('app-chat-typing-dot-$index'),
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: SizedBox(
+          width: 6,
+          height: 6,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: widget.dotColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+      );
+    }
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -209,10 +248,14 @@ class const AppChatDeliveryIndicator({
       _ => (Icons.done, 'Sent'),
     };
 
+    final disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     return Semantics(
       label: label,
       child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 220),
+        duration: disableAnimations
+            ? Duration.zero
+            : const Duration(milliseconds: 220),
         switchInCurve: Curves.easeOutBack,
         switchOutCurve: Curves.easeIn,
         transitionBuilder: (child, animation) => FadeTransition(

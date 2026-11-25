@@ -43,10 +43,9 @@ class AppSnackBar._() {
           Expanded(
             child: Text(
               message,
-              style: TextStyle(
+              style: context.textStyles.bodyMedium?.copyWith(
                 color: fgColor,
                 fontWeight: FontWeight.w600,
-                fontSize: 14,
               ),
             ),
           ),

@@ -1,4 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:design_system/src/tokens/palette.dart';
+import 'package:design_system/src/tokens/radius.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -18,20 +20,27 @@ class const AppNetworkImage({
   final BorderRadius? borderRadius;
   final IconData fallbackIcon;
 
+  static bool _isValidHttpUrl(String url) {
+    final uri = Uri.tryParse(url);
+    return uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final effectiveRadius = borderRadius ?? BorderRadius.circular(16);
+    final effectiveRadius = borderRadius ?? BorderRadius.circular(AppRadius.lg);
     final url = imageUrl?.trim() ?? '';
 
-    if (url.isEmpty || !url.startsWith('http')) {
+    if (!_isValidHttpUrl(url)) {
       return Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
           color: colors.surfaceContainerHighest,
           borderRadius: effectiveRadius,
-          border: Border.all(color: const Color(0x14000000), width: 1),
+          border: Border.all(color: AppPalette.imageOutline, width: 1),
         ),
         child: Icon(
           fallbackIcon,
@@ -41,12 +50,20 @@ class const AppNetworkImage({
       );
     }
 
+    final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 2.0;
+    final memCacheWidth = width.isFinite && width > 0
+        ? (width * dpr).round()
+        : null;
+    final memCacheHeight = height.isFinite && height > 0
+        ? (height * dpr).round()
+        : null;
+
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
         borderRadius: effectiveRadius,
-        border: Border.all(color: const Color(0x14000000), width: 1),
+        border: Border.all(color: AppPalette.imageOutline, width: 1),
       ),
       child: ClipRRect(
         borderRadius: effectiveRadius,
@@ -54,6 +71,8 @@ class const AppNetworkImage({
           imageUrl: url,
           width: width,
           height: height,
+          memCacheWidth: memCacheWidth,
+          memCacheHeight: memCacheHeight,
           fit: fit,
           placeholder: (context, _) => Container(
             width: width,

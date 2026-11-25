@@ -175,6 +175,10 @@ class _AppTabBranchContainerState extends State<AppTabBranchContainer> {
   void _animateToPage(int index) {
     if (!_pageController.hasClients) return;
     if (_pageController.page?.round() == index) return;
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+      _pageController.jumpToPage(index);
+      return;
+    }
     unawaited(
       _pageController.animateToPage(
         index,

@@ -1,4 +1,5 @@
 import 'package:design_system/src/theme/theme_context.dart';
+import 'package:design_system/src/tokens/palette.dart';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
 import 'package:design_system/src/tokens/spacing.dart';
@@ -67,8 +68,10 @@ class AppFloatingTabBar extends StatelessWidget {
       );
     }
 
+    final disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     return TweenAnimationBuilder<double>(
-      duration: animationDuration,
+      duration: disableAnimations ? Duration.zero : animationDuration,
       curve: Curves.easeOutCubic,
       tween: Tween<double>(end: activeIndex.toDouble()),
       builder: (context, position, child) =>
@@ -136,12 +139,12 @@ class AppFloatingTabBar extends StatelessWidget {
         ),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: AppPalette.keyShadow,
             blurRadius: 6,
             offset: Offset(0, 2),
           ),
           BoxShadow(
-            color: Color(0x12000000),
+            color: AppPalette.ambientShadow,
             blurRadius: 20,
             offset: Offset(0, 6),
           ),
@@ -187,7 +190,7 @@ class _AppFloatingTabItem extends StatelessWidget {
           selectionProgress,
         ) ??
         colorScheme.onSurfaceVariant;
-    final labelStyle = Theme.of(context).textTheme.labelMedium!;
+    final labelStyle = context.textStyles.labelMedium;
 
     return Semantics(
       button: true,
@@ -214,9 +217,6 @@ class _AppFloatingTabItem extends StatelessWidget {
             if (states.contains(WidgetState.hovered)) {
               return colorScheme.primary.withValues(alpha: 0.08);
             }
-            if (states.contains(WidgetState.focused)) {
-              return colorScheme.primary.withValues(alpha: 0.12);
-            }
             return colorScheme.surface.withValues(alpha: 0);
           }),
           onTap: () => onTap(index),
@@ -239,7 +239,7 @@ class _AppFloatingTabItem extends StatelessWidget {
                     softWrap: false,
                     textScaler: MediaQuery.textScalerOf(context)
                         .clamp(maxScaleFactor: 1.2),
-                    style: labelStyle.copyWith(
+                    style: labelStyle?.copyWith(
                       color: targetColor,
                       fontWeight: FontWeight.w500,
                     ),

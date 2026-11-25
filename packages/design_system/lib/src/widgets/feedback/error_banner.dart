@@ -52,7 +52,9 @@ class const AppErrorBanner({
               style: TextButton.styleFrom(
                 minimumSize: const Size(48, 48),
                 foregroundColor: scheme.onErrorContainer,
-                textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                textStyle: context.textStyles.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               child: const Text('Retry'),
             ),

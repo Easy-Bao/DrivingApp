@@ -1,3 +1,4 @@
+import 'package:design_system/src/tokens/palette.dart';
 import 'package:design_system/src/tokens/status_colors.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -23,13 +24,13 @@ class const AppSemanticColors({
 
   static const defaults = AppSemanticColors(
     success: AppStatusColors.success,
-    onSuccess: Color(0xFFFFFFFF),
+    onSuccess: AppPalette.white,
     warning: AppStatusColors.warning,
-    onWarning: Color(0xFFFFFFFF),
+    onWarning: AppPalette.white,
     info: AppStatusColors.info,
     rating: AppStatusColors.rating,
     online: AppStatusColors.success,
-    offline: Color(0xFF64748B),
+    offline: AppPalette.gray600,
   );
 
   @override
@@ -59,14 +60,14 @@ class const AppSemanticColors({
   AppSemanticColors lerp(covariant AppSemanticColors? other, double t) {
     if (other == null) return this;
     return AppSemanticColors(
-      success: Color.lerp(success, other.success, t)!,
-      onSuccess: Color.lerp(onSuccess, other.onSuccess, t)!,
-      warning: Color.lerp(warning, other.warning, t)!,
-      onWarning: Color.lerp(onWarning, other.onWarning, t)!,
-      info: Color.lerp(info, other.info, t)!,
-      rating: Color.lerp(rating, other.rating, t)!,
-      online: Color.lerp(online, other.online, t)!,
-      offline: Color.lerp(offline, other.offline, t)!,
+      success: Color.lerp(success, other.success, t) ?? other.success,
+      onSuccess: Color.lerp(onSuccess, other.onSuccess, t) ?? other.onSuccess,
+      warning: Color.lerp(warning, other.warning, t) ?? other.warning,
+      onWarning: Color.lerp(onWarning, other.onWarning, t) ?? other.onWarning,
+      info: Color.lerp(info, other.info, t) ?? other.info,
+      rating: Color.lerp(rating, other.rating, t) ?? other.rating,
+      online: Color.lerp(online, other.online, t) ?? other.online,
+      offline: Color.lerp(offline, other.offline, t) ?? other.offline,
     );
   }
 }

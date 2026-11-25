@@ -128,7 +128,7 @@ class AppAuthLayout extends StatelessWidget {
           if (start > 0) TextSpan(text: description.substring(0, start)),
           TextSpan(
             text: description.substring(start, end),
-            style: TextStyle(
+            style: baseStyle?.copyWith(
               color: context.colorScheme.onSurface,
               fontWeight: FontWeight.w600,
             ),

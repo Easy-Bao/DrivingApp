@@ -1,3 +1,4 @@
+import 'package:design_system/src/theme/theme_context.dart';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
 import 'package:flutter/services.dart';
@@ -59,12 +60,16 @@ class const TripReference({
               child: SelectableText(
                 expanded ? normalizedId : '$label - $normalizedId',
                 textAlign: expanded ? TextAlign.end : TextAlign.start,
-                style: TextStyle(
-                  color: colors.onSurface,
-                  fontSize: fontSize,
-                  fontWeight: FontWeight.w700,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
+                style:
+                    (compact
+                            ? context.textStyles.bodySmall
+                            : context.textStyles.bodyMedium)
+                        ?.copyWith(
+                          color: colors.onSurface,
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.w700,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
               ),
             ),
             IconButton(

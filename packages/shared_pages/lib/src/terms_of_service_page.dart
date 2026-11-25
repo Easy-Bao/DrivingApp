@@ -42,53 +42,55 @@ class const AppTermsOfServicePage({super.key, required this.onBack})
           final horizontalPadding = constraints.maxWidth < 360
               ? AppLayout.pagePadding
               : AppLayout.pagePaddingWide;
-          return ListView(
-            physics: const ClampingScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(
-              horizontalPadding,
-              AppSpacing.md,
-              horizontalPadding,
-              48,
-            ),
-            children: [
-              Semantics(
-                header: true,
-                child: Text(
-                  'EasyRide Terms of Service',
-                  style: textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                    color: colorScheme.onSurface,
+          return SelectionArea(
+            child: ListView(
+              physics: const ClampingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                AppSpacing.md,
+                horizontalPadding,
+                48,
+              ),
+              children: [
+                Semantics(
+                  header: true,
+                  child: Text(
+                    'EasyRide Terms of Service',
+                    style: textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.xs + 2),
-              Text(
-                'Effective for this app release',
-                style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: colorScheme.outlineVariant.withValues(alpha: 0.7),
-              ),
-              for (var index = 0; index < _sections.length; index++) ...[
-                _TermsSection(
-                  number: (index + 1).toString().padLeft(2, '0'),
-                  title: _sections[index].title,
-                  body: _sections[index].body,
-                ),
-                if (index != _sections.length - 1)
-                  Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: colorScheme.outlineVariant.withValues(alpha: 0.65),
+                const SizedBox(height: AppSpacing.xs + 2),
+                Text(
+                  'Effective for this app release',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                   ),
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+                ),
+                for (var index = 0; index < _sections.length; index++) ...[
+                  _TermsSection(
+                    number: (index + 1).toString().padLeft(2, '0'),
+                    title: _sections[index].title,
+                    body: _sections[index].body,
+                  ),
+                  if (index != _sections.length - 1)
+                    Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.65),
+                    ),
+                ],
               ],
-            ],
+            ),
           );
         },
       ),
@@ -112,14 +114,13 @@ class const _TermsSection({
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: ExcludeSemantics(
+              child: Text(
                 number,
                 style: textTheme.labelSmall?.tabular.copyWith(
                   color: colorScheme.onSurfaceVariant,
@@ -127,31 +128,36 @@ class const _TermsSection({
                   letterSpacing: 0.6,
                 ),
               ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Semantics(
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Semantics(
                   header: true,
-                  child: Text(
-                    title,
-                    style: textTheme.titleSmall?.copyWith(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.onSurface,
+                  label: '$number. $title',
+                  child: ExcludeSemantics(
+                    child: Text(
+                      title,
+                      style: textTheme.titleSmall?.copyWith(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Padding(
-            padding: const EdgeInsets.only(left: 28),
-            child: Text(
-              body,
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                height: 1.55,
-              ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  body,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.55,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

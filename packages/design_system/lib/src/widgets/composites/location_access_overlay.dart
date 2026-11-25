@@ -33,6 +33,8 @@ class const LocationAccessOverlay({
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     return Semantics(
       scopesRoute: true,
       namesRoute: true,
@@ -51,7 +53,9 @@ class const LocationAccessOverlay({
               width: double.infinity,
               child: TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: 1, end: 0),
-                duration: const Duration(milliseconds: 360),
+                duration: disableAnimations
+                    ? Duration.zero
+                    : const Duration(milliseconds: 360),
                 curve: Curves.easeOutCubic,
                 builder: (context, slideProgress, child) => LayoutBuilder(
                   builder: (context, constraints) => Transform.translate(
