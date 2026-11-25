@@ -4,10 +4,11 @@ import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:foundation/src/network/availability_coordinator.dart';
 import 'package:foundation/src/realtime/event.dart';
 import 'package:foundation/src/telemetry/correlation_id.dart';
+
+const bool _isReleaseMode = bool.fromEnvironment('dart.vm.product');
 
 typedef RealtimeTokenProvider = FutureOr<String?> Function();
 typedef RealtimeTokenRefresher = Future<String?> Function();
@@ -39,6 +40,8 @@ final class const IoRealtimeSocketConnector({
     Uri uri, {
     required Map<String, String> headers,
   }) async {
+    // Ownership transfers to _IoRealtimeSocket, which closes the socket.
+    // ignore: close_sinks
     final socket = await WebSocket.connect(uri.toString(), headers: headers);
     socket.pingInterval = pingInterval;
     return _IoRealtimeSocket(socket);
@@ -75,24 +78,18 @@ final class const RealtimeConnected() extends RealtimeConnectionState {}
 /// connection is restored, an optional active-trip resync callback runs as one
 /// coalesced operation so screens can consume one authoritative snapshot.
 final class RealtimeWebSocketClient({
-  required Uri uri,
-  required RealtimeTokenProvider tokenProvider,
-  RealtimeTokenRefresher? refreshToken,
-  RealtimeActiveTripResync? onResyncActiveTrip,
-  RealtimeSocketConnector connector = const IoRealtimeSocketConnector(),
+  required this._uri,
+  required this._tokenProvider,
+  this._refreshToken,
+  this._onResyncActiveTrip,
+  this._connector = const IoRealtimeSocketConnector(),
   ReconnectDelay? reconnectDelay,
   Random? random,
-  NetworkAvailabilityCoordinator? networkAvailability,
+  this._networkAvailability,
 }) {
   this
-    : _uri = uri,
-      _tokenProvider = tokenProvider,
-      _refreshToken = refreshToken,
-      _onResyncActiveTrip = onResyncActiveTrip,
-      _connector = connector,
-      _reconnectDelay = reconnectDelay ?? _defaultReconnectDelay,
-      _random = random ?? Random(),
-      _networkAvailability = networkAvailability;
+    : _reconnectDelay = reconnectDelay ?? _defaultReconnectDelay,
+      _random = random ?? Random();
 
   static const _maximumDuplicateIds = 256;
 
@@ -180,12 +177,29 @@ final class RealtimeWebSocketClient({
   }
 
   Future<void> _stop() async {
+    final connecting = _connecting;
+    if (connecting != null) {
+      try {
+        await connecting;
+      } catch (_) {}
+    }
+    final reconnecting = _reconnecting;
+    if (reconnecting != null) {
+      try {
+        await reconnecting;
+      } catch (_) {}
+    }
     final subscription = _socketSubscription;
     _socketSubscription = null;
     final socket = _socket;
     _socket = null;
-    await subscription?.cancel();
-    await socket?.close();
+    _hasEstablishedConnection = false;
+    _seenIds.clear();
+    _attempt = 0;
+    await _cancelSocketSubscription(subscription);
+    try {
+      await socket?.close();
+    } catch (_) {}
     _emitState(const RealtimeDisconnected());
   }
 
@@ -243,6 +257,7 @@ final class RealtimeWebSocketClient({
     try {
       await socket?.close();
     } catch (_) {}
+    if (_disposed || !_wanted) return;
 
     _attempt = 0;
     _emitState(const RealtimeDisconnected(reconnectIn: Duration.zero));
@@ -283,10 +298,13 @@ final class RealtimeWebSocketClient({
     if (!_wanted || _disposed || _socket != null) {
       return;
     }
-    _connectionRequestId = kReleaseMode ? null : newRequestCorrelationId();
+    _connectionRequestId = _isReleaseMode ? null : newRequestCorrelationId();
     _emitState(RealtimeConnecting(_attempt));
     try {
       final token = await _tokenProvider();
+      if (!_wanted || _disposed) {
+        return;
+      }
       if (token == null || token.trim().isEmpty) {
         throw StateError('Realtime authentication token is unavailable.');
       }
@@ -312,12 +330,18 @@ final class RealtimeWebSocketClient({
         unawaited(_resyncAfterReconnect());
       }
     } catch (_) {
+      if (!_wanted || _disposed) {
+        return;
+      }
       if (_attempt > 0) {
         try {
           await _refreshToken?.call();
         } catch (_) {
           // The regular reconnect schedule remains responsible for recovery.
         }
+      }
+      if (!_wanted || _disposed) {
+        return;
       }
       _scheduleReconnect();
     }
@@ -336,17 +360,17 @@ final class RealtimeWebSocketClient({
         RealtimeEnvelope.fromJson(Map<String, dynamic>.from(decoded)),
       );
       final duplicate = !_remember(realtimeEvent.envelope.id);
-      if (!kReleaseMode) {
+      if (!_isReleaseMode) {
         final requestId = _connectionRequestId;
         developer.Timeline.instantSync(
           'realtime.event_delivery',
           arguments: {
             'duplicate': duplicate,
-            if (requestId != null) 'connection_request_id': requestId,
+            'connection_request_id': ?requestId,
           },
         );
       }
-      if (!duplicate) {
+      if (!duplicate && !_events.isClosed) {
         _events.add(realtimeEvent);
       }
     } on FormatException {
@@ -416,18 +440,19 @@ final class RealtimeWebSocketClient({
 
   void _emitState(RealtimeConnectionState state) {
     if (!_states.isClosed) {
-      if (!kReleaseMode) {
-        final arguments = <String, Object?>{
-          'state': switch (state) {
-            RealtimeConnecting() => 'connecting',
-            RealtimeConnected() => 'connected',
-            RealtimeDisconnected() => 'disconnected',
-          },
-        };
-        if (state is RealtimeConnecting) {
-          arguments['attempt'] = state.attempt;
-        } else if (state is RealtimeDisconnected && state.reconnectIn != null) {
-          arguments['reconnect_delay_ms'] = state.reconnectIn!.inMilliseconds;
+      if (!_isReleaseMode) {
+        final arguments = <String, Object?>{};
+        switch (state) {
+          case RealtimeConnecting(:final attempt):
+            arguments['state'] = 'connecting';
+            arguments['attempt'] = attempt;
+          case RealtimeConnected():
+            arguments['state'] = 'connected';
+          case RealtimeDisconnected(:final reconnectIn):
+            arguments['state'] = 'disconnected';
+            if (reconnectIn != null) {
+              arguments['reconnect_delay_ms'] = reconnectIn.inMilliseconds;
+            }
         }
         final requestId = _connectionRequestId;
         if (requestId != null) arguments['request_id'] = requestId;

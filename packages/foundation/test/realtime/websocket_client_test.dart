@@ -257,6 +257,65 @@ void main() {
     await client.dispose();
     await availability.dispose();
   });
+
+  test(
+    'stop clears session dedup state and cancels refresh during in-flight open',
+    () async {
+      final tokenCompleter = Completer<String?>();
+      var refreshCalls = 0;
+      final client = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://example.test/api/v1/realtime/ws'),
+        tokenProvider: () => tokenCompleter.future,
+        refreshToken: () async {
+          refreshCalls++;
+          return 'new-token';
+        },
+        connector: _AlwaysFailConnector(),
+      );
+
+      final startFuture = client.start();
+      final stopFuture = client.stop();
+      tokenCompleter.completeError(StateError('aborted'));
+      await Future.wait([startFuture, stopFuture]);
+
+      expect(refreshCalls, 0);
+      await client.dispose();
+      await expectLater(client.start(), throwsStateError);
+    },
+  );
+
+  test(
+    'isolates malformed payloads and allows event IDs again after stop/start',
+    () async {
+      final firstSocket = _Socket();
+      final secondSocket = _Socket();
+      final connector = _SequenceConnector([firstSocket, secondSocket]);
+      final client = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://example.test/api/v1/realtime/ws'),
+        tokenProvider: () => 'access-token',
+        connector: connector,
+      );
+      final events = <RealtimeEvent>[];
+      final sub = client.events.listen(events.add);
+      addTearDown(() async {
+        await sub.cancel();
+        await client.dispose();
+      });
+
+      await client.start();
+      firstSocket.add('not-json');
+      firstSocket.add('{"id":123}');
+      firstSocket.add(_eventJson('event-1'));
+      await Future<void>.delayed(Duration.zero);
+      expect(events, hasLength(1));
+
+      await client.stop();
+      await client.start();
+      secondSocket.add(_eventJson('event-1'));
+      await Future<void>.delayed(Duration.zero);
+      expect(events, hasLength(2));
+    },
+  );
 }
 
 String _eventJson(String id) =>
