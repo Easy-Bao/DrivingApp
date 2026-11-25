@@ -3,16 +3,16 @@ import 'dart:developer' as dev;
 import 'dart:ui';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:driver/src/core/network/auth_interceptor.dart';
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/core/telemetry/battery_optimization.dart';
 import 'package:driver/src/core/telemetry/location_point_mapper.dart';
 import 'package:driver/src/core/telemetry/location_spool.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:foundation/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _backgroundTelemetryInterval = Duration(seconds: 10);

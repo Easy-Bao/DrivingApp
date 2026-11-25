@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:foundation/foundation.dart';
 import 'package:driver/src/core/session/session_store.dart';
+import 'package:foundation/foundation.dart';
 
 class AuthInterceptor extends BearerAuthInterceptor {
   AuthInterceptor(

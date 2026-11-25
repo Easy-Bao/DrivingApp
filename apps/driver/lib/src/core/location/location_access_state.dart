@@ -1,5 +1,5 @@
-import 'package:maps/maps.dart';
 import 'package:equatable/equatable.dart';
+import 'package:maps/maps.dart';
 
 sealed class const LocationAccessViewState() extends Equatable {
   @override

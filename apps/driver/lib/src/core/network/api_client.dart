@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:driver/src/core/network/auth_interceptor.dart';
 import 'package:driver/src/core/session/session_store.dart';
+import 'package:flutter/foundation.dart';
 import 'package:foundation/foundation.dart';
 import 'package:sentry_dio/sentry_dio.dart';
 

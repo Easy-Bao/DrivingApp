@@ -1,25 +1,24 @@
-import 'package:design_system/design_system.dart';
-
 import 'dart:async';
 
-import 'package:foundation/foundation.dart';
-import 'package:maps/maps.dart';
+import 'package:design_system/design_system.dart';
+import 'package:driver/src/app/navigation/navigation_shell.dart';
+import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/core/telemetry/background_telemetry.dart';
 import 'package:driver/src/core/telemetry/location_spool.dart';
+import 'package:driver/src/features/active_ride/active_ride_module.dart';
+import 'package:driver/src/features/active_ride/domain/services/ride_completion_handler.dart';
 import 'package:driver/src/features/auth/domain/services/logout_coordinator.dart';
-import 'package:driver/src/core/session/session_store.dart';
-import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver/src/features/chat/chat_module.dart';
 import 'package:driver/src/features/dashboard/dashboard_module.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
-import 'package:driver/src/app/navigation/navigation_shell.dart';
-import 'package:driver/src/features/profile/profile_module.dart';
-import 'package:driver/src/features/settings/settings_module.dart';
-import 'package:driver/src/features/active_ride/active_ride_module.dart';
-import 'package:driver/src/features/active_ride/domain/services/ride_completion_handler.dart';
 import 'package:driver/src/features/earnings/earnings_module.dart';
 import 'package:driver/src/features/performance/performance_module.dart';
+import 'package:driver/src/features/profile/profile_module.dart';
 import 'package:driver/src/features/ride_history/ride_history_module.dart';
+import 'package:driver/src/features/settings/settings_module.dart';
+import 'package:foundation/foundation.dart';
+import 'package:go_router_modular/go_router_modular.dart';
+import 'package:maps/maps.dart';
 
 class AppRouter extends Module {
   @override

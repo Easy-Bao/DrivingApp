@@ -1,8 +1,14 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:driver/src/app/router.dart';
 import 'package:driver/src/app/navigation/app_routes.dart';
+import 'package:driver/src/app/router.dart';
+import 'package:driver/src/core/config/env_config.dart';
+import 'package:driver/src/core/location/location_access_cubit.dart';
+import 'package:driver/src/core/network/api_client.dart';
+import 'package:driver/src/core/session/session_store.dart';
+import 'package:driver/src/core/telemetry/background_telemetry.dart';
+import 'package:driver/src/core/telemetry/location_spool.dart';
 import 'package:driver/src/features/active_ride/data/datasources/ride_counterparty_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/datasources/ride_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/datasources/telemetry_remote_data_source.dart';
@@ -10,12 +16,6 @@ import 'package:driver/src/features/active_ride/data/repositories/ride_repositor
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
 import 'package:driver/src/features/auth/auth_module.dart';
 import 'package:driver/src/features/auth/auth_routes.dart';
-import 'package:driver/src/core/location/location_access_cubit.dart';
-import 'package:driver/src/core/config/env_config.dart';
-import 'package:driver/src/core/network/api_client.dart';
-import 'package:driver/src/core/session/session_store.dart';
-import 'package:driver/src/core/telemetry/background_telemetry.dart';
-import 'package:driver/src/core/telemetry/location_spool.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';

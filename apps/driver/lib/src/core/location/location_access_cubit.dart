@@ -111,7 +111,7 @@ class LocationAccessCubit({required this._repository})
 
   void _emitTemporaryFailure() {
     emit(
-      LocationAccessUnavailable(
+      const LocationAccessUnavailable(
         accessState: LocationAccessState.serviceDisabled,
         message: 'Location is temporarily unavailable. Try again.',
       ),

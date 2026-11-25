@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:driver/src/core/session/storage_keys.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionStore({FlutterSecureStorage? storage, this._preferences}) {
