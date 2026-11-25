@@ -17,6 +17,7 @@ import 'package:passenger/src/features/booking/domain/entities/booking_offer.dar
 import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/nearby_drivers/nearby_drivers_cubit.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/cancel_booking_dialog.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/driver_dropdown_card.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_availability_error_panel.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_nearby_panel.dart';
@@ -162,6 +163,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
   DriverModel? _selectedDriver;
   List<DriverModel> _nearbyDrivers = [];
   bool _isLeaving = false;
+  bool _isConfirmingCancel = false;
   bool _isReturningHome = false;
   String? _driverSearchError;
   String? _acceptingOfferId;
@@ -472,9 +474,44 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
   }
 
   void _handleCancel() {
-    if (_isLeaving || _acceptingOfferId != null) return;
+    unawaited(_confirmAndCancel());
+  }
+
+  Future<void> _confirmAndCancel() async {
+    if (_isLeaving || _isConfirmingCancel || _acceptingOfferId != null) return;
+    final bookingBloc = BlocProvider.of<BookingBloc>(context);
+    final currentState = bookingBloc.state;
+    if (currentState is BookingDriverMatched ||
+        currentState is BookingRideRecovered) {
+      return;
+    }
+
+    final shouldConfirm =
+        !(currentState is BookingFailure &&
+            (currentState.isNoDriverFound || currentState.isRequestExpired));
+    if (shouldConfirm) {
+      _isConfirmingCancel = true;
+      final destinationName =
+          bookingBloc.activeDriverSearch?.trip.destination.name ??
+          widget.destination.name;
+      final confirmed = await showCancelBookingDialog(
+        context,
+        isActiveRequest: bookingBloc.hasActiveBooking,
+        destinationName: destinationName,
+      );
+      _isConfirmingCancel = false;
+      if (!mounted || !confirmed || _isLeaving || _acceptingOfferId != null) {
+        return;
+      }
+      final latestState = bookingBloc.state;
+      if (latestState is BookingDriverMatched ||
+          latestState is BookingRideRecovered) {
+        return;
+      }
+    }
+
     setState(() => _isLeaving = true);
-    BlocProvider.of<BookingBloc>(context).add(const CancelBookingEvent());
+    bookingBloc.add(const CancelBookingEvent());
   }
 
   void _returnHome() {

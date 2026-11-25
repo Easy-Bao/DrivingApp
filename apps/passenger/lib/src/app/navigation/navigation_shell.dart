@@ -21,6 +21,7 @@ import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_draft.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/cancel_booking_dialog.dart';
 import 'package:passenger/src/features/home/presentation/widgets/active_booking_banner.dart';
 import 'package:passenger/src/features/home/presentation/widgets/active_ride_banner.dart';
 import 'package:passenger/src/features/home/presentation/widgets/pending_booking_banner.dart';
@@ -94,6 +95,7 @@ class _ShellLayoutState extends State<ShellLayout> {
   bool _isForeground = true;
   bool _activityTabBarVisible = true;
   bool _isContinuingBookingDraft = false;
+  bool _isConfirmingBookingCancel = false;
   BookingFailure? _dismissedBookingFailure;
 
   @override
@@ -740,7 +742,9 @@ class _ShellLayoutState extends State<ShellLayout> {
             onAction: activeSearch == null
                 ? null
                 : () => _openFindingDriverFromShell(activeSearch),
-            onDismiss: () => bookingBloc.add(const CancelBookingEvent()),
+            onDismiss: () => unawaited(
+              _confirmCancelDriverSearch(bookingBloc, trip.destination.name),
+            ),
           );
         }
         return ActiveBookingBanner(
@@ -753,7 +757,9 @@ class _ShellLayoutState extends State<ShellLayout> {
           onAction: activeSearch == null
               ? null
               : () => _openFindingDriverFromShell(activeSearch),
-          onDismiss: () => bookingBloc.add(const CancelBookingEvent()),
+          onDismiss: () => unawaited(
+            _confirmCancelDriverSearch(bookingBloc, trip.destination.name),
+          ),
         );
       case FindingNearestDriver(:final trip):
         return ActiveBookingBanner(
@@ -842,6 +848,24 @@ class _ShellLayoutState extends State<ShellLayout> {
     if (destination.isNotEmpty) return 'To $destination';
     if (driver.isNotEmpty) return 'Waiting for $driver';
     return fallback;
+  }
+
+  Future<void> _confirmCancelDriverSearch(
+    BookingBloc bookingBloc,
+    String destinationName,
+  ) async {
+    if (!mounted || _isConfirmingBookingCancel) return;
+    _isConfirmingBookingCancel = true;
+    final confirmed = await showCancelBookingDialog(
+      context,
+      isActiveRequest: false,
+      destinationName: destinationName,
+    );
+    _isConfirmingBookingCancel = false;
+    if (!mounted || !confirmed) return;
+    if (bookingBloc.state is BookingFindingNearbyDrivers) {
+      bookingBloc.add(const CancelBookingEvent());
+    }
   }
 
   void _openFindingDriverFromShell(

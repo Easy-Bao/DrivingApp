@@ -1076,6 +1076,24 @@ void main() {
 
       await tester.tap(find.byKey(const Key('active-booking-banner-dismiss')));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(find.text('Cancel driver search?'), findsOneWidget);
+      verifyNever(() => bookingBloc.add(const CancelBookingEvent()));
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('keep-booking-button')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+      verifyNever(() => bookingBloc.add(const CancelBookingEvent()));
+
+      await tester.tap(find.byKey(const Key('active-booking-banner-dismiss')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+      await tester.tap(
+        find.byKey(const ValueKey<String>('confirm-cancel-booking-button')),
+      );
+      await tester.pump();
       verify(() => bookingBloc.add(const CancelBookingEvent())).called(1);
     },
   );

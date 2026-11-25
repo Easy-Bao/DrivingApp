@@ -13,6 +13,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/core/location/live_map_bloc.dart';
 import 'package:passenger/src/core/session/session_store.dart';
+import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger/src/features/booking/domain/entities/driver.dart';
 import 'package:passenger/src/features/booking/domain/repositories/booking_repository.dart';
 import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
@@ -240,6 +241,97 @@ void main() {
       unawaited(booking.close());
       unawaited(lifecycle.dispose());
       await tester.pump();
+    },
+  );
+
+  testWidgets(
+    'asks for confirmation before canceling an active driver search',
+    (tester) async {
+      registerFallbackValue(const ClearMapAnnotationsEvent());
+      registerFallbackValue(const CancelBookingEvent());
+      MapboxMapsFlutterPlatform.instance = _MapPlatform();
+      final booking = _Booking();
+      final nearby = _Nearby();
+      final map = _Map();
+      const trip = BidSessionTrip(
+        fare: 30,
+        destination: Place(
+          id: 'destination',
+          name: 'City Hall',
+          fullAddress: 'City Hall',
+          latitude: 14.7,
+          longitude: 121,
+        ),
+        distance: '2 km',
+        duration: '5 min',
+      );
+      when(() => booking.state).thenReturn(
+        const BookingFindingNearbyDrivers(
+          trip: trip,
+          pickupLat: 14.6,
+          pickupLng: 120.9,
+          hasLoaded: true,
+        ),
+      );
+      when(() => booking.stream).thenAnswer((_) => const Stream.empty());
+      when(() => booking.hasActiveDriverSearch).thenReturn(true);
+      when(() => booking.hasActiveBooking).thenReturn(false);
+      when(() => booking.activeDriverSearch).thenReturn(
+        const ActiveDriverSearch(trip: trip, pickupLat: 14.6, pickupLng: 120.9),
+      );
+      when(() => nearby.state).thenReturn(const NearbyDriversState());
+      when(() => nearby.stream).thenAnswer((_) => const Stream.empty());
+      when(() => map.add(any())).thenReturn(null);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<BookingBloc>.value(value: booking),
+              BlocProvider<NearbyDriversCubit>.value(value: nearby),
+              BlocProvider<LiveMapBloc>.value(value: map),
+            ],
+            child: FindingDriverPageContent(
+              fare: 30,
+              distance: '2 km',
+              duration: '5 min',
+              destination: trip.destination,
+              pickupLatitude: 14.6,
+              pickupLongitude: 120.9,
+              profileRepository: _Profiles(),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.tap(
+        find.byKey(const ValueKey('nearby-drivers-cancel-search')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(find.text('Cancel driver search?'), findsOneWidget);
+      verifyNever(() => booking.add(const CancelBookingEvent()));
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('keep-booking-button')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+      verifyNever(() => booking.add(const CancelBookingEvent()));
+
+      await tester.tap(
+        find.byKey(const ValueKey('nearby-drivers-cancel-search')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+      await tester.tap(
+        find.byKey(const ValueKey<String>('confirm-cancel-booking-button')),
+      );
+      await tester.pump();
+      verify(() => booking.add(const CancelBookingEvent())).called(1);
     },
   );
 }
