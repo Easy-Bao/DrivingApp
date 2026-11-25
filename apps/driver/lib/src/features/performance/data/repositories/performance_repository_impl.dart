@@ -59,7 +59,7 @@ DriverStanding _readStanding(Map<String, dynamic> values) {
   final raw = values['standing'];
   if (raw == null) return const DriverStanding();
   if (raw is! Map) {
-    throw DataParsingException(message: 'Driver standing is invalid.');
+    throw const DataParsingException(message: 'Driver standing is invalid.');
   }
   final standing = <String, dynamic>{
     for (final entry in raw.entries) entry.key.toString(): entry.value,
@@ -109,7 +109,7 @@ List<int> _readRatingDistribution(Map<String, dynamic> values) {
   final raw = values['rating_distribution'];
   if (raw == null) return const [0, 0, 0, 0, 0];
   if (raw is! List || raw.length != 5) {
-    throw DataParsingException(
+    throw const DataParsingException(
       message: 'Driver rating distribution is invalid.',
     );
   }
@@ -123,7 +123,9 @@ int _readRatingCount(Object? value) {
       !parsed.isFinite ||
       parsed < 0 ||
       parsed != parsed.roundToDouble()) {
-    throw DataParsingException(message: 'Driver rating count is invalid.');
+    throw const DataParsingException(
+      message: 'Driver rating count is invalid.',
+    );
   }
   return parsed.toInt();
 }

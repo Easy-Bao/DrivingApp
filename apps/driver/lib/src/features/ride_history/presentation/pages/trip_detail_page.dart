@@ -181,7 +181,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
                 hairline,
                 const SizedBox(height: AppSpacing.xl),
               ],
-              _SectionHeader(label: 'Passenger'),
+              const _SectionHeader(label: 'Passenger'),
               const SizedBox(height: AppSpacing.md),
               Row(
                 children: [

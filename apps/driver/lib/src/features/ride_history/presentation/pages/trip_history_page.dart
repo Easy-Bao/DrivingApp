@@ -681,7 +681,10 @@ class _TripHistoryPageState extends State<TripHistoryPage>
     );
   }
 
-  String _formatTripTime(dynamic trip, {required bool alwaysUse24HourFormat}) {
+  String _formatTripTime(
+    Map<String, dynamic> trip, {
+    required bool alwaysUse24HourFormat,
+  }) {
     final rawDate =
         valueAsString(trip['completed_at']) ??
         valueAsString(trip['created_at']);

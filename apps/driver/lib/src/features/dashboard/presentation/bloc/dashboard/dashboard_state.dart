@@ -1,5 +1,5 @@
-import 'package:equatable/equatable.dart';
 import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.dart';
+import 'package:equatable/equatable.dart';
 
 class DashboardState extends Equatable {
   const DashboardState({

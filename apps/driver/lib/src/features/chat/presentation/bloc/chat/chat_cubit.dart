@@ -1,12 +1,10 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:driver/src/features/chat/chat.dart';
-
-import 'dart:async';
-
 import 'package:driver/src/features/chat/presentation/bloc/chat/chat_state.dart';
-import 'package:foundation/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:foundation/foundation.dart';
 
 export 'package:driver/src/features/chat/presentation/bloc/chat/chat_state.dart';
 

@@ -1,18 +1,16 @@
-import 'dart:typed_data';
-
-import 'package:driver/src/features/chat/domain/entities/chat_peer.dart';
-
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
 import 'package:driver/src/features/chat/data/datasources/chat_remote_data_source.dart';
 import 'package:driver/src/features/chat/data/dto/chat_message_dto.dart';
 import 'package:driver/src/features/chat/domain/entities/chat_connection_state.dart';
 import 'package:driver/src/features/chat/domain/entities/chat_event.dart';
 import 'package:driver/src/features/chat/domain/entities/chat_message.dart';
+import 'package:driver/src/features/chat/domain/entities/chat_peer.dart';
 import 'package:driver/src/features/chat/domain/failures/chat_failure.dart';
 import 'package:driver/src/features/chat/domain/repositories/chat_repository.dart';
-import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 
 final class ChatRepositoryImpl({

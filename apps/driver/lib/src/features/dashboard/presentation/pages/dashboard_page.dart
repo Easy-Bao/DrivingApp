@@ -1,31 +1,30 @@
-import 'package:driver/src/features/active_ride/active_ride.dart';
-
 import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:design_system/design_system.dart';
+import 'package:driver/src/core/formatters/value_formatters.dart';
+import 'package:driver/src/core/location/location_access_cubit.dart';
+import 'package:driver/src/core/location/location_access_state.dart';
+import 'package:driver/src/core/notifications/incoming_request_alert.dart';
+import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:driver/src/features/active_ride/active_ride_routes.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
-import 'package:driver/src/features/dashboard/presentation/widgets/availability_card.dart';
-import 'package:driver/src/features/dashboard/presentation/widgets/active_bookings_list.dart';
-import 'package:driver/src/features/dashboard/presentation/widgets/trip_ended_dialog.dart';
-import 'package:driver/src/features/dashboard/presentation/widgets/dashboard_stats_row.dart';
 import 'package:driver/src/features/dashboard/presentation/pages/incoming_ride_request_page.dart';
-import 'package:driver/src/core/location/location_access_cubit.dart';
-import 'package:driver/src/core/location/location_access_state.dart';
-import 'package:driver/src/core/notifications/incoming_request_alert.dart';
-import 'package:driver/src/core/formatters/value_formatters.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:driver/src/features/dashboard/presentation/widgets/active_bookings_list.dart';
+import 'package:driver/src/features/dashboard/presentation/widgets/availability_card.dart';
+import 'package:driver/src/features/dashboard/presentation/widgets/dashboard_stats_row.dart';
+import 'package:driver/src/features/dashboard/presentation/widgets/trip_ended_dialog.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
+import 'package:material_ui/material_ui.dart';
 
 bool _isActiveTripStatus(Object? value) {
   return const {
@@ -128,7 +127,8 @@ class _DashboardPageState extends State<DashboardPage>
     _presenceHeartbeatTimer?.cancel();
     _locationAccessPoller?.cancel();
     _requestCountdownTimer?.cancel();
-    _cancelLocationSubscription();
+    unawaited(_locationSubscription?.cancel());
+    _locationSubscription = null;
     unawaited(_realtimeEventsSubscription?.cancel());
     _realtimeEventsSubscription = null;
     unawaited(_realtimeClient.stop());

@@ -1,5 +1,5 @@
-import 'package:foundation/foundation.dart';
 import 'package:driver/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:foundation/foundation.dart';
 
 abstract interface class AuthRepository {
   Future<Result<AuthCredentials, Failure>> authenticate({

@@ -1,8 +1,8 @@
+import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/features/auth/data/datasources/auth_endpoints.dart';
 import 'package:driver/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:driver/src/features/auth/domain/repositories/auth_repository.dart';
-import 'package:driver/src/core/session/session_store.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -32,7 +32,7 @@ final class AuthRepositoryImpl({
       final driverData =
           authenticationData['driver'] ?? authenticationData['user'];
       if (driverData is! Map) {
-        throw DataParsingException(
+        throw const DataParsingException(
           message: 'Authentication response did not contain a driver.',
         );
       }
@@ -62,7 +62,7 @@ final class AuthRepositoryImpl({
 
       final refreshToken = _stringValue(authenticationData['refreshToken']);
       if (token.isEmpty || driverId.isEmpty || refreshToken.isEmpty) {
-        throw DataParsingException(
+        throw const DataParsingException(
           message:
               'Authentication response did not contain a complete session.',
         );

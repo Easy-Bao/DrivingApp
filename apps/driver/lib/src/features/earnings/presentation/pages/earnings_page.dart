@@ -622,7 +622,7 @@ class _EarningsPageState extends State<EarningsPage> {
           ),
         ),
       ),
-      barTouchData: BarTouchData(enabled: false),
+      barTouchData: const BarTouchData(enabled: false),
       barGroups: [
         for (var index = 0; index < chartDays.length; index++)
           _buildBarGroup(

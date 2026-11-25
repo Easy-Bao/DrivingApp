@@ -1,13 +1,12 @@
-import 'package:driver/src/features/active_ride/active_ride.dart';
-import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
-
 import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:core_domain/core_domain.dart';
+import 'package:driver/src/core/session/session_store.dart';
+import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
-import 'package:driver/src/core/session/session_store.dart';
+import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';

@@ -1,8 +1,7 @@
 import 'package:core_domain/core_domain.dart';
+import 'package:driver/src/features/active_ride/domain/entities/ride_status.dart';
 import 'package:equatable/equatable.dart';
 import 'package:foundation/foundation.dart';
-
-import 'package:driver/src/features/active_ride/domain/entities/ride_status.dart';
 
 final class const RideSnapshot({
   required final String id,

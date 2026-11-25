@@ -1,12 +1,12 @@
-import 'package:driver/src/features/active_ride/active_ride.dart';
-import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:dio/dio.dart';
+import 'package:driver/src/core/telemetry/location_spool.dart';
+import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:driver/src/features/active_ride/data/datasources/ride_counterparty_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/datasources/ride_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/datasources/telemetry_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
+import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:foundation/foundation.dart';
-import 'package:driver/src/core/telemetry/location_spool.dart';
 
 final class RideRepositoryImpl({
   required this._rideDataSource,

@@ -1,5 +1,5 @@
-import 'package:driver/src/features/chat/domain/entities/chat_peer.dart';
 import 'package:driver/src/features/chat/chat.dart';
+import 'package:driver/src/features/chat/domain/entities/chat_peer.dart';
 import 'package:equatable/equatable.dart';
 
 class const ChatState({

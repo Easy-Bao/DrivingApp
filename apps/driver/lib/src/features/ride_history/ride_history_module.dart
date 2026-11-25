@@ -1,14 +1,16 @@
+import 'dart:async';
+
+import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
+import 'package:driver/src/core/session/session_store.dart';
+import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
 import 'package:driver/src/features/ride_history/data/datasources/ride_history_remote_data_source.dart';
 import 'package:driver/src/features/ride_history/data/repositories/ride_history_repository_impl.dart';
 import 'package:driver/src/features/ride_history/domain/repositories/ride_history_repository.dart';
 import 'package:driver/src/features/ride_history/presentation/bloc/trip_history_cubit.dart';
 import 'package:driver/src/features/ride_history/presentation/pages/trip_detail_page.dart';
 import 'package:driver/src/features/ride_history/presentation/pages/trip_history_page.dart';
-import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
 import 'package:driver/src/features/ride_history/ride_history_routes.dart';
-import 'package:driver/src/core/session/session_store.dart';
-import 'package:design_system/design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
@@ -52,7 +54,7 @@ class RideHistoryModule._() {
       child: (context, GoRouterState state) => BlocProvider(
         create: (_) {
           final cubit = Modular.get<TripHistoryCubit>();
-          cubit.load();
+          unawaited(cubit.load());
           return cubit;
         },
         child: const TripHistoryPage(),

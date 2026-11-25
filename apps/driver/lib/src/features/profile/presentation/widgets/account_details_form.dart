@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/profile/domain/entities/account_snapshot.dart';
 import 'package:driver/src/features/profile/presentation/bloc/account/account_cubit.dart';
@@ -366,7 +368,7 @@ class _AccountDetailsFormState extends State<AccountDetailsForm> {
               textCapitalization: TextCapitalization.characters,
               useTabular: true,
               onSubmitted: (_) {
-                if (!state.isSaving) _submitSave();
+                if (!state.isSaving) unawaited(_submitSave());
               },
             ),
           ],
