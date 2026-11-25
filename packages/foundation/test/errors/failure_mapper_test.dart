@@ -8,7 +8,7 @@ import 'package:foundation/foundation.dart';
 void main() {
   test('never carries server exception text into a domain failure', () {
     final failure = FailureMapper.fromException(
-      ServerException(
+      const ServerException(
         statusCode: 500,
         message: 'pq: relation passenger_profiles does not exist',
       ),

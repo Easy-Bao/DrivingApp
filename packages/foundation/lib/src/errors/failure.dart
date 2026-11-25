@@ -1,8 +1,10 @@
 import 'dart:developer' as developer;
 
 import 'package:dio/dio.dart';
+import 'package:equatable/equatable.dart';
 import 'package:foundation/src/errors/exceptions.dart';
 import 'package:foundation/src/errors/network_diagnostic.dart';
+import 'package:foundation/src/network/logging_interceptor.dart';
 
 enum ErrorType {
   network,
@@ -43,7 +45,8 @@ class AppFailure {
   final StackTrace? stackTrace;
 
   factory AppFailure.fromException(Object error, [StackTrace? stackTrace]) {
-    _logTechnicalError(error, stackTrace);
+    final diagnostic = NetworkErrorDiagnostic.fromError(error);
+    _logTechnicalError(error, diagnostic, stackTrace);
 
     AppFailure createFailure({
       required ErrorType type,
@@ -73,12 +76,20 @@ class AppFailure {
       return _fromNetworkReason(error.reason, createFailure);
     }
 
+    if (error is BusinessRuleFailure) {
+      return createFailure(
+        title: 'Action unavailable',
+        userMessage: error.message,
+        actionText: 'Review',
+        type: ErrorType.validation,
+      );
+    }
+
     final statusCode = _statusCodeFor(error);
     if (statusCode != null) {
       return _fromStatusCode(statusCode, createFailure);
     }
 
-    final diagnostic = NetworkErrorDiagnostic.fromError(error);
     final diagnosticFailure = _fromDiagnostic(
       diagnostic.category,
       createFailure,
@@ -150,8 +161,8 @@ class AppFailure {
     if (mapped is NetworkFailure) {
       return _fromNetworkReason(mapped.reason, createFailure);
     }
-    if (mapped is ServerFailure && mapped.statusCode != null) {
-      return _fromStatusCode(mapped.statusCode!, createFailure);
+    if (mapped case ServerFailure(:final statusCode?)) {
+      return _fromStatusCode(statusCode, createFailure);
     }
     if (category == NetworkErrorCategory.invalidJson) {
       return createFailure(
@@ -253,25 +264,40 @@ class AppFailure {
     return null;
   }
 
-  static void _logTechnicalError(Object error, StackTrace? stackTrace) {
-    final diagnostic = NetworkErrorDiagnostic.fromError(error);
+  static void _logTechnicalError(
+    Object error,
+    NetworkErrorDiagnostic diagnostic,
+    StackTrace? stackTrace,
+  ) {
+    final safeError = error is DioException
+        ? HttpLogFormatter.error(error)
+        : error;
     developer.log(
       'Client error mapped to a safe user message: '
       'category=${diagnostic.label}.',
       name: 'shared-error-handler',
-      error: error,
+      error: safeError,
       stackTrace: stackTrace,
     );
   }
 }
 
-abstract class Failure implements Exception {
+abstract class Failure extends Equatable implements Exception {
   const Failure(this.message);
 
   final String message;
 
   @override
+  List<Object?> get props => [message];
+
+  @override
   String toString() => '$runtimeType: $message';
+}
+
+/// A sanitized, domain-authored failure whose message is safe to display
+/// directly to end users (for example, a conflict or precondition message).
+class BusinessRuleFailure extends Failure {
+  const BusinessRuleFailure(super.message);
 }
 
 class NetworkFailure extends Failure {
@@ -303,6 +329,9 @@ class NetworkFailure extends Failure {
   ]) : reason = NetworkFailureReason.connectionInterrupted;
 
   final NetworkFailureReason reason;
+
+  @override
+  List<Object?> get props => [message, reason];
 }
 
 class ValidationFailure extends Failure {
@@ -328,6 +357,9 @@ class ServerFailure extends Failure {
     : this(message, statusCode);
 
   final int? statusCode;
+
+  @override
+  List<Object?> get props => [message, statusCode];
 }
 
 class UnexpectedFailure extends Failure {

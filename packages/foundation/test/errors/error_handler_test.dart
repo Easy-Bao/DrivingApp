@@ -30,7 +30,7 @@ void main() {
 
   test('maps response parsing errors to an explicit format message', () {
     final failure = ErrorHandler.getAppFailure(
-      DataParsingException(message: 'missing field driver_id'),
+      const DataParsingException(message: 'missing field driver_id'),
     );
 
     expect(failure.title, 'Invalid server response');
@@ -90,7 +90,7 @@ void main() {
   });
 
   test('keeps title, CTA, type, and technical details separate', () {
-    final technicalError = ServerException(
+    final technicalError = const ServerException(
       statusCode: 503,
       message: 'database relation passenger_profiles is missing',
     );
@@ -151,8 +151,34 @@ void main() {
         ErrorHandler.getErrorMessage(TimeoutException('internal timeout')),
         'The request took too long. Try again.',
       );
+      expect(
+        ErrorHandler.getErrorMessage(
+          const SocketException(
+            'Connection refused',
+            osError: OSError('Connection refused', 61),
+          ),
+        ),
+        'Cannot reach the server. Check that the server is running and try again.',
+      );
     },
   );
+
+  test('preserves BusinessRuleFailure messages and Failure equality', () {
+    expect(
+      ErrorHandler.getErrorMessage(
+        const BusinessRuleFailure('Go offline before changing vehicle.'),
+      ),
+      'Go offline before changing vehicle.',
+    );
+    expect(
+      const ServerFailure('A', 500),
+      equals(const ServerFailure('A', 500)),
+    );
+    expect(
+      const ServerFailure('A', 500),
+      isNot(equals(const ServerFailure('A', 503))),
+    );
+  });
 }
 
 DioException _dioExceptionWithStatus(int statusCode, String responseBody) {

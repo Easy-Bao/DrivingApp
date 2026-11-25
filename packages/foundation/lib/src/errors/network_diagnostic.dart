@@ -44,7 +44,9 @@ final class NetworkErrorDiagnostic {
   }
 
   factory NetworkErrorDiagnostic.fromError(Object error) {
-    if (error is DioException) return _fromDioException(error);
+    if (error is DioException) {
+      return NetworkErrorDiagnostic._fromDioException(error);
+    }
     if (error is ServerException) {
       final diagnostic = error.diagnostic;
       if (diagnostic != null) return diagnostic;
@@ -52,9 +54,11 @@ final class NetworkErrorDiagnostic {
           ? const NetworkErrorDiagnostic(
               category: NetworkErrorCategory.connectionError,
             )
-          : _fromStatusCode(error.statusCode);
+          : NetworkErrorDiagnostic._fromStatusCode(error.statusCode);
     }
-    if (error is SocketException) return _fromSocketException(error);
+    if (error is SocketException) {
+      return NetworkErrorDiagnostic._fromSocketException(error);
+    }
     if (error is HandshakeException) {
       return const NetworkErrorDiagnostic(
         category: NetworkErrorCategory.tlsFailure,
@@ -81,12 +85,14 @@ final class NetworkErrorDiagnostic {
     return const NetworkErrorDiagnostic(category: NetworkErrorCategory.unknown);
   }
 
-  static NetworkErrorDiagnostic _fromDioException(DioException error) {
+  factory NetworkErrorDiagnostic._fromDioException(DioException error) {
     final statusCode = error.response?.statusCode;
-    if (statusCode != null) return _fromStatusCode(statusCode);
+    if (statusCode != null) {
+      return NetworkErrorDiagnostic._fromStatusCode(statusCode);
+    }
 
     final underlyingError = error.error;
-    if (underlyingError != null) {
+    if (underlyingError != null && !identical(underlyingError, error)) {
       final underlying = NetworkErrorDiagnostic.fromError(underlyingError);
       if (underlying.category != NetworkErrorCategory.unknown) {
         return underlying;
@@ -109,7 +115,7 @@ final class NetworkErrorDiagnostic {
     return NetworkErrorDiagnostic(category: category);
   }
 
-  static NetworkErrorDiagnostic _fromStatusCode(int statusCode) {
+  factory NetworkErrorDiagnostic._fromStatusCode(int statusCode) {
     final category = switch (statusCode) {
       401 => NetworkErrorCategory.unauthorized,
       403 => NetworkErrorCategory.forbidden,
@@ -122,7 +128,7 @@ final class NetworkErrorDiagnostic {
     return NetworkErrorDiagnostic(category: category, statusCode: statusCode);
   }
 
-  static NetworkErrorDiagnostic _fromSocketException(SocketException error) {
+  factory NetworkErrorDiagnostic._fromSocketException(SocketException error) {
     final detail = error.message.toLowerCase();
     final errorCode = error.osError?.errorCode;
     if (detail.contains('failed host lookup') ||
@@ -132,17 +138,25 @@ final class NetworkErrorDiagnostic {
         category: NetworkErrorCategory.dnsFailure,
       );
     }
-    if (errorCode == 111 || detail.contains('connection refused')) {
+    if (errorCode == 111 ||
+        errorCode == 61 ||
+        errorCode == 10061 ||
+        detail.contains('connection refused')) {
       return const NetworkErrorDiagnostic(
         category: NetworkErrorCategory.connectionRefused,
       );
     }
-    if (errorCode == 113 || detail.contains('host is unreachable')) {
+    if (errorCode == 113 ||
+        errorCode == 65 ||
+        errorCode == 10065 ||
+        detail.contains('host is unreachable')) {
       return const NetworkErrorDiagnostic(
         category: NetworkErrorCategory.hostUnreachable,
       );
     }
     if (errorCode == 101 ||
+        errorCode == 51 ||
+        errorCode == 10051 ||
         detail.contains('network is unreachable') ||
         detail.contains('network is down')) {
       return const NetworkErrorDiagnostic(

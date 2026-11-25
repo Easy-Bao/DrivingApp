@@ -1,7 +1,7 @@
 import 'package:foundation/src/errors/network_diagnostic.dart';
 
 class ServerException implements Exception {
-  ServerException({
+  const ServerException({
     required this.statusCode,
     required this.message,
     this.diagnostic,
@@ -16,7 +16,7 @@ class ServerException implements Exception {
 }
 
 class CacheException implements Exception {
-  CacheException({required this.message});
+  const CacheException({required this.message});
 
   final String message;
 
@@ -25,7 +25,7 @@ class CacheException implements Exception {
 }
 
 class DataParsingException implements Exception {
-  DataParsingException({required this.message});
+  const DataParsingException({required this.message});
 
   final String message;
 
