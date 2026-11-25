@@ -1,6 +1,5 @@
+import 'package:core_domain/src/ride/identifiers.dart';
 import 'package:equatable/equatable.dart';
-
-import 'identifiers.dart';
 
 sealed class const ShortHopBookingState() extends Equatable {
   @override

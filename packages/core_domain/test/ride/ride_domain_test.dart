@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:core_domain/core_domain.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('typed ride values', () {
@@ -107,7 +107,7 @@ void main() {
     test('promotes the private final token for an authorized action', () {
       String? receivedToken;
 
-      final executed = RideSessionAccess('session-token')
+      final executed = const RideSessionAccess('session-token')
           .executeAuthorizedAction((token, _) => receivedToken = token);
 
       expect(executed, isTrue);
@@ -115,9 +115,9 @@ void main() {
     });
 
     test('rejects missing or blank credentials', () {
-      expect(RideSessionAccess(null).isAuthenticated, isFalse);
+      expect(const RideSessionAccess(null).isAuthenticated, isFalse);
       expect(
-        RideSessionAccess('  ').executeAuthorizedAction((_, _) {}),
+        const RideSessionAccess('  ').executeAuthorizedAction((_, _) {}),
         isFalse,
       );
     });
