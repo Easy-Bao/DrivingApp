@@ -3,7 +3,7 @@ import 'package:design_system/src/tokens/size.dart';
 import 'package:design_system/src/tokens/spacing.dart';
 import 'package:material_ui/material_ui.dart';
 
-abstract final class AppComponentThemes {
+class AppComponentThemes._() {
   static ElevatedButtonThemeData elevatedButton(
     ColorScheme colors,
     TextTheme textTheme,

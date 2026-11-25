@@ -1,5 +1,5 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:design_system/src/theme/theme_context.dart';
+import 'package:material_ui/material_ui.dart';
 
 class const CompactRouteTimeline({
   super.key,

@@ -1,11 +1,11 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:go_transitions/go_transitions.dart';
+import 'package:material_ui/material_ui.dart';
 
-class CustomPageTransition({this.fromRight = true, super.settings, super.child})
-    extends GoTransition {
+// ignore: prefer_const_constructors_in_immutables
+class CustomPageTransition extends GoTransition {
   final bool fromRight;
 
-  this
+  CustomPageTransition({this.fromRight = true, super.settings, super.child})
     : super(
         builder: (route, context, animation, secondaryAnimation, child) {
           final horizontalDirection = fromRight ? 1.0 : -1.0;

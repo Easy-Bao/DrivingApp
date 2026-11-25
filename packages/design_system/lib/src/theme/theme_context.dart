@@ -1,5 +1,5 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:design_system/src/theme/semantic_colors.dart';
+import 'package:material_ui/material_ui.dart';
 
 extension DesignSystemContext on BuildContext {
   Color get canvasColor => Theme.of(this).scaffoldBackgroundColor;

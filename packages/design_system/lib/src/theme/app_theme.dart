@@ -5,10 +5,10 @@ import 'package:design_system/src/theme/typography.dart';
 import 'package:design_system/src/tokens/palette.dart';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 
-abstract final class AppTheme {
+class AppTheme._() {
   static final ThemeData main = _build();
 
   static ThemeData _build() {

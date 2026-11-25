@@ -1,5 +1,5 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:material_ui/material_ui.dart';
 
 class const GoogleLogo({super.key, this.size = 22}) extends StatelessWidget {
   final double size;

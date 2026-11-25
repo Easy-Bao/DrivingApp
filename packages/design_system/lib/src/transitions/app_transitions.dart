@@ -1,7 +1,7 @@
 import 'package:animations/animations.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:go_transitions/go_transitions.dart';
 import 'package:design_system/src/transitions/page_transition.dart';
+import 'package:go_transitions/go_transitions.dart';
+import 'package:material_ui/material_ui.dart';
 
 class AppTransitions._() {
   static const push = _CustomPushTransitions();
@@ -25,10 +25,9 @@ class AppTransitions._() {
   }
 }
 
-class _SharedAxisPageTransition({
-  required SharedAxisTransitionType transitionType,
-}) extends GoTransition {
-  this
+// ignore: prefer_const_constructors_in_immutables
+class _SharedAxisPageTransition extends GoTransition {
+  _SharedAxisPageTransition({required SharedAxisTransitionType transitionType})
     : super(
         builder: (route, context, animation, secondaryAnimation, child) {
           return SharedAxisTransition(
@@ -42,8 +41,9 @@ class _SharedAxisPageTransition({
       );
 }
 
-class _FadeThroughPageTransition() extends GoTransition {
-  this
+// ignore: prefer_const_constructors_in_immutables
+class _FadeThroughPageTransition extends GoTransition {
+  _FadeThroughPageTransition()
     : super(
         builder: (route, context, animation, secondaryAnimation, child) {
           return FadeThroughTransition(

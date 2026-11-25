@@ -1,8 +1,8 @@
 import 'package:design_system/src/theme/theme_context.dart';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/spacing.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 
 class AppVerificationCodeField extends StatelessWidget {
   const AppVerificationCodeField({
