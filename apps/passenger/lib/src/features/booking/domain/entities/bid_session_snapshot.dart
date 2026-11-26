@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:foundation/foundation.dart';
 
 final class const BidSessionSnapshot({
@@ -21,7 +22,7 @@ final class const BidSessionSnapshot({
   this.targetDriverId,
   this.acceptedDriverId,
   this.rideId,
-}) {
+}) extends Equatable {
   final String id;
   final String bookingReference;
   final String status;
@@ -44,15 +45,44 @@ final class const BidSessionSnapshot({
   final String? rideId;
 
   bool get isDeclined => status.trim().toLowerCase() == 'declined';
-  bool get isExpired =>
-      status.trim().toLowerCase() == 'expired' ||
-      (expiresAt != null && expiresAt!.isBefore(DateTime.now()));
-  bool get isOpen =>
-      status.trim().toLowerCase() == 'open' &&
-      (expiresAt == null || !expiresAt!.isBefore(DateTime.now()));
+  bool get isExpired {
+    final expiry = expiresAt;
+    return status.trim().toLowerCase() == 'expired' ||
+        (expiry != null && expiry.isBefore(DateTime.now()));
+  }
+
+  bool get isOpen {
+    final expiry = expiresAt;
+    return status.trim().toLowerCase() == 'open' &&
+        (expiry == null || !expiry.isBefore(DateTime.now()));
+  }
+
   bool get isAccepted => status.trim().toLowerCase() == 'accepted';
   bool get isCancelled =>
       const {'cancelled', 'canceled'}.contains(status.trim().toLowerCase());
+
+  @override
+  List<Object?> get props => [
+    id,
+    bookingReference,
+    status,
+    expiresAt,
+    createdAt,
+    pickupLatitude,
+    pickupLongitude,
+    pickupName,
+    dropoffLatitude,
+    dropoffLongitude,
+    dropoffName,
+    distanceKm,
+    durationMinutes,
+    offeredFareAmount,
+    customFareAmount,
+    passengerNote,
+    targetDriverId,
+    acceptedDriverId,
+    rideId,
+  ];
 
   factory BidSessionSnapshot.fromJson(Map<String, dynamic> json) {
     final expiresAtValue = _value(json, 'expires_at', 'expiresAt');

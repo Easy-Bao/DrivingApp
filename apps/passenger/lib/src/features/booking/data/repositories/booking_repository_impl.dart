@@ -1,7 +1,7 @@
 import 'package:core_domain/core_domain.dart';
-import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/booking/data/datasources/booking_remote_data_source.dart';
+import 'package:passenger/src/features/booking/data/repositories/booking_failure_mapper.dart';
 import 'package:passenger/src/features/booking/domain/entities/accepted_booking.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_snapshot.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_offer.dart';
@@ -118,55 +118,15 @@ final class BookingRepositoryImpl implements BookingRepository {
   }
 }
 
-Failure _mapFailure(Object error) {
-  if (error is DioException) {
-    final statusCode = error.response?.statusCode;
-    if (statusCode == 401) {
-      return const AuthFailure(
-        'Your passenger session has ended. Sign in again.',
-      );
-    }
-    if (statusCode == 403) {
-      return const ServerFailure.withStatusCode(
-        'You do not have permission to manage this booking.',
-        403,
-      );
-    }
-    if (statusCode == 400 || statusCode == 422) {
-      return const ValidationFailure('The booking request was rejected.');
-    }
-    if (statusCode == 409) {
-      return const ServerFailure.withStatusCode(
-        'The request is already being processed. Please retry.',
-        409,
-      );
-    }
-    if (statusCode == null) {
-      if (error.type == DioExceptionType.connectionTimeout ||
-          error.type == DioExceptionType.sendTimeout ||
-          error.type == DioExceptionType.receiveTimeout) {
-        return const ServerFailure.withStatusCode(
-          'Booking request timed out.',
-          504,
-        );
-      }
-      return const NetworkFailure(
-        'Unable to reach booking services. Check your connection.',
-      );
-    }
-    return ServerFailure.withStatusCode(
-      'Booking services are temporarily unavailable.',
-      statusCode,
-    );
-  }
-  if (error is ServerException) {
-    return FailureMapper.fromException(
-      error,
-      serverMessage: 'Booking services are temporarily unavailable.',
-    );
-  }
-  if (error is FormatException || error is DataParsingException) {
-    return const ValidationFailure('The booking response is invalid.');
-  }
-  return const ServerFailure('Booking services are temporarily unavailable.');
-}
+Failure _mapFailure(Object error) => mapBookingFailure(
+  error,
+  permissionMessage: 'You do not have permission to manage this booking.',
+  timeoutMessage: 'Booking request timed out.',
+  networkMessage: 'Unable to reach booking services. Check your connection.',
+  serverMessage: 'Booking services are temporarily unavailable.',
+  validationFailure: const ValidationFailure(
+    'The booking request was rejected.',
+  ),
+  conflictMessage: 'The request is already being processed. Please retry.',
+  parsingMessage: 'The booking response is invalid.',
+);

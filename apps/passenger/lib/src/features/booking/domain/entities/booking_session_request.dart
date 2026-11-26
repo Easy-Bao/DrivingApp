@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:core_domain/core_domain.dart';
+import 'package:equatable/equatable.dart';
 import 'package:foundation/foundation.dart';
 
 class const BookingSessionRequest({
@@ -16,7 +17,7 @@ class const BookingSessionRequest({
   required this.passengerNote,
   this.targetDriverId,
   this.idempotencyKey,
-}) {
+}) extends Equatable {
   final double pickupLatitude;
   final double pickupLongitude;
   final String pickupName;
@@ -105,4 +106,20 @@ class const BookingSessionRequest({
       pickupName.trim().isNotEmpty &&
       dropoffName.trim().isNotEmpty &&
       customFare.isValid;
+
+  @override
+  List<Object?> get props => [
+    pickupLatitude,
+    pickupLongitude,
+    pickupName,
+    dropoffLatitude,
+    dropoffLongitude,
+    dropoffName,
+    distanceKm,
+    durationMinutes,
+    customFareAmount,
+    passengerNote,
+    targetDriverId,
+    idempotencyKey,
+  ];
 }

@@ -1,4 +1,5 @@
 import 'package:core_domain/core_domain.dart';
+import 'package:equatable/equatable.dart';
 import 'package:foundation/foundation.dart';
 
 class const BookingOffer({
@@ -11,7 +12,7 @@ class const BookingOffer({
   required this.status,
   required this.proposedFareAmount,
   this.driverRating,
-}) {
+}) extends Equatable {
   static BookingOffer? tryParse(Map<String, dynamic> json) {
     final offerId = SafeParse.toStringValue(json['id'] ?? json['offer_id'])
         .trim();
@@ -78,4 +79,17 @@ class const BookingOffer({
         ? 'Vehicle details unavailable'
         : details.join(' • ');
   }
+
+  @override
+  List<Object?> get props => [
+    offerId,
+    sessionId,
+    driverId,
+    driverName,
+    vehicleType,
+    plateNumber,
+    status,
+    proposedFareAmount,
+    driverRating,
+  ];
 }

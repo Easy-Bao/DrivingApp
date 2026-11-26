@@ -192,4 +192,65 @@ void main() {
       }, (_) => fail('Expected a permission failure.'));
     },
   );
+
+  test(
+    'deduplicates driver ids before applying the 10-point nearby candidate cap',
+    () async {
+      const latitude = 7.828;
+      const longitude = 123.434;
+      final dataSource = MockDriverDiscoveryRemoteDataSource();
+      final locationRepository = MockLocationRepository();
+
+      // 10 duplicate pings for driver 1 followed by driver 2 at index 10.
+      final nearbyFeed = <Map<String, dynamic>>[
+        for (var i = 0; i < 10; i++)
+          {'driver_id': '1', 'latitude': latitude, 'longitude': longitude},
+        {'driver_id': '2', 'latitude': latitude, 'longitude': longitude},
+      ];
+
+      when(
+        () => dataSource.fetchNearbyDrivers(
+          latitude: latitude,
+          longitude: longitude,
+        ),
+      ).thenAnswer((_) async => nearbyFeed);
+      when(() => dataSource.fetchOnlineDrivers(any())).thenAnswer(
+        (_) async => [
+          {
+            'id': 1,
+            'name': 'Driver One',
+            'vehicle_type': 'Tricycle',
+            'plate_number': 'AAA 111',
+            'rating': 4.8,
+          },
+          {
+            'id': 2,
+            'name': 'Driver Two',
+            'vehicle_type': 'Tricycle',
+            'plate_number': 'BBB 222',
+            'rating': 4.9,
+          },
+        ],
+      );
+      when(() => locationRepository.getTravelMatrix(body: any(named: 'body')))
+          .thenAnswer(
+            (_) async => {
+              'distances_km': [0.2, 0.1],
+              'durations_min': [2.0, 1.0],
+            },
+          );
+
+      final repository = DriverRepositoryImpl(
+        discoveryDataSource: dataSource,
+        locationRepository: locationRepository,
+      );
+      final result = await repository.getNearbyDrivers(
+        lat: latitude,
+        lng: longitude,
+      );
+
+      final drivers = result.getOrElse((_) => const []);
+      expect(drivers.map((driver) => driver.id), containsAll(['1', '2']));
+    },
+  );
 }

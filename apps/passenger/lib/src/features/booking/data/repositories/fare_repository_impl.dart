@@ -1,7 +1,7 @@
-import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/data/datasources/fare_remote_data_source.dart';
+import 'package:passenger/src/features/booking/data/repositories/booking_failure_mapper.dart';
 import 'package:passenger/src/features/booking/domain/repositories/fare_repository.dart';
 
 final class FareRepositoryImpl({required this._remoteDataSource})
@@ -38,41 +38,18 @@ final class FareRepositoryImpl({required this._remoteDataSource})
         return const Err(ValidationFailure('The fare response is invalid.'));
       }
       return Ok(fare);
-    } on DioException catch (error) {
-      final statusCode = error.response?.statusCode;
-      if (statusCode == null) {
-        if (error.type == DioExceptionType.connectionTimeout ||
-            error.type == DioExceptionType.sendTimeout ||
-            error.type == DioExceptionType.receiveTimeout) {
-          return const Err(
-            ServerFailure.withStatusCode('Fare request timed out.', 504),
-          );
-        }
-        return const Err(
-          NetworkFailure('Unable to calculate fare. Check your connection.'),
-        );
-      }
-      if (statusCode == 400 || statusCode == 422) {
-        return const Err(RouteCalculationFailure());
-      }
+    } catch (error) {
       return Err(
-        ServerFailure.withStatusCode(
-          'Fare calculation is unavailable.',
-          statusCode,
-        ),
-      );
-    } on ServerException catch (error) {
-      if (error.statusCode == 400 || error.statusCode == 422) {
-        return const Err(RouteCalculationFailure());
-      }
-      return Err(
-        FailureMapper.fromException(
+        mapBookingFailure(
           error,
+          permissionMessage: 'Fare calculation is unavailable.',
+          timeoutMessage: 'Fare request timed out.',
+          networkMessage: 'Unable to calculate fare. Check your connection.',
           serverMessage: 'Fare calculation is unavailable.',
+          validationFailure: const RouteCalculationFailure(),
+          handleAuth: false,
         ),
       );
-    } catch (_) {
-      return const Err(ServerFailure('Fare calculation is unavailable.'));
     }
   }
 }

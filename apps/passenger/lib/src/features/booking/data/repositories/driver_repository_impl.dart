@@ -1,8 +1,8 @@
-import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/data/datasources/driver_discovery_remote_data_source.dart';
+import 'package:passenger/src/features/booking/data/repositories/booking_failure_mapper.dart';
 import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
 
 final class DriverRepositoryImpl({
@@ -15,71 +15,18 @@ final class DriverRepositoryImpl({
   Future<Result<List<Driver>, Failure>>? _activeNearbyLookup;
   ({double lat, double lng})? _activeNearbyCoordinates;
 
-  Failure _mapExceptionToFailure(Object error) {
-    if (error is DioException) {
-      final statusCode = error.response?.statusCode;
-      if (statusCode == 401) {
-        return const AuthFailure(
-          'Session expired or unauthorized. Please sign in again.',
-        );
-      }
-      if (statusCode == 403) {
-        return const ServerFailure.withStatusCode(
-          'You do not have permission to view nearby drivers.',
-          403,
-        );
-      }
-      if (statusCode == null) {
-        if (error.type == DioExceptionType.connectionTimeout ||
-            error.type == DioExceptionType.sendTimeout ||
-            error.type == DioExceptionType.receiveTimeout) {
-          return const ServerFailure.withStatusCode(
-            'Driver availability request timed out.',
-            504,
-          );
-        }
-        return const NetworkFailure(
-          'Unable to check nearby drivers. Check your connection and try again.',
-        );
-      }
-      return ServerFailure.withStatusCode(
+  Failure _mapExceptionToFailure(Object error) => mapBookingFailure(
+    error,
+    permissionMessage: 'You do not have permission to view nearby drivers.',
+    timeoutMessage: 'Driver availability request timed out.',
+    networkMessage:
+        'Unable to check nearby drivers. Check your connection and try again.',
+    serverMessage:
         'Driver availability is temporarily unavailable. Please try again.',
-        statusCode,
-      );
-    }
-    if (error is ServerException) {
-      if (error.statusCode == 401) {
-        return const AuthFailure(
-          'Session expired or unauthorized. Please sign in again.',
-        );
-      }
-      if (error.statusCode == 403) {
-        return const ServerFailure.withStatusCode(
-          'You do not have permission to view nearby drivers.',
-          403,
-        );
-      }
-      if (error.statusCode == 400 || error.statusCode == 422) {
-        return const ValidationFailure('Invalid request data.');
-      }
-      return ServerFailure.withStatusCode(
-        'Driver availability is temporarily unavailable. Please try again.',
-        error.statusCode,
-      );
-    }
-    if (error is DataParsingException) {
-      return FailureMapper.fromException(
-        error,
-        validationMessage: 'Nearby driver data is invalid. Please try again.',
-      );
-    }
-    if (error is CacheException) {
-      return FailureMapper.fromException(error);
-    }
-    return const ServerFailure(
-      'Driver availability is temporarily unavailable. Please try again.',
-    );
-  }
+    validationFailure: const ValidationFailure('Invalid request data.'),
+    parsingMessage: 'Nearby driver data is invalid. Please try again.',
+    handleCache: true,
+  );
 
   @override
   Future<Result<List<Driver>, Failure>> getNearbyDrivers({
@@ -123,6 +70,7 @@ final class DriverRepositoryImpl({
         longitude: lng,
       );
       final validPoints = <Map<String, dynamic>>[];
+      final seenDriverIds = <String>{};
       for (final rawPoint in nearbyPoints) {
         final driverId = _stringValue(
           rawPoint['driver_id'] ?? rawPoint['driverId'],
@@ -139,20 +87,22 @@ final class DriverRepositoryImpl({
             !_isValidCoordinate(pointLat, pointLng)) {
           continue;
         }
+        if (!seenDriverIds.add(driverId)) {
+          continue;
+        }
         validPoints.add({
           'driver_id': driverId,
           'lat': pointLat,
           'lng': pointLng,
         });
+        if (validPoints.length >= 10) {
+          break;
+        }
       }
       if (validPoints.isEmpty) return const Ok([]);
-      if (validPoints.length > 10) {
-        validPoints.removeRange(10, validPoints.length);
-      }
 
       final driverIds = validPoints
           .map((point) => point['driver_id']! as String)
-          .toSet()
           .toList(growable: false);
       final profileFuture = _discoveryDataSource.fetchOnlineDrivers(driverIds);
       final matrixFuture = _fetchTravelMetrics(lat, lng, validPoints);

@@ -1,14 +1,17 @@
 part of 'booking_bloc.dart';
 
-sealed class BookingState {
+sealed class BookingState extends Equatable {
   const BookingState();
+
+  @override
+  List<Object?> get props => const [];
 }
 
 final class BookingInitial extends BookingState {
   const BookingInitial();
 }
 
-final class ActiveDriverSearch {
+final class ActiveDriverSearch extends Equatable {
   const ActiveDriverSearch({
     required this.trip,
     required this.pickupLat,
@@ -22,6 +25,15 @@ final class ActiveDriverSearch {
   final double pickupLng;
   final double? distanceKm;
   final double? durationMinutes;
+
+  @override
+  List<Object?> get props => [
+    trip,
+    pickupLat,
+    pickupLng,
+    distanceKm,
+    durationMinutes,
+  ];
 }
 
 final class FindingNearestDriver extends BookingState {
@@ -34,6 +46,9 @@ final class FindingNearestDriver extends BookingState {
   final BidSessionTrip trip;
   final double pickupLat;
   final double pickupLng;
+
+  @override
+  List<Object?> get props => [trip, pickupLat, pickupLng];
 }
 
 final class BookingFindingNearbyDrivers extends BookingState {
@@ -80,6 +95,19 @@ final class BookingFindingNearbyDrivers extends BookingState {
           : errorMessage ?? this.errorMessage,
     );
   }
+
+  @override
+  List<Object?> get props => [
+    trip,
+    pickupLat,
+    pickupLng,
+    distanceKm,
+    durationMinutes,
+    drivers,
+    hasLoaded,
+    isLoading,
+    errorMessage,
+  ];
 }
 
 final class NearestDriverFound extends BookingState {
@@ -124,6 +152,19 @@ final class NearestDriverFound extends BookingState {
       pickupLng: pickupLng,
     );
   }
+
+  @override
+  List<Object?> get props => [
+    driver,
+    nearbyDrivers,
+    totalTrips,
+    reviewsDriverId,
+    reviews,
+    isLoadingReviews,
+    trip,
+    pickupLat,
+    pickupLng,
+  ];
 }
 
 final class BookingSearching extends BookingState {
@@ -142,6 +183,16 @@ final class BookingSearching extends BookingState {
   final String bookingReference;
   final DateTime? expiresAt;
   final String? refreshError;
+
+  @override
+  List<Object?> get props => [
+    isDirect,
+    targetDriver,
+    sessionId,
+    bookingReference,
+    expiresAt,
+    refreshError,
+  ];
 }
 
 final class BookingOffersReceived extends BookingState {
@@ -162,9 +213,20 @@ final class BookingOffersReceived extends BookingState {
   final String bookingReference;
   final DateTime? expiresAt;
   final String? refreshError;
+
+  @override
+  List<Object?> get props => [
+    offers,
+    isDirect,
+    targetDriver,
+    sessionId,
+    bookingReference,
+    expiresAt,
+    refreshError,
+  ];
 }
 
-final class DriverMatchResult {
+final class DriverMatchResult extends Equatable {
   const DriverMatchResult({
     required this.driverId,
     required this.driverName,
@@ -180,6 +242,16 @@ final class DriverMatchResult {
   final String plateNumber;
   final double proposedFare;
   final String? driverRating;
+
+  @override
+  List<Object?> get props => [
+    driverId,
+    driverName,
+    vehicleType,
+    plateNumber,
+    proposedFare,
+    driverRating,
+  ];
 }
 
 final class BookingDriverMatched extends BookingState {
@@ -187,6 +259,9 @@ final class BookingDriverMatched extends BookingState {
 
   final DriverMatchResult matchResult;
   final String? rideId;
+
+  @override
+  List<Object?> get props => [matchResult, rideId];
 }
 
 final class BookingSessionRecoveryInProgress extends BookingState {
@@ -197,6 +272,9 @@ final class BookingSessionRecoveryInProgress extends BookingState {
 
   final String sessionId;
   final String bookingReference;
+
+  @override
+  List<Object?> get props => [sessionId, bookingReference];
 }
 
 final class BookingSessionRecoveryFailure extends BookingState {
@@ -209,6 +287,9 @@ final class BookingSessionRecoveryFailure extends BookingState {
   final String sessionId;
   final String bookingReference;
   final String message;
+
+  @override
+  List<Object?> get props => [sessionId, bookingReference, message];
 }
 
 final class BookingRideRecovered extends BookingState {
@@ -221,6 +302,9 @@ final class BookingRideRecovered extends BookingState {
   final String sessionId;
   final String bookingReference;
   final String rideId;
+
+  @override
+  List<Object?> get props => [sessionId, bookingReference, rideId];
 }
 
 final class BookingCanceled extends BookingState {
@@ -243,6 +327,16 @@ final class BookingFailure extends BookingState {
   final bool isRequestExpired;
   final String? sessionId;
   final String bookingReference;
+
+  @override
+  List<Object?> get props => [
+    message,
+    isNoDriverFound,
+    isDriverDeclined,
+    isRequestExpired,
+    sessionId,
+    bookingReference,
+  ];
 }
 
 extension BookingStateModernApi on BookingState {

@@ -25,4 +25,19 @@ void main() {
       isFalse,
     );
   });
+
+  test('parses route duration strings including hours and minutes', () {
+    expect(parseRouteDurationMinutes('1 hr 15 min'), 75);
+    expect(parseRouteDurationMinutes('2 hrs 5 mins'), 125);
+    expect(parseRouteDurationMinutes('1 hr'), 60);
+    expect(parseRouteDurationMinutes('12 min'), 12);
+    expect(parseRouteDurationMinutes('4.5 mins'), 4.5);
+    expect(parseRouteDurationMinutes(''), isNull);
+  });
+
+  test('parses route distance strings in kilometers and meters', () {
+    expect(parseRouteDistanceKm('2.4 km'), 2.4);
+    expect(parseRouteDistanceKm('450 m'), 0.45);
+    expect(parseRouteDistanceKm(''), isNull);
+  });
 }
