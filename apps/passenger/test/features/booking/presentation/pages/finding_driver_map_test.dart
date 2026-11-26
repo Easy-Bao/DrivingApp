@@ -137,6 +137,28 @@ void main() {
       expect(snapshots.last.markers.last.label, isNull);
       expect(snapshots.last.markers.last.color, AppPalette.obsidian);
       expect(snapshots.last.markers.last.isOrigin, isFalse);
+      // Same driver coordinates with only metadata changed should skip map redraws.
+      updates.add(
+        const NearbyDriversState(
+          drivers: [
+            Driver(
+              id: 'nearby',
+              name: 'Online driver',
+              vehicleType: 'Tricycle',
+              plateNumber: 'ABC 123',
+              rating: 4.9,
+              lat: 14.61,
+              lng: 120.91,
+              distanceKm: 0.3,
+              etaMinutes: 1,
+              score: 2,
+            ),
+          ],
+          hasLoaded: true,
+        ),
+      );
+      await tester.pump();
+      expect(snapshots, hasLength(1));
       updates.add(
         NearbyDriversState(drivers: [driverAt(14.62)], hasLoaded: true),
       );

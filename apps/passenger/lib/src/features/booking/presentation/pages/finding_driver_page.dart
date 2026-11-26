@@ -4,7 +4,6 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
@@ -18,8 +17,8 @@ import 'package:passenger/src/features/booking/domain/repositories/driver_reposi
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/nearby_drivers/nearby_drivers_cubit.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/cancel_booking_dialog.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/driver_dropdown_card.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_availability_error_panel.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_discovery_overlay.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_nearby_panel.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_nearest_panel.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_no_driver_panel.dart';
@@ -73,7 +72,6 @@ double? parseRouteDistanceKm(String raw) {
 class FindingDriverPage extends StatelessWidget {
   const FindingDriverPage({
     super.key,
-
     required this.fare,
     this.baseFare,
     this.tipAmount,
@@ -150,7 +148,6 @@ class FindingDriverPage extends StatelessWidget {
 class FindingDriverPageContent extends StatefulWidget {
   const FindingDriverPageContent({
     super.key,
-
     required this.fare,
     this.baseFare,
     this.tipAmount,
@@ -185,6 +182,8 @@ class FindingDriverPageContent extends StatefulWidget {
       _FindingDriverPageContentState();
 }
 
+typedef _DriverPinCoordinate = ({String id, double lat, double lng});
+
 class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
   final GlobalKey _sheetKey = GlobalKey();
   AppMapController? _mapController;
@@ -192,6 +191,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
   bool _mapLoaded = false;
   bool _focusScheduled = false;
   EdgeInsets? _lastViewportPadding;
+  List<_DriverPinCoordinate>? _lastSyncedDriverPins;
   Driver? _selectedDriver;
   List<Driver> _nearbyDrivers = [];
   bool _isLeaving = false;
@@ -288,6 +288,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     _mapController = controller;
     _mapLoaded = false;
     _lastViewportPadding = null;
+    _lastSyncedDriverPins = null;
   }
 
   void _onMapLoaded() {
@@ -295,6 +296,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     final pickup = _pickupCoordinate;
     if (!mounted || controller == null || pickup == null) return;
     _mapLoaded = true;
+    _lastSyncedDriverPins = null;
     BlocProvider.of<LiveMapBloc>(context).add(
       InitializeMapEvent(
         controller: controller,
@@ -303,13 +305,23 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
         routeColor: context.colorScheme.onSurface,
       ),
     );
-    _syncNearbyDriverPins(_currentNearbyDrivers(context));
+    _syncNearbyDriverPins(_currentNearbyDrivers(context), force: true);
     _schedulePickupFocus();
   }
 
-  void _syncNearbyDriverPins(List<Driver> drivers) {
+  void _syncNearbyDriverPins(List<Driver> drivers, {bool force = false}) {
     final pickup = _pickupCoordinate;
     if (pickup == null) return;
+    final nextCoords = <_DriverPinCoordinate>[
+      for (final driver in drivers)
+        (id: driver.id, lat: driver.lat, lng: driver.lng),
+    ];
+    if (!force &&
+        _lastSyncedDriverPins != null &&
+        listEquals(_lastSyncedDriverPins, nextCoords)) {
+      return;
+    }
+    _lastSyncedDriverPins = nextCoords;
     BlocProvider.of<LiveMapBloc>(context).add(
       ReplaceMapMarkersEvent(
         markers: [
@@ -388,9 +400,6 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
   void _startDirectBooking(Driver driver) {
     final pickup = _pickupCoordinate;
     if (pickup == null) return;
-    final pickupLat = pickup.latitude;
-    final pickupLng = pickup.longitude;
-
     final distanceNum = _effectiveDistanceKm;
     final durationNum = _effectiveDurationMinutes;
     if (distanceNum == null || durationNum == null) return;
@@ -404,8 +413,8 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
       StartDirectBookingEvent(
         targetDriver: driver,
         trip: _tripMetadata(),
-        pickupLat: pickupLat,
-        pickupLng: pickupLng,
+        pickupLat: pickup.latitude,
+        pickupLng: pickup.longitude,
         distanceKm: distanceNum,
         durationMinutes: durationNum,
       ),
@@ -503,9 +512,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     }
   }
 
-  void _handleCancel() {
-    unawaited(_confirmAndCancel());
-  }
+  void _handleCancel() => unawaited(_confirmAndCancel());
 
   Future<void> _confirmAndCancel() async {
     if (_isLeaving || _isConfirmingCancel || _acceptingOfferId != null) return;
@@ -567,8 +574,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
   }
 
   void _retryFindingDriver() {
-    final pickup = _pickupCoordinate;
-    if (pickup == null) {
+    if (_pickupCoordinate == null) {
       setState(() => _locationUnavailable = true);
       return;
     }
@@ -582,21 +588,269 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     _showNearbyDrivers();
   }
 
+  void _handleBookingState(BuildContext context, BookingState state) {
+    switch (state) {
+      case BookingFindingNearbyDrivers():
+        BlocProvider.of<NearbyDriversCubit>(context).stop();
+      case BookingSearching() || BookingOffersReceived():
+        BlocProvider.of<NearbyDriversCubit>(context).start();
+      case NearestDriverFound():
+        _applyNearestDriverFound(context, state);
+      case BookingDriverMatched(:final rideId):
+        unawaited(HapticFeedback.lightImpact());
+        context.pushReplacementNamed(
+          ActiveRideRoutes.trackDriver,
+          extra: rideId,
+        );
+      case BookingRideRecovered(:final rideId):
+        unawaited(HapticFeedback.lightImpact());
+        context.pushReplacementNamed(
+          ActiveRideRoutes.trackDriver,
+          extra: rideId,
+        );
+      case BookingFailure():
+        _acceptingOfferId = null;
+        if (state.isNoDriverFound) {
+          BlocProvider.of<NearbyDriversCubit>(context).stop();
+          _handleNoDriverFound();
+        } else if (state.isRequestExpired) {
+          BlocProvider.of<NearbyDriversCubit>(context).stop();
+          setState(() {
+            _driverSearchError = null;
+            _isLeaving = false;
+          });
+        } else if (state.isDriverDeclined) {
+          final nearbyCubit = BlocProvider.of<NearbyDriversCubit>(context)
+            ..start();
+          unawaited(nearbyCubit.refresh());
+          setState(() {
+            _driverSearchError = state.message;
+            _isLeaving = false;
+          });
+        } else {
+          setState(() {
+            _driverSearchError = state.message;
+            _isLeaving = false;
+          });
+        }
+      case BookingSessionRecoveryFailure():
+        setState(() {
+          _acceptingOfferId = null;
+          _isLeaving = false;
+        });
+      case BookingCanceled():
+        _acceptingOfferId = null;
+        _returnHome();
+      case BookingInitial() ||
+          FindingNearestDriver() ||
+          BookingSessionRecoveryInProgress():
+        break;
+    }
+  }
+
+  void _applyNearestDriverFound(
+    BuildContext context,
+    NearestDriverFound state,
+  ) {
+    final nearbyDrivers = _uniqueNearbyDrivers(state);
+    final currentSelected = _selectedDriver;
+    setState(() {
+      _nearbyDrivers = nearbyDrivers;
+      _selectedDriver =
+          currentSelected != null &&
+              nearbyDrivers.any((driver) => driver.id == currentSelected.id)
+          ? currentSelected
+          : null;
+    });
+    _lastSyncedDriverPins = null;
+    final liveMapBloc = BlocProvider.of<LiveMapBloc>(context);
+    liveMapBloc.add(const ClearMapAnnotationsEvent());
+    liveMapBloc.add(
+      AddMapMarkerEvent(
+        lat: state.pickupLat,
+        lng: state.pickupLng,
+        isOrigin: true,
+      ),
+    );
+    liveMapBloc.add(
+      AddMapMarkerEvent(
+        lat: state.driver.lat,
+        lng: state.driver.lng,
+        color: AppPalette.obsidian,
+        onTap: () {
+          if (!mounted) return;
+          setState(() {
+            _selectedDriver = state.driver;
+            _isViewingDriverProfile = false;
+          });
+        },
+      ),
+    );
+    for (final nearby in nearbyDrivers.take(10)) {
+      if (nearby.id != state.driver.id) {
+        liveMapBloc.add(
+          AddMapMarkerEvent(
+            lat: nearby.lat,
+            lng: nearby.lng,
+            color: AppPalette.obsidian,
+            onTap: () {
+              if (!mounted) return;
+              setState(() {
+                _selectedDriver = nearby;
+                _isViewingDriverProfile = false;
+              });
+            },
+          ),
+        );
+      }
+    }
+    liveMapBloc.add(
+      FitMapToCoordinatesEvent(
+        coordinates: [
+          LatLng(state.pickupLat, state.pickupLng),
+          ...nearbyDrivers
+              .take(10)
+              .map((driver) => LatLng(driver.lat, driver.lng)),
+        ],
+        maxZoom: 14.5,
+      ),
+    );
+  }
+
+  Widget _buildBottomSheet(BuildContext context, BookingState state) {
+    _schedulePickupFocus();
+    final activeSearch = BlocProvider.of<BookingBloc>(context)
+        .activeDriverSearch;
+    final activeTrip = activeSearch?.trip;
+    final fare = activeTrip?.fare ?? widget.fare;
+    final destination = activeTrip?.destination ?? widget.destination;
+    final pickupAddress = activeTrip?.pickupAddress ?? widget.pickupAddress;
+
+    return switch (state) {
+      BookingFailure(isDriverDeclined: true) => _buildNearbyDriversPanel(
+        fare: fare,
+        isChoosingDriver: true,
+        notice: state.message,
+      ),
+      BookingInitial() => _buildNearbyDriversPanel(
+        fare: fare,
+        isChoosingDriver: true,
+      ),
+      BookingFindingNearbyDrivers() => _buildNearbyDriversPanel(
+        fare: fare,
+        isChoosingDriver: true,
+        availabilityOverride: NearbyDriversState(
+          drivers: state.drivers,
+          hasLoaded: state.hasLoaded,
+          isLoading: state.isLoading,
+          errorMessage: state.errorMessage,
+        ),
+      ),
+      FindingNearestDriver() => FindingDriverSearchingPanel(
+        message: state.statusMessage,
+        fare: fare,
+        baseFare: widget.baseFare,
+        destination: destination,
+        pickupAddress: pickupAddress,
+        tipAmount: widget.tipAmount,
+        distance: widget.distance,
+        duration: widget.duration,
+        requestCreated: false,
+        onCancelPressed: _handleCancel,
+        isCanceling: _isLeaving,
+      ),
+      BookingFailure(:final isNoDriverFound, :final isRequestExpired)
+          when isNoDriverFound || isRequestExpired =>
+        FindingDriverNoDriverPanel(
+          fare: widget.fare,
+          destination: widget.destination,
+          pickupAddress: pickupAddress,
+          requestExpired: isRequestExpired,
+          onRetryPressed: _retryFindingDriver,
+          onCancelPressed: _handleCancel,
+          isCanceling: _isLeaving,
+        ),
+      BookingFailure() => FindingDriverAvailabilityErrorPanel(
+        message: _driverSearchError ?? state.message,
+        fare: widget.fare,
+        destination: widget.destination,
+        onRetryPressed: _retryFindingDriver,
+        onCancelPressed: _handleCancel,
+        isCanceling: _isLeaving,
+      ),
+      NearestDriverFound()
+          when _selectedDriver != null || _nearbyDrivers.length <= 1 =>
+        const SizedBox.shrink(),
+      NearestDriverFound() => FindingDriverNearestPanel(
+        state: state,
+        fare: widget.fare,
+        onViewFullProfilePressed: () => _showDriverProfile(state.driver),
+        onBookDirectPressed: () => _startDirectBooking(state.driver),
+        onSearchAllDriversPressed: _showNearbyDrivers,
+        onCancelRidePressed: _handleCancel,
+        isCanceling: _isLeaving,
+      ),
+      BookingSearching() => _buildNearbyDriversPanel(
+        fare: fare,
+        requestedDriver: state.targetDriver,
+        isSendingRequest: state.sessionId == null,
+        refreshError: state.refreshError,
+      ),
+      BookingOffersReceived() => _buildNearbyDriversPanel(
+        fare: fare,
+        requestedDriver: state.targetDriver,
+        offers: state.offers,
+        refreshError: state.refreshError,
+      ),
+      BookingSessionRecoveryInProgress() => FindingDriverSearchingPanel(
+        message: state.statusMessage,
+        fare: fare,
+        baseFare: widget.baseFare,
+        destination: destination,
+        pickupAddress: pickupAddress,
+        tipAmount: widget.tipAmount,
+        distance: widget.distance,
+        duration: widget.duration,
+        requestCreated: state.sessionId.isNotEmpty,
+        isSendingRequest: state.sessionId.isEmpty,
+        onCancelPressed: _handleCancel,
+        isCanceling: _isLeaving,
+      ),
+      BookingSessionRecoveryFailure() => FindingDriverSearchingPanel(
+        message: state.sessionId.isNotEmpty
+            ? 'Unable to refresh your request'
+            : 'We could not confirm your request yet',
+        fare: fare,
+        baseFare: widget.baseFare,
+        destination: destination,
+        pickupAddress: pickupAddress,
+        tipAmount: widget.tipAmount,
+        distance: widget.distance,
+        duration: widget.duration,
+        requestCreated: state.sessionId.isNotEmpty,
+        isSendingRequest: state.sessionId.isEmpty,
+        animate: false,
+        refreshError: state.message,
+        onRetryPressed: () =>
+            BlocProvider.of<BookingBloc>(context)
+                .add(const RestoreActiveBookingEvent()),
+        onCancelPressed: _handleCancel,
+        isCanceling: _isLeaving,
+      ),
+      BookingDriverMatched() ||
+      BookingRideRecovered() ||
+      BookingCanceled() => const SizedBox.shrink(),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_locationUnavailable) {
-      return const Scaffold(
-        body: Center(child: Text('Your location is unavailable.')),
-      );
-    }
     final pickup = _pickupCoordinate;
-    if (pickup == null) {
+    if (_locationUnavailable || pickup == null) {
       return const Scaffold(
         body: Center(child: Text('Your location is unavailable.')),
       );
     }
-    final defaultLat = pickup.latitude;
-    final defaultLng = pickup.longitude;
 
     return PopScope(
       canPop: false,
@@ -633,129 +887,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
               },
             ),
             BlocListener<BookingBloc, BookingState>(
-              listener: (context, state) {
-                switch (state) {
-                  case BookingFindingNearbyDrivers():
-                    BlocProvider.of<NearbyDriversCubit>(context).stop();
-                  case BookingSearching() || BookingOffersReceived():
-                    BlocProvider.of<NearbyDriversCubit>(context).start();
-                  case NearestDriverFound():
-                    final nearbyDrivers = _uniqueNearbyDrivers(state);
-                    final currentSelected = _selectedDriver;
-                    setState(() {
-                      _nearbyDrivers = nearbyDrivers;
-                      _selectedDriver =
-                          currentSelected != null &&
-                              nearbyDrivers.any(
-                                (driver) => driver.id == currentSelected.id,
-                              )
-                          ? currentSelected
-                          : null;
-                    });
-                    final liveMapBloc = BlocProvider.of<LiveMapBloc>(context);
-                    liveMapBloc.add(const ClearMapAnnotationsEvent());
-                    liveMapBloc.add(
-                      AddMapMarkerEvent(
-                        lat: state.pickupLat,
-                        lng: state.pickupLng,
-                        isOrigin: true,
-                      ),
-                    );
-                    liveMapBloc.add(
-                      AddMapMarkerEvent(
-                        lat: state.driver.lat,
-                        lng: state.driver.lng,
-                        color: AppPalette.obsidian,
-                        onTap: () {
-                          if (!mounted) return;
-                          setState(() {
-                            _selectedDriver = state.driver;
-                            _isViewingDriverProfile = false;
-                          });
-                        },
-                      ),
-                    );
-                    for (final nearby in nearbyDrivers.take(10)) {
-                      if (nearby.id != state.driver.id) {
-                        liveMapBloc.add(
-                          AddMapMarkerEvent(
-                            lat: nearby.lat,
-                            lng: nearby.lng,
-                            color: AppPalette.obsidian,
-                            onTap: () {
-                              if (!mounted) return;
-                              setState(() {
-                                _selectedDriver = nearby;
-                                _isViewingDriverProfile = false;
-                              });
-                            },
-                          ),
-                        );
-                      }
-                    }
-                    liveMapBloc.add(
-                      FitMapToCoordinatesEvent(
-                        coordinates: [
-                          LatLng(state.pickupLat, state.pickupLng),
-                          ...nearbyDrivers
-                              .take(10)
-                              .map((driver) => LatLng(driver.lat, driver.lng)),
-                        ],
-                        maxZoom: 14.5,
-                      ),
-                    );
-                  case BookingDriverMatched(:final rideId):
-                    unawaited(HapticFeedback.lightImpact());
-                    context.pushReplacementNamed(
-                      ActiveRideRoutes.trackDriver,
-                      extra: rideId,
-                    );
-                  case BookingRideRecovered(:final rideId):
-                    unawaited(HapticFeedback.lightImpact());
-                    context.pushReplacementNamed(
-                      ActiveRideRoutes.trackDriver,
-                      extra: rideId,
-                    );
-                  case BookingFailure():
-                    _acceptingOfferId = null;
-                    if (state.isNoDriverFound) {
-                      BlocProvider.of<NearbyDriversCubit>(context).stop();
-                      _handleNoDriverFound();
-                    } else if (state.isRequestExpired) {
-                      BlocProvider.of<NearbyDriversCubit>(context).stop();
-                      setState(() {
-                        _driverSearchError = null;
-                        _isLeaving = false;
-                      });
-                    } else if (state.isDriverDeclined) {
-                      final nearbyCubit = BlocProvider.of<NearbyDriversCubit>(
-                        context,
-                      )..start();
-                      unawaited(nearbyCubit.refresh());
-                      setState(() {
-                        _driverSearchError = state.message;
-                        _isLeaving = false;
-                      });
-                    } else {
-                      setState(() {
-                        _driverSearchError = state.message;
-                        _isLeaving = false;
-                      });
-                    }
-                  case BookingSessionRecoveryFailure():
-                    setState(() {
-                      _acceptingOfferId = null;
-                      _isLeaving = false;
-                    });
-                  case BookingCanceled():
-                    _acceptingOfferId = null;
-                    _returnHome();
-                  case BookingInitial() ||
-                      FindingNearestDriver() ||
-                      BookingSessionRecoveryInProgress():
-                    break;
-                }
-              },
+              listener: _handleBookingState,
             ),
           ],
           child: LayoutBuilder(
@@ -767,8 +899,8 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                     child: Container(
                       color: context.colorScheme.surfaceContainerHighest,
                       child: _cachedMap ??= MapProvider.buildMapView(
-                        latitude: defaultLat,
-                        longitude: defaultLng,
+                        latitude: pickup.latitude,
+                        longitude: pickup.longitude,
                         zoom: 14.5,
                         interactive: true,
                         onMapCreated: _onMapCreated,
@@ -776,92 +908,29 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                       ),
                     ),
                   ),
-                  SafeArea(
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: isWideScreen ? 600.0 : double.infinity,
-                        ),
-                        child: BlocBuilder<BookingBloc, BookingState>(
-                          buildWhen: shouldRebuildDriverDiscoveryOverlay,
-                          builder: (context, state) {
-                            final showDriverDiscovery =
-                                state is NearestDriverFound;
-                            return Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  child: _buildTripBackButton(
-                                    context,
-                                    _returnHome,
-                                  ),
-                                ),
-                                if (showDriverDiscovery &&
-                                    _nearbyDrivers.isNotEmpty)
-                                  SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16.0,
-                                      vertical: 4.0,
-                                    ),
-                                    child: Row(
-                                      children: _nearbyDrivers.map((driver) {
-                                        final isSelected =
-                                            _selectedDriver?.id == driver.id;
-                                        return Padding(
-                                          padding: const EdgeInsets.only(
-                                            right: 8.0,
-                                          ),
-                                          child: _NearbyDriverSelectionChip(
-                                            driver: driver,
-                                            isSelected: isSelected,
-                                            onTap: () {
-                                              setState(() {
-                                                _selectedDriver = driver;
-                                                _isViewingDriverProfile = false;
-                                              });
-                                            },
-                                          ),
-                                        );
-                                      }).toList(),
-                                    ),
-                                  ),
-                                if (showDriverDiscovery)
-                                  if (_selectedDriver
-                                      case final selectedDriver?)
-                                    DriverDropdownCard(
-                                      driver: selectedDriver,
-                                      isNearestDriver:
-                                          _nearbyDrivers.isNotEmpty &&
-                                          selectedDriver.id ==
-                                              _nearbyDrivers.first.id,
-                                      isProfileVisible: _isViewingDriverProfile,
-                                      onViewFullProfilePressed: () =>
-                                          _showDriverProfile(selectedDriver),
-                                      onProfileBackPressed: _hideDriverProfile,
-                                      onSelectDriverPressed: () =>
-                                          _startDirectBooking(selectedDriver),
-                                      onCloseDropdownPressed: () {
-                                        setState(() {
-                                          _selectedDriver = null;
-                                          _isViewingDriverProfile = false;
-                                        });
-                                      },
-                                      profileRepository:
-                                          widget.profileRepository,
-                                    ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                    ),
+                  FindingDriverDiscoveryOverlay(
+                    isWideScreen: isWideScreen,
+                    buildWhen: shouldRebuildDriverDiscoveryOverlay,
+                    nearbyDrivers: _nearbyDrivers,
+                    selectedDriver: _selectedDriver,
+                    isViewingDriverProfile: _isViewingDriverProfile,
+                    profileRepository: widget.profileRepository,
+                    onBackPressed: _returnHome,
+                    onSelectNearbyChip: (driver) {
+                      setState(() {
+                        _selectedDriver = driver;
+                        _isViewingDriverProfile = false;
+                      });
+                    },
+                    onViewFullProfile: _showDriverProfile,
+                    onHideDriverProfile: _hideDriverProfile,
+                    onStartDirectBooking: _startDirectBooking,
+                    onCloseDropdown: () {
+                      setState(() {
+                        _selectedDriver = null;
+                        _isViewingDriverProfile = false;
+                      });
+                    },
                   ),
                   Align(
                     alignment: Alignment.bottomCenter,
@@ -871,146 +940,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
                         maxWidth: isWideScreen ? 600.0 : double.infinity,
                       ),
                       child: BlocBuilder<BookingBloc, BookingState>(
-                        builder: (context, state) {
-                          _schedulePickupFocus();
-                          final activeSearch = BlocProvider.of<BookingBloc>(
-                            context,
-                          ).activeDriverSearch;
-                          final activeTrip = activeSearch?.trip;
-                          final fare = activeTrip?.fare ?? widget.fare;
-                          final destination =
-                              activeTrip?.destination ?? widget.destination;
-                          final pickupAddress =
-                              activeTrip?.pickupAddress ?? widget.pickupAddress;
-
-                          return switch (state) {
-                            BookingFailure(isDriverDeclined: true) =>
-                              _buildNearbyDriversPanel(
-                                fare: fare,
-                                isChoosingDriver: true,
-                                notice: state.message,
-                              ),
-                            BookingInitial() => _buildNearbyDriversPanel(
-                              fare: fare,
-                              isChoosingDriver: true,
-                            ),
-                            BookingFindingNearbyDrivers() =>
-                              _buildNearbyDriversPanel(
-                                fare: fare,
-                                isChoosingDriver: true,
-                                availabilityOverride: NearbyDriversState(
-                                  drivers: state.drivers,
-                                  hasLoaded: state.hasLoaded,
-                                  isLoading: state.isLoading,
-                                  errorMessage: state.errorMessage,
-                                ),
-                              ),
-                            FindingNearestDriver() =>
-                              FindingDriverSearchingPanel(
-                                message: state.statusMessage,
-                                fare: fare,
-                                baseFare: widget.baseFare,
-                                destination: destination,
-                                pickupAddress: pickupAddress,
-                                tipAmount: widget.tipAmount,
-                                distance: widget.distance,
-                                duration: widget.duration,
-                                requestCreated: false,
-                                onCancelPressed: _handleCancel,
-                                isCanceling: _isLeaving,
-                              ),
-                            BookingFailure(
-                              :final isNoDriverFound,
-                              :final isRequestExpired,
-                            )
-                                when isNoDriverFound || isRequestExpired =>
-                              FindingDriverNoDriverPanel(
-                                fare: widget.fare,
-                                destination: widget.destination,
-                                pickupAddress: pickupAddress,
-                                requestExpired: isRequestExpired,
-                                onRetryPressed: _retryFindingDriver,
-                                onCancelPressed: _handleCancel,
-                                isCanceling: _isLeaving,
-                              ),
-                            BookingFailure() =>
-                              FindingDriverAvailabilityErrorPanel(
-                                message: _driverSearchError ?? state.message,
-                                fare: widget.fare,
-                                destination: widget.destination,
-                                onRetryPressed: _retryFindingDriver,
-                                onCancelPressed: _handleCancel,
-                                isCanceling: _isLeaving,
-                              ),
-                            NearestDriverFound()
-                                when _selectedDriver != null ||
-                                    _nearbyDrivers.length <= 1 =>
-                              const SizedBox.shrink(),
-                            NearestDriverFound() => FindingDriverNearestPanel(
-                              state: state,
-                              fare: widget.fare,
-                              onViewFullProfilePressed: () =>
-                                  _showDriverProfile(state.driver),
-                              onBookDirectPressed: () =>
-                                  _startDirectBooking(state.driver),
-                              onSearchAllDriversPressed: _showNearbyDrivers,
-                              onCancelRidePressed: _handleCancel,
-                              isCanceling: _isLeaving,
-                            ),
-                            BookingSearching() => _buildNearbyDriversPanel(
-                              fare: fare,
-                              requestedDriver: state.targetDriver,
-                              isSendingRequest: state.sessionId == null,
-                              refreshError: state.refreshError,
-                            ),
-                            BookingOffersReceived() => _buildNearbyDriversPanel(
-                              fare: fare,
-                              requestedDriver: state.targetDriver,
-                              offers: state.offers,
-                              refreshError: state.refreshError,
-                            ),
-                            BookingSessionRecoveryInProgress() =>
-                              FindingDriverSearchingPanel(
-                                message: state.statusMessage,
-                                fare: fare,
-                                baseFare: widget.baseFare,
-                                destination: destination,
-                                pickupAddress: pickupAddress,
-                                tipAmount: widget.tipAmount,
-                                distance: widget.distance,
-                                duration: widget.duration,
-                                requestCreated: state.sessionId.isNotEmpty,
-                                isSendingRequest: state.sessionId.isEmpty,
-                                onCancelPressed: _handleCancel,
-                                isCanceling: _isLeaving,
-                              ),
-                            BookingSessionRecoveryFailure() =>
-                              FindingDriverSearchingPanel(
-                                message: state.sessionId.isNotEmpty
-                                    ? 'Unable to refresh your request'
-                                    : 'We could not confirm your request yet',
-                                fare: fare,
-                                baseFare: widget.baseFare,
-                                destination: destination,
-                                pickupAddress: pickupAddress,
-                                tipAmount: widget.tipAmount,
-                                distance: widget.distance,
-                                duration: widget.duration,
-                                requestCreated: state.sessionId.isNotEmpty,
-                                isSendingRequest: state.sessionId.isEmpty,
-                                animate: false,
-                                refreshError: state.message,
-                                onRetryPressed: () =>
-                                    BlocProvider.of<BookingBloc>(context)
-                                        .add(const RestoreActiveBookingEvent()),
-                                onCancelPressed: _handleCancel,
-                                isCanceling: _isLeaving,
-                              ),
-                            BookingDriverMatched() ||
-                            BookingRideRecovered() ||
-                            BookingCanceled() => const SizedBox.shrink(),
-                          };
-                        },
+                        builder: _buildBottomSheet,
                       ),
                     ),
                   ),
@@ -1022,161 +952,4 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
       ),
     );
   }
-}
-
-class const _NearbyDriverSelectionChip({
-  required this.driver,
-  required this.isSelected,
-  required this.onTap,
-}) extends StatelessWidget {
-  final Driver driver;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  IconData get _vehicleIcon {
-    final vehicleType = driver.vehicleType.toLowerCase();
-    if (vehicleType.contains('suv') || vehicleType.contains('sedan')) {
-      return LucideIcons.car_front;
-    }
-    return LucideIcons.car;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = context.colorScheme;
-    final radius = BorderRadius.circular(AppRadius.pill);
-    final foregroundColor = isSelected ? scheme.onPrimary : scheme.onSurface;
-    final distance = DistanceFormatter.fromKilometers(driver.distanceKm);
-
-    return Semantics(
-      button: true,
-      selected: isSelected,
-      label:
-          '${driver.displayName}, ${driver.vehicleType}, rating ${driver.rating.toStringAsFixed(1)}, $distance away',
-      child: Material(
-        color: isSelected ? scheme.primary : scheme.surfaceContainerLowest,
-        elevation: isSelected ? 1 : 0,
-        shadowColor: scheme.shadow.withValues(alpha: 0.12),
-        borderRadius: radius,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: radius,
-          enableFeedback: false,
-          splashFactory: NoSplash.splashFactory,
-          overlayColor: WidgetStateProperty.resolveWith(
-            (states) => states.contains(WidgetState.focused)
-                ? (isSelected ? scheme.onPrimary : scheme.primary).withValues(
-                    alpha: isSelected ? 0.16 : 0.12,
-                  )
-                : Colors.transparent,
-          ),
-          child: Container(
-            constraints: const BoxConstraints(
-              minHeight: AppSize.minimumTouchTarget,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected ? scheme.primary : scheme.outlineVariant,
-              ),
-              borderRadius: radius,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(_vehicleIcon, size: 17, color: foregroundColor),
-                const SizedBox(width: AppSpacing.sm),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      driver.displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.textStyles.labelMedium?.copyWith(
-                        color: foregroundColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.star_rounded,
-                          size: 13,
-                          color: isSelected
-                              ? scheme.onPrimary
-                              : context.semanticColors.rating,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          driver.rating.toStringAsFixed(1),
-                          style: context.textStyles.labelSmall?.tabular
-                              .copyWith(
-                                color: foregroundColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                        const SizedBox(width: 7),
-                        Text(
-                          distance,
-                          style: context.textStyles.labelSmall?.tabular
-                              .copyWith(
-                                color: foregroundColor.withValues(alpha: 0.78),
-                              ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
-  final colors = context.colorScheme;
-  return Tooltip(
-    message: MaterialLocalizations.of(context).backButtonTooltip,
-    child: Material(
-      color: colors.surfaceContainerLowest,
-      elevation: 1,
-      shadowColor: colors.onSurface.withValues(alpha: 0.08),
-      shape: CircleBorder(side: BorderSide(color: colors.outlineVariant)),
-      clipBehavior: Clip.antiAlias,
-      child: Semantics(
-        button: true,
-        label: 'Back',
-        child: InkWell(
-          onTap: onPressed,
-          customBorder: const CircleBorder(),
-          enableFeedback: false,
-          splashFactory: NoSplash.splashFactory,
-          overlayColor: WidgetStateProperty.resolveWith(
-            (states) => states.contains(WidgetState.focused)
-                ? colors.primary.withValues(alpha: 0.12)
-                : Colors.transparent,
-          ),
-          child: SizedBox(
-            width: AppSize.minimumTouchTarget,
-            height: AppSize.minimumTouchTarget,
-            child: Center(
-              child: Icon(
-                LucideIcons.arrow_left,
-                size: 19,
-                color: colors.onSurface,
-              ),
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
 }

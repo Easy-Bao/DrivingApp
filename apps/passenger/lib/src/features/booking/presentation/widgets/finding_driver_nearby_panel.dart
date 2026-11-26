@@ -25,6 +25,7 @@ class FindingDriverNearbyPanel extends StatefulWidget {
     this.notice,
     this.requestedDriver,
   });
+
   final NearbyDriversState availability;
   final List<BookingOffer> offers;
   final double fare;
@@ -77,12 +78,13 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
       ))
         offer.driverId: offer,
     };
+    final requestedDriver = widget.requestedDriver;
     final drivers = {
       for (final driver in widget.availability.drivers)
         if (widget.isChoosingDriver || readyOffers.containsKey(driver.id))
           driver.id: driver,
-      if (!widget.isChoosingDriver && widget.requestedDriver != null)
-        widget.requestedDriver!.id: widget.requestedDriver!,
+      if (!widget.isChoosingDriver && requestedDriver != null)
+        requestedDriver.id: requestedDriver,
     };
     final driverIds = {
       ...readyOffers.keys,
@@ -95,6 +97,8 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
         (widget.isChoosingDriver && _requestSubmitted) ||
         widget.acceptingOfferId != null;
     final error = widget.availability.errorMessage ?? widget.refreshError;
+    final notice = widget.notice;
+    final onBackPressed = widget.onBackPressed;
 
     final colors = context.colorScheme;
     final hairline = colors.outlineVariant.withValues(alpha: 0.7);
@@ -159,11 +163,11 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                         ),
                       ),
                     ),
-                    if (widget.notice != null) ...[
+                    if (notice != null) ...[
                       Semantics(
                         liveRegion: true,
                         child: Text(
-                          widget.notice!,
+                          notice,
                           style: context.textStyles.bodyMedium?.copyWith(
                             color: colors.onSurface,
                           ),
@@ -358,11 +362,11 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xs),
-                        if (widget.onBackPressed != null)
+                        if (onBackPressed != null)
                           _buildChoosingFooterActions(
                             context,
                             busy: busy,
-                            onBack: widget.onBackPressed!,
+                            onBack: onBackPressed,
                             onCancel: widget.onCancelPressed,
                             isCanceling: widget.isCanceling,
                           )
@@ -379,12 +383,11 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                         FilledButton(
                           onPressed: busy
                               ? null
-                              : (widget.onBackPressed ??
-                                    widget.onCancelPressed),
+                              : (onBackPressed ?? widget.onCancelPressed),
                           style: primaryButtonStyle,
                           child: const Text('Back to trip'),
                         ),
-                        if (widget.onBackPressed != null) ...[
+                        if (onBackPressed != null) ...[
                           const SizedBox(height: AppSpacing.xs),
                           TextButton(
                             key: const ValueKey('nearby-drivers-cancel-search'),
@@ -495,8 +498,18 @@ class const _DriverRow({
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final rating = offer?.driverRating ?? driver?.rating;
-    final canSelect = onSelectDriver != null && driver != null;
+    final resolvedDriver = driver;
+    final resolvedOffer = offer;
+    final selectCallback = onSelectDriver;
+    final rating = resolvedOffer?.driverRating ?? resolvedDriver?.rating;
+    final canSelect = selectCallback != null && resolvedDriver != null;
+    final driverDisplayName =
+        resolvedOffer?.displayDriverName ??
+        resolvedDriver?.displayName ??
+        'Driver';
+    final vehicleSummary =
+        resolvedOffer?.vehicleSummary ?? resolvedDriver?.vehicleSummary ?? '';
+
     final details = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -511,7 +524,7 @@ class const _DriverRow({
                 ),
               ),
               child: AppNetworkImage(
-                imageUrl: driver?.avatarUrl,
+                imageUrl: resolvedDriver?.avatarUrl,
                 width: 40,
                 height: 40,
                 borderRadius: BorderRadius.circular(20),
@@ -524,7 +537,7 @@ class const _DriverRow({
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    offer?.displayDriverName ?? driver!.displayName,
+                    driverDisplayName,
                     style: context.textStyles.titleSmall?.copyWith(
                       color: colors.onSurface,
                       fontWeight: FontWeight.w600,
@@ -532,7 +545,7 @@ class const _DriverRow({
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    offer?.vehicleSummary ?? driver!.vehicleSummary,
+                    vehicleSummary,
                     style: context.textStyles.bodySmall?.copyWith(
                       color: colors.onSurfaceVariant,
                     ),
@@ -542,9 +555,9 @@ class const _DriverRow({
                     spacing: 12,
                     runSpacing: 4,
                     children: [
-                      if (driver != null)
+                      if (resolvedDriver != null)
                         Text(
-                          '${driver!.etaMinutes} min · ${DistanceFormatter.fromKilometers(driver!.distanceKm)}',
+                          '${resolvedDriver.etaMinutes} min · ${DistanceFormatter.fromKilometers(resolvedDriver.distanceKm)}',
                           style: context.textStyles.bodySmall?.tabular.copyWith(
                             color: colors.onSurfaceVariant,
                           ),
@@ -572,7 +585,7 @@ class const _DriverRow({
           ],
         ),
         if (!canSelect) const SizedBox(height: 10),
-        if (offer case final BookingOffer readyOffer when !canSelect)
+        if (resolvedOffer case final BookingOffer readyOffer when !canSelect)
           Wrap(
             alignment: WrapAlignment.spaceBetween,
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -628,11 +641,11 @@ class const _DriverRow({
       button: true,
       selected: isSelected,
       enabled: !isBusy,
-      label: 'Select ${driver!.displayName}',
+      label: 'Select ${resolvedDriver.displayName}',
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
-          onTap: isBusy ? null : () => onSelectDriver!(driver!),
+          onTap: isBusy ? null : () => selectCallback(resolvedDriver),
           borderRadius: BorderRadius.circular(AppRadius.md),
           enableFeedback: false,
           splashFactory: NoSplash.splashFactory,

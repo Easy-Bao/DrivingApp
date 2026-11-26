@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
@@ -429,30 +428,31 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
 
     try {
       final route = await _loadRoute();
-      if (route != null && route.hasGeometry && mounted) {
+      final controller = _mapController;
+      if (route != null && route.hasGeometry && mounted && controller != null) {
         final routePoints = route.validPolylinePoints;
         await MapProvider.addMarker(
-          _mapController!,
+          controller,
           pickupLat,
           pickupLng,
           isOrigin: true,
           color: TripMapMarkerStyle.ownLocation,
         );
         await MapProvider.addMarker(
-          _mapController!,
+          controller,
           destLat,
           destLng,
           isOrigin: false,
           color: TripMapMarkerStyle.tripLocation,
         );
         await MapProvider.addPolylineBuffer(
-          _mapController!,
+          controller,
           route.coordinateBuffer,
           color: routeColor,
           width: 5.0,
         );
         await MapProvider.fitBounds(
-          _mapController!,
+          controller,
           [
             LatLng(pickupLat, pickupLng),
             LatLng(destLat, destLng),
@@ -477,46 +477,6 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         _mapController = controller;
         unawaited(_drawRoute());
       },
-    );
-  }
-
-  Widget _buildMapBackButton(BuildContext context) {
-    final colors = context.colorScheme;
-    return Tooltip(
-      message: MaterialLocalizations.of(context).backButtonTooltip,
-      child: Material(
-        color: colors.surfaceContainerLowest,
-        elevation: 1,
-        shadowColor: colors.onSurface.withValues(alpha: 0.08),
-        shape: CircleBorder(side: BorderSide(color: colors.outlineVariant)),
-        clipBehavior: Clip.antiAlias,
-        child: Semantics(
-          button: true,
-          label: 'Back',
-          child: InkWell(
-            onTap: () => context.pop(),
-            customBorder: const CircleBorder(),
-            enableFeedback: false,
-            splashFactory: NoSplash.splashFactory,
-            overlayColor: WidgetStateProperty.resolveWith(
-              (states) => states.contains(WidgetState.focused)
-                  ? colors.primary.withValues(alpha: 0.12)
-                  : Colors.transparent,
-            ),
-            child: SizedBox(
-              width: AppSize.minimumTouchTarget,
-              height: AppSize.minimumTouchTarget,
-              child: Center(
-                child: Icon(
-                  LucideIcons.arrow_left,
-                  size: 19,
-                  color: colors.onSurface,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -625,7 +585,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
                   horizontal: AppLayout.pagePadding,
                   vertical: 8,
                 ),
-                child: _buildMapBackButton(context),
+                child: AppMapBackButton(onPressed: () => context.pop()),
               ),
             ),
 

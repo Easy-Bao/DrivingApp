@@ -1,5 +1,4 @@
 import 'package:design_system/design_system.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
@@ -7,8 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_fare_details.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_options_loading_view.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/ride_panel_header.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/ride_tip_selector.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/ride_options_sub_views.dart';
 
 enum _RideOptionsView { summary, offer, tip, note, fareDetails }
 
@@ -83,489 +81,19 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
         widget.customFareError == null;
   }
 
-  String _currency(double amount) => formatPesoAmount(amount);
-
   void _showView(_RideOptionsView view) {
-    setState(() {
-      _currentView = view;
-    });
+    setState(() => _currentView = view);
   }
 
   void _backToSummary() {
     FocusScope.of(context).unfocus();
-    setState(() {
-      _currentView = _RideOptionsView.summary;
-    });
-  }
-
-  ButtonStyle _primaryButtonStyle(BuildContext context) {
-    final colors = context.colorScheme;
-    return FilledButton.styleFrom(
-      backgroundColor: colors.primary,
-      foregroundColor: colors.onPrimary,
-      disabledBackgroundColor: colors.surfaceContainerHighest,
-      disabledForegroundColor: colors.onSurfaceVariant.withValues(alpha: 0.45),
-      elevation: 0,
-      enableFeedback: false,
-      splashFactory: NoSplash.splashFactory,
-      minimumSize: const Size.fromHeight(AppSize.controlHeight),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-      ),
-      textStyle: context.textStyles.labelLarge?.copyWith(
-        fontWeight: FontWeight.w600,
-      ),
-    ).copyWith(
-      overlayColor: WidgetStateProperty.resolveWith(
-        (states) => states.contains(WidgetState.focused)
-            ? colors.onPrimary.withValues(alpha: 0.16)
-            : Colors.transparent,
-      ),
-    );
-  }
-
-  Widget _buildOfferView(BuildContext context) {
-    final minimumFare = _minimumFare;
-    if (minimumFare == null) return const SizedBox.shrink();
-    final colors = context.colorScheme;
-
-    return ConstrainedBox(
-      key: const ValueKey(_RideOptionsView.offer),
-      constraints: BoxConstraints(
-        maxHeight:
-            (MediaQuery.sizeOf(context).height -
-                    MediaQuery.viewInsetsOf(context).bottom -
-                    MediaQuery.paddingOf(context).vertical -
-                    80)
-                .clamp(0.0, MediaQuery.sizeOf(context).height * 0.72),
-      ),
-      child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            RidePanelHeader(
-              closeKey: const ValueKey('panel-back'),
-              onClose: _backToSummary,
-              title: 'Set your offer',
-              details: 'Match or raise the calculated fare.',
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              decoration: BoxDecoration(
-                color: colors.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(color: colors.outlineVariant),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Calculated minimum',
-                    style: context.textStyles.labelSmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _currency(minimumFare),
-                          style: context.textStyles.headlineSmall?.tabular
-                              .copyWith(
-                                color: colors.onSurface,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.4,
-                              ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.surfaceContainerLowest,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(color: colors.outlineVariant),
-                        ),
-                        child: Text(
-                          'Minimum',
-                          style: context.textStyles.labelSmall?.copyWith(
-                            color: colors.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Divider(
-                    height: 1,
-                    color: colors.outlineVariant.withValues(alpha: 0.7),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(
-                    'Your offer',
-                    key: const ValueKey('custom-offer-label'),
-                    style: context.textStyles.titleSmall?.copyWith(
-                      color: colors.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    key: const ValueKey('custom-offer-input'),
-                    controller: widget.customFareController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'^\d*\.?\d{0,2}'),
-                      ),
-                    ],
-                    textInputAction: TextInputAction.done,
-                    onChanged: (value) {
-                      widget.onCustomFareChanged(value);
-                      setState(() {});
-                    },
-                    onSubmitted: (_) {
-                      if (_hasValidFare) {
-                        _backToSummary();
-                      }
-                    },
-                    style: context.textStyles.headlineMedium?.tabular.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: colors.onSurface,
-                    ),
-                    decoration: InputDecoration(
-                      prefixText: '₱ ',
-                      hintText: '0.00',
-                      helperText: widget.customFareError == null
-                          ? 'Match or raise the calculated fare.'
-                          : null,
-                      helperMaxLines: 2,
-                      errorText: widget.customFareError,
-                      errorMaxLines: 3,
-                      errorStyle: context.textStyles.bodySmall?.copyWith(
-                        color: colors.error,
-                        height: 1.35,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Theme(
-                    data: Theme.of(context).copyWith(
-                      splashFactory: NoSplash.splashFactory,
-                      splashColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                      hoverColor: Colors.transparent,
-                    ),
-                    child: Wrap(
-                      spacing: AppSpacing.sm,
-                      runSpacing: AppSpacing.sm,
-                      children: [
-                        for (final increment in const [10, 20, 50])
-                          ActionChip(
-                            elevation: 0,
-                            pressElevation: 0,
-                            backgroundColor: colors.surfaceContainerLowest,
-                            side: BorderSide(color: colors.outlineVariant),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                            ),
-                            label: Text(
-                              '+₱$increment',
-                              style: context.textStyles.labelMedium?.tabular
-                                  .copyWith(
-                                    color: colors.onSurface,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                            ),
-                            materialTapTargetSize: MaterialTapTargetSize.padded,
-                            onPressed: () {
-                              final current = _enteredFare ?? minimumFare;
-                              widget.customFareController.text =
-                                  (current + increment).toStringAsFixed(2);
-                              widget.onCustomFareChanged(
-                                widget.customFareController.text,
-                              );
-                              setState(() {});
-                            },
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                key: const ValueKey('custom-offer-save'),
-                onPressed: _hasValidFare ? _backToSummary : null,
-                style: _primaryButtonStyle(context),
-                child: const Text('Save offer'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTipView(BuildContext context) {
-    return ConstrainedBox(
-      key: const ValueKey(_RideOptionsView.tip),
-      constraints: BoxConstraints(
-        maxHeight:
-            (MediaQuery.sizeOf(context).height -
-                    MediaQuery.viewInsetsOf(context).bottom -
-                    MediaQuery.paddingOf(context).vertical -
-                    80)
-                .clamp(0.0, MediaQuery.sizeOf(context).height * 0.72),
-      ),
-      child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            RidePanelHeader(
-              closeKey: const ValueKey('panel-back'),
-              onClose: _backToSummary,
-              title: 'Tip your driver',
-              details: '100% of your tip goes directly to the driver.',
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            RideTipSelector(
-              selectedTipAmount: widget.selectedTipAmount,
-              onTipSelected: (amount) {
-                widget.onTipSelected(amount);
-                setState(() {});
-              },
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                key: const ValueKey('tip-save-button'),
-                onPressed: _backToSummary,
-                style: _primaryButtonStyle(context),
-                child: const Text('Done'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNoteView(BuildContext context) {
-    final colors = context.colorScheme;
-    return ConstrainedBox(
-      key: const ValueKey(_RideOptionsView.note),
-      constraints: BoxConstraints(
-        maxHeight:
-            (MediaQuery.sizeOf(context).height -
-                    MediaQuery.viewInsetsOf(context).bottom -
-                    MediaQuery.paddingOf(context).vertical -
-                    80)
-                .clamp(0.0, MediaQuery.sizeOf(context).height * 0.72),
-      ),
-      child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            RidePanelHeader(
-              closeKey: const ValueKey('panel-back'),
-              onClose: _backToSummary,
-              title: 'Add a trip note',
-              details: 'Help your driver find you quickly.',
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              decoration: BoxDecoration(
-                color: colors.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(color: colors.outlineVariant),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        LucideIcons.file_text,
-                        size: 17,
-                        color: colors.onSurface,
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        'Pickup note',
-                        style: context.textStyles.titleSmall?.copyWith(
-                          color: colors.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Optional · visible to your driver before pickup.',
-                    style: context.textStyles.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  TextField(
-                    key: const ValueKey('trip-note-input'),
-                    controller: widget.notesController,
-                    minLines: 3,
-                    maxLines: 5,
-                    maxLength: 160,
-                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                    inputFormatters: [LengthLimitingTextInputFormatter(160)],
-                    textCapitalization: TextCapitalization.sentences,
-                    textInputAction: TextInputAction.newline,
-                    onChanged: (value) {
-                      widget.onNotesChanged(value);
-                      setState(() {});
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'For example: Meet me at the side entrance.',
-                      contentPadding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
-                      alignLabelWithHint: true,
-                      counterStyle: context.textStyles.labelSmall?.tabular
-                          .copyWith(color: colors.onSurfaceVariant),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Theme(
-                    data: Theme.of(context).copyWith(
-                      splashFactory: NoSplash.splashFactory,
-                      splashColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                      hoverColor: Colors.transparent,
-                    ),
-                    child: Wrap(
-                      spacing: AppSpacing.sm,
-                      runSpacing: AppSpacing.sm,
-                      children: [
-                        for (final preset in const [
-                          'Wait at lobby',
-                          'Near entrance',
-                          'Have luggage',
-                          'Call on arrival',
-                        ])
-                          ActionChip(
-                            elevation: 0,
-                            pressElevation: 0,
-                            backgroundColor: colors.surfaceContainerLowest,
-                            side: BorderSide(color: colors.outlineVariant),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                            ),
-                            label: Text(
-                              preset,
-                              style: context.textStyles.labelMedium?.copyWith(
-                                color: colors.onSurface,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            materialTapTargetSize: MaterialTapTargetSize.padded,
-                            onPressed: () {
-                              final current = widget.notesController.text
-                                  .trim();
-                              final next = current.isEmpty
-                                  ? preset
-                                  : current.contains(preset)
-                                  ? current
-                                  : '$current. $preset';
-                              final clamped = next.length > 160
-                                  ? next.substring(0, 160)
-                                  : next;
-                              widget.notesController.text = clamped;
-                              widget.onNotesChanged(
-                                widget.notesController.text,
-                              );
-                              setState(() {});
-                            },
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                key: const ValueKey('trip-note-save'),
-                onPressed: _backToSummary,
-                style: _primaryButtonStyle(context),
-                child: const Text('Save note'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFareDetailsView(BuildContext context) {
-    final fareResult = _fareResult;
-    if (fareResult == null) return const SizedBox.shrink();
-
-    return ConstrainedBox(
-      key: const ValueKey(_RideOptionsView.fareDetails),
-      constraints: BoxConstraints(
-        maxHeight:
-            (MediaQuery.sizeOf(context).height -
-                    MediaQuery.viewInsetsOf(context).bottom -
-                    MediaQuery.paddingOf(context).vertical -
-                    80)
-                .clamp(0.0, MediaQuery.sizeOf(context).height * 0.72),
-      ),
-      child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
-        child: RideFareDetails(
-          passengerName: widget.passengerName,
-          fareResult: fareResult,
-          offeredFare: _enteredFare ?? fareResult.totalFare,
-          tipAmount: widget.selectedTipAmount,
-          totalFare: widget.totalFare,
-          onBackPressed: _backToSummary,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoadingContent({bool showPrimaryAction = true}) {
-    return RideOptionsLoadingView(showPrimaryAction: showPrimaryAction);
+    setState(() => _currentView = _RideOptionsView.summary);
   }
 
   Widget _buildFareStatus() {
     final error = widget.fareError;
     if (AppNetworkStatusScope.isUnavailableOf(context)) {
-      return _buildLoadingContent(showPrimaryAction: false);
+      return const RideOptionsLoadingView(showPrimaryAction: false);
     }
     if (error == null) {
       return const Padding(
@@ -573,59 +101,7 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
         child: Center(child: Text('Fare details are unavailable.')),
       );
     }
-
-    final colors = context.colorScheme;
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: colors.error.withValues(alpha: 0.35)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(LucideIcons.circle_alert, color: colors.error, size: 18),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  error,
-                  style: context.textStyles.bodySmall?.copyWith(
-                    color: colors.error,
-                    height: 1.35,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (widget.onRetryFare != null)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: widget.onRetryFare,
-                style:
-                    TextButton.styleFrom(
-                      foregroundColor: colors.onSurface,
-                      enableFeedback: false,
-                      splashFactory: NoSplash.splashFactory,
-                    ).copyWith(
-                      overlayColor: WidgetStateProperty.resolveWith(
-                        (states) => states.contains(WidgetState.focused)
-                            ? colors.primary.withValues(alpha: 0.12)
-                            : Colors.transparent,
-                      ),
-                    ),
-                child: const Text('Try again'),
-              ),
-            ),
-        ],
-      ),
-    );
+    return RideFareStatusCard(error: error, onRetryFare: widget.onRetryFare);
   }
 
   Widget _buildActionButton({
@@ -691,72 +167,9 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Container(
-          key: const ValueKey('trip-summary-card'),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: 14,
-          ),
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: colors.outlineVariant),
-          ),
-          child: Row(
-            children: [
-              Column(
-                children: [
-                  const RouteStopMarker(isPickup: true, size: 18),
-                  CustomPaint(
-                    size: const Size(2, 22),
-                    painter: _DottedLinePainter(color: colors.outlineVariant),
-                  ),
-                  const RouteStopMarker(isPickup: false, size: 18),
-                ],
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Pick up',
-                      style: context.textStyles.labelSmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      widget.pickupLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.textStyles.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: colors.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Drop off',
-                      style: context.textStyles.labelSmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      widget.destinationName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.textStyles.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: colors.onSurface,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        RideSummaryTripCard(
+          pickupLabel: widget.pickupLabel,
+          destinationName: widget.destinationName,
         ),
         const SizedBox(height: AppSpacing.lg),
         if (widget.requiresSignIn)
@@ -811,7 +224,7 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _currency(widget.totalFare),
+                      formatPesoAmount(widget.totalFare),
                       key: const ValueKey('total-fare-amount'),
                       style: context.textStyles.headlineLarge?.tabular.copyWith(
                         fontSize: 32,
@@ -874,7 +287,7 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                 child: _buildActionButton(
                   key: const ValueKey('custom-offer-trigger'),
                   label: hasCustomOffer
-                      ? 'Your offer: ${_currency(enteredFare)}'
+                      ? 'Your offer: ${formatPesoAmount(enteredFare)}'
                       : 'Offer',
                   isActive: hasCustomOffer,
                   onTap: () => _showView(_RideOptionsView.offer),
@@ -885,7 +298,7 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                 child: _buildActionButton(
                   key: const ValueKey('tip-trigger'),
                   label: widget.selectedTipAmount > 0
-                      ? 'Tip: ${_currency(widget.selectedTipAmount.toDouble())}'
+                      ? 'Tip: ${formatPesoAmount(widget.selectedTipAmount.toDouble())}'
                       : 'Tip',
                   isActive: widget.selectedTipAmount > 0,
                   onTap: () => _showView(_RideOptionsView.tip),
@@ -911,7 +324,7 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
             onPressed: widget.requiresSignIn || _hasValidFare
                 ? widget.onBookPressed
                 : null,
-            style: _primaryButtonStyle(context),
+            style: rideOptionsPrimaryButtonStyle(context),
             child: Text(
               widget.requiresSignIn
                   ? 'Sign in to book'
@@ -932,26 +345,69 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
       case _RideOptionsView.summary:
         return _buildSummaryView(context);
       case _RideOptionsView.offer:
-        return _buildOfferView(context);
+        final minimumFare = _minimumFare;
+        if (minimumFare == null) return const SizedBox.shrink();
+        return RideOfferSubView(
+          minimumFare: minimumFare,
+          enteredFare: _enteredFare,
+          hasValidFare: _hasValidFare,
+          customFareController: widget.customFareController,
+          customFareError: widget.customFareError,
+          onCustomFareChanged: (value) {
+            widget.onCustomFareChanged(value);
+            setState(() {});
+          },
+          onBackToSummary: _backToSummary,
+        );
       case _RideOptionsView.tip:
-        return _buildTipView(context);
+        return RideTipSubView(
+          selectedTipAmount: widget.selectedTipAmount,
+          onTipSelected: (amount) {
+            widget.onTipSelected(amount);
+            setState(() {});
+          },
+          onBackToSummary: _backToSummary,
+        );
       case _RideOptionsView.note:
-        return _buildNoteView(context);
+        return RideNoteSubView(
+          notesController: widget.notesController,
+          onNotesChanged: (value) {
+            widget.onNotesChanged(value);
+            setState(() {});
+          },
+          onBackToSummary: _backToSummary,
+        );
       case _RideOptionsView.fareDetails:
-        return _buildFareDetailsView(context);
+        final fareResult = _fareResult;
+        if (fareResult == null) return const SizedBox.shrink();
+        return RideFareDetails(
+          passengerName: widget.passengerName,
+          fareResult: fareResult,
+          offeredFare: _enteredFare ?? fareResult.totalFare,
+          tipAmount: widget.selectedTipAmount,
+          totalFare: widget.totalFare,
+          onBackPressed: _backToSummary,
+        );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (widget.isLoadingFare && !widget.requiresSignIn) {
-      return _buildLoadingContent(showPrimaryAction: true);
+      return const RideOptionsLoadingView(showPrimaryAction: true);
     }
 
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final duration = reduceMotion
         ? Duration.zero
         : const Duration(milliseconds: 240);
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final maxScrollHeight =
+        (screenHeight -
+                MediaQuery.viewInsetsOf(context).bottom -
+                MediaQuery.paddingOf(context).vertical -
+                80)
+            .clamp(0.0, screenHeight * 0.72);
 
     return PopScope(
       canPop: _currentView == _RideOptionsView.summary,
@@ -1052,10 +508,16 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
                           ),
                         );
                       },
-                      child: SingleChildScrollView(
+                      child: ConstrainedBox(
                         key: ValueKey(_currentView),
-                        physics: const ClampingScrollPhysics(),
-                        child: _buildCurrentView(context),
+                        constraints: BoxConstraints(maxHeight: maxScrollHeight),
+                        child: SingleChildScrollView(
+                          controller: _currentView == _RideOptionsView.summary
+                              ? widget.scrollController
+                              : null,
+                          physics: const ClampingScrollPhysics(),
+                          child: _buildCurrentView(context),
+                        ),
                       ),
                     ),
                   ),
@@ -1069,37 +531,24 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
   }
 }
 
-class _DottedLinePainter extends CustomPainter {
-  final Color color;
-
-  const _DottedLinePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
-
-    double startY = 3.0;
-    while (startY < size.height - 3.0) {
-      canvas.drawCircle(Offset(size.width / 2, startY), 1.0, paint);
-      startY += 5.0;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _DottedLinePainter oldDelegate) =>
-      color != oldDelegate.color;
-}
-
 @Preview(
   group: 'Trip selection',
   name: 'Interactive ride options panel',
   size: Size(390, 800),
 )
-Widget rideOptionsPanelPreview() {
-  const fareResult = FareEstimate(
+Widget rideOptionsPanelPreview() => const _RideOptionsPanelPreviewHost();
+
+class _RideOptionsPanelPreviewHost extends StatefulWidget {
+  const _RideOptionsPanelPreviewHost();
+
+  @override
+  State<_RideOptionsPanelPreviewHost> createState() =>
+      _RideOptionsPanelPreviewHostState();
+}
+
+class _RideOptionsPanelPreviewHostState
+    extends State<_RideOptionsPanelPreviewHost> {
+  static const _fareResult = FareEstimate(
     baseFare: 20,
     distanceCharge: 5,
     timeCharge: 3.17,
@@ -1107,28 +556,43 @@ Widget rideOptionsPanelPreview() {
     totalFare: 28.17,
   );
 
-  return MaterialApp(
-    theme: AppTheme.main,
-    home: Scaffold(
-      body: RideOptionsPanel(
-        passengerName: 'Avery Cruz',
-        pickupLabel: 'Mountain View',
-        destinationName: 'Near Bathroom',
-        destinationAddress: 'Near Bathroom, 1600 Amphitheatre Pkwy, Mountain View, California 94043, United States',
-        fareResult: fareResult,
-        customFareController: TextEditingController(text: '28.17'),
-        customFareError: null,
-        isLoadingFare: false,
-        fareError: null,
-        onRetryFare: null,
-        onCustomFareChanged: (_) {},
-        notesController: TextEditingController(),
-        onNotesChanged: (_) {},
-        selectedTipAmount: 0,
-        onTipSelected: (_) {},
-        totalFare: fareResult.totalFare,
-        onBookPressed: () {},
-      ),
-    ),
+  final TextEditingController _customFareController = TextEditingController(
+    text: '28.17',
   );
+  final TextEditingController _notesController = TextEditingController();
+
+  @override
+  void dispose() {
+    _customFareController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: AppTheme.main,
+      home: Scaffold(
+        body: RideOptionsPanel(
+          passengerName: 'Avery Cruz',
+          pickupLabel: 'Mountain View',
+          destinationName: 'Near Bathroom',
+          destinationAddress: 'Near Bathroom, 1600 Amphitheatre Pkwy, Mountain View, California 94043, United States',
+          fareResult: _fareResult,
+          customFareController: _customFareController,
+          customFareError: null,
+          isLoadingFare: false,
+          fareError: null,
+          onRetryFare: null,
+          onCustomFareChanged: (_) {},
+          notesController: _notesController,
+          onNotesChanged: (_) {},
+          selectedTipAmount: 0,
+          onTipSelected: (_) {},
+          totalFare: _fareResult.totalFare,
+          onBookPressed: () {},
+        ),
+      ),
+    );
+  }
 }

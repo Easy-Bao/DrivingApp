@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:design_system/design_system.dart';
 import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
@@ -74,11 +76,13 @@ class FindingDriverSearchingPanel extends StatelessWidget {
 
   String _resolveDropoffMeta() {
     final parts = <String>[];
-    if (distance != null && distance!.trim().isNotEmpty) {
-      parts.add(distance!.trim());
+    final trimmedDistance = distance?.trim() ?? '';
+    if (trimmedDistance.isNotEmpty) {
+      parts.add(trimmedDistance);
     }
-    if (duration != null && duration!.trim().isNotEmpty) {
-      parts.add(duration!.trim());
+    final trimmedDuration = duration?.trim() ?? '';
+    if (trimmedDuration.isNotEmpty) {
+      parts.add(trimmedDuration);
     }
     if (parts.isEmpty) return 'Drop off';
     return 'Drop off · ${parts.join(' · ')}';
@@ -94,16 +98,18 @@ class FindingDriverSearchingPanel extends StatelessWidget {
     final dropoffMeta = _resolveDropoffMeta();
 
     final resolvedTip = tipAmount ?? 0;
+    final explicitBaseFare = baseFare;
     final resolvedBaseFare =
-        baseFare ??
+        explicitBaseFare ??
         (fare >= resolvedTip && resolvedTip > 0 ? fare - resolvedTip : fare);
-    final resolvedTotalFare = baseFare != null && tipAmount != null
-        ? baseFare! + resolvedTip
+    final resolvedTotalFare = explicitBaseFare != null && tipAmount != null
+        ? explicitBaseFare + resolvedTip
         : fare;
 
     final displayFare = formatPesoAmount(resolvedBaseFare);
     final displayTip = formatPesoAmount(resolvedTip.toDouble());
     final displayTotal = formatPesoAmount(resolvedTotalFare);
+    final visibleRefreshError = refreshError?.trim();
 
     final hairline = colorScheme.outlineVariant.withValues(alpha: 0.7);
     return Material(
@@ -149,9 +155,9 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (selectedDriverName != null)
+                        if (selectedDriverName case final driverName?)
                           Text(
-                            'Waiting for $selectedDriverName',
+                            'Waiting for $driverName',
                             style: context.textStyles.titleLarge?.copyWith(
                               color: colorScheme.onSurface,
                               fontWeight: FontWeight.w700,
@@ -348,13 +354,14 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                   ],
                 ),
               ),
-              if (refreshError?.trim().isNotEmpty == true) ...[
+              if (visibleRefreshError != null &&
+                  visibleRefreshError.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                        refreshError!,
+                        visibleRefreshError,
                         style: context.textStyles.bodySmall?.copyWith(
                           color: colorScheme.error,
                         ),
@@ -435,43 +442,50 @@ class _SearchingDriverTitle extends StatefulWidget {
   State<_SearchingDriverTitle> createState() => _SearchingDriverTitleState();
 }
 
-class _SearchingDriverTitleState extends State<_SearchingDriverTitle>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1500),
-  )..addListener(_updateDots);
+class _SearchingDriverTitleState extends State<_SearchingDriverTitle> {
+  static const Duration _dotInterval = Duration(milliseconds: 500);
+
+  Timer? _dotTimer;
   int _dotCount = 3;
 
-  void _updateDots() {
-    final next = 3 - (_controller.value * 3).floor().clamp(0, 2);
-    if (next != _dotCount) setState(() => _dotCount = next);
-  }
-
-  void _updateAnimation() {
-    if (widget.animate && !MediaQuery.disableAnimationsOf(context)) {
-      if (!_controller.isAnimating) _controller.repeat();
+  void _syncTimer() {
+    final shouldRun =
+        widget.animate &&
+        !MediaQuery.disableAnimationsOf(context) &&
+        TickerMode.valuesOf(context).enabled;
+    if (shouldRun) {
+      _dotTimer ??= Timer.periodic(_dotInterval, (_) {
+        if (!mounted) return;
+        setState(() {
+          _dotCount = _dotCount <= 1 ? 3 : _dotCount - 1;
+        });
+      });
     } else {
-      _controller.stop();
-      _controller.value = 0;
+      _dotTimer?.cancel();
+      _dotTimer = null;
+      if (_dotCount != 3 && mounted) {
+        setState(() => _dotCount = 3);
+      }
     }
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _updateAnimation();
+    _syncTimer();
   }
 
   @override
   void didUpdateWidget(covariant _SearchingDriverTitle oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.animate != widget.animate) _updateAnimation();
+    if (oldWidget.animate != widget.animate) {
+      _syncTimer();
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _dotTimer?.cancel();
     super.dispose();
   }
 
