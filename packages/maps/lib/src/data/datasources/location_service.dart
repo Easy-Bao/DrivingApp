@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
+import 'package:maps/src/data/services/map_http_service.dart';
 import 'package:maps/src/domain/entities/location_access_state.dart';
-import 'package:maps/src/presentation/native_service.dart';
 
 export 'package:maps/src/domain/entities/location_access_state.dart';
 

@@ -3,7 +3,8 @@ import 'dart:typed_data';
 
 import 'package:foundation/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
-import 'package:maps/src/data/datasources/device_location_service.dart';
+import 'package:maps/src/data/datasources/location_service.dart';
+import 'package:maps/src/data/services/map_http_service.dart';
 import 'package:maps/src/data/services/nearby_place_resolver.dart';
 import 'package:maps/src/data/services/route_request_key.dart';
 import 'package:maps/src/domain/entities/place.dart';
@@ -11,7 +12,6 @@ import 'package:maps/src/domain/entities/route.dart';
 import 'package:maps/src/domain/failures/place_failure.dart';
 import 'package:maps/src/presentation/annotation_service.dart';
 import 'package:maps/src/presentation/camera_service.dart';
-import 'package:maps/src/presentation/native_service.dart';
 import 'package:material_ui/material_ui.dart' hide Route;
 
 export 'package:maps/src/presentation/annotation_service.dart';

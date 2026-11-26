@@ -1,4 +1,4 @@
-import 'package:maps/src/data/datasources/device_location_service.dart';
+import 'package:maps/src/data/datasources/location_service.dart';
 import 'package:maps/src/data/services/access_state_monitor.dart';
 import 'package:maps/src/domain/repositories/location_access_repository.dart';
 

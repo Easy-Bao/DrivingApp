@@ -28,8 +28,6 @@ export 'package:design_system/src/widgets/feedback/network_status_scope.dart';
 export 'package:design_system/src/widgets/feedback/snack_bar.dart';
 export 'package:design_system/src/widgets/inputs/select_field.dart';
 export 'package:design_system/src/widgets/inputs/verification_code_field.dart';
-export 'package:design_system/src/widgets/layout/app_layout.dart'
-    show AppPageHeader, AppPageFrame, AppSurfaceCard, AppNavigationRail;
 export 'package:design_system/src/widgets/layout/auth_layout.dart';
 export 'package:design_system/src/widgets/layout/bottom_sheet_container.dart';
 export 'package:design_system/src/widgets/layout/responsive_layout.dart';
@@ -40,4 +38,4 @@ export 'package:design_system/src/widgets/navigation/map_back_button.dart';
 export 'package:design_system/src/widgets/navigation/segmented_tab_bar.dart';
 export 'package:design_system/src/widgets/navigation/swipe_tab_indicator.dart';
 export 'package:design_system/src/widgets/navigation/tab_branch_container.dart';
-export 'package:design_system/src/widgets/navigation/tab_coordinator.dart';
+export 'package:design_system/src/widgets/navigation/tab_navigation_coordinator.dart';

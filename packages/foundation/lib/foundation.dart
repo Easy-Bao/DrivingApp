@@ -12,7 +12,7 @@ export 'src/errors/failure_mapper.dart';
 export 'src/errors/network_diagnostic.dart';
 export 'src/lifecycle/lifecycle_coordinator.dart';
 export 'src/lifecycle/periodic_task.dart';
-export 'src/navigation/route_data.dart';
+export 'src/navigation/route_payload.dart';
 export 'src/navigation/safe_route_extra.dart';
 export 'src/network/api_base_uri.dart';
 export 'src/network/api_client_factory.dart';
