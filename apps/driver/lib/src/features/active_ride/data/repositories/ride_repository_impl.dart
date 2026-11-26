@@ -4,6 +4,7 @@ import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:driver/src/features/active_ride/data/datasources/ride_counterparty_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/datasources/ride_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/datasources/telemetry_remote_data_source.dart';
+import 'package:driver/src/features/active_ride/data/dto/ride_dto.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
 import 'package:foundation/foundation.dart';
 
@@ -32,7 +33,7 @@ final class RideRepositoryImpl({
           ? const Ok(null)
           : const Err(ServerFailure('The ride could not be accepted.'));
     } catch (error) {
-      return Err(_mapFailure(error, action: 'accept this ride'));
+      return Err(_mapFailure(error, operation: _RideOperation.acceptRide));
     }
   }
 
@@ -67,7 +68,7 @@ final class RideRepositoryImpl({
       }
       return Ok(ride);
     } catch (error) {
-      return Err(_mapFailure(error, action: 'confirm arrival'));
+      return Err(_mapFailure(error, operation: _RideOperation.confirmArrival));
     }
   }
 
@@ -85,7 +86,7 @@ final class RideRepositoryImpl({
       }
       return Ok(ride);
     } catch (error) {
-      return Err(_mapFailure(error, action: 'record the passenger no-show'));
+      return Err(_mapFailure(error, operation: _RideOperation.markNoShow));
     }
   }
 
@@ -109,7 +110,7 @@ final class RideRepositoryImpl({
       }
       return Ok(ride);
     } catch (error) {
-      return Err(_mapFailure(error, action: 'cancel this ride'));
+      return Err(_mapFailure(error, operation: _RideOperation.cancelRide));
     }
   }
 
@@ -142,7 +143,7 @@ final class RideRepositoryImpl({
       }
       return Ok(ride);
     } catch (error) {
-      return Err(_mapFailure(error, action: 'end this ride for safety'));
+      return Err(_mapFailure(error, operation: _RideOperation.emergencyStop));
     }
   }
 
@@ -167,7 +168,9 @@ final class RideRepositoryImpl({
       }
       return const Ok(null);
     } catch (error) {
-      return Err(_mapFailure(error, action: 'submit the safety report'));
+      return Err(
+        _mapFailure(error, operation: _RideOperation.submitSafetyReport),
+      );
     }
   }
 
@@ -199,7 +202,7 @@ final class RideRepositoryImpl({
       }
       return Ok(ride);
     } catch (error) {
-      return Err(_mapFailure(error, action: 'start this trip'));
+      return Err(_mapFailure(error, operation: _RideOperation.startTrip));
     }
   }
 
@@ -232,7 +235,7 @@ final class RideRepositoryImpl({
       }
       return Ok(ride);
     } catch (error) {
-      return Err(_mapFailure(error, action: 'complete this trip'));
+      return Err(_mapFailure(error, operation: _RideOperation.completeTrip));
     }
   }
 
@@ -246,7 +249,7 @@ final class RideRepositoryImpl({
       }
       return Ok(ride);
     } catch (error) {
-      return Err(_mapFailure(error, action: 'load this ride'));
+      return Err(_mapFailure(error, operation: _RideOperation.loadRide));
     }
   }
 
@@ -259,7 +262,9 @@ final class RideRepositoryImpl({
         RideCounterparty.fromJson(await _counterpartyDataSource.fetch(rideId)),
       );
     } catch (error) {
-      return Err(_mapFailure(error, action: 'load passenger contact details'));
+      return Err(
+        _mapFailure(error, operation: _RideOperation.loadCounterparty),
+      );
     }
   }
 
@@ -273,7 +278,9 @@ final class RideRepositoryImpl({
       if (latitude == null || longitude == null) return const Ok(null);
       return Ok((latitude, longitude));
     } catch (error) {
-      return Err(_mapFailure(error, action: 'load passenger location'));
+      return Err(
+        _mapFailure(error, operation: _RideOperation.loadPassengerLocation),
+      );
     }
   }
 
@@ -331,11 +338,12 @@ final class RideRepositoryImpl({
       });
       return const Ok(null);
     } catch (error) {
-      if (error is DioException &&
+      if (_locationSpool != null &&
+          error is DioException &&
           NetworkAvailabilityCoordinator.isNetworkFailure(error)) {
         return const Ok(null);
       }
-      return Err(_mapFailure(error, action: 'share your location'));
+      return Err(_mapFailure(error, operation: _RideOperation.shareLocation));
     }
   }
 
@@ -347,7 +355,7 @@ final class RideRepositoryImpl({
           ? const Ok(null)
           : const Err(ServerFailure('Your location was not removed.'));
     } catch (error) {
-      return Err(_mapFailure(error, action: 'remove your location'));
+      return Err(_mapFailure(error, operation: _RideOperation.removeLocation));
     }
   }
 
@@ -368,22 +376,43 @@ final class RideRepositoryImpl({
               'Your live location could not be updated. Keep location sharing on and try again.',
             );
     } catch (error) {
-      return _mapFailure(error, action: 'share your location');
+      return _mapFailure(error, operation: _RideOperation.shareLocation);
     }
   }
 }
 
-Failure _mapFailure(Object error, {required String action}) {
+enum _RideOperation {
+  acceptRide('accept this ride'),
+  confirmArrival('confirm arrival'),
+  markNoShow('record the passenger no-show'),
+  cancelRide('cancel this ride'),
+  emergencyStop('end this ride for safety'),
+  submitSafetyReport('submit the safety report'),
+  startTrip('start this trip'),
+  completeTrip('complete this trip'),
+  loadRide('load this ride'),
+  loadCounterparty('load passenger contact details'),
+  loadPassengerLocation('load passenger location'),
+  shareLocation('share your location'),
+  removeLocation('remove your location');
+
+  const _RideOperation(this.description);
+
+  final String description;
+}
+
+Failure _mapFailure(Object error, {required _RideOperation operation}) {
   if (error is Failure) return error;
+  final action = operation.description;
   if (error is DioException) {
     final statusCode = error.response?.statusCode;
-    if (action == 'load this ride' && statusCode == 404) {
+    if (operation == _RideOperation.loadRide && statusCode == 404) {
       return const RideNotFoundFailure();
     }
     if (statusCode == 401) {
       return const AuthFailure('Your driver session has ended. Sign in again.');
     }
-    if (action == 'complete this trip' && statusCode == 403) {
+    if (operation == _RideOperation.completeTrip && statusCode == 403) {
       return const AuthFailure(
         'This trip is not assigned to your driver account.',
       );
@@ -391,31 +420,31 @@ Failure _mapFailure(Object error, {required String action}) {
     if (statusCode == 403) {
       return const AuthFailure('Your driver session has ended. Sign in again.');
     }
-    if (action == 'complete this trip' && statusCode == 409) {
+    if (operation == _RideOperation.completeTrip && statusCode == 409) {
       return const ServerFailure.withStatusCode(
         'This trip is no longer active. Refresh your ride and try again.',
         409,
       );
     }
-    if (action == 'complete this trip' && statusCode == 503) {
+    if (operation == _RideOperation.completeTrip && statusCode == 503) {
       return const ServerFailure.withStatusCode(
         'Your live location is unavailable or out of date. Keep location sharing on and try again.',
         503,
       );
     }
-    if (action == 'confirm arrival' && statusCode == 422) {
+    if (operation == _RideOperation.confirmArrival && statusCode == 422) {
       return const ValidationFailure(
         "You must be at the passenger's pickup point to confirm arrival.",
       );
     }
-    if (action == 'start this trip' && statusCode == 422) {
+    if (operation == _RideOperation.startTrip && statusCode == 422) {
       return const ValidationFailure(
         "You must be at the passenger's pickup point to start the trip.",
       );
     }
-    if ((action == 'confirm arrival' ||
-            action == 'start this trip' ||
-            action == 'share your location') &&
+    if ((operation == _RideOperation.confirmArrival ||
+            operation == _RideOperation.startTrip ||
+            operation == _RideOperation.shareLocation) &&
         statusCode == 503) {
       return const ServerFailure.withStatusCode(
         'Your live location is unavailable or out of date. Keep location sharing on and try again.',
@@ -442,7 +471,7 @@ Failure _mapFailure(Object error, {required String action}) {
     );
   }
   if (error is ServerException) {
-    if (action == 'load this ride' && error.statusCode == 404) {
+    if (operation == _RideOperation.loadRide && error.statusCode == 404) {
       return const RideNotFoundFailure();
     }
     return FailureMapper.fromException(

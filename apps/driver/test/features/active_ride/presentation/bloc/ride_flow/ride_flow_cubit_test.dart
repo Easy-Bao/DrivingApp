@@ -925,4 +925,28 @@ void main() {
       await cubit.close();
     },
   );
+
+  test(
+    'resumeRide normalizes uppercase arrived and in_transit statuses',
+    () async {
+      final cubit = _makeCubit(mockRideRepository, mockSessionService);
+      addTearDown(cubit.close);
+
+      final resumedArrived = await cubit.resumeRide(
+        rideId: 'ride-1',
+        status: ' ARRIVED ',
+        passengerName: 'Juan Dela Cruz',
+      );
+      expect(resumedArrived, isTrue);
+      expect(cubit.state, isA<RideFlowWaitingPassenger>());
+
+      final resumedTransit = await cubit.resumeRide(
+        rideId: 'ride-1',
+        status: ' IN_TRANSIT ',
+        passengerName: 'Juan Dela Cruz',
+      );
+      expect(resumedTransit, isTrue);
+      expect(cubit.state, isA<RideFlowInTransit>());
+    },
+  );
 }

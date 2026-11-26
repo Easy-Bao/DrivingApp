@@ -83,19 +83,19 @@ class RideFlowCubit({
   Future<void> _syncAuthoritativeRideState(String rideId) async {
     final actionGeneration = _actionGeneration;
     try {
-      Failure? failure;
-      RideSnapshot? ride;
-      (await _rideRepository.fetchRideResult(rideId))
-          .fold((value) => failure = value, (value) => ride = value);
+      final result = await _rideRepository.fetchRideResult(rideId);
       if (!_isCurrentAction(actionGeneration) || _activeRideId != rideId) {
         return;
       }
-      if (failure is RideNotFoundFailure) {
-        await _finishTerminalRide(rideId: rideId, status: 'not_found');
-        return;
-      }
-      if (ride case final RideSnapshot value when value.isTerminal) {
-        await _finishTerminalRide(rideId: rideId, status: value.status);
+      switch (result) {
+        case Err(failure: RideNotFoundFailure()):
+          await _finishTerminalRide(rideId: rideId, status: 'not_found');
+        case Err():
+          break;
+        case Ok(:final value) when value.isTerminal:
+          await _finishTerminalRide(rideId: rideId, status: value.status);
+        case Ok():
+          break;
       }
     } catch (error, stackTrace) {
       dev.log(
@@ -237,7 +237,7 @@ class RideFlowCubit({
     if (!_isCurrentAction(actionGeneration)) return false;
     _isActionInFlight = false;
     _waitingUntil = waitingUntil?.toUtc();
-    if (status == 'arrived') {
+    if (normalizedStatus == 'arrived') {
       _waitStartedAt = arrivedAt?.toUtc() ?? DateTime.now().toUtc();
       _startWaitTimer(
         actionGeneration: _actionGeneration,
@@ -247,7 +247,7 @@ class RideFlowCubit({
         destinationLatitude: destinationLatitude,
         destinationLongitude: destinationLongitude,
       );
-    } else if (status == 'in_transit') {
+    } else if (normalizedStatus == 'in_transit') {
       _waitingUntil = null;
       _waitStartedAt = null;
       emit(
@@ -384,38 +384,29 @@ class RideFlowCubit({
     _waitingUntil = null;
 
     try {
-      RideSnapshot? arrivedRide;
-      Failure? arrivalFailure;
-      (await _rideRepository.markArrivedResult(
+      final result = await _rideRepository.markArrivedResult(
         rideId: activeRideId,
         latitude: driverLatitude,
         longitude: driverLongitude,
         observedAt: observedAt,
-      )).fold(
-        (failure) => arrivalFailure = failure,
-        (value) => arrivedRide = value,
       );
       if (!_isCurrentAction(actionGeneration)) return;
-      if (arrivalFailure != null || arrivedRide == null) {
-        emit(
-          RideFlowError(
-            arrivalFailure?.message ??
-                ErrorHandler.getErrorMessage(const ServerFailure()),
-          ),
-        );
-        return;
+      switch (result) {
+        case Err(:final failure):
+          emit(RideFlowError(failure.message));
+          return;
+        case Ok(value: final arrivedRide):
+          _waitingUntil = arrivedRide.waitingUntil;
+          _waitStartedAt = arrivedRide.arrivedAt;
+          _startWaitTimer(
+            actionGeneration: actionGeneration,
+            passengerName: passengerName,
+            pickupLatitude: pickupLatitude,
+            pickupLongitude: pickupLongitude,
+            destinationLatitude: destinationLatitude,
+            destinationLongitude: destinationLongitude,
+          );
       }
-      _waitingUntil = arrivedRide!.waitingUntil;
-
-      _waitStartedAt = arrivedRide!.arrivedAt;
-      _startWaitTimer(
-        actionGeneration: actionGeneration,
-        passengerName: passengerName,
-        pickupLatitude: pickupLatitude,
-        pickupLongitude: pickupLongitude,
-        destinationLatitude: destinationLatitude,
-        destinationLongitude: destinationLongitude,
-      );
     } catch (error) {
       if (!_isCurrentAction(actionGeneration)) return;
       dev.log('Error confirming arrival: $error');
@@ -438,11 +429,10 @@ class RideFlowCubit({
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
     try {
-      Failure? failure;
-      (await action(rideId)).fold((value) => failure = value, (_) {});
+      final result = await action(rideId);
       if (!_isCurrentAction(actionGeneration)) return false;
-      if (failure != null) {
-        emit(RideFlowError(ErrorHandler.getErrorMessage(failure!)));
+      if (result case Err(:final failure)) {
+        emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
         return false;
       }
       _clearLocalRideState();
@@ -619,22 +609,15 @@ class RideFlowCubit({
         return false;
       }
 
-      RideSnapshot? startedRide;
-      Failure? startFailure;
-      (await _rideRepository.startRideResult(
+      final startResult = await _rideRepository.startRideResult(
         rideId: activeRideId,
         latitude: driverLatitude,
         longitude: driverLongitude,
         observedAt: observedAt,
-      )).fold(
-        (failure) => startFailure = failure,
-        (value) => startedRide = value,
       );
       if (!_isCurrentAction(actionGeneration)) return false;
-      if (startFailure != null || startedRide == null) {
-        final message =
-            startFailure?.message ??
-            ErrorHandler.getErrorMessage(const ServerFailure());
+      if (startResult case Err(:final failure)) {
+        final message = failure.message;
         _lastActionFailureMessage = message;
         emit(RideFlowError(message));
         restoreWaitingAfterFailure();
@@ -671,13 +654,15 @@ class RideFlowCubit({
     if (rideId == null || rideId.isEmpty) return null;
 
     try {
-      RideSnapshot? ride;
-      (await _rideRepository.fetchRideResult(rideId))
-          .fold((_) {}, (value) => ride = value);
-      final latitude = ride?.dropoffLatitude;
-      final longitude = ride?.dropoffLongitude;
-      if (_isValidCoordinatePair(latitude, longitude)) {
-        return (latitude!, longitude!);
+      final result = await _rideRepository.fetchRideResult(rideId);
+      if (result case Ok(value: final ride)) {
+        final latitude = ride.dropoffLatitude;
+        final longitude = ride.dropoffLongitude;
+        if (latitude != null &&
+            longitude != null &&
+            _isValidCoordinatePair(latitude, longitude)) {
+          return (latitude, longitude);
+        }
       }
     } catch (error, stackTrace) {
       dev.log(
@@ -714,56 +699,42 @@ class RideFlowCubit({
     }
 
     try {
-      RideSnapshot? ride;
-      Failure? loadFailure;
-      (await _rideRepository.fetchRideResult(rideId))
-          .fold((failure) => loadFailure = failure, (value) => ride = value);
+      final fetchResult = await _rideRepository.fetchRideResult(rideId);
       if (!_isCurrentAction(actionGeneration)) return null;
-      if (ride == null) {
-        final failure = loadFailure;
-        emit(
-          RideFlowError(
-            failure == null
-                ? 'Unable to load the active ride.'
-                : ErrorHandler.getErrorMessage(failure),
-          ),
-        );
-        return null;
+      final RideSnapshot ride;
+      switch (fetchResult) {
+        case Err(:final failure):
+          emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
+          return null;
+        case Ok(:final value):
+          ride = value;
       }
-      _activePassengerId ??= ride!.passengerId;
-      _activePassengerName ??= ride!.passengerName;
-      final status = ride!.status;
-      if (status != 'completed') {
-        RideSnapshot? completedRide;
-        Failure? completionFailure;
-        (await _rideRepository.completeRideResult(
-          rideId: rideId,
-          latitude: driverLatitude,
-          longitude: driverLongitude,
-        )).fold(
-          (failure) => completionFailure = failure,
-          (value) => completedRide = value,
-        );
-        if (!_isCurrentAction(actionGeneration)) return null;
-        if (completionFailure != null || completedRide == null) {
+
+      _activePassengerId ??= ride.passengerId;
+      _activePassengerName ??= ride.passengerName;
+      if (ride.status == 'completed') {
+        return ride;
+      }
+
+      final completionResult = await _rideRepository.completeRideResult(
+        rideId: rideId,
+        latitude: driverLatitude,
+        longitude: driverLongitude,
+      );
+      if (!_isCurrentAction(actionGeneration)) return null;
+      switch (completionResult) {
+        case Ok(:final value):
+          return value;
+        case Err(:final failure):
           final recheck = await _rideRepository.fetchRideResult(rideId);
           if (!_isCurrentAction(actionGeneration)) return null;
-          RideSnapshot? authoritative;
-          recheck.fold((_) {}, (r) => authoritative = r);
-          if (authoritative != null && authoritative!.status == 'completed') {
+          if (recheck case Ok(value: final authoritative)
+              when authoritative.status == 'completed') {
             return authoritative;
           }
-          emit(
-            RideFlowError(
-              completionFailure?.message ??
-                  ErrorHandler.getErrorMessage(const ServerFailure()),
-            ),
-          );
+          emit(RideFlowError(failure.message));
           return null;
-        }
-        ride = completedRide;
       }
-      return ride;
     } catch (error) {
       if (!_isCurrentAction(actionGeneration)) return null;
       dev.log('Error completing ride on backend: $error');
@@ -817,6 +788,7 @@ class RideFlowCubit({
   void _clearLocalRideState({bool clearLastFailure = false}) {
     _waitTimer?.cancel();
     _stopRideStatusSyncTimer();
+    _isRideCompletionPending = false;
     _activeRideId = null;
     _activeBookingReference = null;
     _activePassengerId = null;
