@@ -7,6 +7,7 @@ import 'package:driver/src/features/active_ride/domain/services/ride_completion_
 import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
+import 'package:driver/src/features/active_ride/presentation/controllers/driver_trip_chat_tracker.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_trip_panel.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/ride_cancellation_sheet.dart';
 import 'package:driver/src/features/chat/chat_routes.dart';
@@ -49,8 +50,8 @@ class _DriverTripPageState extends State<DriverTripPage> {
   late final LiveMapBloc _liveMapBloc;
   late final RideFlowCubit _rideCubit;
   late final AppLifecyclePeriodicTask _trackingTask;
-  ChatRepository? _chatRepository;
-  String? _driverId;
+  late final DriverTripChatTracker _chatTracker;
+  final ValueNotifier<double> _progressNotifier = ValueNotifier<double>(0);
   double? _pickupLatitude;
   double? _pickupLongitude;
   double? _destinationLatitude;
@@ -58,24 +59,26 @@ class _DriverTripPageState extends State<DriverTripPage> {
   final _panelKey = GlobalKey();
   Widget? _map;
   AppMapController? _mapController;
-  double _progress = 0;
   bool _isActing = false;
   String? _notice;
   bool _isRefreshing = false;
   bool _tripFinished = false;
-  int _unreadChatMessagesCount = 0;
-  int _viewedPassengerMessagesCount = 0;
-  bool _isInitialChatMessagesCountFetched = false;
 
   @override
   void initState() {
     super.initState();
     _rideCubit = BlocProvider.of<RideFlowCubit>(context);
     _liveMapBloc = BlocProvider.of<LiveMapBloc>(context);
+    _chatTracker = DriverTripChatTracker(
+      chatRepositoryFactory: widget.chatRepositoryFactory,
+      sessionService: widget.sessionService,
+      lifecycleCoordinator: widget.lifecycleCoordinator,
+    );
     _pickupLatitude = _rideCubit.state.pickupLatitude;
     _pickupLongitude = _rideCubit.state.pickupLongitude;
     _destinationLatitude = _rideCubit.state.destinationLatitude;
     _destinationLongitude = _rideCubit.state.destinationLongitude;
+    _ensureMap(_rideCubit.state);
     unawaited(WakelockPlus.enable());
     _trackingTask = AppLifecyclePeriodicTask(
       lifecycleCoordinator: widget.lifecycleCoordinator,
@@ -87,24 +90,39 @@ class _DriverTripPageState extends State<DriverTripPage> {
     unawaited(_initialize());
   }
 
-  Future<String> _resolveDriverId() async {
-    final cached = _driverId;
-    if (cached != null && cached.isNotEmpty) return cached;
-    final driverId = await widget.sessionService.readDriverId() ?? '';
-    if (driverId.isNotEmpty) {
-      _driverId = driverId;
-    }
-    return driverId;
+  void _ensureMap(RideState state) {
+    if (_map != null) return;
+    final position = LocationService.lastPosition;
+    final latitude =
+        position?.latitude ??
+        state.pickupLatitude ??
+        _pickupLatitude ??
+        state.destinationLatitude ??
+        _destinationLatitude;
+    final longitude =
+        position?.longitude ??
+        state.pickupLongitude ??
+        _pickupLongitude ??
+        state.destinationLongitude ??
+        _destinationLongitude;
+    if (latitude == null || longitude == null) return;
+    _map = MapProvider.buildMapView(
+      latitude: latitude,
+      longitude: longitude,
+      zoom: 15,
+      onMapCreated: (controller) => _mapController = controller,
+      onMapLoaded: () {
+        final controller = _mapController;
+        if (mounted && controller != null) {
+          _onMapCreated(controller, latitude, longitude);
+        }
+      },
+    );
   }
 
   Future<void> _initialize() async {
-    final driverId = await _resolveDriverId();
+    await _chatTracker.initialize();
     if (!mounted) return;
-    if (driverId.isNotEmpty) {
-      _chatRepository = widget.chatRepositoryFactory.create(
-        currentUserId: driverId,
-      );
-    }
     try {
       if (_pickupLatitude == null && _rideCubit.state is! TripInProgress) {
         final places = await MapProvider.searchPlaces(widget.pickup);
@@ -122,7 +140,11 @@ class _DriverTripPageState extends State<DriverTripPage> {
           _destinationLongitude = places.first.longitude;
         }
       }
-      if (mounted) setState(() {});
+      final hadMap = _map != null;
+      _ensureMap(_rideCubit.state);
+      if (mounted && !hadMap && _map != null) {
+        setState(() {});
+      }
       await _refreshTracking();
     } catch (_) {
       // The periodic refresh keeps the trip usable after a transient map failure.
@@ -133,7 +155,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
     if (!mounted || _isRefreshing || _tripFinished) return;
     _isRefreshing = true;
     try {
-      await _updateUnreadMessagesCount(_rideCubit);
+      await _chatTracker.refreshUnreadCount(_rideCubit.activeRideId);
       if (!mounted) return;
       if (_rideCubit.state is TripInProgress) {
         await _rideCubit.refreshPassengerLocation();
@@ -204,6 +226,10 @@ class _DriverTripPageState extends State<DriverTripPage> {
   }
 
   void _onRideChanged(BuildContext context, RideState state) {
+    if (_map == null) {
+      _ensureMap(state);
+      if (mounted && _map != null) setState(() {});
+    }
     if (state is RideFlowTerminal) {
       unawaited(_finishTrip());
       return;
@@ -319,11 +345,9 @@ class _DriverTripPageState extends State<DriverTripPage> {
     } catch (error) {
       _showError(ErrorHandler.getErrorMessage(error));
     } finally {
+      _progressNotifier.value = 0;
       if (mounted) {
-        setState(() {
-          _isActing = false;
-          _progress = 0;
-        });
+        setState(() => _isActing = false);
       }
     }
   }
@@ -355,14 +379,10 @@ class _DriverTripPageState extends State<DriverTripPage> {
   }
 
   Future<void> _openChat() async {
-    final driverId = await _resolveDriverId();
+    final driverId = await _chatTracker.resolveDriverId();
     final rideId = _rideCubit.activeRideId;
     if (!mounted || driverId.isEmpty || rideId == null) return;
-    setState(() {
-      _viewedPassengerMessagesCount += _unreadChatMessagesCount;
-      _unreadChatMessagesCount = 0;
-      _isInitialChatMessagesCountFetched = true;
-    });
+    _chatTracker.markCurrentUnreadViewed();
     await context.pushNamed(
       ChatRoutes.chat,
       extra: {
@@ -372,42 +392,12 @@ class _DriverTripPageState extends State<DriverTripPage> {
         'peerName': _rideCubit.activePassengerName,
       },
     );
-    if (mounted) await _updateUnreadMessagesCount(_rideCubit);
-  }
-
-  Future<void> _updateUnreadMessagesCount(RideFlowCubit cubit) async {
-    if (!widget.lifecycleCoordinator.isForeground) return;
-    try {
-      final rideId = cubit.activeRideId;
-      if (rideId == null || rideId.isEmpty) return;
-
-      final driverIdentifier = await _resolveDriverId();
-      if (driverIdentifier.isEmpty) return;
-
-      final chatRepository = _chatRepository;
-      if (chatRepository == null) return;
-      final result = await chatRepository.fetchRoomMessages(rideId);
-      result.fold((_) => null, (List<ChatMessage> messages) {
-        var currentPassengerMessagesCount = 0;
-        for (final message in messages) {
-          if (message.senderId != driverIdentifier) {
-            currentPassengerMessagesCount++;
-          }
-        }
-
-        if (!_isInitialChatMessagesCountFetched) {
-          _viewedPassengerMessagesCount = 0;
-          _isInitialChatMessagesCountFetched = true;
-        }
-        final unreadCount =
-            (currentPassengerMessagesCount - _viewedPassengerMessagesCount)
-                .clamp(0, currentPassengerMessagesCount)
-                .toInt();
-        if (mounted && unreadCount != _unreadChatMessagesCount) {
-          setState(() => _unreadChatMessagesCount = unreadCount);
-        }
-      });
-    } catch (_) {}
+    if (mounted) {
+      await _chatTracker.refreshUnreadCount(
+        _rideCubit.activeRideId,
+        markAllViewed: true,
+      );
+    }
   }
 
   Future<void> _cancelRide() async {
@@ -436,143 +426,127 @@ class _DriverTripPageState extends State<DriverTripPage> {
 
   @override
   void dispose() {
+    _progressNotifier.dispose();
     unawaited(_trackingTask.dispose());
-    unawaited(_chatRepository?.dispose());
+    unawaited(_chatTracker.dispose());
     unawaited(WakelockPlus.disable());
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<RideFlowCubit, RideState>(
-      buildWhen: (_, current) =>
-          current is DriverEnRoute || current is TripInProgress,
+    return BlocListener<RideFlowCubit, RideState>(
       listenWhen: (previous, current) =>
           previous.runtimeType != current.runtimeType,
       listener: _onRideChanged,
-      builder: (context, state) {
-        final position = LocationService.lastPosition;
-        final latitude =
-            position?.latitude ??
-            state.pickupLatitude ??
-            _pickupLatitude ??
-            state.destinationLatitude ??
-            _destinationLatitude;
-        final longitude =
-            position?.longitude ??
-            state.pickupLongitude ??
-            _pickupLongitude ??
-            state.destinationLongitude ??
-            _destinationLongitude;
-        if (_map == null && latitude != null && longitude != null) {
-          _map = MapProvider.buildMapView(
-            latitude: latitude,
-            longitude: longitude,
-            zoom: 15,
-            onMapCreated: (controller) => _mapController = controller,
-            onMapLoaded: () {
-              final controller = _mapController;
-              if (mounted && controller != null) {
-                _onMapCreated(controller, latitude, longitude);
-              }
-            },
-          );
-        }
-        return PopScope(
-          canPop: !_isActing,
-          child: Scaffold(
-            body: Stack(
-              children: [
-                Positioned.fill(
-                  child:
-                      _map ??
-                      const Center(child: Text('Map location is unavailable.')),
-                ),
-                SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: Material(
-                      color: context.colorScheme.surfaceContainerLowest,
-                      shape: CircleBorder(
-                        side: BorderSide(
-                          color: context.colorScheme.outlineVariant,
-                        ),
-                      ),
-                      elevation: 1,
-                      shadowColor: context.colorScheme.shadow,
-                      child: IconButton(
-                        key: const ValueKey<String>('driver-trip-back'),
-                        tooltip: 'Back to dashboard',
-                        onPressed: _isActing ? null : () => context.pop(),
-                        style:
-                            IconButton.styleFrom(
-                              foregroundColor: context.colorScheme.onSurface,
-                              shape: const CircleBorder(),
-                              enableFeedback: false,
-                              splashFactory: NoSplash.splashFactory,
-                            ).copyWith(
-                              overlayColor: WidgetStateProperty.resolveWith((
-                                states,
-                              ) {
-                                if (states.contains(WidgetState.focused)) {
-                                  return context.colorScheme.primary.withValues(
-                                    alpha: 0.12,
-                                  );
-                                }
-                                return Colors.transparent;
-                              }),
-                            ),
-                        icon: const Icon(LucideIcons.arrow_left, size: 20),
+      child: PopScope(
+        canPop: !_isActing,
+        child: Scaffold(
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child:
+                    _map ??
+                    const Center(child: Text('Map location is unavailable.')),
+              ),
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Material(
+                    color: context.colorScheme.surfaceContainerLowest,
+                    shape: CircleBorder(
+                      side: BorderSide(
+                        color: context.colorScheme.outlineVariant,
                       ),
                     ),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: SafeArea(
-                    top: false,
-                    child: LayoutBuilder(
-                      builder: (context, constraints) => ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: 600,
-                          maxHeight: constraints.maxHeight * 0.72,
-                        ),
-                        child: SingleChildScrollView(
-                          key: _panelKey,
-                          child: DriverTripPanel(
-                            state: state,
-                            pickup: widget.pickup,
-                            dropoff: widget.dropoff,
-                            fare: widget.fare,
-                            progress: _progress,
-                            isBusy: _isActing,
-                            unreadCount: _unreadChatMessagesCount,
-                            notice: _notice,
-                            onDismissNotice: () =>
-                                setState(() => _notice = null),
-                            onProgressChanged: (value) => setState(() {
-                              _progress = value;
-                              if (value > 0) _notice = null;
+                    elevation: 1,
+                    shadowColor: context.colorScheme.shadow,
+                    child: IconButton(
+                      key: const ValueKey<String>('driver-trip-back'),
+                      tooltip: 'Back to dashboard',
+                      onPressed: _isActing ? null : () => context.pop(),
+                      style:
+                          IconButton.styleFrom(
+                            foregroundColor: context.colorScheme.onSurface,
+                            shape: const CircleBorder(),
+                            enableFeedback: false,
+                            splashFactory: NoSplash.splashFactory,
+                          ).copyWith(
+                            overlayColor: WidgetStateProperty.resolveWith((
+                              states,
+                            ) {
+                              if (states.contains(WidgetState.focused)) {
+                                return context.colorScheme.primary.withValues(
+                                  alpha: 0.12,
+                                );
+                              }
+                              return Colors.transparent;
                             }),
-                            onAdvance: _advance,
-                            onChat: _openChat,
-                            onCancel: _cancelRide,
-                            noShowRemaining:
-                                _rideCubit.passengerNoShowTimeRemaining,
-                            onNoShow: _rideCubit.canMarkPassengerNoShow
-                                ? _markNoShow
-                                : null,
                           ),
+                      icon: const Icon(LucideIcons.arrow_left, size: 20),
+                    ),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: SafeArea(
+                  top: false,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: 600,
+                        maxHeight: constraints.maxHeight * 0.72,
+                      ),
+                      child: SingleChildScrollView(
+                        key: _panelKey,
+                        child: BlocBuilder<RideFlowCubit, RideState>(
+                          buildWhen: (_, current) =>
+                              current is DriverEnRoute ||
+                              current is TripInProgress,
+                          builder: (context, state) {
+                            return ValueListenableBuilder<int>(
+                              valueListenable: _chatTracker.unreadCount,
+                              builder: (context, unreadCount, _) =>
+                                  DriverTripPanel(
+                                    state: state,
+                                    pickup: widget.pickup,
+                                    dropoff: widget.dropoff,
+                                    fare: widget.fare,
+                                    progress: _progressNotifier.value,
+                                    progressListenable: _progressNotifier,
+                                    isBusy: _isActing,
+                                    unreadCount: unreadCount,
+                                    notice: _notice,
+                                    onDismissNotice: () =>
+                                        setState(() => _notice = null),
+                                    onProgressChanged: (value) {
+                                      _progressNotifier.value = value;
+                                      if (value > 0 && _notice != null) {
+                                        setState(() => _notice = null);
+                                      }
+                                    },
+                                    onAdvance: _advance,
+                                    onChat: _openChat,
+                                    onCancel: _cancelRide,
+                                    noShowRemaining:
+                                        _rideCubit.passengerNoShowTimeRemaining,
+                                    onNoShow: _rideCubit.canMarkPassengerNoShow
+                                        ? _markNoShow
+                                        : null,
+                                  ),
+                            );
+                          },
                         ),
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

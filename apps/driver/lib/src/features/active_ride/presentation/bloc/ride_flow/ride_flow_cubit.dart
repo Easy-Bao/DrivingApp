@@ -5,6 +5,7 @@ import 'package:core_domain/core_domain.dart';
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
+import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_session_coordinator.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
@@ -12,20 +13,16 @@ import 'package:maps/maps.dart';
 
 class RideFlowCubit({
   required this._rideRepository,
-  required this._sessionService,
+  required SessionStore sessionService,
 }) extends Cubit<RideFlowState> {
   final RideRepository _rideRepository;
-  final SessionStore _sessionService;
+  final RideFlowSessionCoordinator _sessionCoordinator;
+  final RideFlowWaitTracker _waitTracker = RideFlowWaitTracker();
 
   String? _activeRideId;
   String? _activeBookingReference;
   String? _activePassengerId;
   String? _activePassengerName;
-  Timer? _waitTimer;
-  Future<void> _activeRideIdWriteQueue = Future<void>.value();
-  int _elapsedWaitTime = 0;
-  DateTime? _waitingUntil;
-  DateTime? _waitStartedAt;
   bool _isActionInFlight = false;
   String? _lastActionFailureMessage;
   int _actionGeneration = 0;
@@ -35,9 +32,12 @@ class RideFlowCubit({
   bool _isRideCompletionPending = false;
 
   static const _rideStatusSyncInterval = Duration(seconds: 15);
-  static const _noShowClockSkewBuffer = Duration(seconds: 5);
 
-  this : super(const RideFlowInitial());
+  this
+    : _sessionCoordinator = RideFlowSessionCoordinator(
+        sessionService: sessionService,
+      ),
+      super(const RideFlowInitial());
 
   /// Retains rejected action feedback while the active snapshot is restored
   /// so map coordinates and retry controls survive a recoverable failure.
@@ -47,8 +47,11 @@ class RideFlowCubit({
   String? get activeBookingReference => _activeBookingReference;
   String? get activePassengerId => _activePassengerId;
   String get activePassengerName => _activePassengerName ?? 'Passenger';
-  DateTime? get _passengerNoShowEligibleAt =>
-      _waitingUntil?.add(_noShowClockSkewBuffer);
+
+  bool get canMarkPassengerNoShow => _waitTracker.canMarkPassengerNoShow;
+
+  Duration? get passengerNoShowTimeRemaining =>
+      _waitTracker.passengerNoShowTimeRemaining;
 
   Future<void> syncAuthoritativeRideState() async {
     final rideId = _activeRideId;
@@ -133,7 +136,7 @@ class RideFlowCubit({
     _clearLocalRideState();
     _isActionInFlight = true;
     _isRideCompletionPending = false;
-    await _clearActiveRideSession();
+    await _sessionCoordinator.clearActiveRideSession();
     if (!_isCurrentAction(actionGeneration)) return;
     _isActionInFlight = false;
     emit(
@@ -171,8 +174,7 @@ class RideFlowCubit({
       final result = await _rideRepository.fetchPassengerLocationResult(rideId);
       if (isClosed || _activeRideId != rideId) return;
 
-      result.fold((_) {}, (location) {
-        if (location == null) return;
+      if (result case Ok(value: final location?)) {
         final currentState = state;
         if (currentState is! RideFlowInTransit) return;
         emit(
@@ -185,7 +187,7 @@ class RideFlowCubit({
             passengerLongitude: location.$2,
           ),
         );
-      });
+      }
     } catch (_) {
       // A later tracking refresh can recover from a transient location error.
     }
@@ -214,7 +216,7 @@ class RideFlowCubit({
       final actionGeneration = ++_actionGeneration;
       _clearLocalRideState();
       _isActionInFlight = true;
-      await _clearActiveRideSession();
+      await _sessionCoordinator.clearActiveRideSession();
       if (!_isCurrentAction(actionGeneration)) return false;
       _isActionInFlight = false;
       emit(const RideFlowError('This trip is no longer active.'));
@@ -227,18 +229,20 @@ class RideFlowCubit({
       return false;
     }
     final actionGeneration = ++_actionGeneration;
-    _waitTimer?.cancel();
+    _waitTracker.cancelTimer();
     _isActionInFlight = true;
     _activeRideId = typedRideId.normalized;
     _activeBookingReference = bookingReference;
     _activePassengerId = passengerId;
     _activePassengerName = passengerName;
-    await _saveActiveRideSession(typedRideId.normalized);
+    await _sessionCoordinator.saveActiveRideSession(typedRideId.normalized);
     if (!_isCurrentAction(actionGeneration)) return false;
     _isActionInFlight = false;
-    _waitingUntil = waitingUntil?.toUtc();
     if (normalizedStatus == 'arrived') {
-      _waitStartedAt = arrivedAt?.toUtc() ?? DateTime.now().toUtc();
+      _waitTracker.configure(
+        waitingUntil: waitingUntil,
+        waitStartedAt: arrivedAt ?? DateTime.now().toUtc(),
+      );
       _startWaitTimer(
         actionGeneration: _actionGeneration,
         passengerName: passengerName,
@@ -248,8 +252,7 @@ class RideFlowCubit({
         destinationLongitude: destinationLongitude,
       );
     } else if (normalizedStatus == 'in_transit') {
-      _waitingUntil = null;
-      _waitStartedAt = null;
+      _waitTracker.clear();
       emit(
         RideFlowInTransit(
           passengerName: passengerName,
@@ -261,8 +264,7 @@ class RideFlowCubit({
         ),
       );
     } else {
-      _waitingUntil = null;
-      _waitStartedAt = null;
+      _waitTracker.clear();
       emit(
         RideFlowNavigatingToPickup(
           passengerName: passengerName,
@@ -276,18 +278,6 @@ class RideFlowCubit({
     _isRideCompletionPending = false;
     _startRideStatusSyncTimer();
     return true;
-  }
-
-  bool get canMarkPassengerNoShow {
-    final eligibleAt = _passengerNoShowEligibleAt;
-    return eligibleAt != null && !DateTime.now().toUtc().isBefore(eligibleAt);
-  }
-
-  Duration? get passengerNoShowTimeRemaining {
-    final eligibleAt = _passengerNoShowEligibleAt;
-    if (eligibleAt == null) return null;
-    final remaining = eligibleAt.difference(DateTime.now().toUtc());
-    return remaining.isNegative ? Duration.zero : remaining;
   }
 
   Future<void> acceptRide({
@@ -310,11 +300,11 @@ class RideFlowCubit({
     _activePassengerName = passengerName;
     _isRideCompletionPending = false;
 
-    final driverId = await _sessionService.readDriverId();
+    final driverId = await _sessionCoordinator.readDriverId();
     if (!_isCurrentAction(actionGeneration)) return;
     if (driverId == null || driverId.isEmpty) {
       _activeRideId = null;
-      await _clearActiveRideSession();
+      await _sessionCoordinator.clearActiveRideSession();
       if (!_isCurrentAction(actionGeneration)) return;
       _isActionInFlight = false;
       emit(RideFlowError(ErrorHandler.getErrorMessage(const AuthFailure())));
@@ -327,17 +317,16 @@ class RideFlowCubit({
         driverId: driverId,
       );
       if (!_isCurrentAction(actionGeneration)) return;
-      final failure = result.fold<Failure?>((value) => value, (_) => null);
-      if (failure != null) {
+      if (result case Err(:final failure)) {
         _activeRideId = null;
-        await _clearActiveRideSession();
+        await _sessionCoordinator.clearActiveRideSession();
         if (!_isCurrentAction(actionGeneration)) return;
         _isActionInFlight = false;
         emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
         return;
       }
 
-      await _saveActiveRideSession(typedRideId.normalized);
+      await _sessionCoordinator.saveActiveRideSession(typedRideId.normalized);
       if (!_isCurrentAction(actionGeneration)) return;
 
       emit(
@@ -379,9 +368,7 @@ class RideFlowCubit({
     _lastActionFailureMessage = null;
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
-    _waitTimer?.cancel();
-    _elapsedWaitTime = 0;
-    _waitingUntil = null;
+    _waitTracker.clear();
 
     try {
       final result = await _rideRepository.markArrivedResult(
@@ -396,8 +383,10 @@ class RideFlowCubit({
           emit(RideFlowError(failure.message));
           return;
         case Ok(value: final arrivedRide):
-          _waitingUntil = arrivedRide.waitingUntil;
-          _waitStartedAt = arrivedRide.arrivedAt;
+          _waitTracker.configure(
+            waitingUntil: arrivedRide.waitingUntil,
+            waitStartedAt: arrivedRide.arrivedAt,
+          );
           _startWaitTimer(
             actionGeneration: actionGeneration,
             passengerName: passengerName,
@@ -436,7 +425,7 @@ class RideFlowCubit({
         return false;
       }
       _clearLocalRideState();
-      await _clearActiveRideSession();
+      await _sessionCoordinator.clearActiveRideSession();
       if (!_isCurrentAction(actionGeneration)) return false;
       emit(const RideFlowInitial());
       return true;
@@ -502,37 +491,19 @@ class RideFlowCubit({
     double? destinationLatitude,
     double? destinationLongitude,
   }) {
-    _waitTimer?.cancel();
-    _waitStartedAt ??= DateTime.now().toUtc();
-    void emitWaiting() {
-      if (!_isCurrentAction(actionGeneration)) return;
-      _elapsedWaitTime = _calculateElapsedWaitSeconds();
-      emit(
+    _waitTracker.start(
+      isActive: () => _isCurrentAction(actionGeneration),
+      onTick: (elapsedSeconds) => emit(
         RideFlowWaitingPassenger(
           passengerName: passengerName,
-          waitTimeSeconds: _elapsedWaitTime,
+          waitTimeSeconds: elapsedSeconds,
           pickupLatitude: pickupLatitude,
           pickupLongitude: pickupLongitude,
           destinationLatitude: destinationLatitude,
           destinationLongitude: destinationLongitude,
         ),
-      );
-    }
-
-    emitWaiting();
-    _waitTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!_isCurrentAction(actionGeneration)) {
-        _waitTimer?.cancel();
-        return;
-      }
-      emitWaiting();
-    });
-  }
-
-  int _calculateElapsedWaitSeconds() {
-    final start = _waitStartedAt ?? DateTime.now().toUtc();
-    final elapsed = DateTime.now().toUtc().difference(start).inSeconds;
-    return elapsed.clamp(0, 24 * 60 * 60).toInt();
+      ),
+    );
   }
 
   Future<bool> startRide({
@@ -553,7 +524,7 @@ class RideFlowCubit({
       emit(const RideFlowError('This trip is no longer active.'));
       return false;
     }
-    if (!_isValidCoordinatePair(driverLatitude, driverLongitude)) {
+    if (!isValidCoordinatePair(driverLatitude, driverLongitude)) {
       emit(
         RideFlowError(ErrorHandler.getErrorMessage(const LocationFailure())),
       );
@@ -562,18 +533,18 @@ class RideFlowCubit({
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
     final waitingBeforeStart = state;
-    final waitingUntilBeforeStart = _waitingUntil;
-    final waitStartedAtBeforeStart = _waitStartedAt;
-    _waitTimer?.cancel();
-    _waitingUntil = null;
-    _waitStartedAt = null;
+    final waitingUntilBeforeStart = _waitTracker.waitingUntil;
+    final waitStartedAtBeforeStart = _waitTracker.waitStartedAt;
+    _waitTracker.clear();
 
     // A rejected start leaves the ride arrived on the server, so the waiting
     // snapshot, deadline and timer must survive to allow a retry or no-show.
     void restoreWaitingAfterFailure() {
       if (waitingBeforeStart is! RideFlowWaitingPassenger) return;
-      _waitingUntil = waitingUntilBeforeStart;
-      _waitStartedAt = waitStartedAtBeforeStart;
+      _waitTracker.configure(
+        waitingUntil: waitingUntilBeforeStart,
+        waitStartedAt: waitStartedAtBeforeStart,
+      );
       _startWaitTimer(
         actionGeneration: actionGeneration,
         passengerName: waitingBeforeStart.passengerName,
@@ -595,7 +566,7 @@ class RideFlowCubit({
         resolvedDestinationLongitude = recoveredDestination?.$2;
       }
 
-      if (!_isValidCoordinatePair(
+      if (!isValidCoordinatePair(
         resolvedDestinationLatitude,
         resolvedDestinationLongitude,
       )) {
@@ -660,7 +631,7 @@ class RideFlowCubit({
         final longitude = ride.dropoffLongitude;
         if (latitude != null &&
             longitude != null &&
-            _isValidCoordinatePair(latitude, longitude)) {
+            isValidCoordinatePair(latitude, longitude)) {
           return (latitude, longitude);
         }
       }
@@ -672,17 +643,6 @@ class RideFlowCubit({
       );
     }
     return null;
-  }
-
-  bool _isValidCoordinatePair(double? latitude, double? longitude) {
-    return latitude != null &&
-        longitude != null &&
-        latitude.isFinite &&
-        longitude.isFinite &&
-        latitude >= -90 &&
-        latitude <= 90 &&
-        longitude >= -180 &&
-        longitude <= 180;
   }
 
   Future<RideSnapshot?> _loadCompletedRide(
@@ -752,7 +712,7 @@ class RideFlowCubit({
     _lastActionFailureMessage = null;
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
-    _waitTimer?.cancel();
+    _waitTracker.cancelTimer();
     try {
       final ride = await _loadCompletedRide(
         actionGeneration,
@@ -779,67 +739,29 @@ class RideFlowCubit({
     _clearLocalRideState(clearLastFailure: true);
     _isRideCompletionPending = false;
     _isActionInFlight = true;
-    await _clearActiveRideSession();
+    await _sessionCoordinator.clearActiveRideSession();
     if (!_isCurrentAction(actionGeneration)) return;
     _isActionInFlight = false;
     emit(const RideFlowInitial());
   }
 
   void _clearLocalRideState({bool clearLastFailure = false}) {
-    _waitTimer?.cancel();
+    _waitTracker.clear();
     _stopRideStatusSyncTimer();
     _isRideCompletionPending = false;
     _activeRideId = null;
     _activeBookingReference = null;
     _activePassengerId = null;
     _activePassengerName = null;
-    _waitingUntil = null;
-    _waitStartedAt = null;
-    _elapsedWaitTime = 0;
     if (clearLastFailure) {
       _lastActionFailureMessage = null;
     }
   }
 
-  Future<void> _clearActiveRideSession() =>
-      _serializeActiveRideIdWrite(() async {
-        try {
-          await _sessionService.clearActiveRideId();
-        } catch (error, stackTrace) {
-          dev.log(
-            'Unable to clear the locally cached active ride',
-            error: error,
-            stackTrace: stackTrace,
-          );
-        }
-      });
-
-  Future<void> _saveActiveRideSession(String rideId) =>
-      _serializeActiveRideIdWrite(() async {
-        try {
-          await _sessionService.saveActiveRideId(rideId);
-        } catch (error, stackTrace) {
-          dev.log(
-            'Unable to cache the active ride for recovery',
-            error: error,
-            stackTrace: stackTrace,
-          );
-        }
-      });
-
-  Future<void> _serializeActiveRideIdWrite(Future<void> Function() write) {
-    final operation = _activeRideIdWriteQueue.then((_) => write());
-    _activeRideIdWriteQueue = operation.then<void>(
-      (_) {},
-      onError: (Object error, StackTrace stackTrace) {},
-    );
-    return operation;
-  }
-
   @override
   Future<void> close() {
     ++_actionGeneration;
-    _waitTimer?.cancel();
+    _waitTracker.clear();
     _stopRideStatusSyncTimer();
     return super.close();
   }

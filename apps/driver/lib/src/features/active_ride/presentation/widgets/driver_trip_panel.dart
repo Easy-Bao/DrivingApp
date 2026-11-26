@@ -2,6 +2,7 @@ import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/ride_confirmation_slider.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/ride_passenger_row.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:material_ui/material_ui.dart';
@@ -13,6 +14,7 @@ class const DriverTripPanel({
   required this.dropoff,
   required this.fare,
   required this.progress,
+  this.progressListenable,
   required this.isBusy,
   required this.unreadCount,
   required this.onProgressChanged,
@@ -29,6 +31,7 @@ class const DriverTripPanel({
   final String dropoff;
   final double fare;
   final double progress;
+  final ValueListenable<double>? progressListenable;
   final bool isBusy;
   final int unreadCount;
   final ValueChanged<double> onProgressChanged;
@@ -174,6 +177,28 @@ class const DriverTripPanel({
                         }),
                       ),
                   child: Text(isBusy ? 'Starting trip…' : 'Start trip'),
+                ),
+              )
+            else if (progressListenable case final listenable?)
+              ValueListenableBuilder<double>(
+                valueListenable: listenable,
+                builder: (context, sliderProgress, _) => RideConfirmationSlider(
+                  progress: sliderProgress,
+                  label: inTransit
+                      ? 'Slide to complete trip'
+                      : 'Slide when you arrive',
+                  releaseLabel: inTransit
+                      ? 'Release to complete'
+                      : 'Release to confirm',
+                  processingLabel: inTransit
+                      ? 'Completing trip…'
+                      : 'Confirming arrival…',
+                  hint: inTransit
+                      ? 'Swipe right to complete the trip.'
+                      : 'Swipe right to confirm arrival.',
+                  isProcessing: isBusy,
+                  onProgressChanged: onProgressChanged,
+                  onConfirmed: onAdvance,
                 ),
               )
             else

@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart' show Color, EdgeInsets;
 import 'package:rxdart/rxdart.dart';
@@ -44,6 +45,9 @@ class LiveMapBloc({required this._rideRepository})
   double? _routeOriginLongitude;
   DateTime? _lastCameraFitAt;
   bool _hasFittedCamera = false;
+  (double, double)? _lastDriverPosition;
+  (double, double)? _lastPassengerPosition;
+  (double, double)? _lastDestinationPosition;
   Color _routeColor = TripMapMarkerStyle.ownLocation;
   int _mapViewGeneration = 0;
   int _routeOperationGeneration = 0;
@@ -73,12 +77,9 @@ class LiveMapBloc({required this._rideRepository})
         latitude: event.latitude,
         longitude: event.longitude,
       );
-      result.fold(
-        (failure) => dev.log(
-          'Unable to publish driver location update: ${failure.message}',
-        ),
-        (_) {},
-      );
+      if (result case Err(:final failure)) {
+        dev.log('Unable to publish driver location update: ${failure.message}');
+      }
     } catch (error, stackTrace) {
       dev.log(
         'Unable to publish driver location update',
@@ -133,49 +134,61 @@ class LiveMapBloc({required this._rideRepository})
     if (targetLatitude == null || targetLongitude == null) return;
 
     try {
-      final driverMarkerManager = await _upsertMarker(
-        _driverMarkerManager,
-        mapController,
-        event.driverLatitude,
-        event.driverLongitude,
-        isOrigin: true,
-        color: TripMapMarkerStyle.ownLocation,
-        animate: true,
-      );
-      if (!_isCurrentRouteOperation(
-        routeOperationGeneration,
-        viewGeneration,
-        mapController,
-      )) {
-        if (_driverMarkerManager == null) {
-          await _clearAnnotations(driverMarkerManager);
-        }
-        return;
-      }
-      _driverMarkerManager = driverMarkerManager;
-
-      if (event.routeTargetLatitude == null &&
-          event.passengerLatitude != null &&
-          event.passengerLongitude != null) {
-        final passengerMarkerManager = await _upsertMarker(
-          _passengerMarkerManager,
+      final driverPosition = (event.driverLatitude, event.driverLongitude);
+      if (_driverMarkerManager == null ||
+          !_isSamePosition(_lastDriverPosition, driverPosition)) {
+        final driverMarkerManager = await _upsertMarker(
+          _driverMarkerManager,
           mapController,
-          event.passengerLatitude!,
-          event.passengerLongitude!,
-          color: TripMapMarkerStyle.tripLocation,
+          event.driverLatitude,
+          event.driverLongitude,
+          isOrigin: true,
+          color: TripMapMarkerStyle.ownLocation,
+          animate: true,
         );
         if (!_isCurrentRouteOperation(
           routeOperationGeneration,
           viewGeneration,
           mapController,
         )) {
-          if (_passengerMarkerManager == null) {
-            await _clearAnnotations(passengerMarkerManager);
+          if (_driverMarkerManager == null) {
+            await _clearAnnotations(driverMarkerManager);
           }
           return;
         }
-        _passengerMarkerManager = passengerMarkerManager;
-      } else {
+        _driverMarkerManager = driverMarkerManager;
+        _lastDriverPosition = driverPosition;
+      }
+
+      final passengerLat = event.passengerLatitude;
+      final passengerLng = event.passengerLongitude;
+      if (event.routeTargetLatitude == null &&
+          passengerLat != null &&
+          passengerLng != null) {
+        final passengerPosition = (passengerLat, passengerLng);
+        if (_passengerMarkerManager == null ||
+            !_isSamePosition(_lastPassengerPosition, passengerPosition)) {
+          final passengerMarkerManager = await _upsertMarker(
+            _passengerMarkerManager,
+            mapController,
+            passengerLat,
+            passengerLng,
+            color: TripMapMarkerStyle.tripLocation,
+          );
+          if (!_isCurrentRouteOperation(
+            routeOperationGeneration,
+            viewGeneration,
+            mapController,
+          )) {
+            if (_passengerMarkerManager == null) {
+              await _clearAnnotations(passengerMarkerManager);
+            }
+            return;
+          }
+          _passengerMarkerManager = passengerMarkerManager;
+          _lastPassengerPosition = passengerPosition;
+        }
+      } else if (_passengerMarkerManager != null) {
         await _clearAnnotations(_passengerMarkerManager);
         if (!_isCurrentRouteOperation(
           routeOperationGeneration,
@@ -185,29 +198,35 @@ class LiveMapBloc({required this._rideRepository})
           return;
         }
         _passengerMarkerManager = null;
+        _lastPassengerPosition = null;
       }
 
       if (event.routeTargetLatitude != null &&
           event.routeTargetLongitude != null) {
-        final destinationMarkerManager = await _upsertMarker(
-          _destinationMarkerManager,
-          mapController,
-          targetLatitude,
-          targetLongitude,
-          color: TripMapMarkerStyle.tripLocation,
-        );
-        if (!_isCurrentRouteOperation(
-          routeOperationGeneration,
-          viewGeneration,
-          mapController,
-        )) {
-          if (_destinationMarkerManager == null) {
-            await _clearAnnotations(destinationMarkerManager);
+        final destinationPosition = (targetLatitude, targetLongitude);
+        if (_destinationMarkerManager == null ||
+            !_isSamePosition(_lastDestinationPosition, destinationPosition)) {
+          final destinationMarkerManager = await _upsertMarker(
+            _destinationMarkerManager,
+            mapController,
+            targetLatitude,
+            targetLongitude,
+            color: TripMapMarkerStyle.tripLocation,
+          );
+          if (!_isCurrentRouteOperation(
+            routeOperationGeneration,
+            viewGeneration,
+            mapController,
+          )) {
+            if (_destinationMarkerManager == null) {
+              await _clearAnnotations(destinationMarkerManager);
+            }
+            return;
           }
-          return;
+          _destinationMarkerManager = destinationMarkerManager;
+          _lastDestinationPosition = destinationPosition;
         }
-        _destinationMarkerManager = destinationMarkerManager;
-      } else {
+      } else if (_destinationMarkerManager != null) {
         await _clearAnnotations(_destinationMarkerManager);
         if (!_isCurrentRouteOperation(
           routeOperationGeneration,
@@ -217,12 +236,14 @@ class LiveMapBloc({required this._rideRepository})
           return;
         }
         _destinationMarkerManager = null;
+        _lastDestinationPosition = null;
       }
 
       final now = DateTime.now();
+      final lastCameraFitAt = _lastCameraFitAt;
       if (!_hasFittedCamera ||
-          _lastCameraFitAt == null ||
-          now.difference(_lastCameraFitAt!) >= const Duration(seconds: 8)) {
+          lastCameraFitAt == null ||
+          now.difference(lastCameraFitAt) >= const Duration(seconds: 8)) {
         await MapProvider.fitBounds(
           mapController,
           [
@@ -252,12 +273,15 @@ class LiveMapBloc({required this._rideRepository})
       }
 
       final targetKey = '$targetLatitude:$targetLongitude';
+      final routeOriginLat = _routeOriginLatitude;
+      final routeOriginLng = _routeOriginLongitude;
       final shouldRefreshRoute =
           _routeTargetKey != targetKey ||
-          _routeOriginLatitude == null ||
+          routeOriginLat == null ||
+          routeOriginLng == null ||
           hasExceededRouteDeviation(
-            originLatitude: _routeOriginLatitude!,
-            originLongitude: _routeOriginLongitude!,
+            originLatitude: routeOriginLat,
+            originLongitude: routeOriginLng,
             currentLatitude: event.driverLatitude,
             currentLongitude: event.driverLongitude,
           );
@@ -419,6 +443,18 @@ class LiveMapBloc({required this._rideRepository})
     _driverMarkerManager = null;
     _passengerMarkerManager = null;
     _destinationMarkerManager = null;
+    _lastDriverPosition = null;
+    _lastPassengerPosition = null;
+    _lastDestinationPosition = null;
+  }
+
+  static bool _isSamePosition(
+    (double, double)? previous,
+    (double, double) next,
+  ) {
+    if (previous == null) return false;
+    return (previous.$1 - next.$1).abs() < 1e-6 &&
+        (previous.$2 - next.$2).abs() < 1e-6;
   }
 
   Future<void> _clearPolylines() async {
