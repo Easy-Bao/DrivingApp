@@ -159,4 +159,26 @@ void main() {
       );
     },
   );
+
+  testWidgets('pauses rotation timer when TickerMode is disabled', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: TickerMode(
+            enabled: false,
+            child: HomeDestinationSearchHint(
+              changeInterval: Duration(milliseconds: 500),
+              transitionDuration: Duration(milliseconds: 200),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('Search Robinsons'), findsOneWidget);
+    expect(find.byKey(const ValueKey('search-hint-edge-mask')), findsNothing);
+  });
 }

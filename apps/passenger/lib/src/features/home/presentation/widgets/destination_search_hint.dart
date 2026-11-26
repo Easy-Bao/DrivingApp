@@ -62,10 +62,13 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
   String _currentLabel = HomeDestinationSearchHint.searchExamples.first;
   String _nextLabel = HomeDestinationSearchHint.searchExamples[1];
   var _motionDisabled = false;
+  var _tickerEnabled = true;
   var _hasInitializedDependencies = false;
 
   bool get _shouldRandomize =>
       widget.randomize ?? widget.suggestions.isNotEmpty;
+
+  bool get _isRotationPaused => _motionDisabled || !_tickerEnabled;
 
   @override
   void initState() {
@@ -82,16 +85,19 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
   void didChangeDependencies() {
     super.didChangeDependencies();
     final motionDisabled =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    final tickerEnabled = TickerMode.valuesOf(context).enabled;
     if (_hasInitializedDependencies &&
         motionDisabled == _motionDisabled &&
-        _rotationTimer != null) {
+        tickerEnabled == _tickerEnabled &&
+        (_isRotationPaused || _rotationTimer != null)) {
       return;
     }
 
     _hasInitializedDependencies = true;
     _motionDisabled = motionDisabled;
-    if (_motionDisabled) {
+    _tickerEnabled = tickerEnabled;
+    if (_isRotationPaused) {
       _stopRotation();
       _transitionController.stop();
       _transitionController.value = 0;
@@ -118,7 +124,7 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
       _initializeDeck(preserveCurrent: true);
       final switchedToNewPool = !nextPhrases.contains(previousLabel);
 
-      if (_motionDisabled || nextPhrases.length < 2) {
+      if (_isRotationPaused || nextPhrases.length < 2) {
         _stopRotation();
         _transitionController.stop();
         _transitionController.value = 0;
@@ -136,7 +142,7 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
         _startRotation();
       }
     } else if (oldWidget.changeInterval != widget.changeInterval &&
-        !_motionDisabled) {
+        !_isRotationPaused) {
       _restartRotation();
     }
   }
@@ -215,11 +221,13 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
   }
 
   void _startRotation() {
-    if (_rotationTimer != null || _sourcePhrases.length < 2) {
+    if (_rotationTimer != null ||
+        _isRotationPaused ||
+        _sourcePhrases.length < 2) {
       return;
     }
     _rotationTimer = Timer.periodic(widget.changeInterval, (_) {
-      if (!mounted || _motionDisabled || _transitionController.isAnimating) {
+      if (!mounted || _isRotationPaused || _transitionController.isAnimating) {
         return;
       }
       _nextLabel = _peekNextLabel();
@@ -253,12 +261,13 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
 
   @override
   Widget build(BuildContext context) {
+    final fallbackColor = Theme.of(context).colorScheme.onSurfaceVariant;
     final textStyle =
         widget.style ??
         TextStyle(
           fontSize: 16,
           height: 1.25,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          color: fallbackColor,
           fontWeight: FontWeight.w500,
         );
 
@@ -271,7 +280,7 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
             child: AnimatedBuilder(
               animation: _transitionController,
               builder: (context, _) {
-                if (!_transitionController.isAnimating || _motionDisabled) {
+                if (!_transitionController.isAnimating || _isRotationPaused) {
                   return _buildLabel(_currentLabel, textStyle);
                 }
 
@@ -315,6 +324,7 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
                         opacity: outgoingOpacity,
                         scale: outgoingScale,
                         style: textStyle,
+                        fallbackColor: fallbackColor,
                       ),
                       _buildMovingLabel(
                         label: _nextLabel,
@@ -322,6 +332,7 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
                         opacity: incomingOpacity,
                         scale: incomingScale,
                         style: textStyle,
+                        fallbackColor: fallbackColor,
                       ),
                     ],
                   ),
@@ -352,13 +363,18 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
     required double opacity,
     required double scale,
     required TextStyle style,
+    required Color fallbackColor,
   }) {
+    final baseColor = style.color ?? fallbackColor;
+    final fadedStyle = style.copyWith(
+      color: baseColor.withValues(alpha: baseColor.a * opacity),
+    );
     return Transform.translate(
       offset: Offset(0, offsetY),
       child: Transform.scale(
         scale: scale,
         alignment: Alignment.centerLeft,
-        child: Opacity(opacity: opacity, child: _buildLabel(label, style)),
+        child: _buildLabel(label, fadedStyle),
       ),
     );
   }
