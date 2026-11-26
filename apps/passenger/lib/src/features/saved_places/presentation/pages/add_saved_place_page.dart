@@ -6,6 +6,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
+import 'package:passenger/src/features/saved_places/presentation/widgets/add_saved_place_widgets.dart';
 
 class const AddCategoryPage({
   super.key,
@@ -24,33 +25,11 @@ class const AddCategoryPage({
 }
 
 class _AddCategoryPageState extends State<AddCategoryPage> {
-  static const List<_PlaceIconOption> _iconOptions = <_PlaceIconOption>[
-    _PlaceIconOption(name: 'heart', label: 'Favorite', icon: LucideIcons.heart),
-    _PlaceIconOption(name: 'users', label: 'Family', icon: LucideIcons.users),
-    _PlaceIconOption(
-      name: 'graduation_cap',
-      label: 'School',
-      icon: LucideIcons.graduation_cap,
-    ),
-    _PlaceIconOption(name: 'store', label: 'Store', icon: LucideIcons.store),
-    _PlaceIconOption(name: 'star', label: 'Starred', icon: LucideIcons.star),
-    _PlaceIconOption(
-      name: 'map_pin',
-      label: 'Pinned place',
-      icon: LucideIcons.map_pin,
-    ),
-    _PlaceIconOption(name: 'house', label: 'Home', icon: LucideIcons.house),
-    _PlaceIconOption(
-      name: 'briefcase',
-      label: 'Work',
-      icon: LucideIcons.briefcase,
-    ),
-  ];
-
   final TextEditingController _controller = TextEditingController();
   IconData _selectedIcon = LucideIcons.heart;
   bool _isLocationPinned = false;
   bool _isLoadingLocation = true;
+  bool _isSaving = false;
   double _lat = 0.0;
   double _lng = 0.0;
   String? _nameError;
@@ -62,17 +41,18 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   @override
   void initState() {
     super.initState();
-    final defaultLabel = widget.initialLabel ?? widget.initialPlace?.name;
+    final initialPlace = widget.initialPlace;
+    final defaultLabel = widget.initialLabel ?? initialPlace?.name;
     if (defaultLabel != null) {
       _controller.text = defaultLabel;
     }
-    if (widget.initialIconName != null) {
-      _selectedIcon = _iconDataFromName(widget.initialIconName!);
+    if (widget.initialIconName case final iconName?) {
+      _selectedIcon = _iconDataFromName(iconName);
     }
     _controller.addListener(_handleNameChanged);
-    if (widget.initialPlace != null) {
-      _lat = widget.initialPlace!.latitude;
-      _lng = widget.initialPlace!.longitude;
+    if (initialPlace != null) {
+      _lat = initialPlace.latitude;
+      _lng = initialPlace.longitude;
       _isLocationPinned = true;
       _isLoadingLocation = false;
     } else {
@@ -98,21 +78,21 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   Future<void> _initLocation() async {
     try {
       final position = await LocationService.getCurrentPosition();
+      if (!mounted) return;
       if (position != null) {
-        if (!mounted) return;
         setState(() {
           _lat = position.latitude;
           _lng = position.longitude;
           _isLocationPinned = true;
           _isLoadingLocation = false;
         });
-        if (_mapController != null) {
-          await MapProvider.moveCamera(_mapController!, _lat, _lng, zoom: 14.0);
+        final controller = _mapController;
+        if (controller != null) {
+          await MapProvider.moveCamera(controller, _lat, _lng, zoom: 14.0);
           if (!mounted) return;
           await _syncPinnedMarker();
         }
       } else {
-        if (!mounted) return;
         setState(() {
           _isLocationPinned = false;
           _isLoadingLocation = false;
@@ -167,6 +147,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   }
 
   void _handleSave() {
+    if (_isSaving) return;
     final label = _controller.text.trim();
 
     if (label.isEmpty) {
@@ -179,10 +160,10 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       return;
     }
 
-    final iconName = _iconNameFromData(_selectedIcon);
+    _isSaving = true;
     final newPlace = SavedPlace(
       label: label,
-      iconName: iconName,
+      iconName: _iconNameFromData(_selectedIcon),
       latitude: _lat,
       longitude: _lng,
       savedAddress: widget.initialPlace?.fullAddress ?? label,
@@ -198,14 +179,14 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   }
 
   String _iconNameFromData(IconData icon) {
-    for (final option in _iconOptions) {
+    for (final option in savedPlaceIconOptions) {
       if (option.icon == icon) return option.name;
     }
     return 'map_pin';
   }
 
   IconData _iconDataFromName(String name) {
-    for (final option in _iconOptions) {
+    for (final option in savedPlaceIconOptions) {
       if (option.name == name) return option.icon;
     }
     return LucideIcons.map_pin;
@@ -216,14 +197,13 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     if (customBuilder != null) {
       return customBuilder(context);
     }
-    _cachedMapView ??= MapProvider.buildMapView(
+    return _cachedMapView ??= MapProvider.buildMapView(
       latitude: _lat,
       longitude: _lng,
       zoom: 14.0,
       interactive: true,
       onMapCreated: _onMapCreated,
     );
-    return _cachedMapView!;
   }
 
   @override
@@ -234,6 +214,13 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
         ? Duration.zero
         : const Duration(milliseconds: 180);
     final canSave = !_isLoadingLocation && _isLocationPinned;
+    final addressLabel =
+        widget.initialPlace?.fullAddress ??
+        (_isLoadingLocation
+            ? 'Finding your location...'
+            : _isLocationPinned
+            ? 'Location pinned'
+            : 'Location unavailable');
 
     return Scaffold(
       appBar: AppBar(
@@ -334,56 +321,23 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                                 )
                               : _isLocationPinned
                               ? _getMapView(context)
-                              : _buildLocationUnavailableState(context),
+                              : SavedPlaceLocationUnavailableView(
+                                  onRetry: () {
+                                    setState(() => _isLoadingLocation = true);
+                                    unawaited(_initLocation());
+                                  },
+                                ),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xxl),
-                      _buildFieldLabel(context, 'Location'),
+                      const SavedPlaceFieldLabel('Location'),
                       const SizedBox(height: AppSpacing.sm),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                          vertical: 14,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerLowest,
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                          border: Border.all(color: colorScheme.outlineVariant),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: ExcludeSemantics(
-                                child: Icon(
-                                  LucideIcons.map_pin,
-                                  size: 16,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: AppSpacing.md),
-                            Expanded(
-                              child: Text(
-                                widget.initialPlace?.fullAddress ??
-                                    (_isLoadingLocation
-                                        ? 'Finding your location...'
-                                        : _isLocationPinned
-                                        ? 'Location pinned'
-                                        : 'Location unavailable'),
-                                style: textStyles.bodyMedium?.copyWith(
-                                  color: _isLocationPinned
-                                      ? colorScheme.onSurface
-                                      : colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                      SavedPlaceLocationCard(
+                        addressLabel: addressLabel,
+                        isLocationPinned: _isLocationPinned,
                       ),
                       const SizedBox(height: AppSpacing.xxl),
-                      _buildFieldLabel(context, 'Name this place'),
+                      const SavedPlaceFieldLabel('Name this place'),
                       const SizedBox(height: AppSpacing.sm),
                       TextField(
                         key: const ValueKey<String>('add-place-name-field'),
@@ -423,12 +377,12 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                           ),
                         ),
                       ),
-                      if (_nameError != null) ...[
+                      if (_nameError case final nameError?) ...[
                         const SizedBox(height: AppSpacing.xs + 2),
                         Semantics(
                           liveRegion: true,
                           child: Text(
-                            _nameError!,
+                            nameError,
                             style: textStyles.labelMedium?.copyWith(
                               color: colorScheme.error,
                               fontWeight: FontWeight.w500,
@@ -437,20 +391,13 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                         ),
                       ],
                       const SizedBox(height: AppSpacing.xxl),
-                      _buildFieldLabel(context, 'Icon'),
+                      const SavedPlaceFieldLabel('Icon'),
                       const SizedBox(height: AppSpacing.md),
-                      Wrap(
-                        spacing: AppSpacing.md,
-                        runSpacing: AppSpacing.md,
-                        children: [
-                          for (final option in _iconOptions)
-                            _buildIconOption(
-                              context,
-                              option: option,
-                              isSelected: _selectedIcon == option.icon,
-                              animationDuration: animationDuration,
-                            ),
-                        ],
+                      SavedPlaceIconPicker(
+                        selectedIcon: _selectedIcon,
+                        animationDuration: animationDuration,
+                        onSelected: (icon) =>
+                            setState(() => _selectedIcon = icon),
                       ),
                     ],
                   ),
@@ -462,144 +409,4 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       ),
     );
   }
-
-  Widget _buildFieldLabel(BuildContext context, String label) {
-    return Text(
-      label.toUpperCase(),
-      style: context.textStyles.labelSmall?.copyWith(
-        color: context.colorScheme.onSurfaceVariant,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.85,
-      ),
-    );
-  }
-
-  Widget _buildIconOption(
-    BuildContext context, {
-    required _PlaceIconOption option,
-    required bool isSelected,
-    required Duration animationDuration,
-  }) {
-    final colorScheme = context.colorScheme;
-
-    return Semantics(
-      button: true,
-      selected: isSelected,
-      label: option.label,
-      child: InkWell(
-        key: ValueKey<String>('add-place-icon-${option.name}'),
-        onTap: () => setState(() => _selectedIcon = option.icon),
-        enableFeedback: false,
-        splashFactory: NoSplash.splashFactory,
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-        overlayColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.focused)) {
-            return colorScheme.primary.withValues(alpha: 0.14);
-          }
-          return Colors.transparent;
-        }),
-        customBorder: const CircleBorder(),
-        child: AnimatedContainer(
-          duration: animationDuration,
-          curve: Curves.easeOutCubic,
-          width: AppSize.minimumTouchTarget,
-          height: AppSize.minimumTouchTarget,
-          decoration: BoxDecoration(
-            color: isSelected
-                ? colorScheme.primary
-                : colorScheme.surfaceContainerLowest,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isSelected
-                  ? colorScheme.primary
-                  : colorScheme.outlineVariant,
-            ),
-          ),
-          alignment: Alignment.center,
-          child: Icon(
-            option.icon,
-            color: isSelected
-                ? colorScheme.onPrimary
-                : colorScheme.onSurfaceVariant,
-            size: 20,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLocationUnavailableState(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final textStyles = context.textStyles;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ExcludeSemantics(
-              child: Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerLowest,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: colorScheme.outlineVariant),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  LucideIcons.map_pin_off,
-                  color: colorScheme.onSurfaceVariant,
-                  size: 20,
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Location unavailable',
-              style: textStyles.titleSmall?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            TextButton.icon(
-              onPressed: () {
-                setState(() => _isLoadingLocation = true);
-                unawaited(_initLocation());
-              },
-              style:
-                  TextButton.styleFrom(
-                    foregroundColor: colorScheme.onSurface,
-                    enableFeedback: false,
-                    splashFactory: NoSplash.splashFactory,
-                  ).copyWith(
-                    overlayColor: WidgetStateProperty.resolveWith((states) {
-                      if (states.contains(WidgetState.focused)) {
-                        return colorScheme.primary.withValues(alpha: 0.12);
-                      }
-                      return Colors.transparent;
-                    }),
-                  ),
-              icon: const Icon(LucideIcons.refresh_cw, size: 15),
-              label: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class const _PlaceIconOption({
-  required this.name,
-  required this.label,
-  required this.icon,
-}) {
-  final String name;
-  final String label;
-  final IconData icon;
 }
