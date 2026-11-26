@@ -51,6 +51,7 @@ class _ResetPasswordContent extends StatelessWidget {
           isResending: state is ResetPasswordResending,
           errorMessage: switch (state) {
             ResetPasswordCodeVerificationFailure(:final errorMessage) ||
+            ResetPasswordResendFailure(:final errorMessage) ||
             ResetPasswordFailure(:final errorMessage) => errorMessage,
             _ => null,
           },

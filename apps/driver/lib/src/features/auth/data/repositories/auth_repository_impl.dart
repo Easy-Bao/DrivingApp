@@ -1,4 +1,5 @@
 import 'package:driver/src/core/session/session_store.dart';
+import 'package:driver/src/core/session/storage_keys.dart';
 import 'package:driver/src/features/auth/data/datasources/auth_endpoints.dart';
 import 'package:driver/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:driver/src/features/auth/domain/repositories/auth_repository.dart';
@@ -51,12 +52,14 @@ final class AuthRepositoryImpl({
         driver['phone_number'],
       ]);
       final driverEmail = _stringValue(driver['email']);
-      final vehicleType = _stringValue(driver['vehicleType']).isEmpty
-          ? 'Vehicle type unavailable'
-          : _stringValue(driver['vehicleType']);
-      final plateNumber = _stringValue(driver['plateNumber']).isEmpty
-          ? 'Vehicle plate unavailable'
-          : _stringValue(driver['plateNumber']);
+      final vehicleType = _firstNonEmptyString([
+        driver['vehicleType'],
+        driver['vehicle_type'],
+      ]);
+      final plateNumber = _firstNonEmptyString([
+        driver['plateNumber'],
+        driver['plate_number'],
+      ]);
       final rating = (driver['rating'] as num?)?.toDouble() ?? 0.0;
 
       final refreshToken = _stringValue(authenticationData['refreshToken']);
@@ -72,13 +75,16 @@ final class AuthRepositoryImpl({
       await _secureSessionService.saveDriverId(driverId);
 
       final prefs = _preferences ?? await SharedPreferences.getInstance();
-      await prefs.setString('driver_id', driverId);
-      await prefs.setString('driver_name', driverName);
-      await prefs.setString('driver_phone', driverPhone);
-      await prefs.setString('driver_email', driverEmail);
-      await prefs.setString('vehicle_type', vehicleType);
-      await prefs.setString('plate_number', plateNumber);
-      await prefs.setString('rating', rating.toString());
+      await prefs.setString(StorageKeys.driverId, driverId);
+      await prefs.setString(StorageKeys.driverName, driverName);
+      await prefs.setString(StorageKeys.driverPhone, driverPhone);
+      await prefs.setString(StorageKeys.driverEmail, driverEmail);
+      await prefs.setString(StorageKeys.vehicleType, vehicleType);
+      await prefs.setString(StorageKeys.plateNumber, plateNumber);
+      await prefs.setString(
+        StorageKeys.rating,
+        rating > 0 ? rating.toStringAsFixed(1) : '—',
+      );
 
       final credentials = AuthCredentials(
         driverId: driverId,

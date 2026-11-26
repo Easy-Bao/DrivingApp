@@ -110,6 +110,9 @@ void main() {
 
       expect(result.isOk, isTrue);
       verify(() => secureSessionService.saveDriverId('42')).called(1);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('vehicle_type'), isEmpty);
+      expect(prefs.getString('plate_number'), isEmpty);
     },
   );
 

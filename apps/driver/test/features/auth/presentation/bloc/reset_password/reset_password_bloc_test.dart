@@ -92,6 +92,68 @@ void main() {
   });
 
   test(
+    'reports resend failure without advancing into password submission state',
+    () async {
+      when(() => repository.resetPassword(email: 'driver@example.com'))
+          .thenAnswer((_) async => const Err(ServerFailure('Retry later')));
+      final states = await run(
+        const ResetPasswordCodeRequested('driver@example.com'),
+      );
+      expect(states, const [
+        ResetPasswordResending(),
+        ResetPasswordResendFailure(
+          'The server could not complete your request. Try again.',
+        ),
+      ]);
+    },
+  );
+
+  test(
+    'clears verified OTP cache on reset so re-entered codes re-verify',
+    () async {
+      when(
+        () => repository.verifyResetOtp(
+          email: 'driver@example.com',
+          code: '123456',
+        ),
+      ).thenAnswer((_) async => const Ok(null));
+
+      final bloc = ResetPasswordBloc(repository);
+      addTearDown(bloc.close);
+
+      bloc.add(
+        const ResetPasswordCodeVerifyRequested(
+          email: 'driver@example.com',
+          code: '123456',
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(bloc.state, const ResetPasswordCodeVerified());
+
+      bloc.add(const ResetPasswordCodeVerificationReset());
+      await Future<void>.delayed(Duration.zero);
+      expect(bloc.state, const ResetPasswordInitial());
+
+      bloc.add(
+        const ResetPasswordCodeVerifyRequested(
+          email: 'driver@example.com',
+          code: '123456',
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      verify(
+        () => repository.verifyResetOtp(
+          email: 'driver@example.com',
+          code: '123456',
+        ),
+      ).called(2);
+    },
+  );
+
+  test(
     'verifies reset OTP before advancing and reports invalid codes',
     () async {
       when(

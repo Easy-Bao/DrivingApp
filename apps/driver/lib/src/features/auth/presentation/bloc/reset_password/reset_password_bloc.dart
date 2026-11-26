@@ -23,7 +23,9 @@ class ResetPasswordBloc(this._authRepository)
       transformer: droppable(),
     );
     on<ResetPasswordCodeVerificationReset>((_, emit) {
+      _verifiedCode = null;
       if (state is ResetPasswordCodeVerificationFailure ||
+          state is ResetPasswordResendFailure ||
           state is ResetPasswordFailure ||
           state is ResetPasswordCodeVerified) {
         emit(const ResetPasswordInitial());
@@ -50,8 +52,9 @@ class ResetPasswordBloc(this._authRepository)
       email: event.email.trim().toLowerCase(),
     );
     result.fold(
-      (failure) =>
-          emit(ResetPasswordFailure(ErrorHandler.getErrorMessage(failure))),
+      (failure) => emit(
+        ResetPasswordResendFailure(ErrorHandler.getErrorMessage(failure)),
+      ),
       (_) => emit(const ResetPasswordCodeSent()),
     );
   }
