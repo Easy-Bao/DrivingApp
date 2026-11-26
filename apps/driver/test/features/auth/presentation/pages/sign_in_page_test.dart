@@ -33,7 +33,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.main,
-          home: SigninPage(signInBloc: bloc),
+          home: SignInPage(signInBloc: bloc),
         ),
       );
 
@@ -79,7 +79,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.main,
-        home: SigninPage(signInBloc: SignInBloc(repository)),
+        home: SignInPage(signInBloc: SignInBloc(repository)),
       ),
     );
     expect(find.byType(AppAuthBrand), findsNothing);
@@ -117,7 +117,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.main,
-        home: SigninPage(signInBloc: SignInBloc(repository)),
+        home: SignInPage(signInBloc: SignInBloc(repository)),
       ),
     );
     await tester.enterText(find.byType(TextField).first, 'driver@example.com');
@@ -165,7 +165,7 @@ void main() {
           ),
           child: child!,
         ),
-        home: SigninPage(signInBloc: SignInBloc(repository)),
+        home: SignInPage(signInBloc: SignInBloc(repository)),
       ),
     );
     await tester.pumpAndSettle();

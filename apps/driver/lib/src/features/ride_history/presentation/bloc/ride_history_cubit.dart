@@ -1,6 +1,6 @@
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/features/ride_history/domain/repositories/ride_history_repository.dart';
-import 'package:driver/src/features/ride_history/presentation/bloc/trip_history_state.dart';
+import 'package:driver/src/features/ride_history/presentation/bloc/ride_history_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 

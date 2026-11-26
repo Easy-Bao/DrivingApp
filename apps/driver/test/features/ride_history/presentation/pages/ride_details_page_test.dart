@@ -1,7 +1,7 @@
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
-import 'package:driver/src/features/ride_history/presentation/pages/trip_detail_page.dart';
+import 'package:driver/src/features/ride_history/presentation/pages/ride_details_page.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';

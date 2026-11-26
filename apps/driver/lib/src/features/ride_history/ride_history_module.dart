@@ -7,9 +7,9 @@ import 'package:driver/src/features/active_ride/domain/repositories/ride_reposit
 import 'package:driver/src/features/ride_history/data/datasources/ride_history_remote_data_source.dart';
 import 'package:driver/src/features/ride_history/data/repositories/ride_history_repository_impl.dart';
 import 'package:driver/src/features/ride_history/domain/repositories/ride_history_repository.dart';
-import 'package:driver/src/features/ride_history/presentation/bloc/trip_history_cubit.dart';
-import 'package:driver/src/features/ride_history/presentation/pages/trip_detail_page.dart';
-import 'package:driver/src/features/ride_history/presentation/pages/trip_history_page.dart';
+import 'package:driver/src/features/ride_history/presentation/bloc/ride_history_cubit.dart';
+import 'package:driver/src/features/ride_history/presentation/pages/ride_details_page.dart';
+import 'package:driver/src/features/ride_history/presentation/pages/ride_history_page.dart';
 import 'package:driver/src/features/ride_history/ride_history_routes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';

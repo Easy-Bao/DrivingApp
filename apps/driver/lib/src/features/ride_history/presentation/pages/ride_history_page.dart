@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/core/formatters/value_formatters.dart';
-import 'package:driver/src/features/ride_history/presentation/bloc/trip_history_cubit.dart';
-import 'package:driver/src/features/ride_history/presentation/bloc/trip_history_state.dart';
-import 'package:driver/src/features/ride_history/presentation/widgets/trip_history_filter_bar.dart';
+import 'package:driver/src/features/ride_history/presentation/bloc/ride_history_cubit.dart';
+import 'package:driver/src/features/ride_history/presentation/bloc/ride_history_state.dart';
+import 'package:driver/src/features/ride_history/presentation/widgets/ride_history_filter_bar.dart';
 import 'package:driver/src/features/ride_history/ride_history_routes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';

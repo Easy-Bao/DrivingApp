@@ -1,9 +1,9 @@
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/features/ride_history/domain/repositories/ride_history_repository.dart';
-import 'package:driver/src/features/ride_history/presentation/bloc/trip_history_cubit.dart';
-import 'package:driver/src/features/ride_history/presentation/bloc/trip_history_state.dart';
-import 'package:driver/src/features/ride_history/presentation/pages/trip_history_page.dart';
+import 'package:driver/src/features/ride_history/presentation/bloc/ride_history_cubit.dart';
+import 'package:driver/src/features/ride_history/presentation/bloc/ride_history_state.dart';
+import 'package:driver/src/features/ride_history/presentation/pages/ride_history_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';

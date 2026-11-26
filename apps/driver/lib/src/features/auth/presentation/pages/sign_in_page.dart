@@ -11,8 +11,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
 
-class SigninPage extends StatelessWidget {
-  const SigninPage({super.key, required this.signInBloc});
+class SignInPage extends StatelessWidget {
+  const SignInPage({super.key, required this.signInBloc});
 
   final SignInBloc signInBloc;
 
