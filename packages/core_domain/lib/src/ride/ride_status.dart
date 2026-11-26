@@ -1,0 +1,25 @@
+enum RideStatus(final String value) {
+  requested('requested'),
+  accepted('accepted'),
+  arrived('arrived'),
+  inTransit('in_transit'),
+  completed('completed'),
+  cancelled('cancelled'),
+  unknown('unknown');
+
+  bool get isTerminal => this == completed || this == cancelled;
+
+  static RideStatus fromString(String statusStr) {
+    final normalized = statusStr.toLowerCase().trim();
+    if (normalized == 'canceled') {
+      return RideStatus.cancelled;
+    }
+    if (normalized == 'in_progress') {
+      return RideStatus.inTransit;
+    }
+    return RideStatus.values.firstWhere(
+      (element) => element.value.toLowerCase() == normalized,
+      orElse: () => RideStatus.unknown,
+    );
+  }
+}
