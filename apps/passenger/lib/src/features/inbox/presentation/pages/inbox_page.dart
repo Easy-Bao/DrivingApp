@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
@@ -14,7 +14,7 @@ import 'package:passenger/src/features/inbox/presentation/formatters/inbox_prese
 import 'package:passenger/src/features/inbox/presentation/widgets/inbox_empty_state.dart';
 import 'package:passenger/src/features/inbox/presentation/widgets/inbox_filter_bar.dart';
 import 'package:passenger/src/features/inbox/presentation/widgets/inbox_notification_card.dart';
-import 'package:skeletonizer/skeletonizer.dart';
+import 'package:passenger/src/features/inbox/presentation/widgets/inbox_page_sections.dart';
 
 class InboxPage extends StatefulWidget {
   const InboxPage({super.key, required this.inboxCubit});
@@ -31,11 +31,21 @@ class _InboxPageState extends State<InboxPage>
 
   late final InboxCubit _inboxCubit;
   late final AnimationController _filterTransitionController;
-  late final Animation<double> _filterTransitionCurve;
+  late final CurvedAnimation _filterTransitionCurve;
   InboxFilter _selectedFilter = InboxFilter.all;
   double _filterSlideDirection = 0;
   String? _expandedNotificationId;
   final Set<String> _keptVisibleInUnreadFilter = <String>{};
+  int _keptVisibleRevision = 0;
+
+  List<InboxNotification>? _cachedNotifications;
+  InboxFilter? _cachedFilter;
+  int _cachedKeptVisibleRevision = -1;
+  bool? _cachedAlwaysUse24HourFormat;
+  late InboxPresenter _cachedPresenter;
+  int _cachedUnreadCount = 0;
+  List<InboxNotification> _cachedVisibleNotifications = const [];
+  Map<String, List<InboxNotification>> _cachedGroupedNotifications = const {};
 
   @override
   void initState() {
@@ -55,17 +65,59 @@ class _InboxPageState extends State<InboxPage>
 
   @override
   void dispose() {
+    _filterTransitionCurve.dispose();
     _filterTransitionController.dispose();
     super.dispose();
   }
 
   Future<void> _initializeInbox() async {
     if (_keptVisibleInUnreadFilter.isNotEmpty && mounted) {
-      setState(_keptVisibleInUnreadFilter.clear);
+      setState(() {
+        _keptVisibleInUnreadFilter.clear();
+        _keptVisibleRevision++;
+      });
     }
     final session = BlocProvider.of<SessionBloc>(context).state;
     if (session is! AuthenticatedSession) return;
     await _inboxCubit.loadNotifications(session.passengerId);
+  }
+
+  void _syncMemoizedNotifications(
+    List<InboxNotification> notifications, {
+    required bool alwaysUse24HourFormat,
+  }) {
+    final notificationsUnchanged =
+        identical(_cachedNotifications, notifications) ||
+        listEquals(_cachedNotifications, notifications);
+    if (notificationsUnchanged &&
+        _cachedFilter == _selectedFilter &&
+        _cachedKeptVisibleRevision == _keptVisibleRevision &&
+        _cachedAlwaysUse24HourFormat == alwaysUse24HourFormat) {
+      return;
+    }
+
+    _cachedNotifications = notifications;
+    _cachedFilter = _selectedFilter;
+    _cachedKeptVisibleRevision = _keptVisibleRevision;
+    _cachedAlwaysUse24HourFormat = alwaysUse24HourFormat;
+
+    _cachedPresenter = InboxPresenter(
+      DateTime.now(),
+      alwaysUse24HourFormat: alwaysUse24HourFormat,
+    );
+    _cachedUnreadCount = _cachedPresenter.unreadCount(notifications);
+    _cachedVisibleNotifications = _selectedFilter == InboxFilter.unread
+        ? notifications
+              .where(
+                (item) =>
+                    !item.isRead ||
+                    _keptVisibleInUnreadFilter.contains(item.id),
+              )
+              .toList(growable: false)
+        : _cachedPresenter.filter(notifications, _selectedFilter);
+    _cachedGroupedNotifications = _cachedPresenter.groupByDate(
+      _cachedVisibleNotifications,
+    );
   }
 
   double _horizontalPaddingFor(double viewportWidth) {
@@ -84,31 +136,6 @@ class _InboxPageState extends State<InboxPage>
     final safeBottom = MediaQuery.paddingOf(context).bottom;
     if (isWide) return safeBottom + AppSpacing.xxxl;
     return AppFloatingTabBar.height + safeBottom + AppSpacing.xxl;
-  }
-
-  ButtonStyle _quietTextButtonStyle(
-    BuildContext context, {
-    EdgeInsetsGeometry? padding,
-    AlignmentGeometry? alignment,
-  }) {
-    final colorScheme = context.colorScheme;
-    return TextButton.styleFrom(
-      foregroundColor: colorScheme.onSurface,
-      disabledForegroundColor: colorScheme.onSurfaceVariant.withValues(
-        alpha: 0.42,
-      ),
-      padding: padding,
-      alignment: alignment,
-      enableFeedback: false,
-      splashFactory: NoSplash.splashFactory,
-    ).copyWith(
-      overlayColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.focused)) {
-          return colorScheme.primary.withValues(alpha: 0.12);
-        }
-        return Colors.transparent;
-      }),
-    );
   }
 
   Widget _wrapFilterTransition(Widget child) {
@@ -152,8 +179,9 @@ class _InboxPageState extends State<InboxPage>
                 listener: (_, _) => unawaited(_initializeInbox()),
                 child: BlocBuilder<SessionBloc, SessionState>(
                   builder: (context, sessionState) => switch (sessionState) {
-                    SessionLoading() => _buildLoadingView(
+                    SessionLoading() => InboxLoadingView(
                       horizontalPadding: horizontalPadding,
+                      bottomClearance: _bottomClearance(context),
                     ),
                     GuestSession() || SessionFailure() => _buildInboxContent(
                       const InboxLoadedState(<InboxNotification>[]),
@@ -169,8 +197,9 @@ class _InboxPageState extends State<InboxPage>
                       child: BlocBuilder<InboxCubit, InboxState>(
                         builder: (context, state) {
                           if (state is InboxLoadingState) {
-                            return _buildLoadingView(
+                            return InboxLoadingView(
                               horizontalPadding: horizontalPadding,
+                              bottomClearance: _bottomClearance(context),
                             );
                           }
                           if (state is InboxInitialState) {
@@ -200,90 +229,6 @@ class _InboxPageState extends State<InboxPage>
     );
   }
 
-  Widget _buildLoadingView({required double horizontalPadding}) {
-    final bottomClearance = _bottomClearance(context);
-    return CustomScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: [
-        SliverPadding(
-          padding: EdgeInsets.fromLTRB(
-            horizontalPadding,
-            AppSpacing.sm,
-            horizontalPadding,
-            AppSpacing.xl,
-          ),
-          sliver: const SliverToBoxAdapter(
-            child: AppPageHeader(
-              title: 'Inbox',
-              subtitle: 'Messages and receipts',
-            ),
-          ),
-        ),
-        SliverPadding(
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-          sliver: _buildSkeletonNotifications(),
-        ),
-        SliverToBoxAdapter(child: SizedBox(height: bottomClearance)),
-      ],
-    );
-  }
-
-  Widget _buildSkeletonNotifications() {
-    return Skeletonizer.sliver(
-      key: const ValueKey<String>('inbox-loading-skeleton'),
-      child: SliverList.builder(
-        itemCount: 6,
-        itemBuilder: (context, index) => Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (index == 0) ...[
-              const Bone.text(width: 56, fontSize: 12),
-              const SizedBox(height: AppSpacing.md),
-            ],
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 15),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Bone.circle(size: 38),
-                  SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Bone.text(width: 144, fontSize: 14),
-                            ),
-                            SizedBox(width: AppSpacing.md),
-                            Bone.text(width: 44, fontSize: 11),
-                          ],
-                        ),
-                        SizedBox(height: 8),
-                        Bone.multiText(lines: 2, fontSize: 13),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (index < 5)
-              Divider(
-                height: 1,
-                indent: 52,
-                color: context.colorScheme.outlineVariant.withValues(
-                  alpha: 0.65,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildInboxContent(
     InboxState state, {
     required bool isGuest,
@@ -294,21 +239,14 @@ class _InboxPageState extends State<InboxPage>
         ? state.notifications
         : const <InboxNotification>[];
     final loadedState = state is InboxLoadedState ? state : null;
-    final presenter = InboxPresenter(
-      DateTime.now(),
+    _syncMemoizedNotifications(
+      notifications,
       alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
     );
-    final unreadCount = presenter.unreadCount(notifications);
-    final visibleNotifications = _selectedFilter == InboxFilter.unread
-        ? notifications
-              .where(
-                (item) =>
-                    !item.isRead ||
-                    _keptVisibleInUnreadFilter.contains(item.id),
-              )
-              .toList()
-        : presenter.filter(notifications, _selectedFilter);
-    final groupedNotifications = presenter.groupByDate(visibleNotifications);
+    final presenter = _cachedPresenter;
+    final unreadCount = _cachedUnreadCount;
+    final visibleNotifications = _cachedVisibleNotifications;
+    final groupedNotifications = _cachedGroupedNotifications;
     final bottomClearance = _bottomClearance(context);
     final showFilters =
         !isGuest && loadedState != null && notifications.isNotEmpty;
@@ -324,12 +262,23 @@ class _InboxPageState extends State<InboxPage>
             showFilters ? AppSpacing.md : AppSpacing.lg,
           ),
           sliver: SliverToBoxAdapter(
-            child: _buildHeader(
+            child: InboxHeader(
               isGuest: isGuest,
               loadedState: loadedState,
               notifications: notifications,
               unreadCount: unreadCount,
               contentWidth: contentWidth,
+              onMarkAllRead: () {
+                if (_keptVisibleInUnreadFilter.isNotEmpty) {
+                  setState(() {
+                    _keptVisibleInUnreadFilter.clear();
+                    _keptVisibleRevision++;
+                  });
+                }
+                unawaited(_inboxCubit.markAllNotificationsAsRead());
+              },
+              onRetryInbox: () => unawaited(_initializeInbox()),
+              onClearDismissError: _inboxCubit.clearDismissError,
             ),
           ),
         ),
@@ -393,79 +342,12 @@ class _InboxPageState extends State<InboxPage>
               bottomClearance,
             ),
             sliver: SliverToBoxAdapter(
-              child: _wrapFilterTransition(_buildFooter(loadedState)),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildHeader({
-    required bool isGuest,
-    required InboxLoadedState? loadedState,
-    required List<InboxNotification> notifications,
-    required int unreadCount,
-    required double contentWidth,
-  }) {
-    final inlineAction =
-        contentWidth >= 320 &&
-        MediaQuery.sizeOf(context).width >= 360 &&
-        MediaQuery.textScalerOf(context).scale(14) <= 18;
-
-    final action = !isGuest && loadedState != null && notifications.isNotEmpty
-        ? TextButton(
-            onPressed: loadedState.isMarkingAllRead || unreadCount == 0
-                ? null
-                : () {
-                    if (_keptVisibleInUnreadFilter.isNotEmpty) {
-                      setState(_keptVisibleInUnreadFilter.clear);
-                    }
-                    unawaited(_inboxCubit.markAllNotificationsAsRead());
-                  },
-            style: _quietTextButtonStyle(
-              context,
-              padding: inlineAction
-                  ? const EdgeInsets.only(left: AppSpacing.sm)
-                  : const EdgeInsets.only(right: AppSpacing.sm),
-              alignment: inlineAction
-                  ? Alignment.centerRight
-                  : Alignment.centerLeft,
-            ),
-            child: Text(
-              loadedState.isMarkingAllRead ? 'Marking…' : 'Mark all as read',
-            ),
-          )
-        : null;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AppPageHeader(
-          title: 'Inbox',
-          subtitle: 'Messages and receipts',
-          trailing: inlineAction ? action : null,
-        ),
-        if (!inlineAction && action != null)
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
-            child: action,
-          ),
-        if (loadedState?.markAllReadError case final markAllReadError?)
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.md),
-            child: AppErrorBanner(
-              message: markAllReadError,
-              onRetry: () =>
-                  unawaited(_inboxCubit.markAllNotificationsAsRead()),
-            ),
-          ),
-        if (loadedState?.dismissError case final dismissError?)
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.md),
-            child: AppErrorBanner(
-              message: dismissError,
-              onRetry: () => unawaited(_initializeInbox()),
-              onDismiss: _inboxCubit.clearDismissError,
+              child: _wrapFilterTransition(
+                InboxFooter(
+                  state: loadedState,
+                  onLoadMore: _inboxCubit.loadMoreNotifications,
+                ),
+              ),
             ),
           ),
       ],
@@ -527,36 +409,7 @@ class _InboxPageState extends State<InboxPage>
                     ),
                     direction: DismissDirection.endToStart,
                     onDismissed: (_) => _dismissNotification(notification.id),
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: AppSpacing.xl),
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.errorContainer,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            LucideIcons.trash_2,
-                            color: context.colorScheme.onErrorContainer,
-                            size: 18,
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Flexible(
-                            child: Text(
-                              'Delete',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: context.textStyles.labelMedium?.copyWith(
-                                color: context.colorScheme.onErrorContainer,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    background: const InboxDismissBackground(),
                     child: InboxNotificationCard(
                       notification: notification,
                       presenter: presenter,
@@ -577,75 +430,6 @@ class _InboxPageState extends State<InboxPage>
     return slivers;
   }
 
-  Widget _buildFooter(InboxLoadedState state) {
-    if (state.isLoadingMore) {
-      return Center(
-        child: SizedBox.square(
-          dimension: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: context.colorScheme.onSurface,
-          ),
-        ),
-      );
-    }
-    final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
-    final visibleLoadMoreError = isNetworkUnavailable
-        ? null
-        : state.loadMoreError;
-    if (state.hasMore || visibleLoadMoreError != null) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (visibleLoadMoreError != null) ...[
-            Text(
-              visibleLoadMoreError,
-              textAlign: TextAlign.center,
-              style: context.textStyles.labelMedium?.copyWith(
-                color: context.colorScheme.error,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs + 2),
-          ],
-          TextButton.icon(
-            onPressed: _inboxCubit.loadMoreNotifications,
-            style: _quietTextButtonStyle(context),
-            icon: const Icon(LucideIcons.chevron_down, size: 16),
-            label: Text(
-              visibleLoadMoreError == null ? 'Load more messages' : 'Retry',
-            ),
-          ),
-        ],
-      );
-    }
-    return Center(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ExcludeSemantics(
-            child: Icon(
-              LucideIcons.check,
-              size: 14,
-              color: context.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.xs + 2),
-          Flexible(
-            child: Text(
-              'You are all caught up',
-              textAlign: TextAlign.center,
-              style: context.textStyles.bodySmall?.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _selectFilter(InboxFilter filter) {
     if (filter == _selectedFilter) return;
     final direction = filter.index > _selectedFilter.index ? 1.0 : -1.0;
@@ -654,6 +438,7 @@ class _InboxPageState extends State<InboxPage>
       _selectedFilter = filter;
       _expandedNotificationId = null;
       _keptVisibleInUnreadFilter.clear();
+      _keptVisibleRevision++;
     });
     if (MediaQuery.disableAnimationsOf(context)) {
       _filterTransitionController.value = 1;
@@ -670,7 +455,9 @@ class _InboxPageState extends State<InboxPage>
         if (_expandedNotificationId == notificationId) {
           _expandedNotificationId = null;
         }
-        _keptVisibleInUnreadFilter.remove(notificationId);
+        if (_keptVisibleInUnreadFilter.remove(notificationId)) {
+          _keptVisibleRevision++;
+        }
       });
     }
     _inboxCubit.dismissNotificationById(notificationId);
@@ -688,9 +475,11 @@ class _InboxPageState extends State<InboxPage>
         _expandedNotificationId = isCollapsing ? null : notification.id;
         if (_selectedFilter == InboxFilter.unread) {
           if (isCollapsing) {
-            _keptVisibleInUnreadFilter.remove(notification.id);
-          } else {
-            _keptVisibleInUnreadFilter.add(notification.id);
+            if (_keptVisibleInUnreadFilter.remove(notification.id)) {
+              _keptVisibleRevision++;
+            }
+          } else if (_keptVisibleInUnreadFilter.add(notification.id)) {
+            _keptVisibleRevision++;
           }
         }
       });

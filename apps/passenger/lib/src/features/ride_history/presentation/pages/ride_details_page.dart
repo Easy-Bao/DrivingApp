@@ -13,7 +13,7 @@ import 'package:passenger/src/features/active_ride/domain/repositories/track_rep
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
-import 'package:passenger/src/features/ride_history/presentation/widgets/ride_details_map.dart';
+import 'package:passenger/src/features/ride_history/presentation/widgets/ride_details_sections.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,6 +30,7 @@ class RideDetailsPage extends StatefulWidget {
     this.initialRide,
     this.showRatingAction = true,
   });
+
   final bool showRatingAction;
   final RideHistory? ride;
   final String? rideId;
@@ -135,111 +136,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     }
   }
 
-  Widget _buildReceiptSummary(
-    BuildContext context,
-    RideSnapshot? snapshot,
-    double? fare,
-  ) {
-    final colors = context.colorScheme;
-    final cashReceivedAmount = snapshot?.cashReceivedAmount;
-    final cashChangeAmount = snapshot?.cashChangeAmount;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Expanded(
-              child: Text(
-                'Total fare',
-                style: context.textStyles.bodyLarge?.copyWith(
-                  color: colors.onSurface,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Flexible(
-              child: Text(
-                fare == null ? 'Fare unavailable' : formatPesoAmount(fare),
-                key: const ValueKey('receipt-total-fare'),
-                textAlign: TextAlign.end,
-                style: context.textStyles.titleLarge?.tabular.copyWith(
-                  color: colors.onSurface,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Text(
-          'Cash · ${_cashPaymentStatus(snapshot)}',
-          style: context.textStyles.bodySmall?.copyWith(
-            color: colors.onSurfaceVariant,
-          ),
-        ),
-        if (snapshot?.cashSettled == true &&
-            cashReceivedAmount != null &&
-            cashReceivedAmount > 0) ...[
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Cash received ${formatPesoAmount(cashReceivedAmount / 100)}'
-            '${cashChangeAmount != null && cashChangeAmount > 0 ? ' · Change ${formatPesoAmount(cashChangeAmount / 100)}' : ''}',
-            style: context.textStyles.bodySmall?.tabular.copyWith(
-              color: colors.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildSectionLabel(BuildContext context, String label) {
-    return Semantics(
-      header: true,
-      child: Text(
-        label,
-        style: context.textStyles.labelSmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.85,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContactButton(
-    BuildContext context, {
-    required String tooltip,
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    final colors = context.colorScheme;
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      constraints: const BoxConstraints.tightFor(width: 44, height: 44),
-      style:
-          IconButton.styleFrom(
-            backgroundColor: colors.surfaceContainerLowest,
-            foregroundColor: colors.onSurface,
-            side: BorderSide(color: colors.outlineVariant),
-            shape: const CircleBorder(),
-            enableFeedback: false,
-            splashFactory: NoSplash.splashFactory,
-          ).copyWith(
-            overlayColor: WidgetStateProperty.resolveWith(
-              (states) => states.contains(WidgetState.focused)
-                  ? colors.primary.withValues(alpha: 0.12)
-                  : Colors.transparent,
-            ),
-          ),
-      icon: Icon(icon, size: 18),
-    );
-  }
-
   Future<void> _callDriver(RideDetailsState state) async {
     final counterparty = state.counterparty;
     if (!state.canContactCounterparty ||
@@ -286,15 +182,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     return '${labels.formatMediumDate(local)} · ${labels.formatTimeOfDay(TimeOfDay.fromDateTime(local))}';
   }
 
-  String _driverInitials(String? name) {
-    if (name == null || name.trim().isEmpty) return 'D';
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return parts[0][0].toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<RideDetailsCubit, RideDetailsState>(
@@ -306,7 +193,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
         final ride = widget.ride;
         final snapshot = state.ride ?? widget.initialRide;
         final counterparty = state.counterparty;
-        final showLostFoundChat = state.canContactCounterparty;
         final rideId = _rideId;
         final fare =
             snapshot?.farePesos ??
@@ -318,10 +204,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
         final status = (snapshot?.status ?? ride?.status ?? 'unknown')
             .toLowerCase();
         final isCompleted = status == 'completed';
-        final pickupLatitude = ride?.pickupLat ?? snapshot?.pickupLatitude;
-        final pickupLongitude = ride?.pickupLng ?? snapshot?.pickupLongitude;
-        final dropoffLatitude = ride?.destLat ?? snapshot?.dropoffLatitude;
-        final dropoffLongitude = ride?.destLng ?? snapshot?.dropoffLongitude;
         final reference =
             snapshot?.bookingReference ?? ride?.bookingReference ?? '';
         final driverName =
@@ -361,174 +243,37 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                 TripReference(id: reference, expanded: true, compact: true),
                 const SizedBox(height: AppSpacing.lg),
               ],
-              _buildSectionLabel(context, 'DRIVER'),
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: colors.surfaceContainerLowest,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: colors.outlineVariant),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      _driverInitials(driverName),
-                      style: context.textStyles.titleSmall?.copyWith(
-                        color: colors.onSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          driverName,
-                          style: context.textStyles.titleMedium?.copyWith(
-                            color: colors.onSurface,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          ride?.displayVehicleSummary ??
-                              snapshot?.displayVehicleSummary ??
-                              'Vehicle details unavailable',
-                          style: context.textStyles.bodySmall?.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (showLostFoundChat) ...[
-                    const SizedBox(width: AppSpacing.sm),
-                    _buildContactButton(
-                      context,
-                      tooltip: 'Message driver',
-                      icon: LucideIcons.message_circle,
-                      onPressed: () => unawaited(_initiateLostFoundChat(state)),
-                    ),
-                  ],
-                  if (showLostFoundChat &&
-                      counterparty?.phone.trim().isNotEmpty == true) ...[
-                    const SizedBox(width: AppSpacing.xs),
-                    _buildContactButton(
-                      context,
-                      tooltip: 'Call driver',
-                      icon: LucideIcons.phone,
-                      onPressed: () => unawaited(_callDriver(state)),
-                    ),
-                  ],
-                ],
+              RideDetailsDriverSection(
+                driverName: driverName,
+                vehicleSummary:
+                    ride?.displayVehicleSummary ??
+                    snapshot?.displayVehicleSummary ??
+                    'Vehicle details unavailable',
+                showLostFoundChat: state.canContactCounterparty,
+                canCallDriver: counterparty?.phone.trim().isNotEmpty == true,
+                contactError: _contactError,
+                onMessageDriver: () => unawaited(_initiateLostFoundChat(state)),
+                onCallDriver: () => unawaited(_callDriver(state)),
               ),
-              if (_contactError case final contactError?) ...[
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  contactError,
-                  style: context.textStyles.bodySmall?.copyWith(
-                    color: colors.error,
-                  ),
-                ),
-              ],
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
                 child: Divider(height: 1, color: hairline),
               ),
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.xs,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                alignment: WrapAlignment.spaceBetween,
-                children: [
-                  _buildSectionLabel(context, 'ROUTE'),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: AppSpacing.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.surfaceContainerLowest,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(
-                        color: isCompleted
-                            ? context.semanticColors.success.withValues(
-                                alpha: 0.4,
-                              )
-                            : colors.outlineVariant,
-                      ),
-                    ),
-                    child: Text(
-                      statusLabel,
-                      style: context.textStyles.labelSmall?.copyWith(
-                        color: isCompleted
-                            ? context.semanticColors.success
-                            : colors.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              if (pickupLatitude != null &&
-                  pickupLongitude != null &&
-                  dropoffLatitude != null &&
-                  dropoffLongitude != null) ...[
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: colors.outlineVariant),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: SizedBox(
-                    height: 180,
-                    child: RideDetailsMap(
-                      key: ValueKey((
-                        pickupLatitude,
-                        pickupLongitude,
-                        dropoffLatitude,
-                        dropoffLongitude,
-                      )),
-                      pickupLatitude: pickupLatitude,
-                      pickupLongitude: pickupLongitude,
-                      dropoffLatitude: dropoffLatitude,
-                      dropoffLongitude: dropoffLongitude,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-              ],
-              if (snapshot?.distanceKm != null ||
-                  snapshot?.durationMinutes != null) ...[
-                Text(
-                  [
-                    if (snapshot?.distanceKm case final distance?)
-                      distance < 1
-                          ? '${(distance * 1000).round()} m'
-                          : '${distance.toStringAsFixed(1)} km',
-                    if (snapshot?.durationMinutes case final duration?)
-                      '${duration.round()} min',
-                  ].join(' · '),
-                  style: context.textStyles.labelSmall?.tabular.copyWith(
-                    color: colors.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-              ],
-              CompactRouteTimeline(
-                pickup:
+              RideDetailsRouteSection(
+                statusLabel: statusLabel,
+                isCompleted: isCompleted,
+                pickupLabel:
                     ride?.pickup ?? snapshot?.pickupName ?? 'Pickup location',
-                dropoff:
+                dropoffLabel:
                     ride?.destination ??
                     snapshot?.dropoffName ??
                     'Destination location',
+                pickupLatitude: ride?.pickupLat ?? snapshot?.pickupLatitude,
+                pickupLongitude: ride?.pickupLng ?? snapshot?.pickupLongitude,
+                dropoffLatitude: ride?.destLat ?? snapshot?.dropoffLatitude,
+                dropoffLongitude: ride?.destLng ?? snapshot?.dropoffLongitude,
+                distanceKm: snapshot?.distanceKm,
+                durationMinutes: snapshot?.durationMinutes,
               ),
               if (isCompleted &&
                   snapshot != null &&
@@ -626,9 +371,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
                   child: Divider(height: 1, color: hairline),
                 ),
-                _buildSectionLabel(context, 'FARE BREAKDOWN'),
-                const SizedBox(height: AppSpacing.md),
-                _buildReceiptSummary(context, snapshot, fare),
+                RideDetailsFareBreakdown(snapshot: snapshot, fare: fare),
               ],
               Padding(
                 padding: const EdgeInsets.only(
@@ -681,17 +424,4 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
       },
     );
   }
-}
-
-String _cashPaymentStatus(RideSnapshot? ride) {
-  if (ride == null) return 'Status unavailable.';
-  if (!ride.cashSettled) return 'Awaiting driver confirmation.';
-  return switch (ride.cashOutcome) {
-    'paid' => 'Driver confirmed cash received.',
-    'partial' => 'Driver recorded partial payment.',
-    'refused' => 'Driver recorded that cash was refused.',
-    'unpaid' => 'Driver recorded no cash received.',
-    'disputed' => 'Outcome disputed. Report an issue if needed.',
-    _ => 'Payment status unavailable.',
-  };
 }

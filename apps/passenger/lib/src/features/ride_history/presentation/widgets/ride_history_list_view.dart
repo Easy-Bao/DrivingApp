@@ -1,4 +1,5 @@
 import 'package:design_system/design_system.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
@@ -28,6 +29,7 @@ class RideHistoryListView extends StatefulWidget {
     this.showFilters = true,
     super.key,
   });
+
   final List<RideHistory> activeRides;
   final List<RideHistory> pastRides;
   final DateTime referenceTime;
@@ -52,24 +54,57 @@ class RideHistoryListView extends StatefulWidget {
 class _RideHistoryListViewState extends State<RideHistoryListView> {
   RideHistoryFilter _selectedFilter = RideHistoryFilter.all;
 
+  List<RideHistory>? _cachedPastRides;
+  DateTime? _cachedReferenceTime;
+  bool? _cachedAlwaysUse24HourFormat;
+  RideHistoryFilter? _cachedFilter;
+
+  late RideHistoryPresenter _presenter;
+  List<RideHistory> _filteredRides = const [];
+  Map<String, List<RideHistory>> _groupedRides = const {};
+  double _fallbackWeeklyFare = 0;
+  int _fallbackWeeklyRideCount = 0;
+
+  void _syncMemoizedRides({required bool alwaysUse24HourFormat}) {
+    final ridesUnchanged =
+        identical(_cachedPastRides, widget.pastRides) ||
+        listEquals(_cachedPastRides, widget.pastRides);
+    if (ridesUnchanged &&
+        _cachedReferenceTime == widget.referenceTime &&
+        _cachedAlwaysUse24HourFormat == alwaysUse24HourFormat &&
+        _cachedFilter == _selectedFilter) {
+      return;
+    }
+
+    _cachedPastRides = widget.pastRides;
+    _cachedReferenceTime = widget.referenceTime;
+    _cachedAlwaysUse24HourFormat = alwaysUse24HourFormat;
+    _cachedFilter = _selectedFilter;
+
+    _presenter = RideHistoryPresenter(
+      widget.referenceTime,
+      alwaysUse24HourFormat: alwaysUse24HourFormat,
+    );
+    final sortedPastRides = _presenter.sortPastRides(widget.pastRides);
+    _filteredRides = _filterRides(sortedPastRides);
+    _groupedRides = _presenter.groupRides(_filteredRides);
+    final fallbackWeeklyRides = _presenter.completedRidesThisWeek(
+      sortedPastRides,
+    );
+    _fallbackWeeklyRideCount = fallbackWeeklyRides.length;
+    _fallbackWeeklyFare = fallbackWeeklyRides.fold<double>(
+      0,
+      (total, ride) => total + _presenter.priceValue(ride.price),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final horizontalPadding = MediaQuery.sizeOf(context).width < 360
         ? AppLayout.pagePadding
         : AppLayout.pagePaddingWide;
-    final presenter = RideHistoryPresenter(
-      widget.referenceTime,
-      alwaysUse24HourFormat: MediaQuery.of(context).alwaysUse24HourFormat,
-    );
-    final sortedPastRides = presenter.sortPastRides(widget.pastRides);
-    final filteredRides = _filterRides(sortedPastRides);
-    final groupedRides = presenter.groupRides(filteredRides);
-    final fallbackWeeklyRides = presenter.completedRidesThisWeek(
-      sortedPastRides,
-    );
-    final fallbackWeeklyFare = fallbackWeeklyRides.fold<double>(
-      0,
-      (total, ride) => total + presenter.priceValue(ride.price),
+    _syncMemoizedRides(
+      alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
     );
 
     return CustomScrollView(
@@ -94,15 +129,15 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
           ),
         ),
         if (widget.activeRides.isNotEmpty)
-          ..._activeRideSlivers(presenter, horizontalPadding),
+          ..._activeRideSlivers(_presenter, horizontalPadding),
         if (widget.showSummary)
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
             sliver: SliverToBoxAdapter(
               child: RideHistorySummary(
-                weeklyFare: widget.weeklyFare ?? fallbackWeeklyFare,
+                weeklyFare: widget.weeklyFare ?? _fallbackWeeklyFare,
                 weeklyRideCount:
-                    widget.weeklyRideCount ?? fallbackWeeklyRides.length,
+                    widget.weeklyRideCount ?? _fallbackWeeklyRideCount,
               ),
             ),
           ),
@@ -121,7 +156,7 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
               ),
             ),
           ),
-        if (filteredRides.isEmpty)
+        if (_filteredRides.isEmpty)
           if (widget.activeRides.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
@@ -135,8 +170,8 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
               child: RideHistoryFilteredEmpty(filter: _selectedFilter),
             )
         else
-          ..._historySlivers(groupedRides, presenter, horizontalPadding),
-        if (filteredRides.isNotEmpty &&
+          ..._historySlivers(_groupedRides, _presenter, horizontalPadding),
+        if (_filteredRides.isNotEmpty &&
             (widget.hasMore ||
                 (widget.loadMoreError != null &&
                     !AppNetworkStatusScope.isUnavailableOf(context))))
@@ -149,7 +184,7 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
             ),
             sliver: SliverToBoxAdapter(child: _buildLoadMore()),
           ),
-        if (filteredRides.isNotEmpty)
+        if (_filteredRides.isNotEmpty)
           const SliverToBoxAdapter(child: SizedBox(height: 112)),
       ],
     );
@@ -168,12 +203,13 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
         ),
       );
     }
+    final isOffline = AppNetworkStatusScope.isUnavailableOf(context);
+    final loadMoreError = isOffline ? null : widget.loadMoreError;
     return Column(
       children: [
-        if (widget.loadMoreError != null &&
-            !AppNetworkStatusScope.isUnavailableOf(context)) ...[
+        if (loadMoreError != null) ...[
           Text(
-            widget.loadMoreError!,
+            loadMoreError,
             textAlign: TextAlign.center,
             style: context.textStyles.bodySmall?.copyWith(
               color: colors.error,
@@ -201,12 +237,7 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
                 ),
               ),
           icon: const Icon(LucideIcons.chevron_down, size: 16),
-          label: Text(
-            widget.loadMoreError == null ||
-                    AppNetworkStatusScope.isUnavailableOf(context)
-                ? 'Load more rides'
-                : 'Retry',
-          ),
+          label: Text(loadMoreError == null ? 'Load more rides' : 'Retry'),
         ),
       ],
     );

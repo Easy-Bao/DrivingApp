@@ -22,12 +22,36 @@ class const RideDetailsMap({
 class _RideDetailsMapState extends State<RideDetailsMap> {
   AppMapController? _controller;
   Widget? _mapView;
+  MapPointAnnotationManager? _pickupMarkerManager;
+  MapPointAnnotationManager? _dropoffMarkerManager;
+  MapPolylineAnnotationManager? _routeLineManager;
+
   late final Future<Route?> _route = MapProvider.getRoute(
     widget.pickupLatitude,
     widget.pickupLongitude,
     widget.dropoffLatitude,
     widget.dropoffLongitude,
   );
+
+  @override
+  void dispose() {
+    _clearAnnotations();
+    _controller = null;
+    super.dispose();
+  }
+
+  void _clearAnnotations() {
+    for (final manager in <MapBaseAnnotationManager?>[
+      _routeLineManager,
+      _pickupMarkerManager,
+      _dropoffMarkerManager,
+    ]) {
+      unawaited(MapProvider.clearAnnotations(manager));
+    }
+    _routeLineManager = null;
+    _pickupMarkerManager = null;
+    _dropoffMarkerManager = null;
+  }
 
   Future<void> _renderTrip() async {
     final controller = _controller;
@@ -46,7 +70,9 @@ class _RideDetailsMapState extends State<RideDetailsMap> {
         viewportPadding: const EdgeInsets.all(28),
       );
       if (!mounted || controller != _controller) return;
-      await Future.wait([
+      _clearAnnotations();
+
+      final markers = await Future.wait([
         MapProvider.addMarker(
           controller,
           widget.pickupLatitude,
@@ -61,6 +87,14 @@ class _RideDetailsMapState extends State<RideDetailsMap> {
           color: TripMapMarkerStyle.tripLocation,
         ),
       ]);
+      if (!mounted || controller != _controller) {
+        for (final manager in markers) {
+          unawaited(MapProvider.clearAnnotations(manager));
+        }
+        return;
+      }
+      _pickupMarkerManager = markers[0];
+      _dropoffMarkerManager = markers[1];
 
       final route = await _route;
       if (!mounted ||
@@ -69,13 +103,17 @@ class _RideDetailsMapState extends State<RideDetailsMap> {
           !route.hasGeometry) {
         return;
       }
-      await MapProvider.addPolylineBuffer(
+      final polylineManager = await MapProvider.addPolylineBuffer(
         controller,
         route.coordinateBuffer,
         color: routeColor,
         width: 4.5,
       );
-      if (!mounted || controller != _controller) return;
+      if (!mounted || controller != _controller) {
+        unawaited(MapProvider.clearAnnotations(polylineManager));
+        return;
+      }
+      _routeLineManager = polylineManager;
       await MapProvider.fitBounds(controller, [
         ...stops,
         for (final point in route.validPolylinePoints)
@@ -93,7 +131,10 @@ class _RideDetailsMapState extends State<RideDetailsMap> {
       longitude: (widget.pickupLongitude + widget.dropoffLongitude) / 2,
       zoom: 13,
       interactive: false,
-      onMapCreated: (controller) => _controller = controller,
+      onMapCreated: (controller) {
+        _clearAnnotations();
+        _controller = controller;
+      },
       onMapLoaded: () => unawaited(_renderTrip()),
     );
   }
