@@ -299,15 +299,17 @@ class _RideHistoryFilterTab extends StatelessWidget {
                 child: AnimatedDefaultTextStyle(
                   duration: duration,
                   curve: Curves.easeOutCubic,
-                  style: (context.textStyles.labelLarge ?? const TextStyle())
-                      .copyWith(
-                        color: isSelected
-                            ? colors.onSurface
-                            : colors.onSurfaceVariant,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                      ),
+                  style:
+                      (context.textStyles.labelLarge ??
+                              DefaultTextStyle.of(context).style)
+                          .copyWith(
+                            color: isSelected
+                                ? colors.onSurface
+                                : colors.onSurfaceVariant,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                          ),
                   child: Text(
                     _label,
                     maxLines: 1,

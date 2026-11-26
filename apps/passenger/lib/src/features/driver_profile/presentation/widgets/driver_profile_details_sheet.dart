@@ -360,28 +360,14 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
         ),
       );
     }
-    if (_driverReviewsList.isEmpty && _reviewsErrorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              _reviewsErrorMessage!,
-              textAlign: TextAlign.center,
-              style: context.textStyles.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            TextButton(
-              onPressed: () => unawaited(_loadDriverProfileStats()),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
     if (_driverReviewsList.isEmpty) {
+      if (_reviewsErrorMessage case final errorMessage?) {
+        return AppRetryErrorView(
+          title: 'Could not load reviews',
+          message: errorMessage,
+          onRetry: () => unawaited(_loadDriverProfileStats()),
+        );
+      }
       return Center(
         child: Text(
           'No passenger reviews yet.',

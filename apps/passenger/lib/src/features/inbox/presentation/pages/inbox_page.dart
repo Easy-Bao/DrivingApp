@@ -196,18 +196,11 @@ class _InboxPageState extends State<InboxPage>
                       onRefresh: _initializeInbox,
                       child: BlocBuilder<InboxCubit, InboxState>(
                         builder: (context, state) {
-                          if (state is InboxLoadingState) {
+                          if (state is InboxLoadingState ||
+                              state is InboxInitialState) {
                             return InboxLoadingView(
                               horizontalPadding: horizontalPadding,
                               bottomClearance: _bottomClearance(context),
-                            );
-                          }
-                          if (state is InboxInitialState) {
-                            return _buildInboxContent(
-                              const InboxLoadedState(<InboxNotification>[]),
-                              isGuest: false,
-                              horizontalPadding: horizontalPadding,
-                              contentWidth: contentWidth,
                             );
                           }
                           return _buildInboxContent(

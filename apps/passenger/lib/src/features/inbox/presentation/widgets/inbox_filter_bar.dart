@@ -211,24 +211,19 @@ class _InboxFilterTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final textStyles = context.textStyles;
-    final showCount = count != null && count! > 0;
-    final semanticLabel = showCount ? '$_label, $count' : _label;
-    final labelStyle = (textStyles.labelLarge ?? const TextStyle(fontSize: 14))
-        .copyWith(
-          color: isSelected
-              ? colorScheme.onSurface
-              : colorScheme.onSurfaceVariant,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          letterSpacing: 0,
-        );
-    final countStyle = (textStyles.labelSmall ?? const TextStyle(fontSize: 11))
-        .tabular
-        .copyWith(
-          color: isSelected
-              ? colorScheme.onSurface
-              : colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.w600,
-        );
+    final defaultStyle = DefaultTextStyle.of(context).style;
+    final badgeCount = count;
+    final showCount = badgeCount != null && badgeCount > 0;
+    final semanticLabel = showCount ? '$_label, $badgeCount' : _label;
+    final labelStyle = (textStyles.labelLarge ?? defaultStyle).copyWith(
+      color: isSelected ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+      letterSpacing: 0,
+    );
+    final countStyle = (textStyles.labelSmall ?? defaultStyle).tabular.copyWith(
+      color: isSelected ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+      fontWeight: FontWeight.w600,
+    );
 
     return Semantics(
       button: true,
@@ -281,7 +276,7 @@ class _InboxFilterTab extends StatelessWidget {
                           duration: animationDuration,
                           curve: Curves.easeOutCubic,
                           style: countStyle,
-                          child: Text(count! > 99 ? '99+' : '$count'),
+                          child: Text(badgeCount > 99 ? '99+' : '$badgeCount'),
                         ),
                       ],
                     ],

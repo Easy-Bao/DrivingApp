@@ -152,7 +152,10 @@ class _RideDetailsContactButton extends StatelessWidget {
     return IconButton(
       tooltip: tooltip,
       onPressed: onPressed,
-      constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+      constraints: const BoxConstraints.tightFor(
+        width: AppSize.minimumTouchTarget,
+        height: AppSize.minimumTouchTarget,
+      ),
       style:
           IconButton.styleFrom(
             backgroundColor: colors.surfaceContainerLowest,
@@ -244,7 +247,12 @@ class RideDetailsRouteSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.md),
-        if (pLat != null && pLng != null && dLat != null && dLng != null) ...[
+        if (pLat != null &&
+            pLng != null &&
+            dLat != null &&
+            dLng != null &&
+            (pLat != 0 || pLng != 0) &&
+            (dLat != 0 || dLng != 0)) ...[
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.lg),

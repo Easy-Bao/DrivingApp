@@ -98,14 +98,40 @@ class _TrackDriverPageLoaderState extends State<TrackDriverPageLoader> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator.adaptive()),
+      return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.goNamed(HomeRoutes.home);
+              }
+            },
+            icon: const Icon(Icons.arrow_back),
+          ),
+        ),
+        body: const Center(child: CircularProgressIndicator.adaptive()),
       );
     }
 
     final ride = _ride;
     if (ride == null) {
       return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.goNamed(HomeRoutes.home);
+              }
+            },
+            icon: const Icon(Icons.arrow_back),
+          ),
+        ),
         body: AppRetryErrorView(
           title: 'Could not load trip',
           message: _errorMessage ?? 'No active trip was found.',

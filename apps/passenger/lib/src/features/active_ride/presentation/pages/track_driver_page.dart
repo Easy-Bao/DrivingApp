@@ -203,12 +203,16 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
             driverName: driverName,
           ),
         );
-      case RideFailed():
+      case RideFailed(:final message):
         if (_hasHandledTerminalState) return;
         _hasHandledTerminalState = true;
         widget.realtimeClient?.setActiveTripResyncHandler(null);
         widget.onRideTerminated();
         if (mounted) {
+          final notice = message.trim().isEmpty
+              ? 'This trip is no longer active.'
+              : message.trim();
+          AppSnackBar.show(context, notice, isError: true);
           context.goNamed(HomeRoutes.home);
         }
       case Idle() || SearchingDriver():
@@ -380,7 +384,9 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                     builder: (context, state) {
                       final isInTransit = state.isInTransit;
                       final hasArrived = state.hasArrived;
-                      final statusTitle = isInTransit
+                      final statusTitle = !state.isTracking
+                          ? 'Updating trip status…'
+                          : isInTransit
                           ? 'On your trip'
                           : hasArrived
                           ? 'Meet your driver'

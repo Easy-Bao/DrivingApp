@@ -16,6 +16,7 @@ import 'package:passenger/src/features/ride_history/presentation/bloc/ride_detai
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_details_sections.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class RideDetailsPage extends StatefulWidget {
@@ -227,201 +228,290 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
         return TripReceiptLayout(
           dateLabel: _receiptDate(context, snapshot, ride),
           onBack: () => context.pop(),
+          child: snapshot == null && ride == null
+              ? _buildInitialReceiptState(context, state, rideId)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (state.errorMessage case final errorMessage?)
+                      if (rideId != null) ...[
+                        AppErrorBanner(
+                          message: errorMessage,
+                          onRetry: () => unawaited(
+                            _detailsCubit.load(rideId, force: true),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                      ],
+                    if (reference.trim().isNotEmpty) ...[
+                      TripReference(
+                        id: reference,
+                        expanded: true,
+                        compact: true,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+                    RideDetailsDriverSection(
+                      driverName: driverName,
+                      vehicleSummary:
+                          ride?.displayVehicleSummary ??
+                          snapshot?.displayVehicleSummary ??
+                          'Vehicle details unavailable',
+                      showLostFoundChat: state.canContactCounterparty,
+                      canCallDriver:
+                          counterparty?.phone.trim().isNotEmpty == true,
+                      contactError: _contactError,
+                      onMessageDriver: () =>
+                          unawaited(_initiateLostFoundChat(state)),
+                      onCallDriver: () => unawaited(_callDriver(state)),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.xl,
+                      ),
+                      child: Divider(height: 1, color: hairline),
+                    ),
+                    RideDetailsRouteSection(
+                      statusLabel: statusLabel,
+                      isCompleted: isCompleted,
+                      pickupLabel:
+                          ride?.pickup ??
+                          snapshot?.pickupName ??
+                          'Pickup location',
+                      dropoffLabel:
+                          ride?.destination ??
+                          snapshot?.dropoffName ??
+                          'Destination location',
+                      pickupLatitude:
+                          ride?.pickupLat ?? snapshot?.pickupLatitude,
+                      pickupLongitude:
+                          ride?.pickupLng ?? snapshot?.pickupLongitude,
+                      dropoffLatitude:
+                          ride?.destLat ?? snapshot?.dropoffLatitude,
+                      dropoffLongitude:
+                          ride?.destLng ?? snapshot?.dropoffLongitude,
+                      distanceKm: snapshot?.distanceKm,
+                      durationMinutes: snapshot?.durationMinutes,
+                    ),
+                    if (isCompleted &&
+                        snapshot != null &&
+                        snapshot.driverId?.isNotEmpty == true &&
+                        rideId != null) ...[
+                      if (state.submittedReview case final review?) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.xl,
+                          ),
+                          child: Divider(height: 1, color: hairline),
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Ride rating',
+                                style: context.textStyles.bodyLarge?.copyWith(
+                                  color: colors.onSurface,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              review.rating.toStringAsFixed(0),
+                              style: context.textStyles.titleSmall?.tabular
+                                  .copyWith(
+                                    color: colors.onSurface,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                            const SizedBox(width: AppSpacing.xs),
+                            Icon(
+                              Icons.star_rounded,
+                              size: 18,
+                              color: context.semanticColors.rating,
+                            ),
+                          ],
+                        ),
+                      ] else if (widget.showRatingAction &&
+                          state.hasLoadedReview &&
+                          !state.isLoadingReview &&
+                          state.reviewErrorMessage == null) ...[
+                        const SizedBox(height: AppSpacing.lg),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () async {
+                              await context.pushNamed(
+                                RideHistoryRoutes.tripCompletion,
+                                extra: (ride: snapshot, returnToReceipt: true),
+                              );
+                              if (mounted) {
+                                await _detailsCubit.loadMyReview(
+                                  rideId,
+                                  refresh: true,
+                                );
+                              }
+                            },
+                            style:
+                                TextButton.styleFrom(
+                                  foregroundColor: colors.onSurface,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.md,
+                                  ),
+                                  minimumSize: const Size(
+                                    0,
+                                    AppSize.minimumTouchTarget,
+                                  ),
+                                  side: BorderSide(
+                                    color: colors.outlineVariant,
+                                  ),
+                                  backgroundColor:
+                                      colors.surfaceContainerLowest,
+                                  enableFeedback: false,
+                                  splashFactory: NoSplash.splashFactory,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.md,
+                                    ),
+                                  ),
+                                ).copyWith(
+                                  overlayColor: WidgetStateProperty.resolveWith(
+                                    (states) =>
+                                        states.contains(WidgetState.focused)
+                                        ? colors.primary.withValues(alpha: 0.12)
+                                        : Colors.transparent,
+                                  ),
+                                ),
+                            icon: Icon(
+                              Icons.star_outline_rounded,
+                              size: 18,
+                              color: colors.onSurface,
+                            ),
+                            label: const Text('Rate this ride'),
+                          ),
+                        ),
+                      ],
+                    ],
+                    if (isCompleted) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.xl,
+                        ),
+                        child: Divider(height: 1, color: hairline),
+                      ),
+                      RideDetailsFareBreakdown(snapshot: snapshot, fare: fare),
+                    ],
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: AppSpacing.xl,
+                        bottom: AppSpacing.sm,
+                      ),
+                      child: Divider(height: 1, color: hairline),
+                    ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: rideId == null || rideId.isEmpty
+                            ? null
+                            : () => showSafetyReportSheet(
+                                context,
+                                rideId: rideId,
+                                driverName: driverName,
+                                vehiclePlate:
+                                    ride?.vehiclePlate ??
+                                    snapshot?.plateNumber ??
+                                    '',
+                                vehicleType:
+                                    ride?.vehicleType ??
+                                    snapshot?.vehicleType ??
+                                    '',
+                                trackRepository: widget.trackRepository,
+                              ),
+                        style:
+                            TextButton.styleFrom(
+                              foregroundColor: colors.onSurfaceVariant,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.xs,
+                              ),
+                              minimumSize: const Size(
+                                0,
+                                AppSize.minimumTouchTarget,
+                              ),
+                              enableFeedback: false,
+                              splashFactory: NoSplash.splashFactory,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                              ),
+                            ).copyWith(
+                              overlayColor: WidgetStateProperty.resolveWith(
+                                (states) => states.contains(WidgetState.focused)
+                                    ? colors.primary.withValues(alpha: 0.12)
+                                    : Colors.transparent,
+                              ),
+                            ),
+                        icon: const Icon(LucideIcons.flag, size: 16),
+                        label: const Text('Report an issue'),
+                      ),
+                    ),
+                  ],
+                ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInitialReceiptState(
+    BuildContext context,
+    RideDetailsState state,
+    String? rideId,
+  ) {
+    if (state.isLoading) {
+      return const ExcludeSemantics(
+        child: Skeletonizer.zone(
+          key: ValueKey<String>('passenger-ride-details-loading-skeleton'),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (state.errorMessage case final errorMessage?)
-                if (rideId != null) ...[
-                  AppErrorBanner(
-                    message: errorMessage,
-                    onRetry: () =>
-                        unawaited(_detailsCubit.load(rideId, force: true)),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                ],
-              if (reference.trim().isNotEmpty) ...[
-                TripReference(id: reference, expanded: true, compact: true),
-                const SizedBox(height: AppSpacing.lg),
-              ],
-              RideDetailsDriverSection(
-                driverName: driverName,
-                vehicleSummary:
-                    ride?.displayVehicleSummary ??
-                    snapshot?.displayVehicleSummary ??
-                    'Vehicle details unavailable',
-                showLostFoundChat: state.canContactCounterparty,
-                canCallDriver: counterparty?.phone.trim().isNotEmpty == true,
-                contactError: _contactError,
-                onMessageDriver: () => unawaited(_initiateLostFoundChat(state)),
-                onCallDriver: () => unawaited(_callDriver(state)),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                child: Divider(height: 1, color: hairline),
-              ),
-              RideDetailsRouteSection(
-                statusLabel: statusLabel,
-                isCompleted: isCompleted,
-                pickupLabel:
-                    ride?.pickup ?? snapshot?.pickupName ?? 'Pickup location',
-                dropoffLabel:
-                    ride?.destination ??
-                    snapshot?.dropoffName ??
-                    'Destination location',
-                pickupLatitude: ride?.pickupLat ?? snapshot?.pickupLatitude,
-                pickupLongitude: ride?.pickupLng ?? snapshot?.pickupLongitude,
-                dropoffLatitude: ride?.destLat ?? snapshot?.dropoffLatitude,
-                dropoffLongitude: ride?.destLng ?? snapshot?.dropoffLongitude,
-                distanceKm: snapshot?.distanceKm,
-                durationMinutes: snapshot?.durationMinutes,
-              ),
-              if (isCompleted &&
-                  snapshot != null &&
-                  snapshot.driverId?.isNotEmpty == true &&
-                  rideId != null) ...[
-                if (state.submittedReview case final review?) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xl,
-                    ),
-                    child: Divider(height: 1, color: hairline),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Ride rating',
-                          style: context.textStyles.bodyLarge?.copyWith(
-                            color: colors.onSurface,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        review.rating.toStringAsFixed(0),
-                        style: context.textStyles.titleSmall?.tabular.copyWith(
-                          color: colors.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Icon(
-                        Icons.star_rounded,
-                        size: 18,
-                        color: context.semanticColors.rating,
-                      ),
-                    ],
-                  ),
-                ] else if (widget.showRatingAction &&
-                    state.hasLoadedReview &&
-                    !state.isLoadingReview &&
-                    state.reviewErrorMessage == null) ...[
-                  const SizedBox(height: AppSpacing.lg),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: () async {
-                        await context.pushNamed(
-                          RideHistoryRoutes.tripCompletion,
-                          extra: (ride: snapshot, returnToReceipt: true),
-                        );
-                        if (mounted) {
-                          await _detailsCubit.loadMyReview(
-                            rideId,
-                            refresh: true,
-                          );
-                        }
-                      },
-                      style:
-                          TextButton.styleFrom(
-                            foregroundColor: colors.onSurface,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.md,
-                            ),
-                            minimumSize: const Size(
-                              0,
-                              AppSize.minimumTouchTarget,
-                            ),
-                            side: BorderSide(color: colors.outlineVariant),
-                            backgroundColor: colors.surfaceContainerLowest,
-                            enableFeedback: false,
-                            splashFactory: NoSplash.splashFactory,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                          ).copyWith(
-                            overlayColor: WidgetStateProperty.resolveWith(
-                              (states) => states.contains(WidgetState.focused)
-                                  ? colors.primary.withValues(alpha: 0.12)
-                                  : Colors.transparent,
-                            ),
-                          ),
-                      icon: Icon(
-                        Icons.star_outline_rounded,
-                        size: 18,
-                        color: colors.onSurface,
-                      ),
-                      label: const Text('Rate this ride'),
+              Row(
+                children: [
+                  Bone.circle(size: 44),
+                  SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Bone.text(width: 140, fontSize: 16),
+                        SizedBox(height: 6),
+                        Bone.text(width: 110, fontSize: 12),
+                      ],
                     ),
                   ),
                 ],
-              ],
-              if (isCompleted) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                  child: Divider(height: 1, color: hairline),
-                ),
-                RideDetailsFareBreakdown(snapshot: snapshot, fare: fare),
-              ],
-              Padding(
-                padding: const EdgeInsets.only(
-                  top: AppSpacing.xl,
-                  bottom: AppSpacing.sm,
-                ),
-                child: Divider(height: 1, color: hairline),
               ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: rideId == null || rideId.isEmpty
-                      ? null
-                      : () => showSafetyReportSheet(
-                          context,
-                          rideId: rideId,
-                          driverName: driverName,
-                          vehiclePlate:
-                              ride?.vehiclePlate ?? snapshot?.plateNumber ?? '',
-                          vehicleType:
-                              ride?.vehicleType ?? snapshot?.vehicleType ?? '',
-                          trackRepository: widget.trackRepository,
-                        ),
-                  style:
-                      TextButton.styleFrom(
-                        foregroundColor: colors.onSurfaceVariant,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xs,
-                        ),
-                        minimumSize: const Size(0, AppSize.minimumTouchTarget),
-                        enableFeedback: false,
-                        splashFactory: NoSplash.splashFactory,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                      ).copyWith(
-                        overlayColor: WidgetStateProperty.resolveWith(
-                          (states) => states.contains(WidgetState.focused)
-                              ? colors.primary.withValues(alpha: 0.12)
-                              : Colors.transparent,
-                        ),
-                      ),
-                  icon: const Icon(LucideIcons.flag, size: 16),
-                  label: const Text('Report an issue'),
-                ),
+              SizedBox(height: AppSpacing.xxl),
+              Bone.square(
+                size: 180,
+                borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
               ),
+              SizedBox(height: AppSpacing.xl),
+              Bone.multiText(lines: 3, fontSize: 14),
             ],
           ),
-        );
-      },
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxxl),
+      child: AppRetryErrorView(
+        title: 'Unable to load receipt',
+        message:
+            state.errorMessage ?? 'Trip details are unavailable right now.',
+        onRetry: rideId == null
+            ? () {}
+            : () => unawaited(_detailsCubit.load(rideId, force: true)),
+      ),
     );
   }
 }
