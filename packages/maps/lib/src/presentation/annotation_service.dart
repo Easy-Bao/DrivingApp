@@ -1,72 +1,21 @@
-import 'dart:collection';
-import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:design_system/design_system.dart'
-    show AppPalette, AppStatusColors;
 import 'package:foundation/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/src/presentation/camera_service.dart';
+import 'package:maps/src/presentation/marker_bitmap_renderer.dart';
+import 'package:maps/src/presentation/marker_style_and_motion.dart';
+import 'package:maps/src/presentation/polyline_annotation_controller.dart';
 import 'package:material_ui/material_ui.dart';
+
+export 'package:maps/src/presentation/marker_style_and_motion.dart';
 
 typedef MapPointAnnotationManager = mapbox.PointAnnotationManager;
 typedef MapPolylineAnnotationManager = mapbox.PolylineAnnotationManager;
 typedef MapBaseAnnotationManager = mapbox.BaseAnnotationManager;
 
-class TripMapMarkerStyle._() {
-  static const double pinIconSize = 1.22;
-  static const Color ownLocation = AppPalette.obsidian;
-  static const Color tripLocation = AppStatusColors.success;
-  static const Color markerSurface = AppPalette.white;
-  static const Color labelForeground = AppPalette.obsidian;
-
-  static Color colorFor({required bool isOrigin}) {
-    return isOrigin ? ownLocation : tripLocation;
-  }
-}
-
-class MapMarkerMotion._() {
-  static double bearingBetween({
-    required double startLatitude,
-    required double startLongitude,
-    required double targetLatitude,
-    required double targetLongitude,
-  }) {
-    final startLatitudeRad = _radians(startLatitude);
-    final targetLatitudeRad = _radians(targetLatitude);
-    final longitudeDelta = _radians(targetLongitude - startLongitude);
-    final x = math.sin(longitudeDelta) * math.cos(targetLatitudeRad);
-    final y =
-        math.cos(startLatitudeRad) * math.sin(targetLatitudeRad) -
-        math.sin(startLatitudeRad) *
-            math.cos(targetLatitudeRad) *
-            math.cos(longitudeDelta);
-    if (x == 0 && y == 0) return 0;
-    return _normalize(math.atan2(x, y) * 180 / math.pi);
-  }
-
-  static double interpolateBearing(
-    double start,
-    double target,
-    double progress,
-  ) {
-    final shortestDelta = _normalize(target - start + 180) - 180;
-    return _normalize(start + shortestDelta * progress);
-  }
-
-  static double _radians(double degrees) => degrees * math.pi / 180;
-
-  static double _normalize(double degrees) {
-    final normalized = degrees % 360;
-    return normalized < 0 ? normalized + 360 : normalized;
-  }
-}
-
 class MapAnnotationService._() {
-  static const _markerImageCacheCapacity = 32;
-  static final LinkedHashMap<String, Uint8List> _markerImageCache =
-      LinkedHashMap();
   static final Expando<mapbox.MapboxMap> _annotationManagerOwners = Expando(
     'MapAnnotationService.annotationManagerOwners',
   );
@@ -79,6 +28,13 @@ class MapAnnotationService._() {
   static final Expando<String> _markerImageKeyByManager = Expando(
     'MapAnnotationService.markerImageKeyByManager',
   );
+
+  static void _registerOwner(
+    mapbox.BaseAnnotationManager manager,
+    mapbox.MapboxMap owner,
+  ) {
+    _annotationManagerOwners[manager] = owner;
+  }
 
   static Future<mapbox.PointAnnotationManager> addMarker(
     AppMapController controller,
@@ -93,10 +49,10 @@ class MapAnnotationService._() {
     final mapController = controller.native;
     final annotationManager = await mapController.annotations
         .createPointAnnotationManager();
-    _annotationManagerOwners[annotationManager] = mapController;
+    _registerOwner(annotationManager, mapController);
 
     try {
-      final imageKey = _markerCacheKey(
+      final imageKey = MarkerBitmapRenderer.cacheKey(
         color ?? TripMapMarkerStyle.colorFor(isOrigin: isOrigin),
         label: label,
       );
@@ -136,7 +92,7 @@ class MapAnnotationService._() {
     final generation =
         (_animationGenerationByManager[annotationManager] ?? 0) + 1;
     _animationGenerationByManager[annotationManager] = generation;
-    final imageKey = _markerCacheKey(
+    final imageKey = MarkerBitmapRenderer.cacheKey(
       color ?? TripMapMarkerStyle.colorFor(isOrigin: isOrigin),
       label: label,
     );
@@ -188,7 +144,10 @@ class MapAnnotationService._() {
     if (imageChanged) {
       final markerColor =
           color ?? TripMapMarkerStyle.colorFor(isOrigin: isOrigin);
-      annotation.image = await _createMarkerImage(markerColor, label: label);
+      annotation.image = await MarkerBitmapRenderer.getOrRender(
+        markerColor,
+        label: label,
+      );
       if (_animationGenerationByManager[annotationManager] != generation) {
         return;
       }
@@ -282,7 +241,7 @@ class MapAnnotationService._() {
         color ?? TripMapMarkerStyle.colorFor(isOrigin: isOrigin);
     return mapbox.PointAnnotationOptions(
       geometry: mapbox.Point(coordinates: mapbox.Position(longitude, latitude)),
-      image: await _createMarkerImage(markerColor, label: label),
+      image: await MarkerBitmapRenderer.getOrRender(markerColor, label: label),
       iconAnchor: mapbox.IconAnchor.BOTTOM,
       iconRotate: bearing,
       iconSize: label == null ? TripMapMarkerStyle.pinIconSize : 1.0,
@@ -290,350 +249,57 @@ class MapAnnotationService._() {
     );
   }
 
-  static String _markerCacheKey(Color color, {String? label}) {
-    final cacheLabel = label == null || label.trim().isEmpty ? '' : label;
-    return '${color.toARGB32()}_$cacheLabel';
-  }
-
-  static Future<Uint8List> _createMarkerImage(
-    Color color, {
-    String? label,
-  }) async {
-    final cacheKey = _markerCacheKey(color, label: label);
-    final cachedImage = _markerImageCache.remove(cacheKey);
-    if (cachedImage != null) {
-      _markerImageCache[cacheKey] = cachedImage;
-      return cachedImage;
-    }
-
-    final image = await traceTimelineStage(
-      'maps.marker.rasterize_png',
-      () => _renderMarkerImage(color, label: label),
-    );
-    if (_markerImageCache.length >= _markerImageCacheCapacity) {
-      _markerImageCache.remove(_markerImageCache.keys.first);
-    }
-    _markerImageCache[cacheKey] = image;
-    return image;
-  }
-
-  static Future<Uint8List> _renderMarkerImage(
-    Color color, {
-    String? label,
-  }) async {
-    if (label == null || label.trim().isEmpty) {
-      return _createPinImage(color);
-    }
-
-    const width = 360.0;
-    const height = 104.0;
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-    final background = Paint()..color = TripMapMarkerStyle.markerSurface;
-    final shadow = Paint()
-      ..color = TripMapMarkerStyle.labelForeground.withValues(alpha: 0.12);
-    final cardRect = RRect.fromRectAndRadius(
-      const Rect.fromLTWH(8, 8, width - 16, 78),
-      const Radius.circular(22),
-    );
-    canvas.drawRRect(cardRect.shift(const Offset(0, 6)), shadow);
-    canvas.drawRRect(cardRect, background);
-    final pointer = Path()
-      ..moveTo(width / 2 - 14, 84)
-      ..lineTo(width / 2, height - 4)
-      ..lineTo(width / 2 + 14, 84)
-      ..close();
-    canvas.drawPath(pointer, background);
-
-    canvas.drawCircle(const Offset(48, 47), 20, Paint()..color = color);
-    canvas.drawCircle(
-      const Offset(48, 47),
-      8,
-      Paint()..color = TripMapMarkerStyle.markerSurface,
-    );
-
-    final lines = label.split('\n');
-    _drawLabelText(
-      canvas,
-      lines.first,
-      const Offset(82, 25),
-      width: 250,
-      fontSize: 23,
-      fontWeight: FontWeight.w700,
-      color: TripMapMarkerStyle.labelForeground,
-    );
-    if (lines.length > 1) {
-      _drawLabelText(
-        canvas,
-        lines.skip(1).join(' '),
-        const Offset(82, 55),
-        width: 250,
-        fontSize: 18,
-        fontWeight: FontWeight.w500,
-        color: TripMapMarkerStyle.labelForeground.withValues(alpha: 0.6),
-      );
-    }
-
-    return _encodePictureAsPng(
-      recorder.endRecording(),
-      width: width.toInt(),
-      height: height.toInt(),
-    );
-  }
-
-  static void _drawLabelText(
-    Canvas canvas,
-    String text,
-    Offset offset, {
-    required double width,
-    required double fontSize,
-    required FontWeight fontWeight,
-    required Color color,
-  }) {
-    final paragraphBuilder =
-        ui.ParagraphBuilder(ui.ParagraphStyle(maxLines: 1, ellipsis: '…'))
-          ..pushStyle(
-            ui.TextStyle(
-              color: color,
-              fontSize: fontSize,
-              fontWeight: fontWeight,
-            ),
-          )
-          ..addText(text);
-    final paragraph = paragraphBuilder.build()
-      ..layout(ui.ParagraphConstraints(width: width));
-    canvas.drawParagraph(paragraph, offset);
-  }
-
-  static Future<Uint8List> _createPinImage(Color color) async {
-    const width = 64.0;
-    const height = 76.0;
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-    const center = Offset(width / 2, 26);
-    final outerTail = Path()
-      ..moveTo(center.dx - 10, 41)
-      ..lineTo(center.dx, height - 2)
-      ..lineTo(center.dx + 10, 41)
-      ..close();
-    final innerTail = Path()
-      ..moveTo(center.dx - 6, 40)
-      ..lineTo(center.dx, height - 9)
-      ..lineTo(center.dx + 6, 40)
-      ..close();
-    final shadowPath = Path()
-      ..addOval(Rect.fromCircle(center: center, radius: 23))
-      ..addPath(outerTail, Offset.zero);
-
-    canvas.drawShadow(
-      shadowPath,
-      TripMapMarkerStyle.labelForeground.withValues(alpha: 0.26),
-      5,
-      true,
-    );
-    canvas.drawPath(
-      outerTail,
-      Paint()..color = TripMapMarkerStyle.markerSurface,
-    );
-    canvas.drawPath(innerTail, Paint()..color = color);
-    canvas.drawCircle(
-      center,
-      23,
-      Paint()..color = TripMapMarkerStyle.markerSurface,
-    );
-    canvas.drawCircle(center, 18, Paint()..color = color);
-    canvas.drawCircle(
-      center,
-      9,
-      Paint()..color = TripMapMarkerStyle.markerSurface,
-    );
-    canvas.drawCircle(center, 4, Paint()..color = color);
-    return _encodePictureAsPng(
-      recorder.endRecording(),
-      width: width.toInt(),
-      height: height.toInt(),
-    );
-  }
-
-  static Future<Uint8List> _encodePictureAsPng(
-    ui.Picture picture, {
-    required int width,
-    required int height,
-  }) async {
-    ui.Image? image;
-    try {
-      image = await picture.toImage(width, height);
-      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (bytes == null) {
-        throw StateError('Failed to encode marker image as PNG.');
-      }
-      return bytes.buffer.asUint8List();
-    } finally {
-      image?.dispose();
-      picture.dispose();
-    }
-  }
-
   static Future<mapbox.PolylineAnnotationManager> addPolyline(
     AppMapController controller,
     List<List<double>> points, {
     Color color = TripMapMarkerStyle.ownLocation,
     double width = 4.0,
-  }) {
-    return _addPolylinePositions(
-      controller,
-      _positionsFromPoints(points),
-      color: color,
-      width: width,
-    );
-  }
+  }) => PolylineAnnotationController.addPolyline(
+    controller,
+    points,
+    registerOwner: _registerOwner,
+    clearAnnotations: clearAnnotations,
+    color: color,
+    width: width,
+  );
 
   static Future<mapbox.PolylineAnnotationManager> addPolylineBuffer(
     AppMapController controller,
     Float64List coordinates, {
     Color color = TripMapMarkerStyle.ownLocation,
     double width = 4.0,
-  }) {
-    return _addPolylinePositions(
-      controller,
-      _positionsFromBuffer(coordinates),
-      color: color,
-      width: width,
-    );
-  }
-
-  static Future<mapbox.PolylineAnnotationManager> _addPolylinePositions(
-    AppMapController controller,
-    List<mapbox.Position> positions, {
-    required Color color,
-    required double width,
-  }) async {
-    final mapController = controller.native;
-    final annotationManager = await mapController.annotations
-        .createPolylineAnnotationManager();
-    _annotationManagerOwners[annotationManager] = mapController;
-
-    try {
-      await annotationManager.create(
-        mapbox.PolylineAnnotationOptions(
-          geometry: mapbox.LineString(coordinates: positions),
-          lineWidth: width,
-          lineColor: color.toARGB32(),
-          lineJoin: mapbox.LineJoin.ROUND,
-        ),
-      );
-      return annotationManager;
-    } catch (_) {
-      await clearAnnotations(annotationManager);
-      rethrow;
-    }
-  }
+  }) => PolylineAnnotationController.addPolylineBuffer(
+    controller,
+    coordinates,
+    registerOwner: _registerOwner,
+    clearAnnotations: clearAnnotations,
+    color: color,
+    width: width,
+  );
 
   static Future<void> replacePolyline(
     mapbox.PolylineAnnotationManager annotationManager,
     List<List<double>> points, {
     Color color = TripMapMarkerStyle.ownLocation,
     double width = 4.0,
-  }) {
-    return _replacePolylinePositions(
-      annotationManager,
-      _positionsFromPoints(points),
-      color: color,
-      width: width,
-    );
-  }
+  }) => PolylineAnnotationController.replacePolyline(
+    annotationManager,
+    points,
+    color: color,
+    width: width,
+  );
 
   static Future<void> replacePolylineBuffer(
     mapbox.PolylineAnnotationManager annotationManager,
     Float64List coordinates, {
     Color color = TripMapMarkerStyle.ownLocation,
     double width = 4.0,
-  }) {
-    return _replacePolylinePositions(
-      annotationManager,
-      _positionsFromBuffer(coordinates),
-      color: color,
-      width: width,
-    );
-  }
-
-  static Future<void> _replacePolylinePositions(
-    mapbox.PolylineAnnotationManager annotationManager,
-    List<mapbox.Position> positions, {
-    required Color color,
-    required double width,
-  }) async {
-    final annotations = await annotationManager.getAnnotations();
-    if (annotations.isEmpty) {
-      await annotationManager.create(
-        mapbox.PolylineAnnotationOptions(
-          geometry: mapbox.LineString(coordinates: positions),
-          lineWidth: width,
-          lineColor: color.toARGB32(),
-          lineJoin: mapbox.LineJoin.ROUND,
-        ),
-      );
-      return;
-    }
-    final annotation = annotations.first;
-    annotation.geometry = mapbox.LineString(coordinates: positions);
-    annotation.lineWidth = width;
-    annotation.lineColor = color.toARGB32();
-    annotation.lineJoin = mapbox.LineJoin.ROUND;
-    await annotationManager.update(annotation);
-    if (annotations.length > 1) {
-      await annotationManager.deleteMulti(annotations.skip(1).toList());
-    }
-  }
-
-  static List<mapbox.Position> _positionsFromPoints(List<List<double>> points) {
-    final positions = <mapbox.Position>[];
-    for (final point in points) {
-      if (_isValidPolylinePoint(point)) {
-        positions.add(mapbox.Position(point[0], point[1]));
-      }
-    }
-    if (positions.length < 2) {
-      throw ArgumentError.value(
-        points,
-        'points',
-        'at least two valid coordinates are required',
-      );
-    }
-    return positions;
-  }
-
-  static List<mapbox.Position> _positionsFromBuffer(Float64List coordinates) {
-    final positions = <mapbox.Position>[];
-    for (var index = 0; index + 1 < coordinates.length; index += 2) {
-      final longitude = coordinates[index];
-      final latitude = coordinates[index + 1];
-      if (_isValidPolylineCoordinate(longitude, latitude)) {
-        positions.add(mapbox.Position(longitude, latitude));
-      }
-    }
-    if (positions.length < 2) {
-      throw ArgumentError.value(
-        coordinates,
-        'coordinates',
-        'at least two valid coordinates are required',
-      );
-    }
-    return positions;
-  }
-
-  static bool _isValidPolylinePoint(List<double> point) {
-    return point.length >= 2 && _isValidPolylineCoordinate(point[0], point[1]);
-  }
-
-  static bool _isValidPolylineCoordinate(double longitude, double latitude) {
-    return longitude.isFinite &&
-        latitude.isFinite &&
-        latitude >= -90 &&
-        latitude <= 90 &&
-        longitude >= -180 &&
-        longitude <= 180;
-  }
+  }) => PolylineAnnotationController.replacePolylineBuffer(
+    annotationManager,
+    coordinates,
+    color: color,
+    width: width,
+  );
 
   static Future<void> clearAnnotations(
     mapbox.BaseAnnotationManager? manager,
