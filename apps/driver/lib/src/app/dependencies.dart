@@ -68,7 +68,7 @@ class AppDependencies extends Module {
               sendTimeout: const Duration(seconds: 15),
             ),
           ),
-          onSessionExpired: () => _navigateToSignIn(session),
+          onSessionExpired: () => _handleSessionExpired(i, session),
         );
         session.onActiveRideCleared = provider.flushDeferredExpiry;
         return provider;
@@ -128,18 +128,36 @@ class AppDependencies extends Module {
   ];
 }
 
-Future<void> _navigateToSignIn([SessionStore? sessionService]) async {
+Future<void> _handleSessionExpired(
+  Injector injector,
+  SessionStore sessionService,
+) async {
   try {
-    final session = sessionService ?? Modular.get<SessionStore>();
-    final activeRideId = await session.readActiveRideId();
+    final activeRideId = await sessionService.readActiveRideId();
     if (activeRideId != null && activeRideId.trim().isNotEmpty) {
       return;
     }
   } catch (_) {}
+
+  await Future.wait<void>([
+    _runCleanupStep(() => injector.get<BackgroundTelemetry>().stop()),
+    _runCleanupStep(() => injector.get<RealtimeWebSocketClient>().stop()),
+    _runCleanupStep(() => injector.get<LocationSpool>().clear()),
+  ]);
+
   final router = Modular.routerConfig;
   if (router.routerDelegate.currentConfiguration.uri.path ==
       AuthRoutes.signinPath) {
     return;
   }
   router.goNamed(AuthRoutes.signin);
+}
+
+Future<void> _runCleanupStep(Future<void> Function() step) async {
+  try {
+    await step();
+  } catch (_) {
+    // Cleanup must remain best-effort so forced sign-out still completes even
+    // when background services or platform channels are unavailable.
+  }
 }

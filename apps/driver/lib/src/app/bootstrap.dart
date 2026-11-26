@@ -9,6 +9,7 @@ import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/core/telemetry/background_telemetry.dart';
 import 'package:driver/src/features/auth/auth_routes.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -27,10 +28,11 @@ Future<void> bootstrapApp() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
     configureClientErrorBoundary(appName: 'driver-app');
+    AppTransitions.configure();
 
     try {
       currentStage = 'loading startup configuration';
-      final sessionService = SessionStore();
+      final startupSessionCheck = SessionStore();
       final stopServiceTask = traceTimelineStage<void>(
         'driver.startup.stop_background_service',
         BackgroundTelemetry.stopExistingServiceForStartup,
@@ -41,7 +43,7 @@ Future<void> bootstrapApp() async {
       );
       final sessionTask = traceTimelineStage(
         'driver.startup.restore_session',
-        () => _hasSession(sessionService),
+        () => _hasSession(startupSessionCheck),
       );
       final environmentTask = traceTimelineStage<void>(
         'driver.startup.load_environment',
@@ -56,6 +58,7 @@ Future<void> bootstrapApp() async {
       ]);
       final preferences = await preferencesTask;
       final hasSession = await sessionTask;
+      final sessionService = SessionStore(preferences: preferences);
 
       currentStage = 'initializing crash reporting';
       await traceTimelineStage(
@@ -78,9 +81,9 @@ Future<void> bootstrapApp() async {
                 initialRoute: hasSession
                     ? DashboardRoutes.fullDashboardPath
                     : AuthRoutes.signinPath,
-                debugLogDiagnostics: true,
-                debugLogDiagnosticsGoRouter: true,
-                debugLogEventBus: true,
+                debugLogDiagnostics: kDebugMode,
+                debugLogDiagnosticsGoRouter: kDebugMode,
+                debugLogEventBus: kDebugMode,
               ),
             );
             developer.Timeline.instantSync(

@@ -6,6 +6,7 @@ import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/core/telemetry/background_telemetry.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver/src/features/settings/settings_routes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -36,6 +37,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
       );
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _ensureLocationMonitoring();
       unawaited(_setBackgroundTelemetryVisibility(true));
     });
@@ -100,7 +102,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         // ignore: deprecated_member_use
         builder: (context, child) => MaterialUiCompatibilityBridge(
           child: LocationAccessOverlayScope(
-            enabled: _isDriverRoute,
+            enabled: _requiresLocationAccess,
             child: child ?? const SizedBox.shrink(),
           ),
         ),
@@ -109,26 +111,22 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   }
 
   void _ensureLocationMonitoring() {
-    final currentPath =
-        Modular.routerConfig.routerDelegate.currentConfiguration.uri.path;
-    if (_locationMonitoringRequested ||
-        !currentPath.startsWith(AppRoutes.driverModulePath)) {
+    if (_locationMonitoringRequested || !_requiresLocationAccess) {
       return;
     }
 
     _locationMonitoringRequested = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _isDriverRoute) {
+      if (mounted && _requiresLocationAccess) {
         unawaited(_locationAccessCubit.start());
       }
     });
   }
 
-  bool get _isDriverRoute => Modular
-      .routerConfig
-      .routerDelegate
-      .currentConfiguration
-      .uri
-      .path
-      .startsWith(AppRoutes.driverModulePath);
+  bool get _requiresLocationAccess {
+    final currentPath =
+        Modular.routerConfig.routerDelegate.currentConfiguration.uri.path;
+    return currentPath.startsWith(AppRoutes.driverModulePath) &&
+        !currentPath.endsWith('/${SettingsRoutes.termsPath}');
+  }
 }
