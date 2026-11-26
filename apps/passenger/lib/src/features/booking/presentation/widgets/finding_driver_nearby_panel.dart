@@ -281,6 +281,10 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                           style:
                               TextButton.styleFrom(
                                 foregroundColor: colors.onSurface,
+                                minimumSize: const Size(
+                                  AppSize.minimumTouchTarget,
+                                  AppSize.minimumTouchTarget,
+                                ),
                                 enableFeedback: false,
                                 splashFactory: NoSplash.splashFactory,
                               ).copyWith(
@@ -557,7 +561,7 @@ class const _DriverRow({
                     children: [
                       if (resolvedDriver != null)
                         Text(
-                          '${resolvedDriver.etaMinutes} min · ${DistanceFormatter.fromKilometers(resolvedDriver.distanceKm)}',
+                          '${resolvedDriver.etaMinutes.round()} min · ${DistanceFormatter.fromKilometers(resolvedDriver.distanceKm)}',
                           style: context.textStyles.bodySmall?.tabular.copyWith(
                             color: colors.onSurfaceVariant,
                           ),

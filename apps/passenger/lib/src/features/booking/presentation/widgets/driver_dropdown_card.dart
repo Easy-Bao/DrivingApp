@@ -124,15 +124,12 @@ class _DriverDropdownCardState()
 
   Widget _buildReviewCountLabel() {
     final bloc = _bookingBloc;
+    final labelStyle = context.textStyles.labelSmall?.copyWith(
+      fontWeight: FontWeight.w600,
+      color: context.colorScheme.onSurfaceVariant,
+    );
     if (bloc == null) {
-      return Text(
-        'Reviews',
-        style: TextStyle(
-          fontSize: 11.0,
-          fontWeight: FontWeight.w600,
-          color: context.colorScheme.onSurfaceVariant,
-        ),
-      );
+      return Text('Reviews', style: labelStyle);
     }
     return BlocBuilder<BookingBloc, BookingState>(
       bloc: bloc,
@@ -145,28 +142,18 @@ class _DriverDropdownCardState()
             : feedback.reviews.length == 6
             ? '6+ reviews'
             : '${feedback.reviews.length} reviews';
-        return Text(
-          label,
-          style: TextStyle(
-            fontSize: 11.0,
-            fontWeight: FontWeight.w600,
-            color: context.colorScheme.onSurfaceVariant,
-          ),
-        );
+        return Text(label, style: labelStyle);
       },
     );
   }
 
   Widget _buildRecentFeedbackList() {
     final bloc = _bookingBloc;
+    final emptyStyle = context.textStyles.bodySmall?.copyWith(
+      color: context.colorScheme.onSurfaceVariant,
+    );
     if (bloc == null) {
-      return Text(
-        'No Passenger Feedback Yet.',
-        style: TextStyle(
-          fontSize: 12,
-          color: context.colorScheme.onSurface.withValues(alpha: 0.65),
-        ),
-      );
+      return Text('No Passenger Feedback Yet.', style: emptyStyle);
     }
     return BlocBuilder<BookingBloc, BookingState>(
       bloc: bloc,
@@ -188,15 +175,7 @@ class _DriverDropdownCardState()
                   ),
                 )
               : feedback.reviews.isEmpty
-              ? Text(
-                  'No Passenger Feedback Yet.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: context.colorScheme.onSurface.withValues(
-                      alpha: 0.65,
-                    ),
-                  ),
-                )
+              ? Text('No Passenger Feedback Yet.', style: emptyStyle)
               : ListView.separated(
                   primary: false,
                   padding: EdgeInsets.zero,

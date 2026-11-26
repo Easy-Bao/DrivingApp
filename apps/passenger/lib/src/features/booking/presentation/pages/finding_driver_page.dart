@@ -847,8 +847,23 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
   Widget build(BuildContext context) {
     final pickup = _pickupCoordinate;
     if (_locationUnavailable || pickup == null) {
-      return const Scaffold(
-        body: Center(child: Text('Your location is unavailable.')),
+      return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            onPressed: _returnHome,
+            icon: const Icon(Icons.arrow_back),
+          ),
+        ),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(AppSpacing.xxl),
+            child: Text(
+              'Your location is unavailable.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
       );
     }
 

@@ -30,6 +30,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
   Widget? _cachedMapView;
   String _fullAddress = '';
   bool _isLoading = true;
+  String? _loadError;
   bool _routeDataLoaded = false;
   Future<void>? _routeDataRequest;
   Future<void>? _routeRenderRequest;
@@ -39,6 +40,16 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
   @override
   void initState() {
     super.initState();
+    _ensureRouteDataLoaded();
+  }
+
+  void _retryLoadRouteData() {
+    if (_routeDataRequest != null) return;
+    setState(() {
+      _routeDataLoaded = false;
+      _isLoading = true;
+      _loadError = null;
+    });
     _ensureRouteDataLoaded();
   }
 
@@ -92,6 +103,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
       setState(() {
         _fullAddress = place?.fullAddress ?? widget.placeSubtitle;
         _isLoading = false;
+        _loadError = null;
       });
       await _ensureRouteDataRendered();
     } catch (error) {
@@ -100,6 +112,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
       setState(() {
         _fullAddress = widget.placeSubtitle;
         _isLoading = false;
+        _loadError = 'Unable to load route details. Try again.';
       });
       debugPrint('Unable to load destination route: $error');
     }
@@ -254,7 +267,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                _isLoading ? 'Loading...' : _fullAddress,
+                                _isLoading ? 'Fetching address…' : _fullAddress,
                                 style: context.textStyles.bodySmall?.copyWith(
                                   color: context.colorScheme.onSurfaceVariant,
                                   fontWeight: FontWeight.w500,
@@ -267,6 +280,14 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                         ),
                       ],
                     ),
+                    if (_loadError case final loadError?) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      AppErrorBanner(
+                        message: loadError,
+                        onRetry: _retryLoadRouteData,
+                        onDismiss: () => setState(() => _loadError = null),
+                      ),
+                    ],
                     const SizedBox(height: 20),
                     CompactRouteTimeline(
                       pickup: 'Current Location',

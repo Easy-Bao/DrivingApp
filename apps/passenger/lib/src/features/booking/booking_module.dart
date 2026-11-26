@@ -25,6 +25,7 @@ import 'package:passenger/src/features/booking/presentation/pages/map_pin_page.d
 import 'package:passenger/src/features/booking/presentation/pages/ride_selection_page.dart';
 import 'package:passenger/src/features/booking/presentation/pages/search_destination_page.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
+import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile_cubit.dart';
 
 class BookingModule._() {
@@ -89,8 +90,8 @@ class BookingModule._() {
         final latitude = data.doubleValue('lat');
         final longitude = data.doubleValue('lng');
         if (latitude == null || longitude == null) {
-          return const Scaffold(
-            body: Center(child: Text('Location data is unavailable.')),
+          return const _BookingUnavailablePage(
+            message: 'Location data is unavailable.',
           );
         }
         return DestinationMapPage(
@@ -130,8 +131,8 @@ class BookingModule._() {
         final distance = data.string('distance');
         final duration = data.string('duration');
         if (destination == null) {
-          return const Scaffold(
-            body: Center(child: Text('Trip route data is unavailable.')),
+          return const _BookingUnavailablePage(
+            message: 'Trip route data is unavailable.',
           );
         }
         return BlocProvider<ProfileCubit>.value(
@@ -164,8 +165,8 @@ class BookingModule._() {
         final data = RoutePayload.from(extra: state.extra);
         final destination = data.object<Place>('destination');
         if (destination == null) {
-          return const Scaffold(
-            body: Center(child: Text('Destination data is unavailable.')),
+          return const _BookingUnavailablePage(
+            message: 'Destination data is unavailable.',
           );
         }
         final fare = data.doubleValue('fare');
@@ -173,8 +174,8 @@ class BookingModule._() {
         final distance = data.string('distance');
         final duration = data.string('duration');
         if (fare == null || fare <= 0 || distance == null || duration == null) {
-          return const Scaffold(
-            body: Center(child: Text('Fare and trip data are unavailable.')),
+          return const _BookingUnavailablePage(
+            message: 'Fare and trip data are unavailable.',
           );
         }
         return FindingDriverPage(
@@ -220,6 +221,37 @@ class BookingModule._() {
       fullAddress: data.string('destinationAddress') ?? name,
       latitude: latitude,
       longitude: longitude,
+    );
+  }
+}
+
+class _BookingUnavailablePage extends StatelessWidget {
+  const _BookingUnavailablePage({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.goNamed(HomeRoutes.home);
+            }
+          },
+          icon: const Icon(Icons.arrow_back),
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xxl),
+          child: Text(message, textAlign: TextAlign.center),
+        ),
+      ),
     );
   }
 }

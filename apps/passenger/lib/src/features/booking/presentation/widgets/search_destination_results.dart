@@ -16,6 +16,8 @@ class const SearchDestinationResults({
   required this.drivingDistances,
   required this.drivingDistanceRequests,
   required this.onPlaceSelected,
+  this.errorMessage,
+  this.onRetry,
 }) extends StatelessWidget {
   final List<Place> places;
   final bool hasQuery;
@@ -26,15 +28,24 @@ class const SearchDestinationResults({
   final Map<String, double> drivingDistances;
   final Set<String> drivingDistanceRequests;
   final ValueChanged<Place> onPlaceSelected;
+  final String? errorMessage;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
     if (isLoading) return _buildLoadingList(context);
     if (places.isEmpty) {
+      if (errorMessage case final message?) {
+        return AppRetryErrorView(
+          title: hasQuery ? 'Search unavailable' : 'Nearby places unavailable',
+          message: message,
+          onRetry: onRetry ?? () {},
+        );
+      }
       return Center(
         child: Text(
           hasQuery ? 'No places found' : 'No nearby places found',
-          style: TextStyle(
+          style: context.textStyles.bodyMedium?.copyWith(
             color: context.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w600,
           ),
@@ -77,7 +88,7 @@ class const SearchDestinationResults({
           ),
           title: Text(
             place.name,
-            style: TextStyle(
+            style: context.textStyles.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
               fontSize: 15,
               color: context.colorScheme.onSurface,
@@ -89,9 +100,8 @@ class const SearchDestinationResults({
               drivingDistances,
               drivingDistanceRequests,
             ),
-            style: TextStyle(
+            style: context.textStyles.bodySmall?.copyWith(
               color: context.colorScheme.onSurfaceVariant,
-              fontSize: 13,
             ),
           ),
           trailing: Icon(
@@ -156,9 +166,8 @@ class const SearchDestinationResults({
           Expanded(
             child: Text(
               'Loading more nearby places...',
-              style: TextStyle(
-                color: context.colorScheme.outlineVariant,
-                fontSize: 13,
+              style: context.textStyles.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
               ),
             ),

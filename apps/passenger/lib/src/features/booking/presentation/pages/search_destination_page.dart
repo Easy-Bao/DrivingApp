@@ -474,6 +474,25 @@ class _SearchDestinationPageState()
                         drivingDistances: state.drivingDistances,
                         drivingDistanceRequests: state.drivingDistanceRequests,
                         onPlaceSelected: _onPlaceSelected,
+                        errorMessage: state.searchError,
+                        onRetry: () {
+                          if (hasQuery) {
+                            final requestId = _cubit.startSearchPending();
+                            final isAuthenticated =
+                                BlocProvider.of<SessionBloc>(context).state
+                                    is AuthenticatedSession;
+                            unawaited(
+                              _cubit.performSearch(
+                                _searchController.text,
+                                isAuthenticated: isAuthenticated,
+                                requestId: requestId,
+                              ),
+                            );
+                          } else {
+                            _cubit.markNearbyRefreshing();
+                            unawaited(_cubit.loadNearbyPlaces());
+                          }
+                        },
                       ),
                     ),
                   ),

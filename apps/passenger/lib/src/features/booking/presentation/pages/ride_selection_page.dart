@@ -19,6 +19,7 @@ import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/b
 import 'package:passenger/src/features/booking/presentation/bloc/fare_estimate/fare_estimate_cubit.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_options_panel.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_tip_selector.dart';
+import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile_cubit.dart';
 
 class RideSelectionPage extends StatefulWidget {
@@ -489,6 +490,19 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     if (pickup == null && !requiresSignIn) {
       return Scaffold(
         backgroundColor: context.colorScheme.surface,
+        appBar: AppBar(
+          leading: IconButton(
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.goNamed(HomeRoutes.home);
+              }
+            },
+            icon: const Icon(Icons.arrow_back),
+          ),
+        ),
         body: Center(
           child: _isResolvingPickup
               ? const Column(
