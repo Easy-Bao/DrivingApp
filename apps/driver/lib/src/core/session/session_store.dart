@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:driver/src/core/session/storage_keys.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SessionStore({FlutterSecureStorage? storage, this._preferences}) {
+class SessionStore({FlutterSecureStorage? storage, this._preferences})
+    implements SessionTokenStore {
   static const _defaultStorage = FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
@@ -17,18 +19,22 @@ class SessionStore({FlutterSecureStorage? storage, this._preferences}) {
     await onActiveRideCleared?.call();
   }
 
+  @override
   Future<void> saveToken(String token) async {
     await _storage.write(key: StorageKeys.accessToken, value: token);
   }
 
+  @override
   Future<String?> readToken() async {
     return _storage.read(key: StorageKeys.accessToken);
   }
 
+  @override
   Future<void> saveRefreshToken(String token) async {
     await _storage.write(key: StorageKeys.refreshToken, value: token);
   }
 
+  @override
   Future<String?> readRefreshToken() async {
     return _storage.read(key: StorageKeys.refreshToken);
   }
@@ -105,6 +111,7 @@ class SessionStore({FlutterSecureStorage? storage, this._preferences}) {
     await notifyActiveRideCleared();
   }
 
+  @override
   Future<void> clearSession() async {
     final preferences = _preferences;
     await Future.wait([

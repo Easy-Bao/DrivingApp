@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
@@ -6,7 +7,6 @@ import 'package:passenger/src/app/navigation/app_routes.dart';
 import 'package:passenger/src/app/router.dart';
 import 'package:passenger/src/core/config/env_config.dart';
 import 'package:passenger/src/core/location/location_access_cubit.dart';
-import 'package:passenger/src/core/network/api_client.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 import 'package:passenger/src/features/auth/auth_module.dart';
@@ -14,6 +14,7 @@ import 'package:passenger/src/features/auth/data/repositories/session_repository
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
+import 'package:sentry_dio/sentry_dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppDependencies extends Module {
@@ -84,11 +85,14 @@ class AppDependencies extends Module {
             LocationAccessCubit(repository: i.get<LocationAccessRepository>()),
       )
       ..addLazySingleton<Dio>(
-        (i) => ApiClient.create(
+        (i) => ApiClientFactory.create(
           baseUrl: EnvConfig.apiBaseUri,
-          sessionService: i.get<SessionStore>(),
+          sessionStore: i.get<SessionStore>(),
           networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
           tokenProvider: i.get<RefreshableTokenProvider>(),
+          enableMetrics: kDebugMode || kProfileMode,
+          enableDebugLogging: kDebugMode,
+          configureDio: (dio) => dio.addSentry(),
         ),
       )
       ..addLazySingleton<LocationRepository>(

@@ -8,7 +8,6 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:passenger/src/core/network/auth_interceptor.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/core/session/storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -227,8 +226,8 @@ class BackgroundTelemetrySession {
       onSessionExpired: shutdown,
     );
     client.interceptors.add(
-      AuthInterceptor(
-        _sessionStore,
+      ApiClientFactory.createAuthInterceptor(
+        sessionStore: _sessionStore,
         dio: client,
         allowedBaseUri: parsed,
         tokenProvider: provider,

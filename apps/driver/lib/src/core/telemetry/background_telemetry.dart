@@ -3,7 +3,6 @@ import 'dart:developer' as dev;
 import 'dart:ui';
 
 import 'package:dio/dio.dart';
-import 'package:driver/src/core/network/auth_interceptor.dart';
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/core/telemetry/battery_optimization.dart';
 import 'package:driver/src/core/telemetry/location_point_mapper.dart';
@@ -339,8 +338,8 @@ class DriverBackgroundTelemetrySession {
       onSessionExpired: shutdown,
     );
     client.interceptors.add(
-      AuthInterceptor(
-        _sessionStore,
+      ApiClientFactory.createAuthInterceptor(
+        sessionStore: _sessionStore,
         dio: client,
         allowedBaseUri: parsed,
         tokenProvider: provider,

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:foundation/foundation.dart';
 import 'package:passenger/src/core/session/storage_keys.dart';
 
 typedef PendingBidSessionCreation = ({
@@ -11,7 +12,8 @@ typedef PendingBidSessionCreation = ({
   String? sessionId,
 });
 
-class SessionStore({FlutterSecureStorage? storage}) {
+class SessionStore({FlutterSecureStorage? storage})
+    implements SessionTokenStore {
   static const _defaultStorage = FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
@@ -52,10 +54,12 @@ class SessionStore({FlutterSecureStorage? storage}) {
     return _temporaryValues[key];
   }
 
+  @override
   Future<void> saveToken(String token) async {
     await _writeValue(key: StorageKeys.accessToken, value: token);
   }
 
+  @override
   Future<String?> readToken() async {
     return _readValue(key: StorageKeys.accessToken);
   }
@@ -64,10 +68,12 @@ class SessionStore({FlutterSecureStorage? storage}) {
     await _deleteKeys(const [StorageKeys.accessToken]);
   }
 
+  @override
   Future<void> saveRefreshToken(String token) async {
     await _writeValue(key: StorageKeys.refreshToken, value: token);
   }
 
+  @override
   Future<String?> readRefreshToken() async {
     return _readValue(key: StorageKeys.refreshToken);
   }
@@ -236,6 +242,7 @@ class SessionStore({FlutterSecureStorage? storage}) {
     _persistent = true;
   }
 
+  @override
   Future<void> clearSession() => clearAll();
 
   Future<void> _deleteKeys(Iterable<String> keys) async {

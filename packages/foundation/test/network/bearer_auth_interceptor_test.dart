@@ -179,6 +179,159 @@ void main() {
     expect(apiCalls, 1);
     expect(refreshCalls, 0);
   });
+
+  test('clears session and notifies onSessionExpired when refresh token is missing', () async {
+    final store = _MemorySessionTokenStore(accessToken: 'expired-token');
+    var expiredNotified = false;
+    final dio = Dio(BaseOptions(baseUrl: 'https://api.example'));
+    final refreshClient = Dio(BaseOptions(baseUrl: 'https://api.example'));
+    addTearDown(() {
+      dio.close(force: true);
+      refreshClient.close(force: true);
+    });
+
+    final interceptor = ApiClientFactory.createAuthInterceptor(
+      sessionStore: store,
+      dio: dio,
+      refreshClient: refreshClient,
+      allowedBaseUri: Uri.parse('https://api.example'),
+      onSessionExpired: () => expiredNotified = true,
+    );
+    final requestOptions = RequestOptions(
+      baseUrl: 'https://api.example',
+      path: '/api/v1/rides',
+    );
+    final error = DioException.badResponse(
+      statusCode: 401,
+      requestOptions: requestOptions,
+      response: Response<dynamic>(
+        requestOptions: requestOptions,
+        statusCode: 401,
+      ),
+    );
+    final handler = _ErrorHandler();
+
+    await interceptor.onError(error, handler);
+
+    expect(store.cleared, isTrue);
+    expect(expiredNotified, isTrue);
+    expect(handler.forwarded, same(error));
+  });
+
+  test(
+    'clears session when refresh endpoint rejects the refresh token with 401',
+    () async {
+      final store = _MemorySessionTokenStore(
+        accessToken: 'expired-token',
+        refreshToken: 'revoked-refresh-token',
+      );
+      final dio = Dio(BaseOptions(baseUrl: 'https://api.example'));
+      final refreshClient = Dio(BaseOptions(baseUrl: 'https://api.example'))
+        ..httpClientAdapter = _FnAdapter((_) {
+          return ResponseBody.fromString('Unauthorized', 401);
+        });
+      addTearDown(() {
+        dio.close(force: true);
+        refreshClient.close(force: true);
+      });
+
+      final interceptor = ApiClientFactory.createAuthInterceptor(
+        sessionStore: store,
+        dio: dio,
+        refreshClient: refreshClient,
+        allowedBaseUri: Uri.parse('https://api.example'),
+      );
+      final requestOptions = RequestOptions(
+        baseUrl: 'https://api.example',
+        path: '/api/v1/rides',
+      );
+      final error = DioException.badResponse(
+        statusCode: 401,
+        requestOptions: requestOptions,
+        response: Response<dynamic>(
+          requestOptions: requestOptions,
+          statusCode: 401,
+        ),
+      );
+      final handler = _ErrorHandler();
+
+      await interceptor.onError(error, handler);
+
+      expect(store.cleared, isTrue);
+      expect(handler.forwarded, same(error));
+    },
+  );
+
+  test('preserves session when refresh fails transiently', () async {
+    final store = _MemorySessionTokenStore(
+      accessToken: 'expired-token',
+      refreshToken: 'valid-refresh-token',
+    );
+    final dio = Dio(BaseOptions(baseUrl: 'https://api.example'));
+    final refreshClient = Dio(BaseOptions(baseUrl: 'https://api.example'))
+      ..httpClientAdapter = _FnAdapter((options) {
+        throw DioException(
+          requestOptions: options,
+          type: DioExceptionType.connectionError,
+        );
+      });
+    addTearDown(() {
+      dio.close(force: true);
+      refreshClient.close(force: true);
+    });
+
+    final interceptor = ApiClientFactory.createAuthInterceptor(
+      sessionStore: store,
+      dio: dio,
+      refreshClient: refreshClient,
+      allowedBaseUri: Uri.parse('https://api.example'),
+    );
+    final requestOptions = RequestOptions(
+      baseUrl: 'https://api.example',
+      path: '/api/v1/rides',
+    );
+    final error = DioException.badResponse(
+      statusCode: 401,
+      requestOptions: requestOptions,
+      response: Response<dynamic>(
+        requestOptions: requestOptions,
+        statusCode: 401,
+      ),
+    );
+    final handler = _ErrorHandler();
+
+    await interceptor.onError(error, handler);
+
+    expect(store.cleared, isFalse);
+    expect(handler.forwarded, same(error));
+  });
+}
+
+final class _MemorySessionTokenStore implements SessionTokenStore {
+  _MemorySessionTokenStore({this.accessToken, this.refreshToken});
+
+  String? accessToken;
+  String? refreshToken;
+  bool cleared = false;
+
+  @override
+  Future<String?> readToken() async => accessToken;
+
+  @override
+  Future<String?> readRefreshToken() async => refreshToken;
+
+  @override
+  Future<void> saveToken(String token) async => accessToken = token;
+
+  @override
+  Future<void> saveRefreshToken(String token) async => refreshToken = token;
+
+  @override
+  Future<void> clearSession() async {
+    cleared = true;
+    accessToken = null;
+    refreshToken = null;
+  }
 }
 
 final class _ErrorHandler extends ErrorInterceptorHandler {
