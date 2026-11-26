@@ -32,7 +32,7 @@ final class SavedPlacesRepositoryImpl({required this._preferences})
           await _preferences.remove(storageKey);
           return const [];
         }
-        places.add(SavedPlaceModel.fromJson(Map<String, dynamic>.from(item)));
+        places.add(SavedPlaceDto.fromJson(Map<String, dynamic>.from(item)));
       }
       return places;
     } catch (error) {
@@ -46,7 +46,7 @@ final class SavedPlacesRepositoryImpl({required this._preferences})
     try {
       final models = places
           .map(
-            (p) => SavedPlaceModel(
+            (p) => SavedPlaceDto(
               label: p.label,
               iconName: p.iconName,
               savedAddress: p.savedAddress,
@@ -58,7 +58,7 @@ final class SavedPlacesRepositoryImpl({required this._preferences})
           .toList();
       await _preferences.setString(
         storageKey,
-        SavedPlaceModel.encodeList(models),
+        SavedPlaceDto.encodeList(models),
       );
     } catch (error) {
       throw const CacheFailure('Failed to write saved places to storage.');

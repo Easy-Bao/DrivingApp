@@ -5,7 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/domain/repositories/saved_places_repository.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
-import 'package:passenger/src/features/saved_places/presentation/pages/saved_place_page.dart';
+import 'package:passenger/src/features/saved_places/presentation/pages/saved_places_page.dart';
 
 class MockSavedPlacesRepository extends Mock implements SavedPlacesRepository {}
 

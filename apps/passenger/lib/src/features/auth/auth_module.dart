@@ -31,7 +31,7 @@ class AuthModule extends Module {
       name: AuthRoutes.signin,
       AuthRoutes.signinPath,
       child: (context, GoRouterState state) =>
-          SigninPage(signInBloc: Modular.get<SignInBloc>()),
+          SignInPage(signInBloc: Modular.get<SignInBloc>()),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
@@ -39,7 +39,7 @@ class AuthModule extends Module {
       name: AuthRoutes.signup,
       AuthRoutes.signupPath,
       child: (context, GoRouterState state) =>
-          SignupPage(signUpBloc: Modular.get<SignUpBloc>()),
+          SignUpPage(signUpBloc: Modular.get<SignUpBloc>()),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

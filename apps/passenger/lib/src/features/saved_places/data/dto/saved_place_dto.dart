@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 
-class SavedPlaceModel extends SavedPlace {
-  const SavedPlaceModel({
+class SavedPlaceDto extends SavedPlace {
+  const SavedPlaceDto({
     required super.label,
     required super.iconName,
     super.savedAddress,
@@ -22,11 +22,11 @@ class SavedPlaceModel extends SavedPlace {
     'isDefault': isDefault,
   };
 
-  factory SavedPlaceModel.fromJson(Map<String, dynamic> json) {
+  factory SavedPlaceDto.fromJson(Map<String, dynamic> json) {
     final label = SafeParse.toStringValue(json['label']).trim();
     final iconName = SafeParse.toStringValue(json['iconName']).trim();
     final savedAddress = SafeParse.toStringValue(json['savedAddress']).trim();
-    return SavedPlaceModel(
+    return SavedPlaceDto(
       label: label.isEmpty ? 'Saved Place' : label,
       iconName: iconName.isEmpty ? 'map_pin' : iconName,
       savedAddress: savedAddress.isEmpty ? null : savedAddress,
@@ -36,7 +36,7 @@ class SavedPlaceModel extends SavedPlace {
     );
   }
 
-  static String encodeList(List<SavedPlaceModel> places) {
+  static String encodeList(List<SavedPlaceDto> places) {
     return jsonEncode(places.map((p) => p.toJson()).toList());
   }
 }

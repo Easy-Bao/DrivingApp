@@ -13,8 +13,8 @@ import 'package:passenger/src/features/auth/presentation/validation/auth_form_va
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/settings/settings_routes.dart';
 
-class SigninPage extends StatelessWidget {
-  const SigninPage({super.key, required this.signInBloc});
+class SignInPage extends StatelessWidget {
+  const SignInPage({super.key, required this.signInBloc});
 
   final SignInBloc signInBloc;
 

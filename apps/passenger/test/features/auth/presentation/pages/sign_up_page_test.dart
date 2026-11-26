@@ -23,7 +23,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.main,
-          home: SignupPage(signUpBloc: SignUpBloc(repository)),
+          home: SignUpPage(signUpBloc: SignUpBloc(repository)),
         ),
       );
       await tester.pumpAndSettle();
@@ -76,7 +76,7 @@ void main() {
         routes: [
           GoRoute(
             path: '/',
-            builder: (_, _) => SignupPage(signUpBloc: SignUpBloc(repository)),
+            builder: (_, _) => SignUpPage(signUpBloc: SignUpBloc(repository)),
           ),
           GoRoute(
             path: '/verify',
@@ -147,7 +147,7 @@ void main() {
           ),
           child: child!,
         ),
-        home: SignupPage(signUpBloc: SignUpBloc(_AuthRepository())),
+        home: SignUpPage(signUpBloc: SignUpBloc(_AuthRepository())),
       ),
     );
     await tester.pumpAndSettle();

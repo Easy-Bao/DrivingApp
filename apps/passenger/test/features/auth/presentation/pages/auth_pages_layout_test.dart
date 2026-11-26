@@ -66,7 +66,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.main,
-        home: SigninPage(signInBloc: SignInBloc(_UnusedAuthRepository())),
+        home: SignInPage(signInBloc: SignInBloc(_UnusedAuthRepository())),
       ),
     );
     await tester.pumpAndSettle();
@@ -75,7 +75,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.main,
-        home: SignupPage(signUpBloc: SignUpBloc(_UnusedAuthRepository())),
+        home: SignUpPage(signUpBloc: SignUpBloc(_UnusedAuthRepository())),
       ),
     );
     await tester.pumpAndSettle();
@@ -119,7 +119,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.main,
-        home: SigninPage(signInBloc: SignInBloc(_UnusedAuthRepository())),
+        home: SignInPage(signInBloc: SignInBloc(_UnusedAuthRepository())),
       ),
     );
     await tester.pumpAndSettle();
@@ -153,7 +153,7 @@ void main() {
             ),
             child: child!,
           ),
-          home: SigninPage(signInBloc: SignInBloc(_UnusedAuthRepository())),
+          home: SignInPage(signInBloc: SignInBloc(_UnusedAuthRepository())),
         ),
       );
       await tester.pumpAndSettle();

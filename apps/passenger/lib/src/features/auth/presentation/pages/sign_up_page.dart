@@ -14,7 +14,7 @@ import 'package:passenger/src/features/auth/presentation/validation/auth_form_va
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/settings/settings_routes.dart';
 
-class const SignupPage({super.key, required this.signUpBloc})
+class const SignUpPage({super.key, required this.signUpBloc})
     extends StatelessWidget {
   final SignUpBloc signUpBloc;
 

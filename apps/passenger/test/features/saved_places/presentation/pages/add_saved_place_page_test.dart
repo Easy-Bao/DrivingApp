@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
-import 'package:passenger/src/features/saved_places/presentation/pages/add_category_page.dart';
+import 'package:passenger/src/features/saved_places/presentation/pages/add_saved_place_page.dart';
 
 void main() {
   testWidgets(

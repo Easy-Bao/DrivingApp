@@ -21,7 +21,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.main,
-        home: SigninPage(signInBloc: SignInBloc(_AuthRepository())),
+        home: SignInPage(signInBloc: SignInBloc(_AuthRepository())),
       ),
     );
     await tester.ensureVisible(find.text('Remember me'));
@@ -66,7 +66,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             theme: AppTheme.main,
-            home: SigninPage(signInBloc: SignInBloc(repository)),
+            home: SignInPage(signInBloc: SignInBloc(repository)),
           ),
         );
         await tester.enterText(

@@ -4,7 +4,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/features/saved_places/data/repositories/saved_places_repository_impl.dart';
 import 'package:passenger/src/features/saved_places/domain/repositories/saved_places_repository.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
-import 'package:passenger/src/features/saved_places/presentation/pages/saved_place_page.dart';
+import 'package:passenger/src/features/saved_places/presentation/pages/saved_places_page.dart';
 import 'package:passenger/src/features/saved_places/saved_places_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

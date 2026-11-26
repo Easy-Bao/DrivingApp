@@ -5,7 +5,7 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
-import 'package:passenger/src/features/home/data/datasources/current_location_remote_data_source.dart';
+import 'package:passenger/src/features/home/data/datasources/device_current_location_data_source.dart';
 import 'package:passenger/src/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:passenger/src/features/home/data/repositories/current_location_repository_impl.dart';
 import 'package:passenger/src/features/home/data/repositories/home_repository_impl.dart';
@@ -16,7 +16,7 @@ import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.da
 import 'package:passenger/src/features/home/presentation/pages/home_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
-import 'package:passenger/src/features/saved_places/presentation/pages/add_category_page.dart';
+import 'package:passenger/src/features/saved_places/presentation/pages/add_saved_place_page.dart';
 
 class HomeModule._() {
   static void binds(Injector i) {

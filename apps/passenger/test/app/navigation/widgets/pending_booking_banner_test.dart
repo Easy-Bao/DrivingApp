@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:passenger/src/features/home/presentation/widgets/pending_booking_banner.dart';
+import 'package:passenger/src/app/navigation/widgets/pending_booking_banner.dart';
 
 void main() {
   testWidgets('hides a pending booking from guests', (tester) async {
