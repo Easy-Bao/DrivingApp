@@ -117,6 +117,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
 
   int _unreadChatMessagesCount = 0;
   DateTime? _chatReadAt;
+  late final TrackDriverCubit _trackDriverCubit;
   late final AppLifecyclePeriodicTask _chatMessagesPollingTask;
   ChatRepository? _chatRepository;
   String _passengerIdentifier = '';
@@ -166,6 +167,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
           case TripCompleted(:final driverId, :final driverName):
             if (_hasHandledTerminalState) return;
             _hasHandledTerminalState = true;
+            widget.realtimeClient?.setActiveTripResyncHandler(null);
             widget.onRideTerminated();
             context.pushReplacementNamed(
               RideHistoryRoutes.tripCompletion,
@@ -178,6 +180,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
           case RideFailed():
             if (_hasHandledTerminalState) return;
             _hasHandledTerminalState = true;
+            widget.realtimeClient?.setActiveTripResyncHandler(null);
             widget.onRideTerminated();
             if (mounted) {
               context.goNamed(HomeRoutes.home);
@@ -317,6 +320,8 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                                         'peerName': peerDriverName,
                                       },
                                     );
+                                    if (!mounted) return;
+                                    await _markChatMessagesRead();
                                     await _updateUnreadMessagesCount();
                                   }
                                 },
@@ -341,7 +346,9 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
 
   @override
   void dispose() {
-    widget.realtimeClient?.setActiveTripResyncHandler(null);
+    if (_hasHandledTerminalState || !_trackDriverCubit.state.isTracking) {
+      widget.realtimeClient?.setActiveTripResyncHandler(null);
+    }
     unawaited(_locationSubscription?.cancel());
     unawaited(_chatMessagesPollingTask.dispose());
     unawaited(_chatRepository?.dispose());
@@ -354,7 +361,10 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   @override
   void initState() {
     super.initState();
-    widget.realtimeClient?.setActiveTripResyncHandler(_resyncActiveTrip);
+    _trackDriverCubit = BlocProvider.of<TrackDriverCubit>(context);
+    widget.realtimeClient?.setActiveTripResyncHandler(
+      _trackDriverCubit.resyncActiveTrip,
+    );
     _chatMessagesPollingTask = AppLifecyclePeriodicTask(
       lifecycleCoordinator: widget.lifecycleCoordinator,
       interval: const Duration(seconds: 4),
@@ -480,13 +490,13 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
 
     var readAt = DateTime.now().toUtc();
     final result = await chatRepository.fetchRoomMessages(widget.ride.id);
-    result.fold((_) {}, (messages) {
+    if (result case Ok(value: final messages)) {
       for (final message in messages) {
         if (message.senderId == _passengerIdentifier) continue;
         final createdAt = message.createdAt.toUtc();
         if (createdAt.isAfter(readAt)) readAt = createdAt;
       }
-    });
+    }
     if (!mounted) return;
     _chatReadAt = readAt;
     await widget.sessionService.saveChatReadAt(widget.ride.id, readAt);
@@ -528,8 +538,8 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       final passengerLat = widget.ride.pickupLatitude ?? 0.0;
       final passengerLng = widget.ride.pickupLongitude ?? 0.0;
 
-      if (_locationSubscription != null) {
-        unawaited(_locationSubscription!.cancel());
+      if (_locationSubscription case final subscription?) {
+        unawaited(subscription.cancel());
       }
       final trackDriverCubit = BlocProvider.of<TrackDriverCubit>(context);
       _locationSubscription = LocationService.getPositionStream().listen((
@@ -560,11 +570,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         ),
       );
     }
-  }
-
-  Future<void> _resyncActiveTrip() async {
-    if (!mounted) return;
-    await BlocProvider.of<TrackDriverCubit>(context).resyncActiveTrip();
   }
 
   Future<void> _updateMapElements(
@@ -639,9 +644,10 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       );
       if (!mounted || !identical(_mapController, mapController)) return;
       final now = DateTime.now();
+      final lastCameraFitAt = _lastCameraFitAt;
       if (!_hasFittedInitialMap ||
-          _lastCameraFitAt == null ||
-          now.difference(_lastCameraFitAt!) >= const Duration(seconds: 8)) {
+          lastCameraFitAt == null ||
+          now.difference(lastCameraFitAt) >= const Duration(seconds: 8)) {
         await MapProvider.fitBounds(
           mapController,
           [
@@ -679,7 +685,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
 
       final result = await chatRepository.fetchRoomMessages(widget.ride.id);
 
-      result.fold((_) => null, (List<ChatMessage> messages) {
+      if (result case Ok(value: final messages)) {
         if (!mounted) return;
         final readAt = _chatReadAt;
         var unreadMessagesCount = 0;
@@ -692,7 +698,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         if (unreadMessagesCount != _unreadChatMessagesCount) {
           setState(() => _unreadChatMessagesCount = unreadMessagesCount);
         }
-      });
+      }
     } catch (_) {
       // A later bounded refresh can recover from a transient chat failure.
     } finally {

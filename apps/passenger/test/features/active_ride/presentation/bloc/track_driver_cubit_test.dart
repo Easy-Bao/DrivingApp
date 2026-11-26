@@ -287,6 +287,7 @@ void main() {
         repository: repo,
         sessionService: session,
         lifecycleCoordinator: lifecycleCoordinator,
+        pollInterval: const Duration(milliseconds: 20),
       );
       var cubitClosed = false;
       addTearDown(() async {
@@ -335,7 +336,7 @@ void main() {
 
       lifecycleCoordinator.update(isForeground: false);
       lifecycleCoordinator.update(isForeground: true);
-      await Future<void>.delayed(const Duration(seconds: 2, milliseconds: 100));
+      await Future<void>.delayed(const Duration(milliseconds: 80));
 
       verify(() => repo.getRideStatusUpdate('ride-1')).called(1);
     });
@@ -466,20 +467,17 @@ void main() {
             .thenAnswer((_) async => 'ride-1');
         return _makeCubit(repo, session);
       },
-      act: (cubit) async {
-        await cubit.startTracking(
-          startLat: 7.828,
-          startLng: 123.434,
-          endLat: 7.830,
-          endLng: 123.436,
-          rideId: 'ride-1',
-          driverId: 'drv-1',
-          driverName: 'Driver',
-          vehiclePlate: 'ABC-123',
-          vehicleType: 'Sedan',
-        );
-        await Future.delayed(const Duration(milliseconds: 2200));
-      },
+      act: (cubit) => cubit.startTracking(
+        startLat: 7.828,
+        startLng: 123.434,
+        endLat: 7.830,
+        endLng: 123.436,
+        rideId: 'ride-1',
+        driverId: 'drv-1',
+        driverName: 'Driver',
+        vehiclePlate: 'ABC-123',
+        vehicleType: 'Sedan',
+      ),
       expect: () => [isA<TrackDriverInProgress>()],
       skip: 0,
     );
@@ -514,20 +512,17 @@ void main() {
             .thenAnswer((_) async => 'ride-1');
         return _makeCubit(repo, session);
       },
-      act: (cubit) async {
-        await cubit.startTracking(
-          startLat: 7.828,
-          startLng: 123.434,
-          endLat: 7.830,
-          endLng: 123.436,
-          rideId: 'ride-1',
-          driverId: 'drv-1',
-          driverName: 'driverName',
-          vehiclePlate: 'ABC-123',
-          vehicleType: 'Sedan',
-        );
-        await Future.delayed(const Duration(milliseconds: 2200));
-      },
+      act: (cubit) => cubit.startTracking(
+        startLat: 7.828,
+        startLng: 123.434,
+        endLat: 7.830,
+        endLng: 123.436,
+        rideId: 'ride-1',
+        driverId: 'drv-1',
+        driverName: 'driverName',
+        vehiclePlate: 'ABC-123',
+        vehicleType: 'Sedan',
+      ),
       expect: () => [isA<TrackDriverInProgress>()],
       skip: 0,
     );
@@ -552,20 +547,17 @@ void main() {
             .thenAnswer((_) async => 'ride-1');
         return _makeCubit(repo, session);
       },
-      act: (cubit) async {
-        await cubit.startTracking(
-          startLat: 7.828,
-          startLng: 123.434,
-          endLat: 7.830,
-          endLng: 123.436,
-          rideId: 'ride-1',
-          driverId: 'drv-1',
-          driverName: 'Driver',
-          vehiclePlate: 'ABC-123',
-          vehicleType: 'Sedan',
-        );
-        await Future.delayed(const Duration(milliseconds: 2200));
-      },
+      act: (cubit) => cubit.startTracking(
+        startLat: 7.828,
+        startLng: 123.434,
+        endLat: 7.830,
+        endLng: 123.436,
+        rideId: 'ride-1',
+        driverId: 'drv-1',
+        driverName: 'Driver',
+        vehiclePlate: 'ABC-123',
+        vehicleType: 'Sedan',
+      ),
       expect: () => [
         isA<TrackDriverInProgress>()
             .having((state) => state.status, 'status', RideStatus.arrived)
@@ -600,20 +592,17 @@ void main() {
         );
         return _makeCubit(repo, session);
       },
-      act: (cubit) async {
-        await cubit.startTracking(
-          startLat: 7.828,
-          driverId: 'drv-1',
-          driverName: 'Driver',
-          startLng: 123.434,
-          endLat: 7.830,
-          endLng: 123.436,
-          rideId: 'ride-1',
-          vehiclePlate: 'ABC-123',
-          vehicleType: 'Sedan',
-        );
-        await Future.delayed(const Duration(milliseconds: 2200));
-      },
+      act: (cubit) => cubit.startTracking(
+        startLat: 7.828,
+        driverId: 'drv-1',
+        driverName: 'Driver',
+        startLng: 123.434,
+        endLat: 7.830,
+        endLng: 123.436,
+        rideId: 'ride-1',
+        vehiclePlate: 'ABC-123',
+        vehicleType: 'Sedan',
+      ),
       expect: () => [isA<TrackDriverCompleted>()],
       skip: 0,
     );
@@ -729,5 +718,110 @@ void main() {
         expect(state.routePoints, isNull);
       },
     );
+
+    test(
+      'clears stored active ride before emitting TrackDriverCompleted',
+      () async {
+        final clearRideCompleter = Completer<void>();
+        when(() => session.saveActiveRideId('ride-complete'))
+            .thenAnswer((_) async {});
+        when(() => session.saveActiveRideId(''))
+            .thenAnswer((_) => clearRideCompleter.future);
+        when(() => session.readActiveRideId())
+            .thenAnswer((_) async => 'ride-complete');
+        when(() => repo.getRideStatusUpdate('ride-complete')).thenAnswer(
+          (_) async => const Ok(
+            RideUpdate(
+              status: RideStatus.completed,
+              driverId: 'drv-1',
+              driverName: 'Ali',
+              vehiclePlate: 'ABC-123',
+              vehicleType: 'Sedan',
+            ),
+          ),
+        );
+
+        final cubit = _makeCubit(repo, session);
+        addTearDown(cubit.close);
+
+        final startFuture = cubit.startTracking(
+          startLat: 7.828,
+          startLng: 123.434,
+          endLat: 7.830,
+          endLng: 123.436,
+          rideId: 'ride-complete',
+          driverId: 'drv-1',
+          driverName: 'Driver',
+          vehiclePlate: 'ABC-123',
+          vehicleType: 'Sedan',
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(cubit.state, isNot(isA<TrackDriverCompleted>()));
+        clearRideCompleter.complete();
+        await startFuture;
+
+        expect(cubit.state, isA<TrackDriverCompleted>());
+        verify(() => session.saveActiveRideId('')).called(1);
+      },
+    );
+
+    test('suppresses in-flight tracking emissions while cancellation is in progress', () async {
+      final statusCompleter = Completer<Result<RideUpdate, Failure>>();
+      final cancelCompleter = Completer<Result<void, Failure>>();
+      when(() => session.readActiveRideId())
+          .thenAnswer((_) async => 'ride-cancel-race');
+      when(() => repo.getRideStatusUpdate('ride-cancel-race'))
+          .thenAnswer((_) => statusCompleter.future);
+      when(
+        () => repo.cancelRide(
+          rideId: 'ride-cancel-race',
+          reason: any(named: 'reason'),
+          details: any(named: 'details'),
+        ),
+      ).thenAnswer((_) => cancelCompleter.future);
+
+      final cubit = _makeCubit(repo, session);
+      addTearDown(cubit.close);
+
+      final states = <TrackDriverState>[];
+      final sub = cubit.stream.listen(states.add);
+      addTearDown(sub.cancel);
+
+      final trackingFuture = cubit.startTracking(
+        startLat: 7.828,
+        startLng: 123.434,
+        endLat: 7.830,
+        endLng: 123.436,
+        rideId: 'ride-cancel-race',
+        driverId: 'drv-1',
+        driverName: 'Driver',
+        vehiclePlate: 'ABC-123',
+        vehicleType: 'Sedan',
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      final cancelFuture = cubit.cancelTripRequest();
+      await Future<void>.delayed(Duration.zero);
+
+      statusCompleter.complete(
+        const Ok(
+          RideUpdate(
+            status: RideStatus.accepted,
+            driverId: 'drv-1',
+            driverName: 'Driver',
+            vehiclePlate: 'ABC-123',
+            vehicleType: 'Sedan',
+          ),
+        ),
+      );
+      await trackingFuture;
+
+      expect(states.whereType<TrackDriverInProgress>(), isEmpty);
+
+      cancelCompleter.complete(const Ok(null));
+      expect(await cancelFuture, isTrue);
+      expect(cubit.state, isA<TrackDriverCanceled>());
+    });
   });
 }

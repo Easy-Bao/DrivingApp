@@ -16,12 +16,14 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     required this.sessionService,
     required this.lifecycleCoordinator,
     this.backgroundTelemetryService,
+    this.pollInterval = const Duration(seconds: 2),
   }) : super(const TrackDriverInitial());
 
   final TrackRepository repository;
   final SessionStore sessionService;
   final BackgroundTelemetry? backgroundTelemetryService;
   final AppLifecycleCoordinator lifecycleCoordinator;
+  final Duration pollInterval;
 
   AppLifecyclePeriodicTask? _trackingTask;
   Future<void> Function()? _activeTripResync;
@@ -103,11 +105,11 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
       try {
         final result = await repository.getRideStatusResult(activeRideId);
         if (!_isCurrentTrackingOperation(trackingGeneration)) return;
-        await result.fold(
-          (failure) async {
+        switch (result) {
+          case Err(:final failure):
             dev.log('Error fetching status update: ${failure.message}');
-          },
-          (rideUpdate) async {
+            return;
+          case Ok(value: final rideUpdate):
             if (!_isCurrentTrackingOperation(trackingGeneration)) return;
             if (rideUpdate.status == RideStatus.completed) {
               trackingCompleted = true;
@@ -115,6 +117,18 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                 bumpGeneration: false,
                 expectedResync: activeTripResync,
               );
+              try {
+                await session.saveActiveRideId('');
+              } catch (error, stackTrace) {
+                dev.log(
+                  'Unable to clear the completed passenger ride locally.',
+                  error: error,
+                  stackTrace: stackTrace,
+                );
+              }
+              if (!_isCurrentTrackingOperation(trackingGeneration)) return;
+              await _stopBackgroundTelemetry();
+              if (!_isCurrentTrackingOperation(trackingGeneration)) return;
               emit(
                 TrackDriverCompleted(
                   driverId: rideUpdate.driverId ?? driverId,
@@ -123,10 +137,6 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                       : 'Driver',
                 ),
               );
-              await session.saveActiveRideId('');
-              if (!_isCurrentTrackingOperation(trackingGeneration)) return;
-              await _stopBackgroundTelemetry();
-              if (!_isCurrentTrackingOperation(trackingGeneration)) return;
               return;
             }
             if (rideUpdate.status == RideStatus.cancelled) {
@@ -135,7 +145,15 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                 bumpGeneration: false,
                 expectedResync: activeTripResync,
               );
-              await session.saveActiveRideId('');
+              try {
+                await session.saveActiveRideId('');
+              } catch (error, stackTrace) {
+                dev.log(
+                  'Unable to clear the canceled passenger ride locally.',
+                  error: error,
+                  stackTrace: stackTrace,
+                );
+              }
               if (!_isCurrentTrackingOperation(trackingGeneration)) return;
               await _stopBackgroundTelemetry();
               if (!_isCurrentTrackingOperation(trackingGeneration)) return;
@@ -143,38 +161,29 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               return;
             }
 
-            double? driverLatitude;
-            double? driverLongitude;
-            DateTime? driverLocationObservedAt;
-            bool locationFetched = false;
+            // A status transition is authoritative even when the location
+            // endpoint is temporarily unavailable. Keep the last known
+            // coordinate so states such as `arrived` still reach the UI.
+            var resolvedDriverLat = lastDriverLatitude;
+            var resolvedDriverLng = lastDriverLongitude;
+            var locationFetched = false;
 
             final locationResult = await repository.fetchDriverLocationResult(
               activeRideId,
             );
             if (!_isCurrentTrackingOperation(trackingGeneration)) return;
-            locationResult.fold(
-              (failure) {
+            switch (locationResult) {
+              case Err(:final failure):
                 dev.log(
                   'Error fetching coordinate location: ${failure.message}',
                 );
-              },
-              (coordinate) {
-                driverLatitude = coordinate.latitude;
-                driverLongitude = coordinate.longitude;
-                driverLocationObservedAt = coordinate.observedAt;
+              case Ok(value: final coordinate):
+                resolvedDriverLat = coordinate.latitude;
+                resolvedDriverLng = coordinate.longitude;
+                lastDriverLatitude = coordinate.latitude;
+                lastDriverLongitude = coordinate.longitude;
+                lastDriverLocationObservedAt = coordinate.observedAt;
                 locationFetched = true;
-              },
-            );
-
-            // A status transition is authoritative even when the location
-            // endpoint is temporarily unavailable. Keep the last known
-            // coordinate so states such as `arrived` still reach the UI.
-            driverLatitude ??= lastDriverLatitude;
-            driverLongitude ??= lastDriverLongitude;
-            if (locationFetched) {
-              lastDriverLatitude = driverLatitude!;
-              lastDriverLongitude = driverLongitude!;
-              lastDriverLocationObservedAt = driverLocationObservedAt;
             }
 
             final targetLatitude =
@@ -189,8 +198,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                 _canRetryRoute(pickupRouteLastAttempt, now)) {
               pickupRouteLastAttempt = now;
               final candidate = await repository.getRoutePolyline(
-                startLat: driverLatitude!,
-                startLng: driverLongitude!,
+                startLat: resolvedDriverLat,
+                startLng: resolvedDriverLng,
                 endLat: endLat,
                 endLng: endLng,
               );
@@ -206,8 +215,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                 _canRetryRoute(destinationRouteLastAttempt, now)) {
               destinationRouteLastAttempt = now;
               final candidate = await repository.getRoutePolyline(
-                startLat: driverLatitude!,
-                startLng: driverLongitude!,
+                startLat: resolvedDriverLat,
+                startLng: resolvedDriverLng,
                 endLat: targetLatitude,
                 endLng: targetLongitude,
               );
@@ -235,8 +244,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               }
               final trackingState = rideUpdate.status == RideStatus.inTransit
                   ? TrackDriverTripInProgress(
-                      driverLat: driverLatitude!,
-                      driverLng: driverLongitude!,
+                      driverLat: resolvedDriverLat,
+                      driverLng: resolvedDriverLng,
                       progress: progress,
                       eta: eta,
                       routePoints: routePoints,
@@ -245,8 +254,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                       vehicleType: rideUpdate.vehicleType,
                     )
                   : TrackDriverInProgress(
-                      driverLat: driverLatitude!,
-                      driverLng: driverLongitude!,
+                      driverLat: resolvedDriverLat,
+                      driverLng: resolvedDriverLng,
                       progress: progress,
                       eta: eta,
                       routePoints: routePoints,
@@ -257,8 +266,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                     );
               emit(trackingState);
             }
-          },
-        );
+        }
       } catch (error, stackTrace) {
         dev.log(
           'Error synchronizing driver tracking',
@@ -283,7 +291,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     if (!trackingCompleted && _isCurrentTrackingOperation(trackingGeneration)) {
       final task = AppLifecyclePeriodicTask(
         lifecycleCoordinator: lifecycleCoordinator,
-        interval: const Duration(seconds: 2),
+        interval: pollInterval,
         onTick: activeTripResync,
         runImmediatelyOnResume: true,
       );
@@ -327,11 +335,9 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
         latitude: latitude,
         longitude: longitude,
       );
-      result.fold(
-        (failure) =>
-            dev.log('Passenger telemetry update failed: ${failure.message}'),
-        (_) {},
-      );
+      if (result case Err(:final failure)) {
+        dev.log('Passenger telemetry update failed: ${failure.message}');
+      }
     } catch (error, stackTrace) {
       dev.log(
         'Passenger telemetry update failed',
@@ -380,15 +386,18 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     if (isClosed || _isCancellingTrip) return false;
     _isCancellingTrip = true;
     try {
-      final rideId = await sessionService.readActiveRideId() ?? '';
+      final storedRideId = (await sessionService.readActiveRideId() ?? '')
+          .trim();
+      final rideId = storedRideId.isNotEmpty
+          ? storedRideId
+          : (_activeRideId ?? '').trim();
       if (rideId.isNotEmpty) {
         final result = await repository.cancelRideResult(
           rideId: rideId,
           reason: reason,
           details: details,
         );
-        final failure = result.fold<Failure?>((value) => value, (_) => null);
-        if (failure != null) {
+        if (result case Err(:final failure)) {
           dev.log('Unable to cancel passenger trip: ${failure.message}');
           return false;
         }
@@ -432,7 +441,11 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     if (isClosed || _isEmergencyStopping) return false;
     _isEmergencyStopping = true;
     try {
-      final rideId = (await sessionService.readActiveRideId() ?? '').trim();
+      final storedRideId = (await sessionService.readActiveRideId() ?? '')
+          .trim();
+      final rideId = storedRideId.isNotEmpty
+          ? storedRideId
+          : (_activeRideId ?? '').trim();
       if (rideId.isEmpty) {
         dev.log('Unable to end passenger trip for safety without a ride id.');
         return false;
@@ -443,8 +456,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
         reason: reason,
         details: details,
       );
-      final failure = result.fold<Failure?>((value) => value, (_) => null);
-      if (failure != null) {
+      if (result case Err(:final failure)) {
         dev.log('Unable to end passenger trip for safety: ${failure.message}');
         return false;
       }
@@ -474,18 +486,12 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     }
   }
 
-  String _getEtaLabel(RideStatus status) {
-    switch (status) {
-      case RideStatus.accepted:
-        return 'To Pickup';
-      case RideStatus.arrived:
-        return 'Arrived';
-      case RideStatus.inTransit:
-        return 'On Trip';
-      default:
-        return 'Calculating...';
-    }
-  }
+  String _getEtaLabel(RideStatus status) => switch (status) {
+    RideStatus.accepted => 'To Pickup',
+    RideStatus.arrived => 'Arrived',
+    RideStatus.inTransit => 'On Trip',
+    _ => 'Calculating...',
+  };
 
   @override
   Future<void> close() {
@@ -517,6 +523,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
 
   bool _isCurrentTrackingOperation(int generation) {
     return !isClosed &&
+        !_isCancellingTrip &&
         !_isEmergencyStopping &&
         generation == _trackingGeneration;
   }
