@@ -4,6 +4,7 @@ export 'src/auth/token_provider.dart';
 export 'src/config/client_environment.dart';
 export 'src/core/capture_result.dart';
 export 'src/core/result.dart';
+export 'src/errors/auth_failures.dart';
 export 'src/errors/error_handler.dart';
 export 'src/errors/exceptions.dart';
 export 'src/errors/failure.dart';

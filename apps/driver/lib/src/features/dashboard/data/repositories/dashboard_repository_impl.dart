@@ -8,7 +8,6 @@ import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/core/telemetry/background_telemetry.dart';
 import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
-import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:driver/src/features/dashboard/data/datasources/availability_remote_data_source.dart';
 import 'package:driver/src/features/dashboard/data/datasources/ride_offer_remote_data_source.dart';
 import 'package:driver/src/features/dashboard/domain/entities/dashboard_stats.dart';

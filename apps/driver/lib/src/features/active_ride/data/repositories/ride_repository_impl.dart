@@ -5,7 +5,6 @@ import 'package:driver/src/features/active_ride/data/datasources/ride_counterpar
 import 'package:driver/src/features/active_ride/data/datasources/ride_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/datasources/telemetry_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
-import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:foundation/foundation.dart';
 
 final class RideRepositoryImpl({

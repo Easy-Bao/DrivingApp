@@ -1,5 +1,4 @@
 import 'package:design_system/design_system.dart';
-import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:driver/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:driver/src/features/auth/presentation/bloc/reset_password/reset_password_bloc.dart';
 import 'package:driver/src/features/auth/presentation/pages/reset_password_page.dart';

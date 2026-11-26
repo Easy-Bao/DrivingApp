@@ -1,7 +1,6 @@
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/features/auth/data/datasources/auth_endpoints.dart';
 import 'package:driver/src/features/auth/domain/entities/auth_credentials.dart';
-import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:driver/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
