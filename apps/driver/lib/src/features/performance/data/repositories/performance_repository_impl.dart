@@ -16,20 +16,14 @@ final class PerformanceRepositoryImpl({required this._dataSource})
           : raw;
       return Ok(
         PerformanceStats(
-          todayEarningsAmount: _readNonNegativeInt(
-            values,
-            'today_earnings_amount',
-          ),
+          todayEarningsAmount: _readSignedInt(values, 'today_earnings_amount'),
           todayCompletedTrips: _readNonNegativeInt(
             values,
             'today_completed_trips',
           ),
           totalTrips: _readNonNegativeInt(values, 'total_trips'),
           completedTrips: _readNonNegativeInt(values, 'completed_trips'),
-          totalEarningsAmount: _readNonNegativeInt(
-            values,
-            'total_earnings_amount',
-          ),
+          totalEarningsAmount: _readSignedInt(values, 'total_earnings_amount'),
           averageRating: _readNonNegativeDouble(values, 'average_rating'),
           standing: _readStanding(values),
           ratingDistribution: _readRatingDistribution(values),
@@ -128,6 +122,16 @@ int _readRatingCount(Object? value) {
     );
   }
   return parsed.toInt();
+}
+
+int _readSignedInt(Map<String, dynamic> values, String key) {
+  final raw = values[key];
+  if (raw == null) return 0;
+  final value = SafeParse.toNullableDouble(raw);
+  if (value == null || !value.isFinite || value != value.roundToDouble()) {
+    throw DataParsingException(message: 'Driver statistic $key is invalid.');
+  }
+  return value.toInt();
 }
 
 int _readNonNegativeInt(Map<String, dynamic> values, String key) {

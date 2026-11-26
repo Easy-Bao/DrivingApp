@@ -72,7 +72,7 @@ class TripHistoryCubit({
         driverId,
         limit: pageSize,
         offset: loadMore ? offset ?? 0 : 0,
-        cursor: loadMore ? cursor : '',
+        cursor: loadMore ? cursor : null,
       );
       if (isClosed || generation != _generation) return;
 
@@ -111,11 +111,17 @@ class TripHistoryCubit({
     List<Map<String, dynamic>> current,
     List<Map<String, dynamic>> incoming,
   ) {
-    final tripsById = <String, Map<String, dynamic>>{
-      for (final trip in current) '${trip['id']}': trip,
-      for (final trip in incoming) '${trip['id']}': trip,
-    };
-    return tripsById.values.toList();
+    final tripsById = <String, Map<String, dynamic>>{};
+    final withoutId = <Map<String, dynamic>>[];
+    for (final trip in [...current, ...incoming]) {
+      final rawId = trip['id']?.toString().trim();
+      if (rawId == null || rawId.isEmpty) {
+        withoutId.add(trip);
+      } else {
+        tripsById[rawId] = trip;
+      }
+    }
+    return [...tripsById.values, ...withoutId];
   }
 
   void _emitInitialFailure(String message) {

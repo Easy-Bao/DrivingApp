@@ -104,4 +104,27 @@ void main() {
       (_) => fail('Expected a network failure.'),
     );
   });
+
+  test('accepts negative net earnings from fee deductions', () async {
+    when(() => dataSource.fetchStats('42')).thenAnswer(
+      (_) async => <String, dynamic>{
+        'today_earnings_amount': -450,
+        'today_completed_trips': 1,
+        'total_trips': 2,
+        'completed_trips': 1,
+        'total_earnings_amount': -200,
+        'average_rating': 4.5,
+      },
+    );
+
+    final result = await repository.fetchStats('42');
+
+    result.fold(
+      (failure) => fail('Expected negative net earnings to parse: $failure'),
+      (stats) {
+        expect(stats.todayEarningsAmount, -450);
+        expect(stats.totalEarningsAmount, -200);
+      },
+    );
+  });
 }

@@ -27,7 +27,10 @@ class RideHistoryRemoteDataSourceImpl(this._dio)
       '/api/v1/drivers/${Uri.encodeComponent(driverId)}/trips',
       queryParameters: {
         'limit': limit,
-        if (cursor != null) 'cursor': cursor else 'offset': offset,
+        if (cursor != null && cursor.isNotEmpty)
+          'cursor': cursor
+        else
+          'offset': offset,
         if (activeOnly) 'scope': 'active',
       },
     );
