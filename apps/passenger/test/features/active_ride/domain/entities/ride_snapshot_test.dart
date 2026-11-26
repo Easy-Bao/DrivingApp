@@ -1,5 +1,5 @@
+import 'package:core_domain/core_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 
 void main() {
   test('destructures canonical and legacy snapshot fields', () {

@@ -1,4 +1,4 @@
-import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.dart';
+import 'package:core_domain/core_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

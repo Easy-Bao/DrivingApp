@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:passenger/src/features/booking/booking.dart';
+import 'package:passenger/src/features/booking/data/dto/fare_estimate_dto.dart';
 
 abstract class FareRemoteDataSource() {
   Future<FareEstimate> fetchEstimate({

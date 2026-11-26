@@ -1,5 +1,5 @@
+import 'package:core_domain/core_domain.dart';
 import 'package:design_system/design_system.dart';
-import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/active_bookings_list.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';

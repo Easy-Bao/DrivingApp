@@ -14,6 +14,7 @@ import 'package:passenger/src/features/active_ride/domain/repositories/track_rep
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_cubit.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_state.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/active_trip_exit_dialog.dart';
+import 'package:passenger/src/features/active_ride/presentation/widgets/safety_report_sheet.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/track_driver_chat_tracker.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/track_driver_map_controller.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/track_driver_panel.dart';

@@ -1,4 +1,4 @@
-import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.dart';
+import 'package:core_domain/core_domain.dart';
 
 class const DispatchSnapshot({
   this.activeRides = const [],

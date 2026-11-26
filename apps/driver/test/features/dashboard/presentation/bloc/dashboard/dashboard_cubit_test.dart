@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
-import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.dart';
+import 'package:core_domain/core_domain.dart';
 import 'package:driver/src/features/dashboard/domain/entities/dashboard_stats.dart';
 import 'package:driver/src/features/dashboard/domain/entities/dispatch_snapshot.dart';
 import 'package:driver/src/features/dashboard/domain/repositories/dashboard_repository.dart';

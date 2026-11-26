@@ -1,4 +1,4 @@
-import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
+import 'package:core_domain/core_domain.dart';
 
 final class const RideDto(final RideSnapshot value) {
   factory fromJson(Map<String, dynamic> json, {String? fallbackId}) {

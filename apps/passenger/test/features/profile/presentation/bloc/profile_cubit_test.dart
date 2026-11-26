@@ -1,8 +1,8 @@
 import 'dart:async';
 
+import 'package:core_domain/core_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/profile/domain/entities/profile.dart';
 import 'package:passenger/src/features/profile/domain/repositories/profile_repository.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile_cubit.dart';
 

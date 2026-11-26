@@ -1,4 +1,5 @@
 import 'package:chat/chat.dart';
+import 'package:core_domain/core_domain.dart';
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
@@ -8,7 +9,6 @@ import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/active_ride/data/datasources/ride_remote_data_source.dart';
 import 'package:passenger/src/features/active_ride/data/repositories/track_repository_impl.dart';
-import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/pages/track_driver_page.dart';
 import 'package:passenger/src/features/active_ride/presentation/pages/track_driver_page_loader.dart';

@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:core_domain/core_domain.dart';
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/core/session/storage_keys.dart';
 import 'package:passenger/src/features/profile/data/datasources/profile_remote_data_source.dart';
-import 'package:passenger/src/features/profile/domain/entities/profile.dart';
 import 'package:passenger/src/features/profile/domain/repositories/profile_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

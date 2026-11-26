@@ -1,4 +1,3 @@
-export 'data/dto/fare_estimate_dto.dart';
 export 'domain/entities/accepted_booking.dart';
 export 'domain/entities/bid_session_snapshot.dart';
 export 'domain/entities/driver.dart';

@@ -2,6 +2,8 @@ import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/data/datasources/ride_remote_data_source.dart';
+import 'package:passenger/src/features/active_ride/data/dto/ride_dto.dart';
+import 'package:passenger/src/features/active_ride/data/dto/ride_update_dto.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 
 final class TrackRepositoryImpl({required this._remoteDataSource})

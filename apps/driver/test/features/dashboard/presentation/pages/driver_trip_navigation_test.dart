@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
+import 'package:core_domain/core_domain.dart';
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/active_ride/active_ride_routes.dart';
-import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';

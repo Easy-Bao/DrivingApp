@@ -1,4 +1,4 @@
-import 'package:driver/src/features/profile/domain/entities/profile.dart';
+import 'package:core_domain/core_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

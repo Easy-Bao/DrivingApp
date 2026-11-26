@@ -1,5 +1,5 @@
+import 'package:core_domain/core_domain.dart';
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/profile/domain/entities/profile.dart';
 
 abstract interface class ProfileRepository {
   static const int maxAvatarBytes = 2 << 20;

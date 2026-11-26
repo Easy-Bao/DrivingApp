@@ -1,7 +1,6 @@
+import 'package:core_domain/core_domain.dart';
 import 'package:equatable/equatable.dart';
 import 'package:foundation/foundation.dart';
-
-import 'package:passenger/src/features/active_ride/domain/entities/ride_status.dart';
 
 final class const RideUpdate({
   required final RideStatus status,
