@@ -44,7 +44,8 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
   int _currentPage = 1;
   String? _nextCursor;
   int? _completedTripsCount;
-  List<DriverReview> _driverReviewsList = [];
+  String? _reviewsErrorMessage;
+  List<DriverReview> _driverReviewsList = <DriverReview>[];
 
   @override
   void initState() {
@@ -71,6 +72,12 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     _currentPage = 1;
     _nextCursor = null;
     _hasMore = true;
+    if (mounted && !_isLoadingStats) {
+      setState(() {
+        _isLoadingStats = true;
+        _reviewsErrorMessage = null;
+      });
+    }
     final statsFuture = widget.repository.fetchStatsResult(widget.driverId);
     final reviewsFuture = widget.repository.fetchReviewsResult(
       widget.driverId,
@@ -78,21 +85,29 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
       limit: _reviewPageSize,
     );
     int? completedTrips;
-    List<DriverReview> reviews = const [];
+    var reviews = <DriverReview>[];
+    String? reviewsErrorMessage;
     (await statsFuture).fold(
       (_) {},
       (stats) => completedTrips = stats.completedTrips,
     );
-    (await reviewsFuture).fold((_) => _hasMore = false, (value) {
-      reviews = value.items;
-      _hasMore = value.hasMore;
-      _nextCursor = value.nextCursor;
-    });
+    (await reviewsFuture).fold(
+      (failure) {
+        _hasMore = false;
+        reviewsErrorMessage = failure.message;
+      },
+      (value) {
+        reviews = List<DriverReview>.of(value.items);
+        _hasMore = value.hasMore;
+        _nextCursor = value.nextCursor;
+      },
+    );
 
     if (mounted) {
       setState(() {
         _completedTripsCount = completedTrips;
         _driverReviewsList = reviews;
+        _reviewsErrorMessage = reviewsErrorMessage;
         _isLoadingStats = false;
       });
     }
@@ -106,7 +121,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     });
 
     final nextPage = _currentPage + 1;
-    List<DriverReview> nextReviews = const [];
+    var nextReviews = const <DriverReview>[];
     (await widget.repository.fetchReviewsResult(
       widget.driverId,
       page: nextPage,
@@ -121,7 +136,10 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
     if (mounted) {
       setState(() {
         _currentPage = nextPage;
-        _driverReviewsList.addAll(nextReviews);
+        _driverReviewsList = <DriverReview>[
+          ..._driverReviewsList,
+          ...nextReviews,
+        ];
         _isLoadingMore = false;
       });
     }
@@ -166,7 +184,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               AppLayout.pagePadding,
               AppLayout.pagePadding,
             ),
-            child: _buildProfileContent(),
+            child: SafeArea(top: false, child: _buildProfileContent()),
           ),
         ),
       ),
@@ -339,6 +357,27 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               ],
             ),
           ),
+        ),
+      );
+    }
+    if (_driverReviewsList.isEmpty && _reviewsErrorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _reviewsErrorMessage!,
+              textAlign: TextAlign.center,
+              style: context.textStyles.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextButton(
+              onPressed: () => unawaited(_loadDriverProfileStats()),
+              child: const Text('Retry'),
+            ),
+          ],
         ),
       );
     }

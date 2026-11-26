@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
@@ -18,14 +17,9 @@ import 'package:passenger/src/features/inbox/presentation/widgets/inbox_notifica
 import 'package:skeletonizer/skeletonizer.dart';
 
 class InboxPage extends StatefulWidget {
-  const InboxPage({
-    super.key,
-    required this.inboxCubit,
-    required this.sessionService,
-  });
+  const InboxPage({super.key, required this.inboxCubit});
 
   final InboxCubit inboxCubit;
-  final SessionStore sessionService;
 
   @override
   State<InboxPage> createState() => _InboxPageState();

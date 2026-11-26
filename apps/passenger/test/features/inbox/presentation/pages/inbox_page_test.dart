@@ -7,7 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
@@ -20,8 +19,6 @@ class MockSessionBloc extends MockBloc<SessionEvent, SessionState>
     implements SessionBloc {}
 
 class MockInboxRepository extends Mock implements InboxRepository {}
-
-class MockSessionStore extends Mock implements SessionStore {}
 
 class MockInboxCubit extends MockCubit<InboxState> implements InboxCubit {}
 
@@ -46,10 +43,7 @@ void main() {
         ),
         home: BlocProvider<SessionBloc>.value(
           value: session,
-          child: InboxPage(
-            inboxCubit: cubit,
-            sessionService: MockSessionStore(),
-          ),
+          child: InboxPage(inboxCubit: cubit),
         ),
       ),
     );
@@ -95,10 +89,7 @@ void main() {
         theme: AppTheme.main,
         home: BlocProvider<SessionBloc>.value(
           value: session,
-          child: InboxPage(
-            inboxCubit: cubit,
-            sessionService: MockSessionStore(),
-          ),
+          child: InboxPage(inboxCubit: cubit),
         ),
       ),
     );
@@ -159,10 +150,7 @@ void main() {
           ),
           home: BlocProvider<SessionBloc>.value(
             value: session,
-            child: InboxPage(
-              inboxCubit: cubit,
-              sessionService: MockSessionStore(),
-            ),
+            child: InboxPage(inboxCubit: cubit),
           ),
         ),
       );
@@ -201,7 +189,6 @@ void main() {
   ) async {
     final sessionBloc = MockSessionBloc();
     final inboxCubit = InboxCubit(inboxRepository: MockInboxRepository());
-    final sessionStore = MockSessionStore();
     when(() => sessionBloc.state).thenReturn(const SessionLoading());
     addTearDown(inboxCubit.close);
 
@@ -213,10 +200,7 @@ void main() {
             BlocProvider<SessionBloc>.value(value: sessionBloc),
             BlocProvider<InboxCubit>.value(value: inboxCubit),
           ],
-          child: InboxPage(
-            inboxCubit: inboxCubit,
-            sessionService: sessionStore,
-          ),
+          child: InboxPage(inboxCubit: inboxCubit),
         ),
       ),
     );
@@ -235,11 +219,8 @@ void main() {
   ) async {
     final sessionBloc = MockSessionBloc();
     final inboxCubit = MockInboxCubit();
-    final sessionStore = MockSessionStore();
     when(() => sessionBloc.state)
         .thenReturn(const AuthenticatedSession(passengerId: 'user-1'));
-    when(() => sessionStore.readPassengerId())
-        .thenAnswer((_) async => 'user-1');
     when(() => inboxCubit.loadNotifications(any())).thenAnswer((_) async {});
     when(() => inboxCubit.state)
         .thenReturn(const InboxErrorState('Failed to load notifications.'));
@@ -253,10 +234,7 @@ void main() {
             BlocProvider<SessionBloc>.value(value: sessionBloc),
             BlocProvider<InboxCubit>.value(value: inboxCubit),
           ],
-          child: InboxPage(
-            inboxCubit: inboxCubit,
-            sessionService: sessionStore,
-          ),
+          child: InboxPage(inboxCubit: inboxCubit),
         ),
       ),
     );
@@ -320,10 +298,7 @@ void main() {
           theme: AppTheme.main,
           home: BlocProvider<SessionBloc>.value(
             value: session,
-            child: InboxPage(
-              inboxCubit: cubit,
-              sessionService: MockSessionStore(),
-            ),
+            child: InboxPage(inboxCubit: cubit),
           ),
         ),
       );
@@ -415,10 +390,7 @@ void main() {
         theme: AppTheme.main,
         home: BlocProvider<SessionBloc>.value(
           value: session,
-          child: InboxPage(
-            inboxCubit: cubit,
-            sessionService: MockSessionStore(),
-          ),
+          child: InboxPage(inboxCubit: cubit),
         ),
       ),
     );
@@ -477,10 +449,7 @@ void main() {
         theme: AppTheme.main,
         home: BlocProvider<SessionBloc>.value(
           value: session,
-          child: InboxPage(
-            inboxCubit: cubit,
-            sessionService: MockSessionStore(),
-          ),
+          child: InboxPage(inboxCubit: cubit),
         ),
       ),
     );
@@ -524,10 +493,7 @@ void main() {
           theme: AppTheme.main,
           home: BlocProvider<SessionBloc>.value(
             value: session,
-            child: InboxPage(
-              inboxCubit: cubit,
-              sessionService: MockSessionStore(),
-            ),
+            child: InboxPage(inboxCubit: cubit),
           ),
         ),
       );

@@ -202,8 +202,6 @@ class BookingModule._() {
     ),
   ];
 
-  static List<ModularRoute> shellRoutes = [];
-
   static Place? _destinationFromQuery(RoutePayload data) {
     final name = data.string('destinationName');
     final latitude = data.doubleValue('destinationLat');

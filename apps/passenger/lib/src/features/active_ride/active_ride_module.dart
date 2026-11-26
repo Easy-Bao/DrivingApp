@@ -94,6 +94,4 @@ class ActiveRideModule._() {
       transitionDuration: AppTransitions.modalDuration,
     ),
   ];
-
-  static List<ModularRoute> shellRoutes = [];
 }

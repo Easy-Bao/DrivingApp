@@ -1,7 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/inbox/data/datasources/inbox_remote_data_source.dart';
 import 'package:passenger/src/features/inbox/data/repositories/inbox_repository_impl.dart';
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
@@ -31,10 +30,8 @@ class InboxModule._() {
     ChildRoute(
       name: InboxRoutes.inbox,
       InboxRoutes.inboxPath,
-      child: (context, GoRouterState state) => InboxPage(
-        inboxCubit: Modular.get<InboxCubit>(),
-        sessionService: Modular.get<SessionStore>(),
-      ),
+      child: (context, GoRouterState state) =>
+          InboxPage(inboxCubit: Modular.get<InboxCubit>()),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
     ),

@@ -51,8 +51,6 @@ class ChatModule._() {
       transitionDuration: AppTransitions.pushDuration,
     ),
   ];
-
-  static List<ModularRoute> shellRoutes = [];
 }
 
 String? _asNonEmptyString(Object? value) {

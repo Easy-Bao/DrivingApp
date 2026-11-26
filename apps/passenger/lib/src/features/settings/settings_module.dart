@@ -14,6 +14,4 @@ class SettingsModule._() {
       transitionDuration: AppTransitions.pushDuration,
     ),
   ];
-
-  static List<ModularRoute> shellRoutes = [];
 }
