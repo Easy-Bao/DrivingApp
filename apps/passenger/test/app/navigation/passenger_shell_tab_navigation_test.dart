@@ -545,7 +545,7 @@ void main() {
         distanceKm: 2.4,
         durationMinutes: 6,
       );
-      const driver = DriverModel(
+      const driver = Driver(
         id: '7',
         name: 'Kuya Ben',
         vehicleType: 'Tricycle',

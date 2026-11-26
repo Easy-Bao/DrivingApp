@@ -153,7 +153,7 @@ void main() {
         .thenAnswer((_) async => const Ok([]));
   });
 
-  const testDriver = DriverModel(
+  const testDriver = Driver(
     id: 'drv-01',
     name: 'Manong Driver',
     vehicleType: 'Sedan',
@@ -567,7 +567,7 @@ void main() {
   });
 
   group('BookingBloc — booking request contract', () {
-    const numericDriver = DriverModel(
+    const numericDriver = Driver(
       id: '42',
       name: 'Numeric Driver',
       vehicleType: 'Sedan',
@@ -579,7 +579,7 @@ void main() {
       etaMinutes: 1,
       score: 0,
     );
-    const selectedDriver = DriverModel(
+    const selectedDriver = Driver(
       id: '77',
       name: 'Selected Driver',
       vehicleType: 'Sedan',
@@ -1032,7 +1032,7 @@ void main() {
 
         bloc.add(
           const StartDirectBookingEvent(
-            targetDriver: DriverModel(
+            targetDriver: Driver(
               id: '2',
               name: 'Target Driver',
               vehicleType: 'Sedan',
@@ -1593,7 +1593,7 @@ void main() {
   });
 
   group('BookingBloc — Nearby driver search 15s timeout', () {
-    const nearDriver = DriverModel(
+    const nearDriver = Driver(
       id: '11',
       name: 'Kuya Ben',
       vehicleType: 'Tricycle',
@@ -1605,7 +1605,7 @@ void main() {
       etaMinutes: 2,
       score: 1,
     );
-    const farDriver = DriverModel(
+    const farDriver = Driver(
       id: '12',
       name: 'Kuya Dan',
       vehicleType: 'Tricycle',
@@ -1682,7 +1682,7 @@ void main() {
     testWidgets(
       'cancels the 15s timeout when drivers appear and restarts it if they all go offline',
       (tester) async {
-        final responses = <List<DriverModel>>[
+        final responses = <List<Driver>>[
           const [],
           const [farDriver, nearDriver, nearDriver],
           const [nearDriver],
@@ -1693,7 +1693,7 @@ void main() {
             .thenAnswer((_) async {
               final result = callIndex < responses.length
                   ? responses[callIndex]
-                  : const <DriverModel>[];
+                  : const <Driver>[];
               callIndex++;
               return Ok(result);
             });

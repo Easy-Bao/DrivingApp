@@ -12,7 +12,7 @@ import 'package:passenger/src/features/driver_profile/presentation/widgets/drive
 import 'package:skeletonizer/skeletonizer.dart';
 
 class DriverDropdownCard extends StatefulWidget {
-  final DriverModel driver;
+  final Driver driver;
   final bool isNearestDriver;
   final bool isProfileVisible;
   final VoidCallback onViewFullProfilePressed;
@@ -715,7 +715,7 @@ class _DriverDropdownCardState()
 
 class const _DriverVehicleBadge({required this.driver})
     extends StatelessWidget {
-  final DriverModel driver;
+  final Driver driver;
 
   IconData get _icon {
     final vehicleType = driver.vehicleType.toLowerCase();

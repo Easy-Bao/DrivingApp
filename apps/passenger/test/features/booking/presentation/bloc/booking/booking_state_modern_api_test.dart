@@ -18,7 +18,7 @@ void main() {
     duration: '4 min',
   );
 
-  const driver = DriverModel(
+  const driver = Driver(
     id: 'driver-7',
     name: 'Alex',
     vehicleType: 'Sedan',

@@ -153,5 +153,3 @@ String? _nullableString(Object? value) {
   final normalized = SafeParse.toStringValue(value).trim();
   return normalized.isEmpty ? null : normalized;
 }
-
-typedef DriverModel = Driver;

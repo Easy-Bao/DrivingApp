@@ -7,7 +7,7 @@ import 'package:passenger/src/features/driver_profile/domain/entities/driver_pro
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 
-const driver = DriverModel(
+const driver = Driver(
   id: 'driver-1',
   name: 'Demo Driver',
   vehicleType: 'Sedan',

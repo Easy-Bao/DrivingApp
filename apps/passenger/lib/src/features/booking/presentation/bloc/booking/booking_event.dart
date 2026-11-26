@@ -39,7 +39,7 @@ final class const StartDirectBookingEvent({
   required this.distanceKm,
   required this.durationMinutes,
 }) extends BookingEvent {
-  final DriverModel targetDriver;
+  final Driver targetDriver;
   final BidSessionTrip trip;
   final double pickupLat;
   final double pickupLng;
@@ -106,7 +106,7 @@ final class const _NearbyDriversPollCompletedEvent({
   required this.result,
 }) extends BookingEvent {
   final int generation;
-  final Result<List<DriverModel>, DomainFailure> result;
+  final Result<List<Driver>, DomainFailure> result;
 }
 
 final class const _NearbyDriverSearchTimedOutEvent({required this.generation})

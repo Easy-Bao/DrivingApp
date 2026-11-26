@@ -54,13 +54,13 @@ final class BookingFindingNearbyDrivers extends BookingState {
   final double pickupLng;
   final double? distanceKm;
   final double? durationMinutes;
-  final List<DriverModel> drivers;
+  final List<Driver> drivers;
   final bool hasLoaded;
   final bool isLoading;
   final String? errorMessage;
 
   BookingFindingNearbyDrivers copyWith({
-    List<DriverModel>? drivers,
+    List<Driver>? drivers,
     bool? hasLoaded,
     bool? isLoading,
     String? errorMessage,
@@ -95,8 +95,8 @@ final class NearestDriverFound extends BookingState {
     required this.pickupLng,
   });
 
-  final DriverModel driver;
-  final List<DriverModel> nearbyDrivers;
+  final Driver driver;
+  final List<Driver> nearbyDrivers;
   final int? totalTrips;
   final String? _reviewsDriverId;
   String get reviewsDriverId => _reviewsDriverId ?? driver.id;
@@ -137,7 +137,7 @@ final class BookingSearching extends BookingState {
   });
 
   final bool isDirect;
-  final DriverModel? targetDriver;
+  final Driver? targetDriver;
   final String? sessionId;
   final String bookingReference;
   final DateTime? expiresAt;
@@ -157,7 +157,7 @@ final class BookingOffersReceived extends BookingState {
 
   final List<BookingOffer> offers;
   final bool isDirect;
-  final DriverModel? targetDriver;
+  final Driver? targetDriver;
   final String? sessionId;
   final String bookingReference;
   final DateTime? expiresAt;

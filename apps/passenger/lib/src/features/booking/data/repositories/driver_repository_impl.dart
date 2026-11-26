@@ -12,7 +12,7 @@ final class DriverRepositoryImpl({
   final DriverDiscoveryRemoteDataSource _discoveryDataSource;
   final LocationRepository _locationRepository;
 
-  Future<Result<List<DriverModel>, Failure>>? _activeNearbyLookup;
+  Future<Result<List<Driver>, Failure>>? _activeNearbyLookup;
   ({double lat, double lng})? _activeNearbyCoordinates;
 
   Failure _mapExceptionToFailure(Object error) {
@@ -82,7 +82,7 @@ final class DriverRepositoryImpl({
   }
 
   @override
-  Future<Result<List<DriverModel>, Failure>> getNearbyDrivers({
+  Future<Result<List<Driver>, Failure>> getNearbyDrivers({
     required double lat,
     required double lng,
   }) async {
@@ -113,7 +113,7 @@ final class DriverRepositoryImpl({
     }
   }
 
-  Future<Result<List<DriverModel>, Failure>> _loadNearbyDrivers({
+  Future<Result<List<Driver>, Failure>> _loadNearbyDrivers({
     required double lat,
     required double lng,
   }) async {
@@ -216,12 +216,12 @@ final class DriverRepositoryImpl({
     }
   }
 
-  List<DriverModel> _processNearbyDrivers(
+  List<Driver> _processNearbyDrivers(
     List<Map<String, dynamic>> rawDrivers,
     double userLat,
     double userLng,
   ) {
-    final drivers = <DriverModel>[];
+    final drivers = <Driver>[];
     for (final d in rawDrivers) {
       final driverLat = SafeParse.toNullableDouble(d['lat']);
       final driverLng = SafeParse.toNullableDouble(d['lng']);
@@ -257,7 +257,7 @@ final class DriverRepositoryImpl({
       final rating = SafeParse.toNullableDouble(d['rating']) ?? 0;
       final score = _calculateMatchingScore(distanceKm, rating, etaMinutes);
 
-      final driver = _mapToDriverModel(d, distanceKm, etaMinutes, score);
+      final driver = _mapToDriver(d, distanceKm, etaMinutes, score);
       if (driver != null) drivers.add(driver);
     }
 
@@ -291,7 +291,7 @@ final class DriverRepositoryImpl({
     return (0.5 * distanceKm) + (0.3 * (5.0 - rating)) + (0.2 * etaMinutes);
   }
 
-  DriverModel? _mapToDriverModel(
+  Driver? _mapToDriver(
     Map<String, dynamic> data,
     double distanceKm,
     double etaMinutes,
@@ -300,7 +300,7 @@ final class DriverRepositoryImpl({
     final driverId = _stringValue(data['id'] ?? data['user_id']);
     if (driverId.isEmpty) return null;
 
-    return DriverModel(
+    return Driver(
       id: driverId,
       name: _stringValue(
         data['name'] ?? data['driver_name'] ?? data['driverName'],

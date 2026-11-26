@@ -83,7 +83,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
   Future<void> _requirePassengerAndCreate({
     required BookingSessionRequest request,
     required Emitter<BookingState> emit,
-    DriverModel? targetDriver,
+    Driver? targetDriver,
   }) async {
     String? passengerId;
     try {
@@ -123,7 +123,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
   Future<void> _createOrRecoverPendingSession({
     required BookingSessionRequest? newRequest,
     required Emitter<BookingState> emit,
-    DriverModel? targetDriver,
+    Driver? targetDriver,
   }) async {
     if (!_isCreatingBidSession) {
       _isCreatingBidSession = true;

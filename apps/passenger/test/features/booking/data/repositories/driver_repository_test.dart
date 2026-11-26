@@ -63,11 +63,8 @@ void main() {
         lng: longitude,
       );
 
-      expect(result, isA<Ok<List<DriverModel>, DomainFailure>>());
-      final drivers = result.fold(
-        (_) => const <DriverModel>[],
-        (value) => value,
-      );
+      expect(result, isA<Ok<List<Driver>, DomainFailure>>());
+      final drivers = result.fold((_) => const <Driver>[], (value) => value);
       expect(drivers, hasLength(1));
       expect(drivers.single.id, '42');
       expect(drivers.single.lat, latitude);

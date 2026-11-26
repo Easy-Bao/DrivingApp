@@ -160,8 +160,8 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
   bool _mapLoaded = false;
   bool _focusScheduled = false;
   EdgeInsets? _lastViewportPadding;
-  DriverModel? _selectedDriver;
-  List<DriverModel> _nearbyDrivers = [];
+  Driver? _selectedDriver;
+  List<Driver> _nearbyDrivers = [];
   bool _isLeaving = false;
   bool _isConfirmingCancel = false;
   bool _isReturningHome = false;
@@ -194,8 +194,8 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     passengerNote: widget.passengerNote,
   );
 
-  List<DriverModel> _uniqueNearbyDrivers(NearestDriverFound state) {
-    final byId = <String, DriverModel>{state.driver.id: state.driver};
+  List<Driver> _uniqueNearbyDrivers(NearestDriverFound state) {
+    final byId = <String, Driver>{state.driver.id: state.driver};
     for (final driver in state.nearbyDrivers) {
       byId[driver.id] = driver;
     }
@@ -233,7 +233,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     }
   }
 
-  List<DriverModel> _currentNearbyDrivers(BuildContext context) {
+  List<Driver> _currentNearbyDrivers(BuildContext context) {
     final bookingState = BlocProvider.of<BookingBloc>(context).state;
     if (bookingState is BookingFindingNearbyDrivers) {
       return bookingState.drivers;
@@ -241,7 +241,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     return BlocProvider.of<NearbyDriversCubit>(context).state.drivers;
   }
 
-  void _showDriverProfile(DriverModel driver) {
+  void _showDriverProfile(Driver driver) {
     if (!mounted) return;
     setState(() {
       _selectedDriver = driver;
@@ -277,7 +277,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     _schedulePickupFocus();
   }
 
-  void _syncNearbyDriverPins(List<DriverModel> drivers) {
+  void _syncNearbyDriverPins(List<Driver> drivers) {
     final pickup = _pickupCoordinate;
     if (pickup == null) return;
     BlocProvider.of<LiveMapBloc>(context).add(
@@ -355,7 +355,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     }
   }
 
-  void _startDirectBooking(DriverModel driver) {
+  void _startDirectBooking(Driver driver) {
     final pickup = _pickupCoordinate;
     if (pickup == null) return;
     final pickupLat = pickup.latitude;
@@ -389,7 +389,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
     bool isChoosingDriver = false,
     String? notice,
     String? refreshError,
-    DriverModel? requestedDriver,
+    Driver? requestedDriver,
     NearbyDriversState? availabilityOverride,
   }) {
     Widget buildPanel(
@@ -992,7 +992,7 @@ class const _NearbyDriverSelectionChip({
   required this.isSelected,
   required this.onTap,
 }) extends StatelessWidget {
-  final DriverModel driver;
+  final Driver driver;
   final bool isSelected;
   final VoidCallback onTap;
 

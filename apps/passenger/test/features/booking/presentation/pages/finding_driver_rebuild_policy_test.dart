@@ -20,7 +20,7 @@ const _trip = BidSessionTrip(
   duration: '5 min',
 );
 
-const _driver = DriverModel(
+const _driver = Driver(
   id: 'driver-1',
   name: 'Demo Driver',
   vehicleType: 'Tricycle',

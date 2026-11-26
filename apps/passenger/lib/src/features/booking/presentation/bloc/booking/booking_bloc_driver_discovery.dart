@@ -141,7 +141,7 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
     _nearbyDriverPollTimer?.cancel();
     _nearbyDriverPollTimer = null;
     _isFetchingNearbyDrivers = true;
-    Result<List<DriverModel>, DomainFailure> result;
+    Result<List<Driver>, DomainFailure> result;
     try {
       result = await _driverRepository.getNearbyDriversResult(
         lat: current.pickupLat,
@@ -310,7 +310,7 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
       ),
     );
 
-    List<DriverModel> nearbyDrivers = [];
+    List<Driver> nearbyDrivers = [];
     Failure? lastFailure;
     var lastLookupSucceeded = false;
 
@@ -361,7 +361,7 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
       return;
     }
 
-    DriverModel closestDriver = nearbyDrivers.first;
+    Driver closestDriver = nearbyDrivers.first;
     for (final d in nearbyDrivers) {
       if (d.distanceKm < closestDriver.distanceKm) {
         closestDriver = d;
