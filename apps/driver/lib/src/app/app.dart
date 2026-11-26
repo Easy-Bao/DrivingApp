@@ -21,6 +21,7 @@ class const App({super.key}) extends StatefulWidget {
 class _AppState extends State<App> with WidgetsBindingObserver {
   late final LocationAccessCubit _locationAccessCubit;
   late final AppLifecycleCoordinator _lifecycleCoordinator;
+  NetworkAvailabilityCoordinator? _networkAvailability;
   bool _locationMonitoringRequested = false;
 
   @override
@@ -28,6 +29,12 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     super.initState();
     _locationAccessCubit = Modular.get<LocationAccessCubit>();
     _lifecycleCoordinator = Modular.get<AppLifecycleCoordinator>();
+    try {
+      _networkAvailability = Modular.get<NetworkAvailabilityCoordinator>();
+    } catch (_) {
+      // Tests that mount App without full dependency registration may omit
+      // the global network availability coordinator.
+    }
     WidgetsBinding.instance.addObserver(this);
     Modular.routerConfig.routerDelegate.addListener(_onRouteChanged);
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
@@ -96,16 +103,25 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         theme: AppTheme.main,
         debugShowCheckedModeBanner: false,
         title: 'EasyRide Driver',
-        // Keep legacy Material Theme/Localizations available to dependencies
-        // (such as go_router 17, go_transitions, skeletonizer, and fl_chart)
-        // until they adopt package:material_ui.
-        // ignore: deprecated_member_use
-        builder: (context, child) => MaterialUiCompatibilityBridge(
-          child: LocationAccessOverlayScope(
+        builder: (context, child) {
+          final content = LocationAccessOverlayScope(
             enabled: _requiresLocationAccess,
             child: child ?? const SizedBox.shrink(),
-          ),
-        ),
+          );
+          final networkAvailability = _networkAvailability;
+          // Keep legacy Material Theme/Localizations available to dependencies
+          // (such as go_router 17, go_transitions, skeletonizer, and fl_chart)
+          // until they adopt package:material_ui.
+          // ignore: deprecated_member_use
+          return MaterialUiCompatibilityBridge(
+            child: networkAvailability == null
+                ? content
+                : AppNetworkStatusHost(
+                    coordinator: networkAvailability,
+                    child: content,
+                  ),
+          );
+        },
       ),
     );
   }

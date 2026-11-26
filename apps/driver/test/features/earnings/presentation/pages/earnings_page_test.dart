@@ -383,6 +383,8 @@ void main() {
 
       final barChart = tester.widget<BarChart>(find.byType(BarChart));
       final firstRod = barChart.data.barGroups.first.barRods.first;
+      expect(barChart.data.minY, lessThan(0));
+      expect(firstRod.toY, lessThan(0));
       expect(firstRod.label.text, '-₱50.00');
     },
   );

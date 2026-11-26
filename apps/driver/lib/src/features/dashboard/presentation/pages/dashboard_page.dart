@@ -991,6 +991,27 @@ class _DashboardPageState extends State<DashboardPage>
                                   children: [
                                     const SizedBox(height: AppSpacing.sm),
                                     _buildOnlineCardBanner(context, state),
+                                    if (state.errorMessage
+                                        case final errorMessage?) ...[
+                                      const SizedBox(height: AppSpacing.md),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: AppLayout.pagePadding,
+                                        ),
+                                        child: AppErrorBanner(
+                                          message: errorMessage,
+                                          onRetry: () => unawaited(
+                                            BlocProvider.of<DashboardCubit>(
+                                              context,
+                                            ).loadDispatchSnapshot(force: true),
+                                          ),
+                                          onDismiss: () =>
+                                              BlocProvider.of<DashboardCubit>(
+                                                context,
+                                              ).dismissError(),
+                                        ),
+                                      ),
+                                    ],
                                     const SizedBox(height: AppSpacing.md),
                                     _buildStatsRow(context, state),
                                     const SizedBox(height: AppSpacing.xxl),

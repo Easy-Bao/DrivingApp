@@ -552,12 +552,17 @@ class const _RatingDistributionRow({
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final textScaler = MediaQuery.textScalerOf(context);
+    final labelWidth = textScaler.scale(48).clamp(48.0, 96.0);
+    final countWidth = textScaler.scale(32).clamp(32.0, 72.0);
     return Row(
       children: [
-        SizedBox(
-          width: 48,
+        ConstrainedBox(
+          constraints: BoxConstraints(minWidth: labelWidth),
           child: Text(
             '$stars star',
+            maxLines: 1,
+            softWrap: false,
             style: context.textStyles.labelMedium?.tabular.copyWith(
               color: colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
@@ -581,10 +586,12 @@ class const _RatingDistributionRow({
           ),
         ),
         const SizedBox(width: AppSpacing.md),
-        SizedBox(
-          width: 32,
+        ConstrainedBox(
+          constraints: BoxConstraints(minWidth: countWidth),
           child: Text(
             '$count',
+            maxLines: 1,
+            softWrap: false,
             textAlign: TextAlign.end,
             style: context.textStyles.labelMedium?.tabular.copyWith(
               color: colorScheme.onSurface,

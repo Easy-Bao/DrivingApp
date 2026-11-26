@@ -46,28 +46,49 @@ class const EarningsChartCard({
     final chartDays = dailyData.isEmpty
         ? const [EarnDayBucket(day: '—', amount: 0)]
         : dailyData;
-    final maxAmount = chartDays.fold<double>(0, (max, item) {
-      final amount = item.amount.abs();
-      if (!amount.isFinite || amount <= max) return max;
-      return amount;
+    final maxPositive = chartDays.fold<double>(0, (max, item) {
+      if (!item.amount.isFinite || item.amount <= max) return max;
+      return item.amount;
     });
-    final maxY = maxAmount > 0 ? maxAmount * 1.25 : 1.0;
-    final placeholderHeight = maxAmount > 0 ? maxAmount * 0.025 : 0.025;
+    final maxNegative = chartDays.fold<double>(0, (max, item) {
+      if (!item.amount.isFinite || item.amount >= 0) return max;
+      final magnitude = -item.amount;
+      return magnitude > max ? magnitude : max;
+    });
+    final hasNegative = maxNegative > 0;
+    final minY = hasNegative ? -(maxNegative * 1.25) : 0.0;
+    final maxY = hasNegative
+        ? (maxPositive > 0 ? maxPositive * 1.25 : maxNegative * 0.35)
+        : (maxPositive > 0 ? maxPositive * 1.25 : 1.0);
+    final totalSpan = maxY - minY;
+    final maxMagnitude = maxPositive > maxNegative ? maxPositive : maxNegative;
+    final placeholderHeight = totalSpan > 0 ? totalSpan * 0.02 : 0.025;
     final barWidth = (availableWidth / (chartDays.length * 2.2))
         .clamp(14.0, 32.0)
         .toDouble();
 
     return BarChartData(
-      minY: 0,
+      minY: minY,
       maxY: maxY,
       alignment: BarChartAlignment.spaceEvenly,
       groupsSpace: 8,
       backgroundColor: colorScheme.surface.withValues(alpha: 0),
       borderData: FlBorderData(show: false),
+      extraLinesData: hasNegative
+          ? ExtraLinesData(
+              horizontalLines: [
+                HorizontalLine(
+                  y: 0,
+                  color: colorScheme.outlineVariant,
+                  strokeWidth: 1,
+                ),
+              ],
+            )
+          : null,
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
-        horizontalInterval: maxY / 4,
+        horizontalInterval: totalSpan / 4,
         getDrawingHorizontalLine: (value) => FlLine(
           color: colorScheme.outlineVariant.withValues(alpha: 0.45),
           strokeWidth: 0.75,
@@ -117,7 +138,7 @@ class const EarningsChartCard({
             context,
             chartDays[index],
             index,
-            maxAmount,
+            maxMagnitude,
             placeholderHeight,
             barWidth,
           ),
@@ -134,16 +155,16 @@ class const EarningsChartCard({
     double barWidth,
   ) {
     final colorScheme = context.colorScheme;
-    final isNegative = day.amount < 0;
-    final amount = day.amount.isFinite && !isNegative ? day.amount : 0.0;
+    final finiteAmount = day.amount.isFinite ? day.amount : 0.0;
+    final isNegative = finiteAmount < 0;
     final barValue = isNegative
-        ? (day.amount.abs() > 0 ? day.amount.abs() : placeholderHeight)
-        : (amount > 0 ? amount : placeholderHeight);
+        ? finiteAmount
+        : (finiteAmount > 0 ? finiteAmount : placeholderHeight);
     final rodColor = isNegative
         ? (day.isCurrent
               ? colorScheme.error
               : colorScheme.error.withValues(alpha: 0.55))
-        : (day.amount == 0
+        : (finiteAmount == 0
               ? colorScheme.outlineVariant.withValues(alpha: 0.6)
               : (day.isCurrent
                     ? colorScheme.primary
@@ -158,13 +179,16 @@ class const EarningsChartCard({
       x: index,
       barRods: [
         BarChartRodData(
+          fromY: 0,
           toY: barValue,
           width: barWidth,
           color: rodColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(5)),
+          borderRadius: isNegative
+              ? const BorderRadius.vertical(bottom: Radius.circular(5))
+              : const BorderRadius.vertical(top: Radius.circular(5)),
           label: BarChartRodLabel(
-            show: day.amount != 0,
-            text: formatPesoAmount(day.amount),
+            show: finiteAmount != 0,
+            text: formatPesoAmount(finiteAmount),
             style: context.textStyles.labelSmall?.tabular.copyWith(
               color: labelColor,
               fontWeight: FontWeight.w600,

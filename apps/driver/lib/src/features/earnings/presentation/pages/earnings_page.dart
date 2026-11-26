@@ -42,13 +42,6 @@ class _EarningsPageState extends State<EarningsPage> {
           builder: (context, state) {
             final summary = state.data?.summaryFor(_selectedPeriod);
             final errorMessage = state.errorMessage;
-            if (summary == null && errorMessage != null) {
-              return AppRetryErrorView(
-                title: 'Unable to load earnings',
-                message: errorMessage,
-                onRetry: context.read<EarningsCubit>().load,
-              );
-            }
             return RefreshIndicator(
               color: context.colorScheme.onSurface,
               onRefresh: context.read<EarningsCubit>().load,
@@ -78,7 +71,18 @@ class _EarningsPageState extends State<EarningsPage> {
                             children: [
                               const AppPageHeader(title: 'Earnings'),
                               const SizedBox(height: AppSpacing.xl),
-                              if (summary == null)
+                              if (summary == null && errorMessage != null)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: AppSpacing.xxxl,
+                                  ),
+                                  child: AppRetryErrorView(
+                                    title: 'Unable to load earnings',
+                                    message: errorMessage,
+                                    onRetry: context.read<EarningsCubit>().load,
+                                  ),
+                                )
+                              else if (summary == null)
                                 _buildLoadingState()
                               else
                                 _buildContent(
