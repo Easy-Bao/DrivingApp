@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
-class ProfileAvatar extends StatelessWidget {
+class ProfileAvatar extends StatefulWidget {
   const ProfileAvatar({
     super.key,
     required this.initials,
@@ -21,21 +22,71 @@ class ProfileAvatar extends StatelessWidget {
   final double size;
   final VoidCallback? onCameraTap;
 
+  static final Map<String, Uint8List> _decodedCache = <String, Uint8List>{};
+  static const int _maxCacheEntries = 4;
+
+  static Uint8List? _decodeCached(String? raw) {
+    final value = raw?.trim() ?? '';
+    if (value.isEmpty) return null;
+    final cached = _decodedCache.remove(value);
+    if (cached != null) {
+      _decodedCache[value] = cached;
+      return cached;
+    }
+    try {
+      final bytes = base64Decode(value);
+      if (bytes.isEmpty) return null;
+      if (_decodedCache.length >= _maxCacheEntries) {
+        _decodedCache.remove(_decodedCache.keys.first);
+      }
+      _decodedCache[value] = bytes;
+      return bytes;
+    } on FormatException {
+      return null;
+    }
+  }
+
+  @override
+  State<ProfileAvatar> createState() => _ProfileAvatarState();
+}
+
+class _ProfileAvatarState extends State<ProfileAvatar> {
+  Uint8List? _decodedBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _decodedBytes = ProfileAvatar._decodeCached(widget.imageData);
+  }
+
+  @override
+  void didUpdateWidget(covariant ProfileAvatar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.imageData != oldWidget.imageData) {
+      _decodedBytes = ProfileAvatar._decodeCached(widget.imageData);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final cameraButtonSize = size * 0.34 < AppSize.minimumTouchTarget
+    final cameraButtonSize = widget.size * 0.34 < AppSize.minimumTouchTarget
         ? AppSize.minimumTouchTarget
-        : size * 0.34;
-    final cameraIconSize = size * 0.16 < 16 ? 16.0 : size * 0.16;
-    final imagePath = this.imagePath;
-    final fallbackImage = _buildImageData(context);
+        : widget.size * 0.34;
+    final cameraIconSize = widget.size * 0.16 < 16 ? 16.0 : widget.size * 0.16;
+    final cacheWidth = (widget.size * MediaQuery.devicePixelRatioOf(context))
+        .round()
+        .clamp(1, 1024);
+    final imagePath = widget.imagePath;
+
     final avatar = imagePath == null || imagePath.isEmpty
-        ? fallbackImage ?? _buildInitials(context)
+        ? _buildFallbackImage(context, cacheWidth: cacheWidth)
         : Image.file(
             File(imagePath),
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => fallbackImage ?? _buildInitials(context),
+            cacheWidth: cacheWidth,
+            errorBuilder: (_, _, _) =>
+                _buildFallbackImage(context, cacheWidth: cacheWidth),
           );
 
     final avatarCircle = Container(
@@ -48,9 +99,10 @@ class ProfileAvatar extends StatelessWidget {
       child: ClipOval(child: SizedBox.expand(child: avatar)),
     );
 
+    final onCameraTap = widget.onCameraTap;
     return SizedBox(
-      width: size,
-      height: size,
+      width: widget.size,
+      height: widget.size,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -132,20 +184,17 @@ class ProfileAvatar extends StatelessWidget {
     );
   }
 
-  Widget? _buildImageData(BuildContext context) {
-    final value = imageData?.trim() ?? '';
-    if (value.isEmpty) return null;
-    try {
-      final bytes = base64Decode(value);
-      if (bytes.isEmpty) return null;
-      return Image.memory(
-        bytes,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => _buildInitials(context),
-      );
-    } on FormatException {
-      return null;
+  Widget _buildFallbackImage(BuildContext context, {required int cacheWidth}) {
+    final bytes = _decodedBytes;
+    if (bytes == null || bytes.isEmpty) {
+      return _buildInitials(context);
     }
+    return Image.memory(
+      bytes,
+      fit: BoxFit.cover,
+      cacheWidth: cacheWidth,
+      errorBuilder: (_, _, _) => _buildInitials(context),
+    );
   }
 
   Widget _buildInitials(BuildContext context) {
@@ -153,10 +202,10 @@ class ProfileAvatar extends StatelessWidget {
       color: context.colorScheme.primaryContainer,
       child: Center(
         child: Text(
-          initials,
+          widget.initials,
           style: context.textStyles.titleLarge?.copyWith(
             color: context.colorScheme.onPrimaryContainer,
-            fontSize: size * 0.28,
+            fontSize: widget.size * 0.28,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.2,
           ),

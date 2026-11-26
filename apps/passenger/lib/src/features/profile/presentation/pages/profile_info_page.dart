@@ -13,7 +13,7 @@ import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/profile/domain/repositories/profile_repository.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile_cubit.dart';
-import 'package:passenger/src/features/profile/presentation/widgets/profile_avatar.dart';
+import 'package:passenger/src/features/profile/presentation/widgets/profile_info_sections.dart';
 
 class ProfileInfoPage extends StatefulWidget {
   const ProfileInfoPage({super.key, this.pickPhoto});
@@ -298,7 +298,13 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               ),
             ),
           ),
-          bottomNavigationBar: _buildBottomBar(context),
+          bottomNavigationBar: _isDirty
+              ? ProfileInfoSaveBar(
+                  isSaving: _isSaving,
+                  onDiscard: _discardChanges,
+                  onSave: () => unawaited(_saveProfile()),
+                )
+              : null,
           body: SafeArea(
             top: false,
             child: LayoutBuilder(
@@ -321,19 +327,40 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _buildProfileHero(context),
+                          ProfileInfoHero(
+                            displayedName: _displayedName,
+                            initials: _getInitials(_displayedName),
+                            avatarPath: _avatarPath,
+                            avatarData: _avatarData,
+                            isSaving: _isSaving,
+                            onPickPhoto: () => unawaited(_pickPhoto()),
+                          ),
                           const SizedBox(height: AppSpacing.xxxl),
-                          _buildSectionHeader(context, title: 'Profile'),
+                          const ProfileInfoSectionHeader(title: 'Profile'),
                           const SizedBox(height: AppSpacing.sm),
-                          _buildProfileCard(context),
+                          ProfileInfoEditableCard(
+                            nameController: _nameController,
+                            nameError: _nameError,
+                            gender: _gender,
+                            genderOptions: _genderOptions,
+                            onGenderChanged: (gender) {
+                              setState(() {
+                                _gender = gender;
+                                _isDirty = _draftHasChanges;
+                              });
+                            },
+                          ),
                           const SizedBox(height: AppSpacing.xxl),
-                          _buildSectionHeader(
-                            context,
+                          const ProfileInfoSectionHeader(
                             title: 'Contact',
-                            trailing: _buildVerifiedTag(context),
+                            trailing: ProfileInfoVerifiedTag(),
                           ),
                           const SizedBox(height: AppSpacing.sm),
-                          _buildContactCard(context),
+                          ProfileInfoContactCard(
+                            phonePrefix: _phonePrefix,
+                            phoneNumberController: _phoneNumberController,
+                            emailController: _emailController,
+                          ),
                           const SizedBox(height: AppSpacing.sm),
                           Padding(
                             padding: const EdgeInsets.symmetric(
@@ -354,515 +381,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                 );
               },
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileHero(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final rawName = _displayedName;
-    final displayName = rawName.isEmpty || rawName.contains('@')
-        ? 'Your profile'
-        : rawName;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        ProfileAvatar(
-          key: const ValueKey<String>('passenger-profile-avatar'),
-          initials: _getInitials(rawName),
-          imagePath: _avatarPath,
-          imageData: _avatarData,
-          size: 88,
-          onCameraTap: _pickPhoto,
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        Text(
-          displayName,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: context.textStyles.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.4,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        OutlinedButton(
-          key: const ValueKey<String>('passenger-profile-change-photo'),
-          onPressed: _isSaving ? null : _pickPhoto,
-          style:
-              OutlinedButton.styleFrom(
-                backgroundColor: colorScheme.surfaceContainerLowest,
-                foregroundColor: colorScheme.onSurface,
-                side: BorderSide(color: colorScheme.outlineVariant),
-                enableFeedback: false,
-                splashFactory: NoSplash.splashFactory,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: 8,
-                ),
-                minimumSize: const Size(0, 36),
-                tapTargetSize: MaterialTapTargetSize.padded,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-                textStyle: context.textStyles.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ).copyWith(
-                overlayColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.focused)) {
-                    return colorScheme.primary.withValues(alpha: 0.12);
-                  }
-                  return Colors.transparent;
-                }),
-              ),
-          child: const Text('Change photo'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSectionHeader(
-    BuildContext context, {
-    required String title,
-    Widget? trailing,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-      child: Row(
-        children: [
-          Expanded(
-            child: Semantics(
-              header: true,
-              child: Text(
-                title.toUpperCase(),
-                style: context.textStyles.labelSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.9,
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ),
-          if (trailing != null) ...[
-            const SizedBox(width: AppSpacing.sm),
-            trailing,
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVerifiedTag(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ExcludeSemantics(
-          child: Icon(
-            LucideIcons.lock,
-            size: 11,
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          'Verified',
-          style: context.textStyles.labelSmall?.copyWith(
-            fontWeight: FontWeight.w500,
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProfileCard(BuildContext context) {
-    return AppSurfaceCard(
-      key: const ValueKey<String>('passenger-profile-editable-card'),
-      color: context.colorScheme.surfaceContainerLowest,
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildFullNameRow(context),
-          _buildRowDivider(context),
-          _buildGenderRow(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContactCard(BuildContext context) {
-    return AppSurfaceCard(
-      key: const ValueKey<String>('passenger-profile-contact-card'),
-      color: context.colorScheme.surfaceContainerLow,
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildPhoneRow(context),
-          _buildRowDivider(context),
-          _buildEmailRow(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRowDivider(BuildContext context) {
-    return Divider(
-      height: 1,
-      thickness: 1,
-      indent: AppSpacing.lg,
-      endIndent: AppSpacing.lg,
-      color: context.colorScheme.outlineVariant.withValues(alpha: 0.7),
-    );
-  }
-
-  Widget _buildFieldRow(
-    BuildContext context, {
-    required String label,
-    required Widget child,
-    Widget? trailing,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: 14,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  style: context.textStyles.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-              if (trailing != null) ...[
-                const SizedBox(width: AppSpacing.sm),
-                trailing,
-              ],
-            ],
-          ),
-          const SizedBox(height: 6),
-          child,
-        ],
-      ),
-    );
-  }
-
-  InputDecoration _bareFieldDecoration({
-    String? hintText,
-    Widget? suffixIcon,
-    BoxConstraints? suffixIconConstraints,
-  }) {
-    return InputDecoration(
-      isDense: true,
-      filled: false,
-      border: InputBorder.none,
-      enabledBorder: InputBorder.none,
-      focusedBorder: InputBorder.none,
-      errorBorder: InputBorder.none,
-      focusedErrorBorder: InputBorder.none,
-      contentPadding: EdgeInsets.zero,
-      hintText: hintText,
-      hintStyle: context.textStyles.bodyLarge?.copyWith(
-        color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
-      ),
-      suffixIcon: suffixIcon,
-      suffixIconConstraints: suffixIconConstraints,
-    );
-  }
-
-  Widget _buildFullNameRow(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    return _buildFieldRow(
-      context,
-      label: 'Full name',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            key: const ValueKey<String>('passenger-profile-field-Full Name'),
-            controller: _nameController,
-            textInputAction: TextInputAction.done,
-            textCapitalization: TextCapitalization.words,
-            style: context.textStyles.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
-            decoration: _bareFieldDecoration(hintText: 'Enter your name'),
-          ),
-          if (_nameError case final nameError?) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                nameError,
-                style: context.textStyles.labelMedium?.copyWith(
-                  color: colorScheme.error,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGenderRow(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    return _buildFieldRow(
-      context,
-      label: 'Gender',
-      child: AppSelectField<String>(
-        key: const ValueKey<String>('passenger-profile-gender'),
-        value: _gender,
-        menuTitle: 'Gender',
-        style: context.textStyles.bodyLarge?.copyWith(
-          fontWeight: FontWeight.w600,
-          color: colorScheme.onSurface,
-        ),
-        decoration: _bareFieldDecoration(
-          suffixIcon: Icon(
-            LucideIcons.chevron_down,
-            size: 18,
-            color: colorScheme.onSurfaceVariant,
-          ),
-          suffixIconConstraints: const BoxConstraints(
-            minWidth: 20,
-            minHeight: 20,
-          ),
-        ),
-        options: [
-          for (final gender in _genderOptions)
-            AppSelectOption<String>(value: gender, label: gender),
-        ],
-        onChanged: (gender) {
-          if (gender == null) return;
-          setState(() {
-            _gender = gender;
-            _isDirty = _draftHasChanges;
-          });
-        },
-      ),
-    );
-  }
-
-  Widget _buildPhoneRow(BuildContext context) {
-    final readOnlyColor = context.colorScheme.onSurfaceVariant;
-    return _buildFieldRow(
-      context,
-      label: 'Mobile number',
-      child: Row(
-        children: [
-          Text(
-            _phonePrefix,
-            style: context.textStyles.bodyLarge?.tabular.copyWith(
-              fontWeight: FontWeight.w600,
-              color: readOnlyColor,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Container(
-            width: 1,
-            height: 16,
-            color: context.colorScheme.outlineVariant,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: TextField(
-              key: const ValueKey<String>('passenger-profile-phone-number'),
-              controller: _phoneNumberController,
-              readOnly: true,
-              showCursor: false,
-              keyboardType: TextInputType.phone,
-              style: context.textStyles.bodyLarge?.tabular.copyWith(
-                fontWeight: FontWeight.w500,
-                color: readOnlyColor,
-              ),
-              decoration: _bareFieldDecoration(hintText: '917 000 0001'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmailRow(BuildContext context) {
-    return _buildFieldRow(
-      context,
-      label: 'Email',
-      child: TextField(
-        key: const ValueKey<String>('passenger-profile-field-Email'),
-        controller: _emailController,
-        readOnly: true,
-        showCursor: false,
-        keyboardType: TextInputType.emailAddress,
-        textCapitalization: TextCapitalization.none,
-        style: context.textStyles.bodyLarge?.copyWith(
-          fontWeight: FontWeight.w500,
-          color: context.colorScheme.onSurfaceVariant,
-        ),
-        decoration: _bareFieldDecoration(hintText: 'name@example.com'),
-      ),
-    );
-  }
-
-  Widget? _buildBottomBar(BuildContext context) {
-    if (!_isDirty) return null;
-    final colorScheme = context.colorScheme;
-    final animationDuration = MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : const Duration(milliseconds: 200);
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
-
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0, end: 1),
-      duration: animationDuration,
-      curve: Curves.easeOutCubic,
-      builder: (context, progress, child) => Opacity(
-        opacity: progress.clamp(0.0, 1.0),
-        child: Transform.translate(
-          offset: Offset(0, 12 * (1 - progress)),
-          child: child,
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.only(bottom: bottomInset),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final horizontalPadding = constraints.maxWidth < 360
-                  ? AppLayout.pagePadding
-                  : AppLayout.pagePaddingWide;
-              final compactActions =
-                  constraints.maxWidth < 320 ||
-                  MediaQuery.textScalerOf(context).scale(14) > 21;
-
-              final discardButton = OutlinedButton(
-                key: const ValueKey<String>('passenger-profile-discard'),
-                onPressed: _isSaving ? null : _discardChanges,
-                style:
-                    OutlinedButton.styleFrom(
-                      backgroundColor: colorScheme.surfaceContainerLowest,
-                      foregroundColor: colorScheme.onSurface,
-                      side: BorderSide(color: colorScheme.outlineVariant),
-                      elevation: 0,
-                      enableFeedback: false,
-                      splashFactory: NoSplash.splashFactory,
-                      minimumSize: const Size.fromHeight(AppSize.controlHeight),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                      textStyle: context.textStyles.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ).copyWith(
-                      overlayColor: WidgetStateProperty.resolveWith((states) {
-                        if (states.contains(WidgetState.focused)) {
-                          return colorScheme.primary.withValues(alpha: 0.12);
-                        }
-                        return Colors.transparent;
-                      }),
-                    ),
-                child: const Text('Discard'),
-              );
-
-              final saveButton = FilledButton(
-                key: const ValueKey<String>('passenger-profile-save'),
-                onPressed: _isSaving ? null : _saveProfile,
-                style:
-                    FilledButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
-                      elevation: 0,
-                      enableFeedback: false,
-                      splashFactory: NoSplash.splashFactory,
-                      minimumSize: const Size.fromHeight(AppSize.controlHeight),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                      textStyle: context.textStyles.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ).copyWith(
-                      overlayColor: WidgetStateProperty.resolveWith((states) {
-                        if (states.contains(WidgetState.focused)) {
-                          return colorScheme.onPrimary.withValues(alpha: 0.16);
-                        }
-                        return Colors.transparent;
-                      }),
-                    ),
-                child: _isSaving
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: colorScheme.onPrimary,
-                        ),
-                      )
-                    : const Text('Save changes'),
-              );
-
-              return DecoratedBox(
-                decoration: BoxDecoration(
-                  color: context.canvasColor,
-                  border: Border(
-                    top: BorderSide(
-                      color: colorScheme.outlineVariant.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalPadding,
-                    AppSpacing.md,
-                    horizontalPadding,
-                    AppSpacing.lg,
-                  ),
-                  child: Center(
-                    heightFactor: 1,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 560),
-                      child: compactActions
-                          ? Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                saveButton,
-                                const SizedBox(height: AppSpacing.sm),
-                                discardButton,
-                              ],
-                            )
-                          : Row(
-                              children: [
-                                Expanded(child: discardButton),
-                                const SizedBox(width: AppSpacing.md),
-                                Expanded(flex: 2, child: saveButton),
-                              ],
-                            ),
-                    ),
-                  ),
-                ),
-              );
-            },
           ),
         ),
       ),
