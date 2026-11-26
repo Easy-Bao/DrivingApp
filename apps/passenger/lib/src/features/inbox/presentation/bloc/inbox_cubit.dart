@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
@@ -15,6 +14,7 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
   final Set<String> _dismissedNotificationIds = {};
   String? _activePassengerId;
   int _sessionRevision = 0;
+  int _listGeneration = 0;
   int? _markAllReadRevision;
   final Set<String> _readNotificationIds = {};
   Future<void>? _activeLoad;
@@ -52,22 +52,29 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
       _dismissedNotificationIds.clear();
     }
     final requestRevision = _sessionRevision;
+    final requestGeneration = ++_listGeneration;
     if (state is! InboxLoadedState) {
       emit(const InboxLoadingState());
     }
     final result = await _fetchPage(passengerId, offset: 0);
-    if (isClosed || requestRevision != _sessionRevision) return;
+    if (isClosed ||
+        requestRevision != _sessionRevision ||
+        requestGeneration != _listGeneration) {
+      return;
+    }
 
-    result.fold(
-      (failure) => emit(InboxErrorState(ErrorHandler.getErrorMessage(failure))),
-      (page) => _emitLoaded(
-        InboxLoadedState(
-          _mergeLocalNotifications(page.items),
-          hasMore: page.hasMore,
-          nextOffset: page.nextOffset,
-        ),
-      ),
-    );
+    switch (result) {
+      case Err(:final failure):
+        emit(InboxErrorState(ErrorHandler.getErrorMessage(failure)));
+      case Ok(value: final page):
+        _emitLoaded(
+          InboxLoadedState(
+            _mergeLocalNotifications(page.items),
+            hasMore: page.hasMore,
+            nextOffset: page.nextOffset,
+          ),
+        );
+    }
   }
 
   Future<void> loadMoreNotifications() async {
@@ -76,28 +83,37 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
     if (current is! InboxLoadedState ||
         passengerId == null ||
         !current.hasMore ||
-        current.nextOffset == null ||
         current.isLoadingMore) {
       return;
     }
+    final nextOffset = current.nextOffset;
+    if (nextOffset == null) return;
+
     final requestRevision = _sessionRevision;
+    final requestGeneration = _listGeneration;
     _emitLoaded(
       current.copyWith(isLoadingMore: true, clearLoadMoreError: true),
     );
-    final result = await _fetchPage(passengerId, offset: current.nextOffset!);
-    if (isClosed || requestRevision != _sessionRevision) return;
-    result.fold(
-      (failure) => _emitLoaded(
-        (state is InboxLoadedState ? state as InboxLoadedState : current)
-            .copyWith(
-              isLoadingMore: false,
-              loadMoreError: ErrorHandler.getErrorMessage(failure),
-            ),
-      ),
-      (page) {
-        final latest = state is InboxLoadedState
-            ? state as InboxLoadedState
-            : current;
+    final result = await _fetchPage(passengerId, offset: nextOffset);
+    if (isClosed ||
+        requestRevision != _sessionRevision ||
+        requestGeneration != _listGeneration) {
+      return;
+    }
+
+    final latest = switch (state) {
+      final InboxLoadedState loaded => loaded,
+      _ => current,
+    };
+    switch (result) {
+      case Err(:final failure):
+        _emitLoaded(
+          latest.copyWith(
+            isLoadingMore: false,
+            loadMoreError: ErrorHandler.getErrorMessage(failure),
+          ),
+        );
+      case Ok(value: final page):
         _emitLoaded(
           latest.copyWith(
             notifications: [...latest.notifications, ...page.items],
@@ -107,24 +123,24 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
             clearLoadMoreError: true,
           ),
         );
-      },
-    );
+    }
   }
 
   Future<Result<OffsetPage<InboxNotification>, Failure>> _fetchPage(
     String passengerId, {
     required int offset,
   }) async {
-    final repository = inboxRepository;
-    if (repository is PaginatedInboxRepository) {
-      final paginatedRepository = repository as PaginatedInboxRepository;
+    if (inboxRepository
+        case final PaginatedInboxRepository paginatedRepository) {
       return paginatedRepository.fetchPassengerNotificationsPage(
         passengerId,
         limit: _pageSize,
         offset: offset,
       );
     }
-    final result = await repository.fetchPassengerNotifications(passengerId);
+    final result = await inboxRepository.fetchPassengerNotifications(
+      passengerId,
+    );
     return result.map(
       (notifications) => OffsetPage<InboxNotification>(
         items: notifications,
@@ -162,10 +178,9 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
     );
     if (isClosed || revision != _sessionRevision) return;
     _markAllReadRevision = null;
-    result.fold(
-      (failure) {
-        final latest = state;
-        if (latest is InboxLoadedState) {
+    switch (result) {
+      case Err(:final failure):
+        if (state case final InboxLoadedState latest) {
           _emitLoaded(
             latest.copyWith(
               markAllReadError: switch (ErrorHandler.getAppFailure(failure)) {
@@ -176,29 +191,56 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
             ),
           );
         }
-      },
-      (_) {
+      case Ok():
         _readNotificationIds.addAll(requestedIds);
-        final latest = state;
-        if (latest is InboxLoadedState) {
+        if (state case final InboxLoadedState latest) {
           _emitLoaded(latest.copyWith(clearMarkAllReadError: true));
         }
-      },
-    );
+    }
   }
 
   void addLocalNotification(InboxNotification notification) {
     _localNotifications.removeWhere((item) => item.id == notification.id);
     _localNotifications.insert(0, notification);
-    final currentNotifications = state is InboxLoadedState
-        ? (state as InboxLoadedState).notifications
-        : const <InboxNotification>[];
     final current = state;
+    final (
+      currentNotifications,
+      hasMore,
+      nextOffset,
+      isLoadingMore,
+      loadMoreError,
+      markAllReadError,
+      dismissError,
+    ) = switch (current) {
+      InboxLoadedState(
+        :final notifications,
+        :final hasMore,
+        :final nextOffset,
+        :final isLoadingMore,
+        :final loadMoreError,
+        :final markAllReadError,
+        :final dismissError,
+      ) =>
+        (
+          notifications,
+          hasMore,
+          nextOffset,
+          isLoadingMore,
+          loadMoreError,
+          markAllReadError,
+          dismissError,
+        ),
+      _ => (const <InboxNotification>[], false, null, false, null, null, null),
+    };
     _emitLoaded(
       InboxLoadedState(
         _mergeLocalNotifications(currentNotifications),
-        hasMore: current is InboxLoadedState && current.hasMore,
-        nextOffset: current is InboxLoadedState ? current.nextOffset : null,
+        hasMore: hasMore,
+        nextOffset: nextOffset,
+        isLoadingMore: isLoadingMore,
+        loadMoreError: loadMoreError,
+        markAllReadError: markAllReadError,
+        dismissError: dismissError,
       ),
     );
   }
@@ -266,33 +308,62 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
     if (index < 0) return;
     final currentList = List<InboxNotification>.from(current.notifications);
     final notification = currentList.removeAt(index);
+    final wasLocal = _localNotifications.any(
+      (item) => item.id == notification.id,
+    );
     _localNotifications.removeWhere((item) => item.id == notification.id);
     _dismissedNotificationIds.add(notification.id);
-    _emitLoaded(current.copyWith(notifications: currentList));
-    unawaited(_deleteRemoteNotification(notification));
+    _emitLoaded(
+      current.copyWith(notifications: currentList, clearDismissError: true),
+    );
+    unawaited(
+      _deleteRemoteNotification(
+        notification,
+        requestRevision: _sessionRevision,
+        wasLocal: wasLocal,
+      ),
+    );
   }
 
-  Future<void> _deleteRemoteNotification(InboxNotification notification) async {
+  Future<void> _deleteRemoteNotification(
+    InboxNotification notification, {
+    required int requestRevision,
+    required bool wasLocal,
+  }) async {
     final passengerId = _activePassengerId;
     final notificationId = int.tryParse(notification.id);
-    final repository = inboxRepository;
-    if (passengerId == null ||
-        passengerId.isEmpty ||
-        notificationId == null ||
-        repository is! DismissibleInboxRepository) {
+    if (passengerId == null || passengerId.isEmpty || notificationId == null) {
       return;
     }
+    if (inboxRepository
+        case final DismissibleInboxRepository dismissibleRepository) {
+      final result = await dismissibleRepository.deletePassengerNotification(
+        passengerId,
+        notification.id,
+      );
+      if (isClosed || requestRevision != _sessionRevision) return;
+      if (result case Err(:final failure)) {
+        _dismissedNotificationIds.remove(notification.id);
+        if (wasLocal) {
+          _localNotifications.insert(0, notification);
+        }
+        if (state case final InboxLoadedState latest) {
+          _emitLoaded(
+            latest.copyWith(
+              notifications: [...latest.notifications, notification],
+              dismissError: ErrorHandler.getErrorMessage(failure),
+            ),
+          );
+        }
+      }
+    }
+  }
 
-    final dismissibleRepository = repository as DismissibleInboxRepository;
-    final result = await dismissibleRepository.deletePassengerNotification(
-      passengerId,
-      notification.id,
-    );
-    result.fold(
-      (failure) =>
-          debugPrint('Inbox notification deletion failed: ${failure.message}'),
-      (_) {},
-    );
+  void clearDismissError() {
+    if (state case final InboxLoadedState latest
+        when latest.dismissError != null) {
+      _emitLoaded(latest.copyWith(clearDismissError: true));
+    }
   }
 
   void clearSessionData() {
@@ -300,6 +371,7 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
     _activeLoad = null;
     _activeLoadPassengerId = null;
     _sessionRevision++;
+    _listGeneration++;
     _markAllReadRevision = null;
     _readNotificationIds.clear();
     _localNotifications.clear();

@@ -450,13 +450,22 @@ class _InboxPageState extends State<InboxPage>
             padding: const EdgeInsets.only(top: AppSpacing.xs),
             child: action,
           ),
-        if (loadedState?.markAllReadError != null)
+        if (loadedState?.markAllReadError case final markAllReadError?)
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.md),
             child: AppErrorBanner(
-              message: loadedState!.markAllReadError!,
+              message: markAllReadError,
               onRetry: () =>
                   unawaited(_inboxCubit.markAllNotificationsAsRead()),
+            ),
+          ),
+        if (loadedState?.dismissError case final dismissError?)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.md),
+            child: AppErrorBanner(
+              message: dismissError,
+              onRetry: () => unawaited(_initializeInbox()),
+              onDismiss: _inboxCubit.clearDismissError,
             ),
           ),
       ],
@@ -581,15 +590,16 @@ class _InboxPageState extends State<InboxPage>
       );
     }
     final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
-    final showLoadMoreError =
-        state.loadMoreError != null && !isNetworkUnavailable;
-    if (state.hasMore || showLoadMoreError) {
+    final visibleLoadMoreError = isNetworkUnavailable
+        ? null
+        : state.loadMoreError;
+    if (state.hasMore || visibleLoadMoreError != null) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (showLoadMoreError) ...[
+          if (visibleLoadMoreError != null) ...[
             Text(
-              state.loadMoreError!,
+              visibleLoadMoreError,
               textAlign: TextAlign.center,
               style: context.textStyles.labelMedium?.copyWith(
                 color: context.colorScheme.error,
@@ -603,9 +613,7 @@ class _InboxPageState extends State<InboxPage>
             style: _quietTextButtonStyle(context),
             icon: const Icon(LucideIcons.chevron_down, size: 16),
             label: Text(
-              state.loadMoreError == null || isNetworkUnavailable
-                  ? 'Load more messages'
-                  : 'Retry',
+              visibleLoadMoreError == null ? 'Load more messages' : 'Retry',
             ),
           ),
         ],

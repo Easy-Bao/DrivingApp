@@ -297,4 +297,105 @@ void main() {
     verify(() => repository.deletePassengerNotification('passenger-1', '11'))
         .called(1);
   });
+
+  test('discards stale loadMoreNotifications response when a refresh completes first', () async {
+    final repository = MockPaginatedInboxRepository();
+    final pageTwoCompleter =
+        Completer<Result<OffsetPage<InboxNotification>, Failure>>();
+    final initialItem = notification.copyWith(id: '1');
+    final refreshedItem = notification.copyWith(
+      id: '2',
+      timestamp: DateTime(2026, 8, 8),
+    );
+    final stalePageTwoItem = notification.copyWith(
+      id: 'stale-99',
+      timestamp: DateTime(2026, 8, 1),
+    );
+    var pageOneCalls = 0;
+
+    when(
+      () => repository.fetchPassengerNotificationsPage(
+        'passenger-1',
+        limit: 50,
+        offset: 0,
+      ),
+    ).thenAnswer((_) async {
+      pageOneCalls += 1;
+      if (pageOneCalls == 1) {
+        return Ok(
+          OffsetPage(items: [initialItem], hasMore: true, nextOffset: 50),
+        );
+      }
+      return Ok(
+        OffsetPage(items: [refreshedItem], hasMore: true, nextOffset: 50),
+      );
+    });
+    when(
+      () => repository.fetchPassengerNotificationsPage(
+        'passenger-1',
+        limit: 50,
+        offset: 50,
+      ),
+    ).thenAnswer((_) => pageTwoCompleter.future);
+
+    final cubit = InboxCubit(inboxRepository: repository);
+    addTearDown(cubit.close);
+
+    await cubit.loadNotifications('passenger-1');
+    final staleLoadMore = cubit.loadMoreNotifications();
+    await cubit.loadNotifications('passenger-1');
+
+    pageTwoCompleter.complete(
+      Ok(
+        OffsetPage(items: [stalePageTwoItem], hasMore: false, nextOffset: null),
+      ),
+    );
+    await staleLoadMore;
+
+    final loaded = cubit.state as InboxLoadedState;
+    expect(loaded.notifications.map((n) => n.id).toList(), ['2']);
+    expect(loaded.hasMore, isTrue);
+    expect(loaded.nextOffset, 50);
+  });
+
+  test('restores dismissed notification and surfaces error when server deletion fails', () async {
+    final repository = MockDismissibleInboxRepository();
+    final remoteNotification = notification.copyWith(id: '42');
+    when(
+      () => repository.fetchPassengerNotificationsPage(
+        'passenger-1',
+        limit: 50,
+        offset: 0,
+      ),
+    ).thenAnswer(
+      (_) async => Ok(
+        OffsetPage(
+          items: [remoteNotification],
+          hasMore: false,
+          nextOffset: null,
+        ),
+      ),
+    );
+    when(() => repository.deletePassengerNotification('passenger-1', '42'))
+        .thenAnswer(
+          (_) async =>
+              const Err(NetworkFailure('Unable to delete notification')),
+        );
+
+    final cubit = InboxCubit(inboxRepository: repository);
+    addTearDown(cubit.close);
+
+    await cubit.loadNotifications('passenger-1');
+    cubit.dismissNotificationById('42');
+    expect((cubit.state as InboxLoadedState).notifications, isEmpty);
+
+    await Future<void>.delayed(Duration.zero);
+
+    final restored = cubit.state as InboxLoadedState;
+    expect(restored.notifications.map((n) => n.id).toList(), ['42']);
+    expect(restored.dismissError, isNotNull);
+
+    cubit.clearDismissError();
+    expect((cubit.state as InboxLoadedState).dismissError, isNull);
+  });
 }
