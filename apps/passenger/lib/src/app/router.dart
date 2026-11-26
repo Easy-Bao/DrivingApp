@@ -26,7 +26,6 @@ class AppRouter extends Module {
   @override
   List<ModularRoute> get routes => <ModularRoute>[
     ...RideHistoryModule.routes,
-    ...HomeModule.routes,
     ...ActiveRideModule.routes(
       onRideTerminated: () {
         Modular.get<BookingBloc>().add(const ResetBookingEvent());

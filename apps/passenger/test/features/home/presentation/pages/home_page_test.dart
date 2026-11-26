@@ -284,6 +284,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(homeRequestCount, 2);
+    verify(savedPlacesCubit.loadPlaces).called(1);
     expect(find.text('Mountain View'), findsNothing);
     expect(tester.takeException(), isNull);
   });

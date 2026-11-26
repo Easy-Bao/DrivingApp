@@ -10,6 +10,7 @@ import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart' hide Route;
 import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
+import 'package:passenger/src/features/auth/presentation/widgets/booking_auth_bottom_sheet.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_draft.dart';
@@ -17,7 +18,6 @@ import 'package:passenger/src/features/booking/domain/repositories/fare_reposito
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/fare_estimate/fare_estimate_cubit.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/booking_auth_bottom_sheet.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_options_panel.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_tip_selector.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile_cubit.dart';

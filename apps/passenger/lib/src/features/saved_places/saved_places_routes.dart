@@ -5,4 +5,6 @@ abstract final class SavedPlacesRoutes {
   static const String placesPath = 'account/saved-places';
   static const String fullPlacesPath =
       '${AppRoutes.passengerModulePath}$placesPath';
+  static const String addCategory = 'AddCategory';
+  static const String addCategoryPath = 'home/add-category';
 }

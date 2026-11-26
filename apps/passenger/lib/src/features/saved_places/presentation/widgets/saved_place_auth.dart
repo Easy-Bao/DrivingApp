@@ -5,7 +5,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/booking_auth_bottom_sheet.dart';
+import 'package:passenger/src/features/auth/presentation/widgets/booking_auth_bottom_sheet.dart';
 
 Future<bool> ensureSavedPlaceAuthentication(BuildContext context) async {
   if (BlocProvider.of<SessionBloc>(context).state.isAuthenticated) return true;

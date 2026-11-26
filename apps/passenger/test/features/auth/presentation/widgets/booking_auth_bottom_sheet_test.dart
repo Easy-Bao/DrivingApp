@@ -1,7 +1,7 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/booking_auth_bottom_sheet.dart';
+import 'package:passenger/src/features/auth/presentation/widgets/booking_auth_bottom_sheet.dart';
 
 void main() {
   testWidgets('returns the selected authentication action and is dismissible', (

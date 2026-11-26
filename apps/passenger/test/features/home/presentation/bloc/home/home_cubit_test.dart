@@ -32,6 +32,12 @@ void main() {
   setUp(() {
     repo = MockHomeRepo();
     currentLocationRepo = MockCurrentLocationRepo();
+    when(
+      () => repo.loadNearbyPlaces(
+        lat: any(named: 'lat'),
+        lng: any(named: 'lng'),
+      ),
+    ).thenAnswer((_) async => const []);
   });
 
   group('HomeCubit — initial state', () {

@@ -7,12 +7,12 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
-import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_state.dart';
 import 'package:passenger/src/features/saved_places/presentation/widgets/saved_place_auth.dart';
 import 'package:passenger/src/features/saved_places/presentation/widgets/saved_place_icon.dart';
+import 'package:passenger/src/features/saved_places/saved_places_routes.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class const SavedPlacePage({super.key}) extends StatefulWidget {
@@ -56,7 +56,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       if (selectedPlace == null || !mounted) return;
 
       final configuredPlace = await context.pushNamed<SavedPlace>(
-        HomeRoutes.addCategory,
+        SavedPlacesRoutes.addCategory,
         extra: {
           'place': selectedPlace,
           'initialLabel': label,
@@ -100,7 +100,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       );
       if (selectedPlace == null || !mounted) return;
       final newPlace = await context.pushNamed<SavedPlace>(
-        HomeRoutes.addCategory,
+        SavedPlacesRoutes.addCategory,
         extra: {'place': selectedPlace},
       );
       if (newPlace != null && mounted) {

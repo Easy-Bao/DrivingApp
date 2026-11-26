@@ -28,29 +28,16 @@ const _ignoredPlaceNames = <String>{
   'unknown',
 };
 
-Future<List<Place>> _defaultNearbyPlacesLoader({
-  required double latitude,
-  required double longitude,
-}) async {
-  try {
-    return await MapProvider.getNearbyPOIs(
-      latitude: latitude,
-      longitude: longitude,
-    );
-  } catch (_) {
-    return const [];
-  }
-}
+class HomeCubit extends Cubit<HomeState> {
+  HomeCubit({
+    required this._repository,
+    required this._currentLocationRepository,
+    this._nearbyPlacesLoader,
+  }) : super(const HomeState());
 
-class HomeCubit({
-  required this._repository,
-  required this._currentLocationRepository,
-  NearbyPlacesLoader? nearbyPlacesLoader,
-}) extends Cubit<HomeState> {
   final HomeRepository _repository;
   final CurrentLocationRepository _currentLocationRepository;
-  final NearbyPlacesLoader _nearbyPlacesLoader =
-      nearbyPlacesLoader ?? _defaultNearbyPlacesLoader;
+  final NearbyPlacesLoader? _nearbyPlacesLoader;
 
   StreamSubscription<Result<CurrentLocation, Failure>>? _locationSubscription;
   CurrentLocation? _pendingTrackedLocation;
@@ -61,8 +48,6 @@ class HomeCubit({
   int _trackingRevision = 0;
   int _dataRevision = 0;
   bool _isTrackingLocation = false;
-
-  this : super(const HomeState());
 
   Future<void> loadHomeData({required double lat, required double lng}) async {
     if (_lastLat != null &&
@@ -134,7 +119,10 @@ class HomeCubit({
     required double lng,
   }) async {
     try {
-      final places = await _nearbyPlacesLoader(latitude: lat, longitude: lng);
+      final loader = _nearbyPlacesLoader;
+      final places = loader != null
+          ? await loader(latitude: lat, longitude: lng)
+          : await _repository.loadNearbyPlaces(lat: lat, lng: lng);
       return _extractNearbyPlaceNames(places);
     } catch (_) {
       return const [];

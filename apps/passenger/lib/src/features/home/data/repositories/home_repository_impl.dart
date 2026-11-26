@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger/src/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:passenger/src/features/home/domain/entities/home_data.dart';
 import 'package:passenger/src/features/home/domain/entities/recent_location.dart';
@@ -8,6 +9,18 @@ import 'package:passenger/src/features/home/domain/repositories/home_repository.
 final class HomeRepositoryImpl({required this._homeRemoteDataSource})
     implements HomeRepository {
   final HomeRemoteDataSource _homeRemoteDataSource;
+
+  @override
+  Future<List<Place>> loadNearbyPlaces({
+    required double lat,
+    required double lng,
+  }) async {
+    try {
+      return await MapProvider.getNearbyPOIs(latitude: lat, longitude: lng);
+    } catch (_) {
+      return const [];
+    }
+  }
 
   @override
   Future<Result<HomeData, Failure>> loadHomeData({

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,7 +17,6 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/track_drive
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
-import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_state.dart';
 import 'package:passenger/src/features/home/presentation/widgets/destination_search_hint.dart';
@@ -30,6 +30,7 @@ import 'package:passenger/src/features/saved_places/domain/entities/saved_place.
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_state.dart';
 import 'package:passenger/src/features/saved_places/presentation/widgets/saved_place_auth.dart';
+import 'package:passenger/src/features/saved_places/saved_places_routes.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 bool shouldStartHomeNavigation({
@@ -75,7 +76,10 @@ class _HomePageState extends State<HomePage> {
               previous.errorMessage != current.errorMessage &&
               current.errorMessage != null,
           listener: (context, state) {
-            AppSnackBar.show(context, state.errorMessage!, isError: true);
+            final errorMessage = state.errorMessage;
+            if (errorMessage != null) {
+              AppSnackBar.show(context, errorMessage, isError: true);
+            }
           },
         ),
         BlocListener<SessionBloc, SessionState>(
@@ -89,6 +93,7 @@ class _HomePageState extends State<HomePage> {
         BlocListener<SessionBloc, SessionState>(
           listenWhen: (_, current) => current is AuthenticatedSession,
           listener: (_, _) {
+            unawaited(_loadSavedPlaces());
             _loadRecentRideHistory();
             _refreshLocationSnapshot();
             _bookingBloc.add(const RestoreActiveBookingEvent());
@@ -247,7 +252,13 @@ class _HomePageState extends State<HomePage> {
           }
         },
       );
-    } catch (_) {}
+    } catch (error, stackTrace) {
+      developer.log(
+        'Unable to restore active ride on passenger home launch.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   @override
@@ -452,7 +463,7 @@ class _HomePageState extends State<HomePage> {
       );
       if (selectedPlace == null || !mounted) return;
       final newPlace = await context.pushNamed<SavedPlace>(
-        HomeRoutes.addCategory,
+        SavedPlacesRoutes.addCategory,
         extra: {'place': selectedPlace},
       );
       if (newPlace != null && mounted) {
@@ -510,7 +521,13 @@ class _HomePageState extends State<HomePage> {
     String? activeRideId;
     try {
       activeRideId = await session?.readActiveRideId();
-    } catch (_) {}
+    } catch (error, stackTrace) {
+      developer.log(
+        'Unable to read active ride id from session store.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
     if (!mounted) return;
     if (activeRideId != null && activeRideId.trim().isNotEmpty) {
       unawaited(
@@ -937,15 +954,17 @@ class _HomePageState extends State<HomePage> {
   Future<void> _handleSavedPlaceTap(SavedPlace place) async {
     if (!await ensureSavedPlaceAuthentication(context) || !mounted) return;
     if (!await _canStartOrContinueBooking() || !mounted) return;
-    if (place.hasLocation) {
+    final latitude = place.latitude;
+    final longitude = place.longitude;
+    if (latitude != null && longitude != null) {
       _isNavigationInFlight = true;
       try {
         final syntheticPlace = Place(
           id: 'saved_${place.label.toLowerCase().replaceAll(' ', '_')}',
           name: place.label,
           fullAddress: place.savedAddress ?? place.label,
-          latitude: place.latitude!,
-          longitude: place.longitude!,
+          latitude: latitude,
+          longitude: longitude,
         );
         final address = BlocProvider.of<HomeCubit>(context)
             .state
@@ -974,7 +993,7 @@ class _HomePageState extends State<HomePage> {
       if (selectedPlace == null || selectedPlace is! Place) return;
       if (!mounted) return;
       final updatedPlace = await context.pushNamed<SavedPlace>(
-        HomeRoutes.addCategory,
+        SavedPlacesRoutes.addCategory,
         extra: {'place': selectedPlace, 'initialLabel': place.label},
       );
       if (updatedPlace != null && mounted) {

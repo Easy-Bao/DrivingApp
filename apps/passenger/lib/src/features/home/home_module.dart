@@ -3,7 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:maps/maps.dart';
+import 'package:passenger/src/core/session/session_store.dart';
+import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/home/data/datasources/device_current_location_data_source.dart';
 import 'package:passenger/src/features/home/data/datasources/home_remote_data_source.dart';
@@ -16,7 +17,6 @@ import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.da
 import 'package:passenger/src/features/home/presentation/pages/home_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
-import 'package:passenger/src/features/saved_places/presentation/pages/add_saved_place_page.dart';
 
 class HomeModule._() {
   static void binds(Injector i) {
@@ -45,26 +45,6 @@ class HomeModule._() {
       );
   }
 
-  static List<ModularRoute> routes = [
-    ChildRoute(
-      name: HomeRoutes.addCategory,
-      HomeRoutes.addCategoryPath,
-      child: (context, GoRouterState state) {
-        final extra = SafeRouteExtra.asMap(state.extra);
-        final place = extra['place'] as Place?;
-        final initialLabel = extra['initialLabel'] as String?;
-        final initialIconName = extra['initialIconName'] as String?;
-        return AddCategoryPage(
-          initialPlace: place,
-          initialLabel: initialLabel,
-          initialIconName: initialIconName,
-        );
-      },
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-  ];
-
   static List<ModularRoute> shellRoutes = [
     ChildRoute(
       name: HomeRoutes.home,
@@ -83,6 +63,8 @@ class HomeModule._() {
         child: HomePage(
           bookingBloc: Modular.get<BookingBloc>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
+          sessionService: Modular.get<SessionStore>(),
+          trackRepository: Modular.get<TrackRepository>(),
         ),
       ),
       transition: AppTransitions.none,

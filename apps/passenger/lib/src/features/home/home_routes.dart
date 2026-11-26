@@ -5,6 +5,4 @@ abstract final class HomeRoutes {
   static const String homePath = 'home';
   static const String fullHomePath =
       '${AppRoutes.passengerModulePath}$homePath';
-  static const String addCategory = 'AddCategory';
-  static const String addCategoryPath = 'home/add-category';
 }
