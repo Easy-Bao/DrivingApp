@@ -1,4 +1,6 @@
-class SavedPlace {
+import 'package:equatable/equatable.dart';
+
+class SavedPlace extends Equatable {
   const SavedPlace({
     required this.label,
     required this.iconName,
@@ -7,6 +9,7 @@ class SavedPlace {
     this.longitude,
     this.isDefault = false,
   });
+
   final String label;
   final String iconName;
   final String? savedAddress;
@@ -33,4 +36,14 @@ class SavedPlace {
       isDefault: isDefault ?? this.isDefault,
     );
   }
+
+  @override
+  List<Object?> get props => [
+    label,
+    iconName,
+    savedAddress,
+    latitude,
+    longitude,
+    isDefault,
+  ];
 }

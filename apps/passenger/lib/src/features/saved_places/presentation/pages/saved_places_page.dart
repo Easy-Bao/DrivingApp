@@ -76,13 +76,15 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       } else {
         await cubit.replacePlace(existingIndex, configuredPlace);
       }
-      await cubit.invalidateAndReload();
       final error = cubit.state.errorMessage;
-      if (mounted &&
-          error != null &&
+      if (error != null &&
           cubit.state.errorSource == SavedPlacesErrorSource.persistence) {
-        _showFailureSnackBar(error);
+        if (mounted) {
+          _showFailureSnackBar(error);
+        }
+        return;
       }
+      await cubit.invalidateAndReload();
     } finally {
       _isPlaceFlowOpen = false;
     }
@@ -163,10 +165,11 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                       color: colorScheme.onSurface,
                     ),
                   ),
-                  if ((place.savedAddress ?? '').isNotEmpty) ...[
+                  if (place.savedAddress case final savedAddress?
+                      when savedAddress.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      place.savedAddress!,
+                      savedAddress,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
@@ -432,10 +435,10 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
         AppSpacing.xxxl,
       ),
       children: [
-        if (state.errorMessage != null &&
-            state.errorSource == SavedPlacesErrorSource.load) ...[
+        if (state.errorMessage case final errorMessage?
+            when state.errorSource == SavedPlacesErrorSource.load) ...[
           AppErrorBanner(
-            message: state.errorMessage!,
+            message: errorMessage,
             onRetry: () => unawaited(
               BlocProvider.of<SavedPlacesCubit>(context).loadPlaces(),
             ),

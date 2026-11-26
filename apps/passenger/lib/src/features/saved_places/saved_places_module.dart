@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/saved_places/data/repositories/saved_places_repository_impl.dart';
 import 'package:passenger/src/features/saved_places/domain/repositories/saved_places_repository.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
@@ -15,8 +16,10 @@ class SavedPlacesModule._() {
   static void binds(Injector i) {
     i
       ..addLazySingleton<SavedPlacesRepository>(
-        (i) =>
-            SavedPlacesRepositoryImpl(preferences: i.get<SharedPreferences>()),
+        (i) => SavedPlacesRepositoryImpl(
+          preferences: i.get<SharedPreferences>(),
+          sessionService: i.get<SessionStore>(),
+        ),
       )
       ..addLazySingleton<SavedPlacesCubit>(
         (i) => SavedPlacesCubit(repository: i.get<SavedPlacesRepository>()),

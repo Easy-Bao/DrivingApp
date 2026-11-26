@@ -12,6 +12,8 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
   final SavedPlacesRepository repository;
   SavedPlacesRepository get _repository => repository;
   Future<void>? _loadInFlight;
+  Future<void> _mutationQueue = Future<void>.value();
+  int _operationVersion = 0;
 
   Future<void> loadPlaces() async {
     final existingLoad = _loadInFlight;
@@ -33,25 +35,29 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
   /// Drops in-memory places when the passenger session ends so the next
   /// account never sees them.
   void clear() {
+    _operationVersion++;
     _loadInFlight = null;
     if (!isClosed) emit(const SavedPlacesState(isLoading: false));
   }
 
   Future<void> invalidateAndReload() async {
+    _operationVersion++;
     _loadInFlight = null;
-    await _loadOnce();
+    await loadPlaces();
   }
 
   Future<void> syncHomeAddress(String newAddress) async {
     final trimmed = newAddress.trim();
+    if (trimmed.isEmpty) return;
     final homeIndex = state.places.indexWhere(
       (p) => p.label.toLowerCase() == 'home',
     );
     if (homeIndex != -1) {
       final currentHome = state.places[homeIndex];
+      if (currentHome.savedAddress?.trim() == trimmed) return;
       final updated = currentHome.copyWith(savedAddress: trimmed);
       await replacePlace(homeIndex, updated);
-    } else if (trimmed.isNotEmpty) {
+    } else {
       await addPlace(
         SavedPlace(label: 'Home', iconName: 'house', savedAddress: trimmed),
       );
@@ -60,10 +66,12 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
 
   Future<void> _loadOnce() async {
     if (isClosed) return;
+    final version = ++_operationVersion;
     emit(state.copyWith(isLoading: true, clearErrorMessage: true));
 
     try {
       final loadedPlaces = await _repository.loadPlaces();
+      if (isClosed || version != _operationVersion) return;
       final places = normalizeSavedPlaceDefaults(loadedPlaces);
       String? repairErrorMessage;
       if (_needsDefaultRepair(loadedPlaces)) {
@@ -73,7 +81,7 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
           repairErrorMessage = ErrorHandler.getErrorMessage(error, stackTrace);
         }
       }
-      if (isClosed) return;
+      if (isClosed || version != _operationVersion) return;
       emit(
         SavedPlacesState(
           places: places,
@@ -85,7 +93,7 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
         ),
       );
     } catch (error) {
-      if (isClosed) return;
+      if (isClosed || version != _operationVersion) return;
       emit(
         SavedPlacesState(
           places: state.places,
@@ -97,43 +105,59 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
     }
   }
 
-  Future<void> addPlace(SavedPlace place) async {
-    await _persistPlaces([...state.places, place]);
+  Future<void> addPlace(SavedPlace place) {
+    return _enqueueMutation(() async {
+      await _persistPlaces([...state.places, place]);
+    });
   }
 
-  Future<void> removePlace(int index) async {
-    if (index < 0 || index >= state.places.length) return;
-    final updated = [...state.places]..removeAt(index);
-    await _persistPlaces(updated);
+  Future<void> removePlace(int index) {
+    return _enqueueMutation(() async {
+      if (index < 0 || index >= state.places.length) return;
+      final updated = [...state.places]..removeAt(index);
+      await _persistPlaces(updated);
+    });
   }
 
-  Future<void> replacePlace(int index, SavedPlace place) async {
-    if (index < 0 || index >= state.places.length) return;
-    final replacement = place.copyWith(
-      isDefault: place.isDefault || state.places[index].isDefault,
-    );
-    final updated = [...state.places]..[index] = replacement;
-    await _persistPlaces(updated);
+  Future<void> replacePlace(int index, SavedPlace place) {
+    return _enqueueMutation(() async {
+      if (index < 0 || index >= state.places.length) return;
+      final replacement = place.copyWith(
+        isDefault: place.isDefault || state.places[index].isDefault,
+      );
+      final updated = [...state.places]..[index] = replacement;
+      await _persistPlaces(updated);
+    });
   }
 
-  Future<void> setDefaultPlace(int index) async {
-    if (index < 0 || index >= state.places.length) return;
+  Future<void> setDefaultPlace(int index) {
+    return _enqueueMutation(() async {
+      if (index < 0 || index >= state.places.length) return;
 
-    final updated = [
-      for (var placeIndex = 0; placeIndex < state.places.length; placeIndex++)
-        state.places[placeIndex].copyWith(isDefault: placeIndex == index),
-    ];
-    await _persistPlaces(updated);
+      final updated = [
+        for (var placeIndex = 0; placeIndex < state.places.length; placeIndex++)
+          state.places[placeIndex].copyWith(isDefault: placeIndex == index),
+      ];
+      await _persistPlaces(updated);
+    });
+  }
+
+  Future<void> _enqueueMutation(Future<void> Function() action) {
+    final next = _mutationQueue.then((_) => action());
+    _mutationQueue = next.catchError((Object _, StackTrace _) {});
+    return next;
   }
 
   Future<void> _persistPlaces(List<SavedPlace> places) async {
+    if (isClosed) return;
+    final version = ++_operationVersion;
     final previous = state;
     final normalizedPlaces = normalizeSavedPlaceDefaults(places);
     emit(state.copyWith(places: normalizedPlaces, clearErrorMessage: true));
     try {
       await _repository.savePlaces(normalizedPlaces);
     } catch (error, stackTrace) {
-      if (isClosed) return;
+      if (isClosed || version != _operationVersion) return;
       emit(
         previous.copyWith(
           errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),

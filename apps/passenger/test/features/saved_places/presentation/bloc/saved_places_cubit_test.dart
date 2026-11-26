@@ -322,7 +322,56 @@ void main() {
 
       await cubit.syncHomeAddress('New Address');
       expect(cubit.state.places.single.savedAddress, 'New Address');
+
+      await cubit.syncHomeAddress('   ');
+      expect(cubit.state.places.single.savedAddress, 'New Address');
       await cubit.close();
+    });
+
+    test('clear drops stale results from an in-flight load', () async {
+      final response = Completer<List<SavedPlace>>();
+      when(() => mockRepository.loadPlaces())
+          .thenAnswer((_) => response.future);
+      final cubit = SavedPlacesCubit(repository: mockRepository);
+
+      final loadFuture = cubit.loadPlaces();
+      await Future<void>.delayed(Duration.zero);
+      cubit.clear();
+
+      response.complete(const [
+        SavedPlace(
+          label: 'Home',
+          iconName: 'house',
+          savedAddress: 'Stale User Home',
+          isDefault: true,
+        ),
+      ]);
+      await loadFuture;
+
+      expect(cubit.state.places, isEmpty);
+      expect(cubit.state.isLoading, isFalse);
+      await cubit.close();
+    });
+
+    test('SavedPlace compares fields by value', () {
+      const a = SavedPlace(
+        label: 'Home',
+        iconName: 'house',
+        savedAddress: '123 Main St',
+        latitude: 7.8,
+        longitude: 123.4,
+        isDefault: true,
+      );
+      const b = SavedPlace(
+        label: 'Home',
+        iconName: 'house',
+        savedAddress: '123 Main St',
+        latitude: 7.8,
+        longitude: 123.4,
+        isDefault: true,
+      );
+      expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
     });
   });
 
