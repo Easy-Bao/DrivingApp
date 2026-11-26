@@ -111,12 +111,18 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
   Future<void>? _loadRequest;
   Future<void>? _reviewRequest;
   String? _loadedReviewRideId;
+  String? _attemptedReviewRideId;
 
-  Future<void> load(String rideId) async {
+  Future<void> load(String rideId, {bool force = false}) async {
     final normalizedRideId = rideId.trim();
     if (normalizedRideId.isEmpty || isClosed) return;
-    if (state.rideId == normalizedRideId &&
-        (state.isLoading || state.ride != null || state.counterparty != null)) {
+    if (state.rideId == normalizedRideId && state.isLoading) {
+      return;
+    }
+    if (!force &&
+        state.rideId == normalizedRideId &&
+        state.ride != null &&
+        state.counterparty != null) {
       return;
     }
 
@@ -139,11 +145,15 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
     final sameRide = state.rideId == rideId;
     if (!sameRide) {
       _loadedReviewRideId = null;
+      _attemptedReviewRideId = null;
     }
     emit(
       RideDetailsState(
         rideId: rideId,
         isLoading: true,
+        ride: sameRide ? state.ride : null,
+        counterparty: sameRide ? state.counterparty : null,
+        passengerId: sameRide ? state.passengerId : '',
         submittedReview: sameRide ? state.submittedReview : null,
         hasLoadedReview: sameRide && state.hasLoadedReview,
         isLoadingReview: sameRide && state.isLoadingReview,
@@ -162,14 +172,18 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
       RideSnapshot? ride;
       RideCounterparty? counterparty;
       Failure? firstFailure;
-      (await rideFuture).fold(
-        (failure) => firstFailure ??= failure,
-        (value) => ride = value,
-      );
-      (await counterpartyFuture).fold(
-        (failure) => firstFailure ??= failure,
-        (value) => counterparty = value,
-      );
+      switch (await rideFuture) {
+        case Err(:final failure):
+          firstFailure ??= failure;
+        case Ok(:final value):
+          ride = value;
+      }
+      switch (await counterpartyFuture) {
+        case Err(:final failure):
+          firstFailure ??= failure;
+        case Ok(:final value):
+          counterparty = value;
+      }
 
       if (isClosed) return;
       final preserveReview = state.rideId == rideId;
@@ -225,7 +239,9 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
         state.rideId != normalizedRideId ||
         state.isLoadingReview ||
         state.submittedReview != null ||
-        (!refresh && _loadedReviewRideId == normalizedRideId)) {
+        (!refresh &&
+            (_loadedReviewRideId == normalizedRideId ||
+                _attemptedReviewRideId == normalizedRideId))) {
       return;
     }
 
@@ -245,6 +261,7 @@ class RideDetailsCubit extends Cubit<RideDetailsState> {
   }
 
   Future<void> _fetchMyReview(String rideId) async {
+    _attemptedReviewRideId = rideId;
     emit(
       state.copyWith(
         isLoadingReview: true,

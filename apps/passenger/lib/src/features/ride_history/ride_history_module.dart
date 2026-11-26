@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
@@ -15,6 +16,7 @@ import 'package:passenger/src/features/ride_history/presentation/bloc/ride_detai
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
 import 'package:passenger/src/features/ride_history/presentation/pages/ride_details_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/pages/ride_history_page.dart';
+import 'package:passenger/src/features/ride_history/presentation/pages/trip_completion_page.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 
@@ -69,7 +71,6 @@ class RideHistoryModule._() {
           trackRepository: Modular.get<TrackRepository>(),
           sessionService: Modular.get<SessionStore>(),
           profileRepository: Modular.get<DriverProfileRepository>(),
-          detailsCubit: Modular.get<RideDetailsCubit>(),
         );
       },
       transition: AppTransitions.push.toLeft,
@@ -85,7 +86,32 @@ class RideHistoryModule._() {
           trackRepository: Modular.get<TrackRepository>(),
           sessionService: Modular.get<SessionStore>(),
           profileRepository: Modular.get<DriverProfileRepository>(),
+        );
+      },
+      transition: AppTransitions.modal.toTop,
+      transitionDuration: AppTransitions.modalDuration,
+    ),
+    ChildRoute(
+      name: RideHistoryRoutes.tripCompletion,
+      RideHistoryRoutes.tripCompletionPath,
+      child: (context, GoRouterState state) {
+        final (ride, returnToReceipt) = switch (state.extra) {
+          final RideSnapshot ride => (ride, false),
+          (ride: final RideSnapshot ride, returnToReceipt: final bool back) => (
+            ride,
+            back,
+          ),
+          _ => (null, false),
+        };
+        if (ride == null) {
+          return const Scaffold(
+            body: Center(child: Text('Trip details are unavailable.')),
+          );
+        }
+        return TripCompletionPage(
+          ride: ride,
           detailsCubit: Modular.get<RideDetailsCubit>(),
+          returnToReceipt: returnToReceipt,
         );
       },
       transition: AppTransitions.modal.toTop,

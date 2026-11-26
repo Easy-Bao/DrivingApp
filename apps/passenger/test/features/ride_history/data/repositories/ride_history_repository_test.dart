@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/ride_history/data/datasources/ride_history_remote_data_source.dart';
 import 'package:passenger/src/features/ride_history/data/repositories/ride_history_repository_impl.dart';
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
+import 'package:passenger/src/features/ride_history/presentation/formatters/ride_history_presenter.dart';
 
 class MockRideHistoryRemoteDataSource extends Mock
     implements RideHistoryRemoteDataSource {}
@@ -218,4 +219,43 @@ void main() {
     );
     await Future<void>.delayed(const Duration(milliseconds: 20));
   });
+
+  test(
+    'preserves recordedAt year for rides older than twelve months',
+    () async {
+      final oldTimestamp = DateTime(2024, 8, 18, 17, 30);
+      when(
+        () => remoteDataSource.fetchRideHistory(
+          'passenger-1',
+          limit: any(named: 'limit'),
+          offset: any(named: 'offset'),
+          cursor: any(named: 'cursor'),
+        ),
+      ).thenAnswer(
+        (_) async => OffsetPage<Map<String, dynamic>>(
+          items: [
+            <String, dynamic>{
+              'id': 9,
+              'pickup_name': 'Pickup, City',
+              'dropoff_name': 'Destination, City',
+              'completed_at': oldTimestamp.toUtc().toIso8601String(),
+              'fare_amount': 1500,
+              'status': 'completed',
+            },
+          ],
+          hasMore: false,
+          nextOffset: null,
+        ),
+      );
+
+      final result = await repository.fetchRideHistory('passenger-1');
+
+      result.fold((_) => fail('Expected ride history to load.'), (page) {
+        final ride = page.items.single;
+        expect(ride.recordedAt, oldTimestamp);
+        final presenter = RideHistoryPresenter(DateTime(2026, 8, 22, 18));
+        expect(presenter.dateGroupLabelForRide(ride), 'Aug 18, 2024');
+      });
+    },
+  );
 }

@@ -1,19 +1,21 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:design_system/design_system.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart' hide Route;
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
-import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_details_map.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
+import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class RideDetailsPage extends StatefulWidget {
@@ -43,21 +45,16 @@ class RideDetailsPage extends StatefulWidget {
 
 class _RideDetailsPageState extends State<RideDetailsPage> {
   late final RideDetailsCubit _detailsCubit;
-  StreamSubscription<RideDetailsState>? _detailsSubscription;
-  RideSnapshot? _detailedRideData;
-  RideCounterparty? _counterpartyData;
-  bool _showLostFoundChat = false;
-  String _passengerId = '';
+  late final bool _ownsDetailsCubit;
   String? _contactError;
 
   String? get _rideId =>
       widget.ride?.id ?? widget.initialRide?.id ?? widget.rideId;
 
-  RideSnapshot? get _snapshot => _detailedRideData ?? widget.initialRide;
-
   @override
   void initState() {
     super.initState();
+    _ownsDetailsCubit = widget.detailsCubit == null;
     _detailsCubit =
         widget.detailsCubit ??
         RideDetailsCubit(
@@ -65,12 +62,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
           sessionService: widget.sessionService,
           profileRepository: widget.profileRepository,
         );
-    _syncDetailsState(_detailsCubit.state);
-    _detailsSubscription = _detailsCubit.stream.listen((state) {
-      if (!mounted) return;
-      setState(() => _syncDetailsState(state));
-      _loadReviewIfEligible(state);
-    });
     final rideId = _rideId;
     if (rideId != null) {
       unawaited(_detailsCubit.load(rideId));
@@ -79,6 +70,12 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   }
 
   void _loadReviewIfEligible(RideDetailsState state) {
+    if (state.hasLoadedReview ||
+        state.isLoadingReview ||
+        state.submittedReview != null ||
+        state.reviewErrorMessage != null) {
+      return;
+    }
     final ride = state.ride ?? widget.initialRide;
     final status = ride?.status ?? widget.ride?.status;
     final driverId = ride?.driverId ?? widget.ride?.driverId;
@@ -91,29 +88,25 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     unawaited(_detailsCubit.loadMyReview(rideId));
   }
 
-  void _syncDetailsState(RideDetailsState state) {
-    _passengerId = state.passengerId;
-    _detailedRideData = state.ride;
-    _counterpartyData = state.counterparty;
-    _showLostFoundChat = state.canContactCounterparty;
-  }
-
   @override
   void dispose() {
-    unawaited(_detailsSubscription?.cancel());
-    unawaited(_detailsCubit.close());
+    if (_ownsDetailsCubit) {
+      unawaited(_detailsCubit.close());
+    }
     super.dispose();
   }
 
-  Future<void> _initiateLostFoundChat() async {
+  Future<void> _initiateLostFoundChat(RideDetailsState state) async {
     final rideId = _rideId;
-    final retrievedRideData = _detailedRideData;
-    if (rideId == null || retrievedRideData == null || _passengerId.isEmpty) {
+    final retrievedRideData = state.ride;
+    if (rideId == null ||
+        retrievedRideData == null ||
+        state.passengerId.isEmpty) {
       return;
     }
 
     final driverId =
-        _counterpartyData?.userId ?? retrievedRideData.driverId ?? '';
+        state.counterparty?.userId ?? retrievedRideData.driverId ?? '';
     if (driverId.isEmpty) return;
 
     try {
@@ -123,17 +116,23 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
             ChatRoutes.driverChat,
             extra: {
               'roomId': rideId,
-              'userId': _passengerId,
+              'userId': state.passengerId,
               'peerId': driverId,
               'peerName': SafeParse.toStringValue(
-                _counterpartyData?.name ?? retrievedRideData.driverName,
+                state.counterparty?.name ?? retrievedRideData.driverName,
                 'Driver',
               ),
             },
           ),
         );
       }
-    } catch (_) {}
+    } catch (error, stackTrace) {
+      developer.log(
+        'Unable to open lost-and-found chat for ride $rideId.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   Widget _buildReceiptSummary(
@@ -142,6 +141,8 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     double? fare,
   ) {
     final colors = context.colorScheme;
+    final cashReceivedAmount = snapshot?.cashReceivedAmount;
+    final cashChangeAmount = snapshot?.cashChangeAmount;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -180,11 +181,12 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
           ),
         ),
         if (snapshot?.cashSettled == true &&
-            (snapshot?.cashReceivedAmount ?? 0) > 0) ...[
+            cashReceivedAmount != null &&
+            cashReceivedAmount > 0) ...[
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Cash received ${formatPesoAmount(snapshot!.cashReceivedAmount! / 100)}'
-            '${(snapshot.cashChangeAmount ?? 0) > 0 ? ' · Change ${formatPesoAmount(snapshot.cashChangeAmount! / 100)}' : ''}',
+            'Cash received ${formatPesoAmount(cashReceivedAmount / 100)}'
+            '${cashChangeAmount != null && cashChangeAmount > 0 ? ' · Change ${formatPesoAmount(cashChangeAmount / 100)}' : ''}',
             style: context.textStyles.bodySmall?.tabular.copyWith(
               color: colors.onSurfaceVariant,
             ),
@@ -238,9 +240,9 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     );
   }
 
-  Future<void> _callDriver() async {
-    final counterparty = _counterpartyData;
-    if (!_showLostFoundChat ||
+  Future<void> _callDriver(RideDetailsState state) async {
+    final counterparty = state.counterparty;
+    if (!state.canContactCounterparty ||
         counterparty == null ||
         !counterparty.contactAllowed ||
         counterparty.phone.trim().isEmpty) {
@@ -271,9 +273,13 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     RideSnapshot? snapshot,
     RideHistory? ride,
   ) {
-    final date = snapshot?.completedAt ?? DateTime.tryParse(ride?.date ?? '');
+    final date =
+        snapshot?.completedAt ??
+        ride?.recordedAt ??
+        DateTime.tryParse(ride?.date ?? '');
     if (date == null) {
-      return ride?.date.trim().isNotEmpty == true ? ride!.date : null;
+      final fallback = ride?.date.trim() ?? '';
+      return fallback.isNotEmpty ? fallback : null;
     }
     final local = date.toLocal();
     final labels = MaterialLocalizations.of(context);
@@ -291,369 +297,388 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final ride = widget.ride;
-    final snapshot = _snapshot;
-    final rideId = _rideId;
-    final fare =
-        snapshot?.farePesos ??
-        (ride == null
-            ? null
-            : double.tryParse(ride.price.replaceAll(RegExp(r'[^0-9.\-]'), '')));
-    final status = (snapshot?.status ?? ride?.status ?? 'unknown')
-        .toLowerCase();
-    final isCompleted = status == 'completed';
-    final pickupLatitude = ride?.pickupLat ?? snapshot?.pickupLatitude;
-    final pickupLongitude = ride?.pickupLng ?? snapshot?.pickupLongitude;
-    final dropoffLatitude = ride?.destLat ?? snapshot?.dropoffLatitude;
-    final dropoffLongitude = ride?.destLng ?? snapshot?.dropoffLongitude;
-    final reference =
-        snapshot?.bookingReference ?? ride?.bookingReference ?? '';
-    final driverName =
-        _counterpartyData?.name ??
-        ride?.displayDriverName ??
-        snapshot?.displayDriverName ??
-        'Driver';
+    return BlocConsumer<RideDetailsCubit, RideDetailsState>(
+      bloc: _detailsCubit,
+      listenWhen: (previous, current) =>
+          previous.ride != current.ride || previous.rideId != current.rideId,
+      listener: (_, state) => _loadReviewIfEligible(state),
+      builder: (context, state) {
+        final ride = widget.ride;
+        final snapshot = state.ride ?? widget.initialRide;
+        final counterparty = state.counterparty;
+        final showLostFoundChat = state.canContactCounterparty;
+        final rideId = _rideId;
+        final fare =
+            snapshot?.farePesos ??
+            (ride == null
+                ? null
+                : double.tryParse(
+                    ride.price.replaceAll(RegExp(r'[^0-9.\-]'), ''),
+                  ));
+        final status = (snapshot?.status ?? ride?.status ?? 'unknown')
+            .toLowerCase();
+        final isCompleted = status == 'completed';
+        final pickupLatitude = ride?.pickupLat ?? snapshot?.pickupLatitude;
+        final pickupLongitude = ride?.pickupLng ?? snapshot?.pickupLongitude;
+        final dropoffLatitude = ride?.destLat ?? snapshot?.dropoffLatitude;
+        final dropoffLongitude = ride?.destLng ?? snapshot?.dropoffLongitude;
+        final reference =
+            snapshot?.bookingReference ?? ride?.bookingReference ?? '';
+        final driverName =
+            counterparty?.name ??
+            ride?.displayDriverName ??
+            snapshot?.displayDriverName ??
+            'Driver';
 
-    final colors = context.colorScheme;
-    final hairline = colors.outlineVariant.withValues(alpha: 0.7);
-    final statusLabel = switch (status) {
-      'completed' => 'Completed',
-      'cancelled' || 'canceled' => 'Canceled',
-      'assigned' || 'accepted' => 'Awaiting pickup',
-      'arrived' => 'At pickup',
-      'in_transit' => 'In progress',
-      'requested' => 'Requested',
-      _ => 'Unknown',
-    };
+        final colors = context.colorScheme;
+        final hairline = colors.outlineVariant.withValues(alpha: 0.7);
+        final statusLabel = switch (status) {
+          'completed' => 'Completed',
+          'cancelled' || 'canceled' => 'Canceled',
+          'assigned' || 'accepted' => 'Awaiting pickup',
+          'arrived' => 'At pickup',
+          'in_transit' => 'In progress',
+          'requested' => 'Requested',
+          _ => 'Unknown',
+        };
 
-    return TripReceiptLayout(
-      dateLabel: _receiptDate(context, snapshot, ride),
-      onBack: () => context.pop(),
-      child: Builder(
-        builder: (context) => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (_detailsCubit.state.errorMessage != null && rideId != null) ...[
-              AppErrorBanner(
-                message: _detailsCubit.state.errorMessage!,
-                onRetry: () => unawaited(_detailsCubit.load(rideId)),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-            ],
-            if (reference.trim().isNotEmpty) ...[
-              TripReference(id: reference, expanded: true, compact: true),
-              const SizedBox(height: AppSpacing.lg),
-            ],
-            _buildSectionLabel(context, 'DRIVER'),
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: colors.surfaceContainerLowest,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: colors.outlineVariant),
+        return TripReceiptLayout(
+          dateLabel: _receiptDate(context, snapshot, ride),
+          onBack: () => context.pop(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (state.errorMessage case final errorMessage?)
+                if (rideId != null) ...[
+                  AppErrorBanner(
+                    message: errorMessage,
+                    onRetry: () =>
+                        unawaited(_detailsCubit.load(rideId, force: true)),
                   ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    _driverInitials(driverName),
-                    style: context.textStyles.titleSmall?.copyWith(
-                      color: colors.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        driverName,
-                        style: context.textStyles.titleMedium?.copyWith(
-                          color: colors.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        ride?.displayVehicleSummary ??
-                            snapshot?.displayVehicleSummary ??
-                            'Vehicle details unavailable',
-                        style: context.textStyles.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (_showLostFoundChat) ...[
-                  const SizedBox(width: AppSpacing.sm),
-                  _buildContactButton(
-                    context,
-                    tooltip: 'Message driver',
-                    icon: LucideIcons.message_circle,
-                    onPressed: _initiateLostFoundChat,
-                  ),
+                  const SizedBox(height: AppSpacing.lg),
                 ],
-                if (_showLostFoundChat &&
-                    _counterpartyData?.phone.trim().isNotEmpty == true) ...[
-                  const SizedBox(width: AppSpacing.xs),
-                  _buildContactButton(
-                    context,
-                    tooltip: 'Call driver',
-                    icon: LucideIcons.phone,
-                    onPressed: _callDriver,
-                  ),
-                ],
+              if (reference.trim().isNotEmpty) ...[
+                TripReference(id: reference, expanded: true, compact: true),
+                const SizedBox(height: AppSpacing.lg),
               ],
-            ),
-            if (_contactError != null) ...[
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                _contactError!,
-                style: context.textStyles.bodySmall?.copyWith(
-                  color: colors.error,
-                ),
-              ),
-            ],
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-              child: Divider(height: 1, color: hairline),
-            ),
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.xs,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              alignment: WrapAlignment.spaceBetween,
-              children: [
-                _buildSectionLabel(context, 'ROUTE'),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.surfaceContainerLowest,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: isCompleted
-                          ? context.semanticColors.success.withValues(
-                              alpha: 0.4,
-                            )
-                          : colors.outlineVariant,
-                    ),
-                  ),
-                  child: Text(
-                    statusLabel,
-                    style: context.textStyles.labelSmall?.copyWith(
-                      color: isCompleted
-                          ? context.semanticColors.success
-                          : colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            if (pickupLatitude != null &&
-                pickupLongitude != null &&
-                dropoffLatitude != null &&
-                dropoffLongitude != null) ...[
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: colors.outlineVariant),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: SizedBox(
-                  height: 180,
-                  child: RideDetailsMap(
-                    key: ValueKey((
-                      pickupLatitude,
-                      pickupLongitude,
-                      dropoffLatitude,
-                      dropoffLongitude,
-                    )),
-                    pickupLatitude: pickupLatitude,
-                    pickupLongitude: pickupLongitude,
-                    dropoffLatitude: dropoffLatitude,
-                    dropoffLongitude: dropoffLongitude,
-                  ),
-                ),
-              ),
+              _buildSectionLabel(context, 'DRIVER'),
               const SizedBox(height: AppSpacing.md),
-            ],
-            if (snapshot?.distanceKm != null ||
-                snapshot?.durationMinutes != null) ...[
-              Text(
-                [
-                  if (snapshot?.distanceKm case final distance?)
-                    distance < 1
-                        ? '${(distance * 1000).round()} m'
-                        : '${distance.toStringAsFixed(1)} km',
-                  if (snapshot?.durationMinutes case final duration?)
-                    '${duration.round()} min',
-                ].join(' · '),
-                style: context.textStyles.labelSmall?.tabular.copyWith(
-                  color: colors.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-            ],
-            CompactRouteTimeline(
-              pickup: ride?.pickup ?? snapshot?.pickupName ?? 'Pickup location',
-              dropoff:
-                  ride?.destination ??
-                  snapshot?.dropoffName ??
-                  'Destination location',
-            ),
-            if (isCompleted &&
-                snapshot?.driverId?.isNotEmpty == true &&
-                rideId != null) ...[
-              if (_detailsCubit.state.submittedReview case final review?) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                  child: Divider(height: 1, color: hairline),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Ride rating',
-                        style: context.textStyles.bodyLarge?.copyWith(
-                          color: colors.onSurface,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerLowest,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: colors.outlineVariant),
                     ),
-                    Text(
-                      review.rating.toStringAsFixed(0),
-                      style: context.textStyles.titleSmall?.tabular.copyWith(
+                    alignment: Alignment.center,
+                    child: Text(
+                      _driverInitials(driverName),
+                      style: context.textStyles.titleSmall?.copyWith(
                         color: colors.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Icon(
-                      Icons.star_rounded,
-                      size: 18,
-                      color: context.semanticColors.rating,
-                    ),
-                  ],
-                ),
-              ] else if (widget.showRatingAction &&
-                  _detailsCubit.state.hasLoadedReview &&
-                  !_detailsCubit.state.isLoadingReview &&
-                  _detailsCubit.state.reviewErrorMessage == null) ...[
-                const SizedBox(height: AppSpacing.lg),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    onPressed: () async {
-                      await context.pushNamed(
-                        ActiveRideRoutes.tripCompletion,
-                        extra: (ride: snapshot!, returnToReceipt: true),
-                      );
-                      if (mounted) {
-                        await _detailsCubit.loadMyReview(rideId, refresh: true);
-                      }
-                    },
-                    style:
-                        TextButton.styleFrom(
-                          foregroundColor: colors.onSurface,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.md,
-                          ),
-                          minimumSize: const Size(
-                            0,
-                            AppSize.minimumTouchTarget,
-                          ),
-                          side: BorderSide(color: colors.outlineVariant),
-                          backgroundColor: colors.surfaceContainerLowest,
-                          enableFeedback: false,
-                          splashFactory: NoSplash.splashFactory,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                        ).copyWith(
-                          overlayColor: WidgetStateProperty.resolveWith(
-                            (states) => states.contains(WidgetState.focused)
-                                ? colors.primary.withValues(alpha: 0.12)
-                                : Colors.transparent,
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          driverName,
+                          style: context.textStyles.titleMedium?.copyWith(
+                            color: colors.onSurface,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                    icon: Icon(
-                      Icons.star_outline_rounded,
-                      size: 18,
-                      color: colors.onSurface,
+                        const SizedBox(height: 2),
+                        Text(
+                          ride?.displayVehicleSummary ??
+                              snapshot?.displayVehicleSummary ??
+                              'Vehicle details unavailable',
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
-                    label: const Text('Rate this ride'),
+                  ),
+                  if (showLostFoundChat) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    _buildContactButton(
+                      context,
+                      tooltip: 'Message driver',
+                      icon: LucideIcons.message_circle,
+                      onPressed: () => unawaited(_initiateLostFoundChat(state)),
+                    ),
+                  ],
+                  if (showLostFoundChat &&
+                      counterparty?.phone.trim().isNotEmpty == true) ...[
+                    const SizedBox(width: AppSpacing.xs),
+                    _buildContactButton(
+                      context,
+                      tooltip: 'Call driver',
+                      icon: LucideIcons.phone,
+                      onPressed: () => unawaited(_callDriver(state)),
+                    ),
+                  ],
+                ],
+              ),
+              if (_contactError case final contactError?) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  contactError,
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: colors.error,
                   ),
                 ),
               ],
-            ],
-            if (isCompleted) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
                 child: Divider(height: 1, color: hairline),
               ),
-              _buildSectionLabel(context, 'FARE BREAKDOWN'),
-              const SizedBox(height: AppSpacing.md),
-              _buildReceiptSummary(context, snapshot, fare),
-            ],
-            Padding(
-              padding: const EdgeInsets.only(
-                top: AppSpacing.xl,
-                bottom: AppSpacing.sm,
-              ),
-              child: Divider(height: 1, color: hairline),
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: rideId == null || rideId.isEmpty
-                    ? null
-                    : () => showSafetyReportSheet(
-                        context,
-                        rideId: rideId,
-                        driverName: driverName,
-                        vehiclePlate:
-                            ride?.vehiclePlate ?? snapshot?.plateNumber ?? '',
-                        vehicleType:
-                            ride?.vehicleType ?? snapshot?.vehicleType ?? '',
-                        trackRepository: widget.trackRepository,
-                      ),
-                style:
-                    TextButton.styleFrom(
-                      foregroundColor: colors.onSurfaceVariant,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xs,
-                      ),
-                      minimumSize: const Size(0, AppSize.minimumTouchTarget),
-                      enableFeedback: false,
-                      splashFactory: NoSplash.splashFactory,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                    ).copyWith(
-                      overlayColor: WidgetStateProperty.resolveWith(
-                        (states) => states.contains(WidgetState.focused)
-                            ? colors.primary.withValues(alpha: 0.12)
-                            : Colors.transparent,
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.xs,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                alignment: WrapAlignment.spaceBetween,
+                children: [
+                  _buildSectionLabel(context, 'ROUTE'),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: AppSpacing.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerLowest,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: isCompleted
+                            ? context.semanticColors.success.withValues(
+                                alpha: 0.4,
+                              )
+                            : colors.outlineVariant,
                       ),
                     ),
-                icon: const Icon(LucideIcons.flag, size: 16),
-                label: const Text('Report an issue'),
+                    child: Text(
+                      statusLabel,
+                      style: context.textStyles.labelSmall?.copyWith(
+                        color: isCompleted
+                            ? context.semanticColors.success
+                            : colors.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-      ),
+              const SizedBox(height: AppSpacing.md),
+              if (pickupLatitude != null &&
+                  pickupLongitude != null &&
+                  dropoffLatitude != null &&
+                  dropoffLongitude != null) ...[
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(color: colors.outlineVariant),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: SizedBox(
+                    height: 180,
+                    child: RideDetailsMap(
+                      key: ValueKey((
+                        pickupLatitude,
+                        pickupLongitude,
+                        dropoffLatitude,
+                        dropoffLongitude,
+                      )),
+                      pickupLatitude: pickupLatitude,
+                      pickupLongitude: pickupLongitude,
+                      dropoffLatitude: dropoffLatitude,
+                      dropoffLongitude: dropoffLongitude,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
+              if (snapshot?.distanceKm != null ||
+                  snapshot?.durationMinutes != null) ...[
+                Text(
+                  [
+                    if (snapshot?.distanceKm case final distance?)
+                      distance < 1
+                          ? '${(distance * 1000).round()} m'
+                          : '${distance.toStringAsFixed(1)} km',
+                    if (snapshot?.durationMinutes case final duration?)
+                      '${duration.round()} min',
+                  ].join(' · '),
+                  style: context.textStyles.labelSmall?.tabular.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
+              CompactRouteTimeline(
+                pickup:
+                    ride?.pickup ?? snapshot?.pickupName ?? 'Pickup location',
+                dropoff:
+                    ride?.destination ??
+                    snapshot?.dropoffName ??
+                    'Destination location',
+              ),
+              if (isCompleted &&
+                  snapshot != null &&
+                  snapshot.driverId?.isNotEmpty == true &&
+                  rideId != null) ...[
+                if (state.submittedReview case final review?) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xl,
+                    ),
+                    child: Divider(height: 1, color: hairline),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Ride rating',
+                          style: context.textStyles.bodyLarge?.copyWith(
+                            color: colors.onSurface,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        review.rating.toStringAsFixed(0),
+                        style: context.textStyles.titleSmall?.tabular.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Icon(
+                        Icons.star_rounded,
+                        size: 18,
+                        color: context.semanticColors.rating,
+                      ),
+                    ],
+                  ),
+                ] else if (widget.showRatingAction &&
+                    state.hasLoadedReview &&
+                    !state.isLoadingReview &&
+                    state.reviewErrorMessage == null) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () async {
+                        await context.pushNamed(
+                          RideHistoryRoutes.tripCompletion,
+                          extra: (ride: snapshot, returnToReceipt: true),
+                        );
+                        if (mounted) {
+                          await _detailsCubit.loadMyReview(
+                            rideId,
+                            refresh: true,
+                          );
+                        }
+                      },
+                      style:
+                          TextButton.styleFrom(
+                            foregroundColor: colors.onSurface,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                            ),
+                            minimumSize: const Size(
+                              0,
+                              AppSize.minimumTouchTarget,
+                            ),
+                            side: BorderSide(color: colors.outlineVariant),
+                            backgroundColor: colors.surfaceContainerLowest,
+                            enableFeedback: false,
+                            splashFactory: NoSplash.splashFactory,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                          ).copyWith(
+                            overlayColor: WidgetStateProperty.resolveWith(
+                              (states) => states.contains(WidgetState.focused)
+                                  ? colors.primary.withValues(alpha: 0.12)
+                                  : Colors.transparent,
+                            ),
+                          ),
+                      icon: Icon(
+                        Icons.star_outline_rounded,
+                        size: 18,
+                        color: colors.onSurface,
+                      ),
+                      label: const Text('Rate this ride'),
+                    ),
+                  ),
+                ],
+              ],
+              if (isCompleted) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                  child: Divider(height: 1, color: hairline),
+                ),
+                _buildSectionLabel(context, 'FARE BREAKDOWN'),
+                const SizedBox(height: AppSpacing.md),
+                _buildReceiptSummary(context, snapshot, fare),
+              ],
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: AppSpacing.xl,
+                  bottom: AppSpacing.sm,
+                ),
+                child: Divider(height: 1, color: hairline),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: rideId == null || rideId.isEmpty
+                      ? null
+                      : () => showSafetyReportSheet(
+                          context,
+                          rideId: rideId,
+                          driverName: driverName,
+                          vehiclePlate:
+                              ride?.vehiclePlate ?? snapshot?.plateNumber ?? '',
+                          vehicleType:
+                              ride?.vehicleType ?? snapshot?.vehicleType ?? '',
+                          trackRepository: widget.trackRepository,
+                        ),
+                  style:
+                      TextButton.styleFrom(
+                        foregroundColor: colors.onSurfaceVariant,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xs,
+                        ),
+                        minimumSize: const Size(0, AppSize.minimumTouchTarget),
+                        enableFeedback: false,
+                        splashFactory: NoSplash.splashFactory,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                      ).copyWith(
+                        overlayColor: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.focused)
+                              ? colors.primary.withValues(alpha: 0.12)
+                              : Colors.transparent,
+                        ),
+                      ),
+                  icon: const Icon(LucideIcons.flag, size: 16),
+                  label: const Text('Report an issue'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

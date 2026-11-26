@@ -134,6 +134,8 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
   }
 
   RideHistory _mapToModel(Map<String, dynamic> raw) {
+    final rawTimestamp = raw['completed_at'] ?? raw['created_at'];
+    final recordedAt = _parseCreatedAt(rawTimestamp);
     return RideHistory(
       id: SafeParse.toStringValue(raw['id']),
       bookingReference: SafeParse.toStringValue(raw['booking_reference']),
@@ -145,7 +147,8 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
       pickupLng: SafeParse.toDouble(raw['pickup_longitude']),
       destLat: SafeParse.toDouble(raw['dropoff_latitude']),
       destLng: SafeParse.toDouble(raw['dropoff_longitude']),
-      date: _formatCreatedAt(raw['completed_at'] ?? raw['created_at']),
+      date: _formatCreatedAt(rawTimestamp, recordedAt),
+      recordedAt: recordedAt,
       price: _formatPrice(raw['fare'], raw['fare_amount']),
       status: SafeParse.toStringValue(raw['status'], 'unknown'),
       driverId: SafeParse.toStringValue(raw['driver_id']),
@@ -155,19 +158,19 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
     );
   }
 
-  String _formatCreatedAt(Object? createdAt) {
+  DateTime? _parseCreatedAt(Object? createdAt) {
+    if (createdAt == null) return null;
+    if (createdAt is DateTime) return createdAt.toLocal();
+    return DateTime.tryParse(createdAt.toString())?.toLocal();
+  }
+
+  String _formatCreatedAt(Object? createdAt, DateTime? parsed) {
     if (createdAt == null) return '';
-    try {
-      final createdDateTime = DateTime.parse(createdAt.toString()).toLocal();
-      final hour = createdDateTime.hour % 12 == 0
-          ? 12
-          : createdDateTime.hour % 12;
-      final paddedMinute = createdDateTime.minute.toString().padLeft(2, '0');
-      final meridiemPeriod = createdDateTime.hour < 12 ? 'AM' : 'PM';
-      return '${_monthAbbreviations[createdDateTime.month - 1]} ${createdDateTime.day}, $hour:$paddedMinute $meridiemPeriod';
-    } catch (_) {
-      return createdAt.toString();
-    }
+    if (parsed == null) return createdAt.toString();
+    final hour = parsed.hour % 12 == 0 ? 12 : parsed.hour % 12;
+    final paddedMinute = parsed.minute.toString().padLeft(2, '0');
+    final meridiemPeriod = parsed.hour < 12 ? 'AM' : 'PM';
+    return '${_monthAbbreviations[parsed.month - 1]} ${parsed.day}, $hour:$paddedMinute $meridiemPeriod';
   }
 
   String _formatPrice(Object? price, Object? fareAmount) {

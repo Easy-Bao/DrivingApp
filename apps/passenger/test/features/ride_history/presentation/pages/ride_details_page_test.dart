@@ -250,4 +250,71 @@ void main() {
       expect(find.text('Rate this ride'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'fetches review once on failure without looping and preserves caller cubit lifecycle',
+    (tester) async {
+      final trackRepository = _TrackRepository();
+      final sessionStore = _SessionStore();
+      final profileRepository = _ProfileRepository();
+
+      when(() => sessionStore.readPassengerId())
+          .thenAnswer((_) async => 'passenger-1');
+      when(() => trackRepository.fetchRide('903')).thenAnswer(
+        (_) async => const Ok(
+          RideSnapshot(
+            id: '903',
+            status: 'completed',
+            pickupName: 'Mountain View',
+            dropoffName: 'Cafe',
+            driverId: 'driver-1',
+            driverName: 'Xyrel D. Tenefrancia',
+            fareAmount: 2631,
+          ),
+        ),
+      );
+      when(() => trackRepository.fetchCounterparty('903')).thenAnswer(
+        (_) async => const Err(ServerFailure('Contact unavailable')),
+      );
+      when(() => profileRepository.fetchMyRideReview('903')).thenAnswer(
+        (_) async => const Err(NetworkFailure('Review fetch failed')),
+      );
+
+      final injectedCubit = RideDetailsCubit(
+        repository: trackRepository,
+        sessionService: sessionStore,
+        profileRepository: profileRepository,
+      );
+      addTearDown(injectedCubit.close);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: RideDetailsPage(
+            trackRepository: trackRepository,
+            sessionService: sessionStore,
+            profileRepository: profileRepository,
+            detailsCubit: injectedCubit,
+            initialRide: const RideSnapshot(
+              id: '903',
+              status: 'completed',
+              pickupName: 'Mountain View',
+              dropoffName: 'Cafe',
+              driverId: 'driver-1',
+              driverName: 'Xyrel D. Tenefrancia',
+              fareAmount: 2631,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      verify(() => profileRepository.fetchMyRideReview('903')).called(1);
+      expect(find.text('Rate this ride'), findsNothing);
+
+      await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+      await tester.pump();
+      expect(injectedCubit.isClosed, isFalse);
+    },
+  );
 }

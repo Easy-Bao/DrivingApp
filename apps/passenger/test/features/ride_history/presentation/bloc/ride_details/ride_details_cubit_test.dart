@@ -274,4 +274,92 @@ void main() {
       await cubit.close();
     },
   );
+
+  test('does not loop failed review fetches until an explicit refresh is requested', () async {
+    when(() => repository.fetchRide('909')).thenAnswer(
+      (_) async => const Ok(
+        RideSnapshot(
+          id: '909',
+          status: 'completed',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+          driverId: 'driver-9',
+        ),
+      ),
+    );
+    when(
+      () => repository.fetchCounterparty('909'),
+    ).thenAnswer((_) async => const Err(ServerFailure('Contact unavailable')));
+    when(() => profileRepository.fetchMyRideReview('909')).thenAnswer(
+      (_) async => const Err(NetworkFailure('Review temporarily unavailable')),
+    );
+
+    final cubit = RideDetailsCubit(
+      repository: repository,
+      sessionService: sessionService,
+      profileRepository: profileRepository,
+    );
+    await cubit.load('909');
+    await cubit.loadMyReview('909');
+    await cubit.loadMyReview('909');
+
+    verify(() => profileRepository.fetchMyRideReview('909')).called(1);
+    expect(cubit.state.reviewErrorMessage, isNotNull);
+
+    when(() => profileRepository.fetchMyRideReview('909'))
+        .thenAnswer((_) async => const Ok(null));
+    await cubit.loadMyReview('909', refresh: true);
+
+    verify(() => profileRepository.fetchMyRideReview('909')).called(1);
+    expect(cubit.state.hasLoadedReview, isTrue);
+    expect(cubit.state.reviewErrorMessage, isNull);
+    await cubit.close();
+  });
+
+  test(
+    'retries ride details after partial failure and on forced reload',
+    () async {
+      const ride = RideSnapshot(
+        id: '910',
+        status: 'completed',
+        pickupName: 'Pickup',
+        dropoffName: 'Dropoff',
+      );
+      const counterparty = RideCounterparty(
+        userId: 'driver-10',
+        name: 'Driver Ten',
+        phone: '+639171234567',
+        contactAllowed: true,
+      );
+      when(() => repository.fetchRide('910'))
+          .thenAnswer((_) async => const Ok(ride));
+      var counterpartyCalls = 0;
+      when(() => repository.fetchCounterparty('910')).thenAnswer((_) async {
+        counterpartyCalls += 1;
+        if (counterpartyCalls == 1) {
+          return const Err(NetworkFailure('Temporary failure'));
+        }
+        return const Ok(counterparty);
+      });
+
+      final cubit = RideDetailsCubit(
+        repository: repository,
+        sessionService: sessionService,
+        profileRepository: profileRepository,
+      );
+      await cubit.load('910');
+      expect(cubit.state.ride, ride);
+      expect(cubit.state.counterparty, isNull);
+
+      await cubit.load('910');
+      expect(cubit.state.counterparty, counterparty);
+
+      await cubit.load('910');
+      verify(() => repository.fetchRide('910')).called(2);
+
+      await cubit.load('910', force: true);
+      verify(() => repository.fetchRide('910')).called(1);
+      await cubit.close();
+    },
+  );
 }

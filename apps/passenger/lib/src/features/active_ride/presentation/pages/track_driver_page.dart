@@ -12,7 +12,6 @@ import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
-import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_cubit.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_state.dart';
@@ -21,6 +20,7 @@ import 'package:passenger/src/features/active_ride/presentation/widgets/track_dr
 import 'package:passenger/src/features/active_ride/presentation/widgets/trip_cancellation_dialog.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
+import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 
 Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
   final colors = context.colorScheme;
@@ -168,7 +168,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
             _hasHandledTerminalState = true;
             widget.onRideTerminated();
             context.pushReplacementNamed(
-              ActiveRideRoutes.tripCompletion,
+              RideHistoryRoutes.tripCompletion,
               extra: widget.ride.copyWith(
                 status: 'completed',
                 driverId: driverId,

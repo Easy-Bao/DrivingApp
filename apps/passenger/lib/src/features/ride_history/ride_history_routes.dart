@@ -6,6 +6,8 @@ abstract final class RideHistoryRoutes {
   static const String rideDetailsPath = 'activity/viewDetails';
   static const String passengerRating = 'PassengerRating';
   static const String passengerRatingPath = 'activity/rating';
+  static const String tripCompletion = 'TripCompletion';
+  static const String tripCompletionPath = 'activity/payment';
   static const String rideHistory = 'RideHistory';
   static const String rideHistoryPath = 'activity';
   static const String fullRideHistoryPath =

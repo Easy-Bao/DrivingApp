@@ -242,18 +242,21 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
                                 child: CircularProgressIndicator.adaptive(),
                               ),
                             )
-                          else if (state.reviewErrorMessage != null) ...[
+                          else if (state.reviewErrorMessage
+                              case final reviewErrorMessage?) ...[
                             const SizedBox(height: AppSpacing.sm),
                             Text(
-                              state.reviewErrorMessage!,
+                              reviewErrorMessage,
                               textAlign: TextAlign.center,
                               style: context.textStyles.bodySmall?.copyWith(
                                 color: colors.error,
                               ),
                             ),
                             TextButton(
-                              onPressed: () =>
-                                  widget.detailsCubit.loadMyReview(ride.id),
+                              onPressed: () => widget.detailsCubit.loadMyReview(
+                                ride.id,
+                                refresh: true,
+                              ),
                               style:
                                   TextButton.styleFrom(
                                     foregroundColor: colors.onSurface,
@@ -324,12 +327,13 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
                               ),
                             ),
                           ],
-                          if (state.ratingErrorMessage != null) ...[
+                          if (state.ratingErrorMessage
+                              case final ratingErrorMessage?) ...[
                             const SizedBox(height: AppSpacing.sm),
                             Semantics(
                               liveRegion: true,
                               child: Text(
-                                state.ratingErrorMessage!,
+                                ratingErrorMessage,
                                 textAlign: TextAlign.center,
                                 style: context.textStyles.bodySmall?.copyWith(
                                   color: colors.error,
@@ -367,9 +371,12 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
                                   const SizedBox(width: AppSpacing.md),
                                   Flexible(
                                     child: Text(
-                                      ride.farePesos == null
-                                          ? 'Unavailable'
-                                          : formatPesoAmount(ride.farePesos!),
+                                      switch (ride.farePesos) {
+                                        final farePesos? => formatPesoAmount(
+                                          farePesos,
+                                        ),
+                                        null => 'Unavailable',
+                                      },
                                       textAlign: TextAlign.end,
                                       style: context
                                           .textStyles

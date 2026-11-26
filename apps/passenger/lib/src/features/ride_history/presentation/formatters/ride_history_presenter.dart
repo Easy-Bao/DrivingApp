@@ -14,8 +14,8 @@ final class RideHistoryPresenter(
   List<RideHistory> sortPastRides(List<RideHistory> rides) {
     final sorted = List<RideHistory>.of(rides);
     sorted.sort((left, right) {
-      final leftDate = _parseMoment(left.date).dateTime;
-      final rightDate = _parseMoment(right.date).dateTime;
+      final leftDate = _momentForRide(left).dateTime;
+      final rightDate = _momentForRide(right).dateTime;
       if (leftDate == null && rightDate == null) return 0;
       if (leftDate == null) return 1;
       if (rightDate == null) return -1;
@@ -27,7 +27,7 @@ final class RideHistoryPresenter(
   Map<String, List<RideHistory>> groupRides(List<RideHistory> rides) {
     final grouped = <String, List<RideHistory>>{};
     for (final ride in rides) {
-      grouped.putIfAbsent(dateGroupLabel(ride.date), () => []).add(ride);
+      grouped.putIfAbsent(dateGroupLabelForRide(ride), () => []).add(ride);
     }
     return grouped;
   }
@@ -45,15 +45,20 @@ final class RideHistoryPresenter(
       if (RideStatus.fromString(ride.status) != RideStatus.completed) {
         return false;
       }
-      final date = _parseMoment(ride.date).dateTime;
+      final date = _momentForRide(ride).dateTime;
       return date != null &&
           !date.isBefore(weekStart) &&
           date.isBefore(weekEnd);
     }).toList();
   }
 
-  String dateGroupLabel(String rawDate) {
-    final date = _parseMoment(rawDate).dateTime;
+  String dateGroupLabelForRide(RideHistory ride) =>
+      _formatDateGroupLabel(_momentForRide(ride).dateTime);
+
+  String dateGroupLabel(String rawDate) =>
+      _formatDateGroupLabel(_parseMoment(rawDate).dateTime);
+
+  String _formatDateGroupLabel(DateTime? date) {
     if (date == null) return 'Date unavailable';
 
     final day = DateTime(date.year, date.month, date.day);
@@ -72,12 +77,20 @@ final class RideHistoryPresenter(
   }
 
   String rideMetadata(RideHistory ride) {
-    final moment = _parseMoment(ride.date);
+    final moment = _momentForRide(ride);
+    final dateTime = moment.dateTime;
     final values = <String>[
-      if (moment.hasTime && moment.dateTime != null)
-        _formatClockTime(moment.dateTime!),
+      if (moment.hasTime && dateTime != null) _formatClockTime(dateTime),
     ];
     return values.where((value) => value.isNotEmpty).join(' · ');
+  }
+
+  _RideMoment _momentForRide(RideHistory ride) {
+    final recordedAt = ride.recordedAt;
+    if (recordedAt != null) {
+      return _RideMoment(dateTime: recordedAt.toLocal(), hasTime: true);
+    }
+    return _parseMoment(ride.date);
   }
 
   _RideMoment _parseMoment(String rawDate) {
@@ -98,12 +111,16 @@ final class RideHistoryPresenter(
     ).firstMatch(value);
     if (match == null) return const _RideMoment();
 
+    final monthToken = match.group(1);
+    final dayToken = match.group(2);
+    if (monthToken == null || dayToken == null) return const _RideMoment();
+
     final month = _monthNames.indexWhere(
-      (name) => name.toLowerCase() == match.group(1)!.toLowerCase(),
+      (name) => name.toLowerCase() == monthToken.toLowerCase(),
     );
     if (month < 0) return const _RideMoment();
 
-    final day = int.tryParse(match.group(2)!);
+    final day = int.tryParse(dayToken);
     final rawHour = int.tryParse(match.group(3) ?? '0');
     final minute = int.tryParse(match.group(4) ?? '0');
     if (day == null || rawHour == null || minute == null) {

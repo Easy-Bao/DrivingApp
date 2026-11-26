@@ -11,6 +11,7 @@ class const RideHistory({
   required this.destLat,
   required this.destLng,
   required this.date,
+  this.recordedAt,
   required this.price,
   required this.status,
   required this.driverId,
@@ -28,6 +29,7 @@ class const RideHistory({
   final double destLat;
   final double destLng;
   final String date;
+  final DateTime? recordedAt;
   final String price;
   final String status;
   final String driverId;
@@ -61,6 +63,7 @@ class const RideHistory({
       'destination_latitude': rawDestLat,
       'destination_longitude': rawDestLng,
       'date': rawDate,
+      'recorded_at': rawRecordedAt,
       'price': rawPrice,
       'status': rawStatus,
       'driver_id': rawDriverId,
@@ -71,6 +74,13 @@ class const RideHistory({
     } = _canonicalPayload(
       json,
     );
+
+    final recordedAt = switch (rawRecordedAt) {
+      final DateTime timestamp => timestamp.toLocal(),
+      final Object? value => DateTime.tryParse(
+        SafeParse.toStringValue(value),
+      )?.toLocal(),
+    };
 
     return RideHistory(
       id: SafeParse.toStringValue(rawId),
@@ -84,6 +94,7 @@ class const RideHistory({
       destLat: SafeParse.toDouble(rawDestLat),
       destLng: SafeParse.toDouble(rawDestLng),
       date: SafeParse.toStringValue(rawDate),
+      recordedAt: recordedAt,
       price: SafeParse.toStringValue(rawPrice),
       status: SafeParse.toStringValue(rawStatus),
       driverId: SafeParse.toStringValue(rawDriverId),
@@ -105,6 +116,7 @@ class const RideHistory({
       'destLat': destLat,
       'destLng': destLng,
       'date': date,
+      'recordedAt': recordedAt?.toIso8601String(),
       'price': price,
       'status': status,
       'driverId': driverId,
@@ -125,6 +137,7 @@ class const RideHistory({
     double? destLat,
     double? destLng,
     String? date,
+    DateTime? recordedAt,
     String? price,
     String? status,
     String? driverId,
@@ -143,6 +156,7 @@ class const RideHistory({
       destLat: destLat ?? this.destLat,
       destLng: destLng ?? this.destLng,
       date: date ?? this.date,
+      recordedAt: recordedAt ?? this.recordedAt,
       price: price ?? this.price,
       status: status ?? this.status,
       driverId: driverId ?? this.driverId,
@@ -164,6 +178,7 @@ class const RideHistory({
     destLat,
     destLng,
     date,
+    recordedAt,
     price,
     status,
     driverId,
@@ -183,6 +198,12 @@ Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
   'destination_latitude': json['destLat'] ?? json['dropoff_latitude'],
   'destination_longitude': json['destLng'] ?? json['dropoff_longitude'],
   'date': json['date'] ?? json['completed_at'] ?? json['created_at'],
+  'recorded_at':
+      json['recordedAt'] ??
+      json['recorded_at'] ??
+      json['completed_at'] ??
+      json['created_at'] ??
+      json['date'],
   'price': json['price'] ?? json['fare'],
   'status': json['status'],
   'driver_id': json['driverId'] ?? json['driver_id'],
