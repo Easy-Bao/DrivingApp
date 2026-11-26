@@ -28,63 +28,20 @@ class const FloatingTabBar({
   final ValueChanged<int> onDestinationSelected;
   final InboxCubit inboxCubit;
   final ValueListenable<double>? pagePosition;
-
   final Widget? activeRideBanner;
 
   @override
   Widget build(BuildContext context) {
-    final banner = activeRideBanner;
-    if (banner == null) {
-      return AppFloatingTabBar(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: onDestinationSelected,
-        pagePosition: pagePosition,
-        destinations: destinations,
-        itemKeyPrefix: 'passenger-floating-tab-item',
-        indicatorKey: 'passenger-floating-tab-indicator',
-        iconBuilder: _buildIcon,
-        showInteractionFeedback: false,
-      );
-    }
-
-    final colorScheme = context.colorScheme;
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.sheet),
-        border: Border.all(color: colorScheme.outlineVariant),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 24,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          banner,
-          Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
-          AppFloatingTabBar(
-            bare: true,
-            selectedIndex: selectedIndex,
-            onDestinationSelected: onDestinationSelected,
-            pagePosition: pagePosition,
-            destinations: destinations,
-            itemKeyPrefix: 'passenger-floating-tab-item',
-            indicatorKey: 'passenger-floating-tab-indicator',
-            iconBuilder: _buildIcon,
-            showInteractionFeedback: false,
-          ),
-        ],
-      ),
+    return AppFloatingTabBar(
+      selectedIndex: selectedIndex,
+      onDestinationSelected: onDestinationSelected,
+      pagePosition: pagePosition,
+      destinations: destinations,
+      itemKeyPrefix: 'passenger-floating-tab-item',
+      indicatorKey: 'passenger-floating-tab-indicator',
+      iconBuilder: _buildIcon,
+      showInteractionFeedback: false,
+      header: activeRideBanner,
     );
   }
 
