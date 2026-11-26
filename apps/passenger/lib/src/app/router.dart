@@ -7,6 +7,7 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/app/navigation/navigation_shell.dart';
 import 'package:passenger/src/core/config/env_config.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride_module.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_module.dart';
@@ -44,6 +45,7 @@ class AppRouter extends Module {
         realtimeClient: Modular.get<RealtimeWebSocketClient>(),
         lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
         navigationCoordinator: Modular.get<TabNavigationCoordinator>(),
+        sessionService: Modular.get<SessionStore>(),
         navigationShell: navigationShell,
       ),
       navigatorContainerBuilder: (context, navigationShell, children) =>

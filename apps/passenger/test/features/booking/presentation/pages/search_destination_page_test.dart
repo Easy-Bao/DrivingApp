@@ -9,7 +9,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import 'package:go_router_modular/testing.dart';
 import 'package:mapbox_maps_flutter_platform_interface/mapbox_maps_flutter_platform_interface_internal.dart';
 import 'package:maps/maps.dart' as maps;
 import 'package:material_ui/material_ui.dart';
@@ -101,7 +100,6 @@ class _FakeLocationRepository implements maps.LocationRepository {
 }
 
 void main() {
-  late ModularTestScope scope;
   late _TestMapPlatform mapPlatform;
   final locationRepository = _FakeLocationRepository();
   final originalGeolocatorPlatform = GeolocatorPlatform.instance;
@@ -109,8 +107,6 @@ void main() {
   setUp(() async {
     mapPlatform = _TestMapPlatform();
     MapboxMapsFlutterPlatform.instance = mapPlatform;
-    scope = ModularTestScope.fresh().withInstance(AppLifecycleCoordinator());
-    scope.setUp();
     GeolocatorPlatform.instance = _FakeGeolocatorPlatform();
     await maps.MapProvider.initialize(
       nativeService: maps.MapNativeService(
@@ -128,8 +124,6 @@ void main() {
 
   tearDown(() async {
     GeolocatorPlatform.instance = originalGeolocatorPlatform;
-    await scope.get<AppLifecycleCoordinator>().dispose();
-    scope.tearDown();
   });
 
   testWidgets(
@@ -537,11 +531,15 @@ void main() {
       );
       locationRepository.nearbyPlaces = [nearbyPlace];
 
-      final lifecycleCoordinator = scope.get<AppLifecycleCoordinator>();
+      final lifecycleCoordinator = AppLifecycleCoordinator();
+      addTearDown(lifecycleCoordinator.dispose);
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.main,
-          home: const SearchDestinationPage(autofocusSearch: true),
+          home: SearchDestinationPage(
+            autofocusSearch: true,
+            lifecycleCoordinator: lifecycleCoordinator,
+          ),
         ),
       );
       await tester.pump();

@@ -76,6 +76,7 @@ class BookingModule._() {
         pickupAddress: state.uri.queryParameters['pickupAddress'],
         autofocusSearch: state.uri.queryParameters['focus'] == '1',
         returnToMapPin: state.uri.queryParameters['returnToMapPin'] == '1',
+        lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,

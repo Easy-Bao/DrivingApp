@@ -17,12 +17,14 @@ class const SearchDestinationPage({
   this.pickupAddress,
   this.autofocusSearch = false,
   this.returnToMapPin = false,
+  this.lifecycleCoordinator,
 }) extends StatefulWidget {
   static const searchDebounceDuration = Duration(milliseconds: 300);
 
   final String? pickupAddress;
   final bool autofocusSearch;
   final bool returnToMapPin;
+  final AppLifecycleCoordinator? lifecycleCoordinator;
 
   @override
   State<SearchDestinationPage> createState() => _SearchDestinationPageState();
@@ -65,7 +67,7 @@ class _SearchDestinationPageState()
   late final Animation<double> _resultsFadeAnimation;
   late final Animation<double> _mapPinFadeAnimation;
   late final Animation<double> _collapsedControlsFadeAnimation;
-  late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
+  StreamSubscription<AppLifecycleStatus>? _lifecycleSubscription;
 
   Timer? _debounce;
   bool _isOpeningMapPin = false;
@@ -104,8 +106,9 @@ class _SearchDestinationPageState()
     _focusNode.addListener(_onFocusChanged);
     _searchController.addListener(_onSearchChanged);
     _scrollController.addListener(_onScroll);
-    _lifecycleSubscription = Modular.get<AppLifecycleCoordinator>().changes
-        .listen(_onLifecycleChanged);
+    _lifecycleSubscription = widget.lifecycleCoordinator?.changes.listen(
+      _onLifecycleChanged,
+    );
     if (widget.autofocusSearch) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _focusNode.requestFocus();
@@ -117,7 +120,7 @@ class _SearchDestinationPageState()
   @override
   void dispose() {
     _debounce?.cancel();
-    unawaited(_lifecycleSubscription.cancel());
+    unawaited(_lifecycleSubscription?.cancel());
     unawaited(MapProvider.clearAnnotations(_currentLocationMarker));
     _focusNode.removeListener(_onFocusChanged);
     _focusNode.dispose();

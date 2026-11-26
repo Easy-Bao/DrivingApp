@@ -245,25 +245,13 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _restoreActiveRideOnLaunch() async {
     try {
-      SessionStore? session = widget.sessionService;
-      if (session == null) {
-        try {
-          session = Modular.get<SessionStore>();
-        } catch (_) {
-          return;
-        }
-      }
+      final session = widget.sessionService;
+      final trackRepository = widget.trackRepository;
+      if (session == null || trackRepository == null) return;
+
       final activeRideId = await session.readActiveRideId();
       if (activeRideId == null || activeRideId.trim().isEmpty) return;
 
-      TrackRepository? trackRepository = widget.trackRepository;
-      if (trackRepository == null) {
-        try {
-          trackRepository = Modular.get<TrackRepository>();
-        } catch (_) {
-          return;
-        }
-      }
       final result = await trackRepository.fetchRideResult(activeRideId.trim());
       switch (result) {
         case Err(:final failure):
@@ -383,14 +371,8 @@ class _HomePageState extends State<HomePage> {
     final trackDriverCubit = _getTrackDriverCubit();
     if (trackDriverCubit?.state.isTerminal == true) return;
 
-    SessionStore? session = widget.sessionService;
-    if (session == null) {
-      try {
-        session = Modular.get<SessionStore>();
-      } catch (_) {
-        // Ride-history fallback remains available if session storage is absent.
-      }
-    }
+    // Ride-history fallback remains available if session storage is absent.
+    final session = widget.sessionService;
 
     String? activeRideId;
     try {

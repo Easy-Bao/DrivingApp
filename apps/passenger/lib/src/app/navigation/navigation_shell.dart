@@ -68,6 +68,7 @@ class ShellLayout extends StatefulWidget {
     this.bookingBloc,
     this.bookingDraftCubit,
     this.trackDriverCubit,
+    this.sessionService,
   });
   final StatefulNavigationShell navigationShell;
   final InboxCubit inboxCubit;
@@ -77,6 +78,7 @@ class ShellLayout extends StatefulWidget {
   final BookingBloc? bookingBloc;
   final BookingDraftCubit? bookingDraftCubit;
   final TrackDriverCubit? trackDriverCubit;
+  final SessionStore? sessionService;
   final Stream<BookingState> bookingStates;
 
   @override
@@ -430,11 +432,7 @@ class _ShellLayoutState extends State<ShellLayout> {
     try {
       return BlocProvider.of<TrackDriverCubit>(context);
     } catch (_) {
-      try {
-        return Modular.get<TrackDriverCubit>();
-      } catch (_) {
-        return null;
-      }
+      return null;
     }
   }
 
@@ -443,11 +441,7 @@ class _ShellLayoutState extends State<ShellLayout> {
     try {
       return BlocProvider.of<BookingBloc>(context);
     } catch (_) {
-      try {
-        return Modular.get<BookingBloc>();
-      } catch (_) {
-        return null;
-      }
+      return null;
     }
   }
 
@@ -456,11 +450,7 @@ class _ShellLayoutState extends State<ShellLayout> {
     try {
       return BlocProvider.of<BookingDraftCubit>(context);
     } catch (_) {
-      try {
-        return Modular.get<BookingDraftCubit>();
-      } catch (_) {
-        return null;
-      }
+      return null;
     }
   }
 
@@ -572,10 +562,7 @@ class _ShellLayoutState extends State<ShellLayout> {
 
   Future<void> _resumeFromShell() async {
     if (!mounted) return;
-    SessionStore? session;
-    try {
-      session = Modular.get<SessionStore>();
-    } catch (_) {}
+    final session = widget.sessionService;
     String? activeRideId;
     try {
       activeRideId = await session?.readActiveRideId();
