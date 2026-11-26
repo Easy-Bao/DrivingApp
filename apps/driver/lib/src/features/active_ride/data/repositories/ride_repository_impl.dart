@@ -306,15 +306,29 @@ final class RideRepositoryImpl({
           speed: speed,
         ),
       );
-      await spool.flush(
-        (point) => _telemetryDataSource.sendLocationUpdate(
-          lat: point.latitude,
-          lng: point.longitude,
-          observedAt: point.observedAt,
-          heading: point.heading,
-          speed: point.speed,
-        ),
-      );
+      await spool.flushWithOutcome((point) async {
+        try {
+          final sent = await _telemetryDataSource.sendLocationUpdate(
+            lat: point.latitude,
+            lng: point.longitude,
+            observedAt: point.observedAt,
+            heading: point.heading,
+            speed: point.speed,
+          );
+          return sent ? LocationSendOutcome.sent : LocationSendOutcome.retry;
+        } on DioException catch (error) {
+          final statusCode = error.response?.statusCode;
+          if (statusCode != null &&
+              statusCode >= 400 &&
+              statusCode < 500 &&
+              statusCode != 401 &&
+              statusCode != 408 &&
+              statusCode != 429) {
+            return LocationSendOutcome.drop;
+          }
+          rethrow;
+        }
+      });
       return const Ok(null);
     } catch (error) {
       if (error is DioException &&

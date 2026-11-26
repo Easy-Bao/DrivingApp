@@ -37,7 +37,12 @@ final class LocationPoint {
   }
 }
 
+enum LocationSendOutcome { sent, drop, retry }
+
 typedef LocationSender = Future<bool> Function(LocationPoint point);
+typedef LocationOutcomeSender = Future<LocationSendOutcome> Function(
+  LocationPoint point,
+);
 
 final class LocationSpool {
   static const _storageKey = 'driver_location_spool_v1';
@@ -68,26 +73,35 @@ final class LocationSpool {
   }
 
   Future<bool> flush(LocationSender send) {
+    return flushWithOutcome((point) async {
+      return await send(point)
+          ? LocationSendOutcome.sent
+          : LocationSendOutcome.retry;
+    });
+  }
+
+  Future<bool> flushWithOutcome(LocationOutcomeSender send) {
     return _serialize(
       () => traceTimelineStage('driver.location_spool.flush', () async {
         final points = await _read();
         while (points.isNotEmpty) {
-          var acknowledgedCount = 0;
-          while (acknowledgedCount < _flushCommitBatchSize &&
-              acknowledgedCount < points.length) {
-            if (!await send(points[acknowledgedCount])) {
-              if (acknowledgedCount > 0) {
-                points.removeRange(0, acknowledgedCount);
+          var consumedCount = 0;
+          while (consumedCount < _flushCommitBatchSize &&
+              consumedCount < points.length) {
+            final outcome = await send(points[consumedCount]);
+            if (outcome == LocationSendOutcome.retry) {
+              if (consumedCount > 0) {
+                points.removeRange(0, consumedCount);
                 await _write(points);
               }
               return false;
             }
-            acknowledgedCount++;
+            consumedCount++;
           }
 
           // A process restart may replay one acknowledged batch; the server
           // treats already-seen timestamps as successful stale-point no-ops.
-          points.removeRange(0, acknowledgedCount);
+          points.removeRange(0, consumedCount);
           await _write(points);
         }
         return true;
@@ -100,13 +114,31 @@ final class LocationSpool {
     if (encoded == null || encoded.isEmpty) return <LocationPoint>[];
     try {
       final decoded = jsonDecode(encoded);
-      if (decoded is! List) return <LocationPoint>[];
-      return decoded
-          .whereType<Map>()
-          .map(
-            (value) => LocationPoint.fromJson(Map<String, dynamic>.from(value)),
-          )
-          .toList(growable: true);
+      if (decoded is! List) {
+        await _preferences.remove(_storageKey);
+        return <LocationPoint>[];
+      }
+      final validPoints = <LocationPoint>[];
+      var skippedCorruptEntry = false;
+      for (final item in decoded) {
+        if (item is! Map) {
+          skippedCorruptEntry = true;
+          continue;
+        }
+        try {
+          validPoints.add(
+            LocationPoint.fromJson(Map<String, dynamic>.from(item)),
+          );
+        } on FormatException {
+          skippedCorruptEntry = true;
+        } on TypeError {
+          skippedCorruptEntry = true;
+        }
+      }
+      if (skippedCorruptEntry) {
+        await _write(validPoints);
+      }
+      return validPoints;
     } on FormatException {
       await _preferences.remove(_storageKey);
       return <LocationPoint>[];

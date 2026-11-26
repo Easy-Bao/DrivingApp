@@ -363,5 +363,70 @@ void main() {
       expect(gpsReadCount, 0);
       expect(adapter.requests, isEmpty);
     });
+
+    test(
+      'preserves existing HTTP clients when identical baseUrl is replayed',
+      () async {
+        var createdClients = 0;
+        final session = DriverBackgroundTelemetrySession(
+          service: service,
+          sessionStore: sessionStore,
+          locationSpool: spool,
+          createHttpClient: (_, options) {
+            createdClients++;
+            return Dio(options)..httpClientAdapter = adapter;
+          },
+          readCurrentPosition: () async => _testPosition(),
+          clearSessionFallback: () async {},
+          onUpdateNotification: (content) async => notifications.add(content),
+        );
+
+        session.configure({
+          'baseUrl': 'https://api.example.com',
+          'appVisible': false,
+        });
+        session.configure({
+          'baseUrl': 'https://api.example.com',
+          'appVisible': false,
+          'batteryOptimizationWarning': true,
+        });
+
+        expect(createdClients, 2);
+      },
+    );
+
+    test(
+      'drops permanently rejected 400 spooled point so subsequent points flush',
+      () async {
+        await spool.enqueue(
+          LocationPoint(
+            latitude: 7.1,
+            longitude: 123.4,
+            observedAt: DateTime.utc(2026, 9, 18),
+          ),
+        );
+        var attempts = 0;
+        adapter.onFetch = (options) {
+          attempts++;
+          if (attempts == 1) {
+            return Future.value(ResponseBody.fromString('bad request', 400));
+          }
+          return Future.value(ResponseBody.fromString('{}', 202));
+        };
+
+        final session = createSession();
+        session.configure({'baseUrl': 'https://api.example.com'});
+
+        await session.sendLocation();
+
+        expect(attempts, 2);
+        final remaining = <LocationPoint>[];
+        await spool.flush((point) async {
+          remaining.add(point);
+          return true;
+        });
+        expect(remaining, isEmpty);
+      },
+    );
   });
 }

@@ -249,6 +249,7 @@ class DriverBackgroundTelemetrySession {
   bool _appIsVisible = false;
   bool _batteryOptimizationWarning = false;
   bool _isConfigured = false;
+  Uri? _configuredBaseUri;
   Set<String> _activeRequestIds = <String>{};
   DateTime? _previousLocationSampleAt;
   Timer? _locationTimer;
@@ -312,6 +313,13 @@ class DriverBackgroundTelemetrySession {
     }
 
     unawaited(_updateNotification(_idleNotificationContent()));
+    if (_isConfigured &&
+        _configuredBaseUri == parsed &&
+        _telemetryClient != null &&
+        _tokenProvider != null) {
+      return;
+    }
+
     _closeClients();
 
     final options = _createDioOptions(parsed);
@@ -348,6 +356,7 @@ class DriverBackgroundTelemetrySession {
     _telemetryClient = client;
     _refreshClient = refresh;
     _tokenProvider = provider;
+    _configuredBaseUri = parsed;
     _isConfigured = true;
   }
 
@@ -387,6 +396,7 @@ class DriverBackgroundTelemetrySession {
 
   void _clearClients() {
     _isConfigured = false;
+    _configuredBaseUri = null;
     _closeClients();
   }
 
@@ -423,6 +433,14 @@ class DriverBackgroundTelemetrySession {
 
   static bool _hasCredential(String? value) =>
       value != null && value.isNotEmpty;
+
+  static bool _isPermanentTelemetryRejection(int? statusCode) =>
+      statusCode != null &&
+      statusCode >= 400 &&
+      statusCode < 500 &&
+      statusCode != 401 &&
+      statusCode != 408 &&
+      statusCode != 429;
 
   String _idleNotificationContent() => _batteryOptimizationWarning
       ? 'Battery saver may delay location updates. Allow unrestricted battery use.'
@@ -562,8 +580,12 @@ class DriverBackgroundTelemetrySession {
       if (!_canContinueWith(client, provider)) return;
 
       var acknowledgedPointCount = 0;
-      final flushSucceeded = await _locationSpool.flush((spooledPoint) async {
-        if (!_canContinueWith(client, provider)) return false;
+      final flushSucceeded = await _locationSpool.flushWithOutcome((
+        spooledPoint,
+      ) async {
+        if (!_canContinueWith(client, provider)) {
+          return LocationSendOutcome.retry;
+        }
         try {
           final response = await client.post<void>(
             '/api/v1/telemetry/location',
@@ -579,13 +601,20 @@ class DriverBackgroundTelemetrySession {
               response.statusCode == 200 ||
               response.statusCode == 201 ||
               response.statusCode == 202;
-          if (acknowledged) acknowledgedPointCount++;
-          return acknowledged;
+          if (acknowledged) {
+            acknowledgedPointCount++;
+            return LocationSendOutcome.sent;
+          }
+          return LocationSendOutcome.retry;
         } on DioException catch (error) {
+          final statusCode = error.response?.statusCode;
           dev.log(
-            'Driver telemetry request failed: ${error.type.name}/${error.response?.statusCode ?? 'network'}',
+            'Driver telemetry request failed: ${error.type.name}/${statusCode ?? 'network'}',
           );
-          return false;
+          if (_isPermanentTelemetryRejection(statusCode)) {
+            return LocationSendOutcome.drop;
+          }
+          return LocationSendOutcome.retry;
         }
       });
       if (!kReleaseMode) {

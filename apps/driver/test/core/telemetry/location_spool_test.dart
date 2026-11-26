@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:driver/src/core/telemetry/location_spool.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
@@ -122,6 +125,52 @@ void main() {
         isTrue,
       );
       expect(retried, <double>[10]);
+    },
+  );
+
+  test(
+    'skips corrupt stored entries without discarding valid spooled points',
+    () async {
+      final preferences = SharedPreferencesAsync();
+      await preferences.setString(
+        'driver_location_spool_v1',
+        jsonEncode([
+          _point(latitude: 7.1).toJson(),
+          {'latitude': 'not-a-number', 'observed_at': 'bad-date'},
+          'unexpected-primitive',
+          _point(latitude: 7.3).toJson(),
+        ]),
+      );
+
+      final spool = LocationSpool(preferences: preferences);
+      final sent = <double>[];
+      expect(
+        await spool.flush((point) async {
+          sent.add(point.latitude);
+          return true;
+        }),
+        isTrue,
+      );
+      expect(sent, <double>[7.1, 7.3]);
+    },
+  );
+
+  test(
+    'drops permanent poison-pill points and continues flushing later points',
+    () async {
+      final spool = LocationSpool();
+      await spool.enqueue(_point(latitude: 7.1));
+      await spool.enqueue(_point(latitude: 7.2));
+      final delivered = <double>[];
+
+      final succeeded = await spool.flushWithOutcome((point) async {
+        if (point.latitude == 7.1) return LocationSendOutcome.drop;
+        delivered.add(point.latitude);
+        return LocationSendOutcome.sent;
+      });
+
+      expect(succeeded, isTrue);
+      expect(delivered, <double>[7.2]);
     },
   );
 }
