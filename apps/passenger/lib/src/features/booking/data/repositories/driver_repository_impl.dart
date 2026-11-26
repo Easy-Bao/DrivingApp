@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
-import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/data/datasources/driver_discovery_remote_data_source.dart';
 import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';

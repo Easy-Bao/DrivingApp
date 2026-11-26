@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/driver_profile/data/datasources/driver_profile_remote_data_source.dart';
 import 'package:passenger/src/features/driver_profile/data/repositories/driver_profile_repository_impl.dart';
 
