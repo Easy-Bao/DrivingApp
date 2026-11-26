@@ -46,7 +46,7 @@ void main() {
   );
 
   blocTest<VerifyOtpBloc, VerifyOtpState>(
-    'keeps resend available when the delivery request fails',
+    'keeps resend available and sanitizes server errors when resend fails',
     build: () {
       when(
         () =>
@@ -61,11 +61,61 @@ void main() {
     ),
     expect: () => [
       isA<VerifyOtpResending>(),
-      isA<VerifyOtpResendFailure>().having(
-        (state) => state.errorMessage,
-        'error message',
-        'Mail service unavailable.',
-      ),
+      isA<VerifyOtpResendFailure>()
+          .having(
+            (state) => state.errorMessage,
+            'error message',
+            'The server could not complete your request. Try again.',
+          )
+          .having((state) => state.canResend, 'canResend', isTrue),
     ],
+  );
+
+  blocTest<VerifyOtpBloc, VerifyOtpState>(
+    'preserves verification failure while the resend countdown ticks to zero',
+    build: () {
+      when(
+        () => authRepository.verifyOtp(
+          email: 'passenger@example.com',
+          code: '123456',
+        ),
+      ).thenAnswer(
+        (_) async => const Err(
+          InvalidVerificationCodeFailure(
+            'Invalid verification code. Try again.',
+          ),
+        ),
+      );
+      return VerifyOtpBloc(authRepository);
+    },
+    act: (bloc) async {
+      bloc.add(const VerifyOtpTimerTicked(secondsRemaining: 2));
+      bloc.add(
+        const VerifyOtpSubmitted(
+          email: 'passenger@example.com',
+          code: '123456',
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      bloc.add(const VerifyOtpTimerTicked(secondsRemaining: 1));
+      bloc.add(const VerifyOtpTimerTicked(secondsRemaining: 0));
+    },
+    expect: () => [
+      const VerifyOtpTimerTicking(2),
+      const VerifyOtpLoading(secondsRemaining: 2),
+      const VerifyOtpFailure(
+        'Invalid verification code. Try again.',
+        secondsRemaining: 2,
+      ),
+      const VerifyOtpFailure(
+        'Invalid verification code. Try again.',
+        secondsRemaining: 1,
+      ),
+      const VerifyOtpFailure('Invalid verification code. Try again.'),
+    ],
+    verify: (bloc) {
+      expect(bloc.state.canResend, isTrue);
+      expect(bloc.state.secondsRemaining, 0);
+    },
   );
 }

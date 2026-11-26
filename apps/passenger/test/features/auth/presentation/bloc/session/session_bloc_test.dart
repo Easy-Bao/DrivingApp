@@ -92,4 +92,45 @@ void main() {
       await bloc.close();
     },
   );
+
+  test('Session.guest reports guest mode and is not authenticated', () {
+    const guest = Session.guest();
+    expect(guest.mode, SessionMode.guest);
+    expect(guest.passengerId, isNull);
+    expect(guest.isAuthenticated, isFalse);
+  });
+
+  test(
+    'does not let a slow guest clear overwrite a newer authenticated session',
+    () async {
+      final clearCompleter = Completer<Result<Session, Failure>>();
+      when(() => sessionRepository.clearSession())
+          .thenAnswer((_) => clearCompleter.future);
+      final bloc = SessionBloc(sessionRepository: sessionRepository);
+      final states = <SessionState>[];
+      final subscription = bloc.stream.listen(states.add);
+
+      bloc.add(const SessionGuestRequested());
+      await Future<void>.delayed(Duration.zero);
+      bloc.add(
+        const SessionAuthenticatedRequested(
+          passengerId: '42',
+          passengerName: 'Avery Cruz',
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      clearCompleter.complete(const Ok<Session, Failure>(Session.guest()));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(
+        states.last,
+        const AuthenticatedSession(
+          passengerId: '42',
+          passengerName: 'Avery Cruz',
+        ),
+      );
+      await subscription.cancel();
+      await bloc.close();
+    },
+  );
 }

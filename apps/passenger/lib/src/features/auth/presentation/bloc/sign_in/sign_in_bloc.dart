@@ -25,13 +25,11 @@ class SignInBloc(this._authRepository) extends Bloc<SignInEvent, SignInState> {
     final normalizedEmail = event.email.trim().toLowerCase();
     final password = event.password;
 
-    final emailError = authFormValidator.email(normalizedEmail);
-    final passwordError = authFormValidator.password(
-      password,
-      minimumLength: 1,
-    );
-    if (emailError != null || passwordError != null) {
-      emit(SignInFailure(emailError ?? passwordError!));
+    final validationError =
+        authFormValidator.email(normalizedEmail) ??
+        authFormValidator.password(password, minimumLength: 1);
+    if (validationError != null) {
+      emit(SignInFailure(validationError));
       return;
     }
 

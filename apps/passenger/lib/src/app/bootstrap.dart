@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -64,9 +65,9 @@ Future<void> bootstrapApp() async {
               () => Modular.configure(
                 appModule: AppDependencies(preferences: preferences),
                 initialRoute: HomeRoutes.fullHomePath,
-                debugLogDiagnostics: true,
-                debugLogDiagnosticsGoRouter: true,
-                debugLogEventBus: true,
+                debugLogDiagnostics: kDebugMode,
+                debugLogDiagnosticsGoRouter: kDebugMode,
+                debugLogEventBus: kDebugMode,
                 observers: [appNavigationObserver],
               ),
             );

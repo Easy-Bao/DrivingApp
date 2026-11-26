@@ -1,5 +1,6 @@
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:passenger/src/features/auth/domain/entities/sign_up_result.dart';
 
 abstract interface class AuthRepository {
   Future<Result<AuthCredentials, Failure>> authenticate({
@@ -8,7 +9,7 @@ abstract interface class AuthRepository {
     bool rememberMe = false,
   });
 
-  Future<Result<Map<String, dynamic>, Failure>> registerPassenger({
+  Future<Result<SignUpResult, Failure>> registerPassenger({
     required String name,
     required String email,
     required String phone,

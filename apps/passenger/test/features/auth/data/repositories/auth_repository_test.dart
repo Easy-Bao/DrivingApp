@@ -5,6 +5,7 @@ import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/data/datasources/auth_endpoints.dart';
 import 'package:passenger/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:passenger/src/features/auth/domain/entities/sign_up_result.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MockAuthRemoteDataSource extends Mock implements AuthRemoteDataSource {}
@@ -267,7 +268,12 @@ void main() {
         password: 'secret-password',
       );
 
-      expect(result.isOk, isTrue);
+      expect(
+        result,
+        const Ok<SignUpResult, Failure>(
+          SignUpVerificationRequired(email: 'passenger@example.com'),
+        ),
+      );
       verifyNever(() => secureSessionService.saveToken(any()));
       verifyNever(() => secureSessionService.saveRefreshToken(any()));
       verifyNever(() => secureSessionService.savePassengerId(any()));

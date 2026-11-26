@@ -55,8 +55,9 @@ class SessionBloc({required this._sessionRepository})
     SessionGuestRequested event,
     Emitter<SessionState> emit,
   ) async {
-    _sessionOperation++;
+    final operation = ++_sessionOperation;
     await _sessionRepository.clearSession();
+    if (operation != _sessionOperation) return;
     emit(const GuestSession());
   }
 

@@ -1,7 +1,9 @@
 mixin PhoneNumberValidator {
+  static final RegExp _phMobilePattern = RegExp(r'^(\+639|09)\d{9}$');
+
   static bool isValidPHNumber(String phone) {
     final clean = phone.replaceAll(RegExp(r'[^0-9+]'), '');
-    return clean.startsWith('+639') || clean.startsWith('09');
+    return _phMobilePattern.hasMatch(clean);
   }
 
   static String normalizePHNumber(String phone) {

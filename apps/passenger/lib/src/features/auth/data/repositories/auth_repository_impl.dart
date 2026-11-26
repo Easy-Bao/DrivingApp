@@ -2,6 +2,7 @@ import 'package:foundation/foundation.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/data/datasources/auth_endpoints.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:passenger/src/features/auth/domain/entities/sign_up_result.dart';
 import 'package:passenger/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -58,7 +59,7 @@ final class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<Map<String, dynamic>, Failure>> registerPassenger({
+  Future<Result<SignUpResult, Failure>> registerPassenger({
     required String name,
     required String email,
     required String phone,
@@ -76,14 +77,20 @@ final class AuthRepositoryImpl implements AuthRepository {
         },
       );
       await _secureSessionService.configurePersistence(rememberMe: true);
-      if (responseData['needsVerification'] != true) {
-        final credentials = _credentialsFromResponse(
-          responseData,
-          fallbackEmail: email,
+      if (responseData['needsVerification'] == true) {
+        final responseEmail = _stringValue(responseData['email']).trim();
+        return Ok(
+          SignUpVerificationRequired(
+            email: responseEmail.isEmpty ? email : responseEmail,
+          ),
         );
-        await _persistSession(credentials);
       }
-      return Ok(responseData);
+      final credentials = _credentialsFromResponse(
+        responseData,
+        fallbackEmail: email,
+      );
+      await _persistSession(credentials);
+      return Ok(SignUpAuthenticated(credentials));
     } catch (error) {
       if (error is ServerException && error.statusCode == 409) {
         return const Err(EmailAlreadyRegisteredFailure());
@@ -115,13 +122,19 @@ final class AuthRepositoryImpl implements AuthRepository {
       await _persistSession(credentials);
       return Ok(credentials);
     } catch (error) {
-      return Err(
-        FailureMapper.fromException(
-          error,
-          serverMessage: "Couldn't verify your code. Try again.",
-          validationMessage: 'Invalid verification code. Try again.',
-        ),
+      final failure = FailureMapper.fromException(
+        error,
+        serverMessage: "Couldn't verify your code. Try again.",
+        validationMessage: 'Invalid verification code. Try again.',
       );
+      if (failure is ValidationFailure) {
+        return const Err(
+          InvalidVerificationCodeFailure(
+            'Invalid verification code. Try again.',
+          ),
+        );
+      }
+      return Err(failure);
     }
   }
 

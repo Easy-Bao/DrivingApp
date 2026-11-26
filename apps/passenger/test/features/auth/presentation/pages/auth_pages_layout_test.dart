@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:passenger/src/features/auth/domain/entities/sign_up_result.dart';
 import 'package:passenger/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/forgot_password/forgot_password_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
@@ -20,7 +21,7 @@ class _UnusedAuthRepository implements AuthRepository {
   }) => Future.error(UnimplementedError());
 
   @override
-  Future<Result<Map<String, dynamic>, Failure>> registerPassenger({
+  Future<Result<SignUpResult, Failure>> registerPassenger({
     required String name,
     required String email,
     required String phone,

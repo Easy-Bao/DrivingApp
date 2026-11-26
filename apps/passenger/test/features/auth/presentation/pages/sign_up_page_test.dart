@@ -9,7 +9,9 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/auth/auth_routes.dart';
+import 'package:passenger/src/features/auth/domain/entities/sign_up_result.dart';
 import 'package:passenger/src/features/auth/domain/repositories/auth_repository.dart';
+import 'package:passenger/src/features/auth/domain/validators/phone_number_validator.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/pages/sign_up_page.dart';
 
@@ -63,7 +65,7 @@ void main() {
     'normalizes mobile number and continues to email verification once',
     (tester) async {
       final repository = _AuthRepository();
-      final response = Completer<Result<Map<String, dynamic>, Failure>>();
+      final response = Completer<Result<SignUpResult, Failure>>();
       when(
         () => repository.registerPassenger(
           name: 'Test Passenger',
@@ -126,11 +128,23 @@ void main() {
           password: 'new-password',
         ),
       ).called(1);
-      response.complete(const Ok({'needsVerification': true}));
+      response.complete(
+        const Ok(SignUpVerificationRequired(email: 'passenger@example.com')),
+      );
       await tester.pumpAndSettle();
       expect(find.text('Verify passenger@example.com'), findsOneWidget);
     },
   );
+
+  test('validates Philippine mobile number length strictly', () {
+    expect(PhoneNumberValidator.isValidPHNumber('09171234567'), isTrue);
+    expect(PhoneNumberValidator.isValidPHNumber('+639171234567'), isTrue);
+    expect(PhoneNumberValidator.isValidPHNumber('0917 123 4567'), isTrue);
+    expect(PhoneNumberValidator.isValidPHNumber('09'), isFalse);
+    expect(PhoneNumberValidator.isValidPHNumber('0917123456'), isFalse);
+    expect(PhoneNumberValidator.isValidPHNumber('091712345678'), isFalse);
+    expect(PhoneNumberValidator.isValidPHNumber('+6391712345'), isFalse);
+  });
 
   testWidgets('keeps sign-up usable with large text and keyboard insets', (
     tester,

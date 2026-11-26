@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:passenger/src/features/auth/domain/entities/sign_up_result.dart';
 import 'package:passenger/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:passenger/src/features/auth/presentation/validation/auth_failure_message.dart';
 import 'package:passenger/src/features/auth/presentation/validation/auth_form_validator.dart';
@@ -45,39 +46,16 @@ class SignUpBloc(this._authRepository) extends Bloc<SignUpEvent, SignUpState> {
       password: normalizedPassword,
     );
 
-    result.fold(
-      (failure) => emit(SignUpFailure(safeAuthFailureMessage(failure))),
-      (response) {
-        final needsVerification = response['needsVerification'] == true;
-        if (needsVerification) {
-          emit(SignUpNeedsVerification(normalizedEmail));
-        } else {
-          final userData = response['user'];
-          final user = userData is Map
-              ? Map<String, dynamic>.from(userData)
-              : const <String, dynamic>{};
-          final credentials = AuthCredentials(
-            passengerId:
-                response['passengerId']?.toString() ??
-                user['id']?.toString() ??
-                '',
-            passengerName: user['name']?.toString() ?? normalizedName,
-            passengerEmail: user['email']?.toString() ?? normalizedEmail,
-            passengerPhone: user['phone']?.toString() ?? normalizedPhone,
-            token: response['token']?.toString() ?? '',
-            refreshToken: response['refreshToken']?.toString() ?? '',
-          );
-          if (credentials.passengerId.isEmpty || credentials.token.isEmpty) {
-            emit(
-              SignUpFailure(
-                ErrorHandler.getErrorMessage(const ServerFailure()),
-              ),
-            );
-            return;
-          }
-          emit(SignUpSuccess(credentials));
+    switch (result) {
+      case Err(:final failure):
+        emit(SignUpFailure(safeAuthFailureMessage(failure)));
+      case Ok(:final value):
+        switch (value) {
+          case SignUpVerificationRequired(:final email):
+            emit(SignUpNeedsVerification(email));
+          case SignUpAuthenticated(:final credentials):
+            emit(SignUpSuccess(credentials));
         }
-      },
-    );
+    }
   }
 }

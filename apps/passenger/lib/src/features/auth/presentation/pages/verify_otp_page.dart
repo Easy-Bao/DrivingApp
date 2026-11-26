@@ -97,11 +97,8 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
             : state is VerifyOtpResendFailure
             ? state.errorMessage
             : null;
-        final seconds = state is VerifyOtpTimerTicking
-            ? state.secondsRemaining
-            : 60;
-        final canResend =
-            state is VerifyOtpTimerExpired || state is VerifyOtpResendFailure;
+        final seconds = state.secondsRemaining;
+        final canResend = state.canResend;
         return AppAuthLayout(
           onBack: () => context.pop(),
           title: 'Check your email',
