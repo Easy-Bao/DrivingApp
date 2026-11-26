@@ -51,6 +51,7 @@ class _FakeGeolocatorPlatform extends GeolocatorPlatform {
 class _FakeLocationRepository implements maps.LocationRepository {
   List<maps.Place> nearbyPlaces = [];
   List<maps.Place> searchPlacesResult = [];
+  bool throwOnSearch = false;
   Completer<Map<String, dynamic>>? nearbyPlacesCompleter;
 
   @override
@@ -58,9 +59,14 @@ class _FakeLocationRepository implements maps.LocationRepository {
     required String query,
     double? userLatitude,
     double? userLongitude,
-  }) async => {
-    'places': [for (final place in searchPlacesResult) place.toJson()],
-  };
+  }) async {
+    if (throwOnSearch) {
+      throw Exception('search backend unavailable');
+    }
+    return {
+      'places': [for (final place in searchPlacesResult) place.toJson()],
+    };
+  }
 
   @override
   Future<maps.Place> reverseGeocode({
@@ -115,6 +121,7 @@ void main() {
     maps.MapProvider.clearLookupCaches();
     locationRepository.nearbyPlaces = [];
     locationRepository.searchPlacesResult = [];
+    locationRepository.throwOnSearch = false;
     locationRepository.nearbyPlacesCompleter = null;
     await maps.LocationService.getCurrentPosition();
   });
@@ -555,6 +562,34 @@ void main() {
 
       locationRepository.nearbyPlacesCompleter!.complete(const {'places': []});
       await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
+    'clears loading state when destination search throws and keeps map-pin key unique when expanded',
+    (tester) async {
+      locationRepository.throwOnSearch = true;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: const SearchDestinationPage(autofocusSearch: true),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(
+        find.byKey(const ValueKey('search-destination-map-pin')),
+        findsOneWidget,
+      );
+
+      await tester.enterText(find.byType(TextField), 'Robinsons');
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+
+      expect(find.text('No places found'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     },
   );
 }

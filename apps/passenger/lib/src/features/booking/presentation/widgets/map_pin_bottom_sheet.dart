@@ -1,0 +1,176 @@
+import 'package:design_system/design_system.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:material_ui/material_ui.dart';
+
+class MapPinBottomSheet extends StatelessWidget {
+  const MapPinBottomSheet({
+    super.key,
+    required this.locationLabel,
+    required this.confirmationLabel,
+    required this.address,
+    required this.subAddress,
+    required this.isGeocoding,
+    required this.onUseCurrentLocation,
+    required this.onConfirm,
+  });
+
+  final String locationLabel;
+  final String confirmationLabel;
+  final String address;
+  final String subAddress;
+  final bool isGeocoding;
+  final VoidCallback onUseCurrentLocation;
+  final VoidCallback onConfirm;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    final textStyles = context.textStyles;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        AppLayout.pagePadding,
+        10,
+        AppLayout.pagePadding,
+        MediaQuery.paddingOf(context).bottom + 10,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colors.onSurface.withValues(alpha: 0.12),
+            blurRadius: 18,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 34,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: colors.onSurface.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerHighest,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  LucideIcons.map_pin,
+                  color: colors.onSurface,
+                  size: 17,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      locationLabel,
+                      style: textStyles.labelSmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      address,
+                      style: textStyles.titleSmall?.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (subAddress.isNotEmpty)
+                      Text(
+                        subAddress,
+                        style: textStyles.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Semantics(
+            button: true,
+            label: 'Use my current location',
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              onTap: onUseCurrentLocation,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minHeight: AppSize.minimumTouchTarget,
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      'Use my current location',
+                      style: textStyles.labelMedium?.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      LucideIcons.chevron_right,
+                      color: colors.onSurfaceVariant,
+                      size: 16,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: double.infinity,
+            height: AppSize.controlHeight,
+            child: FilledButton(
+              onPressed: isGeocoding ? null : onConfirm,
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
+                disabledBackgroundColor: colors.primary.withValues(alpha: 0.45),
+                disabledForegroundColor: colors.onPrimary.withValues(
+                  alpha: 0.7,
+                ),
+                padding: EdgeInsets.zero,
+              ),
+              child: Text(
+                isGeocoding ? 'Locating...' : confirmationLabel,
+                style: textStyles.labelLarge?.copyWith(
+                  color: colors.onPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -2,19 +2,18 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
-import 'package:passenger/src/features/booking/presentation/formatters/search_destination_formatters.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/search_destination/search_destination_cubit.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/search_destination_bar.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/search_destination_results.dart';
 
 class const SearchDestinationPage({
   super.key,
-
   this.pickupAddress,
   this.autofocusSearch = false,
   this.returnToMapPin = false,
@@ -59,35 +58,33 @@ class _SearchDestinationPageState()
   final FocusNode _focusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
 
+  late final SearchDestinationCubit _cubit;
   late final AnimationController _expandController;
-  late final Animation<double> _expandAnimation;
+  late final CurvedAnimation _expandAnimation;
   late final Animation<double> _mapFadeAnimation;
   late final Animation<double> _resultsFadeAnimation;
   late final Animation<double> _mapPinFadeAnimation;
   late final Animation<double> _collapsedControlsFadeAnimation;
+  late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
 
   Timer? _debounce;
   bool _isOpeningMapPin = false;
   bool _isOpeningRideSelection = false;
   bool _isPopping = false;
-  List<Place> _results = [];
-  List<Place> _allNearbyPlaces = [];
-  int _displayedCount = 10;
-  int _currentNearbyPage = 1;
-  bool _isLoadingMoreNearby = false;
-  bool _hasMoreNearbyPages = true;
-  bool _isSearching = false;
-  bool _isLoadingNearby = LocationService.lastPosition != null;
-  final Map<String, double> _drivingDistances = {};
-  final Set<String> _drivingDistanceRequests = {};
-  int _searchRequestId = 0;
-  double? _userLatitude = LocationService.lastPosition?.latitude;
-  double? _userLongitude = LocationService.lastPosition?.longitude;
-  late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
+  Widget? _cachedMapView;
+  AppMapController? _mapController;
+  bool _mapReady = false;
+  MapPointAnnotationManager? _currentLocationMarker;
+  int _locationMarkerRequestId = 0;
 
   @override
   void initState() {
     super.initState();
+    final lastPosition = LocationService.lastPosition;
+    _cubit = SearchDestinationCubit(
+      initialLatitude: lastPosition?.latitude,
+      initialLongitude: lastPosition?.longitude,
+    );
     _expandController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
@@ -128,38 +125,10 @@ class _SearchDestinationPageState()
     _searchController.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _expandAnimation.dispose();
     _expandController.dispose();
+    unawaited(_cubit.close());
     super.dispose();
-  }
-
-  void _onLifecycleChanged(AppLifecycleStatus status) {
-    if (status != AppLifecycleStatus.foreground || !mounted) return;
-    unawaited(_reloadAfterForeground());
-  }
-
-  Future<void> _reloadAfterForeground() async {
-    if (!mounted) return;
-    if (_searchController.text.trim().isEmpty) {
-      if (_userLatitude == null || _userLongitude == null) {
-        await _initLocation();
-        return;
-      }
-      setState(() => _isLoadingNearby = true);
-      await _loadNearbyPlaces();
-      return;
-    }
-    await _performSearch();
-  }
-
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-    if (_searchController.text.trim().isNotEmpty) return;
-
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    final currentScroll = _scrollController.position.pixels;
-    if (currentScroll >= maxScroll - 160) {
-      _loadNextLazyBatch();
-    }
   }
 
   Animation<double> _fadeAfter(double start) {
@@ -176,66 +145,47 @@ class _SearchDestinationPageState()
     ).chain(CurveTween(curve: Interval(0, end))).animate(_expandAnimation);
   }
 
-  void _loadNextLazyBatch() {
-    if (_searchController.text.trim().isNotEmpty) return;
-
-    if (_displayedCount < _allNearbyPlaces.length) {
-      setState(() {
-        _displayedCount = (_displayedCount + 10).clamp(
-          0,
-          _allNearbyPlaces.length,
-        );
-      });
-      return;
-    }
-
-    if (!_isLoadingMoreNearby && _hasMoreNearbyPages) {
-      unawaited(_fetchMoreNearbyFromApi());
+  bool _isAuthenticated() {
+    if (!mounted) return false;
+    try {
+      return BlocProvider.of<SessionBloc>(context).state
+          is AuthenticatedSession;
+    } catch (_) {
+      return false;
     }
   }
 
-  Future<void> _fetchMoreNearbyFromApi() async {
-    if (_userLatitude == null ||
-        _userLongitude == null ||
-        _isLoadingMoreNearby) {
+  void _onLifecycleChanged(AppLifecycleStatus status) {
+    if (status != AppLifecycleStatus.foreground || !mounted) return;
+    unawaited(_reloadAfterForeground());
+  }
+
+  Future<void> _reloadAfterForeground() async {
+    if (!mounted) return;
+    if (_searchController.text.trim().isEmpty) {
+      if (_cubit.state.userLatitude == null ||
+          _cubit.state.userLongitude == null) {
+        await _initLocation();
+        return;
+      }
+      _cubit.markNearbyRefreshing();
+      await _cubit.loadNearbyPlaces();
       return;
     }
-    setState(() => _isLoadingMoreNearby = true);
+    await _cubit.performSearch(
+      _searchController.text,
+      isAuthenticated: _isAuthenticated(),
+    );
+  }
 
-    final nextPage = _currentNearbyPage + 1;
-    try {
-      final moreResults = await MapProvider.getNearbyPOIs(
-        latitude: _userLatitude!,
-        longitude: _userLongitude!,
-        page: nextPage,
-      );
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_searchController.text.trim().isNotEmpty) return;
 
-      if (mounted) {
-        _currentNearbyPage = nextPage;
-        if (moreResults.isEmpty) {
-          _hasMoreNearbyPages = false;
-        } else {
-          final previousCount = _allNearbyPlaces.length;
-          _allNearbyPlaces = mergeUniqueDestinationResults(
-            _allNearbyPlaces,
-            moreResults,
-          );
-          final addedCount = _allNearbyPlaces.length - previousCount;
-          _allNearbyPlaces.sort((a, b) {
-            final double distA = a.distanceKm ?? double.maxFinite;
-            final double distB = b.distanceKm ?? double.maxFinite;
-            return distA.compareTo(distB);
-          });
-          _displayedCount = _allNearbyPlaces.length;
-          if (addedCount == 0 || moreResults.length < 10) {
-            _hasMoreNearbyPages = false;
-          }
-        }
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoadingMoreNearby = false);
-      }
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    if (currentScroll >= maxScroll - 160) {
+      _cubit.loadNextNearbyBatch();
     }
   }
 
@@ -269,10 +219,9 @@ class _SearchDestinationPageState()
   }
 
   Future<void> _initLocation() async {
-    _userLatitude ??= LocationService.lastPosition?.latitude;
-    _userLongitude ??= LocationService.lastPosition?.longitude;
-    if (_userLatitude != null && _userLongitude != null) {
-      unawaited(_loadNearbyPlaces());
+    if (_cubit.state.userLatitude != null &&
+        _cubit.state.userLongitude != null) {
+      unawaited(_cubit.loadNearbyPlaces());
     }
 
     final hasLocationAccess =
@@ -281,14 +230,14 @@ class _SearchDestinationPageState()
         ? await LocationService.getCurrentPosition()
         : null;
     if (position != null && mounted) {
-      setState(() {
-        _userLatitude = position.latitude;
-        _userLongitude = position.longitude;
-        _isLoadingNearby = true;
-      });
-      if (_mapController != null) {
+      _cubit.updateUserLocation(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+      final controller = _mapController;
+      if (controller != null) {
         await MapProvider.moveCamera(
-          _mapController!,
+          controller,
           position.latitude,
           position.longitude,
           zoom: 14.5,
@@ -298,151 +247,39 @@ class _SearchDestinationPageState()
           _updateCurrentLocationMarker(position.latitude, position.longitude),
         );
       }
-      unawaited(_loadNearbyPlaces());
-    } else if (mounted && (_userLatitude == null || _userLongitude == null)) {
-      setState(() => _isLoadingNearby = false);
-    }
-  }
-
-  Future<void> _loadNearbyPlaces() async {
-    final latitude = _userLatitude;
-    final longitude = _userLongitude;
-    if (latitude == null || longitude == null) {
-      if (mounted) setState(() => _isLoadingNearby = false);
-      return;
-    }
-
-    try {
-      final results = await MapProvider.getNearbyPOIs(
-        latitude: latitude,
-        longitude: longitude,
-        page: 1,
-      );
-
-      if (mounted) {
-        setState(() {
-          _allNearbyPlaces = results;
-          _displayedCount = results.length;
-          _currentNearbyPage = 1;
-          _hasMoreNearbyPages = results.length == 10;
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoadingNearby = false);
-      }
+      unawaited(_cubit.loadNearbyPlaces());
+    } else if (mounted &&
+        (_cubit.state.userLatitude == null ||
+            _cubit.state.userLongitude == null)) {
+      _cubit.markNearbyLoadStopped();
     }
   }
 
   void _onSearchChanged() {
-    _searchRequestId++;
     _debounce?.cancel();
-    if (_searchController.text.trim().isEmpty) {
-      setState(() {
-        _results = [];
-        _isSearching = false;
-      });
+    final query = _searchController.text.trim();
+    if (query.isEmpty) {
+      _cubit.clearSearch();
       if (!_focusNode.hasFocus) {
         unawaited(_expandController.reverse());
       }
+      setState(() {});
       return;
     }
 
     unawaited(_expandController.forward());
-    setState(() => _isSearching = true);
+    final requestId = _cubit.startSearchPending();
+    setState(() {});
     _debounce = Timer(
       SearchDestinationPage.searchDebounceDuration,
-      () => _performSearch(),
-    );
-  }
-
-  Future<void> _performSearch() async {
-    final query = _searchController.text.trim();
-    if (query.isEmpty) return;
-    final requestId = _searchRequestId;
-
-    final localMatches = _allNearbyPlaces
-        .where((place) => destinationMatchesSearchQuery(place, query))
-        .toList();
-
-    final apiResults = await MapProvider.searchPlaces(
-      query,
-      latitude: _userLatitude,
-      longitude: _userLongitude,
-    );
-
-    final mergedResults = mergeUniqueDestinationResults(
-      localMatches,
-      apiResults.where(
-        (place) =>
-            (place.distanceKm == null || place.distanceKm! <= 10.0) &&
-            destinationMatchesSearchQuery(place, query),
+      () => unawaited(
+        _cubit.performSearch(
+          _searchController.text,
+          isAuthenticated: _isAuthenticated(),
+          requestId: requestId,
+        ),
       ),
-      compareCoordinates: true,
     );
-
-    if (mounted && requestId == _searchRequestId) {
-      setState(() {
-        _results = sortDestinationsByDistance(mergedResults, _drivingDistances);
-        _isSearching = false;
-      });
-      unawaited(_loadDrivingDistances(mergedResults, requestId));
-    }
-  }
-
-  Future<void> _loadDrivingDistances(List<Place> places, int requestId) async {
-    if (!mounted ||
-        BlocProvider.of<SessionBloc>(context).state is! AuthenticatedSession) {
-      return;
-    }
-    if (_userLatitude == null || _userLongitude == null) return;
-
-    final pendingPlaces = <Place>[];
-    final pendingKeys = <String>[];
-    for (final place in places) {
-      final key = destinationPlaceKey(place);
-      if (_drivingDistances.containsKey(key) ||
-          !_drivingDistanceRequests.add(key)) {
-        continue;
-      }
-      pendingPlaces.add(place);
-      pendingKeys.add(key);
-    }
-
-    if (pendingPlaces.isEmpty) return;
-
-    try {
-      final distances = await MapProvider.getDrivingDistances(
-        originLatitude: _userLatitude!,
-        originLongitude: _userLongitude!,
-        destinations: [
-          for (final place in pendingPlaces)
-            (latitude: place.latitude, longitude: place.longitude),
-        ],
-      );
-      if (distances == null || !mounted) return;
-
-      final resolvedDistances = <String, double>{};
-      for (var index = 0; index < pendingKeys.length; index++) {
-        if (index >= distances.length) break;
-        final distance = distances[index];
-        if (distance.isFinite && distance >= 0) {
-          resolvedDistances[pendingKeys[index]] = distance;
-        }
-      }
-      if (resolvedDistances.isEmpty) return;
-
-      setState(() {
-        _drivingDistances.addAll(resolvedDistances);
-        if (requestId == _searchRequestId) {
-          _results = sortDestinationsByDistance(_results, _drivingDistances);
-        }
-      });
-    } finally {
-      for (final key in pendingKeys) {
-        _drivingDistanceRequests.remove(key);
-      }
-    }
   }
 
   Future<void> _onPlaceSelected(Place place) async {
@@ -450,12 +287,15 @@ class _SearchDestinationPageState()
     _isOpeningRideSelection = true;
     _clearSearchAfterSelection();
     final queryParams = <String, String>{};
-    if (widget.pickupAddress != null) {
-      queryParams['pickupAddress'] = widget.pickupAddress!;
+    final pickupAddress = widget.pickupAddress;
+    if (pickupAddress != null) {
+      queryParams['pickupAddress'] = pickupAddress;
     }
-    if (_userLatitude != null && _userLongitude != null) {
-      queryParams['pickupLat'] = _userLatitude!.toString();
-      queryParams['pickupLng'] = _userLongitude!.toString();
+    final userLat = _cubit.state.userLatitude;
+    final userLng = _cubit.state.userLongitude;
+    if (userLat != null && userLng != null) {
+      queryParams['pickupLat'] = userLat.toString();
+      queryParams['pickupLng'] = userLng.toString();
     }
     try {
       await context.pushNamed(
@@ -469,12 +309,10 @@ class _SearchDestinationPageState()
   }
 
   void _clearSearchAfterSelection() {
-    _searchRequestId++;
     _debounce?.cancel();
     _debounce = null;
     _searchController.clear();
-    _results = [];
-    _isSearching = false;
+    _cubit.clearSearch();
   }
 
   Future<void> _openMapPin() async {
@@ -486,7 +324,7 @@ class _SearchDestinationPageState()
     _isOpeningMapPin = true;
     try {
       final result = await context.pushNamed(BookingRoutes.mapPin);
-      if (mounted && result != null && result is Place) {
+      if (mounted && result is Place) {
         unawaited(_onPlaceSelected(result));
       }
     } finally {
@@ -494,14 +332,8 @@ class _SearchDestinationPageState()
     }
   }
 
-  Widget? _cachedMapView;
-  AppMapController? _mapController;
-  bool _mapReady = false;
-  MapPointAnnotationManager? _currentLocationMarker;
-  int _locationMarkerRequestId = 0;
-
   Widget _getMapView(double lat, double lng) {
-    _cachedMapView ??= MapProvider.buildMapView(
+    return _cachedMapView ??= MapProvider.buildMapView(
       latitude: lat,
       longitude: lng,
       zoom: 14.5,
@@ -517,13 +349,12 @@ class _SearchDestinationPageState()
         setState(() => _mapReady = true);
         unawaited(
           _updateCurrentLocationMarker(
-            _userLatitude ?? lat,
-            _userLongitude ?? lng,
+            _cubit.state.userLatitude ?? lat,
+            _cubit.state.userLongitude ?? lng,
           ),
         );
       },
     );
-    return _cachedMapView!;
   }
 
   Future<void> _updateCurrentLocationMarker(double lat, double lng) async {
@@ -554,25 +385,11 @@ class _SearchDestinationPageState()
 
   @override
   Widget build(BuildContext context) {
-    final defaultLatitude = _userLatitude;
-    final defaultLongitude = _userLongitude;
-    final hasQuery = _searchController.text.trim().isNotEmpty;
-    final displayList = hasQuery
-        ? _results
-        : _allNearbyPlaces.take(_displayedCount).toList();
-    final shouldShowLoading = shouldShowDestinationResultsLoading(
-      isSearching: _isSearching,
-      hasQuery: hasQuery,
-    );
-    final shouldHideInitialResults = shouldHideInitialDestinationResults(
-      isLoadingNearby: _isLoadingNearby,
-      hasQuery: hasQuery,
-      hasResults: displayList.isNotEmpty,
-    );
-    final screenSize = MediaQuery.of(context).size;
-    final topPadding = MediaQuery.of(context).padding.top;
+    final screenSize = MediaQuery.sizeOf(context);
+    final mediaPadding = MediaQuery.paddingOf(context);
+    final topPadding = mediaPadding.top;
     final viewInsetsBottom = MediaQuery.viewInsetsOf(context).bottom;
-    final systemBottomPadding = MediaQuery.of(context).padding.bottom;
+    final systemBottomPadding = mediaPadding.bottom;
     final bottomPadding = viewInsetsBottom > systemBottomPadding
         ? viewInsetsBottom
         : systemBottomPadding;
@@ -580,403 +397,83 @@ class _SearchDestinationPageState()
       screenHeight: screenSize.height,
       keyboardInset: viewInsetsBottom,
     );
+    final hasQuery = _searchController.text.trim().isNotEmpty;
 
-    return Scaffold(
-      backgroundColor: context.colorScheme.surface,
-      resizeToAvoidBottomInset: false,
-      body: SizedBox.expand(
-        child: AnimatedBuilder(
-          animation: _expandAnimation,
-          builder: (context, child) {
-            final t = _expandAnimation.value;
+    final mapLayer =
+        BlocBuilder<SearchDestinationCubit, SearchDestinationState>(
+          bloc: _cubit,
+          buildWhen: (previous, current) =>
+              (previous.userLatitude == null) !=
+                  (current.userLatitude == null) ||
+              (previous.userLongitude == null) !=
+                  (current.userLongitude == null),
+          builder: (context, state) {
+            final lat = state.userLatitude;
+            final lng = state.userLongitude;
+            return GestureDetector(
+              onTap: () {
+                if (_focusNode.hasFocus) {
+                  _focusNode.unfocus();
+                }
+                unawaited(_expandController.reverse());
+              },
+              child: lat != null && lng != null
+                  ? _getMapView(lat, lng)
+                  : ColoredBox(
+                      color: context.colorScheme.surfaceContainerHighest,
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+            );
+          },
+        );
 
-            final containerLeft = (1.0 - t) * 56.0;
-            final containerTop = (1.0 - t) * (topPadding + 10.0);
-            final containerRight = (1.0 - t) * 56.0;
-            final containerHeight =
-                52.0 +
-                t * (availableHeight - (1.0 - t) * (topPadding + 10.0) - 52.0);
-            final containerRadius = (1.0 - t) * 36.0;
+    final resultsPanelContent =
+        BlocBuilder<SearchDestinationCubit, SearchDestinationState>(
+          bloc: _cubit,
+          builder: (context, state) {
+            final displayList = state.visiblePlaces(hasQuery: hasQuery);
+            final shouldShowLoading = shouldShowDestinationResultsLoading(
+              isSearching: state.isSearching,
+              hasQuery: hasQuery,
+            );
+            final shouldHideInitialResults =
+                shouldHideInitialDestinationResults(
+                  isLoadingNearby: state.isLoadingNearby,
+                  hasQuery: hasQuery,
+                  hasResults: displayList.isNotEmpty,
+                );
+            if (shouldHideInitialResults) return const SizedBox.shrink();
 
-            return Stack(
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Positioned.fill(
-                  child: FadeTransition(
-                    opacity: _mapFadeAnimation,
-                    child: IgnorePointer(
-                      ignoring: t > 0.5,
-                      child: GestureDetector(
-                        onTap: () {
-                          if (_focusNode.hasFocus) {
-                            _focusNode.unfocus();
-                          }
-                          unawaited(_expandController.reverse());
-                        },
-                        child:
-                            defaultLatitude != null && defaultLongitude != null
-                            ? _getMapView(defaultLatitude, defaultLongitude)
-                            : ColoredBox(
-                                color:
-                                    context.colorScheme.surfaceContainerHighest,
-                                child: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                      ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 6),
+                  child: Text(
+                    hasQuery ? 'Search Results' : 'Nearby Places',
+                    style: context.textStyles.labelSmall?.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: context.colorScheme.onSurfaceVariant,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
-                if (t > 0.01)
-                  Positioned(
-                    left: containerLeft,
-                    top: containerTop,
-                    right: containerRight,
-                    height: containerHeight,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(containerRadius),
-                      child: Material(
-                        color: context.colorScheme.surface,
-                        elevation: 8 * t,
-                        child: Container(
-                          color: context.colorScheme.surface,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(height: t * (topPadding + 62.0)),
-                              if (t > 0.2 && !shouldHideInitialResults)
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    20,
-                                    10,
-                                    20,
-                                    6,
-                                  ),
-                                  child: Text(
-                                    hasQuery
-                                        ? 'Search Results'
-                                        : 'Nearby Places',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                      color:
-                                          context.colorScheme.onSurfaceVariant,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ),
-                              if (t > 0.2 && !shouldHideInitialResults)
-                                Expanded(
-                                  child: FadeTransition(
-                                    opacity: _resultsFadeAnimation,
-                                    child: Material(
-                                      color: context.colorScheme.surface
-                                          .withValues(alpha: 0),
-                                      child: SearchDestinationResults(
-                                        places: displayList,
-                                        hasQuery: hasQuery,
-                                        isLoading: shouldShowLoading,
-                                        isLoadingMoreNearby:
-                                            _isLoadingMoreNearby,
-                                        bottomPadding: bottomPadding,
-                                        scrollController: _scrollController,
-                                        drivingDistances: _drivingDistances,
-                                        drivingDistanceRequests:
-                                            _drivingDistanceRequests,
-                                        onPlaceSelected: _onPlaceSelected,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    child: SizedBox(
-                      height: 52,
-                      width: double.infinity,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Positioned.fill(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: (1.0 - t) * 56.0,
-                              ),
-                              child: Hero(
-                                tag: 'search_bar_field',
-                                child: Material(
-                                  color: context.colorScheme.surface.withValues(
-                                    alpha: 0,
-                                  ),
-                                  child: Container(
-                                    height: 52,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: context.colorScheme.surface,
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.pill,
-                                      ),
-                                      border: Border.all(
-                                        color:
-                                            context.colorScheme.outlineVariant,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        GestureDetector(
-                                          key: const ValueKey(
-                                            'search-destination-back',
-                                          ),
-                                          onTap: () {
-                                            _handleSearchBackTap();
-                                          },
-                                          child: SizedBox(
-                                            width: AppSize.minimumTouchTarget,
-                                            height: AppSize.minimumTouchTarget,
-                                            child: Center(
-                                              child: AnimatedSwitcher(
-                                                duration: const Duration(
-                                                  milliseconds: 200,
-                                                ),
-                                                transitionBuilder:
-                                                    (child, animation) =>
-                                                        ScaleTransition(
-                                                          scale: animation,
-                                                          child: child,
-                                                        ),
-                                                child: Icon(
-                                                  t > 0.4
-                                                      ? LucideIcons.arrow_left
-                                                      : LucideIcons.search,
-                                                  key: ValueKey(t > 0.4),
-                                                  color: context
-                                                      .colorScheme
-                                                      .onSurface,
-                                                  size: 20,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: TextField(
-                                            controller: _searchController,
-                                            focusNode: _focusNode,
-                                            autofocus: false,
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              color:
-                                                  context.colorScheme.onSurface,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                            decoration: InputDecoration(
-                                              hintText: 'Search destination',
-                                              hintStyle: TextStyle(
-                                                fontSize: 15,
-                                                color: context
-                                                    .colorScheme
-                                                    .onSurfaceVariant,
-                                                fontWeight: FontWeight.w400,
-                                              ),
-                                              border: InputBorder.none,
-                                              enabledBorder: InputBorder.none,
-                                              focusedBorder: InputBorder.none,
-                                              disabledBorder: InputBorder.none,
-                                              errorBorder: InputBorder.none,
-                                              focusedErrorBorder:
-                                                  InputBorder.none,
-                                              isDense: true,
-                                              contentPadding: EdgeInsets.zero,
-                                            ),
-                                          ),
-                                        ),
-                                        if (_searchController.text.isNotEmpty)
-                                          GestureDetector(
-                                            onTap: () =>
-                                                _searchController.clear(),
-                                            child: SizedBox(
-                                              width: AppSize.minimumTouchTarget,
-                                              height:
-                                                  AppSize.minimumTouchTarget,
-                                              child: Center(
-                                                child: Icon(
-                                                  LucideIcons.x,
-                                                  size: 18,
-                                                  color: context
-                                                      .colorScheme
-                                                      .onSurfaceVariant,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        if (t >= 0.4)
-                                          FadeTransition(
-                                            opacity: _mapPinFadeAnimation,
-                                            child: Transform.scale(
-                                              scale: ((t - 0.4) / 0.6).clamp(
-                                                0.0,
-                                                1.0,
-                                              ),
-                                              child: GestureDetector(
-                                                key: const ValueKey(
-                                                  'search-destination-map-pin',
-                                                ),
-                                                onTap: _openMapPin,
-                                                child: Material(
-                                                  color: context
-                                                      .colorScheme
-                                                      .surface
-                                                      .withValues(alpha: 0),
-                                                  child: SizedBox(
-                                                    width: AppSize
-                                                        .minimumTouchTarget,
-                                                    height: AppSize
-                                                        .minimumTouchTarget,
-                                                    child: Center(
-                                                      child: Container(
-                                                        width: 36,
-                                                        height: 36,
-                                                        decoration: BoxDecoration(
-                                                          color: context
-                                                              .colorScheme
-                                                              .surfaceContainerHighest,
-                                                          shape:
-                                                              BoxShape.circle,
-                                                        ),
-                                                        child: Icon(
-                                                          LucideIcons.map_pin,
-                                                          color: context
-                                                              .colorScheme
-                                                              .onSurface,
-                                                          size: 18,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          if (t < 0.4)
-                            Positioned(
-                              left: 0,
-                              top: 3,
-                              child: FadeTransition(
-                                opacity: _collapsedControlsFadeAnimation,
-                                child: Transform.scale(
-                                  scale: (1.0 - t * 0.5).clamp(0.0, 1.0),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      _handleSearchBackTap();
-                                    },
-                                    child: Container(
-                                      width: AppSize.minimumTouchTarget,
-                                      height: AppSize.minimumTouchTarget,
-                                      decoration: BoxDecoration(
-                                        color: context.colorScheme.surface,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: context.colorScheme.onSurface
-                                                .withValues(alpha: 0.08),
-                                            blurRadius: 15,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Center(
-                                        child: Icon(
-                                          LucideIcons.arrow_left,
-                                          color: context.colorScheme.onSurface,
-                                          size: 20,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          Positioned(
-                            right: 0,
-                            top: 3,
-                            child: FadeTransition(
-                              opacity: _collapsedControlsFadeAnimation,
-                              child: Transform.scale(
-                                scale: (1.0 - t * 0.5).clamp(0.0, 1.0),
-                                child: GestureDetector(
-                                  key: const ValueKey(
-                                    'search-destination-map-pin',
-                                  ),
-                                  onTap: _openMapPin,
-                                  child: SizedBox(
-                                    width: AppSize.minimumTouchTarget,
-                                    height: AppSize.minimumTouchTarget,
-                                    child: Hero(
-                                      tag: BookingRoutes.mapPinHeroTag,
-                                      child: FittedBox(
-                                        child: Material(
-                                          color: context.colorScheme.surface
-                                              .withValues(alpha: 0),
-                                          child: Container(
-                                            width: AppSize.minimumTouchTarget,
-                                            height: AppSize.minimumTouchTarget,
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  context.colorScheme.surface,
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: context
-                                                    .colorScheme
-                                                    .outlineVariant,
-                                              ),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: context
-                                                      .colorScheme
-                                                      .onSurface
-                                                      .withValues(alpha: 0.08),
-                                                  blurRadius: 15,
-                                                  offset: const Offset(0, 4),
-                                                ),
-                                              ],
-                                            ),
-                                            child: Center(
-                                              child: Icon(
-                                                LucideIcons.map_pin,
-                                                color: context
-                                                    .colorScheme
-                                                    .onSurface,
-                                                size: 20,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                Expanded(
+                  child: FadeTransition(
+                    opacity: _resultsFadeAnimation,
+                    child: Material(
+                      color: context.colorScheme.surface.withValues(alpha: 0),
+                      child: SearchDestinationResults(
+                        places: displayList,
+                        hasQuery: hasQuery,
+                        isLoading: shouldShowLoading,
+                        isLoadingMoreNearby: state.isLoadingMoreNearby,
+                        bottomPadding: bottomPadding,
+                        scrollController: _scrollController,
+                        drivingDistances: state.drivingDistances,
+                        drivingDistanceRequests: state.drivingDistanceRequests,
+                        onPlaceSelected: _onPlaceSelected,
                       ),
                     ),
                   ),
@@ -984,6 +481,85 @@ class _SearchDestinationPageState()
               ],
             );
           },
+        );
+
+    return Scaffold(
+      backgroundColor: context.colorScheme.surface,
+      resizeToAvoidBottomInset: false,
+      body: SizedBox.expand(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: FadeTransition(
+                opacity: _mapFadeAnimation,
+                child: AnimatedBuilder(
+                  animation: _expandAnimation,
+                  child: mapLayer,
+                  builder: (_, child) => IgnorePointer(
+                    ignoring: _expandAnimation.value > 0.5,
+                    child: child,
+                  ),
+                ),
+              ),
+            ),
+            AnimatedBuilder(
+              animation: _expandAnimation,
+              child: resultsPanelContent,
+              builder: (context, resultsChild) {
+                final t = _expandAnimation.value;
+                final containerLeft = (1.0 - t) * 56.0;
+                final containerTop = (1.0 - t) * (topPadding + 10.0);
+                final containerRight = (1.0 - t) * 56.0;
+                final containerHeight =
+                    52.0 +
+                    t *
+                        (availableHeight -
+                            (1.0 - t) * (topPadding + 10.0) -
+                            52.0);
+                final containerRadius = (1.0 - t) * 36.0;
+
+                return Stack(
+                  children: [
+                    if (t > 0.01)
+                      Positioned(
+                        left: containerLeft,
+                        top: containerTop,
+                        right: containerRight,
+                        height: containerHeight,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(containerRadius),
+                          child: Material(
+                            color: context.colorScheme.surface,
+                            elevation: 8 * t,
+                            child: ColoredBox(
+                              color: context.colorScheme.surface,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(height: t * (topPadding + 62.0)),
+                                  if (t > 0.2) Expanded(child: resultsChild!),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    SearchDestinationBar(
+                      expandProgress: t,
+                      mapPinFadeAnimation: _mapPinFadeAnimation,
+                      collapsedControlsFadeAnimation:
+                          _collapsedControlsFadeAnimation,
+                      searchController: _searchController,
+                      focusNode: _focusNode,
+                      onBackTap: _handleSearchBackTap,
+                      onOpenMapPin: () => unawaited(_openMapPin()),
+                      onClearSearch: _searchController.clear,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
         ),
       ),
     );

@@ -27,6 +27,7 @@ class const DestinationMapPage({
 
 class _DestinationMapPageState() extends State<DestinationMapPage> {
   AppMapController? _mapController;
+  Widget? _cachedMapView;
   String _fullAddress = '';
   bool _isLoading = true;
   bool _routeDataLoaded = false;
@@ -159,27 +160,30 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
     }
   }
 
+  Widget _buildMapView() {
+    return _cachedMapView ??= MapProvider.buildMapView(
+      latitude: widget.destinationLat,
+      longitude: widget.destinationLng,
+      zoom: 13.0,
+      onMapCreated: (controller) {
+        _mapController = controller;
+        _ensureRouteDataLoaded();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final origin = _originCoordinate;
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
       body: Stack(
         children: [
-          Positioned.fill(
-            child: MapProvider.buildMapView(
-              latitude: widget.destinationLat,
-              longitude: widget.destinationLng,
-              zoom: 13.0,
-              onMapCreated: (c) {
-                _mapController = c;
-                _ensureRouteDataLoaded();
-              },
-            ),
-          ),
+          Positioned.fill(child: _buildMapView()),
           Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
+            top: MediaQuery.paddingOf(context).top + 8,
             left: 16,
-            child: _buildTripBackButton(context, () => context.pop()),
+            child: AppMapBackButton(onPressed: () => context.pop()),
           ),
           Align(
             alignment: Alignment.bottomCenter,
@@ -243,8 +247,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                             children: [
                               Text(
                                 widget.placeName,
-                                style: TextStyle(
-                                  fontSize: 20,
+                                style: context.textStyles.titleLarge?.copyWith(
                                   fontWeight: FontWeight.w800,
                                   color: context.colorScheme.onSurface,
                                 ),
@@ -252,8 +255,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                               const SizedBox(height: 4),
                               Text(
                                 _isLoading ? 'Loading...' : _fullAddress,
-                                style: TextStyle(
-                                  fontSize: 13,
+                                style: context.textStyles.bodySmall?.copyWith(
                                   color: context.colorScheme.onSurfaceVariant,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -278,10 +280,13 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                       height: AppSize.controlHeight,
                       child: ElevatedButton(
                         onPressed: () {
+                          final resolvedAddress = _fullAddress.trim().isNotEmpty
+                              ? _fullAddress.trim()
+                              : widget.placeSubtitle;
                           final place = Place(
                             id: 'destination_place_${widget.placeName.replaceAll(' ', '_')}',
                             name: widget.placeName,
-                            fullAddress: widget.placeSubtitle,
+                            fullAddress: resolvedAddress,
                             latitude: widget.destinationLat,
                             longitude: widget.destinationLng,
                           );
@@ -290,11 +295,9 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                               BookingRoutes.rideSelection,
                               extra: place,
                               queryParameters: {
-                                if (_originCoordinate != null) ...{
-                                  'pickupLat': _originCoordinate!.lat
-                                      .toString(),
-                                  'pickupLng': _originCoordinate!.lng
-                                      .toString(),
+                                if (origin != null) ...{
+                                  'pickupLat': origin.lat.toString(),
+                                  'pickupLng': origin.lng.toString(),
                                 },
                               },
                             ),
@@ -308,10 +311,10 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                           ),
                           elevation: 0,
                         ),
-                        child: const Text(
+                        child: Text(
                           'Book Ride',
-                          style: TextStyle(
-                            fontSize: 16,
+                          style: context.textStyles.titleSmall?.copyWith(
+                            color: context.colorScheme.onPrimary,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -326,31 +329,4 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
       ),
     );
   }
-}
-
-Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
-  return Tooltip(
-    message: MaterialLocalizations.of(context).backButtonTooltip,
-    child: Material(
-      color: context.colorScheme.surface,
-      elevation: 2,
-      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPressed,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: AppSize.minimumTouchTarget,
-          height: AppSize.minimumTouchTarget,
-          child: Center(
-            child: Icon(
-              LucideIcons.arrow_left,
-              color: context.colorScheme.onSurface,
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
 }

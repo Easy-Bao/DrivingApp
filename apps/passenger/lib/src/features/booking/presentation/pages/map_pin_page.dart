@@ -7,6 +7,7 @@ import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/presentation/formatters/map_pin_address_formatter.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/map_pin_bottom_sheet.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/map_selection_marker.dart';
 
 enum MapPinFlow { pickup, savedPlace }
@@ -56,8 +57,10 @@ class _MapPinPageState()
       duration: const Duration(milliseconds: 180),
       reverseDuration: const Duration(milliseconds: 220),
     );
-    if (_centerLat != null && _centerLng != null) {
-      unawaited(_reverseGeocode(_centerLat!, _centerLng!));
+    final lat = _centerLat;
+    final lng = _centerLng;
+    if (lat != null && lng != null) {
+      unawaited(_reverseGeocode(lat, lng));
     }
     unawaited(_initLocation());
   }
@@ -87,11 +90,12 @@ class _MapPinPageState()
           _centerLat = pos.latitude;
           _centerLng = pos.longitude;
         });
-        if (_mapController != null) {
+        final controller = _mapController;
+        if (controller != null) {
           _isProgrammaticCameraMove = true;
           try {
             await MapProvider.moveCamera(
-              _mapController!,
+              controller,
               pos.latitude,
               pos.longitude,
               zoom: 15.0,
@@ -105,26 +109,30 @@ class _MapPinPageState()
         unawaited(_reverseGeocode(pos.latitude, pos.longitude));
       }
     } else if (mounted && _address == 'Move the map to select a location') {
-      if (_centerLat != null && _centerLng != null) {
-        unawaited(_reverseGeocode(_centerLat!, _centerLng!));
+      final lat = _centerLat;
+      final lng = _centerLng;
+      if (lat != null && lng != null) {
+        unawaited(_reverseGeocode(lat, lng));
       }
     }
   }
 
   void _onMapCreated(AppMapController controller) {
     _mapController = controller;
-    if (_centerLat != null && _centerLng != null) {
+    final lat = _centerLat;
+    final lng = _centerLng;
+    if (lat != null && lng != null) {
       _isProgrammaticCameraMove = true;
       unawaited(
         MapProvider.moveCamera(
           controller,
-          _centerLat!,
-          _centerLng!,
+          lat,
+          lng,
           zoom: 15.0,
         ).whenComplete(() => _isProgrammaticCameraMove = false),
       );
       if (!_hasUserPannedMap) {
-        unawaited(_reverseGeocode(_centerLat!, _centerLng!));
+        unawaited(_reverseGeocode(lat, lng));
       }
     }
   }
@@ -253,7 +261,9 @@ class _MapPinPageState()
   }
 
   void _confirmLocation() {
-    if (_centerLat == null || _centerLng == null) return;
+    final lat = _centerLat;
+    final lng = _centerLng;
+    if (lat == null || lng == null) return;
     final result = Place(
       id: 'pin_${DateTime.now().millisecondsSinceEpoch}',
       name: _address,
@@ -261,34 +271,32 @@ class _MapPinPageState()
         _address,
         if (_subAddress.isNotEmpty) _subAddress,
       ].join(', '),
-      latitude: _centerLat!,
-      longitude: _centerLng!,
+      latitude: lat,
+      longitude: lng,
     );
     _popOnce(result);
   }
 
-  Widget _getMapView() {
-    if (_centerLat == null || _centerLng == null) {
-      return const SizedBox.shrink();
-    }
-    _cachedMapView ??= MapProvider.buildMapView(
-      latitude: _centerLat!,
-      longitude: _centerLng!,
+  Widget _getMapView(double lat, double lng) {
+    return _cachedMapView ??= MapProvider.buildMapView(
+      latitude: lat,
+      longitude: lng,
       zoom: 15.0,
       onMapCreated: _onMapCreated,
       onCameraChanged: _onCameraChanged,
       onMapIdle: _onMapIdle,
     );
-    return _cachedMapView!;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_centerLat == null || _centerLng == null) {
+    final lat = _centerLat;
+    final lng = _centerLng;
+    if (lat == null || lng == null) {
       return Scaffold(
         backgroundColor: context.colorScheme.surface,
         appBar: AppBar(
-          leading: Center(child: _buildTripBackButton(context, _popOnce)),
+          leading: Center(child: AppMapBackButton(onPressed: _popOnce)),
         ),
         body: Center(
           child: CircularProgressIndicator(
@@ -297,11 +305,12 @@ class _MapPinPageState()
         ),
       );
     }
+
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
       body: Stack(
         children: [
-          _getMapView(),
+          _getMapView(lat, lng),
           Center(
             child: AnimatedBuilder(
               animation: _pinAnimationController,
@@ -333,7 +342,7 @@ class _MapPinPageState()
                 child: widget.flow == MapPinFlow.savedPlace
                     ? Align(
                         alignment: Alignment.centerLeft,
-                        child: _buildTripBackButton(context, _popOnce),
+                        child: AppMapBackButton(onPressed: _popOnce),
                       )
                     : Stack(
                         children: [
@@ -345,7 +354,7 @@ class _MapPinPageState()
                           Positioned(
                             left: 0,
                             top: 3,
-                            child: _buildTripBackButton(context, _popOnce),
+                            child: AppMapBackButton(onPressed: _popOnce),
                           ),
                         ],
                       ),
@@ -354,166 +363,14 @@ class _MapPinPageState()
           ),
           Align(
             alignment: Alignment.bottomCenter,
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.fromLTRB(
-                AppLayout.pagePadding,
-                10,
-                AppLayout.pagePadding,
-                MediaQuery.of(context).padding.bottom + 10,
-              ),
-              decoration: BoxDecoration(
-                color: context.colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(AppRadius.sheet),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: context.colorScheme.onSurface.withValues(
-                      alpha: 0.12,
-                    ),
-                    blurRadius: 18,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 34,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.onSurface.withValues(
-                          alpha: 0.16,
-                        ),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          color: context.colorScheme.surfaceContainerHighest,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          LucideIcons.map_pin,
-                          color: context.colorScheme.onSurface,
-                          size: 17,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.flow.locationLabel,
-                              style: TextStyle(
-                                color: context.colorScheme.onSurface.withValues(
-                                  alpha: 0.62,
-                                ),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 1),
-                            Text(
-                              _address,
-                              style: TextStyle(
-                                color: context.colorScheme.onSurface,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (_subAddress.isNotEmpty)
-                              Text(
-                                _subAddress,
-                                style: TextStyle(
-                                  color: context.colorScheme.onSurface
-                                      .withValues(alpha: 0.58),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Semantics(
-                    button: true,
-                    label: 'Use my current location',
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      onTap: _useCurrentLocation,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          minHeight: AppSize.minimumTouchTarget,
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Use my current location',
-                              style: TextStyle(
-                                color: context.colorScheme.onSurface,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const Spacer(),
-                            Icon(
-                              LucideIcons.chevron_right,
-                              color: context.colorScheme.onSurface.withValues(
-                                alpha: 0.62,
-                              ),
-                              size: 16,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: double.infinity,
-                    height: AppSize.controlHeight,
-                    child: FilledButton(
-                      onPressed: _isGeocoding ? null : _confirmLocation,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: context.colorScheme.primary,
-                        foregroundColor: context.colorScheme.onPrimary,
-                        disabledBackgroundColor: context.colorScheme.primary
-                            .withValues(alpha: 0.45),
-                        disabledForegroundColor: context.colorScheme.onPrimary
-                            .withValues(alpha: 0.7),
-                        padding: EdgeInsets.zero,
-                      ),
-                      child: Text(
-                        _isGeocoding
-                            ? 'Locating...'
-                            : widget.flow.confirmationLabel,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            child: MapPinBottomSheet(
+              locationLabel: widget.flow.locationLabel,
+              confirmationLabel: widget.flow.confirmationLabel,
+              address: _address,
+              subAddress: _subAddress,
+              isGeocoding: _isGeocoding,
+              onUseCurrentLocation: () => unawaited(_useCurrentLocation()),
+              onConfirm: _confirmLocation,
             ),
           ),
         ],
@@ -522,6 +379,7 @@ class _MapPinPageState()
   }
 
   Widget _buildDestinationSearchField(BuildContext context) {
+    final colors = context.colorScheme;
     return Semantics(
       button: true,
       label: 'Search destination',
@@ -529,7 +387,7 @@ class _MapPinPageState()
       child: Hero(
         tag: 'search_bar_field',
         child: Material(
-          color: context.colorScheme.surface.withValues(alpha: 0),
+          color: colors.surface.withValues(alpha: 0),
           child: InkWell(
             onTap: () => unawaited(_openDestinationSearch()),
             borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -537,8 +395,8 @@ class _MapPinPageState()
               height: 52,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: context.colorScheme.surface,
-                border: Border.all(color: context.colorScheme.outlineVariant),
+                color: colors.surface,
+                border: Border.all(color: colors.outlineVariant),
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Row(
@@ -549,7 +407,7 @@ class _MapPinPageState()
                     child: Center(
                       child: Icon(
                         LucideIcons.search,
-                        color: context.colorScheme.onSurface,
+                        color: colors.onSurface,
                         size: 20,
                       ),
                     ),
@@ -557,8 +415,8 @@ class _MapPinPageState()
                   const SizedBox(width: 8),
                   Text(
                     'Search destination',
-                    style: TextStyle(
-                      color: context.colorScheme.onSurfaceVariant,
+                    style: context.textStyles.bodyLarge?.copyWith(
+                      color: colors.onSurfaceVariant,
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
                     ),
@@ -571,31 +429,4 @@ class _MapPinPageState()
       ),
     );
   }
-}
-
-Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
-  return Tooltip(
-    message: MaterialLocalizations.of(context).backButtonTooltip,
-    child: Material(
-      color: context.colorScheme.surface,
-      elevation: 2,
-      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPressed,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: AppSize.minimumTouchTarget,
-          height: AppSize.minimumTouchTarget,
-          child: Center(
-            child: Icon(
-              LucideIcons.arrow_left,
-              color: context.colorScheme.onSurface,
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
 }
