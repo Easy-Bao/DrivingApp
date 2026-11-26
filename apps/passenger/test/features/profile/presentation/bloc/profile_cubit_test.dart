@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/profile/domain/entities/profile.dart';
@@ -5,6 +7,9 @@ import 'package:passenger/src/features/profile/domain/repositories/profile_repos
 import 'package:passenger/src/features/profile/presentation/bloc/profile_cubit.dart';
 
 class _FakeProfileRepository implements ProfileRepository {
+  Completer<Result<Profile, Failure>>? refreshCompleter;
+  bool cleared = false;
+
   Profile cached = const Profile(
     name: 'Cached Passenger',
     phone: '+63 900 000 0000',
@@ -24,7 +29,17 @@ class _FakeProfileRepository implements ProfileRepository {
   Profile getCachedProfile() => cached;
 
   @override
+  void clearCachedProfile() {
+    cleared = true;
+    cached = const Profile();
+  }
+
+  @override
   Future<Result<Profile, Failure>> refreshProfile() async {
+    final completer = refreshCompleter;
+    if (completer != null) {
+      return completer.future;
+    }
     cached = remote;
     return Ok(remote);
   }
@@ -70,6 +85,27 @@ void main() {
     expect(cubit.state.address, 'Updated address');
     expect(cubit.state.gender, 'Male');
     expect(cubit.state.isSaving, isFalse);
+    await cubit.close();
+  });
+
+  test('keeps isLoading true during remote refresh and ignores stale results after reset', () async {
+    final repository = _FakeProfileRepository()
+      ..refreshCompleter = Completer<Result<Profile, Failure>>();
+    final cubit = ProfileCubit(repository: repository);
+
+    final loadFuture = cubit.loadProfile();
+    await Future<void>.delayed(Duration.zero);
+    expect(cubit.state.name, 'Cached Passenger');
+    expect(cubit.state.isLoading, isTrue);
+
+    cubit.reset();
+    expect(repository.cleared, isTrue);
+    expect(cubit.state, const ProfileState());
+
+    repository.refreshCompleter!.complete(Ok(repository.remote));
+    await loadFuture;
+
+    expect(cubit.state, const ProfileState());
     await cubit.close();
   });
 }

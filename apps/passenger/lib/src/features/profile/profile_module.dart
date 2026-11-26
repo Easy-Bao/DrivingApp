@@ -4,6 +4,7 @@ import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/profile/data/datasources/profile_remote_data_source.dart';
@@ -28,7 +29,7 @@ class ProfileModule._() {
           preferences: i.get<SharedPreferences>(),
         ),
       )
-      ..addFactory<ProfileCubit>(
+      ..addLazySingleton<ProfileCubit>(
         (i) => ProfileCubit(repository: i.get<ProfileRepository>()),
       );
   }
@@ -37,13 +38,9 @@ class ProfileModule._() {
     ChildRoute(
       name: ProfileRoutes.profileInfo,
       ProfileRoutes.profileInfoPath,
-      child: (context, GoRouterState state) => BlocProvider<ProfileCubit>(
-        create: (_) {
-          final cubit = Modular.get<ProfileCubit>();
-          unawaited(cubit.loadProfile());
-          return cubit;
-        },
-        child: const ProfileInfoPage(),
+      child: (context, GoRouterState state) => BlocProvider<ProfileCubit>.value(
+        value: Modular.get<ProfileCubit>(),
+        child: const _ProfileRouteLoader(child: ProfileInfoPage()),
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
@@ -54,20 +51,38 @@ class ProfileModule._() {
     ChildRoute(
       name: ProfileRoutes.account,
       ProfileRoutes.accountPath,
-      child: (context, GoRouterState state) => BlocProvider<ProfileCubit>(
-        create: (_) {
-          final cubit = Modular.get<ProfileCubit>();
-          unawaited(cubit.loadProfile());
-          return cubit;
-        },
-        child: AccountPage(
-          onLogout: () =>
-              BlocProvider.of<SessionBloc>(context)
-                  .add(const SessionLogoutRequested()),
+      child: (context, GoRouterState state) => BlocProvider<ProfileCubit>.value(
+        value: Modular.get<ProfileCubit>(),
+        child: _ProfileRouteLoader(
+          child: AccountPage(
+            onLogout: () =>
+                BlocProvider.of<SessionBloc>(context)
+                    .add(const SessionLogoutRequested()),
+          ),
         ),
       ),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
     ),
   ];
+}
+
+class _ProfileRouteLoader extends StatefulWidget {
+  const _ProfileRouteLoader({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_ProfileRouteLoader> createState() => _ProfileRouteLoaderState();
+}
+
+class _ProfileRouteLoaderState extends State<_ProfileRouteLoader> {
+  @override
+  void initState() {
+    super.initState();
+    unawaited(BlocProvider.of<ProfileCubit>(context).loadProfile());
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

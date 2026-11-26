@@ -1,5 +1,6 @@
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/core/session/session_store.dart';
+import 'package:passenger/src/core/session/storage_keys.dart';
 import 'package:passenger/src/features/auth/data/datasources/auth_endpoints.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:passenger/src/features/auth/domain/entities/sign_up_result.dart';
@@ -190,14 +191,20 @@ final class AuthRepositoryImpl implements AuthRepository {
     await _secureSessionService.saveRefreshToken(credentials.refreshToken);
     await _secureSessionService.savePassengerId(credentials.passengerId);
     final incomingName = credentials.passengerName.trim();
-    final cachedName = _preferences.getString('passenger_name') ?? '';
+    final cachedName = _preferences.getString(StorageKeys.passengerName) ?? '';
     if (incomingName.isNotEmpty && !incomingName.contains('@')) {
-      await _preferences.setString('passenger_name', incomingName);
+      await _preferences.setString(StorageKeys.passengerName, incomingName);
     } else if (cachedName.isEmpty || cachedName.contains('@')) {
-      await _preferences.setString('passenger_name', incomingName);
+      await _preferences.setString(StorageKeys.passengerName, incomingName);
     }
-    await _preferences.setString('passenger_email', credentials.passengerEmail);
-    await _preferences.setString('passenger_phone', credentials.passengerPhone);
+    await _preferences.setString(
+      StorageKeys.passengerEmail,
+      credentials.passengerEmail,
+    );
+    await _preferences.setString(
+      StorageKeys.passengerPhone,
+      credentials.passengerPhone,
+    );
   }
 
   String _stringValue(Object? value) => value?.toString() ?? '';

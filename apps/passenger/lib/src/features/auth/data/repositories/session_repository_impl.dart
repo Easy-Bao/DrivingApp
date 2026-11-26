@@ -27,7 +27,8 @@ final class SessionRepositoryImpl implements SessionRepository {
       return Ok(
         Session.authenticated(
           passengerId: normalizedPassengerId,
-          passengerName: _preferences.getString('passenger_name') ?? '',
+          passengerName:
+              _preferences.getString(StorageKeys.passengerName) ?? '',
         ),
       );
     } catch (_) {

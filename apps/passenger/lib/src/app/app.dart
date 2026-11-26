@@ -14,6 +14,8 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/track_drive
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
+import 'package:passenger/src/features/profile/domain/repositories/profile_repository.dart';
+import 'package:passenger/src/features/profile/presentation/bloc/profile_cubit.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -69,6 +71,12 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                   );
                   try {
                     Modular.get<BookingBloc>().add(const CancelBookingEvent());
+                  } catch (_) {}
+                  try {
+                    Modular.get<ProfileRepository>().clearCachedProfile();
+                  } catch (_) {}
+                  try {
+                    Modular.get<ProfileCubit>().reset();
                   } catch (_) {}
                   try {
                     unawaited(

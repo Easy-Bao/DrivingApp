@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/core/session/session_store.dart';
+import 'package:passenger/src/core/session/storage_keys.dart';
 import 'package:passenger/src/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:passenger/src/features/profile/domain/entities/profile.dart';
 import 'package:passenger/src/features/profile/domain/repositories/profile_repository.dart';
@@ -14,22 +15,31 @@ final class ProfileRepositoryImpl implements ProfileRepository {
     required this.remoteDataSource,
     required this.sessionService,
     required this.preferences,
-  });
+  }) {
+    sessionService.addSessionClearedListener(clearCachedProfile);
+  }
 
   final ProfileRemoteDataSource remoteDataSource;
   final SessionStore sessionService;
   final SharedPreferences preferences;
   String _avatarData = '';
+  String? _avatarOwnerId;
+
+  @override
+  void clearCachedProfile() {
+    _avatarData = '';
+    _avatarOwnerId = null;
+  }
 
   @override
   Profile getCachedProfile() {
     return Profile(
-      name: preferences.getString('passenger_name') ?? '',
-      phone: preferences.getString('passenger_phone') ?? '',
-      email: preferences.getString('passenger_email') ?? '',
-      address: preferences.getString('passenger_address') ?? '',
-      gender: preferences.getString('passenger_gender') ?? '',
-      avatarPath: preferences.getString('passenger_avatar_path') ?? '',
+      name: preferences.getString(StorageKeys.passengerName) ?? '',
+      phone: preferences.getString(StorageKeys.passengerPhone) ?? '',
+      email: preferences.getString(StorageKeys.passengerEmail) ?? '',
+      address: preferences.getString(StorageKeys.passengerAddress) ?? '',
+      gender: preferences.getString(StorageKeys.passengerGender) ?? '',
+      avatarPath: preferences.getString(StorageKeys.passengerAvatarPath) ?? '',
       avatarData: _avatarData,
     );
   }
@@ -38,6 +48,10 @@ final class ProfileRepositoryImpl implements ProfileRepository {
   Future<Result<Profile, Failure>> refreshProfile() async {
     try {
       final passengerId = await _passengerId();
+      if (_avatarOwnerId != passengerId) {
+        _avatarData = '';
+        _avatarOwnerId = passengerId;
+      }
       final cached = getCachedProfile();
       final remote = Profile.fromJson(
         await remoteDataSource.fetchProfile(passengerId),
@@ -54,6 +68,7 @@ final class ProfileRepositoryImpl implements ProfileRepository {
         }
       }
       _avatarData = avatarData;
+      _avatarOwnerId = passengerId;
       final remoteName = remote.name.trim();
       final cachedName = cached.name.trim();
       final resolvedName = remoteName.isNotEmpty && !remoteName.contains('@')
@@ -94,13 +109,17 @@ final class ProfileRepositoryImpl implements ProfileRepository {
     }
     try {
       final passengerId = await _passengerId();
+      if (_avatarOwnerId != passengerId) {
+        _avatarData = '';
+        _avatarOwnerId = passengerId;
+      }
       final cached = getCachedProfile();
       final normalizedAvatarPath = avatarPath.trim();
       var avatarData = _avatarData;
       if (normalizedAvatarPath.isNotEmpty &&
           normalizedAvatarPath != cached.avatarPath) {
         final bytes = await File(normalizedAvatarPath).readAsBytes();
-        if (bytes.isEmpty || bytes.length > (2 << 20)) {
+        if (bytes.isEmpty || bytes.length > ProfileRepository.maxAvatarBytes) {
           return const Err(
             ValidationFailure('Choose a profile photo under 2 MB.'),
           );
@@ -133,6 +152,7 @@ final class ProfileRepositoryImpl implements ProfileRepository {
         avatarData = '';
       }
       _avatarData = avatarData;
+      _avatarOwnerId = passengerId;
       final profile = Profile(
         id: remote.id,
         userId: remote.userId,
@@ -163,12 +183,15 @@ final class ProfileRepositoryImpl implements ProfileRepository {
 
   Future<void> _cache(Profile profile) async {
     await Future.wait<void>([
-      preferences.setString('passenger_name', profile.name),
-      preferences.setString('passenger_phone', profile.phone),
-      preferences.setString('passenger_email', profile.email),
-      preferences.setString('passenger_address', profile.address),
-      preferences.setString('passenger_gender', profile.gender),
-      preferences.setString('passenger_avatar_path', profile.avatarPath),
+      preferences.setString(StorageKeys.passengerName, profile.name),
+      preferences.setString(StorageKeys.passengerPhone, profile.phone),
+      preferences.setString(StorageKeys.passengerEmail, profile.email),
+      preferences.setString(StorageKeys.passengerAddress, profile.address),
+      preferences.setString(StorageKeys.passengerGender, profile.gender),
+      preferences.setString(
+        StorageKeys.passengerAvatarPath,
+        profile.avatarPath,
+      ),
     ]);
   }
 

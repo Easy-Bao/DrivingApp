@@ -142,4 +142,65 @@ void main() {
       }, (_) => fail('Expected a permission failure.'));
     },
   );
+
+  test('clears in-memory avatar data across passenger sessions and account switches', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final remoteDataSource = MockProfileRemoteDataSource();
+    final sessionService = MockSecureSessionService();
+
+    var activePassengerId = '42';
+    when(() => sessionService.readPassengerId())
+        .thenAnswer((_) async => activePassengerId);
+    when(() => remoteDataSource.fetchProfile('42')).thenAnswer(
+      (_) async => const {
+        'id': 1,
+        'user_id': 42,
+        'name': 'Passenger A',
+        'avatar_url': '/api/v1/passengers/42/avatar',
+      },
+    );
+    when(() => remoteDataSource.fetchProfileAvatar('42'))
+        .thenAnswer((_) async => const <int>[1, 2, 3, 4]);
+    when(() => remoteDataSource.fetchProfile('99')).thenAnswer(
+      (_) async => const {
+        'id': 2,
+        'user_id': 99,
+        'name': 'Passenger B',
+        'avatar_url': '/api/v1/passengers/99/avatar',
+      },
+    );
+    when(() => remoteDataSource.fetchProfileAvatar('99'))
+        .thenThrow(Exception('temporary avatar fetch error'));
+
+    final repository = ProfileRepositoryImpl(
+      remoteDataSource: remoteDataSource,
+      sessionService: sessionService,
+      preferences: preferences,
+    );
+
+    final firstResult = await repository.refreshProfile();
+    expect(firstResult.isOk, isTrue);
+    expect(repository.getCachedProfile().avatarData, isNotEmpty);
+
+    // Switching passenger accounts must never inherit the prior passenger's
+    // in-memory avatar bytes even if the new avatar request fails transiently.
+    activePassengerId = '99';
+    final secondResult = await repository.refreshProfile();
+    switch (secondResult) {
+      case Err(:final failure):
+        fail('Expected second profile refresh to succeed: ${failure.message}');
+      case Ok(:final value):
+        expect(value.name, 'Passenger B');
+        expect(value.avatarData, isEmpty);
+    }
+    expect(repository.getCachedProfile().avatarData, isEmpty);
+
+    // Explicit cache reset must also drop in-memory avatar data immediately.
+    activePassengerId = '42';
+    await repository.refreshProfile();
+    expect(repository.getCachedProfile().avatarData, isNotEmpty);
+    repository.clearCachedProfile();
+    expect(repository.getCachedProfile().avatarData, isEmpty);
+  });
 }

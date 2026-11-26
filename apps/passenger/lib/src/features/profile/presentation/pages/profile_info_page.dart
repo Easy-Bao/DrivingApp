@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
+import 'package:passenger/src/features/profile/domain/repositories/profile_repository.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile_cubit.dart';
 import 'package:passenger/src/features/profile/presentation/widgets/profile_avatar.dart';
 
@@ -49,6 +50,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   bool _isApplyingProfile = false;
   bool _isDirty = false;
   bool _isSaving = false;
+  bool _isPickingPhoto = false;
   String? _nameError;
 
   @override
@@ -171,9 +173,12 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   }
 
   Future<void> _pickPhoto() async {
+    if (_isPickingPhoto || _isSaving) return;
+    _isPickingPhoto = true;
     try {
-      final picked = widget.pickPhoto != null
-          ? await widget.pickPhoto!()
+      final pickPhoto = widget.pickPhoto;
+      final picked = pickPhoto != null
+          ? await pickPhoto()
           : await ImagePicker().pickImage(
               source: ImageSource.gallery,
               maxWidth: 900,
@@ -184,18 +189,18 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
         int? fileSize;
         if (!kIsWeb && picked.path.isNotEmpty) {
           final file = File(picked.path);
-          if (file.existsSync()) {
-            fileSize = file.lengthSync();
+          if (await file.exists()) {
+            fileSize = await file.length();
           }
         }
         if (fileSize == null && (kIsWeb || picked.path.isEmpty)) {
           fileSize = await picked.length();
         }
-        if (fileSize != null && fileSize > 5 * 1024 * 1024) {
+        if (fileSize != null && fileSize > ProfileRepository.maxAvatarBytes) {
           if (!mounted) return;
           AppSnackBar.show(
             context,
-            'Selected photo exceeds 5MB. Choose a smaller image.',
+            'Selected photo exceeds 2 MB. Choose a smaller image.',
             isError: true,
           );
           return;
@@ -203,6 +208,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       } catch (_) {
         // Proceed when file size cannot be resolved on the host platform.
       }
+      if (!mounted) return;
       setState(() {
         _avatarPath = picked.path;
         _isDirty = _draftHasChanges;
@@ -219,6 +225,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
         'Unable to choose a photo. Try again.',
         isError: true,
       );
+    } finally {
+      _isPickingPhoto = false;
     }
   }
 
@@ -598,12 +606,12 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             ),
             decoration: _bareFieldDecoration(hintText: 'Enter your name'),
           ),
-          if (_nameError != null) ...[
+          if (_nameError case final nameError?) ...[
             const SizedBox(height: AppSpacing.xs),
             Semantics(
               liveRegion: true,
               child: Text(
-                _nameError!,
+                nameError,
                 style: context.textStyles.labelMedium?.copyWith(
                   color: colorScheme.error,
                   fontWeight: FontWeight.w500,

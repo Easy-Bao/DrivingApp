@@ -18,6 +18,7 @@ class SessionStore({FlutterSecureStorage? storage})
 
   final FlutterSecureStorage _storage;
   final Map<String, String> _temporaryValues = {};
+  final List<void Function()> _sessionClearedListeners = [];
   bool _persistent = true;
   FutureOr<void> Function()? onActiveRideCleared;
   static const _sessionKeys = [
@@ -236,10 +237,23 @@ class SessionStore({FlutterSecureStorage? storage})
     return DateTime.tryParse(rawValue)?.toUtc();
   }
 
+  void addSessionClearedListener(void Function() listener) {
+    if (!_sessionClearedListeners.contains(listener)) {
+      _sessionClearedListeners.add(listener);
+    }
+  }
+
+  void removeSessionClearedListener(void Function() listener) {
+    _sessionClearedListeners.remove(listener);
+  }
+
   Future<void> clearAll() async {
     await _deleteKeys(_sessionKeys);
     _temporaryValues.clear();
     _persistent = true;
+    for (final listener in List<void Function()>.of(_sessionClearedListeners)) {
+      listener();
+    }
   }
 
   @override

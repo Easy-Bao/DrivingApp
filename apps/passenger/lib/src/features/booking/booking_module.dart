@@ -134,8 +134,8 @@ class BookingModule._() {
             body: Center(child: Text('Trip route data is unavailable.')),
           );
         }
-        return BlocProvider<ProfileCubit>(
-          create: (_) => Modular.get<ProfileCubit>(),
+        return BlocProvider<ProfileCubit>.value(
+          value: Modular.get<ProfileCubit>(),
           child: BlocProvider<BookingBloc>.value(
             value: Modular.get<BookingBloc>(),
             child: RideSelectionPage(

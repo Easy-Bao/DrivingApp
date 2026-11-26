@@ -2,7 +2,6 @@ import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/profile/domain/entities/profile.dart';
 import 'package:passenger/src/features/profile/domain/repositories/profile_repository.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile_state.dart';
 
@@ -12,13 +11,24 @@ class ProfileCubit extends Cubit<ProfileState> {
   ProfileCubit({required this.repository}) : super(const ProfileState());
 
   final ProfileRepository repository;
+  int _loadVersion = 0;
+
+  void reset() {
+    _loadVersion++;
+    repository.clearCachedProfile();
+    if (!isClosed) {
+      emit(const ProfileState());
+    }
+  }
 
   Future<void> loadProfile({bool refreshRemote = true}) async {
     if (isClosed || state.isLoading) return;
+    final version = ++_loadVersion;
     emit(state.copyWith(isLoading: true, clearError: true));
 
     try {
       final cached = repository.getCachedProfile();
+      if (isClosed || version != _loadVersion) return;
 
       emit(
         ProfileState(
@@ -30,40 +40,45 @@ class ProfileCubit extends Cubit<ProfileState> {
           avatarPath: cached.avatarPath,
           avatarUrl: cached.avatarUrl,
           avatarData: cached.avatarData,
-          isLoading: false,
+          isLoading: refreshRemote,
         ),
       );
 
       if (!refreshRemote) return;
 
-      Profile? profile;
-      Failure? failure;
-      (await repository.refreshProfile()).fold(
-        (value) => failure = value,
-        (value) => profile = value,
-      );
-      if (profile == null) throw failure!;
-      final resolvedProfile = profile!;
+      final result = await repository.refreshProfile();
+      if (isClosed || version != _loadVersion) return;
 
-      emit(
-        ProfileState(
-          name: resolvedProfile.name,
-          phone: resolvedProfile.phone,
-          email: resolvedProfile.email,
-          address: resolvedProfile.address,
-          gender: resolvedProfile.gender,
-          avatarPath: resolvedProfile.avatarPath,
-          avatarUrl: resolvedProfile.avatarUrl,
-          avatarData: resolvedProfile.avatarData,
-          isLoading: false,
-        ),
-      );
+      switch (result) {
+        case Err(:final failure):
+          emit(
+            state.copyWith(
+              isLoading: false,
+              errorMessage: ErrorHandler.getErrorMessage(failure),
+            ),
+          );
+        case Ok(:final value):
+          emit(
+            ProfileState(
+              name: value.name,
+              phone: value.phone,
+              email: value.email,
+              address: value.address,
+              gender: value.gender,
+              avatarPath: value.avatarPath,
+              avatarUrl: value.avatarUrl,
+              avatarData: value.avatarData,
+              isLoading: false,
+            ),
+          );
+      }
     } catch (error, stackTrace) {
       dev.log(
         'Error syncing profile values in cubit.',
         error: error,
         stackTrace: stackTrace,
       );
+      if (isClosed || version != _loadVersion) return;
       emit(
         state.copyWith(
           isLoading: false,
@@ -80,6 +95,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     required String avatarPath,
   }) async {
     if (isClosed) return false;
+    final version = ++_loadVersion;
     emit(state.copyWith(isSaving: true, clearError: true));
 
     final result = await repository.updateProfile(
@@ -88,10 +104,10 @@ class ProfileCubit extends Cubit<ProfileState> {
       gender: gender,
       avatarPath: avatarPath,
     );
-    if (isClosed) return false;
+    if (isClosed || version != _loadVersion) return false;
 
-    return result.fold(
-      (failure) {
+    switch (result) {
+      case Err(:final failure):
         emit(
           state.copyWith(
             isSaving: false,
@@ -99,23 +115,21 @@ class ProfileCubit extends Cubit<ProfileState> {
           ),
         );
         return false;
-      },
-      (profile) {
+      case Ok(:final value):
         emit(
           ProfileState(
-            name: profile.name,
-            phone: profile.phone,
-            email: profile.email,
-            address: profile.address,
-            gender: profile.gender.isEmpty ? gender : profile.gender,
+            name: value.name,
+            phone: value.phone,
+            email: value.email,
+            address: value.address,
+            gender: value.gender.isEmpty ? gender : value.gender,
             avatarPath: avatarPath,
-            avatarUrl: profile.avatarUrl,
-            avatarData: profile.avatarData,
+            avatarUrl: value.avatarUrl,
+            avatarData: value.avatarData,
             isSaving: false,
           ),
         );
         return true;
-      },
-    );
+    }
   }
 }

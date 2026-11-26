@@ -191,6 +191,9 @@ void main() {
     await tester.tap(
       find.byKey(const ValueKey<String>('passenger-profile-camera')),
     );
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 20)),
+    );
     await tester.pump();
 
     expect(
@@ -199,21 +202,24 @@ void main() {
     );
   });
 
-  testWidgets('rejects photo uploads exceeding 5MB', (tester) async {
+  testWidgets('rejects photo uploads exceeding 2 MB', (tester) async {
     await tester.pumpWidget(
       buildSubject(
         pickPhoto: () async =>
-            XFile.fromData(Uint8List(6 * 1024 * 1024), path: ''),
+            XFile.fromData(Uint8List(3 * 1024 * 1024), path: ''),
       ),
     );
 
     await tester.tap(
       find.byKey(const ValueKey<String>('passenger-profile-camera')),
     );
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 20)),
+    );
     await tester.pump();
 
     expect(
-      find.text('Selected photo exceeds 5MB. Choose a smaller image.'),
+      find.text('Selected photo exceeds 2 MB. Choose a smaller image.'),
       findsOneWidget,
     );
     expect(
