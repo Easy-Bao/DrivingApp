@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
+import 'package:chat/chat.dart';
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/features/active_ride/domain/services/ride_completion_handler.dart';
@@ -8,7 +9,6 @@ import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/presentation/pages/driver_trip_page.dart';
-import 'package:driver/src/features/chat/chat.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

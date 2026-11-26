@@ -36,6 +36,8 @@ dependencies:
 
   design_system:
     path: ../../packages/design_system
+  chat:
+    path: ../../packages/chat
   shared_pages:
     path: ../../packages/shared_pages
 
