@@ -65,6 +65,32 @@ void main() {
       ),
     );
   });
+
+  test('redacts internal server 500 error details on postJson', () async {
+    final dio = Dio(BaseOptions(baseUrl: 'https://api.example.test'))
+      ..httpClientAdapter = _AuthAdapter((options) {
+        return ResponseBody.fromString(
+          jsonEncode({'message': 'Failed query: select * from accounts'}),
+          500,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        );
+      });
+    addTearDown(() => dio.close(force: true));
+
+    final dataSource = AuthRemoteDataSourceImpl(dio);
+    await expectLater(
+      dataSource.postJson('/login', requestBody: const {}),
+      throwsA(
+        isA<ServerException>().having(
+          (e) => e.message,
+          'message',
+          'The authentication service is temporarily unavailable. Please try again.',
+        ),
+      ),
+    );
+  });
 }
 
 final class _AuthAdapter(this._handler) implements HttpClientAdapter {
