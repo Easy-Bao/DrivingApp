@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:chat/chat.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,7 +14,6 @@ import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_cubit.dart';
 import 'package:passenger/src/features/active_ride/presentation/pages/track_driver_page.dart';
-import 'package:passenger/src/features/chat/chat.dart';
 
 class _Session extends Mock implements SessionStore {}
 

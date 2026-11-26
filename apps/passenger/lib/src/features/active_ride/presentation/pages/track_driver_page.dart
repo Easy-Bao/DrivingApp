@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:chat/chat.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -18,7 +19,6 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/track_drive
 import 'package:passenger/src/features/active_ride/presentation/widgets/active_trip_exit_dialog.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/track_driver_panel.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/trip_cancellation_dialog.dart';
-import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 

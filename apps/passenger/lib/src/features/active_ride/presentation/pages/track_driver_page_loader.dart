@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:chat/chat.dart';
 import 'package:design_system/design_system.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -8,7 +9,6 @@ import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/pages/track_driver_page.dart';
-import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 
 class TrackDriverPageLoader extends StatefulWidget {

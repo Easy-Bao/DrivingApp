@@ -1,11 +1,11 @@
+import 'package:chat/chat.dart';
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:passenger/src/features/chat/chat.dart';
+import 'package:passenger/src/core/config/env_config.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
-import 'package:passenger/src/features/chat/presentation/pages/chat_page.dart';
 
 class ChatModule._() {
   static void binds(Injector i) {
@@ -16,6 +16,7 @@ class ChatModule._() {
         refreshTokenProvider: i
             .get<RefreshableTokenProvider>()
             .refreshAccessToken,
+        networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
       ),
     );
   }
@@ -38,6 +39,12 @@ class ChatModule._() {
           token: _asNonEmptyString(extra['token']),
           peerName: _asNonEmptyString(extra['peerName']),
           chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
+          chatUriBuilder: (id) => EnvConfig.webSocketBaseUri.replace(
+            path: '/api/v1/chat/ws',
+            queryParameters: {'roomId': id},
+          ),
+          config: ChatPageConfig.passenger,
+          onBack: () => context.pop(),
         );
       },
       transition: AppTransitions.push.toLeft,
@@ -57,10 +64,17 @@ String? _asNonEmptyString(Object? value) {
 class const _ChatUnavailablePage() extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onPressed: () => context.pop(),
+          icon: const Icon(Icons.arrow_back),
+        ),
+      ),
+      body: const Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: EdgeInsets.all(AppSpacing.xxl),
           child: Text(
             'This conversation is unavailable. Return to the trip and try again.',
             textAlign: TextAlign.center,

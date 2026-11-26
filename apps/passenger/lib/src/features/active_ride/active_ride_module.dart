@@ -1,3 +1,4 @@
+import 'package:chat/chat.dart';
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
@@ -11,7 +12,6 @@ import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/pages/track_driver_page.dart';
 import 'package:passenger/src/features/active_ride/presentation/pages/track_driver_page_loader.dart';
-import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 import 'package:passenger/src/features/ride_history/presentation/pages/trip_completion_page.dart';
 
