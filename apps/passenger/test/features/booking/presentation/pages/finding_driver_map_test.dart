@@ -11,13 +11,13 @@ import 'package:mapbox_maps_flutter_platform_interface/mapbox_maps_flutter_platf
 import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/core/location/live_map_bloc.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger/src/features/booking/domain/entities/driver.dart';
 import 'package:passenger/src/features/booking/domain/repositories/booking_repository.dart';
 import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/nearby_drivers/nearby_drivers_cubit.dart';
 import 'package:passenger/src/features/booking/presentation/pages/finding_driver_page.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';

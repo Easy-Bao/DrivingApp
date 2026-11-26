@@ -6,14 +6,6 @@ final class const InitializeMapEvent({
   required final AppMapController controller,
   required final double defaultLat,
   required final double defaultLng,
-  required final Color routeColor,
-}) extends LiveMapEvent;
-
-final class const DrawDriverToRiderRouteEvent({
-  required final double riderLat,
-  required final double riderLng,
-  required final double driverLat,
-  required final double driverLng,
 }) extends LiveMapEvent;
 
 final class const AddMapMarkerEvent({

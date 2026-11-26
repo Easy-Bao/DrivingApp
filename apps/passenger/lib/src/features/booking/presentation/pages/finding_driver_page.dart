@@ -8,13 +8,13 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:passenger/src/core/location/live_map_bloc.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_offer.dart';
 import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/nearby_drivers/nearby_drivers_cubit.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/cancel_booking_dialog.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_availability_error_panel.dart';
@@ -88,7 +88,6 @@ class FindingDriverPage extends StatelessWidget {
     required this.driverRepository,
     required this.lifecycleCoordinator,
     required this.bookingBloc,
-    required this.liveMapBloc,
   });
 
   final double fare;
@@ -107,7 +106,6 @@ class FindingDriverPage extends StatelessWidget {
   final DriverRepository driverRepository;
   final AppLifecycleCoordinator lifecycleCoordinator;
   final BookingBloc bookingBloc;
-  final LiveMapBloc liveMapBloc;
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +122,6 @@ class FindingDriverPage extends StatelessWidget {
                 longitude: lng,
               ),
             ),
-        BlocProvider<LiveMapBloc>(create: (_) => liveMapBloc),
       ],
       child: FindingDriverPageContent(
         fare: fare,
@@ -302,7 +299,6 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
         controller: controller,
         defaultLat: pickup.latitude,
         defaultLng: pickup.longitude,
-        routeColor: context.colorScheme.onSurface,
       ),
     );
     _syncNearbyDriverPins(_currentNearbyDrivers(context), force: true);

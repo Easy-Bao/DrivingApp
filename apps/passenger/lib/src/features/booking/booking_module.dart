@@ -5,7 +5,6 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:passenger/src/core/location/live_map_bloc.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
@@ -19,6 +18,7 @@ import 'package:passenger/src/features/booking/domain/repositories/booking_repos
 import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
 import 'package:passenger/src/features/booking/domain/repositories/fare_repository.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/pages/destination_map_page.dart';
 import 'package:passenger/src/features/booking/presentation/pages/finding_driver_page.dart';
 import 'package:passenger/src/features/booking/presentation/pages/map_pin_page.dart';
@@ -64,7 +64,8 @@ class BookingModule._() {
           realtimeClient: i.get<RealtimeWebSocketClient>(),
           lifecycleCoordinator: i.get<AppLifecycleCoordinator>(),
         ),
-      );
+      )
+      ..addFactory<LiveMapBloc>((_) => LiveMapBloc());
   }
 
   static List<ModularRoute> routes = [
@@ -178,24 +179,26 @@ class BookingModule._() {
             message: 'Fare and trip data are unavailable.',
           );
         }
-        return FindingDriverPage(
-          fare: fare,
-          baseFare: baseFare,
-          tipAmount: data.intValue('tipAmount'),
-          destination: destination,
-          distance: distance,
-          duration: duration,
-          distanceKm: data.doubleValue('distanceKm'),
-          durationMinutes: data.doubleValue('durationMinutes'),
-          pickupLatitude: data.doubleValue('pickupLat'),
-          pickupLongitude: data.doubleValue('pickupLng'),
-          pickupAddress: data.string('pickupAddress'),
-          passengerNote: data.string('passengerNote') ?? '',
-          profileRepository: Modular.get<DriverProfileRepository>(),
-          driverRepository: Modular.get<DriverRepository>(),
-          lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
-          bookingBloc: Modular.get<BookingBloc>(),
-          liveMapBloc: Modular.get<LiveMapBloc>(),
+        return BlocProvider<LiveMapBloc>(
+          create: (_) => Modular.get<LiveMapBloc>(),
+          child: FindingDriverPage(
+            fare: fare,
+            baseFare: baseFare,
+            tipAmount: data.intValue('tipAmount'),
+            destination: destination,
+            distance: distance,
+            duration: duration,
+            distanceKm: data.doubleValue('distanceKm'),
+            durationMinutes: data.doubleValue('durationMinutes'),
+            pickupLatitude: data.doubleValue('pickupLat'),
+            pickupLongitude: data.doubleValue('pickupLng'),
+            pickupAddress: data.string('pickupAddress'),
+            passengerNote: data.string('passengerNote') ?? '',
+            profileRepository: Modular.get<DriverProfileRepository>(),
+            driverRepository: Modular.get<DriverRepository>(),
+            lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
+            bookingBloc: Modular.get<BookingBloc>(),
+          ),
         );
       },
       transition: AppTransitions.modal.toTop,

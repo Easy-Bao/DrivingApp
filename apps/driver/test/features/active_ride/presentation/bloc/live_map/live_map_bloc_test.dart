@@ -28,4 +28,50 @@ void main() {
       isTrue,
     );
   });
+
+  test('LiveMapState subclasses support value equality', () {
+    expect(const LiveMapInitial(), equals(const LiveMapInitial()));
+    expect(
+      const LiveMapReady(7.828, 123.434),
+      equals(const LiveMapReady(7.828, 123.434)),
+    );
+    expect(
+      const LiveMapReady(7.828, 123.434),
+      isNot(equals(const LiveMapReady(7.829, 123.434))),
+    );
+    expect(
+      const LiveMapRouteUpdated(
+        driverLatitude: 7.8,
+        driverLongitude: 123.4,
+        passengerLatitude: 7.9,
+        passengerLongitude: 123.5,
+      ),
+      equals(
+        const LiveMapRouteUpdated(
+          driverLatitude: 7.8,
+          driverLongitude: 123.4,
+          passengerLatitude: 7.9,
+          passengerLongitude: 123.5,
+        ),
+      ),
+    );
+    expect(
+      const LiveMapRouteUpdated(
+        driverLatitude: 7.8,
+        driverLongitude: 123.4,
+        passengerLatitude: 7.9,
+        passengerLongitude: 123.5,
+      ),
+      isNot(
+        equals(
+          const LiveMapRouteUpdated(
+            driverLatitude: 7.8,
+            driverLongitude: 123.4,
+            passengerLatitude: null,
+            passengerLongitude: null,
+          ),
+        ),
+      ),
+    );
+  });
 }

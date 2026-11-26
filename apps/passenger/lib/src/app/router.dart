@@ -7,7 +7,6 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/app/navigation/navigation_shell.dart';
 import 'package:passenger/src/core/config/env_config.dart';
-import 'package:passenger/src/core/location/live_map_bloc.dart';
 import 'package:passenger/src/features/active_ride/active_ride_module.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_module.dart';
@@ -82,7 +81,6 @@ class AppRouter extends Module {
     BookingModule.binds(i);
 
     i
-      ..addFactory<LiveMapBloc>((_) => LiveMapBloc())
       ..addLazySingleton<TabNavigationCoordinator>(
         (_) => TabNavigationCoordinator(),
       )

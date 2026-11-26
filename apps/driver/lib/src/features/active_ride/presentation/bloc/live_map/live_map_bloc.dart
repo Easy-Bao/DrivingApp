@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
@@ -57,7 +58,7 @@ class LiveMapBloc({required this._rideRepository})
   late final StreamSubscription<DispatchTelemetryLocationEvent>
   _locationSubscription;
 
-  this : super(LiveMapInitial()) {
+  this : super(const LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
     on<UpdateLocationsAndDrawRouteEvent>(
       _onUpdateLocationsAndDrawRoute,

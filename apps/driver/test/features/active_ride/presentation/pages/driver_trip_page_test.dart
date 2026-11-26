@@ -112,7 +112,7 @@ void main() {
       destinationLongitude: 121,
     );
     whenListen(ride, states.stream, initialState: pickup);
-    when(() => map.state).thenReturn(LiveMapInitial());
+    when(() => map.state).thenReturn(const LiveMapInitial());
     when(() => map.stream).thenAnswer((_) => const Stream.empty());
     when(() => session.readDriverId()).thenAnswer((_) async => '');
     when(() => ride.activeRideId).thenReturn('trip');
