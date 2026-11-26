@@ -40,7 +40,7 @@ class ProfileModule._() {
           preferences: i.get<SharedPreferences>(),
         ),
       )
-      ..addFactory<AccountCubit>(
+      ..addLazySingleton<AccountCubit>(
         (i) => AccountCubit(repository: i.get<ProfileRepository>()),
       );
   }
@@ -49,28 +49,28 @@ class ProfileModule._() {
     ChildRoute(
       name: ProfileRoutes.personalDetails,
       ProfileRoutes.personalDetailsPath,
-      child: (context, GoRouterState state) => BlocProvider(
-        create: (_) {
-          final cubit = Modular.get<AccountCubit>();
-          unawaited(cubit.load());
-          return cubit;
-        },
-        child: const PersonalDetailsPage(),
-      ),
+      child: (context, GoRouterState state) {
+        final cubit = Modular.get<AccountCubit>();
+        unawaited(cubit.load());
+        return BlocProvider<AccountCubit>.value(
+          value: cubit,
+          child: const PersonalDetailsPage(),
+        );
+      },
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: ProfileRoutes.vehicleInformation,
       ProfileRoutes.vehicleInformationPath,
-      child: (context, GoRouterState state) => BlocProvider(
-        create: (_) {
-          final cubit = Modular.get<AccountCubit>();
-          unawaited(cubit.load());
-          return cubit;
-        },
-        child: const VehicleInformationPage(),
-      ),
+      child: (context, GoRouterState state) {
+        final cubit = Modular.get<AccountCubit>();
+        unawaited(cubit.load());
+        return BlocProvider<AccountCubit>.value(
+          value: cubit,
+          child: const VehicleInformationPage(),
+        );
+      },
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
@@ -90,14 +90,14 @@ class ProfileModule._() {
     ChildRoute(
       name: ProfileRoutes.account,
       ProfileRoutes.accountPath,
-      child: (context, GoRouterState state) => BlocProvider(
-        create: (_) {
-          final cubit = Modular.get<AccountCubit>();
-          unawaited(cubit.load());
-          return cubit;
-        },
-        child: AccountPage(onLogout: Modular.get<LogoutCoordinator>().logout),
-      ),
+      child: (context, GoRouterState state) {
+        final cubit = Modular.get<AccountCubit>();
+        unawaited(cubit.load());
+        return BlocProvider<AccountCubit>.value(
+          value: cubit,
+          child: AccountPage(onLogout: Modular.get<LogoutCoordinator>().logout),
+        );
+      },
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
     ),

@@ -23,16 +23,20 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   XFile? _draft;
   Uint8List? _draftBytes;
   String? _draftError;
+  bool _isPickingPhoto = false;
 
   Future<void> _choosePhoto() async {
+    if (_isPickingPhoto) return;
+    _isPickingPhoto = true;
     try {
-      final picked = widget.pickPhoto == null
+      final pickPhoto = widget.pickPhoto;
+      final picked = pickPhoto == null
           ? await ImagePicker().pickImage(
               source: ImageSource.camera,
               maxWidth: 1800,
               imageQuality: 90,
             )
-          : await widget.pickPhoto!();
+          : await pickPhoto();
       if (!mounted || picked == null) return;
       final bytes = await picked.readAsBytes();
       if (!mounted) return;
@@ -49,6 +53,8 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
         _draftBytes = null;
         _draftError = 'The selected photo could not be loaded. Choose another.';
       });
+    } finally {
+      _isPickingPhoto = false;
     }
   }
 
@@ -137,7 +143,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   _buildPreview(context, isUploading: state.isUploading),
-                  if (_draftError != null) ...[
+                  if (_draftError case final draftError?) ...[
                     const SizedBox(height: AppSpacing.md),
                     Semantics(
                       liveRegion: true,
@@ -157,7 +163,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
-                              _draftError!,
+                              draftError,
                               key: const ValueKey(
                                 'driver-document-upload-error',
                               ),

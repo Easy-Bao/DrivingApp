@@ -1,8 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:driver/src/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:driver/src/features/profile/domain/entities/account_snapshot.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -248,6 +250,49 @@ void main() {
       () => profileDataSource.updateProfile(
         data: any<Map<String, dynamic>>(named: 'data'),
       ),
+    );
+  });
+
+  test('preserves the actionable HTTP 409 offline vehicle message through ErrorHandler', () async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    final profileDataSource = _MockProfileDataSource();
+    when(
+      () => profileDataSource.updateProfile(
+        data: any<Map<String, dynamic>>(named: 'data'),
+      ),
+    ).thenThrow(
+      DioException.badResponse(
+        statusCode: 409,
+        requestOptions: RequestOptions(path: '/api/v1/drivers/me'),
+        response: Response<dynamic>(
+          requestOptions: RequestOptions(path: '/api/v1/drivers/me'),
+          statusCode: 409,
+        ),
+      ),
+    );
+    final repository = ProfileRepositoryImpl(
+      profileDataSource: profileDataSource,
+      sessionService: _MockSessionService(),
+      preferences: preferences,
+    );
+
+    final result = await repository.updateAccount(
+      currentAccount: const AccountSnapshot(
+        name: 'Driver',
+        vehicleType: 'Sedan',
+        plateNumber: 'ABC-123',
+      ),
+      name: 'Driver',
+      vehicleType: 'SUV',
+      plateNumber: 'ABC-123',
+    );
+
+    final failure = result.fold((f) => f, (_) => null);
+    expect(failure, isA<BusinessRuleFailure>());
+    expect(
+      ErrorHandler.getErrorMessage(failure!),
+      'Go offline before changing your registered vehicle information.',
     );
   });
 }

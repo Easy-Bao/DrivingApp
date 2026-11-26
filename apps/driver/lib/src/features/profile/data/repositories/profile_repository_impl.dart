@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:driver/src/core/session/session_store.dart';
+import 'package:driver/src/core/session/storage_keys.dart';
 import 'package:driver/src/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:driver/src/features/profile/domain/entities/account_snapshot.dart';
 import 'package:driver/src/features/profile/domain/entities/profile.dart';
@@ -19,12 +20,12 @@ final class ProfileRepositoryImpl({
   @override
   AccountSnapshot getCachedAccount() {
     return AccountSnapshot(
-      name: _preferences.getString('driver_name') ?? '',
-      phone: _preferences.getString('driver_phone') ?? '',
-      email: _preferences.getString('driver_email') ?? '',
-      vehicleType: _preferences.getString('vehicle_type') ?? '',
-      plateNumber: _preferences.getString('plate_number') ?? '',
-      ratingLabel: _preferences.getString('rating') ?? '—',
+      name: _preferences.getString(StorageKeys.driverName) ?? '',
+      phone: _preferences.getString(StorageKeys.driverPhone) ?? '',
+      email: _preferences.getString(StorageKeys.driverEmail) ?? '',
+      vehicleType: _preferences.getString(StorageKeys.vehicleType) ?? '',
+      plateNumber: _preferences.getString(StorageKeys.plateNumber) ?? '',
+      ratingLabel: _preferences.getString(StorageKeys.rating) ?? '—',
     );
   }
 
@@ -122,19 +123,19 @@ final class ProfileRepositoryImpl({
 
   Future<void> _cacheAccount(AccountSnapshot account) async {
     await Future.wait<void>([
-      _preferences.setString('driver_name', account.name),
-      _preferences.setString('driver_phone', account.phone),
-      _preferences.setString('driver_email', account.email),
-      _preferences.setString('vehicle_type', account.vehicleType),
-      _preferences.setString('plate_number', account.plateNumber),
-      _preferences.setString('rating', account.ratingLabel),
+      _preferences.setString(StorageKeys.driverName, account.name),
+      _preferences.setString(StorageKeys.driverPhone, account.phone),
+      _preferences.setString(StorageKeys.driverEmail, account.email),
+      _preferences.setString(StorageKeys.vehicleType, account.vehicleType),
+      _preferences.setString(StorageKeys.plateNumber, account.plateNumber),
+      _preferences.setString(StorageKeys.rating, account.ratingLabel),
     ]);
   }
 }
 
 Failure _mapFailure(Object error) {
   if (error is DioException && error.response?.statusCode == 409) {
-    return const ValidationFailure(
+    return const BusinessRuleFailure(
       'Go offline before changing your registered vehicle information.',
     );
   }

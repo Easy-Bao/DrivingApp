@@ -14,7 +14,7 @@ class AccountCubit({required this._repository}) extends Cubit<AccountState> {
 
     try {
       final cached = _repository.getCachedAccount();
-      emit(state.copyWith(account: cached, isLoading: false));
+      emit(state.copyWith(account: cached, isLoading: true));
 
       final result = await _repository.refreshAccount();
       if (isClosed) return;

@@ -1,15 +1,19 @@
-class const AccountSnapshot({
-  this.name = '',
-  this.phone = '',
-  this.email = '',
-  this.vehicleType = '',
-  this.plateNumber = '',
-  this.ratingLabel = '—',
-  this.totalTrips = 0,
-  this.completedTrips = 0,
-  this.lifetimeEarnings = 0,
-  this.averageRating = 0,
-}) {
+import 'package:equatable/equatable.dart';
+
+class AccountSnapshot extends Equatable {
+  const AccountSnapshot({
+    this.name = '',
+    this.phone = '',
+    this.email = '',
+    this.vehicleType = '',
+    this.plateNumber = '',
+    this.ratingLabel = '—',
+    this.totalTrips = 0,
+    this.completedTrips = 0,
+    this.lifetimeEarnings = 0,
+    this.averageRating = 0,
+  });
+
   final String name;
   final String phone;
   final String email;
@@ -20,4 +24,18 @@ class const AccountSnapshot({
   final int completedTrips;
   final double lifetimeEarnings;
   final double averageRating;
+
+  @override
+  List<Object?> get props => [
+    name,
+    phone,
+    email,
+    vehicleType,
+    plateNumber,
+    ratingLabel,
+    totalTrips,
+    completedTrips,
+    lifetimeEarnings,
+    averageRating,
+  ];
 }
