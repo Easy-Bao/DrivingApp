@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:driver/src/app/navigation/app_routes.dart';
 import 'package:driver/src/app/router.dart';
 import 'package:driver/src/core/config/env_config.dart';
-import 'package:driver/src/core/location/location_access_cubit.dart';
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/core/telemetry/background_telemetry.dart';
 import 'package:driver/src/core/telemetry/location_spool.dart';

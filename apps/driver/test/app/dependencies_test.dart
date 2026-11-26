@@ -1,5 +1,4 @@
 import 'package:driver/src/app/dependencies.dart';
-import 'package:driver/src/core/location/location_access_cubit.dart';
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/features/auth/auth_routes.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';

@@ -6,7 +6,6 @@ import 'package:maps/maps.dart';
 import 'package:passenger/src/app/navigation/app_routes.dart';
 import 'package:passenger/src/app/router.dart';
 import 'package:passenger/src/core/config/env_config.dart';
-import 'package:passenger/src/core/location/location_access_cubit.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 import 'package:passenger/src/features/auth/auth_module.dart';

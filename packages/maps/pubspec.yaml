@@ -15,6 +15,7 @@ dependencies:
     path: ../design_system
   dio: ^5.10.0
   equatable: ^2.0.7
+  flutter_bloc: ^9.1.0
   foundation:
     path: ../foundation
   geolocator: ^14.0.3

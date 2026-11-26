@@ -7,8 +7,6 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passenger/src/app/navigation/app_routes.dart';
-import 'package:passenger/src/core/location/location_access_cubit.dart';
-import 'package:passenger/src/core/location/location_access_state.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
@@ -58,37 +56,31 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         // adopt package:material_ui.
         // ignore: deprecated_member_use
         builder: (context, child) => MaterialUiCompatibilityBridge(
-          child: BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
-            builder: (context, locationState) => MultiBlocListener(
-              listeners: [
-                BlocListener<SessionBloc, SessionState>(
-                  listenWhen: (_, current) =>
-                      current is GuestSession || current is SessionFailure,
-                  listener: (context, _) {
-                    MapProvider.clearLookupCaches();
-                    BlocProvider.of<BookingDraftCubit>(context).clear();
+          child: MultiBlocListener(
+            listeners: [
+              BlocListener<SessionBloc, SessionState>(
+                listenWhen: (_, current) =>
+                    current is GuestSession || current is SessionFailure,
+                listener: (context, _) {
+                  MapProvider.clearLookupCaches();
+                  BlocProvider.of<BookingDraftCubit>(context).clear();
+                  unawaited(
+                    BlocProvider.of<TrackDriverCubit>(context).resetTracking(),
+                  );
+                  try {
+                    Modular.get<BookingBloc>().add(const CancelBookingEvent());
+                  } catch (_) {}
+                  try {
                     unawaited(
-                      BlocProvider.of<TrackDriverCubit>(context)
-                          .resetTracking(),
+                      Modular.get<BackgroundTelemetry>().stopRideTelemetry(),
                     );
-                    try {
-                      Modular.get<BookingBloc>().add(
-                        const CancelBookingEvent(),
-                      );
-                    } catch (_) {}
-                    try {
-                      unawaited(
-                        Modular.get<BackgroundTelemetry>().stopRideTelemetry(),
-                      );
-                    } catch (_) {}
-                  },
-                ),
-              ],
-              child: _buildRouteWithLocationOverlay(
-                context,
-                child,
-                locationState,
+                  } catch (_) {}
+                },
               ),
+            ],
+            child: LocationAccessOverlayScope(
+              enabled: _isPassengerRoute,
+              child: child ?? const SizedBox.shrink(),
             ),
           ),
         ),
@@ -131,60 +123,11 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     });
   }
 
-  Widget? _buildLocationOverlay(
-    BuildContext context,
-    LocationAccessViewState locationState,
-  ) {
-    final currentPath =
-        Modular.routerConfig.routerDelegate.currentConfiguration.uri.path;
-    if (!currentPath.startsWith(AppRoutes.passengerModulePath)) return null;
-
-    final cubit = BlocProvider.of<LocationAccessCubit>(context);
-    return switch (locationState) {
-      LocationAccessChecking() => const LocationAccessOverlay(
-        state: LocationAccessOverlayState.checking,
-        appName: 'EasyRide',
-      ),
-      LocationAccessReady() => null,
-      LocationAccessUnavailable(
-        accessState: final accessState,
-        message: final message,
-      ) =>
-        switch (accessState) {
-          LocationAccessState.ready => null,
-          LocationAccessState.denied => LocationAccessOverlay(
-            state: LocationAccessOverlayState.permissionDenied,
-            appName: 'EasyRide',
-            message: message,
-            onTryAgain: () => unawaited(cubit.enable()),
-          ),
-          LocationAccessState.serviceDisabled => LocationAccessOverlay(
-            state: LocationAccessOverlayState.serviceDisabled,
-            appName: 'EasyRide',
-            message: message,
-            onOpenLocationSettings: () => unawaited(cubit.enable()),
-            onTryAgain: () => unawaited(cubit.refresh()),
-          ),
-          LocationAccessState.deniedForever => LocationAccessOverlay(
-            state: LocationAccessOverlayState.permissionDeniedForever,
-            appName: 'EasyRide',
-            message: message,
-            onOpenAppSettings: () => unawaited(cubit.enable()),
-            onTryAgain: () => unawaited(cubit.refresh()),
-          ),
-        },
-    };
-  }
-
-  Widget _buildRouteWithLocationOverlay(
-    BuildContext context,
-    Widget? child,
-    LocationAccessViewState locationState,
-  ) {
-    final overlay = _buildLocationOverlay(context, locationState);
-    return Stack(
-      fit: StackFit.expand,
-      children: [child ?? const SizedBox.shrink(), ?overlay],
-    );
-  }
+  bool get _isPassengerRoute => Modular
+      .routerConfig
+      .routerDelegate
+      .currentConfiguration
+      .uri
+      .path
+      .startsWith(AppRoutes.passengerModulePath);
 }

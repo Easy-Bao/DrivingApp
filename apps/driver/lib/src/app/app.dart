@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/app/navigation/app_routes.dart';
-import 'package:driver/src/core/location/location_access_cubit.dart';
-import 'package:driver/src/core/location/location_access_state.dart';
 import 'package:driver/src/core/session/session_store.dart';
 import 'package:driver/src/core/telemetry/background_telemetry.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
@@ -101,70 +99,13 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         // until they adopt package:material_ui.
         // ignore: deprecated_member_use
         builder: (context, child) => MaterialUiCompatibilityBridge(
-          child: BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
-            builder: (context, locationState) =>
-                _buildRouteWithLocationOverlay(context, child, locationState),
+          child: LocationAccessOverlayScope(
+            enabled: _isDriverRoute,
+            child: child ?? const SizedBox.shrink(),
           ),
         ),
       ),
     );
-  }
-
-  Widget _buildRouteWithLocationOverlay(
-    BuildContext context,
-    Widget? child,
-    LocationAccessViewState locationState,
-  ) {
-    final overlay = _buildLocationOverlay(context, locationState);
-    return Stack(
-      fit: StackFit.expand,
-      children: [child ?? const SizedBox.shrink(), ?overlay],
-    );
-  }
-
-  Widget? _buildLocationOverlay(
-    BuildContext context,
-    LocationAccessViewState locationState,
-  ) {
-    final currentPath =
-        Modular.routerConfig.routerDelegate.currentConfiguration.uri.path;
-    if (!currentPath.startsWith(AppRoutes.driverModulePath)) return null;
-
-    final cubit = BlocProvider.of<LocationAccessCubit>(context);
-    return switch (locationState) {
-      LocationAccessChecking() => const LocationAccessOverlay(
-        state: LocationAccessOverlayState.checking,
-        appName: 'EasyRide',
-      ),
-      LocationAccessReady() => null,
-      LocationAccessUnavailable(
-        accessState: final accessState,
-        message: final message,
-      ) =>
-        switch (accessState) {
-          LocationAccessState.ready => null,
-          LocationAccessState.denied => LocationAccessOverlay(
-            state: LocationAccessOverlayState.permissionDenied,
-            appName: 'EasyRide',
-            message: message,
-            onTryAgain: () => unawaited(cubit.enable()),
-          ),
-          LocationAccessState.serviceDisabled => LocationAccessOverlay(
-            state: LocationAccessOverlayState.serviceDisabled,
-            appName: 'EasyRide',
-            message: message,
-            onOpenLocationSettings: () => unawaited(cubit.enable()),
-            onTryAgain: () => unawaited(cubit.refresh()),
-          ),
-          LocationAccessState.deniedForever => LocationAccessOverlay(
-            state: LocationAccessOverlayState.permissionDeniedForever,
-            appName: 'EasyRide',
-            message: message,
-            onOpenAppSettings: () => unawaited(cubit.enable()),
-            onTryAgain: () => unawaited(cubit.refresh()),
-          ),
-        },
-    };
   }
 
   void _ensureLocationMonitoring() {

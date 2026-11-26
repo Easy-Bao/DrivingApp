@@ -1,12 +1,13 @@
 import 'dart:async';
 
-import 'package:driver/src/core/location/location_access_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:maps/maps.dart';
+import 'package:maps/src/domain/entities/location_access_state.dart';
+import 'package:maps/src/domain/repositories/location_access_repository.dart';
+import 'package:maps/src/presentation/location_access_state.dart';
 
-class LocationAccessCubit({required this._repository})
-    extends Cubit<LocationAccessViewState> {
-  this : super(const LocationAccessChecking());
+class LocationAccessCubit extends Cubit<LocationAccessViewState> {
+  LocationAccessCubit({required this._repository})
+    : super(const LocationAccessChecking());
 
   final LocationAccessRepository _repository;
 
@@ -28,10 +29,12 @@ class LocationAccessCubit({required this._repository})
 
     try {
       final accessState = await _repository.startMonitoring();
+      if (isClosed) return;
       if (accessState == LocationAccessState.denied &&
           !_hasRequestedPermission) {
         _hasRequestedPermission = true;
-        _applyAccessState(await _repository.requestPermission());
+        final requested = await _repository.requestPermission();
+        _applyAccessState(requested);
       } else {
         _applyAccessState(accessState);
       }
@@ -50,10 +53,11 @@ class LocationAccessCubit({required this._repository})
 
   Future<void> enable() async {
     final previousState = state;
-    emit(const LocationAccessChecking());
+    _emitIfOpen(const LocationAccessChecking());
 
     try {
       final accessState = await _repository.refresh();
+      if (isClosed) return;
       final refreshedState = switch (accessState) {
         LocationAccessState.denied => await _repository.requestPermission(),
         LocationAccessState.serviceDisabled => await _openLocationSettings(),
@@ -63,7 +67,7 @@ class LocationAccessCubit({required this._repository})
       _applyAccessState(refreshedState);
     } catch (_) {
       if (previousState case final LocationAccessUnavailable unavailable) {
-        emit(
+        _emitIfOpen(
           LocationAccessUnavailable(
             accessState: unavailable.accessState,
             message: 'Location is temporarily unavailable. Try again.',
@@ -87,11 +91,11 @@ class LocationAccessCubit({required this._repository})
 
   void _applyAccessState(LocationAccessState accessState) {
     if (accessState == LocationAccessState.ready) {
-      emit(const LocationAccessReady());
+      _emitIfOpen(const LocationAccessReady());
       return;
     }
 
-    emit(
+    _emitIfOpen(
       LocationAccessUnavailable(
         accessState: accessState,
         message: _settingsMessage(accessState),
@@ -110,12 +114,17 @@ class LocationAccessCubit({required this._repository})
   }
 
   void _emitTemporaryFailure() {
-    emit(
+    _emitIfOpen(
       const LocationAccessUnavailable(
         accessState: LocationAccessState.serviceDisabled,
         message: 'Location is temporarily unavailable. Try again.',
       ),
     );
+  }
+
+  void _emitIfOpen(LocationAccessViewState nextState) {
+    if (isClosed) return;
+    emit(nextState);
   }
 
   @override

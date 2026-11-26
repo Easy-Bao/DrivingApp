@@ -3,8 +3,6 @@ import 'dart:developer' as dev;
 
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/core/formatters/value_formatters.dart';
-import 'package:driver/src/core/location/location_access_cubit.dart';
-import 'package:driver/src/core/location/location_access_state.dart';
 import 'package:driver/src/core/notifications/incoming_request_alert.dart';
 import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:driver/src/features/active_ride/active_ride_routes.dart';

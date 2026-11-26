@@ -16,5 +16,8 @@ export 'src/domain/repositories/location_repository.dart';
 export 'src/presentation/annotation_service.dart';
 export 'src/presentation/camera_service.dart';
 export 'src/presentation/demand_heatmap_viewport.dart';
+export 'src/presentation/location_access_cubit.dart';
+export 'src/presentation/location_access_overlay_scope.dart';
+export 'src/presentation/location_access_state.dart';
 export 'src/presentation/map_provider.dart';
 export 'src/presentation/native_service.dart';

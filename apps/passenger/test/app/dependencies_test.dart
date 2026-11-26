@@ -6,7 +6,6 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/app/dependencies.dart';
-import 'package:passenger/src/core/location/location_access_cubit.dart';
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
