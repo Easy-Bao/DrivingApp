@@ -4,8 +4,9 @@ import 'package:design_system/design_system.dart';
 import 'package:driver/src/core/formatters/value_formatters.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
+import 'package:driver/src/features/dashboard/presentation/widgets/incoming_request_action_bar.dart';
+import 'package:driver/src/features/dashboard/presentation/widgets/incoming_request_countdown_badge.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -25,6 +26,9 @@ class IncomingRideRequestPage extends StatefulWidget {
 }
 
 class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
+  final ValueNotifier<DateTime> _clock = ValueNotifier<DateTime>(
+    DateTime.now(),
+  );
   Timer? _timer;
   bool _submitting = false;
   bool _accepted = false;
@@ -43,7 +47,7 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       widget.cubit.removeExpiredRideOffers();
-      if (mounted) setState(() {});
+      if (mounted) _clock.value = DateTime.now();
     });
     if (_request(widget.cubit.state) == null) {
       _close();
@@ -53,6 +57,7 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
   @override
   void dispose() {
     _timer?.cancel();
+    _clock.dispose();
     super.dispose();
   }
 
@@ -137,10 +142,6 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
       final colorScheme = context.colorScheme;
       final textStyles = context.textStyles;
       final expiry = DateTime.tryParse(valueAsString(bid?['expires_at']) ?? '');
-      final seconds = expiry
-          ?.difference(DateTime.now())
-          .inSeconds
-          .clamp(0, 3599);
       final fare = bid == null ? null : fareInPesos(bid);
       final isDirect = bid?['target_driver_id'] != null;
       final awaitingAssignment =
@@ -194,51 +195,10 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
                                   ),
                                 ),
                               ),
-                              if (seconds != null)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.surfaceContainerLowest,
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.pill,
-                                    ),
-                                    border: Border.all(
-                                      color: seconds <= 10
-                                          ? colorScheme.error.withValues(
-                                              alpha: 0.45,
-                                            )
-                                          : colorScheme.outlineVariant,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      ExcludeSemantics(
-                                        child: Icon(
-                                          LucideIcons.clock,
-                                          size: 13,
-                                          color: seconds <= 10
-                                              ? colorScheme.error
-                                              : colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        '${seconds}s',
-                                        style: textStyles.labelSmall?.tabular
-                                            .copyWith(
-                                              fontWeight: FontWeight.w700,
-                                              color: seconds <= 10
-                                                  ? colorScheme.error
-                                                  : colorScheme.onSurface,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                              IncomingRequestCountdownBadge(
+                                clock: _clock,
+                                expiry: expiry,
+                              ),
                             ],
                           ),
                         ),
@@ -266,14 +226,9 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
                                   ),
                                 ),
                                 const SizedBox(height: AppSpacing.xs + 2),
-                                Text(
-                                  seconds == null
-                                      ? 'Review the trip before accepting.'
-                                      : 'Respond within $seconds seconds',
-                                  style: textStyles.bodyMedium?.tabular
-                                      .copyWith(
-                                        color: colorScheme.onSurfaceVariant,
-                                      ),
+                                IncomingRequestCountdownLabel(
+                                  clock: _clock,
+                                  expiry: expiry,
                                 ),
                                 const SizedBox(height: AppSpacing.xxl),
                                 Text(
@@ -361,145 +316,23 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
                             ),
                           ),
                         ),
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: context.canvasColor,
-                            border: Border(
-                              top: BorderSide(
-                                color: colorScheme.outlineVariant.withValues(
-                                  alpha: 0.7,
-                                ),
-                              ),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.fromLTRB(
-                              horizontalPadding,
-                              AppSpacing.lg,
-                              horizontalPadding,
-                              AppSpacing.lg,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                if (awaitingAssignment) ...[
-                                  const LinearProgressIndicator(minHeight: 3),
-                                  const SizedBox(height: AppSpacing.md),
-                                  Text(
-                                    'Confirming your trip…',
-                                    textAlign: TextAlign.center,
-                                    style: textStyles.titleSmall?.copyWith(
-                                      color: colorScheme.onSurface,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ] else ...[
-                                  SizedBox(
-                                    height: AppSize.controlHeight,
-                                    child: FilledButton(
-                                      key: const ValueKey<String>(
-                                        'driver-request-accept',
-                                      ),
-                                      onPressed:
-                                          _submitting ||
-                                              bid == null ||
-                                              fare == null
-                                          ? null
-                                          : () => unawaited(
-                                              _respond(bid, accept: true),
-                                            ),
-                                      style:
-                                          FilledButton.styleFrom(
-                                            backgroundColor:
-                                                colorScheme.primary,
-                                            foregroundColor:
-                                                colorScheme.onPrimary,
-                                            elevation: 0,
-                                            enableFeedback: false,
-                                            splashFactory:
-                                                NoSplash.splashFactory,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                    AppRadius.lg,
-                                                  ),
-                                            ),
-                                          ).copyWith(
-                                            overlayColor:
-                                                WidgetStateProperty.resolveWith(
-                                                  (states) {
-                                                    if (states.contains(
-                                                      WidgetState.focused,
-                                                    )) {
-                                                      return colorScheme
-                                                          .onPrimary
-                                                          .withValues(
-                                                            alpha: 0.16,
-                                                          );
-                                                    }
-                                                    return Colors.transparent;
-                                                  },
-                                                ),
-                                          ),
-                                      child: Text(
-                                        _submitting
-                                            ? 'Sending response…'
-                                            : 'Accept ride',
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppSpacing.sm + 2),
-                                  SizedBox(
-                                    height: AppSize.controlHeight,
-                                    child: OutlinedButton(
-                                      key: const ValueKey<String>(
-                                        'driver-request-decline',
-                                      ),
-                                      onPressed: _submitting || bid == null
-                                          ? null
-                                          : () => unawaited(
-                                              _respond(bid, accept: false),
-                                            ),
-                                      style:
-                                          OutlinedButton.styleFrom(
-                                            foregroundColor:
-                                                colorScheme.onSurface,
-                                            backgroundColor: Colors.transparent,
-                                            side: BorderSide(
-                                              color: colorScheme.outlineVariant,
-                                            ),
-                                            enableFeedback: false,
-                                            splashFactory:
-                                                NoSplash.splashFactory,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                    AppRadius.lg,
-                                                  ),
-                                            ),
-                                          ).copyWith(
-                                            overlayColor:
-                                                WidgetStateProperty.resolveWith(
-                                                  (states) {
-                                                    if (states.contains(
-                                                      WidgetState.focused,
-                                                    )) {
-                                                      return colorScheme.primary
-                                                          .withValues(
-                                                            alpha: 0.12,
-                                                          );
-                                                    }
-                                                    return Colors.transparent;
-                                                  },
-                                                ),
-                                          ),
-                                      child: const Text('Decline'),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
+                        IncomingRequestActionBar(
+                          horizontalPadding: horizontalPadding,
+                          awaitingAssignment: awaitingAssignment,
+                          submitting: _submitting,
+                          canAccept:
+                              !_submitting && bid != null && fare != null,
+                          canDecline: !_submitting && bid != null,
+                          onAccept: () {
+                            if (bid != null) {
+                              unawaited(_respond(bid, accept: true));
+                            }
+                          },
+                          onDecline: () {
+                            if (bid != null) {
+                              unawaited(_respond(bid, accept: false));
+                            }
+                          },
                         ),
                       ],
                     );

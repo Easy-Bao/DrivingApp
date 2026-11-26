@@ -11,27 +11,20 @@ import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
+import 'package:driver/src/features/dashboard/presentation/controllers/dashboard_realtime_parser.dart';
 import 'package:driver/src/features/dashboard/presentation/pages/incoming_ride_request_page.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/active_bookings_list.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/availability_card.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/dashboard_stats_row.dart';
+import 'package:driver/src/features/dashboard/presentation/widgets/dashboard_status_indicator.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/trip_ended_dialog.dart';
+import 'package:driver/src/features/dashboard/presentation/widgets/trip_recovery_review_dialog.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart';
-
-bool _isActiveTripStatus(Object? value) {
-  return const {
-    'assigned',
-    'accepted',
-    'arrived',
-    'in_transit',
-  }.contains(valueAsString(value));
-}
 
 bool shouldAnimateStatusPulse({
   required bool isOnline,
@@ -98,7 +91,6 @@ class _DashboardPageState extends State<DashboardPage>
       vsync: this,
       duration: const Duration(seconds: 2),
     );
-    _startRequestCountdownTimer();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -106,6 +98,7 @@ class _DashboardPageState extends State<DashboardPage>
         _scheduleActiveTripNavigation();
         unawaited(_showIncomingRequest());
         _syncPulseAnimation(dashboardState.isOnline);
+        _syncRequestCountdownTimer(dashboardState);
         _startLocationAccessMonitoring();
         unawaited(_loadActiveTrips());
         if (dashboardState.isOnline && _isForeground) {
@@ -167,9 +160,9 @@ class _DashboardPageState extends State<DashboardPage>
 
     if (_isForeground || !mounted) return;
     _isForeground = true;
-    final isOnline = BlocProvider.of<DashboardCubit>(context).state.isOnline;
-    _syncPulseAnimation(isOnline);
-    _startRequestCountdownTimer();
+    final dashboardState = BlocProvider.of<DashboardCubit>(context).state;
+    _syncPulseAnimation(dashboardState.isOnline);
+    _syncRequestCountdownTimer(dashboardState);
     _scheduleActiveTripNavigation();
     unawaited(_showIncomingRequest());
     unawaited(_resumeForegroundWork());
@@ -334,12 +327,20 @@ class _DashboardPageState extends State<DashboardPage>
 
   void _refreshRequestCountdowns() {
     if (!mounted || !_isForeground) return;
-    BlocProvider.of<DashboardCubit>(context).removeExpiredRideOffers();
+    final cubit = BlocProvider.of<DashboardCubit>(context);
+    cubit.removeExpiredRideOffers();
+    _syncRequestCountdownTimer(cubit.state);
   }
 
-  void _startRequestCountdownTimer() {
-    if (!_isForeground || _requestCountdownTimer != null) return;
-    _requestCountdownTimer = Timer.periodic(
+  void _syncRequestCountdownTimer(DashboardState state) {
+    final hasActiveOffers =
+        state.activeBids.isNotEmpty || state.submittedOffers.isNotEmpty;
+    if (!_isForeground || !state.isOnline || !hasActiveOffers) {
+      _requestCountdownTimer?.cancel();
+      _requestCountdownTimer = null;
+      return;
+    }
+    _requestCountdownTimer ??= Timer.periodic(
       const Duration(seconds: 1),
       (_) => _refreshRequestCountdowns(),
     );
@@ -417,23 +418,10 @@ class _DashboardPageState extends State<DashboardPage>
       return;
     }
     if (event is RideOfferUpdatedEvent) {
-      final payload = event.envelope.payload;
-      final sessionId =
-          valueAsString(payload['session_id']) ??
-          (payload['session'] is Map
-              ? valueAsString((payload['session'] as Map)['id'])
-              : null);
-      final session = payload['session'];
-      final wasClosed =
-          session is Map &&
-          {
-            'cancelled',
-            'canceled',
-          }.contains(valueAsString(session['status'])?.toLowerCase());
-      final reason = valueAsString(payload['reason']);
-      if (reason == 'another_driver_selected' || wasClosed) {
+      final resolvedSessionId = resolvedOfferSessionIdFromUpdate(event);
+      if (resolvedSessionId != null) {
         BlocProvider.of<DashboardCubit>(context)
-            .resolveSubmittedOffer(sessionId);
+            .resolveSubmittedOffer(resolvedSessionId);
       }
 
       unawaited(_pollRideData(_pollGeneration));
@@ -441,51 +429,28 @@ class _DashboardPageState extends State<DashboardPage>
     }
     if (event is! RideMatchedEvent) return;
 
-    final rawRide = event.envelope.payload['ride'];
-    if (rawRide is! Map) {
-      unawaited(_pollRideData(_pollGeneration));
+    final matched = parseMatchedRideEvent(event);
+    if (matched == null) {
+      if (event.envelope.payload['ride'] is! Map) {
+        unawaited(_pollRideData(_pollGeneration));
+      }
       return;
     }
 
-    final ride = Map<String, dynamic>.from(rawRide);
-    final rideId = valueAsString(ride['id']) ?? event.envelope.scope.rideId;
-    if (rideId == null) return;
-
-    final status = valueAsString(ride['status']) ?? 'accepted';
-    if (!_isActiveTripStatus(status)) return;
-    ride['id'] = rideId;
-    ride['status'] = status;
-
-    final payload = event.envelope.payload;
-    final matchedSessionId =
-        valueAsString(payload['session_id']) ??
-        (payload['session'] is Map
-            ? valueAsString((payload['session'] as Map)['id'])
-            : null) ??
-        (payload['offer'] is Map
-            ? valueAsString((payload['offer'] as Map)['session_id'])
-            : null);
-
-    BlocProvider.of<DashboardCubit>(context).mergeActiveRide(
-      RideSnapshot.fromJson(ride, fallbackId: rideId),
-      sessionId: matchedSessionId,
-    );
+    BlocProvider.of<DashboardCubit>(context)
+        .mergeActiveRide(matched.snapshot, sessionId: matched.sessionId);
   }
 
   void _handleRideStatusChanged(RideStatusChangedEvent event) {
-    final rawRide = event.envelope.payload['ride'];
-    final ride = rawRide is Map ? Map<String, dynamic>.from(rawRide) : null;
-    final status =
-        valueAsString(ride?['status']) ??
-        valueAsString(event.envelope.payload['status']);
-    if (status == null) return;
-    final terminalStatus = RideStatus.fromString(status);
+    final parsed = parseRideStatusChangedEvent(event);
+    if (parsed == null) return;
+    final terminalStatus = parsed.status;
     if (!terminalStatus.isTerminal) {
       unawaited(BlocProvider.of<DashboardCubit>(context).resyncActiveTrip());
       return;
     }
 
-    final rideId = event.envelope.scope.rideId ?? valueAsString(ride?['id']);
+    final rideId = parsed.rideId;
     if (rideId == null) return;
 
     final dashboardCubit = BlocProvider.of<DashboardCubit>(context);
@@ -857,23 +822,11 @@ class _DashboardPageState extends State<DashboardPage>
     if (!mounted || !context.mounted) return (null, false);
     if (!_reviewedTripIds.contains(rideId) &&
         resolvedTrip.needsRecoveryReview(DateTime.now())) {
+      final isInTransit = resolvedTrip.status == 'in_transit';
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Review this trip'),
-          content: Text(
-            resolvedTrip!.status == 'in_transit'
-                ? 'This trip has been open longer than expected. Confirm the trip status with your passenger before continuing.'
-                : 'This pickup has been waiting longer than expected. Check with the passenger, then continue or use the cancellation action on the trip screen.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Open trip'),
-            ),
-          ],
-        ),
+        builder: (_) => TripRecoveryReviewDialog(isInTransit: isInTransit),
       );
       if (!mounted || !context.mounted) return (null, false);
       _reviewedTripIds.add(rideId);
@@ -952,7 +905,10 @@ class _DashboardPageState extends State<DashboardPage>
               previous.isOnline != current.isOnline ||
               (previous.activeRides != current.activeRides &&
                   current.activeRides.isEmpty),
-          listener: (_, _) => unawaited(_showIncomingRequest()),
+          listener: (_, state) {
+            _syncRequestCountdownTimer(state);
+            unawaited(_showIncomingRequest());
+          },
         ),
         BlocListener<RideFlowCubit, RideFlowState>(
           listenWhen: (_, current) => current is RideFlowTerminal,
@@ -1000,9 +956,7 @@ class _DashboardPageState extends State<DashboardPage>
             previous.completedTrips != current.completedTrips ||
             previous.errorMessage != current.errorMessage ||
             previous.statsErrorMessage != current.statsErrorMessage ||
-            previous.activeRides != current.activeRides ||
-            previous.activeBids != current.activeBids ||
-            previous.submittedOffers != current.submittedOffers,
+            previous.activeRides != current.activeRides,
         builder: (context, state) {
           return Column(
             children: [
@@ -1011,35 +965,7 @@ class _DashboardPageState extends State<DashboardPage>
                   context: context,
                   removeTop: false,
                   child: Scaffold(
-                    appBar: AppBar(
-                      automaticallyImplyLeading: false,
-                      backgroundColor: context.canvasColor,
-                      titleSpacing: AppLayout.pagePadding,
-                      toolbarHeight: 72,
-                      title: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'EasyRide',
-                            style: context.textStyles.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.4,
-                              color: context.colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'DRIVER',
-                            style: context.textStyles.labelSmall?.copyWith(
-                              color: context.colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    appBar: const DashboardAppBar(),
                     body: SafeArea(
                       top: false,
                       child: Center(
@@ -1100,7 +1026,11 @@ class _DashboardPageState extends State<DashboardPage>
                                         AppSpacing.xxl,
                                       ),
                                       child: Center(
-                                        child: _buildStatusIndicator(state),
+                                        child: DashboardStatusIndicator(
+                                          isOnline: state.isOnline,
+                                          statusPulse:
+                                              _pulseAnimationController,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -1146,75 +1076,6 @@ class _DashboardPageState extends State<DashboardPage>
       errorMessage: state.statsErrorMessage,
       onRetry: () =>
           unawaited(BlocProvider.of<DashboardCubit>(context).loadStats()),
-    );
-  }
-
-  Widget _buildStatusIndicator(DashboardState state) {
-    final colorScheme = context.colorScheme;
-    final onlineColor = context.semanticColors.online;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ExcludeSemantics(
-          child: AnimatedBuilder(
-            animation: _pulseAnimationController,
-            builder: (context, child) {
-              final borderOpacity = state.isOnline
-                  ? 0.25 + _pulseAnimationController.value * 0.25
-                  : 1.0;
-              return Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: state.isOnline
-                      ? onlineColor.withValues(alpha: 0.06)
-                      : colorScheme.surfaceContainerLowest,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: state.isOnline
-                        ? onlineColor.withValues(alpha: borderOpacity)
-                        : colorScheme.outlineVariant,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: child,
-              );
-            },
-            child: Icon(
-              state.isOnline ? LucideIcons.radio : LucideIcons.car_front,
-              size: 22,
-              color: state.isOnline
-                  ? onlineColor
-                  : colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        Text(
-          state.isOnline ? 'Ready for your next ride' : "You're offline",
-          textAlign: TextAlign.center,
-          style: context.textStyles.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.2,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xs + 2),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 280),
-          child: Text(
-            state.isOnline
-                ? 'New ride requests will appear here.'
-                : 'Switch online when you’re ready to drive.',
-            textAlign: TextAlign.center,
-            style: context.textStyles.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              height: 1.45,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

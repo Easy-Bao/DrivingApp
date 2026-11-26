@@ -2,6 +2,7 @@ import 'dart:developer' as dev;
 
 import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:driver/src/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_offer_store.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
@@ -11,11 +12,10 @@ class DashboardCubit({
   DateTime Function()? now,
   this._silentDispatchFailureCooldown = const Duration(seconds: 15),
 }) extends Cubit<DashboardState> {
-  static const int _maxTerminalRideIds = 100;
-
   final DashboardRepository _repository;
   final DateTime Function() _now;
   final Duration _silentDispatchFailureCooldown;
+  late final DashboardOfferStore _offerStore = DashboardOfferStore(now: _now);
   bool _isDispatchRequestInFlight = false;
   bool _isTogglingOnline = false;
   int _activeRideRevision = 0;
@@ -23,8 +23,6 @@ class DashboardCubit({
   Future<void>? _initialization;
   Future<void>? _statsRequestInFlight;
   DateTime? _silentDispatchRetryAfter;
-  final Map<String, DateTime> _resolvedOfferSessions = <String, DateTime>{};
-  final Set<String> _terminalRideIds = <String>{};
 
   this : _now = now ?? DateTime.now, super(const DashboardState());
 
@@ -55,15 +53,12 @@ class DashboardCubit({
     try {
       final onlineStatusResult = await _repository
           .getPersistedOnlineStatusResult();
-      onlineStatusResult.fold(
-        (failure) => dev.log(
-          'Unable to restore driver online status: ${failure.message}',
-        ),
-        (isOnline) {
-          if (isClosed) return;
-          emit(state.copyWith(isOnline: isOnline));
-        },
-      );
+      switch (onlineStatusResult) {
+        case Err(:final failure):
+          dev.log('Unable to restore driver online status: ${failure.message}');
+        case Ok(value: final isOnline):
+          if (!isClosed) emit(state.copyWith(isOnline: isOnline));
+      }
     } catch (error, stackTrace) {
       dev.log(
         'Unable to restore driver online status.',
@@ -95,18 +90,15 @@ class DashboardCubit({
     try {
       final result = await _repository.getDashboardStatsResult();
       if (isClosed) return;
-      result.fold(
-        (failure) {
-          if (isClosed) return;
+      switch (result) {
+        case Err(:final failure):
           emit(
             state.copyWith(
               isLoadingStats: false,
               statsErrorMessage: ErrorHandler.getErrorMessage(failure),
             ),
           );
-        },
-        (stats) {
-          if (isClosed) return;
+        case Ok(value: final stats):
           emit(
             state.copyWith(
               isLoadingStats: false,
@@ -116,8 +108,7 @@ class DashboardCubit({
               statsErrorMessage: null,
             ),
           );
-        },
-      );
+      }
     } catch (error) {
       if (isClosed) return;
       dev.log('Error loading driver dashboard stats: $error');
@@ -150,15 +141,14 @@ class DashboardCubit({
         includeOffers: shouldIncludeOffers,
       );
       if (isClosed) return false;
-      return await result.fold(
-        (failure) {
+      switch (result) {
+        case Err(:final failure):
           if (_pausesSilentDispatch(failure)) {
             _silentDispatchRetryAfter = _now().add(
               _silentDispatchFailureCooldown,
             );
           }
-          if (!silent) {
-            if (isClosed) return false;
+          if (!silent && !isClosed) {
             emit(
               state.copyWith(
                 isLoadingDispatch: false,
@@ -167,9 +157,7 @@ class DashboardCubit({
             );
           }
           return false;
-        },
-        (snapshot) {
-          if (isClosed) return false;
+        case Ok(value: final snapshot):
           if (activeRideRevision != _activeRideRevision) {
             emit(state.copyWith(isLoadingDispatch: false, errorMessage: null));
             return true;
@@ -179,82 +167,47 @@ class DashboardCubit({
               .toSet();
           for (final current in state.activeRides) {
             if (!snapshotIds.contains(current.id)) {
-              _recordTerminalRideId(current.id);
+              _offerStore.recordTerminalRideId(current.id);
             }
           }
           for (final ride in snapshot.activeRides.where(
             (ride) => ride.isTerminal,
           )) {
-            _recordTerminalRideId(ride.id);
+            _offerStore.recordTerminalRideId(ride.id);
           }
           final activeRides = List<RideSnapshot>.unmodifiable(
             snapshot.activeRides.where(
               (ride) =>
                   ride.id.isNotEmpty &&
                   !ride.isTerminal &&
-                  !_terminalRideIds.contains(ride.id),
+                  !_offerStore.isTerminalRide(ride.id),
             ),
           );
           final isFull = activeRides.length >= DashboardState.maxActiveBookings;
           _silentDispatchRetryAfter = null;
-          final offeredSessions = <Map<String, dynamic>>[];
-          final submittedOffers = <Map<String, dynamic>>[];
-          if (shouldIncludeOffers) {
-            for (final bid in snapshot.rideOffers) {
-              final sessionId = _stringValue(bid['id']);
-              if (sessionId != null && _isResolvedOfferSession(sessionId)) {
-                continue;
-              }
-              if (_hasSubmittedOffer(bid)) {
-                submittedOffers.add(bid);
-              } else {
-                offeredSessions.add(bid);
-              }
-            }
-          }
-          if (submittedOfferRevision != _submittedOfferRevision) {
-            final submittedSessionIds = submittedOffers
-                .map((offer) => _stringValue(offer['id']))
-                .whereType<String>()
-                .toSet();
-            for (final offer in state.submittedOffers) {
-              final sessionId = _stringValue(offer['id']);
-              if (offer['local_offer_submitted'] == true &&
-                  sessionId != null &&
-                  !submittedSessionIds.contains(sessionId) &&
-                  !_isResolvedOfferSession(sessionId)) {
-                submittedOffers.add(offer);
-              }
-            }
-            final preservedSessionIds = submittedOffers
-                .where((offer) => offer['local_offer_submitted'] == true)
-                .map((offer) => _stringValue(offer['id']))
-                .whereType<String>()
-                .toSet();
-            offeredSessions.removeWhere(
-              (bid) => preservedSessionIds.contains(_stringValue(bid['id'])),
-            );
-          }
+          final partitioned = shouldIncludeOffers
+              ? _offerStore.partitionSnapshotOffers(
+                  snapshotOffers: snapshot.rideOffers,
+                  currentSubmittedOffers: state.submittedOffers,
+                  preserveLocalSubmissions:
+                      submittedOfferRevision != _submittedOfferRevision,
+                )
+              : null;
           emit(
             state.copyWith(
               isLoadingDispatch: false,
               activeRides: activeRides,
               activeBids: isFull
                   ? const <Map<String, dynamic>>[]
-                  : shouldIncludeOffers
-                  ? _immutableMaps(offeredSessions)
-                  : null,
+                  : partitioned?.activeBids,
               submittedOffers: isFull
                   ? const <Map<String, dynamic>>[]
-                  : shouldIncludeOffers
-                  ? _immutableMaps(submittedOffers)
-                  : null,
+                  : partitioned?.submittedOffers,
               errorMessage: null,
             ),
           );
           return true;
-        },
-      );
+      }
     } catch (error, stackTrace) {
       if (isClosed) return false;
       dev.log(
@@ -291,10 +244,13 @@ class DashboardCubit({
     return true;
   }
 
-  bool _pausesSilentDispatch(Failure failure) =>
-      failure is NetworkFailure ||
-      (failure is ServerFailure &&
-          (failure.statusCode == null || failure.statusCode! >= 500));
+  bool _pausesSilentDispatch(Failure failure) {
+    if (failure is NetworkFailure) return true;
+    if (failure case ServerFailure(:final statusCode)) {
+      return statusCode == null || statusCode >= 500;
+    }
+    return false;
+  }
 
   void mergeActiveRide(RideSnapshot ride, {String? sessionId}) {
     if (ride.id.isEmpty) return;
@@ -302,7 +258,7 @@ class DashboardCubit({
       removeActiveRide(ride.id);
       return;
     }
-    if (_terminalRideIds.contains(ride.id)) return;
+    if (_offerStore.isTerminalRide(ride.id)) return;
     _activeRideRevision++;
     final rides = List<RideSnapshot>.unmodifiable([
       for (final current in state.activeRides)
@@ -310,9 +266,12 @@ class DashboardCubit({
       if (!state.activeRides.any((current) => current.id == ride.id)) ride,
     ]);
     final isFull = rides.length >= DashboardState.maxActiveBookings;
-    final resolvedSessionId = _stringValue(sessionId);
+    final resolvedSessionId = DashboardOfferStore.normalizedString(sessionId);
     if (resolvedSessionId != null) {
-      _recordResolvedOfferSession(resolvedSessionId);
+      _offerStore.recordResolvedOfferSession(
+        resolvedSessionId,
+        candidates: [...state.submittedOffers, ...state.activeBids],
+      );
       _submittedOfferRevision++;
     }
     emit(
@@ -321,18 +280,22 @@ class DashboardCubit({
         activeBids: isFull
             ? const []
             : resolvedSessionId != null
-            ? _immutableMaps(
+            ? DashboardOfferStore.immutableMaps(
                 state.activeBids.where(
-                  (bid) => _stringValue(bid['id']) != resolvedSessionId,
+                  (bid) =>
+                      DashboardOfferStore.normalizedString(bid['id']) !=
+                      resolvedSessionId,
                 ),
               )
             : null,
         submittedOffers: isFull
             ? const []
             : resolvedSessionId != null
-            ? _immutableMaps(
+            ? DashboardOfferStore.immutableMaps(
                 state.submittedOffers.where(
-                  (offer) => _stringValue(offer['id']) != resolvedSessionId,
+                  (offer) =>
+                      DashboardOfferStore.normalizedString(offer['id']) !=
+                      resolvedSessionId,
                 ),
               )
             : null,
@@ -345,7 +308,7 @@ class DashboardCubit({
     final removesCurrentRide = state.activeRides.any(
       (ride) => ride.id == rideId,
     );
-    final addedTombstone = _recordTerminalRideId(rideId);
+    final addedTombstone = _offerStore.recordTerminalRideId(rideId);
     if (!addedTombstone && !removesCurrentRide) return;
     _activeRideRevision++;
     if (!removesCurrentRide) return;
@@ -361,50 +324,31 @@ class DashboardCubit({
   void removeActiveBid(String? bidId) {
     if (bidId == null) return;
     final remaining = state.activeBids
-        .where((bid) => _stringValue(bid['id']) != bidId)
+        .where(
+          (bid) => DashboardOfferStore.normalizedString(bid['id']) != bidId,
+        )
         .toList(growable: false);
     if (remaining.length == state.activeBids.length) return;
     emit(state.copyWith(activeBids: remaining));
   }
 
   bool removeExpiredRideOffers() {
-    final now = _now();
-    final remaining = state.activeBids
-        .where((bid) {
-          final expiresAt = DateTime.tryParse(
-            _stringValue(bid['expires_at']) ?? '',
-          );
-          return expiresAt == null || expiresAt.isAfter(now);
-        })
-        .toList(growable: false);
-    final remainingSubmitted = state.submittedOffers
-        .where((offer) {
-          final expiresAt = DateTime.tryParse(
-            _stringValue(offer['expires_at']) ?? '',
-          );
-          return expiresAt == null || expiresAt.isAfter(now);
-        })
-        .toList(growable: false);
-    _resolvedOfferSessions.removeWhere(
-      (_, expiresAt) => !expiresAt.isAfter(now),
+    final pruned = _offerStore.pruneExpiredOffers(
+      activeBids: state.activeBids,
+      submittedOffers: state.submittedOffers,
     );
-    if (remaining.length == state.activeBids.length &&
-        remainingSubmitted.length == state.submittedOffers.length) {
-      return false;
-    }
-    final submittedOfferExpired =
-        remainingSubmitted.length < state.submittedOffers.length;
+    if (!pruned.changed) return false;
     emit(
       state.copyWith(
-        activeBids: remaining,
-        submittedOffers: remainingSubmitted,
+        activeBids: pruned.activeBids,
+        submittedOffers: pruned.submittedOffers,
       ),
     );
-    return submittedOfferExpired;
+    return pruned.submittedOfferExpired;
   }
 
   void clearActiveBids() {
-    _resolvedOfferSessions.clear();
+    _offerStore.clearResolvedOffers();
     if (state.activeBids.isEmpty && state.submittedOffers.isEmpty) return;
     emit(
       state.copyWith(
@@ -416,76 +360,72 @@ class DashboardCubit({
 
   void markOfferSubmitted(String? sessionId) {
     if (sessionId == null || state.isAtBookingCapacity) return;
-    if (_isResolvedOfferSession(sessionId)) {
+    if (_offerStore.isResolvedOfferSession(sessionId)) {
       removeActiveBid(sessionId);
       return;
     }
     final matchingBid = state.activeBids.where(
-      (bid) => _stringValue(bid['id']) == sessionId,
+      (bid) => DashboardOfferStore.normalizedString(bid['id']) == sessionId,
     );
     if (matchingBid.isEmpty) return;
 
     final submitted = Map<String, dynamic>.from(matchingBid.first)
       ..['local_offer_submitted'] = true;
     final activeBids = state.activeBids
-        .where((bid) => _stringValue(bid['id']) != sessionId)
+        .where(
+          (bid) => DashboardOfferStore.normalizedString(bid['id']) != sessionId,
+        )
         .toList(growable: false);
     final submittedOffers = [
       ...state.submittedOffers.where(
-        (offer) => _stringValue(offer['id']) != sessionId,
+        (offer) =>
+            DashboardOfferStore.normalizedString(offer['id']) != sessionId,
       ),
       submitted,
     ];
     emit(
       state.copyWith(
-        activeBids: _immutableMaps(activeBids),
-        submittedOffers: _immutableMaps(submittedOffers),
+        activeBids: DashboardOfferStore.immutableMaps(activeBids),
+        submittedOffers: DashboardOfferStore.immutableMaps(submittedOffers),
       ),
     );
     _submittedOfferRevision++;
   }
 
-  void _recordResolvedOfferSession(String sessionId) {
-    final candidates = [...state.submittedOffers, ...state.activeBids];
-    Map<String, dynamic>? matchingBid;
-    for (final bid in candidates) {
-      if (_stringValue(bid['id']) == sessionId) {
-        matchingBid = bid;
-        break;
-      }
-    }
-    final expiresAt = DateTime.tryParse(
-      _stringValue(matchingBid?['expires_at']) ?? '',
-    );
-    final retentionUntil = expiresAt != null && expiresAt.isAfter(_now())
-        ? expiresAt
-        : _now().add(const Duration(minutes: 2));
-    _resolvedOfferSessions[sessionId] = retentionUntil;
-  }
-
   bool resolveSubmittedOffer(String? sessionId) {
-    final resolvedSessionId = _stringValue(sessionId);
+    final resolvedSessionId = DashboardOfferStore.normalizedString(sessionId);
     if (resolvedSessionId == null) return false;
     final hasMatchingBid =
         state.submittedOffers.any(
-          (offer) => _stringValue(offer['id']) == resolvedSessionId,
+          (offer) =>
+              DashboardOfferStore.normalizedString(offer['id']) ==
+              resolvedSessionId,
         ) ||
         state.activeBids.any(
-          (bid) => _stringValue(bid['id']) == resolvedSessionId,
+          (bid) =>
+              DashboardOfferStore.normalizedString(bid['id']) ==
+              resolvedSessionId,
         );
-    _recordResolvedOfferSession(resolvedSessionId);
+    _offerStore.recordResolvedOfferSession(
+      resolvedSessionId,
+      candidates: [...state.submittedOffers, ...state.activeBids],
+    );
     if (!hasMatchingBid) return false;
 
     emit(
       state.copyWith(
-        activeBids: _immutableMaps(
+        activeBids: DashboardOfferStore.immutableMaps(
           state.activeBids.where(
-            (bid) => _stringValue(bid['id']) != resolvedSessionId,
+            (bid) =>
+                DashboardOfferStore.normalizedString(bid['id']) !=
+                resolvedSessionId,
           ),
         ),
-        submittedOffers: _immutableMaps(
+        submittedOffers: DashboardOfferStore.immutableMaps(
           state.submittedOffers.where(
-            (offer) => _stringValue(offer['id']) != resolvedSessionId,
+            (offer) =>
+                DashboardOfferStore.normalizedString(offer['id']) !=
+                resolvedSessionId,
           ),
         ),
       ),
@@ -497,18 +437,18 @@ class DashboardCubit({
   Future<bool> declineRideRequest(String sessionId) async {
     final result = await _repository.declineRideRequestResult(sessionId);
     if (isClosed) return false;
-    return result.fold(
-      (failure) {
+    return switch (result) {
+      Err(:final failure) => () {
         emit(
           state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
         );
         return false;
-      },
-      (_) {
+      }(),
+      Ok() => () {
         removeActiveBid(sessionId);
         return true;
-      },
-    );
+      }(),
+    };
   }
 
   Future<bool> submitRideOffer({
@@ -521,19 +461,18 @@ class DashboardCubit({
         farePesos: farePesos,
       );
       if (isClosed) return false;
-      return await result.fold(
-        (failure) {
-          if (isClosed) return false;
+      return switch (result) {
+        Err(:final failure) => () {
           emit(
             state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
           );
           return false;
-        },
-        (_) {
+        }(),
+        Ok() => () {
           markOfferSubmitted(sessionId);
           return true;
-        },
-      );
+        }(),
+      };
     } catch (error, stackTrace) {
       if (isClosed) return false;
       dev.log(
@@ -549,10 +488,13 @@ class DashboardCubit({
   Future<RideSnapshot?> fetchAuthoritativeRide(String rideId) async {
     try {
       final result = await _repository.fetchRideResult(rideId);
-      return await result.fold((failure) {
-        dev.log('Unable to refresh driver trip $rideId: ${failure.message}');
-        return null;
-      }, (ride) => ride);
+      return switch (result) {
+        Err(:final failure) => () {
+          dev.log('Unable to refresh driver trip $rideId: ${failure.message}');
+          return null;
+        }(),
+        Ok(value: final ride) => ride,
+      };
     } catch (error, stackTrace) {
       dev.log(
         'Unable to refresh driver trip $rideId.',
@@ -582,21 +524,17 @@ class DashboardCubit({
       );
       if (isClosed) return;
 
-      updateResult.fold(
-        (failure) {
-          if (isClosed) return;
+      switch (updateResult) {
+        case Err(:final failure):
           emit(
             state.copyWith(
               isOnline: previousOnline,
               errorMessage: ErrorHandler.getErrorMessage(failure),
             ),
           );
-        },
-        (_) {
-          if (isClosed) return;
+        case Ok():
           emit(state.copyWith(isOnline: goingOnline, errorMessage: null));
-        },
-      );
+      }
     } catch (error, stackTrace) {
       if (isClosed) return;
       dev.log(
@@ -615,14 +553,6 @@ class DashboardCubit({
     }
   }
 
-  bool _recordTerminalRideId(String rideId) {
-    final added = _terminalRideIds.add(rideId);
-    while (_terminalRideIds.length > _maxTerminalRideIds) {
-      _terminalRideIds.remove(_terminalRideIds.first);
-    }
-    return added;
-  }
-
   Future<void> forceOffline({required double lat, required double lng}) async {
     final updateResult = await _repository.updateOnlineStatusResult(
       isOnline: false,
@@ -631,21 +561,17 @@ class DashboardCubit({
     );
     if (isClosed) return;
 
-    updateResult.fold(
-      (failure) {
-        if (isClosed) return;
+    switch (updateResult) {
+      case Err(:final failure):
         emit(
           state.copyWith(
             isOnline: false,
             errorMessage: ErrorHandler.getErrorMessage(failure),
           ),
         );
-      },
-      (_) {
-        if (isClosed) return;
+      case Ok():
         emit(state.copyWith(isOnline: false, errorMessage: null));
-      },
-    );
+    }
   }
 
   Future<bool> publishDriverLocation({
@@ -658,10 +584,13 @@ class DashboardCubit({
       lng: lng,
     );
     if (isClosed) return false;
-    return result.fold((failure) {
-      dev.log('Unable to publish driver location: ${failure.runtimeType}');
-      return false;
-    }, (_) => true);
+    return switch (result) {
+      Err(:final failure) => () {
+        dev.log('Unable to publish driver location: ${failure.runtimeType}');
+        return false;
+      }(),
+      Ok() => true,
+    };
   }
 
   Future<bool> refreshOnlinePresence({
@@ -676,27 +605,29 @@ class DashboardCubit({
       lng: lng,
     );
     if (isClosed) return false;
-    return updateResult.fold((failure) async {
-      if (isClosed) return false;
-      if (_isAuthoritativeAvailabilityRejection(failure)) {
-        await _repository.updateOnlineStatusResult(
-          isOnline: false,
-          lat: lat,
-          lng: lng,
-        );
-        if (isClosed) return false;
-        emit(
-          state.copyWith(
+    switch (updateResult) {
+      case Ok():
+        return true;
+      case Err(:final failure):
+        if (_isAuthoritativeAvailabilityRejection(failure)) {
+          await _repository.updateOnlineStatusResult(
             isOnline: false,
-            errorMessage: ErrorHandler.getErrorMessage(failure),
-          ),
-        );
+            lat: lat,
+            lng: lng,
+          );
+          if (isClosed) return false;
+          emit(
+            state.copyWith(
+              isOnline: false,
+              errorMessage: ErrorHandler.getErrorMessage(failure),
+            ),
+          );
+          return false;
+        }
+        // Presence is background work; transient failures must not interrupt the UI.
+        dev.log('Unable to refresh driver presence: ${failure.runtimeType}');
         return false;
-      }
-      // Presence is background work; transient failures must not interrupt the UI.
-      dev.log('Unable to refresh driver presence: ${failure.runtimeType}');
-      return false;
-    }, (_) => true);
+    }
   }
 
   Future<bool> checkOnlineInactivity() async {
@@ -704,17 +635,17 @@ class DashboardCubit({
     try {
       final onlineStatusResult = await _repository
           .getPersistedOnlineStatusResult();
-      final wasExpired = onlineStatusResult.fold((failure) => false, (
-        isOnline,
-      ) {
-        if (isClosed) return false;
-        if (!isOnline && state.isOnline) {
-          emit(state.copyWith(isOnline: false));
-          return true;
-        }
-        return false;
-      });
-      return wasExpired;
+      if (isClosed) return false;
+      return switch (onlineStatusResult) {
+        Err() => false,
+        Ok(value: final isOnline) => () {
+          if (!isOnline && state.isOnline) {
+            emit(state.copyWith(isOnline: false));
+            return true;
+          }
+          return false;
+        }(),
+      };
     } catch (error, stackTrace) {
       dev.log(
         'Unable to verify online inactivity: $error',
@@ -739,37 +670,5 @@ class DashboardCubit({
   bool _isAuthoritativeAvailabilityRejection(Failure failure) {
     return failure is ServerFailure &&
         (failure.statusCode == 403 || failure.statusCode == 404);
-  }
-
-  static List<Map<String, dynamic>> _immutableMaps(
-    Iterable<Map<String, dynamic>> values,
-  ) {
-    return List<Map<String, dynamic>>.unmodifiable(
-      values.map(Map<String, dynamic>.from),
-    );
-  }
-
-  bool _hasSubmittedOffer(Map<String, dynamic> bid) {
-    if (bid['local_offer_submitted'] == true) return true;
-    final offers = bid['offers'];
-    if (offers is! List) return false;
-    return offers.any(
-      (offer) =>
-          offer is Map &&
-          _stringValue(offer['status'])?.toLowerCase() == 'pending',
-    );
-  }
-
-  bool _isResolvedOfferSession(String sessionId) {
-    final expiresAt = _resolvedOfferSessions[sessionId];
-    if (expiresAt == null) return false;
-    if (expiresAt.isAfter(_now())) return true;
-    _resolvedOfferSessions.remove(sessionId);
-    return false;
-  }
-
-  static String? _stringValue(Object? value) {
-    final normalized = value?.toString().trim();
-    return normalized == null || normalized.isEmpty ? null : normalized;
   }
 }
