@@ -33,6 +33,10 @@ class AppFloatingTabBar extends StatelessWidget {
     this.iconBuilder,
     this.showInteractionFeedback = true,
 
+    /// Optional banner stacked directly above the tab row inside the same
+    /// floating surface card (for example, an active-ride status banner).
+    this.header,
+
     /// When true the widget renders only the inner tab-row content with no outer
     /// container decoration, border, or shadow. Use when a parent supplies the
     /// shared surface (e.g. a merged active-ride + tab bar layout).
@@ -50,6 +54,7 @@ class AppFloatingTabBar extends StatelessWidget {
   final bool showInteractionFeedback;
   final String itemKeyPrefix;
   final String indicatorKey;
+  final Widget? header;
   final bool bare;
 
   @override
@@ -127,6 +132,38 @@ class AppFloatingTabBar extends StatelessWidget {
     );
 
     if (bare) return inner;
+
+    final headerBanner = header;
+    if (headerBanner != null) {
+      return Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppRadius.sheet),
+          border: Border.all(color: colorScheme.outlineVariant),
+          boxShadow: const [
+            BoxShadow(
+              color: AppPalette.keyShadow,
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+            BoxShadow(
+              color: AppPalette.ambientShadow,
+              blurRadius: 24,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            headerBanner,
+            Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
+            inner,
+          ],
+        ),
+      );
+    }
 
     return Container(
       height: height,
