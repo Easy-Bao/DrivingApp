@@ -175,13 +175,15 @@ class HomeRecentActivitySection extends StatelessWidget {
 
     return BlocBuilder<RideHistoryBloc, RideHistoryState>(
       builder: (context, state) {
-        if (state is RideHistoryLoading && state.hasExistingRides) {
-          final itemCount = state.existingRideCount
-              .clamp(1, previewLimit)
-              .toInt();
+        if (state is RideHistoryLoading) {
+          final itemCount = state.hasExistingRides
+              ? state.existingRideCount.clamp(1, previewLimit).toInt()
+              : 3;
           return Skeletonizer.zone(
             child: ListView.separated(
-              padding: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.only(
+                bottom: AppFloatingTabBar.height + AppSpacing.xxxl,
+              ),
               physics: const BouncingScrollPhysics(),
               itemCount: itemCount,
               separatorBuilder: (_, _) => Divider(

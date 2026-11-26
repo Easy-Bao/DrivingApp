@@ -27,6 +27,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   late final SessionBloc _sessionBloc;
   late final LocationAccessCubit _locationAccessCubit;
   late final AppLifecycleCoordinator _lifecycleCoordinator;
+  NetworkAvailabilityCoordinator? _networkAvailability;
 
   @override
   Widget build(BuildContext context) {
@@ -53,12 +54,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         theme: AppTheme.main,
         debugShowCheckedModeBanner: false,
         title: 'EasyRide Passenger',
-        // Keep legacy Material Theme/Localizations available to dependencies
-        // (such as go_router 17, go_transitions, and skeletonizer) until they
-        // adopt package:material_ui.
-        // ignore: deprecated_member_use
-        builder: (context, child) => MaterialUiCompatibilityBridge(
-          child: MultiBlocListener(
+        builder: (context, child) {
+          final content = MultiBlocListener(
             listeners: [
               BlocListener<SessionBloc, SessionState>(
                 listenWhen: (_, current) =>
@@ -90,8 +87,21 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               enabled: _isPassengerRoute,
               child: child ?? const SizedBox.shrink(),
             ),
-          ),
-        ),
+          );
+          final networkAvailability = _networkAvailability;
+          // Keep legacy Material Theme/Localizations available to dependencies
+          // (such as go_router 17, go_transitions, and skeletonizer) until they
+          // adopt package:material_ui.
+          // ignore: deprecated_member_use
+          return MaterialUiCompatibilityBridge(
+            child: networkAvailability == null
+                ? content
+                : AppNetworkStatusHost(
+                    coordinator: networkAvailability,
+                    child: content,
+                  ),
+          );
+        },
       ),
     );
   }
@@ -119,6 +129,12 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     _sessionBloc = Modular.get<SessionBloc>()..add(const SessionStarted());
     _locationAccessCubit = Modular.get<LocationAccessCubit>();
     _lifecycleCoordinator = Modular.get<AppLifecycleCoordinator>();
+    try {
+      _networkAvailability = Modular.get<NetworkAvailabilityCoordinator>();
+    } catch (_) {
+      // Tests that mount App without full dependency registration may omit
+      // the global network availability coordinator.
+    }
     WidgetsBinding.instance.addObserver(this);
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
     if (lifecycleState != null) {

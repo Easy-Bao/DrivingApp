@@ -15,7 +15,9 @@ class const RecentRideHistoryPreview({
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
     return ListView.separated(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.only(
+        bottom: AppFloatingTabBar.height + AppSpacing.xxxl,
+      ),
       physics: const BouncingScrollPhysics(),
       itemCount: rides.length,
       separatorBuilder: (_, _) => Divider(

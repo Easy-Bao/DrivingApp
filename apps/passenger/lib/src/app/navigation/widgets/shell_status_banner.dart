@@ -208,7 +208,7 @@ class _ShellBannerActionButton extends StatelessWidget {
             horizontal: AppSpacing.md,
             vertical: AppSpacing.sm,
           ),
-          minimumSize: Size.zero,
+          minimumSize: const Size(AppSize.minimumTouchTarget, 36),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           textStyle: context.textStyles.labelSmall?.copyWith(
             fontWeight: FontWeight.w600,
@@ -256,7 +256,10 @@ class _ShellBannerDismissButton extends StatelessWidget {
       tooltip: tooltip,
       onPressed: onDismiss,
       padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      constraints: const BoxConstraints(
+        minWidth: AppSize.minimumTouchTarget,
+        minHeight: AppSize.minimumTouchTarget,
+      ),
       style:
           IconButton.styleFrom(
             foregroundColor: colors.onSurfaceVariant,

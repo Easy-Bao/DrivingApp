@@ -261,21 +261,25 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
 
   @override
   Widget build(BuildContext context) {
-    final fallbackColor = Theme.of(context).colorScheme.onSurfaceVariant;
+    final theme = Theme.of(context);
+    final fallbackColor = theme.colorScheme.onSurfaceVariant;
     final textStyle =
         widget.style ??
-        TextStyle(
-          fontSize: 16,
+        (theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)).copyWith(
           height: 1.25,
           color: fallbackColor,
           fontWeight: FontWeight.w500,
         );
+    final viewportHeight = MediaQuery.textScalerOf(context)
+        .scale(_viewportHeight)
+        .clamp(_viewportHeight, 56.0);
+    final travelDistance = viewportHeight * (_travelDistance / _viewportHeight);
 
     return Semantics(
       label: 'Search for a destination',
       child: ExcludeSemantics(
         child: SizedBox(
-          height: _viewportHeight,
+          height: viewportHeight,
           child: ClipRect(
             child: AnimatedBuilder(
               animation: _transitionController,
@@ -320,7 +324,7 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
                     children: [
                       _buildMovingLabel(
                         label: _currentLabel,
-                        offsetY: outgoingSlide * _travelDistance,
+                        offsetY: outgoingSlide * travelDistance,
                         opacity: outgoingOpacity,
                         scale: outgoingScale,
                         style: textStyle,
@@ -328,7 +332,7 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
                       ),
                       _buildMovingLabel(
                         label: _nextLabel,
-                        offsetY: incomingSlide * _travelDistance,
+                        offsetY: incomingSlide * travelDistance,
                         opacity: incomingOpacity,
                         scale: incomingScale,
                         style: textStyle,

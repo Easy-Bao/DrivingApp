@@ -120,8 +120,8 @@ class const _InboxTabIcon({required this.color, required this.inboxCubit})
                     alignment: Alignment.center,
                     child: Text(
                       unreadCount > 99 ? '99+' : '$unreadCount',
-                      style: TextStyle(
-                        color: context.colorScheme.surface,
+                      style: context.textStyles.labelSmall?.copyWith(
+                        color: context.colorScheme.onError,
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                       ),
