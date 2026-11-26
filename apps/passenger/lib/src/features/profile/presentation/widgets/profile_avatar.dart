@@ -107,29 +107,31 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
         clipBehavior: Clip.none,
         children: [
           if (onCameraTap != null)
-            Material(
-              type: MaterialType.transparency,
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: onCameraTap,
-                customBorder: const CircleBorder(),
-                enableFeedback: false,
-                splashFactory: NoSplash.splashFactory,
-                splashColor: Colors.transparent,
-                highlightColor: Colors.transparent,
-                hoverColor: Colors.transparent,
-                overlayColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.focused)) {
-                    return colorScheme.primary.withValues(alpha: 0.12);
-                  }
-                  return Colors.transparent;
-                }),
-                child: avatarCircle,
+            ExcludeSemantics(
+              child: Material(
+                type: MaterialType.transparency,
+                shape: const CircleBorder(),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: onCameraTap,
+                  customBorder: const CircleBorder(),
+                  enableFeedback: false,
+                  splashFactory: NoSplash.splashFactory,
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  hoverColor: Colors.transparent,
+                  overlayColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.focused)) {
+                      return colorScheme.primary.withValues(alpha: 0.12);
+                    }
+                    return Colors.transparent;
+                  }),
+                  child: avatarCircle,
+                ),
               ),
             )
           else
-            avatarCircle,
+            ExcludeSemantics(child: avatarCircle),
           if (onCameraTap != null)
             Positioned(
               right: -4,

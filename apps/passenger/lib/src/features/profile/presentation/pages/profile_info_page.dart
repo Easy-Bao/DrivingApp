@@ -254,137 +254,259 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             if (mounted) setState(() {});
           }
         },
-        child: Scaffold(
-          backgroundColor: context.canvasColor,
-          appBar: AppBar(
+        child: PopScope(
+          canPop: !_isDirty || _isSaving,
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+            unawaited(_handleUnsavedBackNavigation());
+          },
+          child: Scaffold(
             backgroundColor: context.canvasColor,
-            scrolledUnderElevation: 0,
-            leading: IconButton(
-              onPressed: () => Navigator.of(context).maybePop(),
-              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-              style:
-                  IconButton.styleFrom(
-                    enableFeedback: false,
-                    splashFactory: NoSplash.splashFactory,
-                  ).copyWith(
-                    overlayColor: WidgetStateProperty.resolveWith((states) {
-                      if (states.contains(WidgetState.focused)) {
-                        return colorScheme.primary.withValues(alpha: 0.12);
-                      }
-                      return Colors.transparent;
-                    }),
-                  ),
-              icon: Icon(
-                LucideIcons.arrow_left,
-                color: colorScheme.onSurface,
-                size: 20,
+            appBar: AppBar(
+              backgroundColor: context.canvasColor,
+              scrolledUnderElevation: 0,
+              leading: IconButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                style:
+                    IconButton.styleFrom(
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith((states) {
+                        if (states.contains(WidgetState.focused)) {
+                          return colorScheme.primary.withValues(alpha: 0.12);
+                        }
+                        return Colors.transparent;
+                      }),
+                    ),
+                icon: Icon(
+                  LucideIcons.arrow_left,
+                  color: colorScheme.onSurface,
+                  size: 20,
+                ),
+              ),
+              title: Text(
+                'Profile Info',
+                style: context.textStyles.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              centerTitle: true,
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(1),
+                child: Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+                ),
               ),
             ),
-            title: Text(
-              'Profile Info',
-              style: context.textStyles.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.2,
-                color: colorScheme.onSurface,
-              ),
-            ),
-            centerTitle: true,
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child: Divider(
-                height: 1,
-                thickness: 1,
-                color: colorScheme.outlineVariant.withValues(alpha: 0.7),
-              ),
-            ),
-          ),
-          bottomNavigationBar: _isDirty
-              ? ProfileInfoSaveBar(
-                  isSaving: _isSaving,
-                  onDiscard: _discardChanges,
-                  onSave: () => unawaited(_saveProfile()),
-                )
-              : null,
-          body: SafeArea(
-            top: false,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final horizontalPadding = constraints.maxWidth < 360
-                    ? AppLayout.pagePadding
-                    : AppLayout.pagePaddingWide;
-                return SingleChildScrollView(
-                  key: const ValueKey<String>('passenger-profile-info-scroll'),
-                  physics: const ClampingScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalPadding,
-                    AppSpacing.xxl,
-                    horizontalPadding,
-                    AppSpacing.xxxl,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 560),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          ProfileInfoHero(
-                            displayedName: _displayedName,
-                            initials: _getInitials(_displayedName),
-                            avatarPath: _avatarPath,
-                            avatarData: _avatarData,
-                            isSaving: _isSaving,
-                            onPickPhoto: () => unawaited(_pickPhoto()),
-                          ),
-                          const SizedBox(height: AppSpacing.xxxl),
-                          const ProfileInfoSectionHeader(title: 'Profile'),
-                          const SizedBox(height: AppSpacing.sm),
-                          ProfileInfoEditableCard(
-                            nameController: _nameController,
-                            nameError: _nameError,
-                            gender: _gender,
-                            genderOptions: _genderOptions,
-                            onGenderChanged: (gender) {
-                              setState(() {
-                                _gender = gender;
-                                _isDirty = _draftHasChanges;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: AppSpacing.xxl),
-                          const ProfileInfoSectionHeader(
-                            title: 'Contact',
-                            trailing: ProfileInfoVerifiedTag(),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          ProfileInfoContactCard(
-                            phonePrefix: _phonePrefix,
-                            phoneNumberController: _phoneNumberController,
-                            emailController: _emailController,
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.xs,
-                            ),
-                            child: Text(
-                              'Email and phone changes require verification.',
-                              style: context.textStyles.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                                height: 1.4,
+            bottomNavigationBar: _isDirty
+                ? ProfileInfoSaveBar(
+                    isSaving: _isSaving,
+                    onDiscard: _discardChanges,
+                    onSave: () => unawaited(_saveProfile()),
+                  )
+                : null,
+            body: SafeArea(
+              top: false,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final horizontalPadding = constraints.maxWidth < 360
+                      ? AppLayout.pagePadding
+                      : AppLayout.pagePaddingWide;
+                  return SingleChildScrollView(
+                    key: const ValueKey<String>(
+                      'passenger-profile-info-scroll',
+                    ),
+                    physics: const ClampingScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      AppSpacing.xxl,
+                      horizontalPadding,
+                      AppSpacing.xxxl,
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 560),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            BlocBuilder<ProfileCubit, ProfileState>(
+                              buildWhen: (previous, current) =>
+                                  previous.isLoading != current.isLoading ||
+                                  previous.errorMessage != current.errorMessage,
+                              builder: (context, profileState) => Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  if (profileState.isLoading) ...[
+                                    const LinearProgressIndicator(minHeight: 2),
+                                    const SizedBox(height: AppSpacing.lg),
+                                  ],
+                                  if (!_isSaving && !_isDirty)
+                                    if (profileState.errorMessage
+                                        case final errorMessage?) ...[
+                                      AppErrorBanner(
+                                        message: errorMessage,
+                                        onRetry: () => unawaited(
+                                          BlocProvider.of<ProfileCubit>(context)
+                                              .loadProfile(),
+                                        ),
+                                      ),
+                                      const SizedBox(height: AppSpacing.lg),
+                                    ],
+                                ],
                               ),
                             ),
-                          ),
-                        ],
+                            ProfileInfoHero(
+                              displayedName: _displayedName,
+                              initials: _getInitials(_displayedName),
+                              avatarPath: _avatarPath,
+                              avatarData: _avatarData,
+                              isSaving: _isSaving,
+                              onPickPhoto: () => unawaited(_pickPhoto()),
+                            ),
+                            const SizedBox(height: AppSpacing.xxxl),
+                            const ProfileInfoSectionHeader(title: 'Profile'),
+                            const SizedBox(height: AppSpacing.sm),
+                            ProfileInfoEditableCard(
+                              nameController: _nameController,
+                              nameError: _nameError,
+                              gender: _gender,
+                              genderOptions: _genderOptions,
+                              onGenderChanged: (gender) {
+                                setState(() {
+                                  _gender = gender;
+                                  _isDirty = _draftHasChanges;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: AppSpacing.xxl),
+                            const ProfileInfoSectionHeader(
+                              title: 'Contact',
+                              trailing: ProfileInfoVerifiedTag(),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            ProfileInfoContactCard(
+                              phonePrefix: _phonePrefix,
+                              phoneNumberController: _phoneNumberController,
+                              emailController: _emailController,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.xs,
+                              ),
+                              child: Text(
+                                'Email and phone changes require verification.',
+                                style: context.textStyles.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _handleUnsavedBackNavigation() async {
+    final colorScheme = context.colorScheme;
+    final textStyles = context.textStyles;
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: colorScheme.surfaceContainerLowest,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.xxl),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Discard unsaved changes?',
+                  textAlign: TextAlign.center,
+                  style: textStyles.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Your profile edits have not been saved yet.',
+                  textAlign: TextAlign.center,
+                  style: textStyles.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                SizedBox(
+                  height: AppSize.controlHeight,
+                  child: FilledButton(
+                    key: const ValueKey<String>(
+                      'passenger-profile-discard-confirm',
+                    ),
+                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: colorScheme.error,
+                      foregroundColor: colorScheme.onError,
+                      elevation: 0,
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
+                    ),
+                    child: const Text('Discard changes'),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                SizedBox(
+                  height: AppSize.controlHeight,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colorScheme.onSurface,
+                      side: BorderSide(color: colorScheme.outlineVariant),
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
+                    ),
+                    child: const Text('Keep editing'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (discard == true && mounted && context.mounted) {
+      setState(() => _isDirty = false);
+      Navigator.of(context).pop();
+    }
   }
 
   void _handleSessionState(BuildContext context, SessionState state) {

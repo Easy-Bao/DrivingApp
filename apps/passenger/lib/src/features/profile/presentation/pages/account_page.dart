@@ -55,26 +55,52 @@ class AccountPage extends StatelessWidget {
                           ),
                           const SizedBox(height: AppSpacing.xxl),
                           _buildProfileSummary(context, visibleState),
+                          if (isAuthenticated && visibleState.isLoading) ...[
+                            const SizedBox(height: AppSpacing.md),
+                            const LinearProgressIndicator(minHeight: 2),
+                          ],
+                          if (isAuthenticated)
+                            if (visibleState.errorMessage
+                                case final errorMessage?) ...[
+                              const SizedBox(height: AppSpacing.lg),
+                              AppErrorBanner(
+                                message: errorMessage,
+                                onRetry: () => unawaited(
+                                  BlocProvider.of<ProfileCubit>(context)
+                                      .loadProfile(),
+                                ),
+                              ),
+                            ],
                           const SizedBox(height: AppSpacing.xxl),
                           _buildHairline(context),
                           const SizedBox(height: AppSpacing.xxl),
-                          _buildSectionTitle(context, 'Account'),
-                          const SizedBox(height: AppSpacing.xs),
-                          _buildMenuGroup(context, [
-                            _AccountMenuItem(
-                              icon: LucideIcons.user_round,
-                              title: 'Personal Details',
-                              subtitle: 'Name, phone, email, and profile photo',
-                              onTap: () => _openProfileInfo(context),
-                            ),
-                            _AccountMenuItem(
-                              icon: LucideIcons.map_pin,
-                              title: 'Saved Places',
-                              subtitle: 'Home, work, and favorite destinations',
-                              onTap: () =>
-                                  context.pushNamed(SavedPlacesRoutes.places),
-                            ),
-                          ]),
+                          AppSettingsSection(
+                            label: 'Account',
+                            children: [
+                              _buildMenuTile(
+                                context,
+                                _AccountMenuItem(
+                                  icon: LucideIcons.user_round,
+                                  title: 'Personal Details',
+                                  subtitle:
+                                      'Name, phone, email, and profile photo',
+                                  onTap: () => _openProfileInfo(context),
+                                ),
+                              ),
+                              _buildMenuTile(
+                                context,
+                                _AccountMenuItem(
+                                  icon: LucideIcons.map_pin,
+                                  title: 'Saved Places',
+                                  subtitle:
+                                      'Home, work, and favorite destinations',
+                                  onTap: () => context.pushNamed(
+                                    SavedPlacesRoutes.places,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                           if (onLogout != null && isAuthenticated) ...[
                             const SizedBox(height: AppSpacing.xxxl),
                             _buildLogoutButton(context),
@@ -151,24 +177,11 @@ class AccountPage extends StatelessWidget {
     unawaited(_pushProfileInfo(context));
   }
 
-  Widget _buildHairline(BuildContext context, {double indent = 0}) {
+  Widget _buildHairline(BuildContext context) {
     return Divider(
       height: 1,
       thickness: 1,
-      indent: indent,
       color: context.colorScheme.outlineVariant.withValues(alpha: 0.7),
-    );
-  }
-
-  Widget _buildMenuGroup(BuildContext context, List<_AccountMenuItem> items) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var index = 0; index < items.length; index++) ...[
-          _buildMenuTile(context, items[index]),
-          if (index != items.length - 1) _buildHairline(context, indent: 52),
-        ],
-      ],
     );
   }
 
@@ -255,20 +268,6 @@ class AccountPage extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(BuildContext context, String title) {
-    return Semantics(
-      header: true,
-      child: Text(
-        title.toUpperCase(),
-        style: context.textStyles.labelSmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.9,
         ),
       ),
     );
