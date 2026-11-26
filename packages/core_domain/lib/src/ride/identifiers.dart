@@ -62,17 +62,20 @@ extension type const DistanceKm(double value) {
 
   double get meters => value * 1000;
 
-  String get label => '${value.toStringAsFixed(1)} km';
+  String get label => isValid ? '${value.toStringAsFixed(1)} km' : '0.0 km';
 
   DistanceKm operator +(DistanceKm other) => DistanceKm(value + other.value);
 }
 
 extension type const FareCents(int value) {
-  bool get isValid => value > 0;
+  bool get isValid => value >= 0;
 
   double get amount => value / 100;
 
-  String get displayAmount => '₱${amount.toStringAsFixed(2)}';
+  String get displayAmount {
+    final formatted = (value.abs() / 100).toStringAsFixed(2);
+    return value < 0 ? '-₱$formatted' : '₱$formatted';
+  }
 
   FareCents operator +(FareCents other) => FareCents(value + other.value);
 }

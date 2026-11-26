@@ -109,10 +109,8 @@ extension ShortHopBookingStatePresentation on ShortHopBookingState {
       :final driver,
       driverLocation: (final latitude, final longitude),
     )
-        when latitude.isFinite &&
-            longitude.isFinite &&
-            latitude != 0 &&
-            longitude != 0 =>
+        when isValidRideCoordinates((latitude, longitude)) &&
+            !(latitude == 0 && longitude == 0) =>
       '${driver.displayName} is on the way at '
           '(${latitude.toStringAsFixed(4)}, ${longitude.toStringAsFixed(4)}).',
     ShortHopDriverAssigned(:final driver) =>
@@ -134,6 +132,7 @@ extension ShortHopBookingStatePresentation on ShortHopBookingState {
 }
 
 String _formatDuration(Duration duration) {
-  if (duration.inMinutes > 0) return '${duration.inMinutes} min';
-  return '${duration.inSeconds} sec';
+  final seconds = duration.inSeconds;
+  if (seconds < 60) return '$seconds sec';
+  return '${(seconds / 60).round()} min';
 }

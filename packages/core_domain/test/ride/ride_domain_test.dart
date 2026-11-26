@@ -24,6 +24,11 @@ void main() {
       expect(fare.amount, 3.5);
       expect(fare.displayAmount, '₱3.50');
       expect((fare + const FareCents(50)).value, 400);
+      expect(const FareCents(0).isValid, isTrue);
+      expect(const FareCents(-500).isValid, isFalse);
+      expect(const FareCents(-500).displayAmount, '-₱5.00');
+      expect(const DistanceKm(double.nan).label, '0.0 km');
+      expect(const DistanceKm(-2.5).label, '0.0 km');
     });
 
     test('validate coordinate records without allocating wrapper objects', () {
@@ -100,6 +105,48 @@ void main() {
       );
 
       expect(assignedWithNaN.statusMessage, 'Alex is on the way.');
+    });
+
+    test('preserves valid equator/meridian points and rejects null-island or out-of-range coordinates', () {
+      const onEquator = ShortHopDriverAssigned(
+        rideId: RideId('ride-1'),
+        driver: driver,
+        driverLocation: (0.0, 123.742),
+        pickup: (8.056, 123.742),
+        destination: (8.060, 123.746),
+        eta: Duration(minutes: 2),
+      );
+      const nullIsland = ShortHopDriverAssigned(
+        rideId: RideId('ride-1'),
+        driver: driver,
+        driverLocation: (0.0, 0.0),
+        pickup: (8.056, 123.742),
+        destination: (8.060, 123.746),
+        eta: Duration(minutes: 2),
+      );
+      const outOfRange = ShortHopDriverAssigned(
+        rideId: RideId('ride-1'),
+        driver: driver,
+        driverLocation: (95.0, 123.742),
+        pickup: (8.056, 123.742),
+        destination: (8.060, 123.746),
+        eta: Duration(minutes: 2),
+      );
+      const roundingEta = ShortHopInTransit(
+        rideId: RideId('ride-1'),
+        driver: driver,
+        currentLocation: (8.058, 123.744),
+        destination: (8.060, 123.746),
+        eta: Duration(seconds: 90),
+      );
+
+      expect(
+        onEquator.statusMessage,
+        'Alex is on the way at (0.0000, 123.7420).',
+      );
+      expect(nullIsland.statusMessage, 'Alex is on the way.');
+      expect(outOfRange.statusMessage, 'Alex is on the way.');
+      expect(roundingEta.statusMessage, 'Arriving in 2 min.');
     });
   });
 
