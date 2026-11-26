@@ -59,7 +59,6 @@ class LiveMapBloc({required this._rideRepository})
       _onUpdateLocationsAndDrawRoute,
       transformer: restartable(),
     );
-    on<ClearMapEvent>(_onClearMap);
     _locationSubscription = _locationSubject
         .throttleTime(const Duration(seconds: 5))
         .listen((event) => unawaited(_publishLocation(event)));
@@ -338,19 +337,6 @@ class LiveMapBloc({required this._rideRepository})
         stackTrace: stackTrace,
       );
     }
-  }
-
-  Future<void> _onClearMap(
-    ClearMapEvent event,
-    Emitter<LiveMapState> emit,
-  ) async {
-    _invalidateMapOperations();
-    await _clearAllAnnotations();
-    _routeTargetKey = null;
-    _routeOriginLatitude = null;
-    _routeOriginLongitude = null;
-    _lastCameraFitAt = null;
-    _hasFittedCamera = false;
   }
 
   Future<MapPointAnnotationManager> _upsertMarker(

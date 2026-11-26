@@ -251,32 +251,6 @@ final class RideRepositoryImpl({
   }
 
   @override
-  Future<Result<int, Failure>> settleCash({
-    required String rideId,
-    required int cashReceivedAmount,
-    required int cashChangeAmount,
-    required String cashOutcome,
-  }) async {
-    try {
-      final data = await _rideDataSource.settleCash(
-        rideId: rideId,
-        cashReceivedAmount: cashReceivedAmount,
-        cashChangeAmount: cashChangeAmount,
-        cashOutcome: cashOutcome,
-      );
-      final fareAmount = SafeParse.toNullableDouble(data['fare_amount']);
-      if (fareAmount == null || fareAmount <= 0) {
-        return const Err(
-          ValidationFailure('The settled ride has no payable fare.'),
-        );
-      }
-      return Ok(fareAmount.round());
-    } catch (error) {
-      return Err(_mapFailure(error, action: 'settle this cash ride'));
-    }
-  }
-
-  @override
   Future<Result<RideCounterparty, Failure>> fetchCounterparty(
     String rideId,
   ) async {

@@ -42,13 +42,6 @@ abstract class RideRemoteDataSource {
   });
 
   Future<Map<String, dynamic>> getRideStatus(String tripId);
-
-  Future<Map<String, dynamic>> settleCash({
-    required String rideId,
-    required int cashReceivedAmount,
-    required int cashChangeAmount,
-    required String cashOutcome,
-  });
 }
 
 class RideRemoteDataSourceImpl(this._dio) implements RideRemoteDataSource {
@@ -156,24 +149,6 @@ class RideRemoteDataSourceImpl(this._dio) implements RideRemoteDataSource {
   Future<Map<String, dynamic>> getRideStatus(String tripId) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/api/v1/rides/${Uri.encodeComponent(tripId)}',
-    );
-    return response.data ?? const <String, dynamic>{};
-  }
-
-  @override
-  Future<Map<String, dynamic>> settleCash({
-    required String rideId,
-    required int cashReceivedAmount,
-    required int cashChangeAmount,
-    required String cashOutcome,
-  }) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      '/api/v1/rides/${Uri.encodeComponent(rideId)}/cash-settle',
-      data: {
-        'cash_received_amount': cashReceivedAmount,
-        'cash_change_amount': cashChangeAmount,
-        'cash_outcome': cashOutcome,
-      },
     );
     return response.data ?? const <String, dynamic>{};
   }

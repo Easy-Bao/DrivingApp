@@ -38,10 +38,6 @@ final class UpdateLocationsAndDrawRouteEvent extends LiveMapEvent {
   final double? routeTargetLongitude;
 }
 
-final class ClearMapEvent extends LiveMapEvent {
-  const ClearMapEvent();
-}
-
 final class DispatchTelemetryLocationEvent extends LiveMapEvent {
   const DispatchTelemetryLocationEvent({
     required this.latitude,

@@ -26,7 +26,6 @@ class const DriverTripPage({
   required this.dropoff,
   required this.distance,
   required this.fare,
-  required this.duration,
   required this.chatRepositoryFactory,
   required this.sessionService,
   required this.lifecycleCoordinator,
@@ -37,7 +36,6 @@ class const DriverTripPage({
   final String dropoff;
   final double distance;
   final double fare;
-  final String duration;
   final ChatRepositoryFactory chatRepositoryFactory;
   final SessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;

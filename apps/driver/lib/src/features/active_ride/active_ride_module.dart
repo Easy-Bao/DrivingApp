@@ -35,7 +35,6 @@ class ActiveRideModule._() {
             dropoff: data.dropoff,
             distance: data.distance,
             fare: data.fare,
-            duration: data.duration,
             chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
             sessionService: Modular.get<SessionStore>(),
             lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
@@ -47,8 +46,6 @@ class ActiveRideModule._() {
       transitionDuration: AppTransitions.pushDuration,
     ),
   ];
-
-  static List<ModularRoute> shellRoutes = [];
 }
 
 class const _TripRouteData({
@@ -56,14 +53,12 @@ class const _TripRouteData({
   required this.dropoff,
   required this.distance,
   required this.fare,
-  required this.duration,
   this.rideId,
 }) {
   final String pickup;
   final String dropoff;
   final double distance;
   final double fare;
-  final String duration;
   final String? rideId;
 
   static _TripRouteData? tryParse(RoutePayload data) {
@@ -71,12 +66,10 @@ class const _TripRouteData({
     final dropoff = data.string('dropoff');
     final distance = data.doubleValue('distance');
     final fare = data.doubleValue('fare');
-    final duration = data.string('duration');
     if (pickup == null ||
         dropoff == null ||
         distance == null ||
         fare == null ||
-        duration == null ||
         !distance.isFinite ||
         distance < 0 ||
         !fare.isFinite ||
@@ -88,7 +81,6 @@ class const _TripRouteData({
       dropoff: dropoff,
       distance: distance,
       fare: fare,
-      duration: duration,
       rideId: data.string('rideId'),
     );
   }

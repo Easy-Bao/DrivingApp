@@ -524,10 +524,6 @@ class _DashboardPageState extends State<DashboardPage>
     try {
       if (!mounted) return;
       final (title, message) = switch (terminal.status) {
-        'completed' => (
-          'Trip already complete',
-          'This trip has already been completed. You have been returned to the dispatch queue.',
-        ),
         'not_found' => (
           'Trip unavailable',
           'This trip is no longer available. You have been returned to the dispatch queue.',

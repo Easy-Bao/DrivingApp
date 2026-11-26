@@ -129,7 +129,6 @@ void main() {
             dropoff: 'Destination street',
             distance: 3,
             fare: 40,
-            duration: '10 min',
             chatRepositoryFactory: _Factory(),
             sessionService: session,
             lifecycleCoordinator: lifecycle,

@@ -49,13 +49,6 @@ abstract interface class RideRepository {
 
   Future<Result<RideSnapshot, Failure>> fetchRide(String rideId);
 
-  Future<Result<int, Failure>> settleCash({
-    required String rideId,
-    required int cashReceivedAmount,
-    required int cashChangeAmount,
-    required String cashOutcome,
-  });
-
   Future<Result<RideCounterparty, Failure>> fetchCounterparty(String rideId);
 
   Future<Result<(double latitude, double longitude)?, Failure>>
@@ -181,23 +174,6 @@ extension RideRepositoryResultAdapters on RideRepository {
     return captureResult(
       () => fetchRide(rideId),
       message: 'Unable to load this ride right now.',
-    );
-  }
-
-  Future<Result<int, DomainFailure>> settleCashResult({
-    required String rideId,
-    required int cashReceivedAmount,
-    required int cashChangeAmount,
-    required String cashOutcome,
-  }) {
-    return captureResult(
-      () => settleCash(
-        rideId: rideId,
-        cashReceivedAmount: cashReceivedAmount,
-        cashChangeAmount: cashChangeAmount,
-        cashOutcome: cashOutcome,
-      ),
-      message: 'Unable to settle this cash ride right now.',
     );
   }
 

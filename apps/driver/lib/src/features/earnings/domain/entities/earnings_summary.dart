@@ -8,13 +8,11 @@ class EarningsSummary extends Equatable {
     required this.daily,
     required this.weekly,
     required this.monthly,
-    this.raw = const {},
   });
 
   final EarningsPeriodSummary daily;
   final EarningsPeriodSummary weekly;
   final EarningsPeriodSummary monthly;
-  final Map<String, dynamic> raw;
 
   EarningsPeriodSummary summaryFor(EarningsPeriod period) {
     switch (period) {
@@ -72,7 +70,6 @@ class EarningsSummary extends Equatable {
         tripsCount: month.tripsCount,
         days: monthWeeks,
       ),
-      raw: data,
     );
   }
 
