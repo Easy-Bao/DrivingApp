@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:core_domain/core_domain.dart';
 import 'package:foundation/foundation.dart';
 
@@ -57,6 +59,16 @@ class const BookingSessionRequest({
     'passenger_note': passengerNote,
     if (targetDriverId != null) 'target_driver_id': targetDriverId,
   };
+
+  String encodePayload() => jsonEncode(toJson());
+
+  factory BookingSessionRequest.fromPayload(String rawPayload) {
+    final decoded = jsonDecode(rawPayload);
+    if (decoded is! Map) {
+      throw const FormatException('The saved ride request is invalid.');
+    }
+    return BookingSessionRequest.fromJson(Map<String, dynamic>.from(decoded));
+  }
 
   factory BookingSessionRequest.fromJson(Map<String, dynamic> json) =>
       BookingSessionRequest(

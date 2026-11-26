@@ -132,29 +132,26 @@ extension _BookingBlocSessionCreation on BookingBloc {
       var pending = await _secureSessionService.readPendingBidSessionCreation();
       if (pending == null) {
         if (newRequest == null) return;
-        final requestPayload = jsonEncode(newRequest.toJson());
+        final requestPayload = newRequest.encodePayload();
         final idempotencyKey = _newIdempotencyKey();
         await _secureSessionService.savePendingBidSessionCreation(
           idempotencyKey: idempotencyKey,
           requestPayload: requestPayload,
         );
-        if (_cancelPendingBidSessionCreation) {
+        final cancelRequested = _cancelPendingBidSessionCreation;
+        if (cancelRequested) {
           await _secureSessionService.requestPendingBidSessionCancellation();
         }
         pending = (
           idempotencyKey: idempotencyKey,
           requestPayload: requestPayload,
-          cancelRequested: false,
+          cancelRequested: cancelRequested,
           sessionId: null,
         );
       }
 
-      final decodedPayload = jsonDecode(pending.requestPayload);
-      if (decodedPayload is! Map) {
-        throw const FormatException('The saved ride request is invalid.');
-      }
-      final storedRequest = BookingSessionRequest.fromJson(
-        Map<String, dynamic>.from(decodedPayload),
+      final storedRequest = BookingSessionRequest.fromPayload(
+        pending.requestPayload,
       ).copyWith(idempotencyKey: pending.idempotencyKey);
       if (!storedRequest.isValid || storedRequest.customFareAmount <= 0) {
         throw const ValidationFailure(
@@ -169,13 +166,22 @@ extension _BookingBlocSessionCreation on BookingBloc {
               storedRequest.targetDriverId.toString() == targetDriver?.id
           ? targetDriver
           : null;
-      _cancelPendingBidSessionCreation = pending.cancelRequested;
+      _cancelPendingBidSessionCreation =
+          _cancelPendingBidSessionCreation || pending.cancelRequested;
 
       var sessionId = pending.sessionId;
       var bookingReference = '';
       if (sessionId == null || sessionId.isEmpty) {
-        if (state is! BookingSearching ||
-            (state as BookingSearching).sessionId != null) {
+        if (state case BookingSearching(:final sessionId?)
+            when sessionId.isNotEmpty) {
+          emit(
+            BookingSearching(
+              isDirect: isDirect,
+              targetDriver: matchingTargetDriver,
+              sessionId: null,
+            ),
+          );
+        } else if (state is! BookingSearching) {
           emit(
             BookingSearching(
               isDirect: isDirect,
@@ -184,27 +190,28 @@ extension _BookingBlocSessionCreation on BookingBloc {
             ),
           );
         }
-        BidSessionSnapshot? createdSession;
-        Failure? failure;
-        (await _bookingRepository.createSessionResult(
+        final createResult = await _bookingRepository.createSessionResult(
           storedRequest,
-        )).fold((value) => failure = value, (value) => createdSession = value);
-        if (createdSession == null) {
-          if (failure is ValidationFailure) {
-            await _secureSessionService.deletePendingBidSessionCreation();
-            _activeTrip = null;
-            emit(
-              _cancelPendingBidSessionCreation
-                  ? const BookingCanceled()
-                  : BookingFailure(failure!.message),
-            );
-            return;
-          }
-          throw failure!;
+        );
+        switch (createResult) {
+          case Err(:final failure):
+            if (failure is ValidationFailure) {
+              await _secureSessionService.deletePendingBidSessionCreation();
+              _activeTrip = null;
+              if (isClosed) return;
+              emit(
+                _cancelPendingBidSessionCreation
+                    ? const BookingCanceled()
+                    : BookingFailure(failure.message),
+              );
+              return;
+            }
+            throw failure;
+          case Ok(value: final createdSession):
+            sessionId = createdSession.id;
+            bookingReference = createdSession.bookingReference;
+            await _secureSessionService.attachPendingBidSessionId(sessionId);
         }
-        sessionId = createdSession!.id;
-        bookingReference = createdSession!.bookingReference;
-        await _secureSessionService.attachPendingBidSessionId(sessionId);
       }
 
       final resolvedSessionId = sessionId;
@@ -219,6 +226,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
         await _secureSessionService.savePendingBidSessionCancellationId(
           resolvedSessionId,
         );
+        if (isClosed) return;
         emit(BookingSessionRecoveryInProgress(sessionId: resolvedSessionId));
         await _cancelPersistedBookingSession(resolvedSessionId, emit);
         return;
@@ -228,10 +236,12 @@ extension _BookingBlocSessionCreation on BookingBloc {
       final cancellationSessionId = await _secureSessionService
           .readPendingBidSessionCancellationId();
       if (cancellationSessionId == resolvedSessionId) {
+        if (isClosed) return;
         emit(BookingSessionRecoveryInProgress(sessionId: resolvedSessionId));
         await _cancelPersistedBookingSession(resolvedSessionId, emit);
         return;
       }
+      if (isClosed) return;
       emit(
         BookingSearching(
           isDirect: isDirect,
@@ -242,6 +252,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
       );
       _subscribeToSession(resolvedSessionId);
     } catch (error) {
+      if (isClosed) return;
       final sessionId = _activeBidSessionId ?? '';
       emit(
         BookingSessionRecoveryFailure(
@@ -260,6 +271,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
     Emitter<BookingState> emit, {
     bool expired = false,
   }) async {
+    _isCancellingBooking = true;
     if (expired) {
       _captureFailedDriverSearch();
     } else {
@@ -277,52 +289,73 @@ extension _BookingBlocSessionCreation on BookingBloc {
       final result = await _bookingRepository
           .cancelSessionResult(sessionId)
           .timeout(const Duration(seconds: 5));
-      var canceled = false;
-      Failure? failure;
-      result.fold((value) => failure = value, (_) => canceled = true);
-      if (canceled) {
-        await _clearPendingBooking(sessionId);
-        emit(terminalState);
-        return;
+      final Failure failure;
+      switch (result) {
+        case Ok():
+          await _clearPendingBooking(sessionId);
+          if (isClosed) return;
+          emit(terminalState);
+          return;
+        case Err(failure: final cancelFailure):
+          failure = cancelFailure;
       }
-      failure ??= const ServerFailure(
-        'The request cancellation is unconfirmed.',
-      );
 
-      BidSessionSnapshot? snapshot;
-      Failure? refreshFailure;
-      (await _bookingRepository.fetchSessionResult(sessionId))
-          .fold((value) => refreshFailure = value, (value) => snapshot = value);
-      if (snapshot?.isAccepted == true) {
-        await _recoverAcceptedSession(snapshot!, emit);
-        return;
-      }
-      if (expired ||
-          snapshot?.isCancelled == true ||
-          snapshot?.isExpired == true ||
-          snapshot?.isDeclined == true) {
-        await _clearPendingBooking(sessionId);
-        emit(terminalState);
-        return;
-      }
-      emit(
-        BookingSessionRecoveryFailure(
-          sessionId: sessionId,
-          message: refreshFailure?.message ?? failure!.message,
-        ),
+      final refreshResult = await _bookingRepository.fetchSessionResult(
+        sessionId,
       );
+      switch (refreshResult) {
+        case Ok(value: final snapshot):
+          if (snapshot.isAccepted) {
+            await _recoverAcceptedSession(snapshot, emit);
+            return;
+          }
+          if (expired ||
+              snapshot.isCancelled ||
+              snapshot.isExpired ||
+              snapshot.isDeclined) {
+            await _clearPendingBooking(sessionId);
+            if (isClosed) return;
+            emit(terminalState);
+            return;
+          }
+          if (isClosed) return;
+          emit(
+            BookingSessionRecoveryFailure(
+              sessionId: sessionId,
+              message: failure.message,
+            ),
+          );
+        case Err(failure: final refreshFailure):
+          if (expired) {
+            await _clearPendingBooking(sessionId);
+            if (isClosed) return;
+            emit(terminalState);
+            return;
+          }
+          if (isClosed) return;
+          emit(
+            BookingSessionRecoveryFailure(
+              sessionId: sessionId,
+              message: refreshFailure.message,
+            ),
+          );
+      }
     } catch (error) {
       if (expired) {
         await _clearPendingBooking(sessionId);
+        if (isClosed) return;
         emit(terminalState);
         return;
       }
+      if (isClosed) return;
       emit(
         BookingSessionRecoveryFailure(
           sessionId: sessionId,
           message: ErrorHandler.getErrorMessage(error),
         ),
       );
+    } finally {
+      _isCancellingBooking = false;
     }
   }
 
@@ -336,8 +369,6 @@ extension _BookingBlocSessionCreation on BookingBloc {
     _pickupLat = null;
     _pickupLng = null;
     _pickupName = null;
-    _dropoffLat = null;
-    _dropoffLng = null;
     _distanceKm = null;
     _durationMinutes = null;
   }
@@ -358,8 +389,6 @@ extension _BookingBlocSessionCreation on BookingBloc {
     _pickupLat = pickupLat;
     _pickupLng = pickupLng;
     _pickupName = _pickupNameForTrip(trip);
-    _dropoffLat = trip.destination.latitude;
-    _dropoffLng = trip.destination.longitude;
     _distanceKm = distanceKm;
     _durationMinutes = durationMinutes;
   }
@@ -383,8 +412,6 @@ extension _BookingBlocSessionCreation on BookingBloc {
     _pickupLat = request.pickupLatitude;
     _pickupLng = request.pickupLongitude;
     _pickupName = request.pickupName;
-    _dropoffLat = request.dropoffLatitude;
-    _dropoffLng = request.dropoffLongitude;
     _distanceKm = request.distanceKm;
     _durationMinutes = request.durationMinutes;
   }

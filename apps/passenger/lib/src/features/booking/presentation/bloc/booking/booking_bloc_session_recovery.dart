@@ -30,8 +30,8 @@ extension _BookingBlocSessionRecovery on BookingBloc {
       if (sessionId?.isNotEmpty != true) {
         sessionId = pendingCancellationId ?? pendingCreation?.sessionId;
       }
-      if (sessionId?.isNotEmpty == true) {
-        await _secureSessionService.saveActiveBidSessionId(sessionId!);
+      if (sessionId != null && sessionId.isNotEmpty) {
+        await _secureSessionService.saveActiveBidSessionId(sessionId);
       }
     } catch (error) {
       dev.log('Unable to read the saved passenger booking: $error');
@@ -55,44 +55,48 @@ extension _BookingBlocSessionRecovery on BookingBloc {
     _activeBidSessionId = sessionId;
     emit(BookingSessionRecoveryInProgress(sessionId: sessionId));
     try {
-      BidSessionSnapshot? snapshot;
-      Failure? failure;
-      (await _bookingRepository.fetchSessionResult(sessionId))
-          .fold((value) => failure = value, (value) => snapshot = value);
+      final sessionResult = await _bookingRepository.fetchSessionResult(
+        sessionId,
+      );
       if (isClosed || _activeBidSessionId != sessionId) return;
-      if (snapshot == null) {
-        throw failure ??
-            const ServerFailure('The saved request could not be loaded.');
+      final BidSessionSnapshot snapshot;
+      switch (sessionResult) {
+        case Err(:final failure):
+          throw failure;
+        case Ok(:final value):
+          snapshot = value;
       }
-      if (snapshot!.id != sessionId) {
+      if (snapshot.id != sessionId) {
         throw const ValidationFailure(
           'The saved request did not match the server response.',
         );
       }
 
-      if (snapshot!.isAccepted) {
-        await _recoverAcceptedSession(snapshot!, emit);
+      if (snapshot.isAccepted) {
+        await _recoverAcceptedSession(snapshot, emit);
         return;
       }
 
-      _restoreTripContext(snapshot!);
-      if (snapshot!.isExpired) {
+      _restoreTripContext(snapshot);
+      if (snapshot.isExpired) {
         _captureFailedDriverSearch();
         await _clearRecoveredRequest(sessionId);
+        if (isClosed) return;
         emit(
           BookingFailure(
             'No driver accepted this request before it expired.',
             isRequestExpired: true,
             sessionId: sessionId,
-            bookingReference: snapshot!.bookingReference,
+            bookingReference: snapshot.bookingReference,
           ),
         );
         return;
       }
 
-      if (snapshot!.isDeclined) {
+      if (snapshot.isDeclined) {
         _captureFailedDriverSearch();
         await _clearRecoveredRequest(sessionId);
+        if (isClosed) return;
         emit(
           const BookingFailure(
             'The selected driver declined your request. Choose another nearby driver.',
@@ -102,14 +106,15 @@ extension _BookingBlocSessionRecovery on BookingBloc {
         return;
       }
 
-      if (snapshot!.isCancelled) {
+      if (snapshot.isCancelled) {
         _lastFailedDriverSearch = null;
         await _clearRecoveredRequest(sessionId);
+        if (isClosed) return;
         emit(const BookingCanceled());
         return;
       }
 
-      if (!snapshot!.isOpen) {
+      if (!snapshot.isOpen) {
         throw const ValidationFailure(
           'The saved request has an unknown status. Please retry.',
         );
@@ -139,12 +144,13 @@ extension _BookingBlocSessionRecovery on BookingBloc {
         );
       }
 
+      if (isClosed || _activeBidSessionId != sessionId) return;
       emit(
         BookingSearching(
-          isDirect: snapshot!.targetDriverId != null,
+          isDirect: snapshot.targetDriverId != null,
           sessionId: sessionId,
-          expiresAt: snapshot!.expiresAt,
-          bookingReference: snapshot!.bookingReference,
+          expiresAt: snapshot.expiresAt,
+          bookingReference: snapshot.bookingReference,
         ),
       );
       _subscribeToSession(sessionId);
@@ -169,8 +175,6 @@ extension _BookingBlocSessionRecovery on BookingBloc {
     _pickupLat = null;
     _pickupLng = null;
     _pickupName = null;
-    _dropoffLat = null;
-    _dropoffLng = null;
     _distanceKm = null;
     _durationMinutes = null;
   }
@@ -275,8 +279,6 @@ extension _BookingBlocSessionRecovery on BookingBloc {
     _pickupLat = pickupLatitude;
     _pickupLng = pickupLongitude;
     _pickupName = pickupName;
-    _dropoffLat = dropoffLatitude;
-    _dropoffLng = dropoffLongitude;
     _distanceKm = distanceKm;
     _durationMinutes = durationMinutes;
   }

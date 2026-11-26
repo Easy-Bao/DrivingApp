@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:developer' as dev;
 import 'dart:math';
 
@@ -67,6 +66,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   bool _nearestSearchCancelled = false;
   bool _isAutoAcceptingOffer = false;
   bool _isCreatingBidSession = false;
+  bool _isCancellingBooking = false;
   bool _cancelPendingBidSessionCreation = false;
   bool _isRefreshingOffers = false;
   bool _isFetchingNearbyDrivers = false;
@@ -82,8 +82,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   double? _pickupLat;
   double? _pickupLng;
   String? _pickupName;
-  double? _dropoffLat;
-  double? _dropoffLng;
   double? _distanceKm;
   double? _durationMinutes;
 
@@ -169,8 +167,10 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     final trip = _activeTrip;
     final pickupLat = _pickupLat;
     final pickupLng = _pickupLng;
-    final isExpiredRequest =
-        state is BookingFailure && (state as BookingFailure).isRequestExpired;
+    final isExpiredRequest = switch (state) {
+      BookingFailure(:final isRequestExpired) => isRequestExpired,
+      _ => false,
+    };
     if ((!hasActiveDriverSearch && !isExpiredRequest) ||
         trip == null ||
         pickupLat == null ||

@@ -1905,5 +1905,124 @@ void main() {
         await tester.pump();
       },
     );
+
+    test(
+      'preserves cancellation requested while pending creation is being saved',
+      () async {
+        final saveCompleter = Completer<void>();
+        when(
+          () => secureSessionService.savePendingBidSessionCreation(
+            idempotencyKey: any(named: 'idempotencyKey'),
+            requestPayload: any(named: 'requestPayload'),
+            cancelRequested: any(named: 'cancelRequested'),
+            sessionId: any(named: 'sessionId'),
+          ),
+        ).thenAnswer((invocation) async {
+          await saveCompleter.future;
+          pendingCreation = (
+            idempotencyKey:
+                invocation.namedArguments[#idempotencyKey] as String,
+            requestPayload:
+                invocation.namedArguments[#requestPayload] as String,
+            cancelRequested:
+                invocation.namedArguments[#cancelRequested] as bool,
+            sessionId: invocation.namedArguments[#sessionId] as String?,
+          );
+        });
+        when(() => bookingRepository.createSession(any())).thenAnswer(
+          (_) async => const Ok(
+            BidSessionSnapshot(
+              id: 'cancel-during-save',
+              status: 'open',
+              expiresAt: null,
+            ),
+          ),
+        );
+        when(() => bookingRepository.cancelSession('cancel-during-save'))
+            .thenAnswer((_) async => const Ok(null));
+
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+        );
+        addTearDown(bloc.close);
+
+        bloc.add(
+          const StartOpenBookingEvent(
+            trip: testTrip,
+            pickupLat: 7.82,
+            pickupLng: 123.43,
+            distanceKm: 2,
+            durationMinutes: 5,
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        final canceled = bloc.stream.firstWhere(
+          (state) => state is BookingCanceled,
+        );
+        bloc.add(const CancelBookingEvent());
+        await Future<void>.delayed(Duration.zero);
+        saveCompleter.complete();
+        await canceled.timeout(const Duration(seconds: 1));
+
+        verify(() => bookingRepository.cancelSession('cancel-during-save'))
+            .called(1);
+        expect(bloc.state, isA<BookingCanceled>());
+      },
+    );
+
+    testWidgets(
+      'waits for an in-flight nearby lookup when the 15s timeout fires',
+      (tester) async {
+        var callCount = 0;
+        final slowLookup = Completer<Result<List<Driver>, Failure>>();
+        when(() => driverRepo.getNearbyDrivers(lat: 7.82, lng: 123.43))
+            .thenAnswer((_) {
+              callCount++;
+              if (callCount < 5) {
+                return Future.value(const Ok(<Driver>[]));
+              }
+              return slowLookup.future;
+            });
+        final lifecycle = AppLifecycleCoordinator();
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+          lifecycleCoordinator: lifecycle,
+        );
+
+        bloc.add(
+          const StartNearbyDriverSearchEvent(
+            trip: testTrip,
+            pickupLat: 7.82,
+            pickupLng: 123.43,
+            distanceKm: 2,
+            durationMinutes: 5,
+          ),
+        );
+        await tester.pump();
+        // Poll 1 (0s), 2 (3s), 3 (6s), 4 (9s), 5 (12s - stays in flight past 15s).
+        await tester.pump(const Duration(seconds: 15));
+        expect(callCount, 5);
+        expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+
+        slowLookup.complete(const Ok([nearDriver]));
+        await tester.pump();
+
+        expect(bloc.state, isA<BookingFindingNearbyDrivers>());
+        expect((bloc.state as BookingFindingNearbyDrivers).drivers, [
+          nearDriver,
+        ]);
+
+        unawaited(bloc.close());
+        unawaited(lifecycle.dispose());
+        await tester.pump();
+      },
+    );
   });
 }

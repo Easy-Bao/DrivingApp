@@ -249,7 +249,7 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
     if (current.drivers.isNotEmpty || current.errorMessage != null) {
       return;
     }
-    if (!current.hasLoaded) {
+    if (!current.hasLoaded || _isFetchingNearbyDrivers) {
       _nearbySearchTimedOutWaitingForLookup = true;
       return;
     }
@@ -298,8 +298,6 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
     _pickupLat = event.pickupLat;
     _pickupLng = event.pickupLng;
     _pickupName = _pickupNameForTrip(event.trip);
-    _dropoffLat = event.trip.destination.latitude;
-    _dropoffLng = event.trip.destination.longitude;
     _distanceKm = null;
     _durationMinutes = null;
     emit(
@@ -321,17 +319,15 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
       );
       if (isClosed || _nearestSearchCancelled) return;
 
-      result.fold(
-        (failure) {
+      switch (result) {
+        case Err(:final failure):
           lastFailure = failure;
           lastLookupSucceeded = false;
-        },
-        (drivers) {
+        case Ok(value: final drivers):
           lastLookupSucceeded = true;
           lastFailure = null;
           nearbyDrivers = drivers;
-        },
-      );
+      }
 
       if (nearbyDrivers.isNotEmpty) break;
       if (!lastLookupSucceeded) break;
@@ -342,9 +338,10 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
     }
 
     if (nearbyDrivers.isEmpty) {
-      if (!lastLookupSucceeded && lastFailure != null) {
+      final failure = lastFailure;
+      if (!lastLookupSucceeded && failure != null) {
         _activeTrip = null;
-        emit(BookingFailure(ErrorHandler.getErrorMessage(lastFailure!)));
+        emit(BookingFailure(ErrorHandler.getErrorMessage(failure)));
         return;
       }
       if (isClosed || _nearestSearchCancelled) return;
@@ -352,9 +349,9 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
       _activeTrip = null;
       emit(
         BookingFailure(
-          lastFailure == null
+          failure == null
               ? ErrorHandler.getErrorMessage(const NoDriversAvailableFailure())
-              : ErrorHandler.getErrorMessage(lastFailure!),
+              : ErrorHandler.getErrorMessage(failure),
           isNoDriverFound: true,
         ),
       );
@@ -409,25 +406,29 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
   }
 
   Future<int?> _loadDriverTripCount(String driverId) async {
-    int? totalTrips;
-    (await _driverProfileRepository.fetchStatsResult(driverId)).fold(
-      (failure) => dev.log('Unable to load driver stats: ${failure.message}'),
-      (stats) => totalTrips = stats.completedTrips,
-    );
-    return totalTrips;
+    final result = await _driverProfileRepository.fetchStatsResult(driverId);
+    return switch (result) {
+      Err(:final failure) => () {
+        dev.log('Unable to load driver stats: ${failure.message}');
+        return null;
+      }(),
+      Ok(value: final stats) => stats.completedTrips,
+    };
   }
 
   Future<List<DriverReview>> _loadDriverReviews(String driverId) async {
-    List<DriverReview> reviews = const [];
-    (await _driverProfileRepository.fetchReviewsResult(
+    final result = await _driverProfileRepository.fetchReviewsResult(
       driverId,
       page: 1,
       limit: 6,
-    )).fold(
-      (failure) => dev.log('Failed to process reviews: ${failure.message}'),
-      (values) => reviews = List<DriverReview>.unmodifiable(values.items),
     );
-    return reviews;
+    return switch (result) {
+      Err(:final failure) => () {
+        dev.log('Failed to process reviews: ${failure.message}');
+        return const <DriverReview>[];
+      }(),
+      Ok(value: final page) => List<DriverReview>.unmodifiable(page.items),
+    };
   }
 
   Future<void> _onLoadDriverReviews(

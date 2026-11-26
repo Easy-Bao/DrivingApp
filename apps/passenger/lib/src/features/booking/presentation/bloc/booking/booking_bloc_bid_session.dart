@@ -35,14 +35,16 @@ extension _BookingBlocBidSession on BookingBloc {
             ..add(updatedOffer);
       add(UpdateOffersEvent(updatedOffers));
     });
-    _realtimeStateSubscription = realtimeClient.states.listen((state) {
-      if (state is! RealtimeConnected) {
-        return;
+    _realtimeStateSubscription = realtimeClient.states.listen((realtimeState) {
+      if (isClosed || _activeBidSessionId != sessionId) return;
+      if (realtimeState is RealtimeConnected) {
+        if (_realtimeWasConnected) {
+          unawaited(_loadOfferSnapshot(sessionId, source: 'reconnect'));
+        }
+        _realtimeWasConnected = true;
+      } else if (realtimeState is RealtimeDisconnected) {
+        unawaited(_loadOfferSnapshot(sessionId, source: 'realtime_fallback'));
       }
-      if (_realtimeWasConnected) {
-        unawaited(_loadOfferSnapshot(sessionId, source: 'reconnect'));
-      }
-      _realtimeWasConnected = true;
     });
     unawaited(_connectRealtime());
   }
@@ -59,23 +61,46 @@ extension _BookingBlocBidSession on BookingBloc {
 
   void _startOfferRefresh(String sessionId) {
     unawaited(_offerRefreshTask?.dispose());
+    var isInitialTick = true;
     final task = AppLifecyclePeriodicTask(
       lifecycleCoordinator: _lifecycleCoordinator,
       interval: _offerRefreshInterval,
-      onTick: () => _loadOfferSnapshot(sessionId, source: 'periodic'),
+      onTick: () {
+        final source = isInitialTick ? 'initial' : 'periodic';
+        isInitialTick = false;
+        if (source == 'periodic' && _shouldSkipPeriodicHttpOfferPoll()) {
+          return Future<void>.value();
+        }
+        return _loadOfferSnapshot(sessionId, source: source);
+      },
       runImmediately: true,
     );
     _offerRefreshTask = task;
     task.start();
   }
 
+  bool _shouldSkipPeriodicHttpOfferPoll() {
+    if (_realtimeClient?.isConnected != true) return false;
+    final expiresAt = switch (state) {
+      BookingSearching(:final expiresAt) ||
+      BookingOffersReceived(:final expiresAt) => expiresAt,
+      _ => null,
+    };
+    if (expiresAt != null && !expiresAt.isAfter(_now())) {
+      return false;
+    }
+    return true;
+  }
+
   Future<void> _loadOfferSnapshot(
     String sessionId, {
     required String source,
   }) async {
+    final flowGeneration = _bookingFlowGeneration;
     if (isClosed ||
         !_lifecycleCoordinator.isForeground ||
         _activeBidSessionId != sessionId ||
+        _isCancellingBooking ||
         _isRefreshingOffers) {
       return;
     }
@@ -90,42 +115,50 @@ extension _BookingBlocBidSession on BookingBloc {
       );
     }
     try {
-      DateTime? expiresAt;
-      String? sessionStatus;
       BidSessionSnapshot? sessionSnapshot;
       String? refreshError;
-      (await _bookingRepository.fetchSessionResult(sessionId)).fold(
-        (failure) {
+      final sessionResult = await _bookingRepository.fetchSessionResult(
+        sessionId,
+      );
+      switch (sessionResult) {
+        case Err(:final failure):
           refreshError = ErrorHandler.getErrorMessage(failure);
           dev.log('Failed to refresh booking session: ${failure.message}');
-        },
-        (session) {
+        case Ok(value: final session):
           if (session.id == sessionId) {
             sessionSnapshot = session;
-            expiresAt = session.expiresAt;
-            sessionStatus = session.status;
           }
-        },
-      );
-      if (_activeBidSessionId != sessionId || isClosed) return;
-      if (sessionSnapshot?.isAccepted == true ||
-          sessionSnapshot?.isCancelled == true ||
-          sessionSnapshot?.isDeclined == true) {
-        add(UpdateOffersEvent(const [], session: sessionSnapshot));
+      }
+      if (isClosed ||
+          _activeBidSessionId != sessionId ||
+          _isCancellingBooking ||
+          flowGeneration != _bookingFlowGeneration) {
         return;
       }
-      if (sessionSnapshot?.isExpired == true) {
+      if (sessionSnapshot != null &&
+          (sessionSnapshot.isAccepted ||
+              sessionSnapshot.isCancelled ||
+              sessionSnapshot.isDeclined ||
+              sessionSnapshot.isExpired)) {
         add(UpdateOffersEvent(const [], session: sessionSnapshot));
         return;
       }
 
       List<BookingOffer>? offersSnapshot;
-      (await _bookingRepository.fetchOffersResult(sessionId)).fold((failure) {
-        refreshError ??= ErrorHandler.getErrorMessage(failure);
-        dev.log('Failed to refresh booking offers: ${failure.message}');
-      }, (offers) => offersSnapshot = offers);
+      final offersResult = await _bookingRepository.fetchOffersResult(
+        sessionId,
+      );
+      switch (offersResult) {
+        case Err(:final failure):
+          refreshError ??= ErrorHandler.getErrorMessage(failure);
+          dev.log('Failed to refresh booking offers: ${failure.message}');
+        case Ok(value: final offers):
+          offersSnapshot = offers;
+      }
       if (!isClosed &&
           _lifecycleCoordinator.isForeground &&
+          !_isCancellingBooking &&
+          flowGeneration == _bookingFlowGeneration &&
           _activeBidSessionId == sessionId) {
         final previousOffers = switch (state) {
           BookingOffersReceived(:final offers) => offers,
@@ -134,15 +167,7 @@ extension _BookingBlocBidSession on BookingBloc {
         add(
           UpdateOffersEvent(
             offersSnapshot ?? previousOffers,
-            session:
-                sessionSnapshot ??
-                (sessionStatus == null
-                    ? null
-                    : BidSessionSnapshot(
-                        id: sessionId,
-                        status: sessionStatus!,
-                        expiresAt: expiresAt,
-                      )),
+            session: sessionSnapshot,
             refreshError: refreshError,
           ),
         );
@@ -156,13 +181,19 @@ extension _BookingBlocBidSession on BookingBloc {
     UpdateOffersEvent event,
     Emitter<BookingState> emit,
   ) async {
+    final flowGeneration = _bookingFlowGeneration;
     final session = event.session;
-    if (session?.isAccepted == true) {
-      await _recoverAcceptedSession(session!, emit);
+    if (session != null && session.isAccepted) {
+      await _recoverAcceptedSession(session, emit);
       return;
     }
-    if (session?.isDeclined == true) {
-      if (_activeBidSessionId != session!.id) return;
+    if (_isCancellingBooking ||
+        _cancelPendingBidSessionCreation ||
+        _activeBidSessionId == null) {
+      return;
+    }
+    if (session != null && session.isDeclined) {
+      if (_activeBidSessionId != session.id) return;
       final selectedName = switch (state) {
         BookingSearching(:final targetDriver) ||
         BookingOffersReceived(
@@ -172,6 +203,7 @@ extension _BookingBlocBidSession on BookingBloc {
       };
       _captureFailedDriverSearch();
       await _clearPendingBooking(session.id);
+      if (isClosed || flowGeneration != _bookingFlowGeneration) return;
       emit(
         BookingFailure(
           '$selectedName declined your request. Choose another nearby driver.',
@@ -180,21 +212,25 @@ extension _BookingBlocBidSession on BookingBloc {
       );
       return;
     }
-    if (session?.isCancelled == true) {
+    if (session != null && session.isCancelled) {
+      if (_activeBidSessionId != session.id) return;
       _lastFailedDriverSearch = null;
-      await _clearPendingBooking(session!.id);
+      await _clearPendingBooking(session.id);
+      if (isClosed || flowGeneration != _bookingFlowGeneration) return;
       emit(const BookingCanceled());
       return;
     }
-    if (session?.isExpired == true) {
-      final sessionId = session!.id;
+    if (session != null && session.isExpired) {
+      final sessionId = session.id;
       if (_activeBidSessionId != sessionId) return;
       try {
         await _secureSessionService.savePendingBidSessionCancellationId(
           sessionId,
         );
+        if (isClosed || flowGeneration != _bookingFlowGeneration) return;
         await _cancelPersistedBookingSession(sessionId, emit, expired: true);
       } catch (error) {
+        if (isClosed || flowGeneration != _bookingFlowGeneration) return;
         emit(
           BookingSessionRecoveryFailure(
             sessionId: sessionId,
@@ -257,36 +293,49 @@ extension _BookingBlocBidSession on BookingBloc {
       }
     }
 
-    if (state is BookingSearching) {
-      final current = state as BookingSearching;
-      emit(
-        BookingOffersReceived(
-          offers: event.offers,
-          isDirect: current.isDirect,
-          targetDriver: current.targetDriver,
-          sessionId: current.sessionId,
-          bookingReference: session?.bookingReference.isNotEmpty == true
-              ? session!.bookingReference
-              : current.bookingReference,
-          expiresAt: session?.expiresAt ?? current.expiresAt,
-          refreshError: event.refreshError,
-        ),
-      );
-    } else if (state is BookingOffersReceived) {
-      final current = state as BookingOffersReceived;
-      emit(
-        BookingOffersReceived(
-          offers: event.offers,
-          isDirect: current.isDirect,
-          targetDriver: current.targetDriver,
-          sessionId: current.sessionId,
-          bookingReference: session?.bookingReference.isNotEmpty == true
-              ? session!.bookingReference
-              : current.bookingReference,
-          expiresAt: session?.expiresAt ?? current.expiresAt,
-          refreshError: event.refreshError,
-        ),
-      );
+    final resolvedBookingReference =
+        session != null && session.bookingReference.isNotEmpty
+        ? session.bookingReference
+        : null;
+    switch (state) {
+      case BookingSearching(
+        :final isDirect,
+        :final targetDriver,
+        :final sessionId,
+        :final bookingReference,
+        :final expiresAt,
+      ):
+        emit(
+          BookingOffersReceived(
+            offers: event.offers,
+            isDirect: isDirect,
+            targetDriver: targetDriver,
+            sessionId: sessionId,
+            bookingReference: resolvedBookingReference ?? bookingReference,
+            expiresAt: session?.expiresAt ?? expiresAt,
+            refreshError: event.refreshError,
+          ),
+        );
+      case BookingOffersReceived(
+        :final isDirect,
+        :final targetDriver,
+        :final sessionId,
+        :final bookingReference,
+        :final expiresAt,
+      ):
+        emit(
+          BookingOffersReceived(
+            offers: event.offers,
+            isDirect: isDirect,
+            targetDriver: targetDriver,
+            sessionId: sessionId,
+            bookingReference: resolvedBookingReference ?? bookingReference,
+            expiresAt: session?.expiresAt ?? expiresAt,
+            refreshError: event.refreshError,
+          ),
+        );
+      default:
+        break;
     }
   }
 
@@ -322,41 +371,37 @@ extension _BookingBlocBidSession on BookingBloc {
   ) async {
     final sessionId = _activeBidSessionId;
     if (sessionId == null || sessionId.isEmpty) {
+      _isAutoAcceptingOffer = false;
       emit(const BookingFailure('Booking session is no longer available.'));
       return;
     }
 
     try {
-      AcceptedBooking? acceptedBooking;
-      Failure? failure;
-      (await _bookingRepository.acceptOfferResult(
+      final acceptResult = await _bookingRepository.acceptOfferResult(
         sessionId: sessionId,
         offerId: event.offerId,
-      )).fold((value) => failure = value, (value) => acceptedBooking = value);
-      if (acceptedBooking == null) throw failure!;
-      final rideId = acceptedBooking!.typedRideId.normalized;
-
-      final pickupLat = _pickupLat;
-      final pickupLng = _pickupLng;
-      final dropoffLat = _dropoffLat;
-      final dropoffLng = _dropoffLng;
-      if (pickupLat == null ||
-          pickupLng == null ||
-          dropoffLat == null ||
-          dropoffLng == null) {
-        throw StateError('Booking coordinates are unavailable');
+      );
+      final AcceptedBooking acceptedBooking;
+      switch (acceptResult) {
+        case Err(:final failure):
+          throw failure;
+        case Ok(:final value):
+          acceptedBooking = value;
       }
+      final rideId = acceptedBooking.typedRideId.normalized;
       await _secureSessionService.saveActiveRideId(rideId);
       await _secureSessionService.deleteActiveBidSessionId();
       await _secureSessionService.deletePendingBidSessionCreation();
       await _secureSessionService.deletePendingBidSessionCancellationId();
       _activeBidSessionId = null;
+      _isAutoAcceptingOffer = false;
       _cleanupSubscriptions();
       _activeTrip = null;
       _lastFailedDriverSearch = null;
       _distanceKm = null;
       _durationMinutes = null;
-      final fareAmount = acceptedBooking?.fareAmount;
+      if (isClosed) return;
+      final fareAmount = acceptedBooking.fareAmount;
       final confirmedFare = (fareAmount != null && fareAmount > 0)
           ? fareAmount / 100
           : event.proposedFare;
@@ -380,6 +425,7 @@ extension _BookingBlocBidSession on BookingBloc {
     } catch (error) {
       _isAutoAcceptingOffer = false;
       _cleanupSubscriptions();
+      if (isClosed) return;
       emit(
         BookingSessionRecoveryFailure(
           sessionId: sessionId,
@@ -401,13 +447,15 @@ extension _BookingBlocBidSession on BookingBloc {
       try {
         await _secureSessionService.requestPendingBidSessionCancellation();
         final sessionId = _activeBidSessionId;
-        if (sessionId?.isNotEmpty == true) {
+        if (sessionId != null && sessionId.isNotEmpty) {
           await _secureSessionService.savePendingBidSessionCancellationId(
-            sessionId!,
+            sessionId,
           );
         }
+        if (isClosed) return;
         emit(BookingSessionRecoveryInProgress(sessionId: sessionId ?? ''));
       } catch (error) {
+        if (isClosed) return;
         emit(
           BookingSessionRecoveryFailure(
             sessionId: '',
@@ -427,11 +475,13 @@ extension _BookingBlocBidSession on BookingBloc {
         if (pendingCreation != null) {
           _cancelPendingBidSessionCreation = true;
           await _secureSessionService.requestPendingBidSessionCancellation();
+          if (isClosed) return;
           emit(const BookingSessionRecoveryInProgress(sessionId: ''));
           await _createOrRecoverPendingSession(newRequest: null, emit: emit);
           return;
         }
       } catch (error) {
+        if (isClosed) return;
         emit(
           BookingSessionRecoveryFailure(
             sessionId: '',
@@ -448,6 +498,7 @@ extension _BookingBlocBidSession on BookingBloc {
       _pickupLng = null;
       _distanceKm = null;
       _durationMinutes = null;
+      if (isClosed) return;
       emit(const BookingCanceled());
       return;
     }
@@ -459,6 +510,7 @@ extension _BookingBlocBidSession on BookingBloc {
       await _cancelPersistedBookingSession(sessionId, emit);
     } catch (error) {
       dev.log('Unable to persist booking cancellation: $error');
+      if (isClosed) return;
       emit(
         BookingSessionRecoveryFailure(
           sessionId: sessionId,
@@ -473,14 +525,15 @@ extension _BookingBlocBidSession on BookingBloc {
     Emitter<BookingState> emit,
   ) async {
     if (_isCreatingBidSession) return;
-    if (_activeBidSessionId != null &&
+    final activeSessionId = _activeBidSessionId;
+    if (activeSessionId != null &&
         state is! BookingFailure &&
         state is! BookingCanceled) {
       return;
     }
     final generation = ++_bookingFlowGeneration;
-    if (_activeBidSessionId != null) {
-      await _clearPendingBooking(_activeBidSessionId!);
+    if (activeSessionId != null) {
+      await _clearPendingBooking(activeSessionId);
       if (isClosed || generation != _bookingFlowGeneration) return;
     }
     _nearestSearchCancelled = true;
@@ -490,8 +543,6 @@ extension _BookingBlocBidSession on BookingBloc {
     _pickupLat = null;
     _pickupLng = null;
     _pickupName = null;
-    _dropoffLat = null;
-    _dropoffLng = null;
     _distanceKm = null;
     _durationMinutes = null;
     _totalTrips = null;
