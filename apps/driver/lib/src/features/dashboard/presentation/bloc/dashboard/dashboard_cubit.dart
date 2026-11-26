@@ -11,10 +11,13 @@ class DashboardCubit({
   DateTime Function()? now,
   this._silentDispatchFailureCooldown = const Duration(seconds: 15),
 }) extends Cubit<DashboardState> {
+  static const int _maxTerminalRideIds = 100;
+
   final DashboardRepository _repository;
   final DateTime Function() _now;
   final Duration _silentDispatchFailureCooldown;
   bool _isDispatchRequestInFlight = false;
+  bool _isTogglingOnline = false;
   int _activeRideRevision = 0;
   int _submittedOfferRevision = 0;
   Future<void>? _initialization;
@@ -176,13 +179,13 @@ class DashboardCubit({
               .toSet();
           for (final current in state.activeRides) {
             if (!snapshotIds.contains(current.id)) {
-              _terminalRideIds.add(current.id);
+              _recordTerminalRideId(current.id);
             }
           }
           for (final ride in snapshot.activeRides.where(
             (ride) => ride.isTerminal,
           )) {
-            _terminalRideIds.add(ride.id);
+            _recordTerminalRideId(ride.id);
           }
           final activeRides = List<RideSnapshot>.unmodifiable(
             snapshot.activeRides.where(
@@ -342,7 +345,7 @@ class DashboardCubit({
     final removesCurrentRide = state.activeRides.any(
       (ride) => ride.id == rideId,
     );
-    final addedTombstone = _terminalRideIds.add(rideId);
+    final addedTombstone = _recordTerminalRideId(rideId);
     if (!addedTombstone && !removesCurrentRide) return;
     _activeRideRevision++;
     if (!removesCurrentRide) return;
@@ -565,6 +568,8 @@ class DashboardCubit({
     required double lng,
     bool? requestedOnline,
   }) async {
+    if (_isTogglingOnline) return;
+    _isTogglingOnline = true;
     final goingOnline = requestedOnline ?? !state.isOnline;
     final previousOnline = state.isOnline;
     emit(state.copyWith(isOnline: goingOnline, errorMessage: null));
@@ -605,7 +610,17 @@ class DashboardCubit({
           errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),
         ),
       );
+    } finally {
+      _isTogglingOnline = false;
     }
+  }
+
+  bool _recordTerminalRideId(String rideId) {
+    final added = _terminalRideIds.add(rideId);
+    while (_terminalRideIds.length > _maxTerminalRideIds) {
+      _terminalRideIds.remove(_terminalRideIds.first);
+    }
+    return added;
   }
 
   Future<void> forceOffline({required double lat, required double lng}) async {

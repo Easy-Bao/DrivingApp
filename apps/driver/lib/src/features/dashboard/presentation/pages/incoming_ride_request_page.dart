@@ -45,6 +45,9 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
       widget.cubit.removeExpiredRideOffers();
       if (mounted) setState(() {});
     });
+    if (_request(widget.cubit.state) == null) {
+      _close();
+    }
   }
 
   @override
@@ -83,10 +86,10 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
       _submitting = true;
     });
     bool succeeded;
-    if (accept) {
+    if (accept && fare != null) {
       succeeded = await widget.cubit.submitRideOffer(
         sessionId: widget.sessionId,
-        farePesos: fare!,
+        farePesos: fare,
       );
     } else if (bid['target_driver_id'] != null) {
       succeeded = await widget.cubit.declineRideRequest(widget.sessionId);
@@ -125,11 +128,12 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
   @override
   Widget build(
     BuildContext context,
-  ) => BlocBuilder<DashboardCubit, DashboardState>(
+  ) => BlocConsumer<DashboardCubit, DashboardState>(
     bloc: widget.cubit,
+    listenWhen: (_, state) => _request(state) == null,
+    listener: (_, _) => _close(),
     builder: (context, state) {
       final bid = _request(state);
-      if (bid == null) _close();
       final colorScheme = context.colorScheme;
       final textStyles = context.textStyles;
       final expiry = DateTime.tryParse(valueAsString(bid?['expires_at']) ?? '');

@@ -129,7 +129,6 @@ class _DashboardPageState extends State<DashboardPage>
     _locationSubscription = null;
     unawaited(_realtimeEventsSubscription?.cancel());
     _realtimeEventsSubscription = null;
-    unawaited(_realtimeClient.stop());
     super.dispose();
   }
 
@@ -401,12 +400,13 @@ class _DashboardPageState extends State<DashboardPage>
 
   void _handleRealtimeEvent(RealtimeEvent event) {
     if (!mounted || !_isForeground) return;
-    if (!BlocProvider.of<DashboardCubit>(context).state.isOnline) return;
 
     if (event is RideStatusChangedEvent) {
       _handleRideStatusChanged(event);
       return;
     }
+
+    if (!BlocProvider.of<DashboardCubit>(context).state.isOnline) return;
 
     // Direct requests already carry the target driver's topic. Refresh the
     // authoritative offers immediately instead of waiting for the fallback

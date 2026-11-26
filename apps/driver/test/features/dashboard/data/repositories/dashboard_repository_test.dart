@@ -467,9 +467,10 @@ void main() {
     verify(() => _rideRepository.clearDriverLocation()).called(1);
   });
 
-  test('explains that an active ride blocks going offline', () async {
+  test('explains that an active ride blocks going offline without clearing presence', () async {
     final availabilityDataSource = MockAvailabilityRemoteDataSource();
     final sessionService = MockSecureSessionService();
+    final telemetryService = MockBackgroundTelemetryService();
 
     when(() => sessionService.readDriverId())
         .thenAnswer((_) async => 'driver-42');
@@ -479,14 +480,11 @@ void main() {
         isOnline: false,
       ),
     ).thenThrow(_httpFailure(statusCode: 409));
-    when(() => _rideRepository.clearDriverLocation())
-        .thenAnswer((_) async => const Ok(null));
-    when(() => sessionService.saveDriverOnlineStatus(false))
-        .thenAnswer((_) async {});
 
     final repository = _buildRepository(
       availabilityDataSource: availabilityDataSource,
       sessionService: sessionService,
+      backgroundTelemetryService: telemetryService,
     );
 
     final result = await repository.updateOnlineStatus(
@@ -496,13 +494,16 @@ void main() {
     );
 
     expect(result.isErr, isTrue);
-    result.fold(
-      (failure) => expect(
-        failure.message,
+    result.fold((failure) {
+      expect(failure, isA<BusinessRuleFailure>());
+      expect(
+        ErrorHandler.getErrorMessage(failure),
         'Finish your active ride before going offline.',
-      ),
-      (_) => fail('Expected the active-ride availability conflict.'),
-    );
+      );
+    }, (_) => fail('Expected the active-ride availability conflict.'));
+    verifyNever(() => sessionService.saveDriverOnlineStatus(false));
+    verifyNever(() => _rideRepository.clearDriverLocation());
+    verifyNever(() => telemetryService.stop());
   });
 
   test('clears local state even when remote offline call fails', () async {

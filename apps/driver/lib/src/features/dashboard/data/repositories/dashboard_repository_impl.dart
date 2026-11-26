@@ -5,6 +5,7 @@ import 'dart:developer' as dev;
 
 import 'package:dio/dio.dart';
 import 'package:driver/src/core/session/session_store.dart';
+import 'package:driver/src/core/session/storage_keys.dart';
 import 'package:driver/src/core/telemetry/background_telemetry.dart';
 import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
@@ -88,9 +89,8 @@ final class DashboardRepositoryImpl implements DashboardRepository {
         'Driver availability access is restricted.',
         403,
       ),
-      409 => const ServerFailure.withStatusCode(
+      409 => const BusinessRuleFailure(
         'Finish your active ride before going offline.',
-        409,
       ),
       400 || 422 => ValidationFailure(
         _safeAvailabilityMessage(error.response?.data) ??
@@ -324,10 +324,15 @@ final class DashboardRepositoryImpl implements DashboardRepository {
           isOnline: false,
         );
       } catch (error) {
-        await _clearOnlinePresence(
-          driverId: driverId,
-          markServerOffline: false,
-        );
+        final isActiveRideConflict =
+            (error is DioException && error.response?.statusCode == 409) ||
+            (error is ServerException && error.statusCode == 409);
+        if (!isActiveRideConflict) {
+          await _clearOnlinePresence(
+            driverId: driverId,
+            markServerOffline: false,
+          );
+        }
         return Err(_mapExceptionToFailure(error));
       }
       await _clearOnlinePresence(driverId: driverId, markServerOffline: false);
@@ -394,16 +399,16 @@ final class DashboardRepositoryImpl implements DashboardRepository {
           AuthFailure('Driver session is unavailable. Please sign in again.'),
         );
       }
-      final tripsFuture = _rideHistoryRepository.fetchTripHistory(
-        driverId,
-        limit: limit,
-        activeOnly: true,
-      );
-      final offersFuture = includeOffers
-          ? _rideOfferDataSource.fetchActiveBids()
-          : Future.value(const <Map<String, dynamic>>[]);
-      final tripResult = await tripsFuture;
-      final offers = await offersFuture;
+      final (tripResult, offers) = await (
+        _rideHistoryRepository.fetchTripHistory(
+          driverId,
+          limit: limit,
+          activeOnly: true,
+        ),
+        includeOffers
+            ? _rideOfferDataSource.fetchActiveBids()
+            : Future.value(const <Map<String, dynamic>>[]),
+      ).wait;
       return await tripResult.fold(Err.new, (page) {
         final activeRides = page.items
             .map(RideSnapshot.fromJson)
@@ -431,9 +436,9 @@ final class DashboardRepositoryImpl implements DashboardRepository {
     try {
       final accepted = await _rideOfferDataSource.placeBid(
         sessionId: sessionId,
-        driverName: _preferences.getString('driver_name') ?? '',
-        plateNumber: _preferences.getString('plate_number') ?? '',
-        vehicleType: _preferences.getString('vehicle_type') ?? '',
+        driverName: _preferences.getString(StorageKeys.driverName) ?? '',
+        plateNumber: _preferences.getString(StorageKeys.plateNumber) ?? '',
+        vehicleType: _preferences.getString(StorageKeys.vehicleType) ?? '',
         offerPrice: farePesos,
       );
       return accepted
