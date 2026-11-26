@@ -87,14 +87,6 @@ class SessionStore({FlutterSecureStorage? storage, this._preferences})
     await _storage.delete(key: StorageKeys.driverLastActive);
   }
 
-  Future<void> savePassengerId(String passengerId) async {
-    await _storage.write(key: StorageKeys.passengerId, value: passengerId);
-  }
-
-  Future<String?> readPassengerId() async {
-    return _storage.read(key: StorageKeys.passengerId);
-  }
-
   Future<void> saveActiveRideId(String rideId) async {
     await _storage.write(key: StorageKeys.activeRideId, value: rideId);
     if (rideId.trim().isEmpty) {

@@ -1,4 +1,4 @@
-import 'package:driver/src/core/notifications/incoming_request_alert.dart';
+import 'package:driver/src/features/dashboard/presentation/controllers/incoming_request_alert.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
