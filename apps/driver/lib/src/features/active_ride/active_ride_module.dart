@@ -6,6 +6,7 @@ import 'package:driver/src/features/active_ride/domain/repositories/ride_reposit
 import 'package:driver/src/features/active_ride/domain/services/ride_completion_handler.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/pages/driver_trip_page.dart';
+import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -26,7 +27,7 @@ class ActiveRideModule._() {
         final data = _TripRouteData.tryParse(
           RoutePayload.from(extra: state.extra),
         );
-        if (data == null) return _tripDataUnavailable();
+        if (data == null) return const _TripUnavailablePage();
         return BlocProvider<LiveMapBloc>(
           create: (_) => Modular.get<LiveMapBloc>(),
           child: DriverTripPage(
@@ -86,8 +87,32 @@ class const _TripRouteData({
   }
 }
 
-Widget _tripDataUnavailable() => const Scaffold(
-  body: Center(
-    child: Text("Trip details aren't available. Go back and try again."),
-  ),
-);
+class const _TripUnavailablePage() extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.goNamed(DashboardRoutes.dashboard);
+            }
+          },
+          icon: const Icon(Icons.arrow_back),
+        ),
+      ),
+      body: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(AppSpacing.xxl),
+          child: Text(
+            "Trip details aren't available. Go back and try again.",
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+}

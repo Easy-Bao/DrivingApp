@@ -200,7 +200,7 @@ class _RideCancellationSheetState extends State<RideCancellationSheet> {
                             children: [
                               TextSpan(
                                 text: 'Passenger No-Show',
-                                style: TextStyle(
+                                style: textStyles.bodySmall?.copyWith(
                                   fontWeight: FontWeight.w600,
                                   color: colors.onSurface,
                                 ),

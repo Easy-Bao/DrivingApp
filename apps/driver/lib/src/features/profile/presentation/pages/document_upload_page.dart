@@ -26,18 +26,18 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   String? _draftError;
   bool _isPickingPhoto = false;
 
-  Future<void> _choosePhoto() async {
+  Future<void> _choosePhoto({ImageSource source = ImageSource.camera}) async {
     if (_isPickingPhoto) return;
     _isPickingPhoto = true;
     try {
       final pickPhoto = widget.pickPhoto;
-      final picked = pickPhoto == null
-          ? await ImagePicker().pickImage(
-              source: ImageSource.camera,
+      final picked = source == ImageSource.camera && pickPhoto != null
+          ? await pickPhoto()
+          : await ImagePicker().pickImage(
+              source: source,
               maxWidth: 1800,
               imageQuality: 90,
-            )
-          : await pickPhoto();
+            );
       if (!mounted || picked == null) return;
       final bytes = await picked.readAsBytes();
       if (!mounted) return;
@@ -89,11 +89,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     return BlocListener<DocumentUploadCubit, DocumentUploadState>(
       listener: (context, state) {
         if (state.status == DocumentUploadStatus.succeeded) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              const SnackBar(content: Text('Document submitted for review.')),
-            );
+          AppSnackBar.show(context, 'Document submitted for review.');
           setState(() {
             _draft = null;
             _draftBytes = null;
@@ -112,7 +108,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
               final horizontalPadding = constraints.maxWidth < 360
                   ? AppLayout.pagePadding
                   : AppLayout.pagePaddingWide;
-              return ListView(
+              return SingleChildScrollView(
                 physics: const ClampingScrollPhysics(),
                 padding: EdgeInsets.fromLTRB(
                   horizontalPadding,
@@ -120,144 +116,193 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                   horizontalPadding,
                   AppSpacing.xxxl,
                 ),
-                children: [
-                  Text(
-                    'Submit a clear photo for review',
-                    style: textStyles.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Submit a clear photo for review',
+                      style: textStyles.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'Your photo stays on this screen until you confirm the upload.',
-                    style: textStyles.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      height: 1.45,
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Your photo stays on this screen until you confirm the upload.',
+                      style: textStyles.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        height: 1.45,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  DocumentTypeSelector(
-                    selected: _type,
-                    enabled: !state.isUploading,
-                    onSelected: (next) => setState(() => _type = next),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  DocumentPhotoPreview(
-                    bytes: _draftBytes,
-                    isUploading: state.isUploading,
-                    onChoosePhoto: _choosePhoto,
-                  ),
-                  if (_draftError case final draftError?) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    Semantics(
-                      liveRegion: true,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: ExcludeSemantics(
-                              child: Icon(
-                                LucideIcons.circle_alert,
-                                size: 15,
-                                color: colorScheme.error,
+                    const SizedBox(height: AppSpacing.lg),
+                    DocumentTypeSelector(
+                      selected: _type,
+                      enabled: !state.isUploading,
+                      onSelected: (next) => setState(() => _type = next),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    DocumentPhotoPreview(
+                      bytes: _draftBytes,
+                      isUploading: state.isUploading,
+                      onChoosePhoto: _choosePhoto,
+                    ),
+                    if (_draftError case final draftError?) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      Semantics(
+                        liveRegion: true,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: ExcludeSemantics(
+                                child: Icon(
+                                  LucideIcons.circle_alert,
+                                  size: 15,
+                                  color: colorScheme.error,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Text(
-                              draftError,
-                              key: const ValueKey(
-                                'driver-document-upload-error',
-                              ),
-                              style: textStyles.bodySmall?.copyWith(
-                                color: colorScheme.error,
-                                fontWeight: FontWeight.w500,
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                draftError,
+                                key: const ValueKey(
+                                  'driver-document-upload-error',
+                                ),
+                                style: textStyles.bodySmall?.copyWith(
+                                  color: colorScheme.error,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: AppSpacing.lg),
+                    SizedBox(
+                      height: AppSize.controlHeight,
+                      child: OutlinedButton.icon(
+                        key: const ValueKey('driver-document-choose-photo'),
+                        onPressed: state.isUploading
+                            ? null
+                            : () => _choosePhoto(source: ImageSource.camera),
+                        style:
+                            OutlinedButton.styleFrom(
+                              foregroundColor: colorScheme.onSurface,
+                              backgroundColor: Colors.transparent,
+                              side: BorderSide(
+                                color: colorScheme.outlineVariant,
+                              ),
+                              enableFeedback: false,
+                              splashFactory: NoSplash.splashFactory,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.lg,
+                                ),
+                              ),
+                            ).copyWith(
+                              overlayColor: WidgetStateProperty.resolveWith((
+                                states,
+                              ) {
+                                if (states.contains(WidgetState.focused)) {
+                                  return colorScheme.primary.withValues(
+                                    alpha: 0.12,
+                                  );
+                                }
+                                return Colors.transparent;
+                              }),
+                            ),
+                        icon: const Icon(LucideIcons.camera, size: 17),
+                        label: Text(
+                          _draft == null ? 'Take a photo' : 'Retake photo',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    SizedBox(
+                      height: AppSize.controlHeight,
+                      child: OutlinedButton.icon(
+                        key: const ValueKey('driver-document-choose-gallery'),
+                        onPressed: state.isUploading
+                            ? null
+                            : () => _choosePhoto(source: ImageSource.gallery),
+                        style:
+                            OutlinedButton.styleFrom(
+                              foregroundColor: colorScheme.onSurface,
+                              backgroundColor: Colors.transparent,
+                              side: BorderSide(
+                                color: colorScheme.outlineVariant,
+                              ),
+                              enableFeedback: false,
+                              splashFactory: NoSplash.splashFactory,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.lg,
+                                ),
+                              ),
+                            ).copyWith(
+                              overlayColor: WidgetStateProperty.resolveWith((
+                                states,
+                              ) {
+                                if (states.contains(WidgetState.focused)) {
+                                  return colorScheme.primary.withValues(
+                                    alpha: 0.12,
+                                  );
+                                }
+                                return Colors.transparent;
+                              }),
+                            ),
+                        icon: const Icon(LucideIcons.image, size: 17),
+                        label: const Text('Choose from gallery'),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm + 2),
+                    SizedBox(
+                      height: AppSize.controlHeight,
+                      child: FilledButton(
+                        key: const ValueKey('driver-document-submit'),
+                        onPressed: _draft == null || state.isUploading
+                            ? null
+                            : _submit,
+                        style:
+                            FilledButton.styleFrom(
+                              backgroundColor: colorScheme.primary,
+                              foregroundColor: colorScheme.onPrimary,
+                              elevation: 0,
+                              enableFeedback: false,
+                              splashFactory: NoSplash.splashFactory,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.lg,
+                                ),
+                              ),
+                            ).copyWith(
+                              overlayColor: WidgetStateProperty.resolveWith((
+                                states,
+                              ) {
+                                if (states.contains(WidgetState.focused)) {
+                                  return colorScheme.onPrimary.withValues(
+                                    alpha: 0.16,
+                                  );
+                                }
+                                return Colors.transparent;
+                              }),
+                            ),
+                        child: state.isUploading
+                            ? SizedBox.square(
+                                dimension: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: colorScheme.onPrimary,
+                                ),
+                              )
+                            : const Text('Submit document'),
                       ),
                     ),
                   ],
-                  const SizedBox(height: AppSpacing.lg),
-                  SizedBox(
-                    height: AppSize.controlHeight,
-                    child: OutlinedButton.icon(
-                      key: const ValueKey('driver-document-choose-photo'),
-                      onPressed: state.isUploading ? null : _choosePhoto,
-                      style:
-                          OutlinedButton.styleFrom(
-                            foregroundColor: colorScheme.onSurface,
-                            backgroundColor: Colors.transparent,
-                            side: BorderSide(color: colorScheme.outlineVariant),
-                            enableFeedback: false,
-                            splashFactory: NoSplash.splashFactory,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                            ),
-                          ).copyWith(
-                            overlayColor: WidgetStateProperty.resolveWith((
-                              states,
-                            ) {
-                              if (states.contains(WidgetState.focused)) {
-                                return colorScheme.primary.withValues(
-                                  alpha: 0.12,
-                                );
-                              }
-                              return Colors.transparent;
-                            }),
-                          ),
-                      icon: const Icon(LucideIcons.camera, size: 17),
-                      label: Text(
-                        _draft == null ? 'Take a photo' : 'Retake photo',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm + 2),
-                  SizedBox(
-                    height: AppSize.controlHeight,
-                    child: FilledButton(
-                      key: const ValueKey('driver-document-submit'),
-                      onPressed: _draft == null || state.isUploading
-                          ? null
-                          : _submit,
-                      style:
-                          FilledButton.styleFrom(
-                            backgroundColor: colorScheme.primary,
-                            foregroundColor: colorScheme.onPrimary,
-                            elevation: 0,
-                            enableFeedback: false,
-                            splashFactory: NoSplash.splashFactory,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                            ),
-                          ).copyWith(
-                            overlayColor: WidgetStateProperty.resolveWith((
-                              states,
-                            ) {
-                              if (states.contains(WidgetState.focused)) {
-                                return colorScheme.onPrimary.withValues(
-                                  alpha: 0.16,
-                                );
-                              }
-                              return Colors.transparent;
-                            }),
-                          ),
-                      child: state.isUploading
-                          ? SizedBox.square(
-                              dimension: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: colorScheme.onPrimary,
-                              ),
-                            )
-                          : const Text('Submit document'),
-                    ),
-                  ),
-                ],
+                ),
               );
             },
           ),

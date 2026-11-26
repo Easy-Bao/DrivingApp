@@ -99,12 +99,15 @@ class _SigninPageContentState extends State<_SigninPageContent> {
           footer: TextButton(
             onPressed: () => context.pushNamed(SettingsRoutes.terms),
             child: Text.rich(
-              const TextSpan(
+              TextSpan(
                 text: 'By signing in, you agree to the EasyRide ',
                 children: [
                   TextSpan(
                     text: 'Terms of Service.',
-                    style: TextStyle(decoration: TextDecoration.underline),
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                      decoration: TextDecoration.underline,
+                    ),
                   ),
                 ],
               ),

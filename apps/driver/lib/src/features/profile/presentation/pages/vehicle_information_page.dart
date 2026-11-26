@@ -20,35 +20,66 @@ class const VehicleInformationPage({super.key, this.onBack})
 class _VehicleInformationPageState extends State<VehicleInformationPage> {
   final _vehicleTypeController = TextEditingController();
   final _plateNumberController = TextEditingController();
+  String _initialVehicleType = '';
+  String _initialPlateNumber = '';
+  String? _validationError;
+
+  bool get _hasChanges =>
+      _vehicleTypeController.text.trim() != _initialVehicleType ||
+      _plateNumberController.text.trim() != _initialPlateNumber;
 
   @override
   void initState() {
     super.initState();
     _applyAccount(BlocProvider.of<AccountCubit>(context).state.account);
+    _vehicleTypeController.addListener(_handleFieldChanged);
+    _plateNumberController.addListener(_handleFieldChanged);
   }
 
   @override
   void dispose() {
+    _vehicleTypeController.removeListener(_handleFieldChanged);
+    _plateNumberController.removeListener(_handleFieldChanged);
     _vehicleTypeController.dispose();
     _plateNumberController.dispose();
     super.dispose();
   }
 
+  void _handleFieldChanged() {
+    if (!mounted) return;
+    setState(() => _validationError = null);
+  }
+
   void _applyAccount(AccountSnapshot account) {
+    _initialVehicleType = account.vehicleType.trim();
+    _initialPlateNumber = account.plateNumber.trim();
     _vehicleTypeController.text = account.vehicleType;
     _plateNumberController.text = account.plateNumber;
   }
 
   Future<void> _submitSave() async {
+    final vehicleType = _vehicleTypeController.text.trim();
+    final plateNumber = _plateNumberController.text.trim();
+    if (vehicleType.isEmpty) {
+      setState(() => _validationError = 'Enter your vehicle type.');
+      return;
+    }
+    if (plateNumber.isEmpty) {
+      setState(() => _validationError = 'Enter your plate number.');
+      return;
+    }
+    if (!_hasChanges) return;
+
     final cubit = BlocProvider.of<AccountCubit>(context);
     final currentAccount = cubit.state.account;
     final success = await cubit.updateAccount(
       name: currentAccount.name,
-      vehicleType: _vehicleTypeController.text.trim(),
-      plateNumber: _plateNumberController.text.trim(),
+      vehicleType: vehicleType,
+      plateNumber: plateNumber,
     );
     if (!mounted || !context.mounted) return;
     if (success) {
+      AppSnackBar.show(context, 'Vehicle information updated.');
       final onBack = widget.onBack;
       if (onBack != null) {
         onBack();
@@ -172,7 +203,8 @@ class _VehicleInformationPageState extends State<VehicleInformationPage> {
                       ),
                     ),
                   ),
-                  if (state.errorMessage case final errorMessage?) ...[
+                  if ((_validationError ?? state.errorMessage)
+                      case final errorMessage?) ...[
                     const SizedBox(height: AppSpacing.md),
                     Semantics(
                       liveRegion: true,
@@ -211,7 +243,9 @@ class _VehicleInformationPageState extends State<VehicleInformationPage> {
                       key: const ValueKey<String>(
                         'driver-account-details-save',
                       ),
-                      onPressed: state.isSaving ? null : _submitSave,
+                      onPressed: state.isSaving || !_hasChanges
+                          ? null
+                          : _submitSave,
                       style:
                           FilledButton.styleFrom(
                             backgroundColor: colorScheme.primary,

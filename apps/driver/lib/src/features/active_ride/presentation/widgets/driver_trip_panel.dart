@@ -326,7 +326,6 @@ class const _TripNotice({required this.message, this.onDismiss})
             if (onDismiss != null)
               IconButton(
                 tooltip: 'Dismiss',
-                visualDensity: VisualDensity.compact,
                 onPressed: onDismiss,
                 style: IconButton.styleFrom(
                   enableFeedback: false,
