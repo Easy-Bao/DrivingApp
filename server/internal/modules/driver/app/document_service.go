@@ -257,7 +257,7 @@ func (service *DocumentService) readContent(ctx context.Context, document domain
 			return domain.Content{}, fmt.Errorf("read private driver document: %w", err)
 		}
 		return domain.Content{}, errors.Join(
-			domain.ErrDocumentCorrupt,
+			ErrServiceUnavailable,
 			fmt.Errorf("read private driver document: %w", err),
 		)
 	}

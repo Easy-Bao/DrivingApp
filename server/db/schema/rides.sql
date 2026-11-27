@@ -77,14 +77,8 @@ CREATE TABLE rides (
         FOREIGN KEY (bid_session_id) REFERENCES bid_sessions (id) ON DELETE RESTRICT
 );
 
-CREATE INDEX ride_passenger_id_created_at
-    ON rides (passenger_id, created_at);
-
 CREATE INDEX ride_passenger_id_status_completed_at
     ON rides (passenger_id, status, completed_at);
-
-CREATE INDEX ride_driver_id_created_at
-    ON rides (driver_id, created_at);
 
 CREATE INDEX ride_driver_id_status_completed_at
     ON rides (driver_id, status, completed_at);

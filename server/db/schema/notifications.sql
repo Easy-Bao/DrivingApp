@@ -10,9 +10,6 @@ CREATE TABLE notifications (
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
-CREATE INDEX notification_user_id_created_at
-    ON notifications (user_id, created_at);
-
 CREATE INDEX notifications_user_id_id_desc_idx
     ON notifications (user_id, id DESC);
 

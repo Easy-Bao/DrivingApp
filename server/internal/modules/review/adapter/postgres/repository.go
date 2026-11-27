@@ -90,12 +90,16 @@ func (repository *ReviewRepository) DriverReviews(
 	if err != nil {
 		return nil, err
 	}
+	dbBeforeID, err := pgutil.ToNonNegativeInt32(query.BeforeID, "before id")
+	if err != nil {
+		return nil, err
+	}
 	items, err := repository.queries.ListDriverReviews(ctx, databasepostgres.ListDriverReviewsParams{
 		DriverID:        dbDriverID,
 		Limit:           dbLimit,
 		Offset:          dbOffset,
 		BeforeCreatedAt: pgtype.Timestamptz{Time: query.BeforeCreatedAt, Valid: !query.BeforeCreatedAt.IsZero()},
-		BeforeID:        int32(query.BeforeID),
+		BeforeID:        dbBeforeID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list driver reviews: %w", err)

@@ -416,7 +416,9 @@ func (repository *Store) DeclineSession(ctx context.Context, sessionID, driverID
 	// Acceptance locks the same session row; the predicate prevents either
 	// terminal transition from overwriting the other after waiting.
 	item, err := repository.queries.DeclineTargetedBidSession(ctx, databasepostgres.DeclineTargetedBidSessionParams{
-		ID: dbSessionID, TargetDriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
+		ID:             dbSessionID,
+		TargetDriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
+		Now:            pgutil.ToTimestamptz(time.Now().UTC()),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		existing, readErr := repository.queries.GetBidSessionByID(ctx, dbSessionID)

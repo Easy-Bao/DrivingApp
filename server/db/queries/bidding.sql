@@ -287,7 +287,7 @@ WITH declined AS (
       AND bid_sessions.target_driver_id = $2
       AND (
           bid_sessions.status = 'declined'
-          OR (bid_sessions.status = 'open' AND bid_sessions.expires_at > clock_timestamp())
+          OR (bid_sessions.status = 'open' AND bid_sessions.expires_at > sqlc.arg('now')::timestamptz)
       )
     RETURNING bid_sessions.id, bid_sessions.booking_reference, bid_sessions.passenger_id,
         bid_sessions.ride_type, bid_sessions.pickup_latitude, bid_sessions.pickup_longitude,

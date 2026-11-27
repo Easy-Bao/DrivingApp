@@ -275,7 +275,7 @@ WITH declined AS (
       AND bid_sessions.target_driver_id = $2
       AND (
           bid_sessions.status = 'declined'
-          OR (bid_sessions.status = 'open' AND bid_sessions.expires_at > clock_timestamp())
+          OR (bid_sessions.status = 'open' AND bid_sessions.expires_at > $3::timestamptz)
       )
     RETURNING bid_sessions.id, bid_sessions.booking_reference, bid_sessions.passenger_id,
         bid_sessions.ride_type, bid_sessions.pickup_latitude, bid_sessions.pickup_longitude,
@@ -301,8 +301,9 @@ FROM declined
 `
 
 type DeclineTargetedBidSessionParams struct {
-	ID             int32       `db:"id"`
-	TargetDriverID pgtype.Int4 `db:"target_driver_id"`
+	ID             int32              `db:"id"`
+	TargetDriverID pgtype.Int4        `db:"target_driver_id"`
+	Now            pgtype.Timestamptz `db:"now"`
 }
 
 type DeclineTargetedBidSessionRow struct {
@@ -328,7 +329,7 @@ type DeclineTargetedBidSessionRow struct {
 }
 
 func (q *Queries) DeclineTargetedBidSession(ctx context.Context, arg DeclineTargetedBidSessionParams) (DeclineTargetedBidSessionRow, error) {
-	row := q.db.QueryRow(ctx, declineTargetedBidSession, arg.ID, arg.TargetDriverID)
+	row := q.db.QueryRow(ctx, declineTargetedBidSession, arg.ID, arg.TargetDriverID, arg.Now)
 	var i DeclineTargetedBidSessionRow
 	err := row.Scan(
 		&i.ID,

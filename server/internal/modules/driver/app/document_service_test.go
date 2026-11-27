@@ -308,4 +308,13 @@ func TestUploadCleanupUsesBoundedDetachedContextAndReadPreservesCancellation(t *
 	if errors.Is(err, domain.ErrDocumentCorrupt) {
 		t.Fatalf("context cancellation must not be reported as ErrDocumentCorrupt: %v", err)
 	}
+
+	storage.readErr = errors.New("minio timeout")
+	_, err = service.DriverContent(context.Background(), 3, doc.ID)
+	if !errors.Is(err, documentapp.ErrServiceUnavailable) {
+		t.Fatalf("storage read error = %v, want ErrServiceUnavailable", err)
+	}
+	if errors.Is(err, domain.ErrDocumentCorrupt) {
+		t.Fatalf("transient storage read error must not be reported as ErrDocumentCorrupt: %v", err)
+	}
 }
