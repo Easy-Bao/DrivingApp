@@ -64,19 +64,6 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	if !handler.ensureProfileService(w) {
 		return
 	}
-	current, err := handler.service.Get(r.Context(), id)
-	if err != nil {
-		writeProfileReadError(w, err)
-		return
-	}
-	if input.Email != nil && !strings.EqualFold(strings.TrimSpace(*input.Email), strings.TrimSpace(current.Email)) {
-		response.Error(w, http.StatusUnprocessableEntity, "Use the email verification flow to change your email.")
-		return
-	}
-	if input.Phone != nil && strings.TrimSpace(*input.Phone) != strings.TrimSpace(current.Phone) {
-		response.Error(w, http.StatusUnprocessableEntity, "Phone changes require verification and cannot be made here.")
-		return
-	}
 	if input.Name != nil {
 		trimmedName := strings.TrimSpace(*input.Name)
 		if trimmedName == "" || len([]rune(trimmedName)) > 100 {
@@ -117,44 +104,46 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 		input.PlateNumber = &trimmedPlateNumber
 	}
-	profile, err := handler.service.Update(r.Context(), applyProfileUpdate(current, input))
+	patch := domain.ProfilePatch{
+		Name:        input.Name,
+		Email:       input.Email,
+		Phone:       input.Phone,
+		Address:     input.Address,
+		Gender:      input.Gender,
+		VehicleType: input.VehicleType,
+		PlateNumber: input.PlateNumber,
+	}
+	profile, err := handler.service.Patch(r.Context(), id, patch)
 	if err != nil {
-		if errors.Is(err, domain.ErrDriverVehicleChangeWhileOnline) {
+		switch {
+		case errors.Is(err, domain.ErrProfileNotFound):
+			writeProfileReadError(w, err)
+		case errors.Is(err, domain.ErrEmailChangeNotAllowed):
+			response.Error(w, http.StatusUnprocessableEntity, "Use the email verification flow to change your email.")
+		case errors.Is(err, domain.ErrPhoneChangeNotAllowed):
+			response.Error(w, http.StatusUnprocessableEntity, "Phone changes require verification and cannot be made here.")
+		case errors.Is(err, domain.ErrDriverVehicleChangeWhileOnline):
 			response.Error(w, http.StatusConflict, "Go offline before changing vehicle information.")
-			return
-		}
-		if errors.Is(err, domain.ErrInvalidRole) {
+		case errors.Is(err, domain.ErrInvalidRole):
 			response.Error(w, http.StatusBadRequest, "unsupported profile role")
-			return
+		default:
+			response.Error(w, http.StatusInternalServerError, "Your profile is temporarily unavailable. Please try again.")
 		}
-		response.Error(w, http.StatusInternalServerError, "Your profile is temporarily unavailable. Please try again.")
 		return
 	}
 	response.JSON(w, http.StatusOK, NewProfileResponse(profile))
 }
 
-func applyProfileUpdate(current domain.Profile, input UpdateProfileRequest) domain.Profile {
-	if input.Name != nil {
-		current.Name = *input.Name
-	}
-	if input.Address != nil {
-		current.Address = *input.Address
-	}
-	if input.Gender != nil {
-		current.Gender = *input.Gender
-	}
-
-	if input.VehicleType != nil {
-		current.VehicleType = *input.VehicleType
-	}
-	if input.PlateNumber != nil {
-		current.PlateNumber = *input.PlateNumber
-	}
-	return current
+func (handler *Handler) Profile(w http.ResponseWriter, r *http.Request) {
+	handler.profileByID(w, r, "invalid passenger id")
 }
 
-func (handler *Handler) Profile(w http.ResponseWriter, r *http.Request) {
-	id, ok := handler.authorizedPassengerID(w, r)
+func (handler *Handler) DriverProfile(w http.ResponseWriter, r *http.Request) {
+	handler.profileByID(w, r, "invalid driver id")
+}
+
+func (handler *Handler) profileByID(w http.ResponseWriter, r *http.Request, invalidMessage string) {
+	id, ok := handler.authorizedAccountID(w, r, invalidMessage)
 	if !ok {
 		return
 	}
@@ -258,6 +247,10 @@ func (handler *Handler) AvatarUpload(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) authorizedPassengerID(w http.ResponseWriter, r *http.Request) (int, bool) {
+	return handler.authorizedAccountID(w, r, "invalid passenger id")
+}
+
+func (handler *Handler) authorizedAccountID(w http.ResponseWriter, r *http.Request, invalidMessage string) (int, bool) {
 	actorID, ok := handler.identity(r)
 	if !ok {
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
@@ -265,7 +258,7 @@ func (handler *Handler) authorizedPassengerID(w http.ResponseWriter, r *http.Req
 	}
 	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || targetID <= 0 {
-		response.Error(w, http.StatusBadRequest, "invalid passenger id")
+		response.Error(w, http.StatusBadRequest, invalidMessage)
 		return 0, false
 	}
 	if actorID != targetID {

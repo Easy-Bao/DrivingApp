@@ -10,6 +10,7 @@ import (
 type ProfileStore interface {
 	Get(ctx context.Context, userID int) (domain.Profile, error)
 	Save(ctx context.Context, profile domain.Profile) (domain.Profile, error)
+	Patch(ctx context.Context, userID int, patch domain.ProfilePatch) (domain.Profile, error)
 	UpdateOnlineStatus(
 		ctx context.Context,
 		userID int,

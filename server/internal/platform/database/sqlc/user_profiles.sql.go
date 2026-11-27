@@ -252,6 +252,33 @@ func (q *Queries) LockPassengerProfileByUserID(ctx context.Context, userID int32
 	return i, err
 }
 
+const lockUserByID = `-- name: LockUserByID :one
+SELECT id, name, phone, email, password_hash, role, is_verified,
+    account_status, created_at, updated_at
+FROM users
+WHERE id = $1
+LIMIT 1
+FOR UPDATE
+`
+
+func (q *Queries) LockUserByID(ctx context.Context, id int32) (User, error) {
+	row := q.db.QueryRow(ctx, lockUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Phone,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Role,
+		&i.IsVerified,
+		&i.AccountStatus,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const markAllNotificationsRead = `-- name: MarkAllNotificationsRead :exec
 UPDATE notifications
 SET is_read = true

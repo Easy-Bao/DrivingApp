@@ -100,6 +100,7 @@ type Querier interface {
 	LockPassengerProfileByUserID(ctx context.Context, userID int32) (PassengerProfile, error)
 	LockPendingBidOfferForAcceptance(ctx context.Context, arg LockPendingBidOfferForAcceptanceParams) (BidOffer, error)
 	LockRequestedRideForAcceptance(ctx context.Context, id int32) (LockRequestedRideForAcceptanceRow, error)
+	LockUserByID(ctx context.Context, id int32) (User, error)
 	LockUserForBidSession(ctx context.Context, id int32) (int32, error)
 	MarkAllNotificationsRead(ctx context.Context, userID int32) error
 	MarkBidOfferAccepted(ctx context.Context, id int32) (BidOffer, error)

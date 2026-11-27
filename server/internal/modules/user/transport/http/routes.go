@@ -43,7 +43,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 			"/passengers/{id}/notifications/{notificationID}",
 			router.handler.DeleteNotification,
 		)
-		withPolicy(middleware.RouteRead, driverOnly).Get("/drivers/{id}", router.handler.Profile)
+		withPolicy(middleware.RouteRead, driverOnly).Get("/drivers/{id}", router.handler.DriverProfile)
 		withPolicy(middleware.RouteOnlinePresence, driverOnly).Post("/drivers/{id}/online", router.handler.Online)
 	})
 }

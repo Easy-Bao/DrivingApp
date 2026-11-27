@@ -196,17 +196,31 @@ func TestRegisteredMarkAllReadRoute(t *testing.T) {
 
 type profileUpdateStoreStub struct {
 	app.ProfileStore
-	profile domain.Profile
-	getErr  error
-	saveErr error
+	profile  domain.Profile
+	getCalls int
+	getErr   error
+	saveErr  error
 }
 
 func (s *profileUpdateStoreStub) Get(context.Context, int) (domain.Profile, error) {
+	s.getCalls++
 	return s.profile, s.getErr
 }
 
 func (s *profileUpdateStoreStub) Save(context.Context, domain.Profile) (domain.Profile, error) {
 	return domain.Profile{}, s.saveErr
+}
+
+func (s *profileUpdateStoreStub) Patch(_ context.Context, _ int, patch domain.ProfilePatch) (domain.Profile, error) {
+	if s.saveErr != nil {
+		return domain.Profile{}, s.saveErr
+	}
+	updated, err := domain.ApplyProfilePatch(s.profile, patch)
+	if err != nil {
+		return domain.Profile{}, err
+	}
+	s.profile = updated
+	return updated, nil
 }
 
 func TestProfileUpdateRejectsUnsupportedRole(t *testing.T) {
@@ -310,5 +324,68 @@ func TestAvatarUploadReturns413WhenMultipartBodyExceedsMaxBytes(t *testing.T) {
 
 	if rec.Code != http.StatusRequestEntityTooLarge {
 		t.Fatalf("status = %d, want %d: %s", rec.Code, http.StatusRequestEntityTooLarge, rec.Body.String())
+	}
+}
+
+func TestProfileUpdatePatchesDirectlyWithoutPrecedingGet(t *testing.T) {
+	manager := security.NewTokenManager("user-handler-test-secret")
+	token, err := manager.IssueWithRole("9", "passenger")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	store := &profileUpdateStoreStub{
+		profile: domain.Profile{
+			ID:      3,
+			UserID:  9,
+			Role:    "passenger",
+			Name:    "Before",
+			Email:   "passenger@example.test",
+			Phone:   "+639171234500",
+			Address: "Existing Street",
+		},
+	}
+	service := app.NewProfileService(app.ProfileServiceDependencies{Repository: store})
+	handler := NewHandler(Dependencies{Service: service, Verifier: manager})
+	router := chi.NewRouter()
+	router.Patch("/users/me", handler.Update)
+
+	req := httptest.NewRequest(http.MethodPatch, "/users/me", strings.NewReader(`{"name":"After"}`))
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d: %s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+	if store.getCalls != 0 {
+		t.Fatalf("expected Update to use Patch without calling Get(), got %d Get calls", store.getCalls)
+	}
+	if store.profile.Name != "After" || store.profile.Address != "Existing Street" {
+		t.Fatalf("updated profile = %#v", store.profile)
+	}
+}
+
+func TestDriverProfileMalformedIDReturnsDriverError(t *testing.T) {
+	manager := security.NewTokenManager("user-handler-test-secret")
+	token, err := manager.IssueWithRole("9", "driver")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	handler := NewHandler(Dependencies{Verifier: manager})
+	r := chi.NewRouter()
+	r.Get("/drivers/{id}", handler.DriverProfile)
+
+	req := httptest.NewRequest(http.MethodGet, "/drivers/invalid", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d: %s", rec.Code, http.StatusBadRequest, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "invalid driver id") {
+		t.Fatalf("body = %s, want invalid driver id", rec.Body.String())
 	}
 }

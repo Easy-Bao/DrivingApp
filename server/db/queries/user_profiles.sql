@@ -53,6 +53,14 @@ WHERE user_id = $1
 LIMIT 1
 FOR UPDATE;
 
+-- name: LockUserByID :one
+SELECT id, name, phone, email, password_hash, role, is_verified,
+    account_status, created_at, updated_at
+FROM users
+WHERE id = $1
+LIMIT 1
+FOR UPDATE;
+
 -- name: UpdateUserProfile :one
 UPDATE users
 SET name = $2,

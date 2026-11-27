@@ -85,22 +85,28 @@ func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domai
 		return domain.Profile{}, fmt.Errorf("find profile account: %w", err)
 	}
 
-	driverProfile, err := repository.queries.GetDriverProfileByUserIDFull(ctx, dbUserID)
-	if err == nil {
-		return driverProfileFromFullRow(account, driverProfile), nil
-	}
-	if !errors.Is(err, pgx.ErrNoRows) {
-		return domain.Profile{}, fmt.Errorf("find driver profile: %w", err)
-	}
-
-	passengerProfile, err := repository.queries.GetPassengerProfileByUserIDFull(ctx, dbUserID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.Profile{}, domain.ErrProfileNotFound
+	switch account.Role {
+	case "driver":
+		driverProfile, driverErr := repository.queries.GetDriverProfileByUserIDFull(ctx, dbUserID)
+		if driverErr != nil {
+			if errors.Is(driverErr, pgx.ErrNoRows) {
+				return domain.Profile{}, domain.ErrProfileNotFound
+			}
+			return domain.Profile{}, fmt.Errorf("find driver profile: %w", driverErr)
 		}
-		return domain.Profile{}, fmt.Errorf("find passenger profile: %w", err)
+		return driverProfileFromFullRow(account, driverProfile), nil
+	case "passenger":
+		passengerProfile, passengerErr := repository.queries.GetPassengerProfileByUserIDFull(ctx, dbUserID)
+		if passengerErr != nil {
+			if errors.Is(passengerErr, pgx.ErrNoRows) {
+				return domain.Profile{}, domain.ErrProfileNotFound
+			}
+			return domain.Profile{}, fmt.Errorf("find passenger profile: %w", passengerErr)
+		}
+		return passengerProfileFromPostgres(account, passengerProfile), nil
+	default:
+		return domain.Profile{}, domain.ErrProfileNotFound
 	}
-	return passengerProfileFromPostgres(account, passengerProfile), nil
 }
 
 const defaultDriverPresenceMaxAge = 45 * time.Second
@@ -235,6 +241,150 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 
 	if err := transaction.Commit(ctx); err != nil {
 		return domain.Profile{}, fmt.Errorf("commit profile update transaction: %w", err)
+	}
+	return updated, nil
+}
+
+func (repository *ProfileRepository) Patch(
+	ctx context.Context,
+	userID int,
+	patch domain.ProfilePatch,
+) (domain.Profile, error) {
+	if err := repository.validate(); err != nil {
+		return domain.Profile{}, fmt.Errorf("validate profile repository: %w", err)
+	}
+	dbUserID, err := toPostgresProfileID(userID, "user id")
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
+	}
+
+	transaction, err := repository.pool.Begin(ctx)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("begin profile patch transaction: %w", err)
+	}
+	defer func() {
+		platformdatabase.Rollback(ctx, transaction)
+	}()
+
+	transactionQueries := repository.queries.WithTx(transaction)
+	account, err := transactionQueries.LockUserByID(ctx, dbUserID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.Profile{}, domain.ErrProfileNotFound
+		}
+		return domain.Profile{}, fmt.Errorf("lock profile account: %w", err)
+	}
+	if patch.Email != nil && !strings.EqualFold(strings.TrimSpace(*patch.Email), strings.TrimSpace(account.Email)) {
+		return domain.Profile{}, domain.ErrEmailChangeNotAllowed
+	}
+	if patch.Phone != nil && strings.TrimSpace(*patch.Phone) != strings.TrimSpace(account.Phone) {
+		return domain.Profile{}, domain.ErrPhoneChangeNotAllowed
+	}
+
+	var updated domain.Profile
+	switch account.Role {
+	case "driver":
+		currentDriver, lockErr := transactionQueries.LockDriverProfileByUserID(ctx, dbUserID)
+		if lockErr != nil {
+			if errors.Is(lockErr, pgx.ErrNoRows) {
+				return domain.Profile{}, domain.ErrProfileNotFound
+			}
+			return domain.Profile{}, fmt.Errorf("lock driver profile: %w", lockErr)
+		}
+		name := currentDriver.Name
+		if patch.Name != nil {
+			name = *patch.Name
+		}
+		vehicleType := currentDriver.VehicleType
+		if patch.VehicleType != nil {
+			vehicleType = *patch.VehicleType
+		}
+		plateNumber := currentDriver.PlateNumber
+		if patch.PlateNumber != nil {
+			plateNumber = *patch.PlateNumber
+		}
+		if currentDriver.IsOnline &&
+			(currentDriver.VehicleType != vehicleType ||
+				currentDriver.PlateNumber != plateNumber) {
+			return domain.Profile{}, domain.ErrDriverVehicleChangeWhileOnline
+		}
+		updatedAccount, userErr := transactionQueries.UpdateUserProfile(ctx, databasepostgres.UpdateUserProfileParams{
+			ID:   dbUserID,
+			Name: toPostgresProfileText(name),
+		})
+		if userErr != nil {
+			if errors.Is(userErr, pgx.ErrNoRows) {
+				return domain.Profile{}, domain.ErrProfileNotFound
+			}
+			return domain.Profile{}, fmt.Errorf("update profile account: %w", userErr)
+		}
+		driverProfile, updateErr := transactionQueries.UpdateDriverProfile(ctx, databasepostgres.UpdateDriverProfileParams{
+			ID:          currentDriver.ID,
+			UserID:      dbUserID,
+			Name:        name,
+			VehicleType: vehicleType,
+			PlateNumber: plateNumber,
+		})
+		if updateErr != nil {
+			if errors.Is(updateErr, pgx.ErrNoRows) {
+				return domain.Profile{}, domain.ErrProfileNotFound
+			}
+			return domain.Profile{}, fmt.Errorf("update driver profile: %w", updateErr)
+		}
+		updated = driverProfileFromUpdateRow(updatedAccount, driverProfile)
+	case "passenger":
+		currentPassenger, lockErr := transactionQueries.LockPassengerProfileByUserID(ctx, dbUserID)
+		if lockErr != nil {
+			if errors.Is(lockErr, pgx.ErrNoRows) {
+				return domain.Profile{}, domain.ErrProfileNotFound
+			}
+			return domain.Profile{}, fmt.Errorf("lock passenger profile: %w", lockErr)
+		}
+		name := currentPassenger.Name
+		if patch.Name != nil {
+			name = *patch.Name
+		}
+		address := profileTextValue(currentPassenger.Address)
+		if patch.Address != nil {
+			address = *patch.Address
+		}
+		gender := currentPassenger.Gender
+		if patch.Gender != nil {
+			gender = *patch.Gender
+		}
+		updatedAccount, userErr := transactionQueries.UpdateUserProfile(ctx, databasepostgres.UpdateUserProfileParams{
+			ID:   dbUserID,
+			Name: toPostgresProfileText(name),
+		})
+		if userErr != nil {
+			if errors.Is(userErr, pgx.ErrNoRows) {
+				return domain.Profile{}, domain.ErrProfileNotFound
+			}
+			return domain.Profile{}, fmt.Errorf("update profile account: %w", userErr)
+		}
+		passengerProfile, updateErr := transactionQueries.UpdatePassengerProfile(
+			ctx,
+			databasepostgres.UpdatePassengerProfileParams{
+				ID:      currentPassenger.ID,
+				UserID:  dbUserID,
+				Name:    name,
+				Address: toPostgresProfileText(address),
+				Gender:  gender,
+			},
+		)
+		if updateErr != nil {
+			if errors.Is(updateErr, pgx.ErrNoRows) {
+				return domain.Profile{}, domain.ErrProfileNotFound
+			}
+			return domain.Profile{}, fmt.Errorf("update passenger profile: %w", updateErr)
+		}
+		updated = passengerProfileFromPostgres(updatedAccount, passengerProfile)
+	default:
+		return domain.Profile{}, fmt.Errorf("%w: unsupported profile role %q", domain.ErrInvalidRole, account.Role)
+	}
+
+	if err := transaction.Commit(ctx); err != nil {
+		return domain.Profile{}, fmt.Errorf("commit profile patch transaction: %w", err)
 	}
 	return updated, nil
 }

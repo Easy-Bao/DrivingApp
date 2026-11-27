@@ -59,6 +59,15 @@ func (repository *avatarRepository) Save(_ context.Context, profile domain.Profi
 	return profile, nil
 }
 
+func (repository *avatarRepository) Patch(_ context.Context, _ int, patch domain.ProfilePatch) (domain.Profile, error) {
+	updated, err := domain.ApplyProfilePatch(repository.profile, patch)
+	if err != nil {
+		return domain.Profile{}, err
+	}
+	repository.profile = updated
+	return updated, nil
+}
+
 func (repository *avatarRepository) UpdateOnlineStatus(
 	_ context.Context,
 	userID int,
@@ -97,6 +106,19 @@ func (repository *onlineRepository) Get(context.Context, int) (domain.Profile, e
 func (repository *onlineRepository) Save(_ context.Context, profile domain.Profile) (domain.Profile, error) {
 	repository.saved = profile
 	return profile, nil
+}
+
+func (repository *onlineRepository) Patch(_ context.Context, _ int, patch domain.ProfilePatch) (domain.Profile, error) {
+	if repository.getErr != nil {
+		return domain.Profile{}, repository.getErr
+	}
+	updated, err := domain.ApplyProfilePatch(repository.profile, patch)
+	if err != nil {
+		return domain.Profile{}, err
+	}
+	repository.saved = updated
+	repository.profile = updated
+	return updated, nil
 }
 
 func (repository *onlineRepository) UpdateOnlineStatus(

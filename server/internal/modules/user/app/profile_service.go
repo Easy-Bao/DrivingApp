@@ -73,6 +73,17 @@ func (service *ProfileService) Update(ctx context.Context, profile domain.Profil
 	return updated, nil
 }
 
+func (service *ProfileService) Patch(ctx context.Context, userID int, patch domain.ProfilePatch) (domain.Profile, error) {
+	if service == nil || service.repository == nil {
+		return domain.Profile{}, ErrProfileUnavailable
+	}
+	updated, err := service.repository.Patch(ctx, userID, patch)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("patch profile: %w", err)
+	}
+	return updated, nil
+}
+
 func (service *ProfileService) UpdateOnlineStatus(
 	ctx context.Context,
 	userID int,
