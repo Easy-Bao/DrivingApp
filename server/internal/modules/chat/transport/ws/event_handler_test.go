@@ -58,7 +58,7 @@ func TestEventHandlerKeepsServerIdentityAndTimestamp(t *testing.T) {
 	handler := NewEventHandler(service)
 	before := time.Now().UTC()
 
-	err := handler.Handle(context.Background(), []byte(`{
+	event, err := ParseClientEvent([]byte(`{
 		"type":"message",
 		"room_id":"303",
 		"sender_id":"7",
@@ -67,6 +67,10 @@ func TestEventHandlerKeepsServerIdentityAndTimestamp(t *testing.T) {
 		"created_at":"2000-01-01T00:00:00Z",
 		"createdAt":"2099-01-01T00:00:00Z"
 	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = handler.Handle(context.Background(), event)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,7 +119,7 @@ func TestEventHandlerRejectsMalformedAndUnsupportedEvents(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := handler.Handle(context.Background(), []byte(tc.payload))
+			_, err := ParseClientEvent([]byte(tc.payload))
 			if err == nil {
 				t.Fatalf("expected error for payload %q, got nil", tc.payload)
 			}
@@ -124,7 +128,15 @@ func TestEventHandlerRejectsMalformedAndUnsupportedEvents(t *testing.T) {
 			}
 		})
 	}
-	if err := (*EventHandler)(nil).Handle(context.Background(), []byte(`{"type":"message","room_id":"303","sender_id":"7","text":"hi"}`)); !errors.Is(err, domain.ErrRoomUnavailable) {
+	for _, invalid := range []ClientEvent{
+		{Type: "unknown_type", RoomID: "303"},
+		{Type: "typing", RoomID: "303", SenderID: "7", HasTyping: false},
+	} {
+		if err := handler.Handle(context.Background(), invalid); !errors.Is(err, domain.ErrInvalidMessage) {
+			t.Fatalf("Handle(%#v) error = %v, want %v", invalid, err, domain.ErrInvalidMessage)
+		}
+	}
+	if err := (*EventHandler)(nil).Handle(context.Background(), ClientEvent{Type: "message", RoomID: "303", SenderID: "7", Text: "hi"}); !errors.Is(err, domain.ErrRoomUnavailable) {
 		t.Fatalf("nil handler error = %v, want %v", err, domain.ErrRoomUnavailable)
 	}
 }
@@ -136,7 +148,11 @@ func TestEventHandlerIgnoresUnicodeFoldedSenderID(t *testing.T) {
 	handler := NewEventHandler(service)
 
 	payload := []byte("{\"type\":\"message\",\"room_id\":\"303\",\"sender_id\":\"7\",\"\u017fender_id\":\"8\",\"text\":\"hi\"}")
-	if err := handler.Handle(context.Background(), payload); err != nil {
+	event, err := ParseClientEvent(payload)
+	if err != nil {
+		t.Fatalf("ParseClientEvent() error = %v", err)
+	}
+	if err := handler.Handle(context.Background(), event); err != nil {
 		t.Fatalf("Handle() error = %v", err)
 	}
 	if history.message.SenderID != "7" {

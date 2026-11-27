@@ -15,7 +15,7 @@ import (
 )
 
 type EventSink interface {
-	Handle(ctx context.Context, message []byte) error
+	Handle(ctx context.Context, event ClientEvent) error
 }
 
 type RoomAuthorizer interface {
@@ -118,58 +118,33 @@ func (protocol *ConnectionProtocol) HandleMessage(
 	isText bool,
 	message []byte,
 ) ([]byte, error) {
-	parsed, ok := parseClientChatEvent(message)
-	if !isText || !ok {
+	if !isText {
+		return formatWebSocketError("error", "invalid_event", "invalid event"), nil
+	}
+	event, err := ParseClientEvent(message)
+	if err != nil {
 		return formatWebSocketError("error", "invalid_event", "invalid event"), nil
 	}
 	roomID := request.URL.Query().Get("roomId")
 	if roomID == "" || identity.Subject == "" {
 		return formatWebSocketError("error", "invalid_chat_event", "invalid chat event"), nil
 	}
+	event.RoomID = roomID
+	event.SenderID = identity.Subject
 
-	var canonical any
-	if parsed.eventType == "typing" {
-		if protocol != nil && protocol.limiter != nil && !protocol.limiter.allowTyping(roomID, identity.Subject, parsed.isTyping) {
+	if event.Type == "typing" {
+		if protocol != nil && protocol.limiter != nil && !protocol.limiter.allowTyping(roomID, identity.Subject, event.IsTyping) {
 			return nil, nil
-		}
-		canonical = struct {
-			Type     string `json:"type"`
-			RoomID   string `json:"room_id"`
-			SenderID string `json:"sender_id"`
-			IsTyping bool   `json:"is_typing"`
-		}{
-			Type:     "typing",
-			RoomID:   roomID,
-			SenderID: identity.Subject,
-			IsTyping: parsed.isTyping,
 		}
 	} else {
 		if protocol != nil && protocol.limiter != nil && !protocol.limiter.allowMessage(roomID, identity.Subject) {
 			return formatWebSocketError("error", "rate_limit_exceeded", "Too many messages. Please slow down."), nil
 		}
-		canonical = struct {
-			Type     string `json:"type"`
-			RoomID   string `json:"room_id"`
-			SenderID string `json:"sender_id"`
-			Body     string `json:"body,omitempty"`
-			Text     string `json:"text,omitempty"`
-		}{
-			Type:     parsed.eventType,
-			RoomID:   roomID,
-			SenderID: identity.Subject,
-			Body:     parsed.body,
-			Text:     parsed.text,
-		}
-	}
-
-	enriched, err := json.Marshal(canonical)
-	if err != nil {
-		return formatWebSocketError("error", "invalid_chat_event", "invalid chat event"), nil
 	}
 	if protocol == nil || protocol.sink == nil {
 		return formatWebSocketError("error", "event_rejected", "event rejected"), nil
 	}
-	if err := protocol.sink.Handle(ctx, enriched); err != nil {
+	if err := protocol.sink.Handle(ctx, event); err != nil {
 		if errors.Is(err, domain.ErrRoomLocked) {
 			return formatWebSocketError("room_locked", "room_locked", "Chat is closed for this trip."), nil
 		}
@@ -259,70 +234,4 @@ func (protocol *ConnectionProtocol) EncodeEnvelope(envelope events.Envelope) ([]
 	default:
 		return nil, nil
 	}
-}
-
-type parsedClientChatEvent struct {
-	eventType string
-	body      string
-	text      string
-	isTyping  bool
-}
-
-func parseClientChatEvent(message []byte) (parsedClientChatEvent, bool) {
-	var parsed map[string]any
-	if json.Unmarshal(message, &parsed) != nil || parsed == nil {
-		return parsedClientChatEvent{}, false
-	}
-	eventType, ok := parsed["type"].(string)
-	if !ok {
-		return parsedClientChatEvent{}, false
-	}
-	switch eventType {
-	case "CHAT_MESSAGE", "message":
-		body, ok := extractOptionalString(parsed, "body")
-		if !ok {
-			return parsedClientChatEvent{}, false
-		}
-		text, ok := extractOptionalString(parsed, "text")
-		if !ok {
-			return parsedClientChatEvent{}, false
-		}
-		return parsedClientChatEvent{
-			eventType: eventType,
-			body:      body,
-			text:      text,
-		}, true
-	case "typing":
-		isTyping, ok := extractTypingFlag(parsed)
-		if !ok {
-			return parsedClientChatEvent{}, false
-		}
-		return parsedClientChatEvent{
-			eventType: eventType,
-			isTyping:  isTyping,
-		}, true
-	default:
-		return parsedClientChatEvent{}, false
-	}
-}
-
-func extractOptionalString(parsed map[string]any, key string) (string, bool) {
-	raw, exists := parsed[key]
-	if !exists || raw == nil {
-		return "", true
-	}
-	value, ok := raw.(string)
-	return value, ok
-}
-
-func extractTypingFlag(parsed map[string]any) (bool, bool) {
-	if raw, exists := parsed["is_typing"]; exists && raw != nil {
-		isTyping, ok := raw.(bool)
-		return isTyping, ok
-	}
-	if raw, exists := parsed["isTyping"]; exists && raw != nil {
-		isTyping, ok := raw.(bool)
-		return isTyping, ok
-	}
-	return false, false
 }

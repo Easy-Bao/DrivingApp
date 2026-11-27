@@ -2,7 +2,6 @@ package ws
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -18,82 +17,28 @@ func NewEventHandler(service *application.Service) *EventHandler {
 	return &EventHandler{service: service}
 }
 
-func (handler *EventHandler) Handle(ctx context.Context, message []byte) error {
+func (handler *EventHandler) Handle(ctx context.Context, event ClientEvent) error {
 	if handler == nil || handler.service == nil {
 		return domain.ErrRoomUnavailable
 	}
-	var fields map[string]json.RawMessage
-	if err := json.Unmarshal(message, &fields); err != nil {
-		return fmt.Errorf("%w: parse chat event header: %w", domain.ErrInvalidMessage, err)
-	}
-	if fields == nil {
-		return fmt.Errorf("%w: chat event must be a JSON object", domain.ErrInvalidMessage)
-	}
-	eventType, _, err := decodeExactStringField(fields, "type")
-	if err != nil {
-		return fmt.Errorf("%w: parse chat event header: %w", domain.ErrInvalidMessage, err)
-	}
-	switch eventType {
+	switch event.Type {
 	case "CHAT_MESSAGE", "message":
-		roomID, _, err := decodeExactStringField(fields, "room_id")
-		if err != nil {
-			return fmt.Errorf("%w: parse chat message event: %w", domain.ErrInvalidMessage, err)
-		}
-		senderID, _, err := decodeExactStringField(fields, "sender_id")
-		if err != nil {
-			return fmt.Errorf("%w: parse chat message event: %w", domain.ErrInvalidMessage, err)
-		}
-		body, _, err := decodeExactStringField(fields, "body")
-		if err != nil {
-			return fmt.Errorf("%w: parse chat message event: %w", domain.ErrInvalidMessage, err)
-		}
-		text, _, err := decodeExactStringField(fields, "text")
-		if err != nil {
-			return fmt.Errorf("%w: parse chat message event: %w", domain.ErrInvalidMessage, err)
-		}
+		body := event.Body
 		if body == "" {
-			body = text
+			body = event.Text
 		}
 		return handler.service.Relay(ctx, domain.Message{
-			RoomID:    roomID,
-			SenderID:  senderID,
+			RoomID:    event.RoomID,
+			SenderID:  event.SenderID,
 			Body:      body,
 			CreatedAt: time.Now().UTC().Format(time.RFC3339Nano),
 		})
 	case "typing":
-		roomID, _, err := decodeExactStringField(fields, "room_id")
-		if err != nil {
-			return fmt.Errorf("%w: parse typing event: %w", domain.ErrInvalidMessage, err)
-		}
-		senderID, _, err := decodeExactStringField(fields, "sender_id")
-		if err != nil {
-			return fmt.Errorf("%w: parse typing event: %w", domain.ErrInvalidMessage, err)
-		}
-		rawTyping, exists := fields["is_typing"]
-		if !exists {
+		if !event.HasTyping {
 			return fmt.Errorf("%w: missing is_typing in typing event", domain.ErrInvalidMessage)
 		}
-		var isTyping *bool
-		if err := json.Unmarshal(rawTyping, &isTyping); err != nil {
-			return fmt.Errorf("%w: parse typing event: %w", domain.ErrInvalidMessage, err)
-		}
-		if isTyping == nil {
-			return fmt.Errorf("%w: missing is_typing in typing event", domain.ErrInvalidMessage)
-		}
-		return handler.service.PublishTyping(ctx, roomID, senderID, *isTyping)
+		return handler.service.PublishTyping(ctx, event.RoomID, event.SenderID, event.IsTyping)
 	default:
-		return fmt.Errorf("%w: unsupported chat event type %q", domain.ErrInvalidMessage, eventType)
+		return fmt.Errorf("%w: unsupported chat event type %q", domain.ErrInvalidMessage, event.Type)
 	}
-}
-
-func decodeExactStringField(fields map[string]json.RawMessage, key string) (string, bool, error) {
-	raw, exists := fields[key]
-	if !exists {
-		return "", false, nil
-	}
-	var value string
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return "", true, err
-	}
-	return value, true, nil
 }

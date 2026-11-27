@@ -60,7 +60,7 @@ func TestConnectionProtocolReportsClosedRideChatToTheSender(t *testing.T) {
 }
 
 func TestConnectionProtocolEnforcesMessageRateBudget(t *testing.T) {
-	sink := &protocolEventSinkStub{messages: make(chan []byte, 10)}
+	sink := &protocolEventSinkStub{messages: make(chan ClientEvent, 10)}
 	protocol := NewConnectionProtocol(
 		sink,
 		protocolRoomAuthorizerStub{allowed: true},
@@ -108,7 +108,7 @@ func TestConnectionProtocolEnforcesMessageRateBudget(t *testing.T) {
 }
 
 func TestConnectionProtocolCoalescesRedundantTypingEvents(t *testing.T) {
-	sink := &protocolEventSinkStub{messages: make(chan []byte, 10)}
+	sink := &protocolEventSinkStub{messages: make(chan ClientEvent, 10)}
 	protocol := NewConnectionProtocol(
 		sink,
 		protocolRoomAuthorizerStub{allowed: true},
@@ -161,7 +161,7 @@ func TestConnectionProtocolCoalescesRedundantTypingEvents(t *testing.T) {
 }
 
 func TestConnectionProtocolStripsUnicodeFoldedSpoofedFields(t *testing.T) {
-	sink := &protocolEventSinkStub{messages: make(chan []byte, 2)}
+	sink := &protocolEventSinkStub{messages: make(chan ClientEvent, 2)}
 	protocol := NewConnectionProtocol(sink, protocolRoomAuthorizerStub{allowed: true})
 	request, err := http.NewRequest(http.MethodGet, "/api/v1/chat/ws?roomId=303", nil)
 	if err != nil {
@@ -180,14 +180,7 @@ func TestConnectionProtocolStripsUnicodeFoldedSpoofedFields(t *testing.T) {
 	if err != nil || len(reply) != 0 {
 		t.Fatalf("HandleMessage(message) = (%s, %v), want nil", reply, err)
 	}
-	rawMsg := <-sink.messages
-	if strings.Contains(string(rawMsg), "\u017f") || strings.Contains(string(rawMsg), "SENDER_ID") {
-		t.Fatalf("spoofed keys leaked into canonical message: %s", rawMsg)
-	}
-	var decodedMsg MessageEvent
-	if err := json.Unmarshal(rawMsg, &decodedMsg); err != nil {
-		t.Fatal(err)
-	}
+	decodedMsg := <-sink.messages
 	if decodedMsg.SenderID != "7" || decodedMsg.RoomID != "303" || decodedMsg.Text != "hello" {
 		t.Fatalf("decoded message = %#v", decodedMsg)
 	}
@@ -202,19 +195,8 @@ func TestConnectionProtocolStripsUnicodeFoldedSpoofedFields(t *testing.T) {
 	if err != nil || len(reply) != 0 {
 		t.Fatalf("HandleMessage(typing) = (%s, %v), want nil", reply, err)
 	}
-	rawTyping := <-sink.messages
-	if strings.Contains(string(rawTyping), "\u017f") {
-		t.Fatalf("spoofed keys leaked into canonical typing event: %s", rawTyping)
-	}
-	var decodedTyping struct {
-		RoomID   string `json:"room_id"`
-		SenderID string `json:"sender_id"`
-		IsTyping bool   `json:"is_typing"`
-	}
-	if err := json.Unmarshal(rawTyping, &decodedTyping); err != nil {
-		t.Fatal(err)
-	}
-	if decodedTyping.RoomID != "303" || decodedTyping.SenderID != "7" || !decodedTyping.IsTyping {
+	decodedTyping := <-sink.messages
+	if decodedTyping.RoomID != "303" || decodedTyping.SenderID != "7" || !decodedTyping.IsTyping || !decodedTyping.HasTyping {
 		t.Fatalf("decoded typing = %#v", decodedTyping)
 	}
 }
@@ -263,16 +245,16 @@ func (stub protocolRoomAuthorizerStub) CanAccessRoom(context.Context, string, st
 }
 
 type protocolEventSinkStub struct {
-	messages chan []byte
+	messages chan ClientEvent
 	err      error
 }
 
-func (stub protocolEventSinkStub) Handle(_ context.Context, message []byte) error {
+func (stub protocolEventSinkStub) Handle(_ context.Context, event ClientEvent) error {
 	if stub.err != nil {
 		return stub.err
 	}
 	if stub.messages != nil {
-		stub.messages <- append([]byte(nil), message...)
+		stub.messages <- event
 	}
 	return nil
 }
@@ -367,7 +349,7 @@ func TestConnectionProtocolResolvesOnlyAuthorizedRoomTopics(t *testing.T) {
 }
 
 func TestConnectionProtocolCanonicalizesTypingIdentity(t *testing.T) {
-	messages := make(chan []byte, 1)
+	messages := make(chan ClientEvent, 1)
 	protocol := NewConnectionProtocol(protocolEventSinkStub{messages: messages}, nil)
 	request, err := http.NewRequest(http.MethodGet, "/api/v1/chat/ws?roomId=303", nil)
 	if err != nil {
@@ -386,15 +368,9 @@ func TestConnectionProtocolCanonicalizesTypingIdentity(t *testing.T) {
 		t.Fatalf("HandleMessage() = (%q, %v), want no reply and no error", reply, err)
 	}
 
-	var received map[string]any
-	if err := json.Unmarshal(<-messages, &received); err != nil {
-		t.Fatal(err)
-	}
-	if received["room_id"] != "303" || received["sender_id"] != "7" || received["is_typing"] != true {
+	received := <-messages
+	if received.RoomID != "303" || received.SenderID != "7" || !received.IsTyping || !received.HasTyping {
 		t.Fatalf("canonical typing event = %#v", received)
-	}
-	if _, exists := received["isTyping"]; exists {
-		t.Fatalf("legacy typing key remained: %#v", received)
 	}
 }
 
@@ -451,7 +427,7 @@ func TestConnectionProtocolRejectsInvalidAndFailedMessages(t *testing.T) {
 
 func TestChatCompatibilityEndpointUsesSharedWebSocketEngine(t *testing.T) {
 	hub := websockethub.NewHub()
-	messages := make(chan []byte, 1)
+	messages := make(chan ClientEvent, 1)
 	protocol := NewConnectionProtocol(
 		protocolEventSinkStub{messages: messages},
 		protocolRoomAuthorizerStub{allowed: true},
@@ -514,12 +490,8 @@ func TestChatCompatibilityEndpointUsesSharedWebSocketEngine(t *testing.T) {
 		t.Fatalf("write compatibility typing event: %v", err)
 	}
 	select {
-	case rawMessage := <-messages:
-		var inbound map[string]any
-		if err := json.Unmarshal(rawMessage, &inbound); err != nil {
-			t.Fatal(err)
-		}
-		if inbound["room_id"] != "303" || inbound["sender_id"] != "7" || inbound["is_typing"] != true {
+	case inbound := <-messages:
+		if inbound.RoomID != "303" || inbound.SenderID != "7" || !inbound.IsTyping || !inbound.HasTyping {
 			t.Fatalf("canonical inbound chat event = %#v", inbound)
 		}
 	case <-time.After(time.Second):
