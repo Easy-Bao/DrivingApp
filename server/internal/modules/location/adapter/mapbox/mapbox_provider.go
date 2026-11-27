@@ -19,6 +19,7 @@ import (
 
 	locationports "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/geo"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/resilience"
 )
 
@@ -342,7 +343,7 @@ func placeFromFeature(feature feature, origin domain.Coordinates) (domain.Place,
 		Category:   categoryName(feature.Properties.Category),
 		Longitude:  longitude,
 		Latitude:   latitude,
-		DistanceKm: haversine(origin.Latitude, origin.Longitude, latitude, longitude),
+		DistanceKm: geo.DistanceKm(origin.Latitude, origin.Longitude, latitude, longitude),
 		Context:    featureContextNames(feature),
 	}, true
 }
@@ -437,7 +438,7 @@ func mostSpecificReverseFeature(features []feature, origin domain.Coordinates) (
 		if !ok {
 			continue
 		}
-		distanceMeters := haversine(origin.Latitude, origin.Longitude, latitude, longitude) * 1000
+		distanceMeters := geo.DistanceMeters(origin.Latitude, origin.Longitude, latitude, longitude)
 		rank := reverseCandidateRankFor(candidate, distanceMeters)
 		isEarlierStage := rank.stage < selectedRank.stage
 		isMoreProminent := rank.stage == selectedRank.stage && rank.prominence > selectedRank.prominence
@@ -970,15 +971,4 @@ func sanitizeMapboxError(err error) error {
 
 func coordinate(value float64) string {
 	return strconv.FormatFloat(value, 'f', 6, 64)
-}
-
-func haversine(latitude1, longitude1, latitude2, longitude2 float64) float64 {
-	const earthRadiusKm = 6371.0
-	const radians = math.Pi / 180
-	deltaLatitude := (latitude2 - latitude1) * radians
-	deltaLongitude := (longitude2 - longitude1) * radians
-	a := math.Sin(deltaLatitude/2)*math.Sin(deltaLatitude/2) +
-		math.Cos(latitude1*radians)*math.Cos(latitude2*radians)*math.Sin(deltaLongitude/2)*math.Sin(deltaLongitude/2)
-	a = min(1, max(0, a))
-	return earthRadiusKm * 2 * math.Asin(math.Sqrt(a))
 }

@@ -14,7 +14,6 @@ import (
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
@@ -256,9 +255,8 @@ func (handler *Handler) authorizedAccountID(w http.ResponseWriter, r *http.Reque
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return 0, false
 	}
-	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil || targetID <= 0 {
-		response.Error(w, http.StatusBadRequest, invalidMessage)
+	targetID, ok := sharedrequest.PositiveIntParam(w, r, "id", invalidMessage)
+	if !ok {
 		return 0, false
 	}
 	if actorID != targetID {
@@ -340,9 +338,8 @@ func (handler *Handler) DeleteNotification(w http.ResponseWriter, r *http.Reques
 	if !ok {
 		return
 	}
-	notificationID, err := strconv.Atoi(chi.URLParam(r, "notificationID"))
-	if err != nil || notificationID <= 0 {
-		response.Error(w, http.StatusBadRequest, "invalid notification")
+	notificationID, ok := sharedrequest.PositiveIntParam(w, r, "notificationID", "invalid notification")
+	if !ok {
 		return
 	}
 	if handler == nil || handler.service == nil {
@@ -366,9 +363,8 @@ func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil || targetID <= 0 {
-		response.Error(w, http.StatusBadRequest, "invalid driver id")
+	targetID, ok := sharedrequest.PositiveIntParam(w, r, "id", "invalid driver id")
+	if !ok {
 		return
 	}
 	var input struct {

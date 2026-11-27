@@ -1,6 +1,6 @@
 package domain
 
-import "math"
+import "github.com/Easy-Bao/DrivingApp/server/internal/platform/geo"
 
 type Coordinates struct {
 	Latitude  float64
@@ -8,12 +8,7 @@ type Coordinates struct {
 }
 
 func (coordinates Coordinates) Valid() bool {
-	return !math.IsNaN(coordinates.Latitude) &&
-		!math.IsInf(coordinates.Latitude, 0) &&
-		!math.IsNaN(coordinates.Longitude) &&
-		!math.IsInf(coordinates.Longitude, 0) &&
-		coordinates.Latitude >= -90 && coordinates.Latitude <= 90 &&
-		coordinates.Longitude >= -180 && coordinates.Longitude <= 180
+	return geo.ValidCoordinates(coordinates.Latitude, coordinates.Longitude)
 }
 
 type RecentDestination struct {

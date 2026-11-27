@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	miniosdk "github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -124,7 +124,7 @@ func (store *ObjectStore) Store(ctx context.Context, content []byte) (string, er
 		})
 		if err != nil {
 			cleanupErr := store.removeMinIOObject(context.WithoutCancel(ctx), externalKey)
-			if isPostgresObjectUniqueViolation(err) && cleanupErr == nil {
+			if pgutil.IsUniqueViolation(err) && cleanupErr == nil {
 				continue
 			}
 			metadataErr := fmt.Errorf("create external private object metadata: %w", err)
@@ -497,9 +497,4 @@ func newMinIOObjectKey() (string, error) {
 		return "", fmt.Errorf("generate MinIO object key: %w", err)
 	}
 	return _minioObjectKeyPrefix + hex.EncodeToString(random), nil
-}
-
-func isPostgresObjectUniqueViolation(err error) bool {
-	var databaseError *pgconn.PgError
-	return errors.As(err, &databaseError) && databaseError.Code == "23505"
 }

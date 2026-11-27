@@ -4,15 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -71,7 +69,7 @@ func (repository *UserRepository) createAccount(
 
 	transactionQueries := repository.queries.WithTx(transaction)
 	created, err := transactionQueries.CreateUser(ctx, databasepostgres.CreateUserParams{
-		Name:         toPostgresText(account.Name),
+		Name:         pgutil.ToText(account.Name),
 		Phone:        account.Phone,
 		Email:        account.Email,
 		PasswordHash: account.PasswordHash,
@@ -79,7 +77,7 @@ func (repository *UserRepository) createAccount(
 		IsVerified:   account.IsVerified,
 	})
 	if err != nil {
-		if isPostgresUniqueViolation(err) {
+		if pgutil.IsUniqueViolation(err) {
 			return domain.User{}, domain.ErrAccountConflict
 		}
 		return domain.User{}, fmt.Errorf("create user: %w", err)
@@ -107,7 +105,7 @@ func (repository *UserRepository) createAccount(
 		if err := transactionQueries.CreateRefreshSession(ctx, databasepostgres.CreateRefreshSessionParams{
 			UserID:    created.ID,
 			TokenHash: session.TokenHash,
-			ExpiresAt: toPostgresTimestamp(session.ExpiresAt),
+			ExpiresAt: pgutil.ToTimestamptz(session.ExpiresAt),
 		}); err != nil {
 			return domain.User{}, fmt.Errorf("%w: create initial refresh session: %w", domain.ErrRefreshSessionUnavailable, err)
 		}
@@ -128,7 +126,7 @@ func (repository *UserRepository) MarkVerified(ctx context.Context, userID int) 
 	if err := repository.validate(); err != nil {
 		return fmt.Errorf("validate user repository: %w", err)
 	}
-	dbUserID, err := toPostgresUserID(userID)
+	dbUserID, err := pgutil.ToInt32(userID, "user id")
 	if err != nil {
 		return fmt.Errorf("convert user id: %w", err)
 	}
@@ -154,7 +152,7 @@ func (repository *UserRepository) MarkVerifiedWithSession(
 	if session.TokenHash == "" {
 		return fmt.Errorf("%w: refresh session token hash is required", domain.ErrRefreshSessionUnavailable)
 	}
-	dbUserID, err := toPostgresUserID(userID)
+	dbUserID, err := pgutil.ToInt32(userID, "user id")
 	if err != nil {
 		return fmt.Errorf("convert user id: %w", err)
 	}
@@ -177,7 +175,7 @@ func (repository *UserRepository) MarkVerifiedWithSession(
 	if err := txQueries.CreateRefreshSession(ctx, databasepostgres.CreateRefreshSessionParams{
 		UserID:    dbUserID,
 		TokenHash: session.TokenHash,
-		ExpiresAt: toPostgresTimestamp(session.ExpiresAt),
+		ExpiresAt: pgutil.ToTimestamptz(session.ExpiresAt),
 	}); err != nil {
 		return fmt.Errorf("%w: create verified refresh session: %w", domain.ErrRefreshSessionUnavailable, err)
 	}
@@ -209,7 +207,7 @@ func (repository *UserRepository) FindByID(ctx context.Context, userID int) (dom
 	if err := repository.validate(); err != nil {
 		return domain.User{}, fmt.Errorf("validate user repository: %w", err)
 	}
-	dbUserID, err := toPostgresUserID(userID)
+	dbUserID, err := pgutil.ToInt32(userID, "user id")
 	if err != nil {
 		return domain.User{}, fmt.Errorf("convert user id: %w", err)
 	}
@@ -232,7 +230,7 @@ func (repository *UserRepository) UpdatePassword(ctx context.Context, userID int
 	if err := repository.validate(); err != nil {
 		return fmt.Errorf("validate user repository: %w", err)
 	}
-	dbUserID, err := toPostgresUserID(userID)
+	dbUserID, err := pgutil.ToInt32(userID, "user id")
 	if err != nil {
 		return fmt.Errorf("convert user id: %w", err)
 	}
@@ -259,7 +257,7 @@ func (repository *UserRepository) UpgradePasswordHash(
 	if err := repository.validate(); err != nil {
 		return false, fmt.Errorf("validate user repository: %w", err)
 	}
-	dbUserID, err := toPostgresUserID(userID)
+	dbUserID, err := pgutil.ToInt32(userID, "user id")
 	if err != nil {
 		return false, fmt.Errorf("convert user id: %w", err)
 	}
@@ -283,7 +281,7 @@ func (repository *UserRepository) UpdateEmail(
 	if err := repository.validate(); err != nil {
 		return fmt.Errorf("validate user repository: %w", err)
 	}
-	dbUserID, err := toPostgresUserID(userID)
+	dbUserID, err := pgutil.ToInt32(userID, "user id")
 	if err != nil {
 		return fmt.Errorf("convert user id: %w", err)
 	}
@@ -293,7 +291,7 @@ func (repository *UserRepository) UpdateEmail(
 		NewEmail:      newEmail,
 	})
 	if err != nil {
-		if isPostgresUniqueViolation(err) {
+		if pgutil.IsUniqueViolation(err) {
 			return domain.ErrEmailTaken
 		}
 		return fmt.Errorf("update email for user %d: %w", userID, err)
@@ -345,39 +343,15 @@ func validateUserRole(role domain.Role) error {
 	}
 }
 
-func toPostgresUserID(userID int) (int32, error) {
-	userID64 := int64(userID)
-	if userID64 < math.MinInt32 || userID64 > math.MaxInt32 {
-		return 0, fmt.Errorf("user id %d is outside PostgreSQL integer range", userID)
-	}
-	return int32(userID), nil
-}
-
 func fromPostgresUser(account databasepostgres.User) domain.User {
 	return domain.User{
 		ID:            int(account.ID),
 		Email:         account.Email,
 		Phone:         account.Phone,
-		Name:          textValue(account.Name),
+		Name:          pgutil.TextValue(account.Name),
 		Role:          domain.Role(account.Role),
 		PasswordHash:  account.PasswordHash,
 		IsVerified:    account.IsVerified,
 		AccountStatus: account.AccountStatus,
 	}
-}
-
-func toPostgresText(value string) pgtype.Text {
-	return pgtype.Text{String: value, Valid: true}
-}
-
-func textValue(value pgtype.Text) string {
-	if !value.Valid {
-		return ""
-	}
-	return value.String
-}
-
-func isPostgresUniqueViolation(err error) bool {
-	databaseError, ok := errors.AsType[*pgconn.PgError](err)
-	return ok && databaseError.Code == "23505"
 }

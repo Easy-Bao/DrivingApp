@@ -291,8 +291,8 @@ func actorID(request *http.Request) (int, bool) {
 }
 
 func documentID(request *http.Request) (int, error) {
-	id, err := strconv.Atoi(chi.URLParam(request, "id"))
-	if err != nil || id <= 0 {
+	id, ok := sharedrequest.ParsePositiveInt32Param(request, "id")
+	if !ok {
 		return 0, domain.ErrInvalidDocument
 	}
 	return id, nil

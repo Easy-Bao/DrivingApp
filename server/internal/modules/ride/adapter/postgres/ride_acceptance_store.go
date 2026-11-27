@@ -8,6 +8,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -21,11 +22,11 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
 	}
-	dbRideID, err := toPostgresRideID(rideID, "ride id")
+	dbRideID, err := pgutil.ToPositiveInt32(rideID, "ride id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(driverID, "driver id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -94,9 +95,9 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 	updatedRide, err := transactionQueries.AcceptRideFromRequest(ctx, databasepostgres.AcceptRideFromRequestParams{
 		ID:           trip.ID,
 		DriverID:     pgtype.Int4{Int32: profile.UserID, Valid: true},
-		DriverName:   rideText(profile.Name),
-		VehicleType:  rideText(profile.VehicleType),
-		PlateNumber:  rideText(profile.PlateNumber),
+		DriverName:   pgutil.ToText(profile.Name),
+		VehicleType:  pgutil.ToText(profile.VehicleType),
+		PlateNumber:  pgutil.ToText(profile.PlateNumber),
 		DriverRating: rideRating(profile.Rating),
 	})
 	if err != nil {

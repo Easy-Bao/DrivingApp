@@ -7,8 +7,8 @@ import (
 
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 var _ ports.PassengerActivityReader = (*RideRepository)(nil)
@@ -21,13 +21,13 @@ func (repository *RideRepository) PassengerActivitySummary(
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.PassengerActivitySummary{}, err
 	}
-	dbPassengerID, err := toPostgresRideID(passengerID, "passenger id")
+	dbPassengerID, err := pgutil.ToPositiveInt32(passengerID, "passenger id")
 	if err != nil {
 		return domain.PassengerActivitySummary{}, err
 	}
 	row, err := repository.queries.GetPassengerActivitySummary(ctx, databasepostgres.GetPassengerActivitySummaryParams{
-		WeekStart:   pgtype.Timestamptz{Time: weekStart.UTC(), Valid: true},
-		WeekEnd:     pgtype.Timestamptz{Time: weekEnd.UTC(), Valid: true},
+		WeekStart:   pgutil.ToTimestamptz(weekStart.UTC()),
+		WeekEnd:     pgutil.ToTimestamptz(weekEnd.UTC()),
 		PassengerID: dbPassengerID,
 	})
 	if err != nil {

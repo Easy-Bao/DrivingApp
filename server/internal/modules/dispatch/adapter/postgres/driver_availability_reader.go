@@ -7,6 +7,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 )
 
@@ -19,11 +20,11 @@ func (store *Store) OnlineDrivers(
 	if err := store.validate(); err != nil {
 		return nil, err
 	}
-	dbDriverIDs, err := toPostgresDriverIDs(driverIDs)
+	dbDriverIDs, err := pgutil.ToPositiveInt32s(driverIDs, "driver id")
 	if err != nil {
 		return nil, err
 	}
-	dbLimit, err := toPostgresRideID(len(driverIDs), "driver availability limit")
+	dbLimit, err := pgutil.ToPositiveInt32(len(driverIDs), "driver availability limit")
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +57,7 @@ func (store *Store) PublicDriverSummaries(
 	if err := store.validate(); err != nil {
 		return nil, err
 	}
-	dbLimit, err := toPostgresRideID(limit, "driver summary limit")
+	dbLimit, err := pgutil.ToPositiveInt32(limit, "driver summary limit")
 	if err != nil {
 		return nil, err
 	}
@@ -103,18 +104,6 @@ func fromPostgresPublicDriverSummary(item databasepostgres.ListPublicDriverSumma
 		VehicleType: item.VehicleType,
 		Rating:      item.Rating,
 	}
-}
-
-func toPostgresDriverIDs(values []int) ([]int32, error) {
-	result := make([]int32, 0, len(values))
-	for _, value := range values {
-		converted, err := toPostgresRideID(value, "driver id")
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, converted)
-	}
-	return result, nil
 }
 
 func toNativeDriverAvailabilityCount(value int64) (int, error) {

@@ -12,6 +12,7 @@ import (
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -33,11 +34,11 @@ func (repository *RideRepository) MarkArrived(
 	if !ok || (current != domain.RideAssigned && current != domain.RideAccepted) {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
-	dbRideID, err := toPostgresRideID(rideID, "ride id")
+	dbRideID, err := pgutil.ToPositiveInt32(rideID, "ride id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(driverID, "driver id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -104,11 +105,11 @@ func (repository *RideRepository) StartTrip(
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
 	}
-	dbRideID, err := toPostgresRideID(rideID, "ride id")
+	dbRideID, err := pgutil.ToPositiveInt32(rideID, "ride id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(driverID, "driver id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -149,11 +150,11 @@ func (repository *RideRepository) CompleteTrip(
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
 	}
-	dbRideID, err := toPostgresRideID(rideID, "ride id")
+	dbRideID, err := pgutil.ToPositiveInt32(rideID, "ride id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(driverID, "driver id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -194,11 +195,11 @@ func (repository *RideRepository) MarkPassengerNoShow(
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
 	}
-	dbRideID, err := toPostgresRideID(rideID, "ride id")
+	dbRideID, err := pgutil.ToPositiveInt32(rideID, "ride id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(driverID, "driver id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -340,17 +341,17 @@ func (repository *RideRepository) UpdateStatus(
 	if !currentOK || !nextOK {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
-	dbRideID, err := toPostgresRideID(rideID, "ride id")
+	dbRideID, err := pgutil.ToPositiveInt32(rideID, "ride id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	dbActorID, err := toPostgresRideID(actorID, "actor id")
+	dbActorID, err := pgutil.ToPositiveInt32(actorID, "actor id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
 	completedAt := pgtype.Timestamptz{}
 	if domain.IsTerminal(string(next)) {
-		completedAt = pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}
+		completedAt = pgutil.ToTimestamptz(time.Now().UTC())
 	}
 	transaction, err := repository.pool.Begin(ctx)
 	if err != nil {

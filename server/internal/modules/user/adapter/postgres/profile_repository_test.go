@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -20,10 +21,10 @@ func TestNewProfileRepositoryRejectsNilPool(t *testing.T) {
 }
 
 func TestProfileTextValue(t *testing.T) {
-	if got := profileTextValue(pgtype.Text{String: "Quezon City", Valid: true}); got != "Quezon City" {
+	if got := pgutil.TextValue(pgtype.Text{String: "Quezon City", Valid: true}); got != "Quezon City" {
 		t.Fatalf("valid text = %q, want Quezon City", got)
 	}
-	if got := profileTextValue(pgtype.Text{}); got != "" {
+	if got := pgutil.TextValue(pgtype.Text{}); got != "" {
 		t.Fatalf("invalid text = %q, want empty string", got)
 	}
 }
@@ -75,20 +76,20 @@ func TestProfileMappingsPreserveAccountContactDetails(t *testing.T) {
 }
 
 func TestPostgresProfileIDAndPageBounds(t *testing.T) {
-	if got, err := toPostgresProfileID(7, "user id"); err != nil || got != 7 {
-		t.Fatalf("toPostgresProfileID(7) = %d, %v", got, err)
+	if got, err := pgutil.ToPositiveInt32(7, "user id"); err != nil || got != 7 {
+		t.Fatalf("pgutil.ToPositiveInt32(7) = %d, %v", got, err)
 	}
 	for _, value := range []int{0, -1, math.MaxInt32 + 1} {
-		if _, err := toPostgresProfileID(value, "user id"); err == nil {
-			t.Errorf("toPostgresProfileID(%d) succeeded", value)
+		if _, err := pgutil.ToPositiveInt32(value, "user id"); err == nil {
+			t.Errorf("pgutil.ToPositiveInt32(%d) succeeded", value)
 		}
 	}
-	if got, err := toPostgresProfilePageValue(0, "offset"); err != nil || got != 0 {
-		t.Fatalf("toPostgresProfilePageValue(0) = %d, %v", got, err)
+	if got, err := pgutil.ToNonNegativeInt32(0, "offset"); err != nil || got != 0 {
+		t.Fatalf("pgutil.ToNonNegativeInt32(0) = %d, %v", got, err)
 	}
 	for _, value := range []int{-1, math.MaxInt32 + 1} {
-		if _, err := toPostgresProfilePageValue(value, "offset"); err == nil {
-			t.Errorf("toPostgresProfilePageValue(%d) succeeded", value)
+		if _, err := pgutil.ToNonNegativeInt32(value, "offset"); err == nil {
+			t.Errorf("pgutil.ToNonNegativeInt32(%d) succeeded", value)
 		}
 	}
 }
@@ -113,7 +114,7 @@ func TestPostgresNotificationMappingUsesUTC(t *testing.T) {
 	if _, err := fromPostgresNotification(databasepostgres.Notification{}); err == nil {
 		t.Fatal("expected invalid notification timestamp to be rejected")
 	}
-	if _, err := toPostgresProfilePageValue(-1, "offset"); err == nil {
+	if _, err := pgutil.ToNonNegativeInt32(-1, "offset"); err == nil {
 		t.Fatal("expected negative notification offset to be rejected")
 	}
 }

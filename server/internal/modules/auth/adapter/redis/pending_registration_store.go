@@ -10,6 +10,7 @@ import (
 
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/domain"
+	platformcache "github.com/Easy-Bao/DrivingApp/server/internal/platform/cache"
 	redisclient "github.com/redis/go-redis/v9"
 )
 
@@ -29,16 +30,13 @@ func (store *PendingRegistrationStore) Put(
 	if err := store.validate(); err != nil {
 		return err
 	}
-	payload, err := encodePendingRegistration(registration)
-	if err != nil {
-		return fmt.Errorf("marshal pending registration: %w", err)
-	}
-	if err := store.client.Set(
+	if err := platformcache.SetJSON(
 		ctx,
+		store.client,
 		pendingKey(registration.Email),
-		payload,
+		newPendingRegistrationRecord(registration),
 		ttl,
-	).Err(); err != nil {
+	); err != nil {
 		return fmt.Errorf("store pending registration: %w", err)
 	}
 	return nil
@@ -48,18 +46,14 @@ func (store *PendingRegistrationStore) Get(ctx context.Context, email string) (d
 	if err := store.validate(); err != nil {
 		return domain.PendingRegistration{}, err
 	}
-	payload, err := store.client.Get(ctx, pendingKey(email)).Bytes()
-	if errors.Is(err, redisclient.Nil) {
+	record, err := platformcache.GetJSON[pendingRegistrationRecord](ctx, store.client, pendingKey(email))
+	if errors.Is(err, platformcache.ErrCacheMiss) {
 		return domain.PendingRegistration{}, domain.ErrPendingRegistrationNotFound
 	}
 	if err != nil {
 		return domain.PendingRegistration{}, fmt.Errorf("get pending registration: %w", err)
 	}
-	registration, err := decodePendingRegistration(payload)
-	if err != nil {
-		return domain.PendingRegistration{}, fmt.Errorf("decode pending registration: %w", err)
-	}
-	return registration, nil
+	return record.toDomain(), nil
 }
 
 func (store *PendingRegistrationStore) Delete(ctx context.Context, email string) error {
@@ -93,8 +87,8 @@ type pendingRegistrationRecord struct {
 	PlateNumber  string      `json:"plate_number,omitempty"`
 }
 
-func encodePendingRegistration(registration domain.PendingRegistration) ([]byte, error) {
-	return json.Marshal(pendingRegistrationRecord{
+func newPendingRegistrationRecord(registration domain.PendingRegistration) pendingRegistrationRecord {
+	return pendingRegistrationRecord{
 		Email:        registration.Email,
 		Phone:        registration.Phone,
 		Name:         registration.Name,
@@ -102,14 +96,10 @@ func encodePendingRegistration(registration domain.PendingRegistration) ([]byte,
 		Role:         registration.Role,
 		VehicleType:  registration.VehicleType,
 		PlateNumber:  registration.PlateNumber,
-	})
+	}
 }
 
-func decodePendingRegistration(payload []byte) (domain.PendingRegistration, error) {
-	var record pendingRegistrationRecord
-	if err := json.Unmarshal(payload, &record); err != nil {
-		return domain.PendingRegistration{}, err
-	}
+func (record pendingRegistrationRecord) toDomain() domain.PendingRegistration {
 	return domain.PendingRegistration{
 		Email:        record.Email,
 		Phone:        record.Phone,
@@ -118,5 +108,17 @@ func decodePendingRegistration(payload []byte) (domain.PendingRegistration, erro
 		Role:         record.Role,
 		VehicleType:  record.VehicleType,
 		PlateNumber:  record.PlateNumber,
-	}, nil
+	}
+}
+
+func encodePendingRegistration(registration domain.PendingRegistration) ([]byte, error) {
+	return json.Marshal(newPendingRegistrationRecord(registration))
+}
+
+func decodePendingRegistration(payload []byte) (domain.PendingRegistration, error) {
+	var record pendingRegistrationRecord
+	if err := json.Unmarshal(payload, &record); err != nil {
+		return domain.PendingRegistration{}, err
+	}
+	return record.toDomain(), nil
 }

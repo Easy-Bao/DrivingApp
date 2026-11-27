@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -45,7 +46,7 @@ func TestFromPostgresDocumentMapsReviewMetadata(t *testing.T) {
 }
 
 func TestPostgresDocumentPageValueRejectsNegativeValues(t *testing.T) {
-	if _, err := toPostgresDocumentPageValue(-1, "offset"); err == nil {
+	if _, err := pgutil.ToNonNegativeInt32(-1, "offset"); err == nil {
 		t.Fatal("expected negative page value to be rejected")
 	}
 }

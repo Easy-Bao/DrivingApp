@@ -9,6 +9,7 @@ import (
 
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 )
@@ -32,11 +33,11 @@ func (repository *RideRepository) CreateSafetyReport(
 		return domain.SafetyReport{}, domain.ErrSafetyReportInvalid
 	}
 
-	reportID, err := toPostgresRideID(report.RideID, "ride id")
+	reportID, err := pgutil.ToPositiveInt32(report.RideID, "ride id")
 	if err != nil {
 		return domain.SafetyReport{}, domain.ErrSafetyReportNotAllowed
 	}
-	reporterID, err := toPostgresRideID(report.ReporterID, "reporter id")
+	reporterID, err := pgutil.ToPositiveInt32(report.ReporterID, "reporter id")
 	if err != nil {
 		return domain.SafetyReport{}, domain.ErrSafetyReportNotAllowed
 	}
@@ -52,7 +53,7 @@ func (repository *RideRepository) CreateSafetyReport(
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.SafetyReport{}, domain.ErrSafetyReportNotAllowed
 		}
-		if isPostgresUniqueViolation(err) {
+		if pgutil.IsUniqueViolation(err) {
 			existing, lookupErr := repository.queries.GetRideReportByReporterCategory(
 				ctx,
 				databasepostgres.GetRideReportByReporterCategoryParams{

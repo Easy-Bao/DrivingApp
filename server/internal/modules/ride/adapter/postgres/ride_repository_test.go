@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -184,12 +185,12 @@ func TestToNativeRideCountRejectsNegativeValues(t *testing.T) {
 }
 
 func TestToPostgresRideIDRequiresPositiveInt32(t *testing.T) {
-	if got, err := toPostgresRideID(7, "ride id"); err != nil || got != 7 {
-		t.Fatalf("toPostgresRideID(7) = %d, %v", got, err)
+	if got, err := pgutil.ToPositiveInt32(7, "ride id"); err != nil || got != 7 {
+		t.Fatalf("pgutil.ToPositiveInt32(7) = %d, %v", got, err)
 	}
 	for _, value := range []int{0, -1, math.MaxInt32 + 1} {
-		if _, err := toPostgresRideID(value, "ride id"); err == nil {
-			t.Errorf("toPostgresRideID(%d) succeeded", value)
+		if _, err := pgutil.ToPositiveInt32(value, "ride id"); err == nil {
+			t.Errorf("pgutil.ToPositiveInt32(%d) succeeded", value)
 		}
 	}
 }

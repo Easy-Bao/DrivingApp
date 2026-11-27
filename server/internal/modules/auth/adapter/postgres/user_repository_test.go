@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -30,10 +31,10 @@ func TestValidateUserRole(t *testing.T) {
 }
 
 func TestTextValue(t *testing.T) {
-	if got := textValue(pgtype.Text{String: "Ada", Valid: true}); got != "Ada" {
+	if got := pgutil.TextValue(pgtype.Text{String: "Ada", Valid: true}); got != "Ada" {
 		t.Fatalf("valid text = %q, want Ada", got)
 	}
-	if got := textValue(pgtype.Text{}); got != "" {
+	if got := pgutil.TextValue(pgtype.Text{}); got != "" {
 		t.Fatalf("invalid text = %q, want empty string", got)
 	}
 }
@@ -56,10 +57,10 @@ func TestFromPostgresUserMapsNullableName(t *testing.T) {
 
 func TestIsPostgresUniqueViolationFindsWrappedConstraint(t *testing.T) {
 	err := fmt.Errorf("insert user: %w", &pgconn.PgError{Code: "23505"})
-	if !isPostgresUniqueViolation(err) {
+	if !pgutil.IsUniqueViolation(err) {
 		t.Fatal("expected wrapped unique violation to be detected")
 	}
-	if isPostgresUniqueViolation(errors.New("connection failed")) {
+	if pgutil.IsUniqueViolation(errors.New("connection failed")) {
 		t.Fatal("unexpected unique violation for unrelated error")
 	}
 }

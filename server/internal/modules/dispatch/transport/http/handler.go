@@ -14,7 +14,6 @@ import (
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
@@ -192,11 +191,9 @@ func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	sessionID, sessionErr := strconv.Atoi(chi.URLParam(r, "sessionID"))
-	offerID, offerErr := strconv.Atoi(chi.URLParam(r, "offerID"))
-	if sessionErr != nil || offerErr != nil ||
-		sessionID <= 0 || int64(sessionID) > math.MaxInt32 ||
-		offerID <= 0 || int64(offerID) > math.MaxInt32 {
+	sessionID, sessionOK := sharedrequest.ParsePositiveInt32Param(r, "sessionID")
+	offerID, offerOK := sharedrequest.ParsePositiveInt32Param(r, "offerID")
+	if !sessionOK || !offerOK {
 		response.Error(w, http.StatusBadRequest, "invalid bid id")
 		return
 	}
@@ -273,12 +270,7 @@ func (handler *Handler) CancelOffer(w http.ResponseWriter, r *http.Request) {
 }
 
 func sessionIDParam(w http.ResponseWriter, r *http.Request) (int, bool) {
-	id, err := strconv.Atoi(chi.URLParam(r, "sessionID"))
-	if err != nil || id <= 0 || int64(id) > math.MaxInt32 {
-		response.Error(w, http.StatusBadRequest, "invalid session id")
-		return 0, false
-	}
-	return id, true
+	return sharedrequest.PositiveIntParam(w, r, "sessionID", "invalid session id")
 }
 
 func dispatchErrorStatus(err error) int {

@@ -3,14 +3,13 @@ package postgres
 import (
 	"errors"
 	"fmt"
-	"math"
 	"time"
 
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -41,7 +40,7 @@ func fromPostgresBidSession(item databasepostgres.BidSession) (dispatchdomain.Bi
 		DropoffLatitude:   item.DropoffLatitude,
 		DropoffLongitude:  item.DropoffLongitude,
 		DropoffName:       item.DropoffName,
-		PassengerNote:     bidTextValue(item.PassengerNote),
+		PassengerNote:     pgutil.TextValue(item.PassengerNote),
 		DistanceKm:        item.DistanceKm,
 		DurationMinutes:   item.DurationMinutes,
 		OfferedFareAmount: item.OfferedFare,
@@ -61,9 +60,9 @@ func fromPostgresBidOffer(item databasepostgres.BidOffer) (dispatchdomain.BidOff
 		ID:                 int64(item.ID),
 		SessionID:          int(item.SessionID),
 		DriverID:           int(item.DriverID),
-		DriverName:         bidTextValue(item.DriverName),
-		PlateNumber:        bidTextValue(item.PlateNumber),
-		VehicleType:        bidTextValue(item.VehicleType),
+		DriverName:         pgutil.TextValue(item.DriverName),
+		PlateNumber:        pgutil.TextValue(item.PlateNumber),
+		VehicleType:        pgutil.TextValue(item.VehicleType),
 		ProposedFareAmount: item.ProposedFare,
 		Status:             item.Status,
 		CreatedAt:          item.CreatedAt.Time,
@@ -141,15 +140,15 @@ func fromPostgresRideProjection(
 
 		PickupLatitude:             dispatchFloatValue(item.PickupLatitude),
 		PickupLongitude:            dispatchFloatValue(item.PickupLongitude),
-		PickupName:                 dispatchTextValue(item.PickupName),
+		PickupName:                 pgutil.TextValue(item.PickupName),
 		DropoffLatitude:            dispatchFloatValue(item.DropoffLatitude),
 		DropoffLongitude:           dispatchFloatValue(item.DropoffLongitude),
-		DropoffName:                dispatchTextValue(item.DropoffName),
+		DropoffName:                pgutil.TextValue(item.DropoffName),
 		DistanceKm:                 dispatchFloatValue(item.DistanceKm),
 		DurationMinutes:            dispatchFloatValue(item.DurationMinutes),
-		DriverName:                 dispatchTextValue(item.DriverName),
-		VehicleType:                dispatchTextValue(item.VehicleType),
-		PlateNumber:                dispatchTextValue(item.PlateNumber),
+		DriverName:                 pgutil.TextValue(item.DriverName),
+		VehicleType:                pgutil.TextValue(item.VehicleType),
+		PlateNumber:                pgutil.TextValue(item.PlateNumber),
 		DriverRating:               dispatchFloatValue(item.DriverRating),
 		CreatedAt:                  dispatchTimestamp(item.CreatedAt),
 		CompletedAt:                dispatchTimestamp(item.CompletedAt),
@@ -179,34 +178,12 @@ func fromPostgresRideProjection(
 	return ride, nil
 }
 
-func bidTimestamp(value time.Time) pgtype.Timestamptz {
-	return pgtype.Timestamptz{Time: value, Valid: true}
-}
-
-func toPostgresBidText(value string) pgtype.Text {
-	return pgtype.Text{String: value, Valid: true}
-}
-
-func bidTextValue(value pgtype.Text) string {
-	if !value.Valid {
-		return ""
-	}
-	return value.String
-}
-
 func dispatchTimestamp(value pgtype.Timestamptz) *string {
 	if !value.Valid {
 		return nil
 	}
 	formatted := value.Time.UTC().Format(time.RFC3339)
 	return &formatted
-}
-
-func dispatchTextValue(value pgtype.Text) string {
-	if !value.Valid {
-		return ""
-	}
-	return value.String
 }
 
 func dispatchFloatValue(value pgtype.Float8) float64 {
@@ -224,18 +201,6 @@ func dispatchOptionalInt(value pgtype.Int4) *int {
 	return &result
 }
 
-func toPostgresRideID(value int, field string) (int32, error) {
-	if value <= 0 || int64(value) > math.MaxInt32 {
-		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
-	}
-	return int32(value), nil
-}
-
-func isPostgresUniqueViolation(err error) bool {
-	databaseError, ok := errors.AsType[*pgconn.PgError](err)
-	return ok && databaseError.Code == "23505"
-}
-
 func driverUnavailableError(operation string, err error, unavailable error) error {
 	if errors.Is(err, pgx.ErrNoRows) {
 		return unavailable
@@ -244,8 +209,8 @@ func driverUnavailableError(operation string, err error, unavailable error) erro
 }
 
 func acceptedRideConflictError(operation string, err error) error {
-	if databaseError, ok := errors.AsType[*pgconn.PgError](err); ok && databaseError.Code == "23505" {
-		switch databaseError.ConstraintName {
+	if constraint, ok := pgutil.UniqueConstraint(err); ok {
+		switch constraint {
 		case "ride_passenger_id", "rides_one_active_ride_per_passenger_idx":
 			return ridedomain.ErrActiveBooking
 		case "rides_one_active_ride_per_driver_idx":
@@ -264,8 +229,4 @@ func rideRating(value float64) pgtype.Float8 {
 		return pgtype.Float8{}
 	}
 	return pgtype.Float8{Float64: value, Valid: true}
-}
-
-func rideText(value string) pgtype.Text {
-	return pgtype.Text{String: value, Valid: true}
 }

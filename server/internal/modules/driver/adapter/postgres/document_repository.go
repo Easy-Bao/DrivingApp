@@ -9,6 +9,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -36,7 +37,7 @@ func (repository *DocumentRepository) Create(ctx context.Context, item domain.Do
 	if err := repository.validate(); err != nil {
 		return domain.Document{}, err
 	}
-	driverID, err := toPostgresDocumentID(item.DriverID, "driver id")
+	driverID, err := pgutil.ToPositiveInt32(item.DriverID, "driver id")
 	if err != nil {
 		return domain.Document{}, err
 	}
@@ -63,7 +64,7 @@ func (repository *DocumentRepository) Get(ctx context.Context, id int) (domain.D
 	if err := repository.validate(); err != nil {
 		return domain.Document{}, err
 	}
-	documentID, err := toPostgresDocumentID(id, "document id")
+	documentID, err := pgutil.ToPositiveInt32(id, "document id")
 	if err != nil {
 		return domain.Document{}, err
 	}
@@ -89,11 +90,11 @@ func (repository *DocumentRepository) ListByDriver(
 	if err := repository.validate(); err != nil {
 		return nil, err
 	}
-	dbDriverID, err := toPostgresDocumentID(driverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(driverID, "driver id")
 	if err != nil {
 		return nil, err
 	}
-	dbLimit, err := toPostgresDocumentPageValue(limit, "limit")
+	dbLimit, err := pgutil.ToNonNegativeInt32(limit, "limit")
 	if err != nil {
 		return nil, err
 	}
@@ -126,11 +127,11 @@ func (repository *DocumentRepository) ListForReview(
 	if limit == math.MaxInt {
 		return nil, errors.New("limit exceeds PostgreSQL integer range")
 	}
-	dbLimit, err := toPostgresDocumentPageValue(limit+1, "limit")
+	dbLimit, err := pgutil.ToNonNegativeInt32(limit+1, "limit")
 	if err != nil {
 		return nil, err
 	}
-	dbOffset, err := toPostgresDocumentPageValue(offset, "offset")
+	dbOffset, err := pgutil.ToNonNegativeInt32(offset, "offset")
 	if err != nil {
 		return nil, err
 	}
@@ -160,18 +161,18 @@ func (repository *DocumentRepository) Review(
 	if err := repository.validate(); err != nil {
 		return domain.Document{}, err
 	}
-	documentID, err := toPostgresDocumentID(id, "document id")
+	documentID, err := pgutil.ToPositiveInt32(id, "document id")
 	if err != nil {
 		return domain.Document{}, err
 	}
-	dbReviewerID, err := toPostgresDocumentID(reviewerID, "reviewer id")
+	dbReviewerID, err := pgutil.ToPositiveInt32(reviewerID, "reviewer id")
 	if err != nil {
 		return domain.Document{}, err
 	}
 	updated, err := repository.queries.ReviewDriverDocument(ctx, databasepostgres.ReviewDriverDocumentParams{
 		ID:         documentID,
 		Status:     string(status),
-		ReviewedAt: toPostgresDocumentTimestamp(time.Now().UTC()),
+		ReviewedAt: pgutil.ToTimestamptz(time.Now().UTC()),
 		ReviewedBy: pgtype.Int4{Int32: dbReviewerID, Valid: true},
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -244,22 +245,4 @@ func fromPostgresDocument(item databasepostgres.DriverDocument) (domain.Document
 		document.ReviewedBy = &reviewedBy
 	}
 	return document, nil
-}
-
-func toPostgresDocumentPageValue(value int, field string) (int32, error) {
-	if value < 0 || int64(value) > math.MaxInt32 {
-		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
-	}
-	return int32(value), nil
-}
-
-func toPostgresDocumentID(value int, field string) (int32, error) {
-	if value <= 0 || int64(value) > math.MaxInt32 {
-		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
-	}
-	return int32(value), nil
-}
-
-func toPostgresDocumentTimestamp(value time.Time) pgtype.Timestamptz {
-	return pgtype.Timestamptz{Time: value, Valid: true}
 }

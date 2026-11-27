@@ -10,6 +10,7 @@ import (
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -24,15 +25,15 @@ func (repository *Store) AcceptOffer(
 	if err := repository.validate(); err != nil {
 		return dispatchapp.OfferAcceptance{}, err
 	}
-	dbSessionID, err := toPostgresRideID(sessionID, "session id")
+	dbSessionID, err := pgutil.ToPositiveInt32(sessionID, "session id")
 	if err != nil {
 		return dispatchapp.OfferAcceptance{}, err
 	}
-	dbOfferID, err := toPostgresRideID(offerID, "offer id")
+	dbOfferID, err := pgutil.ToPositiveInt32(offerID, "offer id")
 	if err != nil {
 		return dispatchapp.OfferAcceptance{}, err
 	}
-	dbPassengerID, err := toPostgresRideID(passengerID, "passenger id")
+	dbPassengerID, err := pgutil.ToPositiveInt32(passengerID, "passenger id")
 	if err != nil {
 		return dispatchapp.OfferAcceptance{}, err
 	}
@@ -50,7 +51,7 @@ func (repository *Store) AcceptOffer(
 		ctx,
 		databasepostgres.LockActiveBidSessionForOfferParams{
 			ID:        dbSessionID,
-			ExpiresAt: bidTimestamp(time.Now().UTC()),
+			ExpiresAt: pgutil.ToTimestamptz(time.Now().UTC()),
 		},
 	)
 	if err != nil {
@@ -323,7 +324,7 @@ func createAcceptedRideAndSettlement(
 	if acceptedRide.DriverID == nil || acceptedRide.CommissionBPS == nil {
 		return databasepostgres.Ride{}, databasepostgres.RideSettlement{}, domain.ErrInvalidSettlement
 	}
-	dbAcceptedDriverID, err := toPostgresRideID(*acceptedRide.DriverID, "driver id")
+	dbAcceptedDriverID, err := pgutil.ToPositiveInt32(*acceptedRide.DriverID, "driver id")
 	if err != nil {
 		return databasepostgres.Ride{}, databasepostgres.RideSettlement{}, err
 	}
@@ -333,15 +334,15 @@ func createAcceptedRideAndSettlement(
 		FareAmount:       acceptedRide.FareAmount,
 		PickupLatitude:   rideFloat(acceptedRide.PickupLatitude),
 		PickupLongitude:  rideFloat(acceptedRide.PickupLongitude),
-		PickupName:       rideText(acceptedRide.PickupName),
+		PickupName:       pgutil.ToText(acceptedRide.PickupName),
 		DropoffLatitude:  rideFloat(acceptedRide.DropoffLatitude),
 		DropoffLongitude: rideFloat(acceptedRide.DropoffLongitude),
-		DropoffName:      rideText(acceptedRide.DropoffName),
+		DropoffName:      pgutil.ToText(acceptedRide.DropoffName),
 		DistanceKm:       rideFloat(acceptedRide.DistanceKm),
 		DurationMinutes:  rideFloat(acceptedRide.DurationMinutes),
-		DriverName:       rideText(acceptedRide.DriverName),
-		VehicleType:      rideText(acceptedRide.VehicleType),
-		PlateNumber:      rideText(acceptedRide.PlateNumber),
+		DriverName:       pgutil.ToText(acceptedRide.DriverName),
+		VehicleType:      pgutil.ToText(acceptedRide.VehicleType),
+		PlateNumber:      pgutil.ToText(acceptedRide.PlateNumber),
 		DriverRating:     rideRating(acceptedRide.DriverRating),
 		BidSessionID:     pgtype.Int4{Int32: session.ID, Valid: true},
 	})

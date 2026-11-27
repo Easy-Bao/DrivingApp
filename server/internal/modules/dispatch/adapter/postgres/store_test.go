@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -31,7 +32,7 @@ func TestAcceptedRideProjectionPreservesRideAndSettlementSnapshot(t *testing.T) 
 			DropoffLatitude:  pgtype.Float8{Float64: 14.6, Valid: true},
 			DropoffLongitude: pgtype.Float8{Float64: 121.1, Valid: true},
 			DropoffName:      pgtype.Text{String: "Destination", Valid: true},
-			CreatedAt:        bidTimestamp(createdAt),
+			CreatedAt:        pgutil.ToTimestamptz(createdAt),
 		},
 		databasepostgres.RideSettlement{
 			CommissionBps:      pgtype.Int4{Int32: commissionBPS, Valid: true},

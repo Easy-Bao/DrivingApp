@@ -9,6 +9,7 @@ import (
 
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -25,7 +26,7 @@ func (repository *RideRepository) Counterparty(ctx context.Context, rideID, acto
 	if err != nil {
 		return domain.Counterparty{}, fmt.Errorf("resolve ride counterparty: %w", err)
 	}
-	dbTargetID, err := toPostgresRideID(targetID, "counterparty id")
+	dbTargetID, err := pgutil.ToPositiveInt32(targetID, "counterparty id")
 	if err != nil {
 		return domain.Counterparty{}, fmt.Errorf("convert counterparty id: %w", err)
 	}
@@ -37,7 +38,7 @@ func (repository *RideRepository) Counterparty(ctx context.Context, rideID, acto
 		RideID:     ride.ID,
 		UserID:     targetID,
 		Role:       targetRole,
-		Name:       rideTextValue(account.Name),
+		Name:       pgutil.TextValue(account.Name),
 		RideStatus: ride.Status,
 	}
 	result.ContactAllowed, result.ContactAllowedUntil = rideContactAvailabilityFromRide(ride)

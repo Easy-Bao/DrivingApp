@@ -7,6 +7,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -26,7 +27,7 @@ func (repository *RideRepository) CreateRide(ctx context.Context, value domain.R
 	if !ok || normalizedStatus != domain.RideRequested {
 		return domain.Ride{}, domain.ErrInvalidTrip
 	}
-	passengerID, err := toPostgresRideID(value.PassengerID, "passenger id")
+	passengerID, err := pgutil.ToPositiveInt32(value.PassengerID, "passenger id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -44,7 +45,7 @@ func (repository *RideRepository) CreateRide(ctx context.Context, value domain.R
 	if _, err := transactionQueries.LockUserForBidSession(ctx, passengerID); err != nil {
 		return domain.Ride{}, fmt.Errorf("lock passenger for ride creation: %w", err)
 	}
-	now := pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}
+	now := pgutil.ToTimestamptz(time.Now().UTC())
 	if err := transactionQueries.ExpireBidSessions(ctx, databasepostgres.ExpireBidSessionsParams{
 		PassengerID: passengerID,
 		ExpiresAt:   now,
@@ -76,10 +77,10 @@ func (repository *RideRepository) CreateRide(ctx context.Context, value domain.R
 
 		PickupLatitude:   rideFloat(value.PickupLatitude),
 		PickupLongitude:  rideFloat(value.PickupLongitude),
-		PickupName:       rideText(value.PickupName),
+		PickupName:       pgutil.ToText(value.PickupName),
 		DropoffLatitude:  rideFloat(value.DropoffLatitude),
 		DropoffLongitude: rideFloat(value.DropoffLongitude),
-		DropoffName:      rideText(value.DropoffName),
+		DropoffName:      pgutil.ToText(value.DropoffName),
 		DistanceKm:       rideFloat(value.DistanceKm),
 		DurationMinutes:  rideFloat(value.DurationMinutes),
 	})
@@ -105,8 +106,4 @@ func rideRating(value float64) pgtype.Float8 {
 		return pgtype.Float8{}
 	}
 	return pgtype.Float8{Float64: value, Valid: true}
-}
-
-func rideText(value string) pgtype.Text {
-	return pgtype.Text{String: value, Valid: true}
 }

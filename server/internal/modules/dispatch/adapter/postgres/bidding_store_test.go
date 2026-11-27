@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -18,8 +19,8 @@ func TestFromPostgresBidSessionMapsNullableIdentityFields(t *testing.T) {
 
 		PassengerNote:  pgtype.Text{String: "Call on arrival", Valid: true},
 		TargetDriverID: pgtype.Int4{Int32: 11, Valid: true},
-		ExpiresAt:      bidTimestamp(time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)),
-		CreatedAt:      bidTimestamp(time.Date(2026, time.January, 2, 3, 0, 0, 0, time.UTC)),
+		ExpiresAt:      pgutil.ToTimestamptz(time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)),
+		CreatedAt:      pgutil.ToTimestamptz(time.Date(2026, time.January, 2, 3, 0, 0, 0, time.UTC)),
 	}
 
 	session, err := fromPostgresBidSession(item)
@@ -43,7 +44,7 @@ func TestFromPostgresBidOfferMapsDriverSnapshot(t *testing.T) {
 		VehicleType:  pgtype.Text{String: "sedan", Valid: true},
 		ProposedFare: 3200,
 		Status:       "pending",
-		CreatedAt:    bidTimestamp(time.Now()),
+		CreatedAt:    pgutil.ToTimestamptz(time.Now()),
 	})
 	if err != nil {
 		t.Fatalf("fromPostgresBidOffer() error = %v", err)
@@ -63,7 +64,7 @@ func TestFromPostgresBiddingRowsRejectMissingTimestamps(t *testing.T) {
 }
 
 func TestMapBidOfferWithdrawalsUsesUpdatedOfferStatus(t *testing.T) {
-	createdAt := bidTimestamp(time.Date(2026, time.January, 2, 3, 0, 0, 0, time.UTC))
+	createdAt := pgutil.ToTimestamptz(time.Date(2026, time.January, 2, 3, 0, 0, 0, time.UTC))
 	withdrawals, err := mapBidOfferWithdrawals([]databasepostgres.RejectDriverPendingBidOffersRow{{
 		OfferID:           9,
 		OfferSessionID:    21,

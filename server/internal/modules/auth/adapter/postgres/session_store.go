@@ -9,6 +9,7 @@ import (
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -38,14 +39,14 @@ func (repository *RefreshSessionRepository) Create(ctx context.Context, session 
 	if err := repository.validate(); err != nil {
 		return fmt.Errorf("validate refresh session repository: %w", err)
 	}
-	userID, err := toPostgresUserID(session.UserID)
+	userID, err := pgutil.ToInt32(session.UserID, "user id")
 	if err != nil {
 		return fmt.Errorf("convert refresh session user id: %w", err)
 	}
 	if err := repository.queries.CreateRefreshSession(ctx, databasepostgres.CreateRefreshSessionParams{
 		UserID:    userID,
 		TokenHash: session.TokenHash,
-		ExpiresAt: toPostgresTimestamp(session.ExpiresAt),
+		ExpiresAt: pgutil.ToTimestamptz(session.ExpiresAt),
 	}); err != nil {
 		return fmt.Errorf("create refresh session: %w", err)
 	}
@@ -62,7 +63,7 @@ func (repository *RefreshSessionRepository) FindActive(
 	}
 	row, err := repository.queries.GetActiveRefreshSession(ctx, databasepostgres.GetActiveRefreshSessionParams{
 		TokenHash: tokenHash,
-		Now:       toPostgresTimestamp(now),
+		Now:       pgutil.ToTimestamptz(now),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.RefreshSession{}, domain.ErrInvalidRefreshToken
@@ -86,7 +87,7 @@ func (repository *RefreshSessionRepository) Rotate(
 	if err := repository.validate(); err != nil {
 		return fmt.Errorf("validate refresh session repository: %w", err)
 	}
-	replacementUserID, err := toPostgresUserID(replacement.UserID)
+	replacementUserID, err := pgutil.ToInt32(replacement.UserID, "user id")
 	if err != nil {
 		return fmt.Errorf("convert replacement refresh session user id: %w", err)
 	}
@@ -104,7 +105,7 @@ func (repository *RefreshSessionRepository) Rotate(
 		ctx,
 		databasepostgres.GetActiveRefreshSessionForUpdateParams{
 			TokenHash: tokenHash,
-			Now:       toPostgresTimestamp(now),
+			Now:       pgutil.ToTimestamptz(now),
 		},
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -119,7 +120,7 @@ func (repository *RefreshSessionRepository) Rotate(
 
 	rows, err := transactionQueries.RevokeRefreshSessionByID(ctx, databasepostgres.RevokeRefreshSessionByIDParams{
 		ID:        current.ID,
-		RevokedAt: toPostgresTimestamp(now),
+		RevokedAt: pgutil.ToTimestamptz(now),
 	})
 	if err != nil {
 		return fmt.Errorf("revoke refresh session during rotation: %w", err)
@@ -131,7 +132,7 @@ func (repository *RefreshSessionRepository) Rotate(
 	if err := transactionQueries.CreateRefreshSession(ctx, databasepostgres.CreateRefreshSessionParams{
 		UserID:    replacementUserID,
 		TokenHash: replacement.TokenHash,
-		ExpiresAt: toPostgresTimestamp(replacement.ExpiresAt),
+		ExpiresAt: pgutil.ToTimestamptz(replacement.ExpiresAt),
 	}); err != nil {
 		return fmt.Errorf("create replacement refresh session: %w", err)
 	}
@@ -147,7 +148,7 @@ func (repository *RefreshSessionRepository) Revoke(ctx context.Context, tokenHas
 	}
 	if err := repository.queries.RevokeRefreshSession(ctx, databasepostgres.RevokeRefreshSessionParams{
 		TokenHash: tokenHash,
-		RevokedAt: toPostgresTimestamp(now),
+		RevokedAt: pgutil.ToTimestamptz(now),
 	}); err != nil {
 		return fmt.Errorf("revoke refresh session: %w", err)
 	}
@@ -158,13 +159,13 @@ func (repository *RefreshSessionRepository) RevokeAll(ctx context.Context, userI
 	if err := repository.validate(); err != nil {
 		return fmt.Errorf("validate refresh session repository: %w", err)
 	}
-	dbUserID, err := toPostgresUserID(userID)
+	dbUserID, err := pgutil.ToInt32(userID, "user id")
 	if err != nil {
 		return fmt.Errorf("convert refresh session user id: %w", err)
 	}
 	if err := repository.queries.RevokeUserRefreshSessions(ctx, databasepostgres.RevokeUserRefreshSessionsParams{
 		UserID:    dbUserID,
-		RevokedAt: toPostgresTimestamp(now),
+		RevokedAt: pgutil.ToTimestamptz(now),
 	}); err != nil {
 		return fmt.Errorf("revoke user refresh sessions: %w", err)
 	}
@@ -189,8 +190,8 @@ func (repository *RefreshSessionRepository) PruneExpired(
 	var total int64
 	for range 10 {
 		deleted, err := repository.queries.DeleteExpiredRefreshSessions(ctx, databasepostgres.DeleteExpiredRefreshSessionsParams{
-			Now:           toPostgresTimestamp(now.UTC()),
-			RevokedBefore: toPostgresTimestamp(revokedBefore.UTC()),
+			Now:           pgutil.ToTimestamptz(now.UTC()),
+			RevokedBefore: pgutil.ToTimestamptz(revokedBefore.UTC()),
 			Limit:         int32(batchSize),
 		})
 		if err != nil {
@@ -227,8 +228,4 @@ func fromPostgresRefreshSession(
 		TokenHash: tokenHash,
 		ExpiresAt: expiresAt.Time,
 	}, nil
-}
-
-func toPostgresTimestamp(value time.Time) pgtype.Timestamptz {
-	return pgtype.Timestamptz{Time: value, Valid: true}
 }

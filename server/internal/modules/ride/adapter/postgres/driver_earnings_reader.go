@@ -7,6 +7,7 @@ import (
 
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -21,14 +22,14 @@ func (repository *RideRepository) DriverEarnings(
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return nil, err
 	}
-	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(driverID, "driver id")
 	if err != nil {
 		return nil, err
 	}
 	items, err := repository.queries.ListDriverEarnings(ctx, databasepostgres.ListDriverEarningsParams{
 		DriverID:   pgtype.Int4{Int32: dbDriverID, Valid: true},
-		MonthStart: postgresTimestamp(monthStart.UTC()),
-		MonthEnd:   postgresTimestamp(monthEnd.UTC()),
+		MonthStart: pgutil.ToTimestamptz(monthStart.UTC()),
+		MonthEnd:   pgutil.ToTimestamptz(monthEnd.UTC()),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list driver earnings: %w", err)

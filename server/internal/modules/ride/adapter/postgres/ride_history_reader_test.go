@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -72,10 +73,10 @@ func TestFromPostgresPassengerRidePreservesRideSnapshot(t *testing.T) {
 }
 
 func TestToPostgresPaginationValueRejectsNegativeValues(t *testing.T) {
-	if _, err := toPostgresPaginationValue(-1, "offset"); err == nil {
+	if _, err := pgutil.ToNonNegativeInt32(-1, "offset"); err == nil {
 		t.Fatal("expected negative pagination value to be rejected")
 	}
-	if value, err := toPostgresPaginationValue(25, "limit"); err != nil || value != 25 {
-		t.Fatalf("toPostgresPaginationValue(25) = %d, %v", value, err)
+	if value, err := pgutil.ToNonNegativeInt32(25, "limit"); err != nil || value != 25 {
+		t.Fatalf("pgutil.ToNonNegativeInt32(25) = %d, %v", value, err)
 	}
 }

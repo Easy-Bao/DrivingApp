@@ -3,6 +3,7 @@ package postgres
 import (
 	"testing"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 )
 
@@ -27,10 +28,10 @@ func TestOnlineDriverMappingPreservesAvailabilityDetails(t *testing.T) {
 }
 
 func TestToPostgresDriverIDsRejectsInvalidIDs(t *testing.T) {
-	if ids, err := toPostgresDriverIDs([]int{7, 11}); err != nil || len(ids) != 2 || ids[1] != 11 {
-		t.Fatalf("toPostgresDriverIDs() = %v, %v", ids, err)
+	if ids, err := pgutil.ToPositiveInt32s([]int{7, 11}, "driver id"); err != nil || len(ids) != 2 || ids[1] != 11 {
+		t.Fatalf("pgutil.ToPositiveInt32s() = %v, %v", ids, err)
 	}
-	if _, err := toPostgresDriverIDs([]int{7, 0}); err == nil {
+	if _, err := pgutil.ToPositiveInt32s([]int{7, 0}, "driver id"); err == nil {
 		t.Fatal("expected invalid driver id to be rejected")
 	}
 }

@@ -10,6 +10,7 @@ import (
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -24,11 +25,11 @@ func (repository *RideRepository) SettleCash(
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
 	}
-	dbRideID, err := toPostgresRideID(request.RideID, "ride id")
+	dbRideID, err := pgutil.ToPositiveInt32(request.RideID, "ride id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	dbDriverID, err := toPostgresRideID(request.DriverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(request.DriverID, "driver id")
 	if err != nil {
 		return domain.Ride{}, err
 	}

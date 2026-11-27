@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -59,7 +60,7 @@ func (store *Store) onlinePresenceCutoff() pgtype.Timestamptz {
 	if maxAge <= 0 {
 		maxAge = _defaultOnlinePresenceMaxAge
 	}
-	return bidTimestamp(time.Now().UTC().Add(-maxAge))
+	return pgutil.ToTimestamptz(time.Now().UTC().Add(-maxAge))
 }
 
 func (store *Store) validate() error {

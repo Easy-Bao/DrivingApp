@@ -2,7 +2,6 @@ package http
 
 import (
 	"errors"
-	"math"
 	"net/http"
 	"strconv"
 
@@ -12,7 +11,6 @@ import (
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
@@ -35,7 +33,7 @@ func (handler *Handler) DriverReviews(writer http.ResponseWriter, request *http.
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	driverID, ok := positivePathID(writer, request, "invalid driver id")
+	driverID, ok := sharedrequest.PositiveIntParam(writer, request, "id", "invalid driver id")
 	if !ok {
 		return
 	}
@@ -80,7 +78,7 @@ func (handler *Handler) PassengerDriverReviewForRide(writer http.ResponseWriter,
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	rideID, ok := positivePathID(writer, request, "invalid ride id")
+	rideID, ok := sharedrequest.PositiveIntParam(writer, request, "id", "invalid ride id")
 	if !ok {
 		return
 	}
@@ -107,7 +105,7 @@ func (handler *Handler) CreateReview(writer http.ResponseWriter, request *http.R
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	driverID, ok := positivePathID(writer, request, "invalid driver id")
+	driverID, ok := sharedrequest.PositiveIntParam(writer, request, "id", "invalid driver id")
 	if !ok {
 		return
 	}
@@ -136,7 +134,7 @@ func (handler *Handler) CreatePassengerReview(writer http.ResponseWriter, reques
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	passengerID, ok := positivePathID(writer, request, "invalid passenger id")
+	passengerID, ok := sharedrequest.PositiveIntParam(writer, request, "id", "invalid passenger id")
 	if !ok {
 		return
 	}
@@ -157,15 +155,6 @@ func (handler *Handler) CreatePassengerReview(writer http.ResponseWriter, reques
 		return
 	}
 	response.JSON(writer, http.StatusCreated, NewPassengerReviewResponse(item))
-}
-
-func positivePathID(writer http.ResponseWriter, request *http.Request, message string) (int, bool) {
-	id, err := strconv.Atoi(chi.URLParam(request, "id"))
-	if err != nil || id <= 0 || int64(id) > math.MaxInt32 {
-		response.Error(writer, http.StatusBadRequest, message)
-		return 0, false
-	}
-	return id, true
 }
 
 func reviewErrorStatus(err error) int {

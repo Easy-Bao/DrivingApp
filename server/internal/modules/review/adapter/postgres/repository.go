@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"time"
 
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/review/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -47,7 +47,7 @@ func (repository *ReviewRepository) ReviewableRide(
 	if err := repository.validate(); err != nil {
 		return domain.ReviewableRide{}, err
 	}
-	dbRideID, err := toPostgresID(rideID, "ride id")
+	dbRideID, err := pgutil.ToPositiveInt32(rideID, "ride id")
 	if err != nil {
 		return domain.ReviewableRide{}, domain.ErrReviewNotAllowed
 	}
@@ -78,15 +78,15 @@ func (repository *ReviewRepository) DriverReviews(
 	if err := repository.validate(); err != nil {
 		return nil, err
 	}
-	dbDriverID, err := toPostgresID(driverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(driverID, "driver id")
 	if err != nil {
 		return nil, err
 	}
-	dbLimit, err := toPostgresPaginationValue(query.Limit, "limit")
+	dbLimit, err := pgutil.ToNonNegativeInt32(query.Limit, "limit")
 	if err != nil {
 		return nil, err
 	}
-	dbOffset, err := toPostgresPaginationValue(query.Offset, "offset")
+	dbOffset, err := pgutil.ToNonNegativeInt32(query.Offset, "offset")
 	if err != nil {
 		return nil, err
 	}
@@ -118,11 +118,11 @@ func (repository *ReviewRepository) DriverReviewForRide(
 	if err := repository.validate(); err != nil {
 		return domain.Review{}, err
 	}
-	dbRideID, err := toPostgresID(rideID, "ride id")
+	dbRideID, err := pgutil.ToPositiveInt32(rideID, "ride id")
 	if err != nil {
 		return domain.Review{}, domain.ErrReviewNotFound
 	}
-	dbPassengerID, err := toPostgresID(passengerID, "passenger id")
+	dbPassengerID, err := pgutil.ToPositiveInt32(passengerID, "passenger id")
 	if err != nil {
 		return domain.Review{}, domain.ErrReviewNotFound
 	}
@@ -150,15 +150,15 @@ func (repository *ReviewRepository) CreateReview(
 	if err := repository.validate(); err != nil {
 		return domain.Review{}, err
 	}
-	rideID, err := toPostgresID(value.RideID, "ride id")
+	rideID, err := pgutil.ToPositiveInt32(value.RideID, "ride id")
 	if err != nil {
 		return domain.Review{}, domain.ErrReviewNotAllowed
 	}
-	driverID, err := toPostgresID(value.DriverID, "driver id")
+	driverID, err := pgutil.ToPositiveInt32(value.DriverID, "driver id")
 	if err != nil {
 		return domain.Review{}, domain.ErrReviewNotAllowed
 	}
-	passengerID, err := toPostgresID(value.PassengerID, "passenger id")
+	passengerID, err := pgutil.ToPositiveInt32(value.PassengerID, "passenger id")
 	if err != nil {
 		return domain.Review{}, domain.ErrReviewNotAllowed
 	}
@@ -181,9 +181,9 @@ func (repository *ReviewRepository) CreateReview(
 		RideID:        queryRideID,
 		DriverID:      driverID,
 		PassengerID:   passengerID,
-		PassengerName: reviewText(value.PassengerName),
+		PassengerName: pgutil.ToNonEmptyText(value.PassengerName),
 		Rating:        value.Rating,
-		Comment:       reviewText(value.Comment),
+		Comment:       pgutil.ToNonEmptyText(value.Comment),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return repository.existingDriverReview(ctx, rideID)
@@ -211,15 +211,15 @@ func (repository *ReviewRepository) CreatePassengerReview(
 	if err := repository.validate(); err != nil {
 		return domain.PassengerReview{}, err
 	}
-	rideID, err := toPostgresID(value.RideID, "ride id")
+	rideID, err := pgutil.ToPositiveInt32(value.RideID, "ride id")
 	if err != nil {
 		return domain.PassengerReview{}, domain.ErrReviewNotAllowed
 	}
-	driverID, err := toPostgresID(value.DriverID, "driver id")
+	driverID, err := pgutil.ToPositiveInt32(value.DriverID, "driver id")
 	if err != nil {
 		return domain.PassengerReview{}, domain.ErrReviewNotAllowed
 	}
-	passengerID, err := toPostgresID(value.PassengerID, "passenger id")
+	passengerID, err := pgutil.ToPositiveInt32(value.PassengerID, "passenger id")
 	if err != nil {
 		return domain.PassengerReview{}, domain.ErrReviewNotAllowed
 	}
@@ -228,7 +228,7 @@ func (repository *ReviewRepository) CreatePassengerReview(
 		DriverID:    driverID,
 		PassengerID: passengerID,
 		Rating:      value.Rating,
-		Comment:     reviewText(value.Comment),
+		Comment:     pgutil.ToNonEmptyText(value.Comment),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return repository.existingPassengerReview(ctx, rideID)
@@ -284,7 +284,7 @@ func fromPostgresReview(item databasepostgres.ListDriverReviewsRow) (domain.Revi
 		PassengerID:   int(item.PassengerID),
 		PassengerName: item.PassengerName,
 		Rating:        item.Rating,
-		Comment:       textValue(item.Comment),
+		Comment:       pgutil.TextValue(item.Comment),
 		CreatedAt:     item.CreatedAt.Time.UTC().Format(time.RFC3339Nano),
 	}, nil
 }
@@ -298,9 +298,9 @@ func fromPostgresCreatedReview(item databasepostgres.Review) (domain.Review, err
 		RideID:        optionalID(item.RideID),
 		DriverID:      int(item.DriverID),
 		PassengerID:   int(item.PassengerID),
-		PassengerName: textValue(item.PassengerName),
+		PassengerName: pgutil.TextValue(item.PassengerName),
 		Rating:        item.Rating,
-		Comment:       textValue(item.Comment),
+		Comment:       pgutil.TextValue(item.Comment),
 		CreatedAt:     item.CreatedAt.Time.UTC().Format(time.RFC3339Nano),
 	}, nil
 }
@@ -315,23 +315,9 @@ func fromPostgresPassengerReview(item databasepostgres.PassengerReview) (domain.
 		DriverID:    int(item.DriverID),
 		PassengerID: int(item.PassengerID),
 		Rating:      item.Rating,
-		Comment:     textValue(item.Comment),
+		Comment:     pgutil.TextValue(item.Comment),
 		CreatedAt:   item.CreatedAt.Time.UTC().Format(time.RFC3339Nano),
 	}, nil
-}
-
-func toPostgresID(value int, field string) (int32, error) {
-	if value <= 0 || int64(value) > math.MaxInt32 {
-		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
-	}
-	return int32(value), nil
-}
-
-func toPostgresPaginationValue(value int, field string) (int32, error) {
-	if value < 0 || int64(value) > math.MaxInt32 {
-		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
-	}
-	return int32(value), nil
 }
 
 func optionalID(value pgtype.Int4) int {
@@ -339,18 +325,4 @@ func optionalID(value pgtype.Int4) int {
 		return 0
 	}
 	return int(value.Int32)
-}
-
-func reviewText(value string) pgtype.Text {
-	if value == "" {
-		return pgtype.Text{}
-	}
-	return pgtype.Text{String: value, Valid: true}
-}
-
-func textValue(value pgtype.Text) string {
-	if !value.Valid {
-		return ""
-	}
-	return value.String
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
 	"github.com/jackc/pgx/v5"
@@ -72,7 +73,7 @@ func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domai
 	if err := repository.validate(); err != nil {
 		return domain.Profile{}, fmt.Errorf("validate profile repository: %w", err)
 	}
-	dbUserID, err := toPostgresProfileID(userID, "user id")
+	dbUserID, err := pgutil.ToPositiveInt32(userID, "user id")
 	if err != nil {
 		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
 	}
@@ -119,7 +120,7 @@ func (repository *ProfileRepository) IsDriverOnline(
 	if err := repository.validate(); err != nil {
 		return false, fmt.Errorf("validate profile repository: %w", err)
 	}
-	dbUserID, err := toPostgresProfileID(userID, "user id")
+	dbUserID, err := pgutil.ToPositiveInt32(userID, "user id")
 	if err != nil {
 		return false, fmt.Errorf("convert driver user id: %w", err)
 	}
@@ -155,11 +156,11 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 	if profile.Role != "driver" && profile.Role != "passenger" {
 		return domain.Profile{}, fmt.Errorf("%w: unsupported profile role %q", domain.ErrInvalidRole, profile.Role)
 	}
-	dbUserID, err := toPostgresProfileID(profile.UserID, "user id")
+	dbUserID, err := pgutil.ToPositiveInt32(profile.UserID, "user id")
 	if err != nil {
 		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
 	}
-	dbProfileID, err := toPostgresProfileID(profile.ID, "profile id")
+	dbProfileID, err := pgutil.ToPositiveInt32(profile.ID, "profile id")
 	if err != nil {
 		return domain.Profile{}, fmt.Errorf("convert profile id: %w", err)
 	}
@@ -175,7 +176,7 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 	transactionQueries := repository.queries.WithTx(transaction)
 	account, err := transactionQueries.UpdateUserProfile(ctx, databasepostgres.UpdateUserProfileParams{
 		ID:   dbUserID,
-		Name: toPostgresProfileText(profile.Name),
+		Name: pgutil.ToText(profile.Name),
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -226,7 +227,7 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 				ID:      dbProfileID,
 				UserID:  dbUserID,
 				Name:    profile.Name,
-				Address: toPostgresProfileText(profile.Address),
+				Address: pgutil.ToText(profile.Address),
 				Gender:  profile.Gender,
 			},
 		)
@@ -253,7 +254,7 @@ func (repository *ProfileRepository) Patch(
 	if err := repository.validate(); err != nil {
 		return domain.Profile{}, fmt.Errorf("validate profile repository: %w", err)
 	}
-	dbUserID, err := toPostgresProfileID(userID, "user id")
+	dbUserID, err := pgutil.ToPositiveInt32(userID, "user id")
 	if err != nil {
 		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
 	}
@@ -310,7 +311,7 @@ func (repository *ProfileRepository) Patch(
 		}
 		updatedAccount, userErr := transactionQueries.UpdateUserProfile(ctx, databasepostgres.UpdateUserProfileParams{
 			ID:   dbUserID,
-			Name: toPostgresProfileText(name),
+			Name: pgutil.ToText(name),
 		})
 		if userErr != nil {
 			if errors.Is(userErr, pgx.ErrNoRows) {
@@ -344,7 +345,7 @@ func (repository *ProfileRepository) Patch(
 		if patch.Name != nil {
 			name = *patch.Name
 		}
-		address := profileTextValue(currentPassenger.Address)
+		address := pgutil.TextValue(currentPassenger.Address)
 		if patch.Address != nil {
 			address = *patch.Address
 		}
@@ -354,7 +355,7 @@ func (repository *ProfileRepository) Patch(
 		}
 		updatedAccount, userErr := transactionQueries.UpdateUserProfile(ctx, databasepostgres.UpdateUserProfileParams{
 			ID:   dbUserID,
-			Name: toPostgresProfileText(name),
+			Name: pgutil.ToText(name),
 		})
 		if userErr != nil {
 			if errors.Is(userErr, pgx.ErrNoRows) {
@@ -368,7 +369,7 @@ func (repository *ProfileRepository) Patch(
 				ID:      currentPassenger.ID,
 				UserID:  dbUserID,
 				Name:    name,
-				Address: toPostgresProfileText(address),
+				Address: pgutil.ToText(address),
 				Gender:  gender,
 			},
 		)
@@ -398,11 +399,11 @@ func (repository *ProfileRepository) UpdateOnlineStatus(
 	if err := repository.validate(); err != nil {
 		return domain.Profile{}, fmt.Errorf("validate profile repository: %w", err)
 	}
-	dbUserID, err := toPostgresProfileID(userID, "user id")
+	dbUserID, err := pgutil.ToPositiveInt32(userID, "user id")
 	if err != nil {
 		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
 	}
-	dbTargetID, err := toPostgresProfileID(targetID, "target id")
+	dbTargetID, err := pgutil.ToPositiveInt32(targetID, "target id")
 	if err != nil {
 		return domain.Profile{}, fmt.Errorf("convert profile target id: %w", err)
 	}
@@ -481,7 +482,7 @@ func (repository *ProfileRepository) SaveAvatar(
 	if repository.avatarStorage == nil {
 		return domain.Profile{}, domain.ErrAvatarStorageUnavailable
 	}
-	dbUserID, err := toPostgresProfileID(userID, "user id")
+	dbUserID, err := pgutil.ToPositiveInt32(userID, "user id")
 	if err != nil {
 		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
 	}
@@ -526,8 +527,8 @@ func (repository *ProfileRepository) SaveAvatar(
 	updatedRows, err := transactionQueries.UpdatePassengerAvatar(ctx, databasepostgres.UpdatePassengerAvatarParams{
 		ID:                passengerProfile.ID,
 		UserID:            dbUserID,
-		AvatarStorageKey:  toPostgresProfileText(storageKey),
-		AvatarContentType: toPostgresProfileText(contentType),
+		AvatarStorageKey:  pgutil.ToText(storageKey),
+		AvatarContentType: pgutil.ToText(contentType),
 	})
 	if err != nil {
 		return domain.Profile{}, fmt.Errorf("update passenger avatar metadata: %w", err)
@@ -541,7 +542,7 @@ func (repository *ProfileRepository) SaveAvatar(
 	}
 	committed = true
 
-	oldStorageKey := strings.TrimSpace(profileTextValue(passengerProfile.AvatarStorageKey))
+	oldStorageKey := strings.TrimSpace(pgutil.TextValue(passengerProfile.AvatarStorageKey))
 	if oldStorageKey != "" && oldStorageKey != storageKey {
 		repository.cleanupAvatar(ctx, oldStorageKey)
 	}
@@ -563,7 +564,7 @@ func (repository *ProfileRepository) GetAvatar(ctx context.Context, userID int) 
 	if repository.avatarStorage == nil {
 		return domain.Avatar{}, domain.ErrAvatarStorageUnavailable
 	}
-	dbUserID, err := toPostgresProfileID(userID, "user id")
+	dbUserID, err := pgutil.ToPositiveInt32(userID, "user id")
 	if err != nil {
 		return domain.Avatar{}, fmt.Errorf("convert profile user id: %w", err)
 	}
@@ -575,7 +576,7 @@ func (repository *ProfileRepository) GetAvatar(ctx context.Context, userID int) 
 	if err != nil {
 		return domain.Avatar{}, fmt.Errorf("find passenger avatar profile: %w", err)
 	}
-	storageKey := strings.TrimSpace(profileTextValue(passengerProfile.AvatarStorageKey))
+	storageKey := strings.TrimSpace(pgutil.TextValue(passengerProfile.AvatarStorageKey))
 	if storageKey == "" {
 		return domain.Avatar{}, domain.ErrAvatarNotFound
 	}
@@ -591,7 +592,7 @@ func (repository *ProfileRepository) GetAvatar(ctx context.Context, userID int) 
 		)
 	}
 	contentType := http.DetectContentType(content)
-	storedContentType := strings.TrimSpace(profileTextValue(passengerProfile.AvatarContentType))
+	storedContentType := strings.TrimSpace(pgutil.TextValue(passengerProfile.AvatarContentType))
 	invalidContentType := contentType != "image/jpeg" && contentType != "image/png"
 	contentTypeMismatch := storedContentType != "" && storedContentType != contentType
 	if invalidContentType || contentTypeMismatch {
@@ -609,7 +610,7 @@ func (repository *ProfileRepository) Notifications(
 	if err := repository.validate(); err != nil {
 		return nil, fmt.Errorf("validate profile repository: %w", err)
 	}
-	dbUserID, err := toPostgresProfileID(userID, "user id")
+	dbUserID, err := pgutil.ToPositiveInt32(userID, "user id")
 	if err != nil {
 		return nil, fmt.Errorf("convert notification user id: %w", err)
 	}
@@ -619,11 +620,11 @@ func (repository *ProfileRepository) Notifications(
 	if limit == math.MaxInt {
 		return nil, errors.New("notification limit exceeds native integer range")
 	}
-	dbLimit, err := toPostgresProfilePageValue(limit+1, "limit")
+	dbLimit, err := pgutil.ToNonNegativeInt32(limit+1, "limit")
 	if err != nil {
 		return nil, fmt.Errorf("convert notification limit: %w", err)
 	}
-	dbOffset, err := toPostgresProfilePageValue(offset, "offset")
+	dbOffset, err := pgutil.ToNonNegativeInt32(offset, "offset")
 	if err != nil {
 		return nil, fmt.Errorf("convert notification offset: %w", err)
 	}
@@ -651,7 +652,7 @@ func (repository *ProfileRepository) MarkAllNotificationsRead(ctx context.Contex
 	if err := repository.validate(); err != nil {
 		return fmt.Errorf("validate profile repository: %w", err)
 	}
-	dbUserID, err := toPostgresProfileID(userID, "user id")
+	dbUserID, err := pgutil.ToPositiveInt32(userID, "user id")
 	if err != nil {
 		return fmt.Errorf("convert notification user id: %w", err)
 	}
@@ -669,11 +670,11 @@ func (repository *ProfileRepository) DeleteNotification(
 	if err := repository.validate(); err != nil {
 		return fmt.Errorf("validate profile repository: %w", err)
 	}
-	dbUserID, err := toPostgresProfileID(userID, "user id")
+	dbUserID, err := pgutil.ToPositiveInt32(userID, "user id")
 	if err != nil {
 		return fmt.Errorf("convert notification user id: %w", err)
 	}
-	dbNotificationID, err := toPostgresProfileID(notificationID, "notification id")
+	dbNotificationID, err := pgutil.ToPositiveInt32(notificationID, "notification id")
 	if err != nil {
 		return fmt.Errorf("convert notification id: %w", err)
 	}
@@ -773,9 +774,9 @@ func passengerProfileFromPostgres(
 		Name:      profile.Name,
 		Phone:     account.Phone,
 		Email:     account.Email,
-		Address:   profileTextValue(profile.Address),
+		Address:   pgutil.TextValue(profile.Address),
 		Gender:    profile.Gender,
-		AvatarURL: passengerAvatarURL(int(profile.UserID), profileTextValue(profile.AvatarStorageKey)),
+		AvatarURL: passengerAvatarURL(int(profile.UserID), pgutil.TextValue(profile.AvatarStorageKey)),
 	}
 }
 
@@ -799,29 +800,4 @@ func fromPostgresNotification(item databasepostgres.Notification) (domain.Notifi
 		IsRead:    item.IsRead,
 		CreatedAt: item.CreatedAt.Time.UTC().Format("2006-01-02T15:04:05Z07:00"),
 	}, nil
-}
-
-func toPostgresProfileID(value int, field string) (int32, error) {
-	if value <= 0 || int64(value) > math.MaxInt32 {
-		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
-	}
-	return int32(value), nil
-}
-
-func toPostgresProfilePageValue(value int, field string) (int32, error) {
-	if value < 0 || int64(value) > math.MaxInt32 {
-		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
-	}
-	return int32(value), nil
-}
-
-func toPostgresProfileText(value string) pgtype.Text {
-	return pgtype.Text{String: value, Valid: true}
-}
-
-func profileTextValue(value pgtype.Text) string {
-	if !value.Valid {
-		return ""
-	}
-	return value.String
 }

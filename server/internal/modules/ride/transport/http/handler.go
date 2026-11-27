@@ -2,7 +2,6 @@ package http
 
 import (
 	"errors"
-	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -253,9 +252,8 @@ func (handler *Handler) Counterparty(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil || rideID <= 0 || int64(rideID) > math.MaxInt32 {
-		response.Error(w, http.StatusBadRequest, "invalid ride id")
+	rideID, ok := sharedrequest.PositiveIntParam(w, r, "id", "invalid ride id")
+	if !ok {
 		return
 	}
 	result, err := handler.service.Counterparty(r.Context(), rideID, actorID)
@@ -413,9 +411,8 @@ func (handler *Handler) CreateSafetyReport(w http.ResponseWriter, r *http.Reques
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil || rideID <= 0 || int64(rideID) > math.MaxInt32 {
-		response.Error(w, http.StatusBadRequest, "invalid ride id")
+	rideID, ok := sharedrequest.PositiveIntParam(w, r, "id", "invalid ride id")
+	if !ok {
 		return
 	}
 	var input SafetyReportRequest
@@ -531,9 +528,8 @@ func (handler *Handler) driverRideCommand(w http.ResponseWriter, r *http.Request
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return 0, 0, false
 	}
-	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil || rideID <= 0 || int64(rideID) > math.MaxInt32 {
-		response.Error(w, http.StatusBadRequest, "invalid ride id")
+	rideID, ok := sharedrequest.PositiveIntParam(w, r, "id", "invalid ride id")
+	if !ok {
 		return 0, 0, false
 	}
 	return actorID, rideID, true

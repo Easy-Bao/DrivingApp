@@ -2,13 +2,12 @@ package redis
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	locationports "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
+	platformcache "github.com/Easy-Bao/DrivingApp/server/internal/platform/cache"
 	redisclient "github.com/redis/go-redis/v9"
 )
 
@@ -96,8 +95,8 @@ func NewCache(client *redisclient.Client) *Cache {
 }
 
 func (cache *Cache) GetPlaces(ctx context.Context, key string) ([]domain.Place, error) {
-	var records []placeCacheRecord
-	if err := cache.get(ctx, key, &records); err != nil {
+	records, err := getLocationCache[[]placeCacheRecord](ctx, cache, key)
+	if err != nil {
 		return nil, err
 	}
 	if records == nil {
@@ -122,8 +121,8 @@ func (cache *Cache) SetPlaces(ctx context.Context, key string, places []domain.P
 }
 
 func (cache *Cache) GetPlace(ctx context.Context, key string) (*domain.Place, error) {
-	var record *placeCacheRecord
-	if err := cache.get(ctx, key, &record); err != nil {
+	record, err := getLocationCache[*placeCacheRecord](ctx, cache, key)
+	if err != nil {
 		return nil, err
 	}
 	if record == nil {
@@ -142,8 +141,8 @@ func (cache *Cache) SetPlace(ctx context.Context, key string, place *domain.Plac
 }
 
 func (cache *Cache) GetMatrix(ctx context.Context, key string) (*domain.Matrix, error) {
-	var record *matrixCacheRecord
-	if err := cache.get(ctx, key, &record); err != nil {
+	record, err := getLocationCache[*matrixCacheRecord](ctx, cache, key)
+	if err != nil {
 		return nil, err
 	}
 	if record == nil {
@@ -163,38 +162,24 @@ func (cache *Cache) SetMatrix(ctx context.Context, key string, matrix *domain.Ma
 	return cache.set(ctx, key, newMatrixCacheRecord(matrix), ttl)
 }
 
-func (cache *Cache) get(ctx context.Context, key string, target any) error {
+func getLocationCache[T any](ctx context.Context, cache *Cache, key string) (T, error) {
+	var zero T
 	if cache == nil || cache.client == nil {
-		return errors.New("location cache is not configured")
+		return zero, errors.New("location cache is not configured")
 	}
-	payload, err := cache.client.Get(ctx, "location:"+key).Bytes()
-	if errors.Is(err, redisclient.Nil) {
-		return locationports.ErrCacheMiss
+	value, err := platformcache.GetJSON[T](ctx, cache.client, "location:"+key)
+	if errors.Is(err, platformcache.ErrCacheMiss) {
+		return zero, locationports.ErrCacheMiss
 	}
 	if err != nil {
-		return fmt.Errorf("get location cache entry: %w", err)
+		return zero, err
 	}
-	if err := json.Unmarshal(payload, target); err != nil {
-		return fmt.Errorf("decode location cache entry: %w", err)
-	}
-	return nil
+	return value, nil
 }
 
 func (cache *Cache) set(ctx context.Context, key string, value any, ttl time.Duration) error {
 	if cache == nil || cache.client == nil {
 		return errors.New("location cache is not configured")
 	}
-	payload, err := json.Marshal(value)
-	if err != nil {
-		return fmt.Errorf("marshal location cache entry: %w", err)
-	}
-	if err := cache.client.Set(
-		ctx,
-		"location:"+key,
-		payload,
-		ttl,
-	).Err(); err != nil {
-		return fmt.Errorf("store location cache entry: %w", err)
-	}
-	return nil
+	return platformcache.SetJSON(ctx, cache.client, "location:"+key, value, ttl)
 }

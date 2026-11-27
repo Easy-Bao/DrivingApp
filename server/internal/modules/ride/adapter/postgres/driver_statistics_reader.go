@@ -8,6 +8,7 @@ import (
 
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 )
 
@@ -21,13 +22,13 @@ func (repository *RideRepository) DriverStats(
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.DriverStats{}, err
 	}
-	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(driverID, "driver id")
 	if err != nil {
 		return domain.DriverStats{}, err
 	}
 	row, err := repository.queries.GetDriverStats(ctx, databasepostgres.GetDriverStatsParams{
-		DayStart: postgresTimestamp(dayStart.UTC()),
-		DayEnd:   postgresTimestamp(dayEnd.UTC()),
+		DayStart: pgutil.ToTimestamptz(dayStart.UTC()),
+		DayEnd:   pgutil.ToTimestamptz(dayEnd.UTC()),
 		DriverID: dbDriverID,
 	})
 	if err != nil {

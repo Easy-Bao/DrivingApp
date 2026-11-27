@@ -3,11 +3,11 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"math"
 	"strings"
 
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -25,15 +25,15 @@ func (repository *RideRepository) DriverTrips(
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return nil, err
 	}
-	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(driverID, "driver id")
 	if err != nil {
 		return nil, err
 	}
-	limit, err := toPostgresPaginationValue(history.Limit+1, "trip history limit")
+	limit, err := pgutil.ToNonNegativeInt32(history.Limit+1, "trip history limit")
 	if err != nil {
 		return nil, err
 	}
-	offset, err := toPostgresPaginationValue(history.Offset, "trip history offset")
+	offset, err := pgutil.ToNonNegativeInt32(history.Offset, "trip history offset")
 	if err != nil {
 		return nil, err
 	}
@@ -68,15 +68,15 @@ func (repository *RideRepository) PassengerRides(
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return nil, err
 	}
-	dbPassengerID, err := toPostgresRideID(passengerID, "passenger id")
+	dbPassengerID, err := pgutil.ToPositiveInt32(passengerID, "passenger id")
 	if err != nil {
 		return nil, err
 	}
-	limit, err := toPostgresPaginationValue(history.Limit+1, "trip history limit")
+	limit, err := pgutil.ToNonNegativeInt32(history.Limit+1, "trip history limit")
 	if err != nil {
 		return nil, err
 	}
-	offset, err := toPostgresPaginationValue(history.Offset, "trip history offset")
+	offset, err := pgutil.ToNonNegativeInt32(history.Offset, "trip history offset")
 	if err != nil {
 		return nil, err
 	}
@@ -109,11 +109,11 @@ func (repository *RideRepository) PassengerRecentRides(
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return nil, err
 	}
-	dbPassengerID, err := toPostgresRideID(passengerID, "passenger id")
+	dbPassengerID, err := pgutil.ToPositiveInt32(passengerID, "passenger id")
 	if err != nil {
 		return nil, err
 	}
-	dbLimit, err := toPostgresPaginationValue(limit, "recent rides limit")
+	dbLimit, err := pgutil.ToNonNegativeInt32(limit, "recent rides limit")
 	if err != nil {
 		return nil, err
 	}
@@ -218,11 +218,4 @@ func fromPostgresRideWithDriverProfile(
 		ride.PlateNumber = plateNumber
 	}
 	return ride, nil
-}
-
-func toPostgresPaginationValue(value int, field string) (int32, error) {
-	if value < 0 || int64(value) > math.MaxInt32 {
-		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
-	}
-	return int32(value), nil
 }

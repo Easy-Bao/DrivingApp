@@ -10,6 +10,7 @@ import (
 
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -70,11 +71,7 @@ func (repository *RideRepository) onlinePresenceCutoff() pgtype.Timestamptz {
 	if maxAge <= 0 {
 		maxAge = _defaultOnlinePresenceMaxAge
 	}
-	return postgresTimestamp(time.Now().UTC().Add(-maxAge))
-}
-
-func postgresTimestamp(value time.Time) pgtype.Timestamptz {
-	return pgtype.Timestamptz{Time: value, Valid: true}
+	return pgutil.ToTimestamptz(time.Now().UTC().Add(-maxAge))
 }
 
 func toPostgresWaitSeconds(duration time.Duration) (int32, error) {
@@ -89,7 +86,7 @@ func (repository *RideRepository) Get(ctx context.Context, rideID int) (domain.R
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
 	}
-	dbRideID, err := toPostgresRideID(rideID, "ride id")
+	dbRideID, err := pgutil.ToPositiveInt32(rideID, "ride id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -111,7 +108,7 @@ func (repository *RideRepository) ActiveRidesForDriver(ctx context.Context, driv
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return nil, err
 	}
-	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(driverID, "driver id")
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +131,7 @@ func (repository *RideRepository) HasActivePassengerRide(ctx context.Context, pa
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return false, err
 	}
-	dbPassengerID, err := toPostgresRideID(passengerID, "passenger id")
+	dbPassengerID, err := pgutil.ToPositiveInt32(passengerID, "passenger id")
 	if err != nil {
 		return false, err
 	}
@@ -170,15 +167,15 @@ func fromPostgresRide(item databasepostgres.Ride) (domain.Ride, error) {
 
 		PickupLatitude:             rideFloatValue(item.PickupLatitude),
 		PickupLongitude:            rideFloatValue(item.PickupLongitude),
-		PickupName:                 rideTextValue(item.PickupName),
+		PickupName:                 pgutil.TextValue(item.PickupName),
 		DropoffLatitude:            rideFloatValue(item.DropoffLatitude),
 		DropoffLongitude:           rideFloatValue(item.DropoffLongitude),
-		DropoffName:                rideTextValue(item.DropoffName),
+		DropoffName:                pgutil.TextValue(item.DropoffName),
 		DistanceKm:                 rideFloatValue(item.DistanceKm),
 		DurationMinutes:            rideFloatValue(item.DurationMinutes),
-		DriverName:                 rideTextValue(item.DriverName),
-		VehicleType:                rideTextValue(item.VehicleType),
-		PlateNumber:                rideTextValue(item.PlateNumber),
+		DriverName:                 pgutil.TextValue(item.DriverName),
+		VehicleType:                pgutil.TextValue(item.VehicleType),
+		PlateNumber:                pgutil.TextValue(item.PlateNumber),
 		DriverRating:               rideFloatValue(item.DriverRating),
 		CreatedAt:                  rideTimestamp(item.CreatedAt),
 		CompletedAt:                rideTimestamp(item.CompletedAt),
@@ -294,13 +291,6 @@ func rideTimestamp(value pgtype.Timestamptz) *string {
 	return &formatted
 }
 
-func rideTextValue(value pgtype.Text) string {
-	if !value.Valid {
-		return ""
-	}
-	return value.String
-}
-
 func rideFloatValue(value pgtype.Float8) float64 {
 	if !value.Valid {
 		return 0
@@ -314,11 +304,4 @@ func rideOptionalInt(value pgtype.Int4) *int {
 	}
 	result := int(value.Int32)
 	return &result
-}
-
-func toPostgresRideID(value int, field string) (int32, error) {
-	if value <= 0 || int64(value) > math.MaxInt32 {
-		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
-	}
-	return int32(value), nil
 }

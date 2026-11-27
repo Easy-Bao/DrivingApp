@@ -10,6 +10,7 @@ import (
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/pgutil"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -22,7 +23,7 @@ func (repository *Store) CreateSession(
 	if err := repository.validate(); err != nil {
 		return dispatchdomain.BidSession{}, err
 	}
-	passengerID, err := toPostgresRideID(value.PassengerID, "passenger id")
+	passengerID, err := pgutil.ToPositiveInt32(value.PassengerID, "passenger id")
 	if err != nil {
 		return dispatchdomain.BidSession{}, err
 	}
@@ -34,7 +35,7 @@ func (repository *Store) CreateSession(
 	}
 	targetDriverID := pgtype.Int4{}
 	if value.TargetDriverID != nil {
-		targetID, targetErr := toPostgresRideID(*value.TargetDriverID, "target driver id")
+		targetID, targetErr := pgutil.ToPositiveInt32(*value.TargetDriverID, "target driver id")
 		if targetErr != nil {
 			return dispatchdomain.BidSession{}, targetErr
 		}
@@ -42,7 +43,7 @@ func (repository *Store) CreateSession(
 	}
 	createdAt := pgtype.Timestamptz{}
 	if !value.CreatedAt.IsZero() {
-		createdAt = bidTimestamp(value.CreatedAt)
+		createdAt = pgutil.ToTimestamptz(value.CreatedAt)
 	}
 
 	transaction, err := repository.pool.Begin(ctx)
@@ -57,7 +58,7 @@ func (repository *Store) CreateSession(
 	if _, err := transactionQueries.LockUserForBidSession(ctx, passengerID); err != nil {
 		return dispatchdomain.BidSession{}, fmt.Errorf("lock passenger for bid session: %w", err)
 	}
-	now := bidTimestamp(time.Now().UTC())
+	now := pgutil.ToTimestamptz(time.Now().UTC())
 	if err := transactionQueries.ExpireBidSessions(ctx, databasepostgres.ExpireBidSessionsParams{
 		PassengerID: passengerID,
 		ExpiresAt:   now,
@@ -91,17 +92,17 @@ func (repository *Store) CreateSession(
 		DropoffLatitude:  value.DropoffLatitude,
 		DropoffLongitude: value.DropoffLongitude,
 		DropoffName:      value.DropoffName,
-		PassengerNote:    toPostgresBidText(value.PassengerNote),
+		PassengerNote:    pgutil.ToText(value.PassengerNote),
 		DistanceKm:       value.DistanceKm,
 		DurationMinutes:  value.DurationMinutes,
 		OfferedFare:      value.OfferedFareAmount,
 		Status:           value.Status,
 		TargetDriverID:   targetDriverID,
-		ExpiresAt:        bidTimestamp(value.ExpiresAt),
+		ExpiresAt:        pgutil.ToTimestamptz(value.ExpiresAt),
 		CreatedAt:        createdAt,
 	})
 	if err != nil {
-		if isPostgresUniqueViolation(err) {
+		if pgutil.IsUniqueViolation(err) {
 			return dispatchdomain.BidSession{}, domain.ErrActiveBooking
 		}
 		return dispatchdomain.BidSession{}, fmt.Errorf("create bid session: %w", err)
@@ -180,7 +181,7 @@ func (repository *Store) ActiveSessions(ctx context.Context, driverID *int) ([]d
 	timings := newActiveSessionTimings(ctx, repository.logger)
 	defer timings.log(driverID != nil)
 
-	now := bidTimestamp(time.Now().UTC())
+	now := pgutil.ToTimestamptz(time.Now().UTC())
 	items, dbDriverID, capped, err := repository.loadActiveSessionRows(ctx, driverID, now, timings)
 	if err != nil {
 		return nil, err
@@ -218,7 +219,7 @@ func (repository *Store) loadActiveSessionRows(
 		return items, 0, false, nil
 	}
 
-	dbDriverID, err := toPostgresRideID(*driverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(*driverID, "driver id")
 	if err != nil {
 		return nil, 0, false, err
 	}
@@ -334,7 +335,7 @@ func (repository *Store) Offers(ctx context.Context, sessionID int) ([]dispatchd
 	if err := repository.validate(); err != nil {
 		return nil, err
 	}
-	dbSessionID, err := toPostgresRideID(sessionID, "session id")
+	dbSessionID, err := pgutil.ToPositiveInt32(sessionID, "session id")
 	if err != nil {
 		return nil, err
 	}
@@ -360,11 +361,11 @@ func (repository *Store) PlaceOffer(ctx context.Context, value dispatchdomain.Bi
 	if value.ProposedFareAmount <= 0 {
 		return dispatchdomain.BidOffer{}, dispatchdomain.ErrInvalidFareOffer
 	}
-	sessionID, err := toPostgresRideID(value.SessionID, "session id")
+	sessionID, err := pgutil.ToPositiveInt32(value.SessionID, "session id")
 	if err != nil {
 		return dispatchdomain.BidOffer{}, err
 	}
-	driverID, err := toPostgresRideID(value.DriverID, "driver id")
+	driverID, err := pgutil.ToPositiveInt32(value.DriverID, "driver id")
 	if err != nil {
 		return dispatchdomain.BidOffer{}, err
 	}
@@ -377,7 +378,7 @@ func (repository *Store) PlaceOffer(ctx context.Context, value dispatchdomain.Bi
 		platformdatabase.Rollback(ctx, transaction)
 	}()
 	transactionQueries := repository.queries.WithTx(transaction)
-	now := bidTimestamp(time.Now().UTC())
+	now := pgutil.ToTimestamptz(time.Now().UTC())
 	session, err := transactionQueries.LockActiveBidSessionForOffer(
 		ctx,
 		databasepostgres.LockActiveBidSessionForOfferParams{
@@ -430,13 +431,13 @@ func (repository *Store) PlaceOffer(ctx context.Context, value dispatchdomain.Bi
 	created, err := transactionQueries.CreateBidOffer(ctx, databasepostgres.CreateBidOfferParams{
 		SessionID:    sessionID,
 		DriverID:     driverID,
-		DriverName:   toPostgresBidText(profile.Name),
-		PlateNumber:  toPostgresBidText(profile.PlateNumber),
-		VehicleType:  toPostgresBidText(profile.VehicleType),
+		DriverName:   pgutil.ToText(profile.Name),
+		PlateNumber:  pgutil.ToText(profile.PlateNumber),
+		VehicleType:  pgutil.ToText(profile.VehicleType),
 		ProposedFare: value.ProposedFareAmount,
 	})
 	if err != nil {
-		if isPostgresUniqueViolation(err) {
+		if pgutil.IsUniqueViolation(err) {
 			return dispatchdomain.BidOffer{}, dispatchdomain.ErrDuplicateBid
 		}
 		return dispatchdomain.BidOffer{}, fmt.Errorf("create bid offer: %w", err)
@@ -459,17 +460,17 @@ func (repository *Store) CancelSession(
 	if err := repository.validate(); err != nil {
 		return dispatchdomain.BidSession{}, err
 	}
-	dbSessionID, err := toPostgresRideID(sessionID, "session id")
+	dbSessionID, err := pgutil.ToPositiveInt32(sessionID, "session id")
 	if err != nil {
 		return dispatchdomain.BidSession{}, err
 	}
-	dbPassengerID, err := toPostgresRideID(passengerID, "passenger id")
+	dbPassengerID, err := pgutil.ToPositiveInt32(passengerID, "passenger id")
 	if err != nil {
 		return dispatchdomain.BidSession{}, err
 	}
 	if err := repository.queries.ExpireBidSessions(ctx, databasepostgres.ExpireBidSessionsParams{
 		PassengerID: dbPassengerID,
-		ExpiresAt:   bidTimestamp(time.Now().UTC()),
+		ExpiresAt:   pgutil.ToTimestamptz(time.Now().UTC()),
 	}); err != nil {
 		return dispatchdomain.BidSession{}, fmt.Errorf("expire passenger bid sessions before cancellation: %w", err)
 	}
@@ -494,11 +495,11 @@ func (repository *Store) CancelOffer(ctx context.Context, sessionID, driverID in
 	if err := repository.validate(); err != nil {
 		return dispatchdomain.BidOffer{}, err
 	}
-	dbSessionID, err := toPostgresRideID(sessionID, "session id")
+	dbSessionID, err := pgutil.ToPositiveInt32(sessionID, "session id")
 	if err != nil {
 		return dispatchdomain.BidOffer{}, err
 	}
-	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(driverID, "driver id")
 	if err != nil {
 		return dispatchdomain.BidOffer{}, err
 	}
@@ -523,7 +524,7 @@ func (repository *Store) Session(ctx context.Context, sessionID int) (dispatchdo
 	if err := repository.validate(); err != nil {
 		return dispatchdomain.BidSession{}, err
 	}
-	dbSessionID, err := toPostgresRideID(sessionID, "session id")
+	dbSessionID, err := pgutil.ToPositiveInt32(sessionID, "session id")
 	if err != nil {
 		return dispatchdomain.BidSession{}, err
 	}
@@ -555,11 +556,11 @@ func (repository *Store) DeclineSession(ctx context.Context, sessionID, driverID
 	if err := repository.validate(); err != nil {
 		return dispatchdomain.BidSession{}, err
 	}
-	dbSessionID, err := toPostgresRideID(sessionID, "session id")
+	dbSessionID, err := pgutil.ToPositiveInt32(sessionID, "session id")
 	if err != nil {
 		return dispatchdomain.BidSession{}, err
 	}
-	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := pgutil.ToPositiveInt32(driverID, "driver id")
 	if err != nil {
 		return dispatchdomain.BidSession{}, err
 	}
@@ -612,7 +613,7 @@ func (repository *Store) ExpireAllElapsedBidSessions(
 	var total int64
 	for range 10 {
 		expired, err := repository.queries.ExpireAllElapsedBidSessions(ctx, databasepostgres.ExpireAllElapsedBidSessionsParams{
-			ExpiresAt: bidTimestamp(now.UTC()),
+			ExpiresAt: pgutil.ToTimestamptz(now.UTC()),
 			Limit:     int32(batchSize),
 		})
 		if err != nil {

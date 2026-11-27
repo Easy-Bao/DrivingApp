@@ -2,8 +2,9 @@ package domain
 
 import (
 	"fmt"
-	"math"
 	"slices"
+
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/geo"
 )
 
 // Coordinates identifies a point in decimal degrees. Callers should validate
@@ -14,15 +15,7 @@ type Coordinates struct {
 }
 
 func (coordinates Coordinates) Valid() bool {
-	return isFiniteInRange(coordinates.Latitude, -90, 90) &&
-		isFiniteInRange(coordinates.Longitude, -180, 180)
-}
-
-func isFiniteInRange(value, minimum, maximum float64) bool {
-	return !math.IsNaN(value) &&
-		!math.IsInf(value, 0) &&
-		value >= minimum &&
-		value <= maximum
+	return geo.ValidCoordinates(coordinates.Latitude, coordinates.Longitude)
 }
 
 type RoutePreference string

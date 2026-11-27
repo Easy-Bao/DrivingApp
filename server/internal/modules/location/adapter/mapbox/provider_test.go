@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/geo"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/resilience"
 )
 
@@ -217,7 +218,7 @@ func TestProviderRejectsTrailingResponseData(t *testing.T) {
 }
 
 func TestHaversineRemainsFiniteForAntipodalCoordinates(t *testing.T) {
-	distance := haversine(0, 0, 0, 180)
+	distance := geo.DistanceKm(0, 0, 0, 180)
 	if math.IsNaN(distance) || math.IsInf(distance, 0) || distance <= 0 {
 		t.Fatalf("antipodal distance = %v, want a finite positive value", distance)
 	}
