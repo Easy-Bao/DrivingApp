@@ -26,7 +26,7 @@ func newChatService(history chatapplication.RoomStore) *chatapplication.Service 
 }
 
 func (history *roomHistory) CreateRoom(context.Context, string, string, string) error { return nil }
-func (history *roomHistory) Append(context.Context, domain.Message) error { return nil }
+func (history *roomHistory) Append(context.Context, domain.Message) error             { return nil }
 func (history *roomHistory) AppendWithParticipants(context.Context, domain.Message) (string, string, error) {
 	if history.locked {
 		return "", "", domain.ErrRoomLocked

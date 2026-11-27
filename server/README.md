@@ -52,8 +52,9 @@ The current module ownership is:
 - `user`: passenger and driver profiles, avatar storage, and notifications.
 - `admin`: administrative verification and back-office management.
 - `driver`: driver onboarding, vehicle documents, and document verification.
-- `location`: Mapbox-backed geolocation, geocoding, reverse geocoding, and route calculation.
-- `chat`: communication rooms and messaging for active rides.
+- `places`: Mapbox-backed place search, nearby lookup, geocoding, reverse geocoding, route, and matrix calculation.
+- `tracking`: real-time driver and passenger telemetry ingestion, presence caching, and active-ride location queries.
+- `chat`: communication rooms and PostgreSQL-persisted, Redis-cached messaging for active rides.
 
 There is no generic `realtime` business module. Chat and tracking own their
 business behavior; the process-local event publisher and WebSocket hub belong
