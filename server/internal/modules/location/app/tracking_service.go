@@ -247,15 +247,7 @@ func (service *TrackingService) Ingest(ctx context.Context, point domain.DriverP
 		timings.eventPublicationDuration = timings.measure(eventPublicationStartedAt)
 	}()
 	if len(assignments) == 0 {
-		service.publish(
-			ctx,
-			event.DriverLocationUpdated,
-			event.Scope{DriverID: point.DriverID},
-			map[string]any{"location": point},
-		)
-		if err := contextError(ctx); err != nil {
-			return err
-		}
+		// Idle drivers have no active ride listeners; avoid flooding cluster Pub/Sub.
 		if timings.outcome == "not_accepted" {
 			timings.outcome = "accepted"
 		}

@@ -442,6 +442,27 @@ func TestIngestPublishesAnActiveRideLocationToBothParticipants(t *testing.T) {
 	}
 }
 
+func TestIngestSkipsPubSubBroadcastWhenDriverHasNoActiveAssignments(t *testing.T) {
+	repository := &locationRepositoryStub{}
+	publisher := &locationEventPublisherStub{}
+	service := newLocationTrackingService(
+		repository,
+		WithRideAssignments(assignmentLookupStub{}),
+		WithEventPublisher(publisher),
+	)
+
+	err := service.Ingest(
+		context.Background(),
+		domain.DriverPoint{DriverID: "driver-1", Latitude: 6.7, Longitude: 122.1},
+	)
+	if err != nil {
+		t.Fatalf("Ingest() error = %v", err)
+	}
+	if len(publisher.envelopes) != 0 {
+		t.Fatalf("published %d events for idle driver, want 0", len(publisher.envelopes))
+	}
+}
+
 func TestIngestDebugTimingOmitsDriverAndLocationData(t *testing.T) {
 	var output bytes.Buffer
 	logger := slog.New(slog.NewJSONHandler(&output, &slog.HandlerOptions{

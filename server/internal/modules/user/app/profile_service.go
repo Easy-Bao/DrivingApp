@@ -14,7 +14,8 @@ type ContentTypeDetector func([]byte) string
 type ProfileServiceOption func(*ProfileService)
 
 type ProfileServiceDependencies struct {
-	Repository ProfileStore
+	Repository    ProfileStore
+	PresenceCache PresenceCacheNotifier
 }
 
 func WithContentTypeDetector(detector ContentTypeDetector) ProfileServiceOption {
@@ -27,6 +28,7 @@ func WithContentTypeDetector(detector ContentTypeDetector) ProfileServiceOption 
 
 type ProfileService struct {
 	repository        ProfileStore
+	presenceCache     PresenceCacheNotifier
 	detectContentType ContentTypeDetector
 }
 
@@ -40,7 +42,8 @@ func NewProfileService(
 	options ...ProfileServiceOption,
 ) *ProfileService {
 	service := &ProfileService{
-		repository: dependencies.Repository,
+		repository:    dependencies.Repository,
+		presenceCache: dependencies.PresenceCache,
 	}
 	for _, option := range options {
 		if option != nil {
@@ -87,6 +90,13 @@ func (service *ProfileService) UpdateOnlineStatus(
 	)
 	if err != nil {
 		return domain.Profile{}, fmt.Errorf("update online status: %w", err)
+	}
+	if service.presenceCache != nil {
+		cacheDriverID := updated.UserID
+		if cacheDriverID <= 0 {
+			cacheDriverID = userID
+		}
+		service.presenceCache.SetOnline(ctx, cacheDriverID, updated.IsOnline)
 	}
 	return updated, nil
 }

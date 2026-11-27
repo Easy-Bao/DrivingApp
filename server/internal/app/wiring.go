@@ -145,10 +145,20 @@ func newHTTPRouter(
 		authhttp.WithOTPAttemptStore(dependencies.otpAttemptStore),
 	)
 
+	driverPresenceCache := locationredis.NewDriverPresenceCache(
+		redisClient,
+		profileStore.IsDriverOnline,
+		config.RideLifecycle.DriverLocationMaxAge,
+		applicationLogger,
+	)
+
 	usersRouter := userhttp.NewRouter(
 		userhttp.Dependencies{
 			Service: userapplication.NewProfileService(
-				userapplication.ProfileServiceDependencies{Repository: profileStore},
+				userapplication.ProfileServiceDependencies{
+					Repository:    profileStore,
+					PresenceCache: driverPresenceCache,
+				},
 				userapplication.WithContentTypeDetector(http.DetectContentType),
 			),
 			Verifier:      verifier,
@@ -215,19 +225,7 @@ func newHTTPRouter(
 			MaxAge: config.RideLifecycle.DriverLocationMaxAge,
 		},
 		locationapplication.WithRideAssignments(rideAssignments),
-		locationapplication.WithDriverPresence(locationapplication.DriverPresenceReaderFunc(
-			func(ctx context.Context, driverID string) (bool, error) {
-				parsedDriverID, err := strconv.Atoi(driverID)
-				if err != nil {
-					return false, fmt.Errorf("parse driver id: %w", err)
-				}
-				return profileStore.IsDriverOnline(
-					ctx,
-					parsedDriverID,
-					config.RideLifecycle.DriverLocationMaxAge,
-				)
-			},
-		)),
+		locationapplication.WithDriverPresence(driverPresenceCache),
 		locationapplication.WithEventPublisher(eventPublisher),
 		locationapplication.WithLogger(applicationLogger),
 	)

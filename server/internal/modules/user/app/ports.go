@@ -30,3 +30,14 @@ type NotificationStore interface {
 	Notifications(ctx context.Context, userID, limit, offset int) ([]domain.Notification, error)
 	DeleteNotification(ctx context.Context, userID, notificationID int) error
 }
+
+// PresenceCacheNotifier synchronizes Redis hot-path presence when a driver toggles availability.
+type PresenceCacheNotifier interface {
+	SetOnline(ctx context.Context, driverID int, isOnline bool)
+}
+
+type PresenceCacheNotifierFunc func(ctx context.Context, driverID int, isOnline bool)
+
+func (fn PresenceCacheNotifierFunc) SetOnline(ctx context.Context, driverID int, isOnline bool) {
+	fn(ctx, driverID, isOnline)
+}
