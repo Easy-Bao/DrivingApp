@@ -44,28 +44,32 @@ func testPricingConfig(t *testing.T) PricingConfig {
 }
 
 func newTestRideService(
-	repository RideStore,
+	stub *ridesRepositoryStub,
 	pricingConfig PricingConfig,
 	publisher EventPublisher,
 	options ...Option,
 ) *Service {
-	return NewService(
-		Dependencies{
-			Repository:     repository,
-			PricingConfig:  pricingConfig,
-			EventPublisher: publisher,
-			DriverLocation: DriverLocationReaderFunc(
-				func(context.Context, int) (DriverLocation, error) {
-					return DriverLocation{
-						Latitude:   6.7,
-						Longitude:  122.1,
-						ObservedAt: time.Now().UTC(),
-					}, nil
-				},
-			),
-		},
-		options...,
-	)
+	deps := Dependencies{
+		PricingConfig:  pricingConfig,
+		EventPublisher: publisher,
+		DriverLocation: DriverLocationReaderFunc(
+			func(context.Context, int) (DriverLocation, error) {
+				return DriverLocation{
+					Latitude:   6.7,
+					Longitude:  122.1,
+					ObservedAt: time.Now().UTC(),
+				}, nil
+			},
+		),
+	}
+	if stub != nil {
+		deps.Repository = stub
+		deps.ActiveRideChecker = stub
+		deps.Lifecycle = stub
+		deps.History = stub
+		deps.SafetyReports = stub
+	}
+	return NewService(deps, options...)
 }
 
 func (stub *ridesRepositoryStub) CreateRide(_ context.Context, ride domain.Ride) (domain.Ride, error) {

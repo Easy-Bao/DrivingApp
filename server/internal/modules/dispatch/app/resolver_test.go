@@ -221,7 +221,12 @@ func TestResolverCachesIdleDriverAndInvalidatesOnRideMatched(t *testing.T) {
 		ridesByDriver:  nil,
 		forDriverCalls: &driverCalls,
 	}
-	resolver := newTestResolver(projection, authority)
+	resolver := NewResolver(ResolverDependencies{
+		Routing:       projection,
+		CachedRouting: projection,
+		Projection:    projection,
+		Authority:     authority,
+	})
 
 	// First lookup hits authority and remembers the idle state.
 	got, err := resolver.ForDriver(context.Background(), "55")

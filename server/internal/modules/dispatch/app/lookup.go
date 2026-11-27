@@ -23,3 +23,9 @@ type Projection interface {
 	Lookup
 	Remember(driverID string, values []Assignment)
 }
+
+// CachedDriverLookup serves negative-cached driver assignment reads so idle drivers
+// skip fallback queries until expiry or a new assignment event.
+type CachedDriverLookup interface {
+	ForDriverCached(ctx context.Context, driverID string) ([]Assignment, bool, error)
+}

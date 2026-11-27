@@ -10,21 +10,27 @@ import (
 // Resolver uses the lifecycle projection for hot-path reads and consults the
 // ride store when the projection has not observed the assignment yet.
 type Resolver struct {
-	routing   Lookup
-	authority Lookup
-	logger    *slog.Logger
+	routing       Lookup
+	cachedRouting CachedDriverLookup
+	projection    Projection
+	authority     Lookup
+	logger        *slog.Logger
 }
 
 type ResolverDependencies struct {
-	Routing   Lookup
-	Authority Lookup
+	Routing       Lookup
+	CachedRouting CachedDriverLookup
+	Projection    Projection
+	Authority     Lookup
 }
 
 func NewResolver(dependencies ResolverDependencies) *Resolver {
 	return &Resolver{
-		routing:   dependencies.Routing,
-		authority: dependencies.Authority,
-		logger:    slog.Default(),
+		routing:       dependencies.Routing,
+		cachedRouting: dependencies.CachedRouting,
+		projection:    dependencies.Projection,
+		authority:     dependencies.Authority,
+		logger:        slog.Default(),
 	}
 }
 
@@ -33,10 +39,6 @@ func (resolver *Resolver) WithLogger(logger *slog.Logger) *Resolver {
 		resolver.logger = logger
 	}
 	return resolver
-}
-
-type cachedDriverLookup interface {
-	ForDriverCached(ctx context.Context, driverID string) ([]Assignment, bool, error)
 }
 
 func (resolver *Resolver) ForRide(ctx context.Context, rideID string) (Assignment, bool, error) {
@@ -87,35 +89,33 @@ func (resolver *Resolver) ForDriver(ctx context.Context, driverID string) ([]Ass
 	if err := contextError(ctx); err != nil {
 		return nil, err
 	}
-	if resolver.routing != nil {
-		if cached, ok := resolver.routing.(cachedDriverLookup); ok {
-			assignments, hit, err := cached.ForDriverCached(ctx, driverID)
-			if err == nil && hit {
-				return slices.Clone(assignments), nil
-			}
-			if contextErr := contextError(ctx); contextErr != nil {
-				return nil, contextErr
-			}
-			if err != nil && resolver.authority == nil {
-				return nil, fmt.Errorf("load routing driver assignments: %w", err)
-			}
-			if err != nil {
-				resolver.log().DebugContext(ctx, "routing driver assignment lookup failed; using authority", "error", err)
-			}
-		} else {
-			assignments, err := resolver.routing.ForDriver(ctx, driverID)
-			if err == nil && len(assignments) > 0 {
-				return slices.Clone(assignments), nil
-			}
-			if contextErr := contextError(ctx); contextErr != nil {
-				return nil, contextErr
-			}
-			if err != nil && resolver.authority == nil {
-				return nil, fmt.Errorf("load routing driver assignments: %w", err)
-			}
-			if err != nil {
-				resolver.log().DebugContext(ctx, "routing driver assignment lookup failed; using authority", "error", err)
-			}
+	if resolver.cachedRouting != nil {
+		assignments, hit, err := resolver.cachedRouting.ForDriverCached(ctx, driverID)
+		if err == nil && hit {
+			return slices.Clone(assignments), nil
+		}
+		if contextErr := contextError(ctx); contextErr != nil {
+			return nil, contextErr
+		}
+		if err != nil && resolver.authority == nil {
+			return nil, fmt.Errorf("load routing driver assignments: %w", err)
+		}
+		if err != nil {
+			resolver.log().DebugContext(ctx, "routing driver assignment lookup failed; using authority", "error", err)
+		}
+	} else if resolver.routing != nil {
+		assignments, err := resolver.routing.ForDriver(ctx, driverID)
+		if err == nil && len(assignments) > 0 {
+			return slices.Clone(assignments), nil
+		}
+		if contextErr := contextError(ctx); contextErr != nil {
+			return nil, contextErr
+		}
+		if err != nil && resolver.authority == nil {
+			return nil, fmt.Errorf("load routing driver assignments: %w", err)
+		}
+		if err != nil {
+			resolver.log().DebugContext(ctx, "routing driver assignment lookup failed; using authority", "error", err)
 		}
 	}
 	if err := contextError(ctx); err != nil {
@@ -138,13 +138,10 @@ func (resolver *Resolver) ForDriver(ctx context.Context, driverID string) ([]Ass
 }
 
 func (resolver *Resolver) remember(driverID string, assignments []Assignment) {
-	if resolver == nil || resolver.routing == nil {
+	if resolver == nil || resolver.projection == nil {
 		return
 	}
-	projection, ok := resolver.routing.(Projection)
-	if ok {
-		projection.Remember(driverID, assignments)
-	}
+	resolver.projection.Remember(driverID, assignments)
 }
 
 func (resolver *Resolver) log() *slog.Logger {

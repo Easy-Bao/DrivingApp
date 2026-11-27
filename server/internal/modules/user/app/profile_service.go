@@ -15,6 +15,8 @@ type ProfileServiceOption func(*ProfileService)
 
 type ProfileServiceDependencies struct {
 	Repository    ProfileStore
+	Avatars       AvatarStore
+	Notifications NotificationStore
 	PresenceCache PresenceCacheNotifier
 }
 
@@ -28,6 +30,8 @@ func WithContentTypeDetector(detector ContentTypeDetector) ProfileServiceOption 
 
 type ProfileService struct {
 	repository        ProfileStore
+	avatars           AvatarStore
+	notifications     NotificationStore
 	presenceCache     PresenceCacheNotifier
 	detectContentType ContentTypeDetector
 }
@@ -43,6 +47,8 @@ func NewProfileService(
 ) *ProfileService {
 	service := &ProfileService{
 		repository:    dependencies.Repository,
+		avatars:       dependencies.Avatars,
+		notifications: dependencies.Notifications,
 		presenceCache: dependencies.PresenceCache,
 	}
 	for _, option := range options {
@@ -117,7 +123,7 @@ func (service *ProfileService) MaxAvatarBytes() int64 {
 }
 
 func (service *ProfileService) SaveAvatar(ctx context.Context, userID int, content []byte) (domain.Profile, error) {
-	if service == nil || service.detectContentType == nil {
+	if service == nil || service.detectContentType == nil || service.avatars == nil {
 		return domain.Profile{}, domain.ErrAvatarStorageUnavailable
 	}
 	invalidUserID := userID <= 0
@@ -129,11 +135,7 @@ func (service *ProfileService) SaveAvatar(ctx context.Context, userID int, conte
 	if contentType != "image/jpeg" && contentType != "image/png" {
 		return domain.Profile{}, domain.ErrInvalidAvatar
 	}
-	repository, ok := service.repository.(AvatarStore)
-	if !ok {
-		return domain.Profile{}, domain.ErrAvatarStorageUnavailable
-	}
-	profile, err := repository.SaveAvatar(ctx, userID, content, contentType)
+	profile, err := service.avatars.SaveAvatar(ctx, userID, content, contentType)
 	if err != nil {
 		return domain.Profile{}, fmt.Errorf("save profile avatar: %w", err)
 	}
@@ -144,14 +146,10 @@ func (service *ProfileService) Avatar(ctx context.Context, userID int) (domain.A
 	if userID <= 0 {
 		return domain.Avatar{}, domain.ErrAvatarNotFound
 	}
-	if service == nil {
+	if service == nil || service.avatars == nil {
 		return domain.Avatar{}, domain.ErrAvatarStorageUnavailable
 	}
-	repository, ok := service.repository.(AvatarStore)
-	if !ok {
-		return domain.Avatar{}, domain.ErrAvatarStorageUnavailable
-	}
-	avatar, err := repository.GetAvatar(ctx, userID)
+	avatar, err := service.avatars.GetAvatar(ctx, userID)
 	if err != nil {
 		return domain.Avatar{}, fmt.Errorf("load profile avatar: %w", err)
 	}
@@ -164,11 +162,7 @@ func (service *ProfileService) Notifications(
 	limit int,
 	offset int,
 ) ([]domain.Notification, error) {
-	if service == nil {
-		return nil, ErrNotificationUnavailable
-	}
-	repository, ok := service.repository.(NotificationStore)
-	if !ok {
+	if service == nil || service.notifications == nil {
 		return nil, ErrNotificationUnavailable
 	}
 	if userID <= 0 {
@@ -179,7 +173,7 @@ func (service *ProfileService) Notifications(
 	if invalidLimit || invalidOffset {
 		return nil, errors.New("notification pagination is invalid")
 	}
-	items, err := repository.Notifications(ctx, userID, limit, offset)
+	items, err := service.notifications.Notifications(ctx, userID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("load notifications: %w", err)
 	}
@@ -191,34 +185,26 @@ func (service *ProfileService) DeleteNotification(
 	userID int,
 	notificationID int,
 ) error {
-	if service == nil {
-		return ErrNotificationUnavailable
-	}
-	repository, ok := service.repository.(NotificationStore)
-	if !ok {
+	if service == nil || service.notifications == nil {
 		return ErrNotificationUnavailable
 	}
 	if userID <= 0 || notificationID <= 0 {
 		return errors.New("notification identity is invalid")
 	}
-	if err := repository.DeleteNotification(ctx, userID, notificationID); err != nil {
+	if err := service.notifications.DeleteNotification(ctx, userID, notificationID); err != nil {
 		return fmt.Errorf("delete notification: %w", err)
 	}
 	return nil
 }
 
 func (service *ProfileService) MarkAllNotificationsRead(ctx context.Context, userID int) error {
-	if service == nil {
-		return ErrNotificationUnavailable
-	}
-	repository, ok := service.repository.(NotificationStore)
-	if !ok {
+	if service == nil || service.notifications == nil {
 		return ErrNotificationUnavailable
 	}
 	if userID <= 0 {
 		return errors.New("notification user id is invalid")
 	}
-	if err := repository.MarkAllNotificationsRead(ctx, userID); err != nil {
+	if err := service.notifications.MarkAllNotificationsRead(ctx, userID); err != nil {
 		return fmt.Errorf("mark all notifications read: %w", err)
 	}
 	return nil

@@ -48,19 +48,13 @@ type Service struct {
 }
 
 func NewService(dependencies Dependencies) *Service {
-	activeRideChecker := dependencies.ActiveRideChecker
-	if activeRideChecker == nil {
-		if checker, ok := dependencies.Store.(PassengerActiveRideChecker); ok {
-			activeRideChecker = checker
-		}
-	}
 	now := dependencies.Now
 	if now == nil {
 		now = time.Now
 	}
 	return &Service{
 		store:             dependencies.Store,
-		activeRideChecker: activeRideChecker,
+		activeRideChecker: dependencies.ActiveRideChecker,
 		resolveRoute:      dependencies.ResolveRoute,
 		calculateFare:     dependencies.CalculateFare,
 		eventPublisher:    dependencies.EventPublisher,

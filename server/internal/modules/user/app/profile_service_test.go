@@ -12,11 +12,11 @@ import (
 type repository struct{ profile domain.Profile }
 
 func newProfileService(
-	repository app.ProfileStore,
+	repository *repository,
 	options ...app.ProfileServiceOption,
 ) *app.ProfileService {
 	return app.NewProfileService(
-		app.ProfileServiceDependencies{Repository: repository},
+		app.ProfileServiceDependencies{Repository: repository, Avatars: repository},
 		options...,
 	)
 }

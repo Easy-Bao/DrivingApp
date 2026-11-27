@@ -50,6 +50,16 @@ import (
 
 type rideRuntimeStore interface {
 	rideapplication.RideStore
+	rideapplication.PassengerActiveRideChecker
+	rideapplication.RideLifecycleStore
+	rideapplication.CashSettlementStore
+	rideapplication.CounterpartyReader
+	rideapplication.RideHistoryReader
+	rideapplication.RecentPassengerRidesReader
+	rideapplication.PassengerActivityReader
+	rideapplication.DriverEarningsReader
+	rideapplication.DriverStatisticsReader
+	rideapplication.SafetyReportStore
 	ActiveRidesForDriver(context.Context, int) ([]ridedomain.Ride, error)
 }
 
@@ -65,6 +75,8 @@ type authRuntimeStore interface {
 
 type profileRuntimeStore interface {
 	userapplication.ProfileStore
+	userapplication.AvatarStore
+	userapplication.NotificationStore
 	IsDriverOnline(ctx context.Context, userID int, maxAge time.Duration) (bool, error)
 }
 
@@ -157,6 +169,8 @@ func newHTTPRouter(
 			Service: userapplication.NewProfileService(
 				userapplication.ProfileServiceDependencies{
 					Repository:    profileStore,
+					Avatars:       profileStore,
+					Notifications: profileStore,
 					PresenceCache: driverPresenceCache,
 				},
 				userapplication.WithContentTypeDetector(http.DetectContentType),
@@ -214,8 +228,10 @@ func newHTTPRouter(
 	dispatchEventPublisher := dispatchwebsocket.NewEventPublisher(eventPublisher)
 	rideAssignments := dispatchapplication.NewResolver(
 		dispatchapplication.ResolverDependencies{
-			Routing:   assignmentProjection,
-			Authority: dispatchapplication.NewRideLookup(rideStore),
+			Routing:       assignmentProjection,
+			CachedRouting: assignmentProjection,
+			Projection:    assignmentProjection,
+			Authority:     dispatchapplication.NewRideLookup(rideStore),
 		},
 	)
 	trackingService := locationapplication.NewTrackingService(
@@ -232,10 +248,20 @@ func newHTTPRouter(
 	)
 	ridesService := rideapplication.NewService(
 		rideapplication.Dependencies{
-			Repository:      rideStore,
-			PricingConfig:   config.Pricing,
-			EventPublisher:  rideEventPublisher,
-			LifecycleConfig: config.RideLifecycle,
+			Repository:        rideStore,
+			ActiveRideChecker: rideStore,
+			Lifecycle:         rideStore,
+			Settlement:        rideStore,
+			Counterparties:    rideStore,
+			History:           rideStore,
+			RecentRides:       rideStore,
+			PassengerActivity: rideStore,
+			DriverEarnings:    rideStore,
+			DriverStats:       rideStore,
+			SafetyReports:     rideStore,
+			PricingConfig:     config.Pricing,
+			EventPublisher:    rideEventPublisher,
+			LifecycleConfig:   config.RideLifecycle,
 			DriverLocation: rideapplication.DriverLocationReaderFunc(
 				func(ctx context.Context, driverID int) (rideapplication.DriverLocation, error) {
 					point, err := trackingService.Get(ctx, strconv.Itoa(driverID))

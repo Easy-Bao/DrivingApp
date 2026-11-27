@@ -149,7 +149,7 @@ func TestMarkAllNotificationsRead(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &notificationStore{err: tt.storeErr}
-			service := app.NewProfileService(app.ProfileServiceDependencies{Repository: store})
+			service := app.NewProfileService(app.ProfileServiceDependencies{Repository: store, Notifications: store})
 			handler := NewHandler(Dependencies{Service: service, Verifier: manager})
 			router := chi.NewRouter()
 			router.Post("/passengers/{id}/notifications/read-all", handler.MarkAllNotificationsRead)
@@ -176,7 +176,7 @@ func TestRegisteredMarkAllReadRoute(t *testing.T) {
 		Idempotency: middleware.NewIdempotency(middleware.IdempotencyDependencies{Store: middleware.NewMemoryIdempotencyStore()}),
 	})
 	router := chi.NewRouter()
-	NewRouter(Dependencies{Service: app.NewProfileService(app.ProfileServiceDependencies{Repository: store}), Verifier: manager, RouteSecurity: routeSecurity}).RegisterRoutes(router)
+	NewRouter(Dependencies{Service: app.NewProfileService(app.ProfileServiceDependencies{Repository: store, Notifications: store}), Verifier: manager, RouteSecurity: routeSecurity}).RegisterRoutes(router)
 	token, err := manager.IssueWithRole("9", "passenger")
 	if err != nil {
 		t.Fatal(err)

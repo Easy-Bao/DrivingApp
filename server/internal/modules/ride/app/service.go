@@ -25,6 +25,13 @@ func WithRouteCalculator(calculator RouteProvider) Option {
 
 type Service struct {
 	repository        RideStore
+	counterparties    CounterpartyReader
+	history           RideHistoryReader
+	recentRides       RecentPassengerRidesReader
+	passengerActivity PassengerActivityReader
+	driverEarnings    DriverEarningsReader
+	driverStats       DriverStatisticsReader
+	safetyReports     SafetyReportStore
 	routeCalculator   RouteProvider
 	pricingConfig     PricingConfig
 	eventPublisher    EventPublisher
@@ -36,22 +43,37 @@ type Service struct {
 }
 
 type Dependencies struct {
-	Repository      RideStore
-	PricingConfig   PricingConfig
-	EventPublisher  EventPublisher
-	LifecycleConfig LifecycleConfig
-	DriverLocation  DriverLocationReader
+	Repository        RideStore
+	ActiveRideChecker PassengerActiveRideChecker
+	Lifecycle         RideLifecycleStore
+	Settlement        CashSettlementStore
+	Counterparties    CounterpartyReader
+	History           RideHistoryReader
+	RecentRides       RecentPassengerRidesReader
+	PassengerActivity PassengerActivityReader
+	DriverEarnings    DriverEarningsReader
+	DriverStats       DriverStatisticsReader
+	SafetyReports     SafetyReportStore
+	PricingConfig     PricingConfig
+	EventPublisher    EventPublisher
+	LifecycleConfig   LifecycleConfig
+	DriverLocation    DriverLocationReader
 }
 
 func NewService(
 	dependencies Dependencies,
 	options ...Option,
 ) *Service {
-	repository := dependencies.Repository
 	pricingConfig := dependencies.PricingConfig
-	activeRideChecker, lifecycleStore, settlementStore := optionalRideCapabilities(repository)
 	service := &Service{
-		repository:        repository,
+		repository:        dependencies.Repository,
+		counterparties:    dependencies.Counterparties,
+		history:           dependencies.History,
+		recentRides:       dependencies.RecentRides,
+		passengerActivity: dependencies.PassengerActivity,
+		driverEarnings:    dependencies.DriverEarnings,
+		driverStats:       dependencies.DriverStats,
+		safetyReports:     dependencies.SafetyReports,
 		pricingConfig:     pricingConfig,
 		eventPublisher:    dependencies.EventPublisher,
 		reportingLocation: _defaultReportingLocation,
@@ -63,49 +85,24 @@ func NewService(
 		}
 	}
 	service.bookingService = NewBookingService(BookingDependencies{
-		Writer:            repository,
-		ActiveRideChecker: activeRideChecker,
+		Writer:            dependencies.Repository,
+		ActiveRideChecker: dependencies.ActiveRideChecker,
 		ResolveRoute:      service.authoritativeRoute,
 		CalculateFare:     pricingConfig.FareAmount,
 		PublishRide:       service.publishRide,
 		HasRouteProvider:  service.routeCalculator != nil,
 	})
 	service.lifecycleService = NewLifecycleService(LifecycleDependencies{
-		Store:          lifecycleStore,
+		Store:          dependencies.Lifecycle,
 		DriverLocation: dependencies.DriverLocation,
 		PublishRide:    service.publishRide,
 		Config:         dependencies.LifecycleConfig,
 	})
 	service.settlementService = NewSettlementService(SettlementDependencies{
-		Store:       settlementStore,
+		Store:       dependencies.Settlement,
 		PublishRide: service.publishRide,
 	})
 	return service
-}
-
-func optionalRideCapabilities(
-	repository RideStore,
-) (
-	PassengerActiveRideChecker,
-	RideLifecycleStore,
-	CashSettlementStore,
-) {
-	var activeRideChecker PassengerActiveRideChecker
-	if candidate, ok := repository.(PassengerActiveRideChecker); ok {
-		activeRideChecker = candidate
-	}
-
-	var lifecycleStore RideLifecycleStore
-	if candidate, ok := repository.(RideLifecycleStore); ok {
-		lifecycleStore = candidate
-	}
-
-	var settlementStore CashSettlementStore
-	if candidate, ok := repository.(CashSettlementStore); ok {
-		settlementStore = candidate
-	}
-
-	return activeRideChecker, lifecycleStore, settlementStore
 }
 
 func (service *Service) WithLogger(logger *slog.Logger) *Service {
@@ -361,12 +358,11 @@ func validateTrip(
 }
 
 func (service *Service) DriverStats(ctx context.Context, driverID int) (domain.DriverStats, error) {
-	repository, ok := service.repository.(DriverStatisticsReader)
-	if !ok {
+	if service == nil || service.driverStats == nil {
 		return domain.DriverStats{}, errors.New("driver analytics persistence is unavailable")
 	}
 	dayStart, dayEnd := service.reportingDayBounds(time.Now())
-	stats, err := repository.DriverStats(
+	stats, err := service.driverStats.DriverStats(
 		ctx,
 		driverID,
 		dayStart,
@@ -379,14 +375,13 @@ func (service *Service) DriverStats(ctx context.Context, driverID int) (domain.D
 }
 
 func (service *Service) DriverEarnings(ctx context.Context, driverID int) (domain.DriverEarningsSummary, error) {
-	repository, ok := service.repository.(DriverEarningsReader)
-	if !ok {
+	if service == nil || service.driverEarnings == nil {
 		return domain.DriverEarningsSummary{}, errors.New("driver earnings persistence is unavailable")
 	}
 	location := service.reportingLocationOrDefault()
 	now := time.Now().In(location)
 	queryStart, queryEnd := driverEarningsQueryBounds(now, location)
-	entries, err := repository.DriverEarnings(
+	entries, err := service.driverEarnings.DriverEarnings(
 		ctx,
 		driverID,
 		queryStart,
@@ -403,14 +398,13 @@ func (service *Service) DriverTrips(
 	driverID int,
 	query domain.TripHistoryQuery,
 ) ([]domain.Ride, error) {
-	repository, ok := service.repository.(RideHistoryReader)
-	if !ok {
+	if service == nil || service.history == nil {
 		return nil, errors.New("driver trip persistence is unavailable")
 	}
 	if err := validateTripHistoryQuery(query); err != nil {
 		return nil, err
 	}
-	rides, err := repository.DriverTrips(ctx, driverID, query)
+	rides, err := service.history.DriverTrips(ctx, driverID, query)
 	if err != nil {
 		return nil, fmt.Errorf("load driver trips: %w", err)
 	}
@@ -422,14 +416,13 @@ func (service *Service) PassengerRides(
 	passengerID int,
 	query domain.TripHistoryQuery,
 ) ([]domain.Ride, error) {
-	repository, ok := service.repository.(RideHistoryReader)
-	if !ok {
+	if service == nil || service.history == nil {
 		return nil, errors.New("passenger ride persistence is unavailable")
 	}
 	if err := validateTripHistoryQuery(query); err != nil {
 		return nil, err
 	}
-	rides, err := repository.PassengerRides(ctx, passengerID, query)
+	rides, err := service.history.PassengerRides(ctx, passengerID, query)
 	if err != nil {
 		return nil, fmt.Errorf("load passenger rides: %w", err)
 	}
@@ -440,12 +433,11 @@ func (service *Service) PassengerActivitySummary(
 	ctx context.Context,
 	passengerID int,
 ) (domain.PassengerActivitySummary, error) {
-	repository, ok := service.repository.(PassengerActivityReader)
-	if !ok {
+	if service == nil || service.passengerActivity == nil {
 		return domain.PassengerActivitySummary{}, errors.New("passenger activity persistence is unavailable")
 	}
 	weekStart, weekEnd := service.reportingWeekBounds(time.Now())
-	activity, err := repository.PassengerActivitySummary(
+	activity, err := service.passengerActivity.PassengerActivitySummary(
 		ctx,
 		passengerID,
 		weekStart,
@@ -463,8 +455,8 @@ func (service *Service) PassengerRecentRides(ctx context.Context, passengerID, l
 	if invalidPassengerID || invalidLimit {
 		return nil, errors.New("invalid passenger recent rides request")
 	}
-	if repository, ok := service.repository.(RecentPassengerRidesReader); ok {
-		rides, err := repository.PassengerRecentRides(ctx, passengerID, limit)
+	if service != nil && service.recentRides != nil {
+		rides, err := service.recentRides.PassengerRecentRides(ctx, passengerID, limit)
 		if err != nil {
 			return nil, fmt.Errorf("load recent passenger rides: %w", err)
 		}
@@ -484,8 +476,7 @@ func (service *Service) CreateSafetyReport(
 	ctx context.Context,
 	report domain.SafetyReport,
 ) (domain.SafetyReport, error) {
-	repository, ok := service.repository.(SafetyReportStore)
-	if !ok {
+	if service == nil || service.safetyReports == nil {
 		return domain.SafetyReport{}, errors.New("safety report persistence is unavailable")
 	}
 	report.ReporterRole = strings.ToLower(strings.TrimSpace(report.ReporterRole))
@@ -502,7 +493,7 @@ func (service *Service) CreateSafetyReport(
 		return domain.SafetyReport{}, domain.ErrSafetyReportInvalid
 	}
 	report.Severity = severity
-	created, err := repository.CreateSafetyReport(ctx, report)
+	created, err := service.safetyReports.CreateSafetyReport(ctx, report)
 	if err != nil {
 		return domain.SafetyReport{}, fmt.Errorf("create safety report: %w", err)
 	}

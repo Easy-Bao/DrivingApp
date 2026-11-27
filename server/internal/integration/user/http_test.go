@@ -473,8 +473,11 @@ func TestProfileAvatarUploadAndReadUseAuthenticatedRoutes(t *testing.T) {
 
 	router := chi.NewRouter()
 	newUserRouter(
-		newProfileService(
-			repository,
+		application.NewProfileService(
+			application.ProfileServiceDependencies{
+				Repository: repository,
+				Avatars:    repository,
+			},
 			application.WithContentTypeDetector(http.DetectContentType),
 		),
 		tokenManager,

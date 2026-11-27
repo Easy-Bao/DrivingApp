@@ -122,9 +122,18 @@ func (store *resetOTPStore) Consume(_ context.Context, _, _, code string) error 
 	return nil
 }
 
+func (store *resetOTPStore) Delete(_ context.Context, _, _ string) error {
+	store.code = ""
+	store.attempts = 0
+	return nil
+}
+
 type issuer struct{}
 
 func (issuer) Issue(subject string) (string, error) { return "token:" + subject, nil }
+func (issuer) IssueWithRole(subject, _ string) (string, error) {
+	return "token:" + subject, nil
+}
 
 func testPasswordHash(t *testing.T, password string) string {
 	t.Helper()

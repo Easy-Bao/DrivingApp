@@ -595,13 +595,8 @@ const (
 	_otpCleanupTimeout         = 2 * time.Second
 )
 
-type otpDeleter interface {
-	Delete(ctx context.Context, purpose, email string) error
-}
-
 func (service *OTPService) deleteOTP(ctx context.Context, purpose, email string) {
-	deleter, ok := service.store.(otpDeleter)
-	if !ok {
+	if service == nil || service.store == nil {
 		return
 	}
 	baseCtx := ctx
@@ -610,7 +605,7 @@ func (service *OTPService) deleteOTP(ctx context.Context, purpose, email string)
 	}
 	cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(baseCtx), _otpCleanupTimeout)
 	defer cancel()
-	if err := deleter.Delete(cleanupCtx, purpose, email); err != nil {
+	if err := service.store.Delete(cleanupCtx, purpose, email); err != nil {
 		service.log().WarnContext(ctx, "remove unsent otp failed", "error", err, "purpose", purpose)
 	}
 }

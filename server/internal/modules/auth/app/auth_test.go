@@ -68,6 +68,9 @@ func (r *repository) UpdatePassword(_ context.Context, id int, passwordHash stri
 type issuer struct{}
 
 func (issuer) Issue(subject string) (string, error) { return "token:" + subject, nil }
+func (issuer) IssueWithRole(subject, _ string) (string, error) {
+	return "token:" + subject, nil
+}
 
 func TestPassengerAndDriverRegistrationUseCases(t *testing.T) {
 	repository := &repository{users: map[string]domain.User{}}

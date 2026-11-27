@@ -56,15 +56,9 @@ type BookingService struct {
 }
 
 func NewBookingService(dependencies BookingDependencies) *BookingService {
-	activeRideChecker := dependencies.ActiveRideChecker
-	if activeRideChecker == nil {
-		if checker, ok := dependencies.Writer.(PassengerActiveRideChecker); ok {
-			activeRideChecker = checker
-		}
-	}
 	return &BookingService{
 		writer:            dependencies.Writer,
-		activeRideChecker: activeRideChecker,
+		activeRideChecker: dependencies.ActiveRideChecker,
 		resolveRoute:      dependencies.ResolveRoute,
 		calculateFare:     dependencies.CalculateFare,
 		publishRide:       dependencies.PublishRide,

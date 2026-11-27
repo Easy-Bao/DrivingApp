@@ -61,6 +61,11 @@ func (store *otpMemoryStore) Consume(_ context.Context, purpose, email, code str
 	return nil
 }
 
+func (store *otpMemoryStore) Delete(_ context.Context, purpose, email string) error {
+	delete(store.values, purpose+":"+strings.ToLower(email))
+	return nil
+}
+
 type otpGateway struct{ sent string }
 
 func (gateway *otpGateway) Send(_ context.Context, _, code string) error {
@@ -71,6 +76,9 @@ func (gateway *otpGateway) Send(_ context.Context, _, code string) error {
 type otpIssuer struct{}
 
 func (otpIssuer) Issue(subject string) (string, error) { return "token:" + subject, nil }
+func (otpIssuer) IssueWithRole(subject, _ string) (string, error) {
+	return "token:" + subject, nil
+}
 
 func TestPassengerOTPVerifiesAndConsumesCode(t *testing.T) {
 	repository := &otpRepository{account: domain.User{ID: 7, Email: "passenger@example.test", Role: domain.Passenger}}

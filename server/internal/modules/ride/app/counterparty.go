@@ -12,11 +12,10 @@ func (service *Service) Counterparty(ctx context.Context, rideID, actorID int) (
 	if rideID <= 0 || actorID <= 0 {
 		return domain.Counterparty{}, domain.ErrUnauthorizedRide
 	}
-	repository, ok := service.repository.(CounterpartyReader)
-	if !ok {
+	if service == nil || service.counterparties == nil {
 		return domain.Counterparty{}, errors.New("ride counterparty lookup is unavailable")
 	}
-	counterparty, err := repository.Counterparty(ctx, rideID, actorID)
+	counterparty, err := service.counterparties.Counterparty(ctx, rideID, actorID)
 	if err != nil {
 		return domain.Counterparty{}, fmt.Errorf("load ride counterparty: %w", err)
 	}

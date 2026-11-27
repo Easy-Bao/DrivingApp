@@ -35,6 +35,20 @@ func newRideService(repository rideapplication.RideStore, config rideapplication
 	})
 }
 
+func newAnalyticsContractRideService(
+	repository analyticsRepository,
+	config rideapplication.PricingConfig,
+) *rideapplication.Service {
+	return rideapplication.NewService(rideapplication.Dependencies{
+		Repository:        repository,
+		History:           repository,
+		PassengerActivity: repository,
+		DriverEarnings:    repository,
+		DriverStats:       repository,
+		PricingConfig:     config,
+	})
+}
+
 type rideAndDispatchRouter struct {
 	ride     *ridehttp.Router
 	dispatch *dispatchhttp.Router
@@ -283,7 +297,7 @@ func TestDriverAnalyticsAreLimitedToTheAuthenticatedDriver(t *testing.T) {
 	}
 
 	mux := chi.NewRouter()
-	newRideRouter(newRideService(analyticsRepository{}, config), verifier).RegisterRoutes(mux)
+	newRideRouter(newAnalyticsContractRideService(analyticsRepository{}, config), verifier).RegisterRoutes(mux)
 
 	request := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/8/stats", nil)
 	request.Header.Set("Authorization", "Bearer "+accessToken)
@@ -365,7 +379,7 @@ func TestPassengerActivitySummaryUsesAnAuthoritativeAggregate(t *testing.T) {
 		t.Fatal(err)
 	}
 	mux := chi.NewRouter()
-	newRideRouter(newRideService(analyticsRepository{}, config), verifier).RegisterRoutes(mux)
+	newRideRouter(newAnalyticsContractRideService(analyticsRepository{}, config), verifier).RegisterRoutes(mux)
 	request := httptest.NewRequest(
 		http.MethodGet,
 		api.V1Prefix+"/passengers/8/activity-summary",

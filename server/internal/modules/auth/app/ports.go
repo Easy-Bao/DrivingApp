@@ -27,6 +27,7 @@ type OTPStore interface {
 	Put(ctx context.Context, purpose, email, code string, ttl time.Duration) error
 	Verify(ctx context.Context, purpose, email, code string) error
 	Consume(ctx context.Context, purpose, email, code string) error
+	Delete(ctx context.Context, purpose, email string) error
 }
 
 // PendingRegistrationStore keeps incomplete registrations out of the user store
@@ -50,6 +51,7 @@ type SessionStore interface {
 // TokenIssuer keeps token signing behind the auth application boundary.
 type TokenIssuer interface {
 	Issue(subject string) (string, error)
+	IssueWithRole(subject, role string) (string, error)
 }
 
 // UserStore isolates account commands and queries from persistence details.

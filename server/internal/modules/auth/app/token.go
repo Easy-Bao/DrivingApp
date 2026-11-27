@@ -21,10 +21,6 @@ const _refreshTokenBytes = 32
 // that began just before another request rotated the same session.
 const RefreshTokenRotationGracePeriod = 30 * time.Second
 
-type roleTokenIssuer interface {
-	IssueWithRole(subject, role string) (string, error)
-}
-
 type SessionTokens struct {
 	AccessToken  string
 	RefreshToken string
@@ -34,16 +30,9 @@ func IssueToken(issuer TokenIssuer, subject string, role domain.Role) (string, e
 	if issuer == nil {
 		return "", errors.New("token issuer is nil")
 	}
-	if roleIssuer, ok := issuer.(roleTokenIssuer); ok {
-		token, err := roleIssuer.IssueWithRole(subject, string(role))
-		if err != nil {
-			return "", fmt.Errorf("issue role token: %w", err)
-		}
-		return token, nil
-	}
-	token, err := issuer.Issue(subject)
+	token, err := issuer.IssueWithRole(subject, string(role))
 	if err != nil {
-		return "", fmt.Errorf("issue token: %w", err)
+		return "", fmt.Errorf("issue role token: %w", err)
 	}
 	return token, nil
 }
