@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/app"
-	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
+	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/places/app"
+	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/places/domain"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 )

@@ -23,17 +23,20 @@ import (
 	dispatchwebsocket "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/transport/ws"
 	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/app"
 	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/transport/http"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/adapter/mapbox"
-	locationredis "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/adapter/redis"
-	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/app"
-	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
-	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/transport/http"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/places/adapter/mapbox"
+	placesredis "github.com/Easy-Bao/DrivingApp/server/internal/modules/places/adapter/redis"
+	placesapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/places/app"
+	placesdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/places/domain"
+	placeshttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/places/transport/http"
 	reviewapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/app"
 	reviewhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/transport/http"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/transport/http"
 	ridewebsocket "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/transport/ws"
+	trackingredis "github.com/Easy-Bao/DrivingApp/server/internal/modules/tracking/adapter/redis"
+	trackingapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/tracking/app"
+	trackinghttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/tracking/transport/http"
 	userapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/user/app"
 	userhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/user/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
@@ -157,7 +160,7 @@ func newHTTPRouter(
 		authhttp.WithOTPAttemptStore(dependencies.otpAttemptStore),
 	)
 
-	driverPresenceCache := locationredis.NewDriverPresenceCache(
+	driverPresenceCache := trackingredis.NewDriverPresenceCache(
 		redisClient,
 		profileStore.IsDriverOnline,
 		config.RideLifecycle.DriverLocationMaxAge,
@@ -204,10 +207,10 @@ func newHTTPRouter(
 		) (rideapplication.RouteMetrics, error) {
 			route, err := routingProvider.Route(
 				ctx,
-				locationdomain.Coordinates{Latitude: originLatitude, Longitude: originLongitude},
-				locationdomain.Coordinates{Latitude: destinationLatitude, Longitude: destinationLongitude},
-				locationdomain.RouteOptions{
-					Profile: locationdomain.RouteProfileDrivingTraffic,
+				placesdomain.Coordinates{Latitude: originLatitude, Longitude: originLongitude},
+				placesdomain.Coordinates{Latitude: destinationLatitude, Longitude: destinationLongitude},
+				placesdomain.RouteOptions{
+					Profile: placesdomain.RouteProfileDrivingTraffic,
 				},
 			)
 			if err != nil {
@@ -234,17 +237,17 @@ func newHTTPRouter(
 			Authority:     dispatchapplication.NewRideLookup(rideStore),
 		},
 	)
-	trackingService := locationapplication.NewTrackingService(
-		locationapplication.TrackingDependencies{
-			Repository: locationredis.NewDriverLocationStore(redisClient).
+	trackingService := trackingapplication.NewTrackingService(
+		trackingapplication.TrackingDependencies{
+			Repository: trackingredis.NewDriverLocationStore(redisClient).
 				WithTTL(config.RideLifecycle.DriverLocationMaxAge).
 				WithLogger(applicationLogger),
 			MaxAge: config.RideLifecycle.DriverLocationMaxAge,
 		},
-		locationapplication.WithRideAssignments(&trackingAssignmentAdapter{resolver: rideAssignments}),
-		locationapplication.WithDriverPresence(driverPresenceCache),
-		locationapplication.WithEventPublisher(eventPublisher),
-		locationapplication.WithLogger(applicationLogger),
+		trackingapplication.WithRideAssignments(&trackingAssignmentAdapter{resolver: rideAssignments}),
+		trackingapplication.WithDriverPresence(driverPresenceCache),
+		trackingapplication.WithEventPublisher(eventPublisher),
+		trackingapplication.WithLogger(applicationLogger),
 	)
 	ridesService := rideapplication.NewService(
 		rideapplication.Dependencies{
@@ -336,9 +339,9 @@ func newHTTPRouter(
 		Verifier:   verifier,
 		Authorizer: adminAuthorizer,
 	})
-	locationService := locationapplication.NewService(
-		locationapplication.Dependencies{Provider: routingProvider},
-		locationapplication.WithCache(locationredis.NewCache(redisClient)),
+	locationService := placesapplication.NewService(
+		placesapplication.Dependencies{Provider: routingProvider},
+		placesapplication.WithCache(placesredis.NewCache(redisClient)),
 	).WithLogger(applicationLogger)
 	passengerRideContextQuery := rideapplication.NewQueryService(
 		rideapplication.QueryDependencies{
@@ -359,7 +362,7 @@ func newHTTPRouter(
 	router.With(routeSecurity.Middleware(middleware.RouteRead)).Group(func(admin chi.Router) {
 		adminRouter.RegisterRoutes(admin)
 	})
-	locationhttp.NewRouter(locationService, verifier, routeSecurity).RegisterRoutes(router)
+	placeshttp.NewRouter(locationService, verifier, routeSecurity).RegisterRoutes(router)
 	ridehttp.NewPassengerContextRouter(ridehttp.PassengerContextDependencies{
 		Query:         passengerRideContextQuery,
 		Verifier:      verifier,
@@ -414,7 +417,7 @@ func newHTTPRouter(
 			websockethub.WithLogger(applicationLogger),
 		)).ServeHTTP,
 	)
-	locationhttp.NewTrackingRouter(locationhttp.TrackingDependencies{
+	trackinghttp.NewTrackingRouter(trackinghttp.TrackingDependencies{
 		Service:       trackingService,
 		Auth:          verifier,
 		RouteSecurity: routeSecurity,
@@ -456,14 +459,14 @@ type trackingAssignmentAdapter struct {
 func (adapter *trackingAssignmentAdapter) ForDriver(
 	ctx context.Context,
 	driverID string,
-) ([]locationapplication.RideAssignment, error) {
+) ([]trackingapplication.RideAssignment, error) {
 	items, err := adapter.resolver.ForDriver(ctx, driverID)
 	if err != nil {
 		return nil, err
 	}
-	result := make([]locationapplication.RideAssignment, 0, len(items))
+	result := make([]trackingapplication.RideAssignment, 0, len(items))
 	for _, item := range items {
-		result = append(result, locationapplication.RideAssignment{
+		result = append(result, trackingapplication.RideAssignment{
 			RideID:      item.RideID,
 			DriverID:    item.DriverID,
 			PassengerID: item.PassengerID,
@@ -476,12 +479,12 @@ func (adapter *trackingAssignmentAdapter) ForDriver(
 func (adapter *trackingAssignmentAdapter) ForRide(
 	ctx context.Context,
 	rideID string,
-) (locationapplication.RideAssignment, bool, error) {
+) (trackingapplication.RideAssignment, bool, error) {
 	item, found, err := adapter.resolver.ForRide(ctx, rideID)
 	if err != nil || !found {
-		return locationapplication.RideAssignment{}, found, err
+		return trackingapplication.RideAssignment{}, found, err
 	}
-	return locationapplication.RideAssignment{
+	return trackingapplication.RideAssignment{
 		RideID:      item.RideID,
 		DriverID:    item.DriverID,
 		PassengerID: item.PassengerID,

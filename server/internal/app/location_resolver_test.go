@@ -3,7 +3,7 @@ package app
 import (
 	"testing"
 
-	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
+	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/places/domain"
 )
 
 func TestFormatPlaceAddressFallsBackToPlaceName(t *testing.T) {

@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	locationapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/app"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
-	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/transport/http"
+	locationapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/tracking/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/tracking/domain"
+	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/tracking/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
