@@ -93,7 +93,7 @@ func (limiter *RateLimiter) policyMiddleware(routePolicy RoutePolicy, next http.
 		key := fmt.Sprintf(
 			"rate:%s:%s:%d",
 			policy.scope,
-			rateLimitClientKey(ClientIPFromRequest(request)),
+			RateLimitClientKey(ClientIPFromRequest(request)),
 			windowKey(time.Now(), limiter.config.Window),
 		)
 		count, err := limiter.store.Increment(request.Context(), key, limiter.config.Window)
@@ -198,7 +198,9 @@ func retryAfterSeconds(now time.Time, window time.Duration) int64 {
 	return max(1, seconds)
 }
 
-func rateLimitClientKey(clientIP string) string {
+// RateLimitClientKey normalizes a client IP for rate limiting, masking IPv6
+// addresses to their /64 prefix so a single allocation cannot rotate host bits.
+func RateLimitClientKey(clientIP string) string {
 	address, ok := parseRequestAddress(clientIP)
 	if !ok {
 		return clientIP

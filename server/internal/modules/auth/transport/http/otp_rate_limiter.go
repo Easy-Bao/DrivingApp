@@ -32,7 +32,13 @@ func (limiter *OTPVerificationRateLimiter) Middleware(next http.Handler) http.Ha
 			return
 		}
 
-		key := counterKey("ip", middleware.ClientIPFromRequest(request))
+		scope := "ip"
+		subject := middleware.RateLimitClientKey(middleware.ClientIPFromRequest(request))
+		if principal, ok := middleware.PrincipalFromRequest(request); ok && principal.UserID > 0 {
+			scope = "user"
+			subject = strconv.Itoa(principal.UserID)
+		}
+		key := counterKey(scope, subject)
 		count, err := limiter.store.Increment(
 			request.Context(),
 			key,
@@ -64,7 +70,7 @@ func (limiter *OTPVerificationRateLimiter) Middleware(next http.Handler) http.Ha
 					request.Context(),
 					"OTP verification attempts throttled",
 					"scope",
-					"ip",
+					scope,
 					"attempt_count",
 					count,
 				)
