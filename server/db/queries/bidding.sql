@@ -32,6 +32,41 @@ SELECT
     END
 FROM expired;
 
+-- name: ExpireAllElapsedBidSessions :execrows
+WITH targets AS (
+    SELECT bs.id
+    FROM bid_sessions AS bs
+    WHERE bs.status = 'open'
+      AND bs.expires_at <= sqlc.arg('expires_at')::timestamptz
+    ORDER BY bs.expires_at ASC
+    LIMIT sqlc.arg('limit')::int
+    FOR UPDATE OF bs SKIP LOCKED
+), expired AS (
+    UPDATE bid_sessions
+    SET status = 'expired'
+    WHERE bid_sessions.id IN (SELECT targets.id FROM targets)
+    RETURNING bid_sessions.id, bid_sessions.passenger_id,
+        bid_sessions.booking_reference, bid_sessions.target_driver_id
+), rejected_offers AS (
+    UPDATE bid_offers
+    SET status = 'rejected'
+    WHERE bid_offers.status = 'pending'
+      AND bid_offers.session_id IN (SELECT expired.id FROM expired)
+)
+INSERT INTO notifications (user_id, type, title, body)
+SELECT
+    expired.passenger_id,
+    'ride',
+    CASE
+        WHEN expired.target_driver_id IS NOT NULL THEN 'Driver timed out'
+        ELSE 'Ride request timed out'
+    END,
+    CASE
+        WHEN expired.target_driver_id IS NOT NULL THEN 'The driver did not respond to Booking ID - ' || expired.booking_reference || ' in time.'
+        ELSE 'Your ride request for Booking ID - ' || expired.booking_reference || ' timed out because no driver responded in time.'
+    END
+FROM expired;
+
 -- name: HasActiveBidSession :one
 SELECT EXISTS (
     SELECT 1

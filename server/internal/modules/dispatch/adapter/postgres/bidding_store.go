@@ -590,3 +590,38 @@ func (repository *Store) DeclineSession(ctx context.Context, sessionID, driverID
 	}
 	return session, nil
 }
+
+const _defaultSweepBatchSize = 200
+
+// ExpireAllElapsedBidSessions transitions overdue open bid sessions in bounded batches
+// without blocking concurrent acceptance or decline transactions.
+func (repository *Store) ExpireAllElapsedBidSessions(
+	ctx context.Context,
+	now time.Time,
+	batchSize int,
+) (int64, error) {
+	if err := repository.validate(); err != nil {
+		return 0, err
+	}
+	if now.IsZero() {
+		now = time.Now().UTC()
+	}
+	if batchSize <= 0 {
+		batchSize = _defaultSweepBatchSize
+	}
+	var total int64
+	for range 10 {
+		expired, err := repository.queries.ExpireAllElapsedBidSessions(ctx, databasepostgres.ExpireAllElapsedBidSessionsParams{
+			ExpiresAt: bidTimestamp(now.UTC()),
+			Limit:     int32(batchSize),
+		})
+		if err != nil {
+			return total, fmt.Errorf("sweep expired bid sessions: %w", err)
+		}
+		total += expired
+		if expired < int64(batchSize) {
+			break
+		}
+	}
+	return total, nil
+}

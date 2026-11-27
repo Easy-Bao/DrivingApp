@@ -354,6 +354,55 @@ func (q *Queries) DeclineTargetedBidSession(ctx context.Context, arg DeclineTarg
 	return i, err
 }
 
+const expireAllElapsedBidSessions = `-- name: ExpireAllElapsedBidSessions :execrows
+WITH targets AS (
+    SELECT bs.id
+    FROM bid_sessions AS bs
+    WHERE bs.status = 'open'
+      AND bs.expires_at <= $1::timestamptz
+    ORDER BY bs.expires_at ASC
+    LIMIT $2::int
+    FOR UPDATE OF bs SKIP LOCKED
+), expired AS (
+    UPDATE bid_sessions
+    SET status = 'expired'
+    WHERE bid_sessions.id IN (SELECT targets.id FROM targets)
+    RETURNING bid_sessions.id, bid_sessions.passenger_id,
+        bid_sessions.booking_reference, bid_sessions.target_driver_id
+), rejected_offers AS (
+    UPDATE bid_offers
+    SET status = 'rejected'
+    WHERE bid_offers.status = 'pending'
+      AND bid_offers.session_id IN (SELECT expired.id FROM expired)
+)
+INSERT INTO notifications (user_id, type, title, body)
+SELECT
+    expired.passenger_id,
+    'ride',
+    CASE
+        WHEN expired.target_driver_id IS NOT NULL THEN 'Driver timed out'
+        ELSE 'Ride request timed out'
+    END,
+    CASE
+        WHEN expired.target_driver_id IS NOT NULL THEN 'The driver did not respond to Booking ID - ' || expired.booking_reference || ' in time.'
+        ELSE 'Your ride request for Booking ID - ' || expired.booking_reference || ' timed out because no driver responded in time.'
+    END
+FROM expired
+`
+
+type ExpireAllElapsedBidSessionsParams struct {
+	ExpiresAt pgtype.Timestamptz `db:"expires_at"`
+	Limit     int32              `db:"limit"`
+}
+
+func (q *Queries) ExpireAllElapsedBidSessions(ctx context.Context, arg ExpireAllElapsedBidSessionsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, expireAllElapsedBidSessions, arg.ExpiresAt, arg.Limit)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const expireBidSessions = `-- name: ExpireBidSessions :exec
 WITH expired AS (
     UPDATE bid_sessions

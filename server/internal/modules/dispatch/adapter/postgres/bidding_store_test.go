@@ -136,4 +136,12 @@ func TestBiddingSQLQuerySafetyInvariants(t *testing.T) {
 	if !strings.Contains(lockDriverSQL, "FOR UPDATE OF driver_profiles") {
 		t.Fatalf("LockOnlineDriverProfileForBidding must lock only driver_profiles:\n%s", lockDriverSQL)
 	}
+
+	sweepSQL := extractQuery("ExpireAllElapsedBidSessions")
+	if !strings.Contains(sweepSQL, "FOR UPDATE") || !strings.Contains(sweepSQL, "SKIP LOCKED") {
+		t.Fatalf("ExpireAllElapsedBidSessions must use FOR UPDATE ... SKIP LOCKED:\n%s", sweepSQL)
+	}
+	if !strings.Contains(sweepSQL, "IN (SELECT expired.id FROM expired)") {
+		t.Fatalf("ExpireAllElapsedBidSessions must gate offer rejection on expired CTE:\n%s", sweepSQL)
+	}
 }

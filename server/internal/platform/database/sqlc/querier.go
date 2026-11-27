@@ -39,6 +39,7 @@ type Querier interface {
 	DeleteExpiredRefreshSessions(ctx context.Context, arg DeleteExpiredRefreshSessionsParams) (int64, error)
 	DeleteNotification(ctx context.Context, arg DeleteNotificationParams) (int64, error)
 	DeletePrivateObjectByStorageKey(ctx context.Context, storageKey string) error
+	ExpireAllElapsedBidSessions(ctx context.Context, arg ExpireAllElapsedBidSessionsParams) (int64, error)
 	ExpireBidSessions(ctx context.Context, arg ExpireBidSessionsParams) error
 	GetActiveRefreshSession(ctx context.Context, arg GetActiveRefreshSessionParams) (GetActiveRefreshSessionRow, error)
 	GetActiveRefreshSessionForUpdate(ctx context.Context, arg GetActiveRefreshSessionForUpdateParams) (GetActiveRefreshSessionForUpdateRow, error)

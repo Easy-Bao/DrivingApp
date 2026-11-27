@@ -30,6 +30,7 @@ import (
 
 const (
 	_defaultPruneRefreshInterval = 15 * time.Minute
+	_defaultSweepBidInterval     = 10 * time.Second
 	_defaultBackgroundTimeout    = 10 * time.Second
 )
 
@@ -42,6 +43,8 @@ type Application struct {
 	migrateChatHistory   func(context.Context) error
 	pruneRefreshSessions func(context.Context) (int64, error)
 	pruneRefreshInterval time.Duration
+	expireBidSessions    func(context.Context) (int64, error)
+	expireBidInterval    time.Duration
 	logger               *slog.Logger
 }
 
@@ -226,7 +229,11 @@ func New(ctx context.Context, config Config) (*Application, error) {
 			return sessionStore.PruneExpired(taskCtx, now, now.Add(-24*time.Hour), 500)
 		},
 		pruneRefreshInterval: _defaultPruneRefreshInterval,
-		logger:               applicationLogger,
+		expireBidSessions: func(taskCtx context.Context) (int64, error) {
+			return dispatchStore.ExpireAllElapsedBidSessions(taskCtx, time.Now().UTC(), 200)
+		},
+		expireBidInterval: _defaultSweepBidInterval,
+		logger:            applicationLogger,
 	}
 	application.server.RegisterOnShutdown(eventHub.Close)
 	closePostgresPool = false
@@ -291,34 +298,30 @@ func (application *Application) Run(ctx context.Context) error {
 	} else {
 		close(migrationDone)
 	}
-	pruneDone := make(chan struct{})
-	if application.pruneRefreshSessions != nil {
-		interval := application.pruneRefreshInterval
-		if interval <= 0 {
-			interval = _defaultPruneRefreshInterval
-		}
-		go func() {
-			defer close(pruneDone)
-			runPeriodicTask(
-				monitorContext,
-				applicationLogger,
-				"prune expired refresh sessions",
-				interval,
-				_defaultBackgroundTimeout,
-				func(taskCtx context.Context) error {
-					_, err := application.pruneRefreshSessions(taskCtx)
-					return err
-				},
-			)
-		}()
-	} else {
-		close(pruneDone)
-	}
+	pruneDone := startPeriodicTask(
+		monitorContext,
+		applicationLogger,
+		"prune expired refresh sessions",
+		application.pruneRefreshInterval,
+		_defaultPruneRefreshInterval,
+		_defaultBackgroundTimeout,
+		application.pruneRefreshSessions,
+	)
+	sweepBidsDone := startPeriodicTask(
+		monitorContext,
+		applicationLogger,
+		"sweep expired bid sessions",
+		application.expireBidInterval,
+		_defaultSweepBidInterval,
+		_defaultBackgroundTimeout,
+		application.expireBidSessions,
+	)
 	defer func() {
 		stopMonitoring()
 		<-monitorDone
 		<-migrationDone
 		<-pruneDone
+		<-sweepBidsDone
 	}()
 
 	serverErrors := make(chan error, 1)
@@ -408,6 +411,33 @@ func subscriberEarlyExitError(ctx context.Context, subscriberErr error) error {
 		return nil
 	}
 	return errors.New("realtime event subscriber stopped before subscribing")
+}
+
+func startPeriodicTask(
+	ctx context.Context,
+	logger *slog.Logger,
+	name string,
+	interval time.Duration,
+	defaultInterval time.Duration,
+	timeout time.Duration,
+	run func(context.Context) (int64, error),
+) <-chan struct{} {
+	done := make(chan struct{})
+	if run == nil {
+		close(done)
+		return done
+	}
+	if interval <= 0 {
+		interval = defaultInterval
+	}
+	go func() {
+		defer close(done)
+		runPeriodicTask(ctx, logger, name, interval, timeout, func(taskCtx context.Context) error {
+			_, err := run(taskCtx)
+			return err
+		})
+	}()
+	return done
 }
 
 func runPeriodicTask(
