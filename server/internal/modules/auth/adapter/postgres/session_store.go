@@ -171,6 +171,39 @@ func (repository *RefreshSessionRepository) RevokeAll(ctx context.Context, userI
 	return nil
 }
 
+const _defaultPruneBatchSize = 500
+
+// PruneExpired deletes expired and previously revoked refresh sessions in bounded batches.
+func (repository *RefreshSessionRepository) PruneExpired(
+	ctx context.Context,
+	now time.Time,
+	revokedBefore time.Time,
+	batchSize int,
+) (int64, error) {
+	if err := repository.validate(); err != nil {
+		return 0, fmt.Errorf("validate refresh session repository: %w", err)
+	}
+	if batchSize <= 0 {
+		batchSize = _defaultPruneBatchSize
+	}
+	var total int64
+	for range 10 {
+		deleted, err := repository.queries.DeleteExpiredRefreshSessions(ctx, databasepostgres.DeleteExpiredRefreshSessionsParams{
+			Now:           toPostgresTimestamp(now.UTC()),
+			RevokedBefore: toPostgresTimestamp(revokedBefore.UTC()),
+			Limit:         int32(batchSize),
+		})
+		if err != nil {
+			return total, fmt.Errorf("prune expired refresh sessions: %w", err)
+		}
+		total += deleted
+		if deleted < int64(batchSize) {
+			break
+		}
+	}
+	return total, nil
+}
+
 func (repository *RefreshSessionRepository) validate() error {
 	if repository == nil {
 		return errors.New("postgresql refresh session repository is not initialized")

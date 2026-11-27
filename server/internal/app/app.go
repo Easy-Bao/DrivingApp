@@ -28,14 +28,21 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+const (
+	_defaultPruneRefreshInterval = 15 * time.Minute
+	_defaultBackgroundTimeout    = 10 * time.Second
+)
+
 type Application struct {
-	server             *http.Server
-	postgresPool       *pgxpool.Pool
-	redisClient        redisClient
-	eventHub           *websockethub.Hub
-	eventSubscriber    eventSubscriber
-	migrateChatHistory func(context.Context) error
-	logger             *slog.Logger
+	server               *http.Server
+	postgresPool         *pgxpool.Pool
+	redisClient          redisClient
+	eventHub             *websockethub.Hub
+	eventSubscriber      eventSubscriber
+	migrateChatHistory   func(context.Context) error
+	pruneRefreshSessions func(context.Context) (int64, error)
+	pruneRefreshInterval time.Duration
+	logger               *slog.Logger
 }
 
 type eventSubscriber interface {
@@ -214,7 +221,12 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		eventHub:           eventHub,
 		eventSubscriber:    eventSubscriber,
 		migrateChatHistory: chatStore.MigrateLegacyRedisRooms,
-		logger:             applicationLogger,
+		pruneRefreshSessions: func(taskCtx context.Context) (int64, error) {
+			now := time.Now().UTC()
+			return sessionStore.PruneExpired(taskCtx, now, now.Add(-24*time.Hour), 500)
+		},
+		pruneRefreshInterval: _defaultPruneRefreshInterval,
+		logger:               applicationLogger,
 	}
 	application.server.RegisterOnShutdown(eventHub.Close)
 	closePostgresPool = false
@@ -279,10 +291,34 @@ func (application *Application) Run(ctx context.Context) error {
 	} else {
 		close(migrationDone)
 	}
+	pruneDone := make(chan struct{})
+	if application.pruneRefreshSessions != nil {
+		interval := application.pruneRefreshInterval
+		if interval <= 0 {
+			interval = _defaultPruneRefreshInterval
+		}
+		go func() {
+			defer close(pruneDone)
+			runPeriodicTask(
+				monitorContext,
+				applicationLogger,
+				"prune expired refresh sessions",
+				interval,
+				_defaultBackgroundTimeout,
+				func(taskCtx context.Context) error {
+					_, err := application.pruneRefreshSessions(taskCtx)
+					return err
+				},
+			)
+		}()
+	} else {
+		close(pruneDone)
+	}
 	defer func() {
 		stopMonitoring()
 		<-monitorDone
 		<-migrationDone
+		<-pruneDone
 	}()
 
 	serverErrors := make(chan error, 1)
@@ -372,4 +408,32 @@ func subscriberEarlyExitError(ctx context.Context, subscriberErr error) error {
 		return nil
 	}
 	return errors.New("realtime event subscriber stopped before subscribing")
+}
+
+func runPeriodicTask(
+	ctx context.Context,
+	logger *slog.Logger,
+	name string,
+	interval time.Duration,
+	timeout time.Duration,
+	tick func(context.Context) error,
+) {
+	if tick == nil || interval <= 0 {
+		return
+	}
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			taskCtx, cancel := context.WithTimeout(ctx, timeout)
+			err := tick(taskCtx)
+			cancel()
+			if err != nil && !errors.Is(err, context.Canceled) && logger != nil {
+				logger.Warn(name+" failed", "error", err)
+			}
+		}
+	}
 }

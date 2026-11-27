@@ -55,6 +55,7 @@ type TokenIssuer interface {
 // UserStore isolates account commands and queries from persistence details.
 type UserStore interface {
 	Create(ctx context.Context, user domain.User) (domain.User, error)
+	CreateWithSession(ctx context.Context, user domain.User, session domain.RefreshSession) (domain.User, error)
 	FindByEmail(ctx context.Context, email string) (domain.User, error)
 	FindByID(ctx context.Context, id int) (domain.User, error)
 	UpdatePassword(ctx context.Context, id int, passwordHash string) error
@@ -68,4 +69,5 @@ type UserStore interface {
 type VerifiedUserStore interface {
 	UserStore
 	MarkVerified(ctx context.Context, id int) error
+	MarkVerifiedWithSession(ctx context.Context, id int, session domain.RefreshSession) error
 }

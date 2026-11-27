@@ -206,65 +206,105 @@ func (service *OTPService) RequestVerification(ctx context.Context, email string
 }
 
 func (service *OTPService) VerifyPassenger(ctx context.Context, email, code string) (domain.User, string, error) {
+	account, tokens, err := service.verifyPassenger(ctx, email, code, false)
+	return account, tokens.AccessToken, err
+}
+
+// VerifyPassengerSession consumes the verification OTP, persists verification/account creation
+// atomically with a refresh session, and returns both access and refresh tokens.
+func (service *OTPService) VerifyPassengerSession(ctx context.Context, email, code string) (domain.User, SessionTokens, error) {
+	return service.verifyPassenger(ctx, email, code, true)
+}
+
+func (service *OTPService) verifyPassenger(
+	ctx context.Context,
+	email string,
+	code string,
+	withSession bool,
+) (domain.User, SessionTokens, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 	if service == nil || service.store == nil || service.users == nil {
-		return domain.User{}, "", domain.ErrOTPUnavailable
+		return domain.User{}, SessionTokens{}, domain.ErrOTPUnavailable
+	}
+	if withSession && service.sessions == nil {
+		return domain.User{}, SessionTokens{}, domain.ErrRefreshSessionUnavailable
 	}
 	code = strings.TrimSpace(code)
 	if code == "" {
-		return domain.User{}, "", domain.ErrOTPRequired
+		return domain.User{}, SessionTokens{}, domain.ErrOTPRequired
 	}
 	if err := service.store.Consume(ctx, "verification", email, code); err != nil {
 		if errors.Is(err, domain.ErrInvalidOTP) || errors.Is(err, domain.ErrOTPMaxAttemptsExceeded) {
-			return domain.User{}, "", err
+			return domain.User{}, SessionTokens{}, err
 		}
 		service.log().WarnContext(ctx, "consume passenger verification otp failed", "error", err)
-		return domain.User{}, "", domain.ErrOTPUnavailable
+		return domain.User{}, SessionTokens{}, domain.ErrOTPUnavailable
 	}
 	account, err := service.users.FindByEmail(ctx, email)
 	if err == nil && account.ID != 0 {
 		if account.Role != domain.Passenger || account.IsVerified {
-			return domain.User{}, "", domain.ErrInvalidOTP
+			return domain.User{}, SessionTokens{}, domain.ErrInvalidOTP
 		}
 		if !account.IsActive() {
-			return domain.User{}, "", domain.ErrAccountSuspended
+			return domain.User{}, SessionTokens{}, domain.ErrAccountSuspended
 		}
-		if err := service.users.MarkVerified(ctx, account.ID); err != nil {
-			return domain.User{}, "", fmt.Errorf("mark passenger verified: %w", err)
+		accessToken, err := IssueToken(service.tokens, strconv.Itoa(account.ID), account.Role)
+		if err != nil {
+			return domain.User{}, SessionTokens{}, fmt.Errorf("issue verified passenger token: %w", err)
+		}
+		var tokens SessionTokens
+		tokens.AccessToken = accessToken
+		if withSession {
+			refreshToken, session, err := NewRefreshSession(account.ID, time.Now().UTC())
+			if err != nil {
+				return domain.User{}, SessionTokens{}, UnavailableError(err)
+			}
+			if err := service.users.MarkVerifiedWithSession(ctx, account.ID, session); err != nil {
+				return domain.User{}, SessionTokens{}, fmt.Errorf("mark passenger verified with session: %w", err)
+			}
+			tokens.RefreshToken = refreshToken
+		} else if err := service.users.MarkVerified(ctx, account.ID); err != nil {
+			return domain.User{}, SessionTokens{}, fmt.Errorf("mark passenger verified: %w", err)
 		}
 		account.IsVerified = true
-		token, err := IssueToken(service.tokens, strconv.Itoa(account.ID), account.Role)
-		if err != nil {
-			return domain.User{}, "", fmt.Errorf("issue verified passenger token: %w", err)
-		}
-		return account, token, nil
+		return account, tokens, nil
 	}
 	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
 		service.log().WarnContext(ctx, "find account for passenger verification failed", "error", err)
-		return domain.User{}, "", domain.ErrOTPUnavailable
+		return domain.User{}, SessionTokens{}, domain.ErrOTPUnavailable
 	}
 	if service.pending == nil || service.registrations == nil {
-		return domain.User{}, "", domain.ErrInvalidOTP
+		return domain.User{}, SessionTokens{}, domain.ErrInvalidOTP
 	}
 	registration, err := service.pending.Get(ctx, email)
 	if err != nil {
 		if errors.Is(err, domain.ErrPendingRegistrationNotFound) {
-			return domain.User{}, "", domain.ErrInvalidOTP
+			return domain.User{}, SessionTokens{}, domain.ErrInvalidOTP
 		}
 		service.log().WarnContext(ctx, "find pending registration for passenger verification failed", "error", err)
-		return domain.User{}, "", domain.ErrOTPUnavailable
+		return domain.User{}, SessionTokens{}, domain.ErrOTPUnavailable
 	}
 	if registration.Role != domain.Passenger {
-		return domain.User{}, "", domain.ErrInvalidOTP
+		return domain.User{}, SessionTokens{}, domain.ErrInvalidOTP
 	}
-	account, token, err := service.registrations.CommitPendingPassenger(ctx, registration)
-	if err != nil {
-		return domain.User{}, "", fmt.Errorf("commit pending passenger registration: %w", err)
+	var tokens SessionTokens
+	if withSession {
+		account, tokens, err = service.registrations.CommitPendingPassengerSession(ctx, registration)
+		if err != nil {
+			return domain.User{}, SessionTokens{}, fmt.Errorf("commit pending passenger registration with session: %w", err)
+		}
+	} else {
+		var accessToken string
+		account, accessToken, err = service.registrations.CommitPendingPassenger(ctx, registration)
+		if err != nil {
+			return domain.User{}, SessionTokens{}, fmt.Errorf("commit pending passenger registration: %w", err)
+		}
+		tokens.AccessToken = accessToken
 	}
 	if err := service.pending.Delete(ctx, registration.Email); err != nil {
 		service.log().WarnContext(ctx, "remove verified passenger registration cleanup", "error", err)
 	}
-	return account, token, nil
+	return account, tokens, nil
 }
 
 func (service *OTPService) IssueRefreshToken(ctx context.Context, account domain.User) (string, error) {

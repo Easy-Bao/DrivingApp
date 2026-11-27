@@ -100,16 +100,21 @@ func IssueRefreshToken(
 	return refreshToken, nil
 }
 
-func ReplacementRefreshSession(userID int, now time.Time) (string, domain.RefreshSession, error) {
+// NewRefreshSession generates an opaque refresh token and its hashed persistence record.
+func NewRefreshSession(userID int, now time.Time) (string, domain.RefreshSession, error) {
 	refreshToken, tokenHash, err := newRefreshToken()
 	if err != nil {
-		return "", domain.RefreshSession{}, fmt.Errorf("generate replacement refresh token: %w", err)
+		return "", domain.RefreshSession{}, fmt.Errorf("generate refresh token: %w", err)
 	}
 	return refreshToken, domain.RefreshSession{
 		UserID:    userID,
 		TokenHash: tokenHash,
-		ExpiresAt: now.Add(refreshTokenLifetime()),
+		ExpiresAt: now.UTC().Add(refreshTokenLifetime()),
 	}, nil
+}
+
+func ReplacementRefreshSession(userID int, now time.Time) (string, domain.RefreshSession, error) {
+	return NewRefreshSession(userID, now)
 }
 
 func newRefreshToken() (string, string, error) {

@@ -21,6 +21,14 @@ func (store *emailChangeUsers) Create(_ context.Context, account domain.User) (d
 	return account, nil
 }
 
+func (store *emailChangeUsers) CreateWithSession(
+	ctx context.Context,
+	account domain.User,
+	_ domain.RefreshSession,
+) (domain.User, error) {
+	return store.Create(ctx, account)
+}
+
 func (store *emailChangeUsers) FindByEmail(_ context.Context, email string) (domain.User, error) {
 	for _, account := range store.accounts {
 		if strings.EqualFold(account.Email, email) {
@@ -56,6 +64,14 @@ func (store *emailChangeUsers) MarkVerified(_ context.Context, userID int) error
 	account.IsVerified = true
 	store.accounts[userID] = account
 	return nil
+}
+
+func (store *emailChangeUsers) MarkVerifiedWithSession(
+	ctx context.Context,
+	userID int,
+	_ domain.RefreshSession,
+) error {
+	return store.MarkVerified(ctx, userID)
 }
 
 func (store *emailChangeUsers) UpdateEmail(

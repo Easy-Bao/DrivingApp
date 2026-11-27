@@ -43,3 +43,14 @@ SET revoked_at = $2,
     rotation_grace_until = NULL
 WHERE user_id = $1
   AND (revoked_at IS NULL OR rotation_grace_until > $2);
+
+-- name: DeleteExpiredRefreshSessions :execrows
+DELETE FROM refresh_sessions
+WHERE id IN (
+    SELECT id
+    FROM refresh_sessions
+    WHERE expires_at <= sqlc.arg('now')::timestamptz
+       OR (revoked_at IS NOT NULL AND revoked_at <= sqlc.arg('revoked_before')::timestamptz)
+    ORDER BY id
+    LIMIT sqlc.arg('limit')::int
+);

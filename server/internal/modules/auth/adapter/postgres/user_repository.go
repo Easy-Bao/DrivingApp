@@ -35,11 +35,30 @@ func NewUserRepository(pool *pgxpool.Pool) (*UserRepository, error) {
 }
 
 func (repository *UserRepository) Create(ctx context.Context, account domain.User) (domain.User, error) {
+	return repository.createAccount(ctx, account, nil)
+}
+
+func (repository *UserRepository) CreateWithSession(
+	ctx context.Context,
+	account domain.User,
+	session domain.RefreshSession,
+) (domain.User, error) {
+	return repository.createAccount(ctx, account, &session)
+}
+
+func (repository *UserRepository) createAccount(
+	ctx context.Context,
+	account domain.User,
+	session *domain.RefreshSession,
+) (domain.User, error) {
 	if err := repository.validate(); err != nil {
 		return domain.User{}, fmt.Errorf("validate user repository: %w", err)
 	}
 	if err := validateUserRole(account.Role); err != nil {
 		return domain.User{}, err
+	}
+	if session != nil && session.TokenHash == "" {
+		return domain.User{}, fmt.Errorf("%w: refresh session token hash is required", domain.ErrRefreshSessionUnavailable)
 	}
 
 	transaction, err := repository.pool.Begin(ctx)
@@ -84,6 +103,16 @@ func (repository *UserRepository) Create(ctx context.Context, account domain.Use
 		return domain.User{}, fmt.Errorf("create %s profile: %w", account.Role, err)
 	}
 
+	if session != nil {
+		if err := transactionQueries.CreateRefreshSession(ctx, databasepostgres.CreateRefreshSessionParams{
+			UserID:    created.ID,
+			TokenHash: session.TokenHash,
+			ExpiresAt: toPostgresTimestamp(session.ExpiresAt),
+		}); err != nil {
+			return domain.User{}, fmt.Errorf("%w: create initial refresh session: %w", domain.ErrRefreshSessionUnavailable, err)
+		}
+	}
+
 	if err := transaction.Commit(ctx); err != nil {
 		return domain.User{}, fmt.Errorf("commit user creation transaction: %w", err)
 	}
@@ -110,6 +139,50 @@ func (repository *UserRepository) MarkVerified(ctx context.Context, userID int) 
 	}
 	if rows == 0 {
 		return fmt.Errorf("mark user %d verified: %w", userID, domain.ErrInvalidOTP)
+	}
+	return nil
+}
+
+func (repository *UserRepository) MarkVerifiedWithSession(
+	ctx context.Context,
+	userID int,
+	session domain.RefreshSession,
+) error {
+	if err := repository.validate(); err != nil {
+		return fmt.Errorf("validate user repository: %w", err)
+	}
+	if session.TokenHash == "" {
+		return fmt.Errorf("%w: refresh session token hash is required", domain.ErrRefreshSessionUnavailable)
+	}
+	dbUserID, err := toPostgresUserID(userID)
+	if err != nil {
+		return fmt.Errorf("convert user id: %w", err)
+	}
+	transaction, err := repository.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin verification transaction: %w", err)
+	}
+	defer func() {
+		platformdatabase.Rollback(ctx, transaction)
+	}()
+
+	txQueries := repository.queries.WithTx(transaction)
+	rows, err := txQueries.MarkUserVerified(ctx, dbUserID)
+	if err != nil {
+		return fmt.Errorf("mark user %d verified: %w", userID, err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("mark user %d verified: %w", userID, domain.ErrInvalidOTP)
+	}
+	if err := txQueries.CreateRefreshSession(ctx, databasepostgres.CreateRefreshSessionParams{
+		UserID:    dbUserID,
+		TokenHash: session.TokenHash,
+		ExpiresAt: toPostgresTimestamp(session.ExpiresAt),
+	}); err != nil {
+		return fmt.Errorf("%w: create verified refresh session: %w", domain.ErrRefreshSessionUnavailable, err)
+	}
+	if err := transaction.Commit(ctx); err != nil {
+		return fmt.Errorf("commit verification transaction: %w", err)
 	}
 	return nil
 }

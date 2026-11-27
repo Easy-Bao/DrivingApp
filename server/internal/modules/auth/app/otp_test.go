@@ -19,6 +19,9 @@ type otpRepository struct {
 func (repository *otpRepository) Create(context.Context, domain.User) (domain.User, error) {
 	return repository.account, nil
 }
+func (repository *otpRepository) CreateWithSession(_ context.Context, _ domain.User, _ domain.RefreshSession) (domain.User, error) {
+	return repository.account, nil
+}
 func (repository *otpRepository) FindByEmail(context.Context, string) (domain.User, error) {
 	return repository.account, nil
 }
@@ -27,6 +30,10 @@ func (repository *otpRepository) FindByID(context.Context, int) (domain.User, er
 }
 func (repository *otpRepository) UpdatePassword(context.Context, int, string) error { return nil }
 func (repository *otpRepository) MarkVerified(context.Context, int) error {
+	repository.marked = true
+	return nil
+}
+func (repository *otpRepository) MarkVerifiedWithSession(context.Context, int, domain.RefreshSession) error {
 	repository.marked = true
 	return nil
 }

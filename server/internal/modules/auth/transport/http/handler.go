@@ -89,7 +89,7 @@ func (handler *Handler) registerDecoded(
 		})
 		return
 	}
-	account, token, err := handler.register.Driver(
+	account, tokens, err := handler.register.DriverSession(
 		r.Context(),
 		toRegisterInput(input),
 	)
@@ -97,14 +97,9 @@ func (handler *Handler) registerDecoded(
 		response.Error(w, registrationErrorStatus(err), safeAuthError(err))
 		return
 	}
-	refreshToken, err := handler.register.IssueRefreshToken(r.Context(), account)
-	if err != nil {
-		response.Error(w, http.StatusServiceUnavailable, safeAuthError(err))
-		return
-	}
 	response.JSON(w, http.StatusCreated, authSessionResponse(
 		account,
-		authapp.SessionTokens{AccessToken: token, RefreshToken: refreshToken},
+		tokens,
 		!account.IsVerified,
 		false,
 	))
@@ -222,20 +217,14 @@ func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, token, err := handler.otp.VerifyPassenger(r.Context(), input.Email, input.Code)
-
+	account, tokens, err := handler.otp.VerifyPassengerSession(r.Context(), input.Email, input.Code)
 	if err != nil {
 		writeOTPError(w, err)
 		return
 	}
-	refreshToken, err := handler.otp.IssueRefreshToken(r.Context(), account)
-	if err != nil {
-		response.Error(w, http.StatusServiceUnavailable, safeAuthError(err))
-		return
-	}
 	response.JSON(w, http.StatusOK, authSessionResponse(
 		account,
-		authapp.SessionTokens{AccessToken: token, RefreshToken: refreshToken},
+		tokens,
 		false,
 		true,
 	))
@@ -381,7 +370,9 @@ func registrationErrorStatus(err error) int {
 	switch {
 	case errors.Is(err, domain.ErrEmailTaken), errors.Is(err, domain.ErrAccountConflict):
 		return http.StatusConflict
-	case errors.Is(err, domain.ErrOTPUnavailable), errors.Is(err, authapp.ErrRegistrationUnavailable):
+	case errors.Is(err, domain.ErrOTPUnavailable),
+		errors.Is(err, authapp.ErrRegistrationUnavailable),
+		errors.Is(err, domain.ErrRefreshSessionUnavailable):
 		return http.StatusServiceUnavailable
 	case errors.Is(err, domain.ErrInvalidCredentials),
 		errors.Is(err, domain.ErrInvalidEmail),

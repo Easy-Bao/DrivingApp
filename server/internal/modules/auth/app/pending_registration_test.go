@@ -317,8 +317,10 @@ func TestRegisterPassengerRejectsSuspendedUnverifiedAccount(t *testing.T) {
 }
 
 type pendingUserRepository struct {
-	users map[string]domain.User
-	next  int
+	users                map[string]domain.User
+	sessions             []domain.RefreshSession
+	next                 int
+	createWithSessionErr error
 }
 
 func newPendingUserRepository() *pendingUserRepository {
@@ -330,6 +332,23 @@ func (repository *pendingUserRepository) Create(_ context.Context, account domai
 	account.ID = repository.next
 	repository.users[account.Email] = account
 	return account, nil
+}
+
+func (repository *pendingUserRepository) CreateWithSession(
+	ctx context.Context,
+	account domain.User,
+	session domain.RefreshSession,
+) (domain.User, error) {
+	if repository.createWithSessionErr != nil {
+		return domain.User{}, repository.createWithSessionErr
+	}
+	created, err := repository.Create(ctx, account)
+	if err != nil {
+		return domain.User{}, err
+	}
+	session.UserID = created.ID
+	repository.sessions = append(repository.sessions, session)
+	return created, nil
 }
 
 func (repository *pendingUserRepository) FindByEmail(_ context.Context, email string) (domain.User, error) {
@@ -369,6 +388,22 @@ func (repository *pendingUserRepository) MarkVerified(_ context.Context, id int)
 	return nil
 }
 
+func (repository *pendingUserRepository) MarkVerifiedWithSession(
+	ctx context.Context,
+	id int,
+	session domain.RefreshSession,
+) error {
+	if repository.createWithSessionErr != nil {
+		return repository.createWithSessionErr
+	}
+	if err := repository.MarkVerified(ctx, id); err != nil {
+		return err
+	}
+	session.UserID = id
+	repository.sessions = append(repository.sessions, session)
+	return nil
+}
+
 type pendingRegistrationStore struct {
 	registration *domain.PendingRegistration
 	deleteErr    error
@@ -403,4 +438,45 @@ func (store *pendingRegistrationStore) Delete(_ context.Context, _ string) error
 
 func (repository *pendingUserRepository) UpgradePasswordHash(_ context.Context, id int, expectedHash, passwordHash string) (bool, error) {
 	return false, nil
+}
+
+func TestVerifyPassengerSessionPreservesPendingWhenSessionFails(t *testing.T) {
+	repository := newPendingUserRepository()
+	pending := &pendingRegistrationStore{}
+	gateway := &otpGateway{}
+	sessions := newTestRefreshSessionStore()
+	register := newTestRegisterService(authapp.RegisterDependencies{
+		Repository: repository,
+		Tokens:     otpIssuer{},
+		Sessions:   sessions,
+	})
+	service := authapp.NewOTPService(
+		authapp.OTPDependencies{
+			Users:    repository,
+			Store:    &otpMemoryStore{values: map[string]string{}},
+			Gateway:  gateway,
+			Tokens:   otpIssuer{},
+			Sessions: sessions,
+		},
+		authapp.WithPendingRegistration(pending, register),
+	)
+
+	registration, err := service.RegisterPassenger(context.Background(), authapp.RegisterInput{
+		Email: "atomic@example.test", Phone: "+639171234514", Name: "Passenger", Password: "secret-8",
+	})
+	if err != nil {
+		t.Fatalf("register passenger: %v", err)
+	}
+	repository.createWithSessionErr = domain.ErrRefreshSessionUnavailable
+
+	_, _, err = service.VerifyPassengerSession(context.Background(), registration.Email, gateway.sent)
+	if !errors.Is(err, domain.ErrRefreshSessionUnavailable) {
+		t.Fatalf("VerifyPassengerSession() error = %v, want ErrRefreshSessionUnavailable", err)
+	}
+	if len(repository.users) != 0 {
+		t.Fatalf("expected atomic rollback leaving 0 users, got %d", len(repository.users))
+	}
+	if _, pendingErr := pending.Get(context.Background(), registration.Email); pendingErr != nil {
+		t.Fatalf("expected pending registration to remain preserved, got %v", pendingErr)
+	}
 }

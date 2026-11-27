@@ -12,8 +12,10 @@ import (
 )
 
 type repository struct {
-	users map[string]domain.User
-	next  int
+	users                map[string]domain.User
+	sessions             []domain.RefreshSession
+	next                 int
+	createWithSessionErr error
 }
 
 func (r *repository) Create(_ context.Context, account domain.User) (domain.User, error) {
@@ -21,6 +23,22 @@ func (r *repository) Create(_ context.Context, account domain.User) (domain.User
 	account.ID = r.next
 	r.users[account.Email] = account
 	return account, nil
+}
+func (r *repository) CreateWithSession(
+	ctx context.Context,
+	account domain.User,
+	session domain.RefreshSession,
+) (domain.User, error) {
+	if r.createWithSessionErr != nil {
+		return domain.User{}, r.createWithSessionErr
+	}
+	created, err := r.Create(ctx, account)
+	if err != nil {
+		return domain.User{}, err
+	}
+	session.UserID = created.ID
+	r.sessions = append(r.sessions, session)
+	return created, nil
 }
 func (r *repository) FindByEmail(_ context.Context, email string) (domain.User, error) {
 	account, ok := r.users[email]
@@ -324,4 +342,34 @@ func (r *repository) UpgradePasswordHash(_ context.Context, id int, expectedHash
 		}
 	}
 	return false, nil
+}
+
+func TestDriverSessionDoesNotCreateUserWhenSessionFails(t *testing.T) {
+	repo := &repository{
+		users:                map[string]domain.User{},
+		createWithSessionErr: domain.ErrRefreshSessionUnavailable,
+	}
+	service := newTestRegisterService(authapp.RegisterDependencies{
+		Repository: repo,
+		Tokens:     issuer{},
+		Sessions:   newTestRefreshSessionStore(),
+	})
+
+	_, _, err := service.DriverSession(
+		context.Background(),
+		authapp.RegisterInput{
+			Email:       "driver@example.test",
+			Phone:       "+639171234502",
+			Name:        "Driver",
+			Password:    "secret-8",
+			VehicleType: "Sedan",
+			PlateNumber: "ABC 123",
+		},
+	)
+	if !errors.Is(err, domain.ErrRefreshSessionUnavailable) {
+		t.Fatalf("DriverSession() error = %v, want ErrRefreshSessionUnavailable", err)
+	}
+	if len(repo.users) != 0 {
+		t.Fatalf("expected atomic rollback leaving 0 users, got %d", len(repo.users))
+	}
 }

@@ -27,6 +27,14 @@ func (repository *repository) Create(_ context.Context, account domain.User) (do
 	return account, nil
 }
 
+func (repository *repository) CreateWithSession(
+	ctx context.Context,
+	account domain.User,
+	_ domain.RefreshSession,
+) (domain.User, error) {
+	return repository.Create(ctx, account)
+}
+
 func (repository *repository) FindByEmail(_ context.Context, email string) (domain.User, error) {
 	return repository.users[email], nil
 }
@@ -59,6 +67,14 @@ func (repository *repository) MarkVerified(_ context.Context, id int) error {
 		}
 	}
 	return domain.ErrUserNotFound
+}
+
+func (repository *repository) MarkVerifiedWithSession(
+	ctx context.Context,
+	id int,
+	_ domain.RefreshSession,
+) error {
+	return repository.MarkVerified(ctx, id)
 }
 
 type resetOTPStore struct {

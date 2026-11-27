@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
@@ -59,6 +60,39 @@ func (service *RegisterService) Driver(ctx context.Context, input RegisterInput)
 	return service.register(ctx, input, domain.Driver)
 }
 
+// DriverSession atomically registers a driver account and creates its initial refresh session.
+func (service *RegisterService) DriverSession(ctx context.Context, input RegisterInput) (domain.User, SessionTokens, error) {
+	if service == nil || service.repository == nil {
+		return domain.User{}, SessionTokens{}, ErrRegistrationUnavailable
+	}
+	if service.sessions == nil {
+		return domain.User{}, SessionTokens{}, domain.ErrRefreshSessionUnavailable
+	}
+	if service.tokens == nil {
+		return domain.User{}, SessionTokens{}, ErrRegistrationUnavailable
+	}
+	normalized, err := normalizeInput(input, domain.Driver, service.hashPassword)
+	if err != nil {
+		return domain.User{}, SessionTokens{}, fmt.Errorf("normalize driver registration input: %w", err)
+	}
+	existing, err := service.repository.FindByEmail(ctx, normalized.Email)
+	if err == nil && existing.ID != 0 {
+		return domain.User{}, SessionTokens{}, domain.ErrEmailTaken
+	}
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return domain.User{}, SessionTokens{}, fmt.Errorf("check existing driver account: %w", err)
+	}
+	return service.createWithSession(ctx, domain.User{
+		Email:        normalized.Email,
+		Phone:        normalized.Phone,
+		Name:         normalized.Name,
+		Role:         normalized.Role,
+		PasswordHash: normalized.PasswordHash,
+		VehicleType:  normalized.VehicleType,
+		PlateNumber:  normalized.PlateNumber,
+	})
+}
+
 func (service *RegisterService) IssueRefreshToken(ctx context.Context, account domain.User) (string, error) {
 	if service == nil {
 		return "", ErrRegistrationUnavailable
@@ -104,23 +138,55 @@ func (service *RegisterService) CommitPendingPassenger(
 	ctx context.Context,
 	pending domain.PendingRegistration,
 ) (domain.User, string, error) {
+	account, err := service.prepareCommitPendingPassenger(ctx, pending)
+	if err != nil {
+		return domain.User{}, "", err
+	}
+	return service.create(ctx, account)
+}
+
+// CommitPendingPassengerSession atomically persists a verified passenger account and refresh session.
+func (service *RegisterService) CommitPendingPassengerSession(
+	ctx context.Context,
+	pending domain.PendingRegistration,
+) (domain.User, SessionTokens, error) {
 	if service == nil || service.repository == nil {
-		return domain.User{}, "", ErrRegistrationUnavailable
+		return domain.User{}, SessionTokens{}, ErrRegistrationUnavailable
+	}
+	if service.sessions == nil {
+		return domain.User{}, SessionTokens{}, domain.ErrRefreshSessionUnavailable
+	}
+	if service.tokens == nil {
+		return domain.User{}, SessionTokens{}, ErrRegistrationUnavailable
+	}
+	account, err := service.prepareCommitPendingPassenger(ctx, pending)
+	if err != nil {
+		return domain.User{}, SessionTokens{}, err
+	}
+	return service.createWithSession(ctx, account)
+}
+
+func (service *RegisterService) prepareCommitPendingPassenger(
+	ctx context.Context,
+	pending domain.PendingRegistration,
+) (domain.User, error) {
+	if service == nil || service.repository == nil {
+		return domain.User{}, ErrRegistrationUnavailable
 	}
 	invalidRole := pending.Role != domain.Passenger
 	missingEmail := pending.Email == ""
 	missingPasswordHash := pending.PasswordHash == ""
 	if invalidRole || missingEmail || missingPasswordHash {
-		return domain.User{}, "", domain.ErrInvalidCredentials
+		return domain.User{}, domain.ErrInvalidCredentials
 	}
 	existing, err := service.repository.FindByEmail(ctx, pending.Email)
 	if err == nil && existing.ID != 0 {
-		return domain.User{}, "", domain.ErrEmailTaken
+		return domain.User{}, domain.ErrEmailTaken
 	}
 	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
-		return domain.User{}, "", fmt.Errorf("check existing passenger account: %w", err)
+		return domain.User{}, fmt.Errorf("check existing passenger account: %w", err)
 	}
-	return service.create(ctx, domain.User{
+	return domain.User{
 		Email:        pending.Email,
 		Phone:        pending.Phone,
 		Name:         pending.Name,
@@ -129,7 +195,7 @@ func (service *RegisterService) CommitPendingPassenger(
 		IsVerified:   true,
 		VehicleType:  pending.VehicleType,
 		PlateNumber:  pending.PlateNumber,
-	})
+	}, nil
 }
 
 func (service *RegisterService) register(
@@ -221,6 +287,28 @@ func (service *RegisterService) create(ctx context.Context, account domain.User)
 		return domain.User{}, "", fmt.Errorf("issue account token: %w", err)
 	}
 	return created, token, nil
+}
+
+func (service *RegisterService) createWithSession(ctx context.Context, account domain.User) (domain.User, SessionTokens, error) {
+	if service == nil || service.repository == nil {
+		return domain.User{}, SessionTokens{}, ErrRegistrationUnavailable
+	}
+	if service.sessions == nil {
+		return domain.User{}, SessionTokens{}, domain.ErrRefreshSessionUnavailable
+	}
+	refreshToken, session, err := NewRefreshSession(0, time.Now().UTC())
+	if err != nil {
+		return domain.User{}, SessionTokens{}, UnavailableError(err)
+	}
+	created, err := service.repository.CreateWithSession(ctx, account, session)
+	if err != nil {
+		return domain.User{}, SessionTokens{}, fmt.Errorf("create account with session: %w", err)
+	}
+	accessToken, err := IssueToken(service.tokens, strconv.Itoa(created.ID), created.Role)
+	if err != nil {
+		return domain.User{}, SessionTokens{}, fmt.Errorf("issue account token: %w", err)
+	}
+	return created, SessionTokens{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
 var _e164Phone = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)

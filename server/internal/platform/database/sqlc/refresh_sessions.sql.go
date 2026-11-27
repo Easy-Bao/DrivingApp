@@ -27,6 +27,32 @@ func (q *Queries) CreateRefreshSession(ctx context.Context, arg CreateRefreshSes
 	return err
 }
 
+const deleteExpiredRefreshSessions = `-- name: DeleteExpiredRefreshSessions :execrows
+DELETE FROM refresh_sessions
+WHERE id IN (
+    SELECT id
+    FROM refresh_sessions
+    WHERE expires_at <= $1::timestamptz
+       OR (revoked_at IS NOT NULL AND revoked_at <= $2::timestamptz)
+    ORDER BY id
+    LIMIT $3::int
+)
+`
+
+type DeleteExpiredRefreshSessionsParams struct {
+	Now           pgtype.Timestamptz `db:"now"`
+	RevokedBefore pgtype.Timestamptz `db:"revoked_before"`
+	Limit         int32              `db:"limit"`
+}
+
+func (q *Queries) DeleteExpiredRefreshSessions(ctx context.Context, arg DeleteExpiredRefreshSessionsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteExpiredRefreshSessions, arg.Now, arg.RevokedBefore, arg.Limit)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const getActiveRefreshSession = `-- name: GetActiveRefreshSession :one
 SELECT id, user_id, token_hash, expires_at
 FROM refresh_sessions
