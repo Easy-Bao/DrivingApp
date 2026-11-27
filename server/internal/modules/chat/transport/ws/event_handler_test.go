@@ -20,8 +20,15 @@ func (stub *roomRepositoryStub) Append(_ context.Context, message domain.Message
 	stub.message = message
 	return nil
 }
+func (stub *roomRepositoryStub) AppendWithParticipants(_ context.Context, message domain.Message) (string, string, error) {
+	stub.message = message
+	return "7", "8", nil
+}
 func (*roomRepositoryStub) Messages(context.Context, string) ([]domain.Message, error) {
 	return nil, nil
+}
+func (*roomRepositoryStub) FindMessage(context.Context, string, string) (domain.Message, bool, error) {
+	return domain.Message{}, false, nil
 }
 func (*roomRepositoryStub) Resolve(context.Context, string) error { return nil }
 func (*roomRepositoryStub) RoomParticipants(context.Context, string) (string, string, error) {

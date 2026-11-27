@@ -11,6 +11,8 @@ import (
 
 	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/admin/adapter/postgres"
 	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/adapter/postgres"
+	chathybrid "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/adapter/hybrid"
+	chatpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/adapter/postgres"
 	chatredis "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/adapter/redis"
 	dispatchpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/adapter/postgres"
 	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/adapter/postgres"
@@ -27,13 +29,13 @@ import (
 )
 
 type Application struct {
-	server            *http.Server
-	postgresPool      *pgxpool.Pool
-	redisClient       redisClient
-	eventHub          *websockethub.Hub
-	eventSubscriber   eventSubscriber
-	retainChatHistory func(context.Context) error
-	logger            *slog.Logger
+	server             *http.Server
+	postgresPool       *pgxpool.Pool
+	redisClient        redisClient
+	eventHub           *websockethub.Hub
+	eventSubscriber    eventSubscriber
+	migrateChatHistory func(context.Context) error
+	logger             *slog.Logger
 }
 
 type eventSubscriber interface {
@@ -155,6 +157,18 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		RateLimiter: rateLimiter,
 		Idempotency: idempotency,
 	})
+	chatPostgresStore, err := chatpostgres.NewHistoryStore(postgresPool)
+	if err != nil {
+		return nil, fmt.Errorf("create postgresql chat store: %w", err)
+	}
+	chatStore, err := chathybrid.NewStore(
+		chatPostgresStore,
+		chatredis.NewHistoryStore(redisClient),
+		chathybrid.WithLogger(applicationLogger),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("create hybrid chat store: %w", err)
+	}
 	router, eventHub, eventSubscriber := newHTTPRouter(httpRouterDependencies{
 		config:             config,
 		postgresPool:       postgresPool,
@@ -168,6 +182,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		profileStore:       profileStore,
 		statsReader:        statsReader,
 		documentStore:      documentStore,
+		chatStore:          chatStore,
 		privateObjectStore: privateObjectStore,
 		otpAttemptStore:    rateCounterStore,
 		routeSecurity:      routeSecurity,
@@ -194,12 +209,12 @@ func New(ctx context.Context, config Config) (*Application, error) {
 			WriteTimeout:      15 * time.Second,
 			IdleTimeout:       60 * time.Second,
 		},
-		postgresPool:      postgresPool,
-		redisClient:       redisClient,
-		eventHub:          eventHub,
-		eventSubscriber:   eventSubscriber,
-		retainChatHistory: chatredis.NewHistoryStore(redisClient).RetainExistingHistory,
-		logger:            applicationLogger,
+		postgresPool:       postgresPool,
+		redisClient:        redisClient,
+		eventHub:           eventHub,
+		eventSubscriber:    eventSubscriber,
+		migrateChatHistory: chatStore.MigrateLegacyRedisRooms,
+		logger:             applicationLogger,
 	}
 	application.server.RegisterOnShutdown(eventHub.Close)
 	closePostgresPool = false
@@ -251,23 +266,23 @@ func (application *Application) Run(ctx context.Context) error {
 		defer close(monitorDone)
 		monitorPostgresPool(monitorContext, applicationLogger, application.postgresPool)
 	}()
-	retentionDone := make(chan struct{})
-	if application.retainChatHistory != nil {
+	migrationDone := make(chan struct{})
+	if application.migrateChatHistory != nil {
 		go func() {
-			defer close(retentionDone)
-			retentionContext, cancelRetention := context.WithTimeout(monitorContext, 30*time.Second)
-			defer cancelRetention()
-			if err := application.retainChatHistory(retentionContext); err != nil && !errors.Is(err, context.Canceled) {
-				applicationLogger.Warn("retain existing chat conversations failed", "error", err)
+			defer close(migrationDone)
+			migrationContext, cancelMigration := context.WithTimeout(monitorContext, 30*time.Second)
+			defer cancelMigration()
+			if err := application.migrateChatHistory(migrationContext); err != nil && !errors.Is(err, context.Canceled) {
+				applicationLogger.Warn("migrate legacy chat conversations failed", "error", err)
 			}
 		}()
 	} else {
-		close(retentionDone)
+		close(migrationDone)
 	}
 	defer func() {
 		stopMonitoring()
 		<-monitorDone
-		<-retentionDone
+		<-migrationDone
 	}()
 
 	serverErrors := make(chan error, 1)

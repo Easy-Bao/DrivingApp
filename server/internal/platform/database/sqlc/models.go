@@ -57,6 +57,26 @@ type BookingReference struct {
 	Reference string `db:"reference"`
 }
 
+type ChatMessage struct {
+	ID        string             `db:"id"`
+	RoomID    string             `db:"room_id"`
+	SenderID  string             `db:"sender_id"`
+	Body      string             `db:"body"`
+	ImageKey  string             `db:"image_key"`
+	CreatedAt pgtype.Timestamptz `db:"created_at"`
+}
+
+type ChatRoom struct {
+	RoomID               string             `db:"room_id"`
+	PassengerID          string             `db:"passenger_id"`
+	DriverID             string             `db:"driver_id"`
+	Locked               bool               `db:"locked"`
+	PassengerReadThrough pgtype.Timestamptz `db:"passenger_read_through"`
+	DriverReadThrough    pgtype.Timestamptz `db:"driver_read_through"`
+	CreatedAt            pgtype.Timestamptz `db:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `db:"updated_at"`
+}
+
 type DriverDocument struct {
 	ID             int32              `db:"id"`
 	DriverID       int32              `db:"driver_id"`

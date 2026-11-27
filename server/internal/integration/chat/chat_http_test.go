@@ -27,9 +27,18 @@ func newChatService(history chatapplication.RoomStore) *chatapplication.Service 
 }
 
 func (history *roomHistory) CreateRoom(context.Context, string, string, string) error { return nil }
-func (history *roomHistory) Append(context.Context, domain.Message) error             { return nil }
+func (history *roomHistory) Append(context.Context, domain.Message) error { return nil }
+func (history *roomHistory) AppendWithParticipants(context.Context, domain.Message) (string, string, error) {
+	if history.locked {
+		return "", "", domain.ErrRoomLocked
+	}
+	return "7", "8", nil
+}
 func (history *roomHistory) Messages(context.Context, string) ([]domain.Message, error) {
 	return []domain.Message{{Body: "private"}}, nil
+}
+func (history *roomHistory) FindMessage(context.Context, string, string) (domain.Message, bool, error) {
+	return domain.Message{}, false, nil
 }
 func (history *roomHistory) Resolve(context.Context, string) error { return nil }
 func (history *roomHistory) RoomParticipants(context.Context, string) (string, string, error) {

@@ -27,10 +27,6 @@ const (
 	_chatEventPublishTimeout = 2 * time.Second
 )
 
-type atomicMessageAppender interface {
-	AppendWithParticipants(ctx context.Context, message domain.Message) (passengerID, driverID string, err error)
-}
-
 type Service struct {
 	images      storage.ObjectStore
 	history     RoomStore
@@ -101,32 +97,11 @@ func (service *Service) Relay(ctx context.Context, message domain.Message) error
 	} else {
 		message.CreatedAt = parsed.UTC().Format(time.RFC3339Nano)
 	}
-	if appender, ok := service.history.(atomicMessageAppender); ok {
-		passengerID, driverID, err := appender.AppendWithParticipants(ctx, message)
-		if err != nil {
-			return fmt.Errorf("append chat message: %w", err)
-		}
-		service.publishRealtimeMessageWithParticipants(ctx, message, passengerID, driverID)
-		return nil
-	}
-	locked, err := service.history.IsLocked(ctx, message.RoomID)
+	passengerID, driverID, err := service.history.AppendWithParticipants(ctx, message)
 	if err != nil {
-		return fmt.Errorf("check chat room lock: %w", err)
-	}
-	if locked {
-		return domain.ErrRoomLocked
-	}
-	member, err := service.history.IsMember(ctx, message.RoomID, message.SenderID)
-	if err != nil {
-		return fmt.Errorf("check chat room membership: %w", err)
-	}
-	if !member {
-		return domain.ErrForbidden
-	}
-	if err := service.history.Append(ctx, message); err != nil {
 		return fmt.Errorf("append chat message: %w", err)
 	}
-	service.publishRealtimeMessage(ctx, message)
+	service.publishRealtimeMessageWithParticipants(ctx, message, passengerID, driverID)
 	return nil
 }
 
@@ -159,18 +134,6 @@ func (service *Service) PublishTyping(ctx context.Context, roomID, senderID stri
 		service.log().WarnContext(ctx, "publish chat typing event failed", "error", err)
 	}
 	return nil
-}
-
-func (service *Service) publishRealtimeMessage(ctx context.Context, message domain.Message) {
-	if service.events == nil || service.history == nil {
-		return
-	}
-	passengerID, driverID, err := service.history.RoomParticipants(ctx, message.RoomID)
-	if err != nil {
-		service.log().WarnContext(ctx, "load chat room participants for notification failed", "error", err)
-		return
-	}
-	service.publishRealtimeMessageWithParticipants(ctx, message, passengerID, driverID)
 }
 
 func (service *Service) publishRealtimeMessageWithParticipants(
@@ -456,23 +419,28 @@ func (service *Service) Image(ctx context.Context, roomID, userID, messageID str
 	if messageID == "" {
 		return nil, "", domain.ErrForbidden
 	}
-	messages, err := service.MessagesForUser(ctx, roomID, userID)
+	allowed, err := service.CanReadRoom(ctx, roomID, userID)
 	if err != nil {
 		return nil, "", err
 	}
-	for _, message := range messages {
-		if message.ID == messageID && message.ImageKey != "" {
-			if service.images == nil {
-				return nil, "", domain.ErrRoomUnavailable
-			}
-			content, err := service.images.Read(ctx, message.ImageKey, MaxImageBytes)
-			if err != nil {
-				return nil, "", err
-			}
-			return content, http.DetectContentType(content), nil
-		}
+	if !allowed {
+		return nil, "", domain.ErrForbidden
 	}
-	return nil, "", domain.ErrForbidden
+	message, found, err := service.history.FindMessage(ctx, roomID, messageID)
+	if err != nil {
+		return nil, "", fmt.Errorf("load chat message: %w", err)
+	}
+	if !found || message.ImageKey == "" {
+		return nil, "", domain.ErrForbidden
+	}
+	if service.images == nil {
+		return nil, "", domain.ErrRoomUnavailable
+	}
+	content, err := service.images.Read(ctx, message.ImageKey, MaxImageBytes)
+	if err != nil {
+		return nil, "", err
+	}
+	return content, http.DetectContentType(content), nil
 }
 
 func (service *Service) MarkRead(ctx context.Context, roomID, userID, messageID string) error {
@@ -480,35 +448,39 @@ func (service *Service) MarkRead(ctx context.Context, roomID, userID, messageID 
 	if messageID == "" {
 		return domain.ErrInvalidMessage
 	}
-	messages, err := service.MessagesForUser(ctx, roomID, userID)
+	allowed, err := service.CanReadRoom(ctx, roomID, userID)
 	if err != nil {
 		return err
 	}
-	for _, message := range messages {
-		if message.ID != messageID || message.SenderID == userID {
-			continue
-		}
-		created, err := time.Parse(time.RFC3339Nano, message.CreatedAt)
-		if err != nil {
-			return domain.ErrInvalidMessage
-		}
-		through := created.UTC().Format("2006-01-02T15:04:05.000000000Z")
-		if err := service.history.MarkRead(ctx, roomID, userID, through); err != nil {
-			return fmt.Errorf("save chat receipt: %w", err)
-		}
-		if service.events != nil {
-			envelope, err := event.New(event.NewID(), event.ChatMessagesRead, time.Now().UTC(), event.Scope{RoomID: roomID}, map[string]any{"sender_id": userID, "read_through": through})
-			if err != nil {
-				return err
-			}
-			publishCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), _chatEventPublishTimeout)
-			err = service.events.Publish(publishCtx, envelope)
-			cancel()
-			if err != nil {
-				service.log().WarnContext(ctx, "publish chat receipt failed", "error", err)
-			}
-		}
-		return nil
+	if !allowed {
+		return domain.ErrForbidden
 	}
-	return domain.ErrInvalidMessage
+	message, found, err := service.history.FindMessage(ctx, roomID, messageID)
+	if err != nil {
+		return fmt.Errorf("load chat message: %w", err)
+	}
+	if !found || message.SenderID == userID {
+		return domain.ErrInvalidMessage
+	}
+	created, err := time.Parse(time.RFC3339Nano, message.CreatedAt)
+	if err != nil {
+		return domain.ErrInvalidMessage
+	}
+	through := created.UTC().Format("2006-01-02T15:04:05.000000000Z")
+	if err := service.history.MarkRead(ctx, roomID, userID, through); err != nil {
+		return fmt.Errorf("save chat receipt: %w", err)
+	}
+	if service.events != nil {
+		envelope, err := event.New(event.NewID(), event.ChatMessagesRead, time.Now().UTC(), event.Scope{RoomID: roomID}, map[string]any{"sender_id": userID, "read_through": through})
+		if err != nil {
+			return err
+		}
+		publishCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), _chatEventPublishTimeout)
+		err = service.events.Publish(publishCtx, envelope)
+		cancel()
+		if err != nil {
+			service.log().WarnContext(ctx, "publish chat receipt failed", "error", err)
+		}
+	}
+	return nil
 }

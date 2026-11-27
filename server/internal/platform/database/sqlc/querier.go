@@ -44,6 +44,8 @@ type Querier interface {
 	GetAdminDashboardCounts(ctx context.Context) (GetAdminDashboardCountsRow, error)
 	GetBidOfferDriverForAcceptance(ctx context.Context, arg GetBidOfferDriverForAcceptanceParams) (int32, error)
 	GetBidSessionByID(ctx context.Context, id int32) (BidSession, error)
+	GetChatMessageByRoomAndID(ctx context.Context, arg GetChatMessageByRoomAndIDParams) (ChatMessage, error)
+	GetChatRoom(ctx context.Context, roomID string) (ChatRoom, error)
 	GetDriverDocumentByID(ctx context.Context, id int32) (DriverDocument, error)
 	GetDriverOnlinePresence(ctx context.Context, userID int32) (GetDriverOnlinePresenceRow, error)
 	GetDriverProfileByUserID(ctx context.Context, userID int32) (GetDriverProfileByUserIDRow, error)
@@ -70,9 +72,11 @@ type Querier interface {
 	HasActiveBidSession(ctx context.Context, arg HasActiveBidSessionParams) (bool, error)
 	HasActivePassengerRide(ctx context.Context, passengerID int32) (bool, error)
 	HasPendingBidOffer(ctx context.Context, arg HasPendingBidOfferParams) (bool, error)
+	InsertChatMessage(ctx context.Context, arg InsertChatMessageParams) error
 	ListActiveBidSessions(ctx context.Context, expiresAt pgtype.Timestamptz) ([]BidSession, error)
 	ListActiveRidesForDriver(ctx context.Context, driverID pgtype.Int4) ([]ListActiveRidesForDriverRow, error)
 	ListBidOffersBySession(ctx context.Context, sessionID int32) ([]BidOffer, error)
+	ListChatMessagesByRoom(ctx context.Context, arg ListChatMessagesByRoomParams) ([]ChatMessage, error)
 	ListDriverDocumentsByDriverID(ctx context.Context, arg ListDriverDocumentsByDriverIDParams) ([]DriverDocument, error)
 	ListDriverDocumentsForReview(ctx context.Context, arg ListDriverDocumentsForReviewParams) ([]DriverDocument, error)
 	ListDriverEarnings(ctx context.Context, arg ListDriverEarningsParams) ([]ListDriverEarningsRow, error)
@@ -86,6 +90,8 @@ type Querier interface {
 	ListRecentPassengerRides(ctx context.Context, arg ListRecentPassengerRidesParams) ([]ListRecentPassengerRidesRow, error)
 	ListTargetedActiveBidSessions(ctx context.Context, arg ListTargetedActiveBidSessionsParams) ([]BidSession, error)
 	LockActiveBidSessionForOffer(ctx context.Context, arg LockActiveBidSessionForOfferParams) (BidSession, error)
+	LockChatRoom(ctx context.Context, roomID string) error
+	LockChatRoomForAppend(ctx context.Context, roomID string) (LockChatRoomForAppendRow, error)
 	LockCompletedRideForCashSettlement(ctx context.Context, arg LockCompletedRideForCashSettlementParams) (Ride, error)
 	LockDriverProfileByUserID(ctx context.Context, userID int32) (DriverProfile, error)
 	LockDriverProfileForOnlineStatus(ctx context.Context, arg LockDriverProfileForOnlineStatusParams) (DriverProfile, error)
@@ -97,10 +103,12 @@ type Querier interface {
 	MarkAllNotificationsRead(ctx context.Context, userID int32) error
 	MarkBidOfferAccepted(ctx context.Context, id int32) (BidOffer, error)
 	MarkBidSessionAccepted(ctx context.Context, arg MarkBidSessionAcceptedParams) (BidSession, error)
+	MarkChatRoomRead(ctx context.Context, arg MarkChatRoomReadParams) error
 	MarkRideArrived(ctx context.Context, arg MarkRideArrivedParams) (Ride, error)
 	MarkRidePassengerNoShow(ctx context.Context, arg MarkRidePassengerNoShowParams) (Ride, error)
 	MarkRideSettlementOutcome(ctx context.Context, arg MarkRideSettlementOutcomeParams) (RideSettlement, error)
 	MarkUserVerified(ctx context.Context, id int32) (int64, error)
+	MigrateChatRoomState(ctx context.Context, arg MigrateChatRoomStateParams) error
 	RefreshDriverProfileRating(ctx context.Context, driverID int32) error
 	RejectDriverPendingBidOffers(ctx context.Context, arg RejectDriverPendingBidOffersParams) ([]RejectDriverPendingBidOffersRow, error)
 	RejectOtherPendingBidOffers(ctx context.Context, arg RejectOtherPendingBidOffersParams) ([]BidOffer, error)
@@ -122,6 +130,7 @@ type Querier interface {
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
 	UpgradeUserPasswordHash(ctx context.Context, arg UpgradeUserPasswordHashParams) (int64, error)
 	UpsertAndCreditDriverWalletAccount(ctx context.Context, arg UpsertAndCreditDriverWalletAccountParams) (DriverWalletAccount, error)
+	UpsertChatRoom(ctx context.Context, arg UpsertChatRoomParams) error
 }
 
 var _ Querier = (*Queries)(nil)

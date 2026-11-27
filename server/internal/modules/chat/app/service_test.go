@@ -62,8 +62,23 @@ func (history *chatHistory) Append(_ context.Context, message domain.Message) er
 	history.messages = append(history.messages, message)
 	return nil
 }
+func (history *chatHistory) AppendWithParticipants(_ context.Context, message domain.Message) (string, string, error) {
+	if history.locked {
+		return "", "", domain.ErrRoomLocked
+	}
+	history.messages = append(history.messages, message)
+	return history.passengerID, history.driverID, nil
+}
 func (history *chatHistory) Messages(context.Context, string) ([]domain.Message, error) {
 	return history.messages, nil
+}
+func (history *chatHistory) FindMessage(_ context.Context, _, messageID string) (domain.Message, bool, error) {
+	for _, message := range history.messages {
+		if message.ID == messageID {
+			return message, true, nil
+		}
+	}
+	return domain.Message{}, false, nil
 }
 func (history *chatHistory) Resolve(context.Context, string) error { return nil }
 func (history *chatHistory) RoomParticipants(context.Context, string) (string, string, error) {

@@ -198,7 +198,7 @@ func TestRunExecutesChatHistoryRetentionAsynchronouslyAndAwaitsBeforeClosingRedi
 		server:          server,
 		eventSubscriber: subscriber,
 		redisClient:     orderRecordingRedisClient{mu: &mu, events: &lifecycleOrder},
-		retainChatHistory: func(ctx context.Context) error {
+		migrateChatHistory: func(ctx context.Context) error {
 			close(retentionStarted)
 			<-ctx.Done()
 			mu.Lock()
@@ -219,7 +219,7 @@ func TestRunExecutesChatHistoryRetentionAsynchronouslyAndAwaitsBeforeClosingRedi
 	select {
 	case <-retentionStarted:
 	case <-time.After(3 * time.Second):
-		t.Fatal("retainChatHistory did not start")
+		t.Fatal("migrateChatHistory did not start")
 	}
 
 	// HTTP must already be serving while retention is still blocked.

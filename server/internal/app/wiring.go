@@ -81,6 +81,7 @@ type httpRouterDependencies struct {
 	profileStore       profileRuntimeStore
 	statsReader        adminapp.StatsReader
 	documentStore      documentapplication.DocumentStore
+	chatStore          chatapplication.RoomStore
 	privateObjectStore platformstorage.ObjectStore
 	otpAttemptStore    middleware.CounterStore
 	routeSecurity      *middleware.RouteSecurity
@@ -340,7 +341,10 @@ func newHTTPRouter(
 		RouteSecurity: routeSecurity,
 	}).RegisterRoutes(router)
 
-	chatRoomStore := chatredis.NewHistoryStore(redisClient)
+	chatRoomStore := dependencies.chatStore
+	if chatRoomStore == nil {
+		chatRoomStore = chatredis.NewHistoryStore(redisClient)
+	}
 	chatService := chatapplication.NewService(chatapplication.Dependencies{History: chatRoomStore, Images: privateObjectStore}).
 		WithEventPublisher(eventPublisher).
 		WithRideAssignmentLookup(rideAssignments).

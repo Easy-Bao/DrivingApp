@@ -13,7 +13,9 @@ type RoomStore interface {
 	MarkRead(ctx context.Context, roomID, userID, through string) error
 	CreateRoom(ctx context.Context, roomID, passengerID, driverID string) error
 	Append(ctx context.Context, message domain.Message) error
+	AppendWithParticipants(ctx context.Context, message domain.Message) (passengerID, driverID string, err error)
 	Messages(ctx context.Context, roomID string) ([]domain.Message, error)
+	FindMessage(ctx context.Context, roomID, messageID string) (domain.Message, bool, error)
 	Resolve(ctx context.Context, roomID string) error
 	RoomParticipants(ctx context.Context, roomID string) (passengerID, driverID string, err error)
 	IsMember(ctx context.Context, roomID, userID string) (bool, error)
