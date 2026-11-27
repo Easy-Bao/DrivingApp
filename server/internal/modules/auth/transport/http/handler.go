@@ -325,7 +325,7 @@ func toRegisterInput(input RegistrationRequest) authapp.RegisterInput {
 }
 
 func decode(w http.ResponseWriter, r *http.Request, value any) bool {
-	if sharedrequest.DecodeJSON(w, r, value, 16<<10) != nil {
+	if sharedrequest.DecodeJSONV2(w, r, value, 16<<10) != nil {
 		response.Error(w, http.StatusBadRequest, "invalid JSON")
 		return false
 	}

@@ -79,7 +79,7 @@ func (handler *Handler) Reverse(writer http.ResponseWriter, request *http.Reques
 
 func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request) {
 	var payload RouteRequest
-	if sharedrequest.DecodeJSON(writer, request, &payload, _maxRoutePayloadBytes) != nil {
+	if sharedrequest.DecodeJSONV2(writer, request, &payload, _maxRoutePayloadBytes) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid route payload")
 		return
 	}
@@ -103,7 +103,7 @@ func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request)
 
 func (handler *Handler) Matrix(writer http.ResponseWriter, request *http.Request) {
 	var payload MatrixRequest
-	if sharedrequest.DecodeJSON(writer, request, &payload, _maxRoutePayloadBytes) != nil {
+	if sharedrequest.DecodeJSONV2(writer, request, &payload, _maxRoutePayloadBytes) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid matrix payload")
 		return
 	}

@@ -238,7 +238,7 @@ func (handler *Handler) Review(writer http.ResponseWriter, request *http.Request
 		return
 	}
 	var payload ReviewRequest
-	if sharedrequest.DecodeJSON(writer, request, &payload, _maxReviewPayloadBytes) != nil {
+	if sharedrequest.DecodeJSONV2(writer, request, &payload, _maxReviewPayloadBytes) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid review payload")
 		return
 	}

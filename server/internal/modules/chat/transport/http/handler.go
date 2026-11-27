@@ -39,7 +39,7 @@ func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Req
 	var input struct {
 		RideID string `json:"ride_id"`
 	}
-	if sharedrequest.DecodeJSON(writer, request, &input, 8<<10) != nil {
+	if sharedrequest.DecodeJSONV2(writer, request, &input, 8<<10) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid chat room")
 		return
 	}
@@ -174,7 +174,7 @@ func (handler *Handler) MarkRead(writer http.ResponseWriter, request *http.Reque
 	var input struct {
 		MessageID string `json:"message_id"`
 	}
-	if err := sharedrequest.DecodeJSON(writer, request, &input, 8<<10); err != nil {
+	if err := sharedrequest.DecodeJSONV2(writer, request, &input, 8<<10); err != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid read receipt")
 		return
 	}

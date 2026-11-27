@@ -56,7 +56,7 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input UpdateProfileRequest
-	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil {
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
 		response.Error(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
@@ -371,7 +371,7 @@ func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 		IsOnline       *bool `json:"is_online"`
 		LegacyIsOnline *bool `json:"isOnline"`
 	}
-	if sharedrequest.DecodeJSON(w, r, &input, 4<<10) != nil {
+	if sharedrequest.DecodeJSONV2(w, r, &input, 4<<10) != nil {
 		response.Error(w, http.StatusBadRequest, "invalid online status")
 		return
 	}
