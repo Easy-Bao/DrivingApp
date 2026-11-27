@@ -797,3 +797,88 @@ func TestPlaceAndCancelOfferDoNotBroadcastToDriverPoolAndDetachPublishContext(t 
 		t.Fatalf("publish context observed caller cancellation: %v", publisher.lastPublishErr)
 	}
 }
+
+func TestSessionForViewerAndOffersForViewerAuthorizeAccess(t *testing.T) {
+	targetDriver := 10
+	acceptedDriver := 12
+
+	t.Run("direct session access", func(t *testing.T) {
+		store := &biddingStoreStub{
+			session: dispatchdomain.BidSession{
+				ID:             1,
+				PassengerID:    5,
+				TargetDriverID: &targetDriver,
+			},
+		}
+		service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
+
+		if _, err := service.SessionForViewer(context.Background(), 1, 5, "passenger"); err != nil {
+			t.Fatalf("owner passenger view failed: %v", err)
+		}
+		if _, err := service.SessionForViewer(context.Background(), 1, 6, "passenger"); !errors.Is(err, dispatchdomain.ErrUnauthorizedSession) {
+			t.Fatalf("unrelated passenger err = %v, want ErrUnauthorizedSession", err)
+		}
+		if _, err := service.SessionForViewer(context.Background(), 1, 10, "driver"); err != nil {
+			t.Fatalf("target driver view failed: %v", err)
+		}
+		if _, err := service.SessionForViewer(context.Background(), 1, 11, "driver"); !errors.Is(err, dispatchdomain.ErrUnauthorizedSession) {
+			t.Fatalf("non-target driver err = %v, want ErrUnauthorizedSession", err)
+		}
+		if _, err := service.SessionForViewer(context.Background(), 1, 0, "passenger"); !errors.Is(err, dispatchdomain.ErrUnauthorizedSession) {
+			t.Fatalf("zero actor err = %v, want ErrUnauthorizedSession", err)
+		}
+	})
+
+	t.Run("closed broadcast filtering", func(t *testing.T) {
+		store := &biddingStoreStub{
+			session: dispatchdomain.BidSession{
+				ID:               3,
+				PassengerID:      5,
+				Status:           "accepted",
+				AcceptedDriverID: &acceptedDriver,
+			},
+			offers: []dispatchdomain.BidOffer{
+				{ID: 1, DriverID: 12, ProposedFareAmount: 1500, Status: "accepted"},
+				{ID: 2, DriverID: 13, ProposedFareAmount: 1600, Status: "rejected"},
+			},
+		}
+		service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
+
+		if _, err := service.SessionForViewer(context.Background(), 3, 12, "driver"); err != nil {
+			t.Fatalf("accepted driver view failed: %v", err)
+		}
+		driverView, err := service.SessionForViewer(context.Background(), 3, 13, "driver")
+		if err != nil {
+			t.Fatalf("participating bidder view failed: %v", err)
+		}
+		if len(driverView.Offers) != 1 || driverView.Offers[0].DriverID != 13 {
+			t.Fatalf("driver view offers = %+v, want only driver 13", driverView.Offers)
+		}
+		if _, err := service.SessionForViewer(context.Background(), 3, 14, "driver"); !errors.Is(err, dispatchdomain.ErrUnauthorizedSession) {
+			t.Fatalf("unrelated driver err = %v, want ErrUnauthorizedSession", err)
+		}
+		passengerView, err := service.SessionForViewer(context.Background(), 3, 5, "passenger")
+		if err != nil {
+			t.Fatalf("passenger view failed: %v", err)
+		}
+		if len(passengerView.Offers) != 2 {
+			t.Fatalf("passenger view offers = %+v, want all 2 offers", passengerView.Offers)
+		}
+	})
+
+	t.Run("offers ownership", func(t *testing.T) {
+		store := &biddingStoreStub{
+			session: dispatchdomain.BidSession{ID: 7, PassengerID: 5, Status: "open"},
+			offers:  []dispatchdomain.BidOffer{{ID: 1, DriverID: 12}},
+		}
+		service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
+
+		if _, err := service.OffersForViewer(context.Background(), 7, 12); !errors.Is(err, dispatchdomain.ErrUnauthorizedSession) {
+			t.Fatalf("non-owner OffersForViewer err = %v, want ErrUnauthorizedSession", err)
+		}
+		offers, err := service.OffersForViewer(context.Background(), 7, 5)
+		if err != nil || len(offers) != 1 {
+			t.Fatalf("owner OffersForViewer = (%+v, %v), want 1 offer", offers, err)
+		}
+	})
+}

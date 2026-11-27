@@ -8,7 +8,6 @@ import (
 
 	application "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/domain"
-	assignment "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 )
 
 type roomRepositoryStub struct {
@@ -41,12 +40,8 @@ func (*roomRepositoryStub) IsLocked(context.Context, string) (bool, error) { ret
 
 type assignmentLookupStub struct{}
 
-func (assignmentLookupStub) ForDriver(context.Context, string) ([]assignment.Assignment, error) {
-	return nil, nil
-}
-
-func (assignmentLookupStub) ForRide(_ context.Context, rideID string) (assignment.Assignment, bool, error) {
-	return assignment.Assignment{
+func (assignmentLookupStub) ForRide(_ context.Context, rideID string) (application.RideAssignment, bool, error) {
+	return application.RideAssignment{
 		RideID: rideID, PassengerID: "7", DriverID: "8", Status: "assigned",
 	}, true, nil
 }

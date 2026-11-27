@@ -8,14 +8,13 @@ import (
 	"math"
 	"time"
 
-	assignment "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 type TrackingService struct {
 	repository     LocationStore
-	assignments    assignment.Lookup
+	assignments    RideAssignmentLookup
 	presence       DriverPresenceReader
 	eventPublisher EventPublisher
 	logger         *slog.Logger
@@ -38,7 +37,7 @@ const (
 
 type TrackingOption func(*TrackingService)
 
-func WithRideAssignments(assignments assignment.Lookup) TrackingOption {
+func WithRideAssignments(assignments RideAssignmentLookup) TrackingOption {
 	return func(service *TrackingService) { service.assignments = assignments }
 }
 
@@ -446,12 +445,12 @@ func (service *TrackingService) GetDriverForRide(
 func (service *TrackingService) activeRidesForDriver(
 	ctx context.Context,
 	driverID string,
-) ([]assignment.Assignment, error) {
+) ([]RideAssignment, error) {
 	if err := contextError(ctx); err != nil {
 		return nil, err
 	}
 	if service.assignments == nil {
-		return []assignment.Assignment{}, nil
+		return []RideAssignment{}, nil
 	}
 	assignments, err := service.assignments.ForDriver(ctx, driverID)
 	if err != nil {
@@ -460,7 +459,7 @@ func (service *TrackingService) activeRidesForDriver(
 	if err := contextError(ctx); err != nil {
 		return nil, err
 	}
-	active := make([]assignment.Assignment, 0, len(assignments))
+	active := make([]RideAssignment, 0, len(assignments))
 	for _, rideAssignment := range assignments {
 		if rideAssignment.Active() {
 			active = append(active, rideAssignment)
@@ -472,22 +471,22 @@ func (service *TrackingService) activeRidesForDriver(
 func (service *TrackingService) assignmentForRide(
 	ctx context.Context,
 	rideID string,
-) (assignment.Assignment, error) {
+) (RideAssignment, error) {
 	if err := contextError(ctx); err != nil {
-		return assignment.Assignment{}, err
+		return RideAssignment{}, err
 	}
 	if service.assignments == nil {
-		return assignment.Assignment{}, domain.ErrRideAssignmentUnavailable
+		return RideAssignment{}, domain.ErrRideAssignmentUnavailable
 	}
 	rideAssignment, found, err := service.assignments.ForRide(ctx, rideID)
 	if err != nil {
-		return assignment.Assignment{}, fmt.Errorf("load ride assignment: %w", err)
+		return RideAssignment{}, fmt.Errorf("load ride assignment: %w", err)
 	}
 	if err := contextError(ctx); err != nil {
-		return assignment.Assignment{}, err
+		return RideAssignment{}, err
 	}
 	if !found || !rideAssignment.Active() {
-		return assignment.Assignment{}, domain.ErrRideAccessDenied
+		return RideAssignment{}, domain.ErrRideAccessDenied
 	}
 	return rideAssignment, nil
 }

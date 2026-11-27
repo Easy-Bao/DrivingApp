@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	assignment "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	locationapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/transport/http"
@@ -20,7 +19,7 @@ import (
 
 type locationRepository struct{ point domain.DriverPoint }
 
-type locationAssignmentLookup struct{ value assignment.Assignment }
+type locationAssignmentLookup struct{ value locationapp.RideAssignment }
 
 func newTrackingRouter(
 	service *locationapp.TrackingService,
@@ -39,11 +38,11 @@ func newTrackingService(
 	)
 }
 
-func (lookup locationAssignmentLookup) ForDriver(context.Context, string) ([]assignment.Assignment, error) {
-	return []assignment.Assignment{lookup.value}, nil
+func (lookup locationAssignmentLookup) ForDriver(context.Context, string) ([]locationapp.RideAssignment, error) {
+	return []locationapp.RideAssignment{lookup.value}, nil
 }
 
-func (lookup locationAssignmentLookup) ForRide(_ context.Context, rideID string) (assignment.Assignment, bool, error) {
+func (lookup locationAssignmentLookup) ForRide(_ context.Context, rideID string) (locationapp.RideAssignment, bool, error) {
 	return lookup.value, lookup.value.RideID == rideID, nil
 }
 
@@ -192,7 +191,7 @@ func TestPassengerReadsDriverLocationThroughItsRide(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assignments := locationAssignmentLookup{value: assignment.Assignment{
+	assignments := locationAssignmentLookup{value: locationapp.RideAssignment{
 		RideID: "303", DriverID: "42", PassengerID: "99", Status: "assigned",
 	}}
 	router := chi.NewRouter()

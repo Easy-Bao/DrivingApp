@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	assignment "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
@@ -86,19 +85,19 @@ func (stub *locationRepositoryStub) GetPassenger(context.Context, string) (domai
 	return stub.passengerPoint, nil
 }
 
-type assignmentLookupStub struct{ assignments []assignment.Assignment }
+type assignmentLookupStub struct{ assignments []RideAssignment }
 
-func (stub assignmentLookupStub) ForDriver(context.Context, string) ([]assignment.Assignment, error) {
+func (stub assignmentLookupStub) ForDriver(context.Context, string) ([]RideAssignment, error) {
 	return stub.assignments, nil
 }
 
-func (stub assignmentLookupStub) ForRide(_ context.Context, rideID string) (assignment.Assignment, bool, error) {
+func (stub assignmentLookupStub) ForRide(_ context.Context, rideID string) (RideAssignment, bool, error) {
 	for _, value := range stub.assignments {
 		if value.RideID == rideID {
 			return value, true, nil
 		}
 	}
-	return assignment.Assignment{}, false, nil
+	return RideAssignment{}, false, nil
 }
 
 type locationEventPublisherStub struct{ envelopes []event.Envelope }
@@ -410,7 +409,7 @@ func TestIngestPublishesAnActiveRideLocationToBothParticipants(t *testing.T) {
 	service := newLocationTrackingService(
 		repository,
 		WithRideAssignments(assignmentLookupStub{
-			assignments: []assignment.Assignment{{
+			assignments: []RideAssignment{{
 				RideID:      "ride-7",
 				DriverID:    "driver-1",
 				PassengerID: "passenger-2",
@@ -536,7 +535,7 @@ func TestPassengerLocationRequiresTheRidePassenger(t *testing.T) {
 	service := newLocationTrackingService(
 		&locationRepositoryStub{},
 		WithRideAssignments(assignmentLookupStub{
-			assignments: []assignment.Assignment{{
+			assignments: []RideAssignment{{
 				RideID:      "ride-7",
 				DriverID:    "driver-1",
 				PassengerID: "passenger-2",
@@ -561,7 +560,7 @@ func TestPassengerLocationPopulatesObservedTimestampWhenMissing(t *testing.T) {
 	service := newLocationTrackingService(
 		repository,
 		WithRideAssignments(assignmentLookupStub{
-			assignments: []assignment.Assignment{{
+			assignments: []RideAssignment{{
 				RideID:      "ride-7",
 				DriverID:    "driver-1",
 				PassengerID: "passenger-2",

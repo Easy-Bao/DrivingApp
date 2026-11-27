@@ -15,9 +15,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/domain"
-	assignment "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
 )
 
 const (
@@ -28,16 +26,16 @@ const (
 )
 
 type Service struct {
-	images      storage.ObjectStore
+	images      ImageStore
 	history     RoomStore
 	events      EventPublisher
-	assignments assignment.Lookup
+	assignments RideAssignmentLookup
 	logger      *slog.Logger
 }
 
 type Dependencies struct {
 	History RoomStore
-	Images  storage.ObjectStore
+	Images  ImageStore
 }
 
 func NewService(dependencies Dependencies) *Service {
@@ -52,7 +50,7 @@ func (service *Service) WithEventPublisher(publisher EventPublisher) *Service {
 }
 
 func (service *Service) WithRideAssignmentLookup(
-	lookup assignment.Lookup,
+	lookup RideAssignmentLookup,
 ) *Service {
 	if service != nil {
 		service.assignments = lookup
@@ -217,26 +215,26 @@ func (service *Service) participantAssignment(
 	ctx context.Context,
 	rideID string,
 	actorID string,
-) (assignment.Assignment, error) {
+) (RideAssignment, error) {
 	if service == nil || service.assignments == nil {
-		return assignment.Assignment{}, domain.ErrRoomUnavailable
+		return RideAssignment{}, domain.ErrRoomUnavailable
 	}
 	rideAssignment, found, err := service.assignments.ForRide(ctx, rideID)
 	if err != nil {
 		service.log().WarnContext(ctx, "load ride assignment for chat authorization failed", "error", err)
-		return assignment.Assignment{}, domain.ErrRoomUnavailable
+		return RideAssignment{}, domain.ErrRoomUnavailable
 	}
 	if !found {
-		return assignment.Assignment{}, domain.ErrForbidden
+		return RideAssignment{}, domain.ErrForbidden
 	}
 	actorIsNotParticipant := actorID != rideAssignment.PassengerID && actorID != rideAssignment.DriverID
 	if actorIsNotParticipant {
-		return assignment.Assignment{}, domain.ErrForbidden
+		return RideAssignment{}, domain.ErrForbidden
 	}
 	return rideAssignment, nil
 }
 
-func (service *Service) communicationAssignment(ctx context.Context, roomID, userID string) (assignment.Assignment, error) {
+func (service *Service) communicationAssignment(ctx context.Context, roomID, userID string) (RideAssignment, error) {
 	value, err := service.participantAssignment(ctx, roomID, userID)
 	if err != nil {
 		return value, err

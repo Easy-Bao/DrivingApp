@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
-	ridedto "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/transport/http"
 )
 
 func TestBiddingResponseMappersPreserveWireShapes(t *testing.T) {
@@ -51,7 +50,7 @@ func TestBiddingResponseMappersPreserveWireShapes(t *testing.T) {
 			value: AcceptedOfferResponse{
 				Session: NewBidSessionResponse(domain.BidSession{ID: 31, PassengerID: 7, Status: "accepted"}),
 				Offer:   NewBidOfferResponse(domain.BidOffer{ID: 45, SessionID: 31, DriverID: 9, Status: "accepted"}),
-				Ride:    ridedto.RideResponse{ID: 303, PassengerID: 7, Status: "accepted"},
+				Ride:    RideResponse{ID: 303, PassengerID: 7, Status: "accepted"},
 				RideID:  303,
 			},
 			want: `{"session":{"id":31,"passenger_id":7,"pickup_latitude":0,"pickup_longitude":0,"pickup_name":"","dropoff_latitude":0,"dropoff_longitude":0,"dropoff_name":"","distance_km":0,"duration_minutes":0,"offered_fare":0,"status":"accepted","expires_at":"0001-01-01T00:00:00Z","created_at":"0001-01-01T00:00:00Z"},"offer":{"id":45,"session_id":31,"driver_id":9,"proposed_fare":0,"status":"accepted","created_at":"0001-01-01T00:00:00Z"},"ride":{"id":303,"passenger_id":7,"status":"accepted","fare_amount":0,"payment_status":"","cash_received_amount":0,"cash_change_amount":0,"cash_outcome":"","cash_settled":false,"commission_amount":0,"driver_payout_amount":0},"ride_id":303}`,
@@ -109,82 +108,5 @@ func TestDriverAvailabilityResponseMappersPreserveNil(t *testing.T) {
 	}
 	if NewPublicDriverSummaryResponses(nil) != nil {
 		t.Fatal("NewPublicDriverSummaryResponses(nil) returned a non-nil slice")
-	}
-}
-
-func TestCanViewSession(t *testing.T) {
-	targetDriver := 10
-	directSession := domain.BidSession{
-		ID:             1,
-		PassengerID:    5,
-		TargetDriverID: &targetDriver,
-	}
-	broadcastSession := domain.BidSession{
-		ID:             2,
-		PassengerID:    5,
-		TargetDriverID: nil,
-	}
-
-	if !canViewSession(5, "passenger", directSession) {
-		t.Fatal("expected owner passenger to view direct session")
-	}
-	if !canViewSession(5, "passenger", broadcastSession) {
-		t.Fatal("expected owner passenger to view broadcast session")
-	}
-
-	if canViewSession(6, "passenger", directSession) {
-		t.Fatal("expected unrelated passenger cannot view direct session")
-	}
-	if canViewSession(6, "passenger", broadcastSession) {
-		t.Fatal("expected unrelated passenger cannot view broadcast session")
-	}
-
-	if !canViewSession(10, "driver", directSession) {
-		t.Fatal("expected target driver to view direct session")
-	}
-
-	if canViewSession(11, "driver", directSession) {
-		t.Fatal("expected non-target driver cannot view direct session")
-	}
-
-	if !canViewSession(11, "driver", broadcastSession) {
-		t.Fatal("expected driver to view broadcast session")
-	}
-
-	if canViewSession(0, "passenger", directSession) {
-		t.Fatal("expected zero actorID cannot view direct session")
-	}
-	if canViewSession(-1, "driver", broadcastSession) {
-		t.Fatal("expected negative actorID cannot view broadcast session")
-	}
-
-	acceptedDriver := 12
-	closedBroadcast := domain.BidSession{
-		ID:               3,
-		PassengerID:      5,
-		Status:           "accepted",
-		AcceptedDriverID: &acceptedDriver,
-		Offers: []domain.BidOffer{
-			{ID: 1, DriverID: 12, ProposedFareAmount: 1500, Status: "accepted"},
-			{ID: 2, DriverID: 13, ProposedFareAmount: 1600, Status: "rejected"},
-		},
-	}
-	if !canViewSession(12, "driver", closedBroadcast) {
-		t.Fatal("expected accepted driver to view closed broadcast session")
-	}
-	if !canViewSession(13, "driver", closedBroadcast) {
-		t.Fatal("expected participating bidder to view closed broadcast session")
-	}
-	if canViewSession(14, "driver", closedBroadcast) {
-		t.Fatal("expected unrelated driver not to view closed broadcast session")
-	}
-
-	driverView := filterSessionForViewer(13, closedBroadcast)
-	if len(driverView.Offers) != 1 || driverView.Offers[0].DriverID != 13 {
-		t.Fatalf("driver view offers = %+v, want only driver 13 offer", driverView.Offers)
-	}
-	passengerView := filterSessionForViewer(5, closedBroadcast)
-	if len(passengerView.Offers) != 2 {
-		t.Fatalf("passenger view offers = %+v, want all 2 offers", passengerView.Offers)
 	}
 }

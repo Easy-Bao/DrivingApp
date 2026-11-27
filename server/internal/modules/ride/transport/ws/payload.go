@@ -1,48 +1,8 @@
 package ws
 
 import (
-	"time"
-
-	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 )
-
-type bidSessionPayload struct {
-	ID               int    `json:"id"`
-	BookingReference string `json:"booking_reference,omitempty"`
-	RideID           *int   `json:"ride_id,omitempty"`
-	PassengerID      int    `json:"passenger_id"`
-
-	PickupLatitude    float64           `json:"pickup_latitude"`
-	PickupLongitude   float64           `json:"pickup_longitude"`
-	PickupName        string            `json:"pickup_name"`
-	DropoffLatitude   float64           `json:"dropoff_latitude"`
-	DropoffLongitude  float64           `json:"dropoff_longitude"`
-	DropoffName       string            `json:"dropoff_name"`
-	PassengerNote     string            `json:"passenger_note,omitempty"`
-	DistanceKm        float64           `json:"distance_km"`
-	DurationMinutes   float64           `json:"duration_minutes"`
-	OfferedFareAmount int64             `json:"offered_fare"`
-	CustomFareAmount  *int64            `json:"custom_fare,omitempty"`
-	Status            string            `json:"status"`
-	TargetDriverID    *int              `json:"target_driver_id,omitempty"`
-	AcceptedDriverID  *int              `json:"accepted_driver_id,omitempty"`
-	ExpiresAt         time.Time         `json:"expires_at"`
-	CreatedAt         time.Time         `json:"created_at"`
-	Offers            []bidOfferPayload `json:"offers,omitempty"`
-}
-
-type bidOfferPayload struct {
-	ID                 int64     `json:"id"`
-	SessionID          int       `json:"session_id"`
-	DriverID           int       `json:"driver_id"`
-	DriverName         string    `json:"driver_name,omitempty"`
-	PlateNumber        string    `json:"plate_number,omitempty"`
-	VehicleType        string    `json:"vehicle_type,omitempty"`
-	ProposedFareAmount int64     `json:"proposed_fare"`
-	Status             string    `json:"status"`
-	CreatedAt          time.Time `json:"created_at"`
-}
 
 type ridePayload struct {
 	ID               int    `json:"id"`
@@ -90,68 +50,11 @@ func NewPayload(payload map[string]any) map[string]any {
 	result := make(map[string]any, len(payload))
 	for name, value := range payload {
 		switch value := value.(type) {
-		case dispatchdomain.BidSession:
-			result[name] = newBidSessionPayload(value)
-		case dispatchdomain.BidOffer:
-			result[name] = newBidOfferPayload(value)
 		case domain.Ride:
 			result[name] = newRidePayload(value)
 		default:
 			result[name] = value
 		}
-	}
-	return result
-}
-
-func newBidSessionPayload(session dispatchdomain.BidSession) bidSessionPayload {
-	return bidSessionPayload{
-		ID:               session.ID,
-		BookingReference: session.BookingReference,
-		RideID:           session.RideID,
-		PassengerID:      session.PassengerID,
-
-		PickupLatitude:    session.PickupLatitude,
-		PickupLongitude:   session.PickupLongitude,
-		PickupName:        session.PickupName,
-		DropoffLatitude:   session.DropoffLatitude,
-		DropoffLongitude:  session.DropoffLongitude,
-		DropoffName:       session.DropoffName,
-		PassengerNote:     session.PassengerNote,
-		DistanceKm:        session.DistanceKm,
-		DurationMinutes:   session.DurationMinutes,
-		OfferedFareAmount: session.OfferedFareAmount,
-		CustomFareAmount:  session.CustomFareAmount,
-		Status:            session.Status,
-		TargetDriverID:    session.TargetDriverID,
-		AcceptedDriverID:  session.AcceptedDriverID,
-		ExpiresAt:         session.ExpiresAt,
-		CreatedAt:         session.CreatedAt,
-		Offers:            newBidOfferPayloads(session.Offers),
-	}
-}
-
-func newBidOfferPayload(offer dispatchdomain.BidOffer) bidOfferPayload {
-	return bidOfferPayload{
-		ID:                 offer.ID,
-		SessionID:          offer.SessionID,
-		DriverID:           offer.DriverID,
-		DriverName:         offer.DriverName,
-		PlateNumber:        offer.PlateNumber,
-		VehicleType:        offer.VehicleType,
-		ProposedFareAmount: offer.ProposedFareAmount,
-		Status:             offer.Status,
-		CreatedAt:          offer.CreatedAt,
-	}
-}
-
-func newBidOfferPayloads(offers []dispatchdomain.BidOffer) []bidOfferPayload {
-	if offers == nil {
-		return nil
-	}
-
-	result := make([]bidOfferPayload, 0, len(offers))
-	for _, offer := range offers {
-		result = append(result, newBidOfferPayload(offer))
 	}
 	return result
 }

@@ -12,7 +12,6 @@ import (
 	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/domain"
 	chath "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/transport/http"
-	assignment "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
@@ -66,7 +65,7 @@ func TestChatHTTPRoutesRequireRoomMembership(t *testing.T) {
 	chath.NewRouter(chath.Dependencies{
 		Service: newChatService(history).
 			WithRideAssignmentLookup(chatAssignmentLookup{
-				assignment: assignment.Assignment{
+				assignment: chatapplication.RideAssignment{
 					RideID: "ride-1", PassengerID: "7", DriverID: "9", Status: "assigned",
 				},
 				found: true,
@@ -111,7 +110,7 @@ func TestChatCreateRoomReportsResolvedRoom(t *testing.T) {
 	chath.NewRouter(chath.Dependencies{
 		Service: newChatService(history).
 			WithRideAssignmentLookup(chatAssignmentLookup{
-				assignment: assignment.Assignment{
+				assignment: chatapplication.RideAssignment{
 					RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "assigned",
 				},
 				found: true,

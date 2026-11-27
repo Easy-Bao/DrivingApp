@@ -8,22 +8,23 @@ import (
 
 	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/app"
 	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
-	ridecontextdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
+	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 )
 
-type LocationResolver struct {
+type locationResolver struct {
 	service *locationapplication.Service
 }
 
-var _ AddressResolver = (*LocationResolver)(nil)
+var _ rideapplication.AddressResolver = (*locationResolver)(nil)
 
-func NewLocationResolver(service *locationapplication.Service) *LocationResolver {
-	return &LocationResolver{service: service}
+func newLocationResolver(service *locationapplication.Service) *locationResolver {
+	return &locationResolver{service: service}
 }
 
-func (resolver *LocationResolver) ResolveAddress(
+func (resolver *locationResolver) ResolveAddress(
 	ctx context.Context,
-	coordinates ridecontextdomain.Coordinates,
+	coordinates ridedomain.Coordinates,
 ) (string, error) {
 	if resolver.service == nil {
 		return "", errors.New("location module is unavailable")
@@ -35,10 +36,10 @@ func (resolver *LocationResolver) ResolveAddress(
 	if err != nil {
 		return "", fmt.Errorf("reverse geocode ride context address: %w", err)
 	}
-	return formatAddress(place), nil
+	return formatPlaceAddress(place), nil
 }
 
-func formatAddress(place *locationdomain.Place) string {
+func formatPlaceAddress(place *locationdomain.Place) string {
 	if place == nil {
 		return ""
 	}
@@ -57,5 +58,17 @@ func formatAddress(place *locationdomain.Place) string {
 	if name := strings.TrimSpace(place.Name); name != "" {
 		return name
 	}
-	return shortenAddress(place.Address)
+	return shortenPlaceAddress(place.Address)
+}
+
+func shortenPlaceAddress(address string) string {
+	address = strings.TrimSpace(address)
+	parts := strings.Split(address, ",")
+	for index := range parts {
+		parts[index] = strings.TrimSpace(parts[index])
+	}
+	if len(parts) >= 2 {
+		return parts[len(parts)-2] + ", " + parts[len(parts)-1]
+	}
+	return address
 }

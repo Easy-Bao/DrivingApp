@@ -10,7 +10,6 @@ import (
 	dispatchapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
-	ridedto "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
@@ -115,16 +114,16 @@ func (handler *Handler) Session(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	item, err := handler.service.Session(r.Context(), id)
+	item, err := handler.service.SessionForViewer(r.Context(), id, principal.UserID, principal.Role)
 	if err != nil {
+		if errors.Is(err, dispatchdomain.ErrUnauthorizedSession) {
+			response.Error(w, http.StatusForbidden, "forbidden")
+			return
+		}
 		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
-	if !canViewSession(principal.UserID, principal.Role, item) {
-		response.Error(w, http.StatusForbidden, "forbidden")
-		return
-	}
-	response.JSON(w, http.StatusOK, NewBidSessionResponse(filterSessionForViewer(principal.UserID, item)))
+	response.JSON(w, http.StatusOK, NewBidSessionResponse(item))
 }
 
 func (handler *Handler) Offers(w http.ResponseWriter, r *http.Request) {
@@ -137,17 +136,12 @@ func (handler *Handler) Offers(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	session, err := handler.service.Session(r.Context(), id)
+	items, err := handler.service.OffersForViewer(r.Context(), id, actorID)
 	if err != nil {
-		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
-		return
-	}
-	if session.PassengerID != actorID {
-		response.Error(w, http.StatusForbidden, "forbidden")
-		return
-	}
-	items, err := handler.service.Offers(r.Context(), id)
-	if err != nil {
+		if errors.Is(err, dispatchdomain.ErrUnauthorizedSession) {
+			response.Error(w, http.StatusForbidden, "forbidden")
+			return
+		}
 		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
@@ -219,7 +213,7 @@ func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, AcceptedOfferResponse{
 		Session: NewBidSessionResponse(session),
 		Offer:   NewBidOfferResponse(offer),
-		Ride:    ridedto.NewRideResponse(ride),
+		Ride:    newRideResponse(ride),
 		RideID:  ride.ID,
 	})
 }
@@ -285,48 +279,6 @@ func sessionIDParam(w http.ResponseWriter, r *http.Request) (int, bool) {
 		return 0, false
 	}
 	return id, true
-}
-
-func canViewSession(actorID int, actorRole string, session dispatchdomain.BidSession) bool {
-	if actorID <= 0 {
-		return false
-	}
-	if session.PassengerID == actorID {
-		return true
-	}
-	if session.TargetDriverID != nil {
-		return *session.TargetDriverID == actorID
-	}
-	if actorRole != string(security.RoleDriver) {
-		return false
-	}
-	if session.AcceptedDriverID != nil && *session.AcceptedDriverID == actorID {
-		return true
-	}
-	status := strings.TrimSpace(session.Status)
-	if status == "" || strings.EqualFold(status, "open") {
-		return true
-	}
-	for _, offer := range session.Offers {
-		if offer.DriverID == actorID {
-			return true
-		}
-	}
-	return false
-}
-
-func filterSessionForViewer(actorID int, session dispatchdomain.BidSession) dispatchdomain.BidSession {
-	if session.PassengerID == actorID || len(session.Offers) == 0 {
-		return session
-	}
-	filtered := make([]dispatchdomain.BidOffer, 0, 1)
-	for _, offer := range session.Offers {
-		if offer.DriverID == actorID {
-			filtered = append(filtered, offer)
-		}
-	}
-	session.Offers = filtered
-	return session
 }
 
 func dispatchErrorStatus(err error) int {

@@ -63,3 +63,27 @@ func (reader DriverPresenceReaderFunc) IsOnline(
 type EventPublisher interface {
 	Publish(ctx context.Context, envelope event.Envelope) error
 }
+
+// RideAssignment carries active trip participants and lifecycle state for
+// telemetry authorization without importing the dispatch module.
+type RideAssignment struct {
+	RideID      string
+	DriverID    string
+	PassengerID string
+	Status      string
+}
+
+func (value RideAssignment) Active() bool {
+	switch value.Status {
+	case "assigned", "accepted", "arrived", "in_transit":
+		return true
+	default:
+		return false
+	}
+}
+
+// RideAssignmentLookup supplies driver/ride assignments needed for live telemetry.
+type RideAssignmentLookup interface {
+	ForDriver(ctx context.Context, driverID string) ([]RideAssignment, error)
+	ForRide(ctx context.Context, rideID string) (RideAssignment, bool, error)
+}

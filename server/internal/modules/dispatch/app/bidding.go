@@ -408,6 +408,89 @@ func (service *Service) Session(ctx context.Context, sessionID int) (dispatchdom
 	return session, nil
 }
 
+// SessionForViewer loads a bid session, enforces viewer authorization, and filters
+// competing offers when viewed by a driver.
+func (service *Service) SessionForViewer(
+	ctx context.Context,
+	sessionID int,
+	actorID int,
+	actorRole string,
+) (dispatchdomain.BidSession, error) {
+	session, err := service.Session(ctx, sessionID)
+	if err != nil {
+		return dispatchdomain.BidSession{}, err
+	}
+	if !canViewSession(actorID, actorRole, session) {
+		return dispatchdomain.BidSession{}, dispatchdomain.ErrUnauthorizedSession
+	}
+	return filterSessionForViewer(actorID, session), nil
+}
+
+// OffersForViewer loads offers for a bid session after verifying the caller owns it.
+func (service *Service) OffersForViewer(
+	ctx context.Context,
+	sessionID int,
+	actorID int,
+) ([]dispatchdomain.BidOffer, error) {
+	if service == nil || service.store == nil {
+		return nil, ErrPersistenceUnavailable
+	}
+	session, err := service.store.Session(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("load bid session: %w", err)
+	}
+	if actorID <= 0 || session.PassengerID != actorID {
+		return nil, dispatchdomain.ErrUnauthorizedSession
+	}
+	offers, err := service.store.Offers(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("load bid offers: %w", err)
+	}
+	return slices.Clone(offers), nil
+}
+
+func canViewSession(actorID int, actorRole string, session dispatchdomain.BidSession) bool {
+	if actorID <= 0 {
+		return false
+	}
+	if session.PassengerID == actorID {
+		return true
+	}
+	if session.TargetDriverID != nil {
+		return *session.TargetDriverID == actorID
+	}
+	if actorRole != "driver" {
+		return false
+	}
+	if session.AcceptedDriverID != nil && *session.AcceptedDriverID == actorID {
+		return true
+	}
+	status := strings.TrimSpace(session.Status)
+	if status == "" || strings.EqualFold(status, "open") {
+		return true
+	}
+	for _, offer := range session.Offers {
+		if offer.DriverID == actorID {
+			return true
+		}
+	}
+	return false
+}
+
+func filterSessionForViewer(actorID int, session dispatchdomain.BidSession) dispatchdomain.BidSession {
+	if session.PassengerID == actorID || len(session.Offers) == 0 {
+		return session
+	}
+	filtered := make([]dispatchdomain.BidOffer, 0, 1)
+	for _, offer := range session.Offers {
+		if offer.DriverID == actorID {
+			filtered = append(filtered, offer)
+		}
+	}
+	session.Offers = filtered
+	return session
+}
+
 func withinOfferFareBounds(offeredFareAmount, proposedFareAmount int64) bool {
 	if offeredFareAmount <= 0 {
 		return proposedFareAmount >= _minProposedFareCentavos && proposedFareAmount <= _maxProposedFareCentavos

@@ -20,6 +20,7 @@ import (
 	chatwebsocket "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/transport/ws"
 	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	dispatchhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/transport/http"
+	dispatchwebsocket "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/transport/ws"
 	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/app"
 	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/adapter/mapbox"
@@ -29,7 +30,6 @@ import (
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/transport/http"
 	reviewapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/app"
 	reviewhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/transport/http"
-	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/adapter/postgres"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/transport/http"
@@ -211,6 +211,7 @@ func newHTTPRouter(
 	)
 	eventSubscriber.WithLogger(applicationLogger)
 	rideEventPublisher := ridewebsocket.NewEventPublisher(eventPublisher)
+	dispatchEventPublisher := dispatchwebsocket.NewEventPublisher(eventPublisher)
 	rideAssignments := dispatchapplication.NewResolver(
 		dispatchapplication.ResolverDependencies{
 			Routing:   assignmentProjection,
@@ -224,7 +225,7 @@ func newHTTPRouter(
 				WithLogger(applicationLogger),
 			MaxAge: config.RideLifecycle.DriverLocationMaxAge,
 		},
-		locationapplication.WithRideAssignments(rideAssignments),
+		locationapplication.WithRideAssignments(&trackingAssignmentAdapter{resolver: rideAssignments}),
 		locationapplication.WithDriverPresence(driverPresenceCache),
 		locationapplication.WithEventPublisher(eventPublisher),
 		locationapplication.WithLogger(applicationLogger),
@@ -283,7 +284,7 @@ func newHTTPRouter(
 			}, nil
 		},
 		CalculateFare:  config.Pricing.FareAmount,
-		EventPublisher: rideEventPublisher,
+		EventPublisher: dispatchEventPublisher,
 		Config:         config.Bidding,
 	}).WithLogger(applicationLogger)
 	dispatchAvailability := dispatchapplication.NewAvailabilityService(dependencies.dispatchStore)
@@ -315,8 +316,8 @@ func newHTTPRouter(
 	).WithLogger(applicationLogger)
 	passengerRideContextQuery := rideapplication.NewQueryService(
 		rideapplication.QueryDependencies{
-			RecentDestinations: ridepostgres.NewRidesReader(ridesService),
-			AddressResolver:    rideapplication.NewLocationResolver(locationService),
+			RecentDestinations: rideapplication.NewRidesReader(ridesService),
+			AddressResolver:    newLocationResolver(locationService),
 		},
 	).WithLogger(applicationLogger)
 
@@ -345,7 +346,22 @@ func newHTTPRouter(
 	}
 	chatService := chatapplication.NewService(chatapplication.Dependencies{History: chatRoomStore, Images: privateObjectStore}).
 		WithEventPublisher(eventPublisher).
-		WithRideAssignmentLookup(rideAssignments).
+		WithRideAssignmentLookup(chatapplication.RideAssignmentLookupFunc(
+			func(ctx context.Context, rideID string) (chatapplication.RideAssignment, bool, error) {
+				a, found, err := rideAssignments.ForRide(ctx, rideID)
+				if err != nil || !found {
+					return chatapplication.RideAssignment{}, found, err
+				}
+				return chatapplication.RideAssignment{
+					RideID:      a.RideID,
+					DriverID:    a.DriverID,
+					PassengerID: a.PassengerID,
+					Status:      a.Status,
+					ContactOpen: a.ContactOpen,
+					CompletedAt: a.CompletedAt,
+				}, true, nil
+			},
+		)).
 		WithLogger(applicationLogger)
 	chatEventHandler := chatwebsocket.NewEventHandler(chatService)
 	chatProtocol := chatwebsocket.NewConnectionProtocol(chatEventHandler, chatService)
@@ -405,4 +421,44 @@ func methodNotAllowedHandler(routeSecurity *middleware.RouteSecurity) http.Handl
 		return handler
 	}
 	return routeSecurity.Middleware(middleware.RouteRead)(handler)
+}
+
+type trackingAssignmentAdapter struct {
+	resolver *dispatchapplication.Resolver
+}
+
+func (adapter *trackingAssignmentAdapter) ForDriver(
+	ctx context.Context,
+	driverID string,
+) ([]locationapplication.RideAssignment, error) {
+	items, err := adapter.resolver.ForDriver(ctx, driverID)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]locationapplication.RideAssignment, 0, len(items))
+	for _, item := range items {
+		result = append(result, locationapplication.RideAssignment{
+			RideID:      item.RideID,
+			DriverID:    item.DriverID,
+			PassengerID: item.PassengerID,
+			Status:      item.Status,
+		})
+	}
+	return result, nil
+}
+
+func (adapter *trackingAssignmentAdapter) ForRide(
+	ctx context.Context,
+	rideID string,
+) (locationapplication.RideAssignment, bool, error) {
+	item, found, err := adapter.resolver.ForRide(ctx, rideID)
+	if err != nil || !found {
+		return locationapplication.RideAssignment{}, found, err
+	}
+	return locationapplication.RideAssignment{
+		RideID:      item.RideID,
+		DriverID:    item.DriverID,
+		PassengerID: item.PassengerID,
+		Status:      item.Status,
+	}, true, nil
 }

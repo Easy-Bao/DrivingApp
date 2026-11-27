@@ -11,7 +11,6 @@ import (
 
 	application "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/domain"
-	assignment "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
@@ -25,7 +24,7 @@ type chatHistory struct {
 func newChatService(history application.RoomStore) *application.Service {
 	return application.NewService(application.Dependencies{History: history}).
 		WithRideAssignmentLookup(chatAssignmentLookup{
-			assignment: assignment.Assignment{
+			assignment: application.RideAssignment{
 				RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "assigned",
 			},
 			found: true,
@@ -33,18 +32,11 @@ func newChatService(history application.RoomStore) *application.Service {
 }
 
 type chatAssignmentLookup struct {
-	assignment assignment.Assignment
+	assignment application.RideAssignment
 	found      bool
 }
 
-func (lookup chatAssignmentLookup) ForDriver(context.Context, string) ([]assignment.Assignment, error) {
-	if !lookup.found {
-		return nil, nil
-	}
-	return []assignment.Assignment{lookup.assignment}, nil
-}
-
-func (lookup chatAssignmentLookup) ForRide(context.Context, string) (assignment.Assignment, bool, error) {
+func (lookup chatAssignmentLookup) ForRide(context.Context, string) (application.RideAssignment, bool, error) {
 	return lookup.assignment, lookup.found, nil
 }
 
@@ -95,7 +87,7 @@ func TestChatCreateRoomDoesNotReplaceParticipants(t *testing.T) {
 	history := &chatHistory{passengerID: "passenger-1", driverID: "driver-1"}
 	service := newChatService(history).
 		WithRideAssignmentLookup(chatAssignmentLookup{
-			assignment: assignment.Assignment{
+			assignment: application.RideAssignment{
 				RideID: "ride-1", PassengerID: "passenger-1", DriverID: "driver-1", Status: "assigned",
 			},
 			found: true,
@@ -117,7 +109,7 @@ func TestChatCreateRoomRequiresTheAssignedRideParticipants(t *testing.T) {
 	history := &chatHistory{}
 	service := newChatService(history).
 		WithRideAssignmentLookup(chatAssignmentLookup{
-			assignment: assignment.Assignment{
+			assignment: application.RideAssignment{
 				RideID:      "ride-1",
 				PassengerID: "passenger-1",
 				DriverID:    "driver-1",
@@ -147,7 +139,7 @@ func TestChatCreateRoomUsesAuthoritativeParticipants(t *testing.T) {
 	history := &chatHistory{}
 	service := newChatService(history).
 		WithRideAssignmentLookup(chatAssignmentLookup{
-			assignment: assignment.Assignment{
+			assignment: application.RideAssignment{
 				RideID:      "ride-1",
 				PassengerID: "passenger-1",
 				DriverID:    "driver-1",
@@ -223,7 +215,7 @@ func TestChatRelayPublishesPassengerScopedNotification(t *testing.T) {
 	service := newChatService(history).
 		WithEventPublisher(events).
 		WithRideAssignmentLookup(chatAssignmentLookup{
-			assignment: assignment.Assignment{
+			assignment: application.RideAssignment{
 				RideID: "ride-1", PassengerID: "passenger-1", DriverID: "driver-1", Status: "assigned",
 			},
 			found: true,
@@ -257,7 +249,7 @@ func TestChatRelayRejectsMessagesAfterTheRideContactWindowCloses(t *testing.T) {
 	history := &chatHistory{passengerID: "passenger-1", driverID: "driver-1"}
 	service := newChatService(history).
 		WithRideAssignmentLookup(chatAssignmentLookup{
-			assignment: assignment.Assignment{
+			assignment: application.RideAssignment{
 				RideID: "ride-1", PassengerID: "passenger-1", DriverID: "driver-1", Status: "completed",
 			},
 			found: true,
@@ -282,7 +274,7 @@ func TestChatTypingPublishesAnAuthorizedRoomEvent(t *testing.T) {
 	service := newChatService(history).
 		WithEventPublisher(publisher).
 		WithRideAssignmentLookup(chatAssignmentLookup{
-			assignment: assignment.Assignment{
+			assignment: application.RideAssignment{
 				RideID:      "ride-1",
 				PassengerID: "passenger-1",
 				DriverID:    "driver-1",
@@ -315,7 +307,7 @@ func TestChatTypingRejectsAnUnassignedSender(t *testing.T) {
 	history := &chatHistory{passengerID: "passenger-1", driverID: "driver-1"}
 	service := newChatService(history).
 		WithRideAssignmentLookup(chatAssignmentLookup{
-			assignment: assignment.Assignment{
+			assignment: application.RideAssignment{
 				RideID:      "ride-1",
 				PassengerID: "passenger-1",
 				DriverID:    "driver-1",
@@ -349,7 +341,7 @@ func (*chatHistory) MarkRead(context.Context, string, string, string) error { re
 
 func TestClosedConversationRetainsParticipantHistory(t *testing.T) {
 	history := &chatHistory{passengerID: "7", driverID: "8", locked: true, messages: []domain.Message{{ID: "old", Body: "previous conversation"}}}
-	service := newChatService(history).WithRideAssignmentLookup(chatAssignmentLookup{assignment: assignment.Assignment{RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "completed"}, found: true})
+	service := newChatService(history).WithRideAssignmentLookup(chatAssignmentLookup{assignment: application.RideAssignment{RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "completed"}, found: true})
 	for _, userID := range []string{"7", "8"} {
 		messages, err := service.MessagesForUser(context.Background(), "ride-1", userID)
 		if err != nil || len(messages) != 1 || messages[0].ID != "old" {
@@ -415,7 +407,7 @@ func (store *pictureStore) Delete(context.Context, string) error { store.deleted
 func TestPicturesUsePrivateStorageAndRoomAuthorization(t *testing.T) {
 	history := &chatHistory{passengerID: "7", driverID: "8"}
 	pictures := &pictureStore{}
-	service := application.NewService(application.Dependencies{History: history, Images: pictures}).WithRideAssignmentLookup(chatAssignmentLookup{assignment: assignment.Assignment{RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "assigned"}, found: true})
+	service := application.NewService(application.Dependencies{History: history, Images: pictures}).WithRideAssignmentLookup(chatAssignmentLookup{assignment: application.RideAssignment{RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "assigned"}, found: true})
 	var picture bytes.Buffer
 	if err := png.Encode(&picture, image.NewRGBA(image.Rect(0, 0, 2, 2))); err != nil {
 		t.Fatal(err)

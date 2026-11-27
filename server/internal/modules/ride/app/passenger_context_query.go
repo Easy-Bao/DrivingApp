@@ -193,3 +193,39 @@ func shortenAddress(address string) string {
 	}
 	return address
 }
+
+// RidesReader adapts the ride application service for passenger recent-destination lookups.
+type RidesReader struct {
+	service *Service
+}
+
+var _ RecentDestinationReader = (*RidesReader)(nil)
+
+func NewRidesReader(service *Service) *RidesReader {
+	return &RidesReader{service: service}
+}
+
+func (reader *RidesReader) ReadRecentDestinations(
+	ctx context.Context,
+	passengerID, limit int,
+) ([]RecentDestination, error) {
+	if reader == nil || reader.service == nil {
+		return nil, errors.New("rides module is unavailable")
+	}
+	rides, err := reader.service.PassengerRecentRides(ctx, passengerID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("load recent passenger rides: %w", err)
+	}
+
+	destinations := make([]RecentDestination, 0, len(rides))
+	for _, ride := range rides {
+		destinations = append(destinations, RecentDestination{
+			Status:    ride.Status,
+			Title:     ride.DropoffName,
+			Subtitle:  ride.PickupName,
+			Latitude:  ride.DropoffLatitude,
+			Longitude: ride.DropoffLongitude,
+		})
+	}
+	return destinations, nil
+}
