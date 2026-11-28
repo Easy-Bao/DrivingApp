@@ -173,4 +173,60 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'shows session-expired warning banner and clears it when signing in',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 568));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      when(
+        () => repository.authenticate(
+          email: 'driver@example.com',
+          password: 'password123',
+        ),
+      ).thenAnswer((_) async => const Err(InvalidCredentialsFailure()));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!,
+          ),
+          home: SignInPage(
+            signInBloc: SignInBloc(repository),
+            sessionExpired: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('driver-session-expired-notice')),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Your session expired. Sign in again to continue.'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+
+      await tester.enterText(
+        find.byType(TextField).first,
+        'driver@example.com',
+      );
+      await tester.enterText(find.byType(TextField).last, 'password123');
+      await tester.ensureVisible(find.text('Sign in'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sign in'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('driver-session-expired-notice')),
+        findsNothing,
+      );
+      expect(find.byType(AppErrorBanner), findsOneWidget);
+    },
+  );
 }

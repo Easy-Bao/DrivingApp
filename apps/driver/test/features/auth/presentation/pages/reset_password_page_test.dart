@@ -1,9 +1,13 @@
 import 'package:design_system/design_system.dart';
+import 'package:driver/src/features/auth/auth_routes.dart';
 import 'package:driver/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:driver/src/features/auth/presentation/bloc/reset_password/reset_password_bloc.dart';
 import 'package:driver/src/features/auth/presentation/pages/reset_password_page.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
+// ignore: depend_on_referenced_packages
+import 'package:go_router/go_router.dart' show GoRouter;
+import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -132,4 +136,68 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'shows completion screen after resetting password and returns to sign in',
+    (tester) async {
+      final repository = _MockAuthRepository();
+      when(
+        () => repository.verifyResetOtp(
+          email: 'driver@example.com',
+          code: '123456',
+        ),
+      ).thenAnswer((_) async => const Ok(null));
+      when(
+        () => repository.confirmPasswordReset(
+          email: 'driver@example.com',
+          code: '123456',
+          newPassword: 'new-password',
+        ),
+      ).thenAnswer((_) async => const Ok(null));
+
+      final router = GoRouter(
+        initialLocation: '/reset',
+        routes: [
+          GoRoute(
+            path: '/reset',
+            builder: (_, _) => ResetPasswordPage(
+              email: 'driver@example.com',
+              resetPasswordBloc: ResetPasswordBloc(repository),
+            ),
+          ),
+          GoRoute(
+            path: '/signin',
+            name: AuthRoutes.signin,
+            builder: (_, _) => const Scaffold(body: Text('Driver Sign In')),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '123456');
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, 'new-password');
+      await tester.enterText(find.byType(TextField).last, 'new-password');
+      await tester.pump();
+      await tester.tap(find.widgetWithText(FilledButton, 'Reset password'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Password updated'), findsOneWidget);
+      expect(find.text('Back to sign in'), findsOneWidget);
+      expect(find.text('Driver Sign In'), findsNothing);
+
+      await tester.tap(find.text('Back to sign in'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Driver Sign In'), findsOneWidget);
+    },
+  );
 }

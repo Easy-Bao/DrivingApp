@@ -150,7 +150,7 @@ Future<void> _handleSessionExpired(
       AuthRoutes.signinPath) {
     return;
   }
-  router.goNamed(AuthRoutes.signin);
+  router.goNamed(AuthRoutes.signin, queryParameters: const {'expired': '1'});
 }
 
 Future<void> _runCleanupStep(Future<void> Function() step) async {

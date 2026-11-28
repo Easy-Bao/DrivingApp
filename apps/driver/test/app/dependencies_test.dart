@@ -79,6 +79,15 @@ void main() {
       Modular.routerConfig.routeInformationProvider.value.uri.path,
       AuthRoutes.signinPath,
     );
+    expect(
+      Modular
+          .routerConfig
+          .routeInformationProvider
+          .value
+          .uri
+          .queryParameters['expired'],
+      '1',
+    );
 
     session
       ..sessionCleared = false
@@ -99,6 +108,15 @@ void main() {
     expect(
       Modular.routerConfig.routeInformationProvider.value.uri.path,
       AuthRoutes.signinPath,
+    );
+    expect(
+      Modular
+          .routerConfig
+          .routeInformationProvider
+          .value
+          .uri
+          .queryParameters['expired'],
+      '1',
     );
   });
 }

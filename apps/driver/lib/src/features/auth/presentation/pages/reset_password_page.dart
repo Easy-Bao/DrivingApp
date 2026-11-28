@@ -36,7 +36,6 @@ class _ResetPasswordContent extends StatelessWidget {
         listener: (context, state) {
           if (state is ResetPasswordSuccess) {
             TextInput.finishAutofillContext();
-            context.goNamed(AuthRoutes.signin);
           }
         },
         builder: (context, state) => AppPasswordResetFlow(
@@ -49,6 +48,8 @@ class _ResetPasswordContent extends StatelessWidget {
               state is ResetPasswordFailure,
           isSubmitting: state is ResetPasswordLoading,
           isResending: state is ResetPasswordResending,
+          isCompleted: state is ResetPasswordSuccess,
+          onCompletedAction: () => context.goNamed(AuthRoutes.signin),
           errorMessage: switch (state) {
             ResetPasswordCodeVerificationFailure(:final errorMessage) ||
             ResetPasswordResendFailure(:final errorMessage) ||

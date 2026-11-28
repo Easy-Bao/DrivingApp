@@ -40,8 +40,10 @@ class AuthModule extends Module {
     ChildRoute(
       name: AuthRoutes.signin,
       AuthRoutes.signinPath,
-      child: (context, GoRouterState state) =>
-          SignInPage(signInBloc: Modular.get<SignInBloc>()),
+      child: (context, GoRouterState state) => SignInPage(
+        signInBloc: Modular.get<SignInBloc>(),
+        sessionExpired: state.uri.queryParameters['expired'] == '1',
+      ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.fadeDuration,
     ),

@@ -12,21 +12,28 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
 
 class SignInPage extends StatelessWidget {
-  const SignInPage({super.key, required this.signInBloc});
+  const SignInPage({
+    super.key,
+    required this.signInBloc,
+    this.sessionExpired = false,
+  });
 
   final SignInBloc signInBloc;
+  final bool sessionExpired;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<SignInBloc>(
       create: (_) => signInBloc,
-      child: const _SigninPageContent(),
+      child: _SigninPageContent(sessionExpired: sessionExpired),
     );
   }
 }
 
 class _SigninPageContent extends StatefulWidget {
-  const _SigninPageContent();
+  const _SigninPageContent({this.sessionExpired = false});
+
+  final bool sessionExpired;
 
   @override
   State<_SigninPageContent> createState() => _SigninPageContentState();
@@ -44,8 +51,17 @@ class _SigninPageContentState extends State<_SigninPageContent> {
   final _passwordFocus = FocusNode();
 
   bool _isPasswordVisible = false;
+  late bool _showSessionExpiredNotice = widget.sessionExpired;
   String? _emailError;
   String? _passwordError;
+
+  @override
+  void didUpdateWidget(covariant _SigninPageContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.sessionExpired && !oldWidget.sessionExpired) {
+      _showSessionExpiredNotice = true;
+    }
+  }
 
   @override
   void dispose() {
@@ -76,6 +92,10 @@ class _SigninPageContentState extends State<_SigninPageContent> {
     if (_emailError != null || _passwordError != null) {
       (_emailError != null ? _emailFocus : _passwordFocus).requestFocus();
       return;
+    }
+
+    if (_showSessionExpiredNotice) {
+      setState(() => _showSessionExpiredNotice = false);
     }
 
     BlocProvider.of<SignInBloc>(context)
@@ -118,6 +138,43 @@ class _SigninPageContentState extends State<_SigninPageContent> {
             ),
           ),
           children: [
+            if (_showSessionExpiredNotice && state is! SignInFailure) ...[
+              Semantics(
+                liveRegion: true,
+                child: Container(
+                  key: const ValueKey<String>('driver-session-expired-notice'),
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: context.semanticColors.warningContainer,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 1),
+                        child: Icon(
+                          LucideIcons.triangle_alert,
+                          size: 16,
+                          color: context.semanticColors.onWarningContainer,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          'Your session expired. Sign in again to continue.',
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: context.semanticColors.onWarningContainer,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+            ],
             if (state is SignInFailure) ...[
               AppErrorBanner(
                 message: state.errorMessage,
