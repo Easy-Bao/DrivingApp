@@ -2,6 +2,11 @@ import 'package:material_ui/material_ui.dart';
 
 abstract final class AppPalette {
   static const emerald = Color(0xFF059669);
+  static const green100 = Color(0xFFE6F4EE);
+  static const green800 = Color(0xFF145339);
+
+  static const blue100 = Color(0xFFE8F1FC);
+  static const blue800 = Color(0xFF1E4475);
 
   static const amber = Color(0xFFF59E0B);
   static const amber100 = Color(0xFFFEF3C7);

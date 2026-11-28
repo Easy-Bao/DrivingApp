@@ -22,6 +22,20 @@ void main() {
       _contrast(scheme.onSurfaceVariant, scheme.surface),
       greaterThan(4.5),
     );
+    expect(_contrast(semantic!.onSuccess, semantic.success), greaterThan(4.5));
+    expect(
+      _contrast(semantic.onSuccessContainer, semantic.successContainer),
+      greaterThan(4.5),
+    );
+    expect(_contrast(semantic.onWarning, semantic.warning), greaterThan(4.5));
+    expect(
+      _contrast(semantic.onWarningContainer, semantic.warningContainer),
+      greaterThan(4.5),
+    );
+    expect(
+      _contrast(semantic.onInfoContainer, semantic.infoContainer),
+      greaterThan(4.5),
+    );
   });
 
   test('exposes the balanced type scale', () {
