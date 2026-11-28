@@ -365,6 +365,17 @@ go test ./...
 go vet ./...
 ```
 
+CI also verifies module checksums and generated queries, runs forward migrations
+on an empty PostgreSQL database, and runs the unit and integration suites with
+race detection. To run the database-backed suite locally, set
+`TEST_DATABASE_URL` to a disposable PostgreSQL database that allows creating
+schemas. The integration tests create and drop their own schemas; never point
+them at a shared or production database.
+
+```sh
+go test -count=1 -shuffle=on -race -tags=integration ./...
+```
+
 Generated sqlc files are checked into the repository. Schema changes must be
 reviewed with a versioned PostgreSQL migration before they are used by a shared
 environment.
