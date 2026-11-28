@@ -10,18 +10,13 @@ enum BookingAuthAction() {
 Future<BookingAuthAction?> showBookingAuthBottomSheet(
   BuildContext context, {
   String title = 'Sign in to book a ride',
-  String message = 'Sign in or create an account to see your route and fare, then book your ride.',
+  String message = 'Sign in or create an account to see your route and fare. Your trip details are saved and ready once you sign in.',
 }) {
   return showModalBottomSheet<BookingAuthAction>(
     context: context,
     useRootNavigator: true,
-    backgroundColor: context.colorScheme.surfaceContainerLowest,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(
-        top: Radius.circular(AppRadius.sheet),
-      ),
-    ),
-    clipBehavior: Clip.antiAlias,
+    backgroundColor: Colors.transparent,
+    elevation: 0,
     isScrollControlled: true,
     isDismissible: true,
     enableDrag: true,
@@ -35,33 +30,25 @@ Future<BookingAuthAction?> showBookingAuthBottomSheet(
 class const BookingAuthBottomSheet({
   super.key,
   this.title = 'Sign in to book a ride',
-  this.message = 'Sign in or create an account to see your route and fare, then book your ride.',
+  this.message = 'Sign in or create an account to see your route and fare. Your trip details are saved and ready once you sign in.',
 }) extends StatelessWidget {
   final String title;
   final String message;
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    return SafeArea(
+    return AppBottomSheetContainer(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xxl,
+        AppSpacing.md,
+        AppSpacing.xxl,
+        AppSpacing.xxl,
+      ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.xxl,
-          AppSpacing.md,
-          AppSpacing.xxl,
-          AppSpacing.xxl,
-        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colors.outlineVariant,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xxl),
+            const SizedBox(height: AppSpacing.md),
             Container(
               width: 56,
               height: 56,

@@ -200,149 +200,124 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
           ),
           Align(
             alignment: Alignment.bottomCenter,
-            child: SafeArea(
-              top: false,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(
-                  AppLayout.pagePaddingWide,
-                  AppSpacing.xxl,
-                  AppLayout.pagePaddingWide,
-                  AppSpacing.xxl,
-                ),
-                decoration: BoxDecoration(
-                  color: context.colorScheme.surface,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(AppRadius.sheet),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: context.colorScheme.onSurface.withValues(
-                        alpha: 0.08,
-                      ),
-                      blurRadius: 30,
-                      offset: const Offset(0, -10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        margin: const EdgeInsets.only(bottom: 20),
+            child: AppBottomSheetContainer(
+              showShadow: true,
+              backgroundColor: context.colorScheme.surface,
+              padding: const EdgeInsets.fromLTRB(
+                AppLayout.pagePaddingWide,
+                AppSpacing.md,
+                AppLayout.pagePaddingWide,
+                AppSpacing.xxl,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: context.colorScheme.outlineVariant,
-                          borderRadius: BorderRadius.circular(2),
+                          color: context.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                        ),
+                        child: Icon(
+                          LucideIcons.map_pin,
+                          color: context.colorScheme.onSurface,
+                          size: 22,
                         ),
                       ),
-                    ),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: context.colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
-                          ),
-                          child: Icon(
-                            LucideIcons.map_pin,
-                            color: context.colorScheme.onSurface,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.placeName,
-                                style: context.textStyles.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: context.colorScheme.onSurface,
-                                ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.placeName,
+                              style: context.textStyles.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: context.colorScheme.onSurface,
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _isLoading ? 'Fetching address…' : _fullAddress,
-                                style: context.textStyles.bodySmall?.copyWith(
-                                  color: context.colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _isLoading ? 'Fetching address…' : _fullAddress,
+                              style: context.textStyles.bodySmall?.copyWith(
+                                color: context.colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
                               ),
-                            ],
-                          ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    if (_loadError case final loadError?) ...[
-                      const SizedBox(height: AppSpacing.md),
-                      AppErrorBanner(
-                        message: loadError,
-                        onRetry: _retryLoadRouteData,
-                        onDismiss: () => setState(() => _loadError = null),
                       ),
                     ],
-                    const SizedBox(height: 20),
-                    CompactRouteTimeline(
-                      pickup: 'Current Location',
-                      dropoff: widget.placeName,
-                      pickupLabel: 'From',
-                      dropoffLabel: 'Destination',
+                  ),
+                  if (_loadError case final loadError?) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    AppErrorBanner(
+                      message: loadError,
+                      onRetry: _retryLoadRouteData,
+                      onDismiss: () => setState(() => _loadError = null),
                     ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      height: AppSize.controlHeight,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          final resolvedAddress = _fullAddress.trim().isNotEmpty
-                              ? _fullAddress.trim()
-                              : widget.placeSubtitle;
-                          final place = Place(
-                            id: 'destination_place_${widget.placeName.replaceAll(' ', '_')}',
-                            name: widget.placeName,
-                            fullAddress: resolvedAddress,
-                            latitude: widget.destinationLat,
-                            longitude: widget.destinationLng,
-                          );
-                          unawaited(
-                            context.pushNamed(
-                              BookingRoutes.rideSelection,
-                              extra: place,
-                              queryParameters: {
-                                if (origin != null) ...{
-                                  'pickupLat': origin.lat.toString(),
-                                  'pickupLng': origin.lng.toString(),
-                                },
+                  ],
+                  const SizedBox(height: 20),
+                  CompactRouteTimeline(
+                    pickup: 'Current Location',
+                    dropoff: widget.placeName,
+                    pickupLabel: 'From',
+                    dropoffLabel: 'Destination',
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: AppSize.controlHeight,
+                    child: FilledButton(
+                      onPressed: () {
+                        final resolvedAddress = _fullAddress.trim().isNotEmpty
+                            ? _fullAddress.trim()
+                            : widget.placeSubtitle;
+                        final place = Place(
+                          id: 'destination_place_${widget.placeName.replaceAll(' ', '_')}',
+                          name: widget.placeName,
+                          fullAddress: resolvedAddress,
+                          latitude: widget.destinationLat,
+                          longitude: widget.destinationLng,
+                        );
+                        unawaited(
+                          context.pushNamed(
+                            BookingRoutes.rideSelection,
+                            extra: place,
+                            queryParameters: {
+                              if (origin != null) ...{
+                                'pickupLat': origin.lat.toString(),
+                                'pickupLng': origin.lng.toString(),
                               },
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: context.colorScheme.primary,
-                          foregroundColor: context.colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            },
                           ),
-                          elevation: 0,
+                        );
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: context.colorScheme.primary,
+                        foregroundColor: context.colorScheme.onPrimary,
+                        enableFeedback: false,
+                        splashFactory: NoSplash.splashFactory,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
-                        child: Text(
-                          'Book Ride',
-                          style: context.textStyles.titleSmall?.copyWith(
-                            color: context.colorScheme.onPrimary,
-                            fontWeight: FontWeight.w800,
-                          ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Book ride',
+                        style: context.textStyles.titleSmall?.copyWith(
+                          color: context.colorScheme.onPrimary,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

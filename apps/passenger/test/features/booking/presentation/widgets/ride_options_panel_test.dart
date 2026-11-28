@@ -223,6 +223,67 @@ void main() {
     expect(find.text('Set your offer'), findsNothing);
   });
 
+  testWidgets('reverts an invalid custom offer when backing out to summary', (
+    tester,
+  ) async {
+    final offerController = TextEditingController(text: '28.17');
+    String? customFareError;
+    await tester.pumpWidget(
+      StatefulBuilder(
+        builder: (context, setState) => MaterialApp(
+          theme: AppTheme.main,
+          home: Scaffold(
+            body: RideOptionsPanel(
+              passengerName: 'Avery Cruz',
+              pickupLabel: 'Current location',
+              destinationName: 'Central Park',
+              destinationAddress: '123 Main Street',
+              fareResult: fareResult,
+              onBookPressed: () {},
+              customFareController: offerController,
+              customFareError: customFareError,
+              isLoadingFare: false,
+              fareError: null,
+              onRetryFare: null,
+              onCustomFareChanged: (value) {
+                final parsed = double.tryParse(value);
+                setState(() {
+                  customFareError = parsed == null || parsed < 28.17
+                      ? 'Offer must be at least ₱28.17.'
+                      : null;
+                });
+              },
+              notesController: TextEditingController(),
+              onNotesChanged: (_) {},
+              selectedTipAmount: 0,
+              onTipSelected: (_) {},
+              totalFare: double.tryParse(offerController.text) ?? 28.17,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('custom-offer-trigger')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('custom-offer-input')),
+      '10',
+    );
+    await tester.pump();
+    expect(customFareError, isNotNull);
+
+    await tester.tap(find.byKey(const ValueKey('panel-back')));
+    await tester.pumpAndSettle();
+
+    expect(offerController.text, '28.17');
+    expect(customFareError, isNull);
+    final bookButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('book-directly-button')),
+    );
+    expect(bookButton.onPressed, isNotNull);
+  });
+
   testWidgets('opens a dedicated trip note editor instead of an inline field', (
     tester,
   ) async {
@@ -322,6 +383,7 @@ void main() {
     await tester.pump();
     expect(selectedTip, 20);
 
+    expect(find.text('Save tip'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('tip-save-button')));
     await tester.pumpAndSettle();
 

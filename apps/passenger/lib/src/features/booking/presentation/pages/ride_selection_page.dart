@@ -7,6 +7,7 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:material_ui/material_ui.dart' hide Route;
+import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/widgets/booking_auth_bottom_sheet.dart';
@@ -369,7 +370,9 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
       AppSnackBar.show(
         context,
         'You already have a booking request in progress.',
-        isError: true,
+        tone: AppSnackBarTone.warning,
+        actionLabel: 'View',
+        onAction: () => _openActiveBooking(bookingBloc),
       );
       return;
     }
@@ -406,6 +409,54 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     } finally {
       _isStartingBooking = false;
     }
+  }
+
+  void _openActiveBooking(BookingBloc bookingBloc) {
+    if (!mounted) return;
+    final state = bookingBloc.state;
+    if (state is BookingDriverMatched) {
+      final rideId = state.rideId?.trim() ?? '';
+      if (rideId.isNotEmpty) {
+        unawaited(
+          context.pushNamed(ActiveRideRoutes.trackDriver, extra: rideId),
+        );
+        return;
+      }
+    }
+    if (state is BookingRideRecovered) {
+      final rideId = state.rideId.trim();
+      if (rideId.isNotEmpty) {
+        unawaited(
+          context.pushNamed(ActiveRideRoutes.trackDriver, extra: rideId),
+        );
+        return;
+      }
+    }
+    final activeSearch = bookingBloc.activeDriverSearch;
+    if (activeSearch != null) {
+      final trip = activeSearch.trip;
+      unawaited(
+        context.pushNamed(
+          BookingRoutes.findingDriver,
+          extra: {
+            'fare': trip.fare,
+            'destination': trip.destination,
+            'distance': trip.distance,
+            'duration': trip.duration,
+            if (activeSearch.distanceKm != null)
+              'distanceKm': activeSearch.distanceKm,
+            if (activeSearch.durationMinutes != null)
+              'durationMinutes': activeSearch.durationMinutes,
+            'pickupAddress': trip.pickupAddress,
+            'pickupLat': activeSearch.pickupLat,
+            'pickupLng': activeSearch.pickupLng,
+            'passengerNote': trip.passengerNote,
+          },
+        ),
+      );
+      return;
+    }
+    context.goNamed(HomeRoutes.home);
   }
 
   @override

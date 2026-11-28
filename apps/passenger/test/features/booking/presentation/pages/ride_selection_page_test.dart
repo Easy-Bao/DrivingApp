@@ -279,6 +279,7 @@ void main() {
         find.text('You already have a booking request in progress.'),
         findsOneWidget,
       );
+      expect(find.text('View'), findsOneWidget);
     },
   );
 }

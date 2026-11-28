@@ -7,6 +7,11 @@ void main() {
     expect(MapPinFlow.pickup.confirmationLabel, 'Confirm pickup location');
   });
 
+  test('identifies the destination map-pin flow', () {
+    expect(MapPinFlow.destination.locationLabel, 'Destination location');
+    expect(MapPinFlow.destination.confirmationLabel, 'Confirm destination');
+  });
+
   test('identifies the saved-place map-pin flow', () {
     expect(MapPinFlow.savedPlace.locationLabel, 'Saved place location');
     expect(

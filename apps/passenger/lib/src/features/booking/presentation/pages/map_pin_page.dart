@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
@@ -10,16 +11,18 @@ import 'package:passenger/src/features/booking/presentation/formatters/map_pin_a
 import 'package:passenger/src/features/booking/presentation/widgets/map_pin_bottom_sheet.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/map_selection_marker.dart';
 
-enum MapPinFlow { pickup, savedPlace }
+enum MapPinFlow { pickup, destination, savedPlace }
 
 extension MapPinFlowCopy on MapPinFlow {
   String get locationLabel => switch (this) {
     MapPinFlow.pickup => 'Pickup location',
+    MapPinFlow.destination => 'Destination location',
     MapPinFlow.savedPlace => 'Saved place location',
   };
 
   String get confirmationLabel => switch (this) {
     MapPinFlow.pickup => 'Confirm pickup location',
+    MapPinFlow.destination => 'Confirm destination',
     MapPinFlow.savedPlace => 'Confirm saved place location',
   };
 }
@@ -39,6 +42,7 @@ class _MapPinPageState()
   String _address = 'Move the map to select a location';
   String _subAddress = '';
   bool _isGeocoding = false;
+  bool _isLocatingCurrent = false;
   bool _isOpeningDestinationSearch = false;
   bool _isPopping = false;
   bool _hasUserPannedMap = false;
@@ -196,38 +200,52 @@ class _MapPinPageState()
   }
 
   Future<void> _useCurrentLocation() async {
-    final position = await () async {
-      try {
-        return await LocationService.getCurrentPosition();
-      } catch (_) {
-        return null;
-      }
-    }();
-    if (!mounted || position == null) return;
-
-    _hasUserPannedMap = false;
-    setState(() {
-      _centerLat = position.latitude;
-      _centerLng = position.longitude;
-    });
-
-    final controller = _mapController;
-    if (controller != null) {
-      _isProgrammaticCameraMove = true;
-      try {
-        await MapProvider.moveCamera(
-          controller,
-          position.latitude,
-          position.longitude,
-          zoom: 15.0,
-          animate: true,
+    if (_isLocatingCurrent) return;
+    setState(() => _isLocatingCurrent = true);
+    try {
+      final position = await () async {
+        try {
+          return await LocationService.getCurrentPosition();
+        } catch (_) {
+          return null;
+        }
+      }();
+      if (!mounted) return;
+      if (position == null) {
+        AppSnackBar.show(
+          context,
+          'Unable to find your current location. Check location access and try again.',
+          tone: AppSnackBarTone.error,
         );
-      } finally {
-        _isProgrammaticCameraMove = false;
+        return;
       }
-    }
-    if (mounted) {
-      unawaited(_reverseGeocode(position.latitude, position.longitude));
+
+      _hasUserPannedMap = false;
+      setState(() {
+        _centerLat = position.latitude;
+        _centerLng = position.longitude;
+      });
+
+      final controller = _mapController;
+      if (controller != null) {
+        _isProgrammaticCameraMove = true;
+        try {
+          await MapProvider.moveCamera(
+            controller,
+            position.latitude,
+            position.longitude,
+            zoom: 15.0,
+            animate: true,
+          );
+        } finally {
+          _isProgrammaticCameraMove = false;
+        }
+      }
+      if (mounted) {
+        unawaited(_reverseGeocode(position.latitude, position.longitude));
+      }
+    } finally {
+      if (mounted) setState(() => _isLocatingCurrent = false);
     }
   }
 
@@ -264,6 +282,7 @@ class _MapPinPageState()
     final lat = _centerLat;
     final lng = _centerLng;
     if (lat == null || lng == null) return;
+    unawaited(HapticFeedback.lightImpact());
     final result = Place(
       id: 'pin_${DateTime.now().millisecondsSinceEpoch}',
       name: _address,
@@ -339,7 +358,7 @@ class _MapPinPageState()
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: SizedBox(
                 height: 52,
-                child: widget.flow == MapPinFlow.savedPlace
+                child: widget.flow != MapPinFlow.pickup
                     ? Align(
                         alignment: Alignment.centerLeft,
                         child: AppMapBackButton(onPressed: _popOnce),
@@ -369,6 +388,7 @@ class _MapPinPageState()
               address: _address,
               subAddress: _subAddress,
               isGeocoding: _isGeocoding,
+              isLocatingCurrent: _isLocatingCurrent,
               onUseCurrentLocation: () => unawaited(_useCurrentLocation()),
               onConfirm: _confirmLocation,
             ),

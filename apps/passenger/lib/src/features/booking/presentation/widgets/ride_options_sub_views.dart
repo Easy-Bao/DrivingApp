@@ -260,7 +260,7 @@ class RideTipSubView extends StatelessWidget {
             key: const ValueKey('tip-save-button'),
             onPressed: onBackToSummary,
             style: rideOptionsPrimaryButtonStyle(context),
-            child: const Text('Done'),
+            child: const Text('Save tip'),
           ),
         ),
       ],

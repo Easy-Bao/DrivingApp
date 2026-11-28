@@ -10,6 +10,7 @@ class MapPinBottomSheet extends StatelessWidget {
     required this.address,
     required this.subAddress,
     required this.isGeocoding,
+    this.isLocatingCurrent = false,
     required this.onUseCurrentLocation,
     required this.onConfirm,
   });
@@ -19,6 +20,7 @@ class MapPinBottomSheet extends StatelessWidget {
   final String address;
   final String subAddress;
   final bool isGeocoding;
+  final bool isLocatingCurrent;
   final VoidCallback onUseCurrentLocation;
   final VoidCallback onConfirm;
 
@@ -27,42 +29,19 @@ class MapPinBottomSheet extends StatelessWidget {
     final colors = context.colorScheme;
     final textStyles = context.textStyles;
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(
+    return AppBottomSheetContainer(
+      showShadow: true,
+      backgroundColor: colors.surface,
+      padding: const EdgeInsets.fromLTRB(
         AppLayout.pagePadding,
-        10,
+        AppSpacing.sm + 2,
         AppLayout.pagePadding,
-        MediaQuery.paddingOf(context).bottom + 10,
-      ),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.sheet),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colors.onSurface.withValues(alpha: 0.12),
-            blurRadius: 18,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        AppSpacing.md,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              width: 34,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: colors.onSurface.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -118,29 +97,47 @@ class MapPinBottomSheet extends StatelessWidget {
           const SizedBox(height: 6),
           Semantics(
             button: true,
-            label: 'Use my current location',
+            label: isLocatingCurrent
+                ? 'Locating current position'
+                : 'Use my current location',
             child: InkWell(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              onTap: onUseCurrentLocation,
+              enableFeedback: false,
+              splashFactory: NoSplash.splashFactory,
+              onTap: isLocatingCurrent ? null : onUseCurrentLocation,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(
                   minHeight: AppSize.minimumTouchTarget,
                 ),
                 child: Row(
                   children: [
-                    Text(
-                      'Use my current location',
-                      style: textStyles.labelMedium?.copyWith(
-                        color: colors.onSurface,
-                        fontWeight: FontWeight.w700,
+                    Expanded(
+                      child: Text(
+                        isLocatingCurrent
+                            ? 'Locating current position…'
+                            : 'Use my current location',
+                        style: textStyles.labelMedium?.copyWith(
+                          color: isLocatingCurrent
+                              ? colors.onSurfaceVariant
+                              : colors.onSurface,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                    const Spacer(),
-                    Icon(
-                      LucideIcons.chevron_right,
-                      color: colors.onSurfaceVariant,
-                      size: 16,
-                    ),
+                    if (isLocatingCurrent)
+                      SizedBox.square(
+                        dimension: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colors.onSurfaceVariant,
+                        ),
+                      )
+                    else
+                      Icon(
+                        LucideIcons.chevron_right,
+                        color: colors.onSurfaceVariant,
+                        size: 16,
+                      ),
                   ],
                 ),
               ),
@@ -150,7 +147,7 @@ class MapPinBottomSheet extends StatelessWidget {
             width: double.infinity,
             height: AppSize.controlHeight,
             child: FilledButton(
-              onPressed: isGeocoding ? null : onConfirm,
+              onPressed: isGeocoding || isLocatingCurrent ? null : onConfirm,
               style: FilledButton.styleFrom(
                 backgroundColor: colors.primary,
                 foregroundColor: colors.onPrimary,
@@ -158,10 +155,12 @@ class MapPinBottomSheet extends StatelessWidget {
                 disabledForegroundColor: colors.onPrimary.withValues(
                   alpha: 0.7,
                 ),
+                enableFeedback: false,
+                splashFactory: NoSplash.splashFactory,
                 padding: EdgeInsets.zero,
               ),
               child: Text(
-                isGeocoding ? 'Locating...' : confirmationLabel,
+                isGeocoding ? 'Locating…' : confirmationLabel,
                 style: textStyles.labelLarge?.copyWith(
                   color: colors.onPrimary,
                   fontWeight: FontWeight.w700,

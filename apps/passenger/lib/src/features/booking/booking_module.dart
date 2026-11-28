@@ -112,6 +112,8 @@ class BookingModule._() {
       child: (context, GoRouterState state) => MapPinPage(
         flow: state.uri.queryParameters['savedPlace'] == '1'
             ? MapPinFlow.savedPlace
+            : state.uri.queryParameters['destination'] == '1'
+            ? MapPinFlow.destination
             : MapPinFlow.pickup,
       ),
       transition: AppTransitions.modal.toTop,

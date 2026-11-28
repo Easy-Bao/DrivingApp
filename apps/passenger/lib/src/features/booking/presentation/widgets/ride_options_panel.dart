@@ -64,6 +64,7 @@ class RideOptionsPanel extends StatefulWidget {
 
 class _RideOptionsPanelState extends State<RideOptionsPanel> {
   _RideOptionsView _currentView = _RideOptionsView.summary;
+  String? _lastValidOfferText;
 
   FareEstimate? get _fareResult => widget.fareResult;
 
@@ -82,10 +83,23 @@ class _RideOptionsPanelState extends State<RideOptionsPanel> {
   }
 
   void _showView(_RideOptionsView view) {
+    if (view == _RideOptionsView.offer) {
+      _lastValidOfferText = _hasValidFare
+          ? widget.customFareController.text.trim()
+          : _minimumFare?.toStringAsFixed(2);
+    }
     setState(() => _currentView = view);
   }
 
   void _backToSummary() {
+    if (_currentView == _RideOptionsView.offer && !_hasValidFare) {
+      final fallback =
+          _lastValidOfferText ?? _minimumFare?.toStringAsFixed(2) ?? '';
+      if (fallback.isNotEmpty) {
+        widget.customFareController.text = fallback;
+        widget.onCustomFareChanged(fallback);
+      }
+    }
     FocusScope.of(context).unfocus();
     setState(() => _currentView = _RideOptionsView.summary);
   }

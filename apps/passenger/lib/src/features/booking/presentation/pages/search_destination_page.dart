@@ -345,7 +345,10 @@ class _SearchDestinationPageState()
     if (!mounted || _isOpeningMapPin) return;
     _isOpeningMapPin = true;
     try {
-      final result = await context.pushNamed(BookingRoutes.mapPin);
+      final result = await context.pushNamed(
+        BookingRoutes.mapPin,
+        queryParameters: const {'destination': '1'},
+      );
       if (mounted && result is Place) {
         unawaited(_onPlaceSelected(result));
       }
