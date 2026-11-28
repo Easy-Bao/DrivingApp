@@ -44,8 +44,8 @@ CREATE TABLE bid_sessions (
         FOREIGN KEY (accepted_driver_id) REFERENCES users (id) ON DELETE RESTRICT
 );
 
-CREATE INDEX bidsession_expires_at_created_at
-    ON bid_sessions (expires_at, created_at);
+CREATE INDEX bid_sessions_open_expiry_id_idx
+    ON bid_sessions (expires_at, id) WHERE status = 'open';
 
 CREATE INDEX bidsession_target_driver_id_created_at
     ON bid_sessions (target_driver_id, created_at);

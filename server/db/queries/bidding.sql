@@ -38,7 +38,7 @@ WITH targets AS (
     FROM bid_sessions AS bs
     WHERE bs.status = 'open'
       AND bs.expires_at <= sqlc.arg('expires_at')::timestamptz
-    ORDER BY bs.expires_at ASC
+    ORDER BY bs.expires_at, bs.id
     LIMIT sqlc.arg('limit')::int
     FOR UPDATE OF bs SKIP LOCKED
 ), expired AS (
