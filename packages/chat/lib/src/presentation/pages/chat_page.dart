@@ -54,6 +54,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   Timer? _typingStopTimer;
   bool _isTyping = false;
   bool _isPickingImage = false;
+  ImageSource? _sendingImageSource;
   bool _isCalling = false;
 
   @override
@@ -187,6 +188,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       if (!mounted) return;
       await _stopTyping();
       if (!mounted) return;
+      setState(() => _sendingImageSource = source);
       await _chatCubit.sendImage(bytes);
     } catch (_) {
       if (mounted) {
@@ -198,6 +200,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       }
     } finally {
       _isPickingImage = false;
+      if (mounted && _sendingImageSource != null) {
+        setState(() => _sendingImageSource = null);
+      }
     }
   }
 
@@ -315,7 +320,16 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                     tooltip: widget.config.callTooltip,
                     onPressed: _isCalling ? null : _callPeer,
                     style: AppQuietInteraction.iconButtonStyle(colors),
-                    icon: const Icon(LucideIcons.phone, size: 19),
+                    icon: _isCalling
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colors.onSurface,
+                            ),
+                          )
+                        : const Icon(LucideIcons.phone, size: 19),
                   ),
               ],
               title: ChatPeerHeader(
@@ -326,8 +340,6 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
             body: Column(
               children: [
                 Divider(height: 1, color: hairline),
-                if (state.isRoomLocked && messages.isNotEmpty)
-                  const ChatClosedBanner(),
                 if (state.errorMessage != null &&
                     !state.isAccessDenied &&
                     !state.isRoomLocked &&
@@ -380,7 +392,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                   ),
                 const SizedBox(height: AppSpacing.sm),
                 if (state.isRoomLocked)
-                  const ChatEndedFooter()
+                  ChatEndedFooter(reasonMessage: state.lockReasonMessage)
                 else
                   ChatComposer(
                     controller: _messageController,
@@ -388,6 +400,8 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                     isConnected: state.isConnected,
                     isRoomLocked: state.isRoomLocked,
                     isSendingImage: state.isSendingImage,
+                    isSendingFromCamera:
+                        _sendingImageSource == ImageSource.camera,
                     lockReasonMessage: state.lockReasonMessage,
                     onChanged: _onDraftChanged,
                     onSend: () => unawaited(_send(_messageController.text)),

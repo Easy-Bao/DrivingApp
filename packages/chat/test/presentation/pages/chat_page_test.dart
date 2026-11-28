@@ -328,6 +328,8 @@ void main() {
     expect(find.text('Previous conversation'), findsOneWidget);
     expect(find.text('No messages yet'), findsNothing);
     expect(find.text('This conversation has ended'), findsOneWidget);
+    expect(find.text('Chat is closed for this trip.'), findsOneWidget);
+    expect(find.byType(ChatEndedFooter), findsOneWidget);
     expect(find.text('Alex Driver'), findsOneWidget);
     expect(find.text('ABC 123 | Motorcycle'), findsOneWidget);
     expect(find.byType(CircleAvatar), findsOneWidget);

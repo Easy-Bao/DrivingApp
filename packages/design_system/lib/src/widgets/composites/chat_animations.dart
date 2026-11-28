@@ -231,20 +231,34 @@ class const AppChatDeliveryIndicator({
   required this.isDelivered,
   required this.isFailed,
   required this.color,
+  this.isSeen,
+  this.canRetry = true,
   this.size = 13,
 }) extends StatelessWidget {
   final bool isSending;
   final bool isDelivered;
   final bool isFailed;
   final Color color;
+  final bool? isSeen;
+  final bool canRetry;
   final double size;
 
   @override
   Widget build(BuildContext context) {
-    final (icon, label) = switch ((isSending, isDelivered, isFailed)) {
-      (true, _, _) => (Icons.schedule, 'Sending'),
-      (_, _, true) => (Icons.refresh, 'Not delivered'),
-      (_, true, _) => (Icons.done_all, 'Seen'),
+    final effectiveSeen = isSeen ?? isDelivered;
+    final (icon, label) = switch ((
+      isSending,
+      isFailed,
+      effectiveSeen,
+      isDelivered,
+    )) {
+      (true, _, _, _) => (Icons.schedule, 'Sending'),
+      (_, true, _, _) => (
+        canRetry ? Icons.refresh : Icons.error_outline,
+        'Not delivered',
+      ),
+      (_, _, true, _) => (Icons.done_all, 'Seen'),
+      (_, _, false, true) => (Icons.done_all, 'Delivered'),
       _ => (Icons.done, 'Sent'),
     };
 
@@ -252,6 +266,7 @@ class const AppChatDeliveryIndicator({
         MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     return Semantics(
       label: label,
+      liveRegion: isFailed,
       child: AnimatedSwitcher(
         duration: disableAnimations
             ? Duration.zero

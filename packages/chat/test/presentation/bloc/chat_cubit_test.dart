@@ -129,12 +129,14 @@ void main() {
       cubit.state.messages.single.deliveryStatus,
       ChatMessageDeliveryStatus.failed,
     );
+    expect(cubit.state.errorMessage, isNull);
 
     expect(await cubit.retryMessage(cubit.state.messages.single), isTrue);
     expect(
       cubit.state.messages.single.deliveryStatus,
       ChatMessageDeliveryStatus.sending,
     );
+    expect(cubit.state.errorMessage, isNull);
     expect(attempts, 2);
 
     await cubit.close();

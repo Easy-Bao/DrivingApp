@@ -26,6 +26,14 @@ class const ChatMessageBubble({
         isOutgoing &&
         message.deliveryStatus == ChatMessageDeliveryStatus.failed;
     final canRetry = isFailed && onRetry != null && !message.hasImage;
+    final isSeen = message.deliveryStatus == ChatMessageDeliveryStatus.seen;
+    final isDelivered =
+        message.deliveryStatus == ChatMessageDeliveryStatus.delivered || isSeen;
+    final indicatorColor = isFailed
+        ? colors.error
+        : isSeen
+        ? context.semanticColors.success
+        : colors.onSurfaceVariant;
 
     final bubble = Container(
       margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
@@ -104,18 +112,42 @@ class const ChatMessageBubble({
                       isSending:
                           message.deliveryStatus ==
                           ChatMessageDeliveryStatus.sending,
-                      isDelivered:
-                          message.deliveryStatus ==
-                          ChatMessageDeliveryStatus.seen,
+                      isDelivered: isDelivered,
+                      isSeen: isSeen,
                       isFailed: isFailed,
-                      color: isFailed
-                          ? colors.error
-                          : context.semanticColors.success,
+                      canRetry: canRetry,
+                      color: indicatorColor,
                     ),
                   ],
                 ],
               ),
             ),
+            if (isFailed)
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: AppSpacing.xs,
+                  right: AppSpacing.xs,
+                  top: 2,
+                ),
+                child: canRetry
+                    ? GestureDetector(
+                        onTap: onRetry,
+                        child: Text(
+                          'Not sent · Tap to retry',
+                          style: context.textStyles.labelSmall?.copyWith(
+                            color: colors.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        'Not sent',
+                        style: context.textStyles.labelSmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
             const SizedBox(height: AppSpacing.sm),
           ],
         ),

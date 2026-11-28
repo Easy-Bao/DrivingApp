@@ -204,6 +204,7 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
               [message],
             ),
             isPeerTyping: false,
+            errorMessage: null,
             lastDeliveredMessage: message,
           ),
         );
@@ -242,6 +243,7 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
     emit(
       state.copyWith(
         messages: _mergeMessages(state.messages, [pendingMessage]),
+        errorMessage: null,
       ),
     );
     return _dispatchPendingMessage(pendingMessage, text);
@@ -259,7 +261,7 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
     final retrying = failedMessage.copyWith(
       deliveryStatus: ChatMessageDeliveryStatus.sending,
     );
-    _replacePendingMessage(failedMessage, retrying);
+    _replacePendingMessage(failedMessage, retrying, clearError: true);
     return _dispatchPendingMessage(retrying, retrying.text);
   }
 
@@ -272,15 +274,16 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
       Ok() => true,
       Err(:final failure) => () {
         if (!isClosed) {
-          emit(
-            state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
-          );
-          _replacePendingMessage(
-            pendingMessage,
-            pendingMessage.copyWith(
-              deliveryStatus: ChatMessageDeliveryStatus.failed,
-            ),
-          );
+          if (failure is ChatRoomLockedFailure) {
+            _handleChatFailure(failure);
+          } else {
+            _replacePendingMessage(
+              pendingMessage,
+              pendingMessage.copyWith(
+                deliveryStatus: ChatMessageDeliveryStatus.failed,
+              ),
+            );
+          }
         }
         return false;
       }(),
@@ -307,6 +310,7 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
           state.copyWith(
             isSendingImage: false,
             messages: _mergeMessages(state.messages, [value]),
+            lastDeliveredMessage: value,
           ),
         );
     }
@@ -455,13 +459,22 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
     return _mergeMessages(_removePendingEchoes(current, incoming), incoming);
   }
 
-  void _replacePendingMessage(ChatMessage previous, ChatMessage replacement) {
+  void _replacePendingMessage(
+    ChatMessage previous,
+    ChatMessage replacement, {
+    bool clearError = false,
+  }) {
     if (isClosed) return;
     final messages = [...state.messages];
     final index = messages.indexWhere((message) => message.id == previous.id);
     if (index < 0) return;
     messages[index] = replacement;
-    emit(state.copyWith(messages: _mergeMessages(const [], messages)));
+    emit(
+      state.copyWith(
+        messages: _mergeMessages(const [], messages),
+        errorMessage: clearError ? null : state.errorMessage,
+      ),
+    );
   }
 
   void _handleChatFailure(Failure failure) {

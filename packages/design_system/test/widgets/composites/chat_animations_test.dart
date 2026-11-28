@@ -97,4 +97,39 @@ void main() {
     await tester.pump(const Duration(milliseconds: 110));
     expect(find.bySemanticsLabel('Seen'), findsOneWidget);
   });
+
+  testWidgets('distinguishes delivered from seen and non-retryable failure', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const Directionality(
+        textDirection: TextDirection.ltr,
+        child: AppChatDeliveryIndicator(
+          isSending: false,
+          isDelivered: true,
+          isSeen: false,
+          isFailed: false,
+          color: Colors.grey,
+        ),
+      ),
+    );
+    expect(find.byIcon(Icons.done_all), findsOneWidget);
+    expect(find.bySemanticsLabel('Delivered'), findsOneWidget);
+
+    await tester.pumpWidget(
+      const Directionality(
+        textDirection: TextDirection.ltr,
+        child: AppChatDeliveryIndicator(
+          isSending: false,
+          isDelivered: false,
+          isFailed: true,
+          canRetry: false,
+          color: Colors.red,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    expect(find.bySemanticsLabel('Not delivered'), findsOneWidget);
+  });
 }

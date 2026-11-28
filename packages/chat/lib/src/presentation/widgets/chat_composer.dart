@@ -9,6 +9,7 @@ class const ChatComposer({
   required this.isConnected,
   required this.isRoomLocked,
   required this.isSendingImage,
+  this.isSendingFromCamera = false,
   required this.lockReasonMessage,
   required this.onChanged,
   required this.onSend,
@@ -20,6 +21,7 @@ class const ChatComposer({
   final bool isConnected;
   final bool isRoomLocked;
   final bool isSendingImage;
+  final bool isSendingFromCamera;
   final String lockReasonMessage;
   final ValueChanged<String> onChanged;
   final VoidCallback onSend;
@@ -33,6 +35,12 @@ class const ChatComposer({
     final quietIconStyle = AppQuietInteraction.iconButtonStyle(
       colors,
       foregroundColor: colors.onSurfaceVariant,
+    );
+
+    Widget uploadSpinner() => SizedBox(
+      width: 18,
+      height: 18,
+      child: CircularProgressIndicator(strokeWidth: 2, color: colors.onSurface),
     );
 
     return SafeArea(
@@ -56,7 +64,9 @@ class const ChatComposer({
                   ? onCameraPressed
                   : null,
               style: quietIconStyle,
-              icon: const Icon(LucideIcons.camera, size: 19),
+              icon: isSendingImage && isSendingFromCamera
+                  ? uploadSpinner()
+                  : const Icon(LucideIcons.camera, size: 19),
             ),
             IconButton(
               tooltip: 'Attach photo file',
@@ -64,15 +74,8 @@ class const ChatComposer({
                   ? onGalleryPressed
                   : null,
               style: quietIconStyle,
-              icon: isSendingImage
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: colors.onSurface,
-                      ),
-                    )
+              icon: isSendingImage && !isSendingFromCamera
+                  ? uploadSpinner()
                   : const Icon(LucideIcons.paperclip, size: 19),
             ),
             Expanded(
@@ -162,30 +165,55 @@ class const ChatComposer({
   }
 }
 
-class const ChatEndedFooter({super.key}) extends StatelessWidget {
+class const ChatEndedFooter({super.key, this.reasonMessage})
+    extends StatelessWidget {
+  final String? reasonMessage;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    return SafeArea(
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: 14,
-        ),
-        decoration: BoxDecoration(
-          color: colors.surfaceContainerLowest,
-          border: Border(
-            top: BorderSide(
-              color: colors.outlineVariant.withValues(alpha: 0.7),
+    final detail = reasonMessage?.trim();
+    final hasDetail = detail != null && detail.isNotEmpty;
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      child: SafeArea(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: 14,
+          ),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerLowest,
+            border: Border(
+              top: BorderSide(
+                color: colors.outlineVariant.withValues(alpha: 0.7),
+              ),
             ),
           ),
-        ),
-        child: Text(
-          'This conversation has ended',
-          textAlign: TextAlign.center,
-          style: context.textStyles.bodySmall?.copyWith(
-            color: colors.onSurfaceVariant,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'This conversation has ended',
+                textAlign: TextAlign.center,
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (hasDetail) ...[
+                const SizedBox(height: 2),
+                Text(
+                  detail,
+                  textAlign: TextAlign.center,
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),
