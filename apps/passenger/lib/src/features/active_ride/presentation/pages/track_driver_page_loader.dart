@@ -112,7 +112,24 @@ class _TrackDriverPageLoaderState extends State<TrackDriverPageLoader> {
             icon: const Icon(Icons.arrow_back),
           ),
         ),
-        body: const Center(child: CircularProgressIndicator.adaptive()),
+        body: Center(
+          child: Semantics(
+            liveRegion: true,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator.adaptive(),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Loading your live trip…',
+                  style: context.textStyles.bodyMedium?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
 

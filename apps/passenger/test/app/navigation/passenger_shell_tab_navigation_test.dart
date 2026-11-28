@@ -1095,6 +1095,7 @@ void main() {
       );
       await tester.pump();
       verify(() => bookingBloc.add(const CancelBookingEvent())).called(1);
+      expect(find.text('Driver search canceled.'), findsOneWidget);
     },
   );
 

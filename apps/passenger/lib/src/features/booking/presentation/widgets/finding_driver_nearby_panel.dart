@@ -102,6 +102,9 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
 
     final colors = context.colorScheme;
     final hairline = colors.outlineVariant.withValues(alpha: 0.7);
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final showWaitingSpinner =
+        !widget.isChoosingDriver && readyOffers.isEmpty && !reduceMotion;
     final primaryButtonStyle =
         FilledButton.styleFrom(
           backgroundColor: colors.primary,
@@ -175,46 +178,69 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                       ),
                       const SizedBox(height: AppSpacing.md),
                     ],
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    Semantics(
+                      container: true,
+                      liveRegion: !widget.isChoosingDriver,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Text(
-                                widget.isChoosingDriver
-                                    ? 'Nearby drivers'
-                                    : 'Waiting for driver',
-                                style: context.textStyles.titleLarge?.copyWith(
-                                  color: colors.onSurface,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: -0.3,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.isChoosingDriver
+                                          ? 'Nearby drivers'
+                                          : 'Waiting for driver',
+                                      style: context.textStyles.titleLarge
+                                          ?.copyWith(
+                                            color: colors.onSurface,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: -0.3,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      formatPesoAmount(widget.fare),
+                                      style: context
+                                          .textStyles
+                                          .titleMedium
+                                          ?.tabular
+                                          .copyWith(
+                                            color: colors.onSurface,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                formatPesoAmount(widget.fare),
-                                style: context.textStyles.titleMedium?.tabular
-                                    .copyWith(
-                                      color: colors.onSurface,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                              ),
+                              if (showWaitingSpinner) ...[
+                                const SizedBox(width: AppSpacing.md),
+                                SizedBox.square(
+                                  dimension: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: colors.primary,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      widget.isChoosingDriver
-                          ? 'Select a driver, then send your request.'
-                          : widget.isSendingRequest
-                          ? 'Sending your request…'
-                          : 'Your request was sent. Waiting for the driver to accept.',
-                      style: context.textStyles.bodyMedium?.copyWith(
-                        color: colors.onSurfaceVariant,
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            widget.isChoosingDriver
+                                ? 'Select a driver, then send your request.'
+                                : widget.isSendingRequest
+                                ? 'Sending your request…'
+                                : 'Your request was sent. Waiting for the driver to accept.',
+                            style: context.textStyles.bodyMedium?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     if (widget.isChoosingDriver &&
@@ -402,18 +428,43 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
                             ),
                             child: Text(
                               widget.isCanceling
-                                  ? 'Cancelling…'
+                                  ? 'Canceling…'
                                   : 'Cancel search',
                             ),
                           ),
                         ],
                       ] else
-                        FilledButton(
+                        OutlinedButton(
                           onPressed: busy ? null : widget.onCancelPressed,
-                          style: primaryButtonStyle,
+                          style:
+                              OutlinedButton.styleFrom(
+                                foregroundColor: colors.error,
+                                side: BorderSide(
+                                  color: colors.error.withValues(alpha: 0.45),
+                                ),
+                                enableFeedback: false,
+                                splashFactory: NoSplash.splashFactory,
+                                minimumSize: const Size.fromHeight(
+                                  AppSize.controlHeight,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.lg,
+                                  ),
+                                ),
+                                textStyle: context.textStyles.labelLarge
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ).copyWith(
+                                overlayColor: WidgetStateProperty.resolveWith(
+                                  (states) =>
+                                      states.contains(WidgetState.focused)
+                                      ? colors.error.withValues(alpha: 0.12)
+                                      : Colors.transparent,
+                                ),
+                              ),
                           child: Text(
                             widget.isCanceling
-                                ? 'Cancelling…'
+                                ? 'Canceling…'
                                 : 'Cancel request',
                           ),
                         ),
@@ -460,7 +511,7 @@ class _FindingDriverNearbyPanelState extends State<FindingDriverNearbyPanel> {
       key: const ValueKey('nearby-drivers-cancel-search'),
       onPressed: busy ? null : onCancel,
       style: _secondaryTextButtonStyle(colors.error, colors.error),
-      child: Text(isCanceling ? 'Cancelling…' : 'Cancel search'),
+      child: Text(isCanceling ? 'Canceling…' : 'Cancel search'),
     );
     final stack =
         MediaQuery.sizeOf(context).width < 320 ||

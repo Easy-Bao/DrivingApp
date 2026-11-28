@@ -191,8 +191,8 @@ void main() {
         findsOneWidget,
       );
       expect(find.byTooltip('Refresh nearby drivers'), findsNothing);
-      final button = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Cancel request'),
+      final button = tester.widget<OutlinedButton>(
+        find.widgetWithText(OutlinedButton, 'Cancel request'),
       );
       expect(button.onPressed, isNotNull);
     },
@@ -283,8 +283,8 @@ void main() {
     expect(selections, 0);
     expect(
       tester
-          .widget<FilledButton>(
-            find.widgetWithText(FilledButton, 'Cancel request'),
+          .widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, 'Cancel request'),
           )
           .onPressed,
       isNull,

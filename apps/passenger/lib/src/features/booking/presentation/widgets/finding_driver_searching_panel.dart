@@ -152,42 +152,46 @@ class FindingDriverSearchingPanel extends StatelessWidget {
                     ),
                   ),
                 ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (selectedDriverName case final driverName?)
+                Semantics(
+                  container: true,
+                  liveRegion: true,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (selectedDriverName case final driverName?)
+                              Text(
+                                'Waiting for $driverName',
+                                style: context.textStyles.titleLarge?.copyWith(
+                                  color: colorScheme.onSurface,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.3,
+                                ),
+                              )
+                            else
+                              _SearchingDriverTitle(
+                                animate: animate,
+                                style: context.textStyles.titleLarge?.copyWith(
+                                  color: colorScheme.onSurface,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                            const SizedBox(height: 4),
                             Text(
-                              'Waiting for $driverName',
-                              style: context.textStyles.titleLarge?.copyWith(
-                                color: colorScheme.onSurface,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.3,
-                              ),
-                            )
-                          else
-                            _SearchingDriverTitle(
-                              animate: animate,
-                              style: context.textStyles.titleLarge?.copyWith(
-                                color: colorScheme.onSurface,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.3,
+                              message,
+                              style: context.textStyles.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
                               ),
                             ),
-                          const SizedBox(height: 4),
-                          Text(
-                            message,
-                            style: context.textStyles.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 14),
                 Divider(height: 1, thickness: 1, color: hairline),

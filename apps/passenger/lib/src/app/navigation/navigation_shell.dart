@@ -508,8 +508,16 @@ class _ShellLayoutState extends State<ShellLayout> {
     );
     _isConfirmingBookingCancel = false;
     if (!mounted || !confirmed) return;
-    if (bookingBloc.state is BookingFindingNearbyDrivers) {
+    final state = bookingBloc.state;
+    if (state is BookingFindingNearbyDrivers ||
+        state is FindingNearestDriver ||
+        state is NearestDriverFound) {
       bookingBloc.add(const CancelBookingEvent());
+      AppSnackBar.show(
+        context,
+        'Driver search canceled.',
+        tone: AppSnackBarTone.info,
+      );
     }
   }
 

@@ -4,6 +4,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
@@ -194,6 +195,8 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
   bool _isLeaving = false;
   bool _isConfirmingCancel = false;
   bool _isReturningHome = false;
+  bool _announcedRequestSent = false;
+  bool _wasActiveRequestBeforeCancel = false;
   String? _driverSearchError;
   String? _acceptingOfferId;
   bool _locationUnavailable = false;
@@ -543,6 +546,7 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
       }
     }
 
+    _wasActiveRequestBeforeCancel = bookingBloc.hasActiveBooking;
     setState(() => _isLeaving = true);
     bookingBloc.add(const CancelBookingEvent());
   }
@@ -587,24 +591,36 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
   void _handleBookingState(BuildContext context, BookingState state) {
     switch (state) {
       case BookingFindingNearbyDrivers():
+        _announcedRequestSent = false;
         BlocProvider.of<NearbyDriversCubit>(context).stop();
-      case BookingSearching() || BookingOffersReceived():
+      case BookingSearching(:final sessionId):
+        if (sessionId != null && !_announcedRequestSent) {
+          _announcedRequestSent = true;
+          unawaited(HapticFeedback.lightImpact());
+        }
+        BlocProvider.of<NearbyDriversCubit>(context).start();
+      case BookingOffersReceived():
+        if (!_announcedRequestSent) {
+          _announcedRequestSent = true;
+          unawaited(HapticFeedback.lightImpact());
+        }
         BlocProvider.of<NearbyDriversCubit>(context).start();
       case NearestDriverFound():
         _applyNearestDriverFound(context, state);
       case BookingDriverMatched(:final rideId):
-        unawaited(HapticFeedback.lightImpact());
+        unawaited(HapticFeedback.mediumImpact());
         context.pushReplacementNamed(
           ActiveRideRoutes.trackDriver,
           extra: rideId,
         );
       case BookingRideRecovered(:final rideId):
-        unawaited(HapticFeedback.lightImpact());
+        unawaited(HapticFeedback.mediumImpact());
         context.pushReplacementNamed(
           ActiveRideRoutes.trackDriver,
           extra: rideId,
         );
       case BookingFailure():
+        _announcedRequestSent = false;
         _acceptingOfferId = null;
         if (state.isNoDriverFound) {
           BlocProvider.of<NearbyDriversCubit>(context).stop();
@@ -635,11 +651,19 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
           _isLeaving = false;
         });
       case BookingCanceled():
+        _announcedRequestSent = false;
         _acceptingOfferId = null;
+        AppSnackBar.show(
+          context,
+          _wasActiveRequestBeforeCancel
+              ? 'Ride request canceled.'
+              : 'Driver search canceled.',
+          tone: AppSnackBarTone.info,
+        );
         _returnHome();
-      case BookingInitial() ||
-          FindingNearestDriver() ||
-          BookingSessionRecoveryInProgress():
+      case BookingInitial():
+        _announcedRequestSent = false;
+      case FindingNearestDriver() || BookingSessionRecoveryInProgress():
         break;
     }
   }
@@ -833,8 +857,10 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
         onCancelPressed: _handleCancel,
         isCanceling: _isLeaving,
       ),
-      BookingDriverMatched() ||
-      BookingRideRecovered() ||
+      BookingDriverMatched(:final matchResult) => _DriverMatchedTransitionSheet(
+        driverName: matchResult.driverName,
+      ),
+      BookingRideRecovered() => const _DriverMatchedTransitionSheet(),
       BookingCanceled() => const SizedBox.shrink(),
     };
   }
@@ -959,6 +985,87 @@ class _FindingDriverPageContentState() extends State<FindingDriverPageContent> {
               );
             },
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class const _DriverMatchedTransitionSheet({this.driverName})
+    extends StatelessWidget {
+  final String? driverName;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    final semanticColors = context.semanticColors;
+    final resolvedDriver = driverName?.trim() ?? '';
+    final subtitle = resolvedDriver.isNotEmpty
+        ? '$resolvedDriver accepted your ride. Opening live tracking…'
+        : 'Your driver accepted. Opening live tracking…';
+
+    return AppBottomSheetContainer(
+      showDragHandle: false,
+      showShadow: true,
+      padding: const EdgeInsets.fromLTRB(
+        AppLayout.pagePadding,
+        AppSpacing.xl,
+        AppLayout.pagePadding,
+        AppSpacing.xl,
+      ),
+      child: Semantics(
+        container: true,
+        liveRegion: true,
+        child: Row(
+          children: [
+            ExcludeSemantics(
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: semanticColors.successContainer,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  LucideIcons.check,
+                  size: 22,
+                  color: semanticColors.onSuccessContainer,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Driver accepted',
+                    style: context.textStyles.titleMedium?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            SizedBox.square(
+              dimension: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: semanticColors.success,
+              ),
+            ),
+          ],
         ),
       ),
     );

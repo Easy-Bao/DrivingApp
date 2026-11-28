@@ -12,6 +12,8 @@ Future<bool> showAppConfirmDialog(
   required String message,
   required String confirmLabel,
   String? cancelLabel,
+  Key? confirmButtonKey,
+  Key? cancelButtonKey,
   IconData? icon,
   AppConfirmDialogTone tone = AppConfirmDialogTone.neutral,
   bool isDestructive = false,
@@ -27,6 +29,8 @@ Future<bool> showAppConfirmDialog(
       message: message,
       confirmLabel: confirmLabel,
       cancelLabel: cancelLabel,
+      confirmButtonKey: confirmButtonKey,
+      cancelButtonKey: cancelButtonKey,
       icon: icon,
       tone: tone,
       isDestructive: isDestructive,
@@ -48,6 +52,8 @@ class const AppConfirmDialog({
   required this.onConfirm,
   this.cancelLabel,
   this.onCancel,
+  this.confirmButtonKey,
+  this.cancelButtonKey,
   this.icon,
   this.tone = AppConfirmDialogTone.neutral,
   this.isDestructive = false,
@@ -59,6 +65,8 @@ class const AppConfirmDialog({
   final VoidCallback onConfirm;
   final String? cancelLabel;
   final VoidCallback? onCancel;
+  final Key? confirmButtonKey;
+  final Key? cancelButtonKey;
   final IconData? icon;
   final AppConfirmDialogTone tone;
   final bool isDestructive;
@@ -94,6 +102,7 @@ class const AppConfirmDialog({
     };
 
     final confirmButton = FilledButton(
+      key: confirmButtonKey,
       onPressed: onConfirm,
       style: FilledButton.styleFrom(
         minimumSize: const Size(
@@ -103,6 +112,8 @@ class const AppConfirmDialog({
         backgroundColor: isDestructive ? colors.error : colors.primary,
         foregroundColor: isDestructive ? colors.onError : colors.onPrimary,
         elevation: 0,
+        enableFeedback: false,
+        splashFactory: NoSplash.splashFactory,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
@@ -113,6 +124,7 @@ class const AppConfirmDialog({
     final cancelButton = cancelLabel == null
         ? null
         : OutlinedButton(
+            key: cancelButtonKey,
             onPressed: onCancel ?? () => Navigator.of(context).pop(false),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(
@@ -121,6 +133,8 @@ class const AppConfirmDialog({
               ),
               foregroundColor: colors.onSurface,
               side: BorderSide(color: colors.outlineVariant),
+              enableFeedback: false,
+              splashFactory: NoSplash.splashFactory,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),

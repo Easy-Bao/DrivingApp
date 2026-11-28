@@ -12,7 +12,6 @@ class const CancelBookingDialog({
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
     final destination = destinationName?.trim() ?? '';
     final title = isActiveRequest
         ? 'Cancel ride request?'
@@ -27,97 +26,18 @@ class const CancelBookingDialog({
     final keepLabel = isActiveRequest ? 'Keep waiting' : 'Keep searching';
     final confirmLabel = isActiveRequest ? 'Cancel request' : 'Cancel search';
 
-    return AlertDialog(
-      backgroundColor: colors.surfaceContainerLowest,
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        side: BorderSide(color: colors.outlineVariant),
-      ),
-      icon: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: colors.surfaceContainerLowest,
-          shape: BoxShape.circle,
-          border: Border.all(color: colors.outlineVariant),
-        ),
-        alignment: Alignment.center,
-        child: Icon(
-          isActiveRequest ? LucideIcons.circle_alert : LucideIcons.search_x,
-          size: 20,
-          color: colors.onSurface,
-        ),
-      ),
-      title: Text(
-        title,
-        textAlign: TextAlign.center,
-        style: context.textStyles.titleMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: colors.onSurface,
-        ),
-      ),
-      content: Text(
-        message,
-        textAlign: TextAlign.center,
-        style: context.textStyles.bodyMedium?.copyWith(
-          color: colors.onSurfaceVariant,
-          height: 1.45,
-        ),
-      ),
-      actionsAlignment: MainAxisAlignment.end,
-      actions: [
-        TextButton(
-          key: const ValueKey<String>('confirm-cancel-booking-button'),
-          onPressed: () => Navigator.pop(context, true),
-          style:
-              TextButton.styleFrom(
-                foregroundColor: colors.error,
-                enableFeedback: false,
-                splashFactory: NoSplash.splashFactory,
-                minimumSize: const Size(0, AppSize.minimumTouchTarget),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                textStyle: context.textStyles.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ).copyWith(
-                overlayColor: WidgetStateProperty.resolveWith(
-                  (states) => states.contains(WidgetState.focused)
-                      ? colors.error.withValues(alpha: 0.12)
-                      : Colors.transparent,
-                ),
-              ),
-          child: Text(confirmLabel),
-        ),
-        FilledButton(
-          key: const ValueKey<String>('keep-booking-button'),
-          onPressed: () => Navigator.pop(context, false),
-          style:
-              FilledButton.styleFrom(
-                backgroundColor: colors.primary,
-                foregroundColor: colors.onPrimary,
-                elevation: 0,
-                enableFeedback: false,
-                splashFactory: NoSplash.splashFactory,
-                minimumSize: const Size(0, AppSize.minimumTouchTarget),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                textStyle: context.textStyles.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ).copyWith(
-                overlayColor: WidgetStateProperty.resolveWith(
-                  (states) => states.contains(WidgetState.focused)
-                      ? colors.onPrimary.withValues(alpha: 0.16)
-                      : Colors.transparent,
-                ),
-              ),
-          child: Text(keepLabel),
-        ),
-      ],
+    return AppConfirmDialog(
+      title: title,
+      message: message,
+      confirmLabel: confirmLabel,
+      cancelLabel: keepLabel,
+      confirmButtonKey: const ValueKey<String>('confirm-cancel-booking-button'),
+      cancelButtonKey: const ValueKey<String>('keep-booking-button'),
+      icon: isActiveRequest ? LucideIcons.circle_alert : LucideIcons.search_x,
+      tone: AppConfirmDialogTone.destructive,
+      isDestructive: true,
+      onConfirm: () => Navigator.pop(context, true),
+      onCancel: () => Navigator.pop(context, false),
     );
   }
 }
