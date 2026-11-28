@@ -113,11 +113,21 @@ final class const TrackDriverCompleted({
 }) extends TripCompleted;
 
 final class TrackDriverCanceled extends RideFailed {
-  const TrackDriverCanceled() : super('Ride canceled');
+  const TrackDriverCanceled({this.canceledByPassenger = true})
+    : super(
+        canceledByPassenger
+            ? 'Ride canceled.'
+            : 'Your driver canceled this trip.',
+      );
+
+  final bool canceledByPassenger;
+
+  @override
+  List<Object?> get props => [message, canceledByPassenger];
 }
 
 final class TrackDriverEmergencyStopped extends RideFailed {
-  const TrackDriverEmergencyStopped() : super('Ride ended for safety');
+  const TrackDriverEmergencyStopped() : super('Ride ended for safety.');
 }
 
 extension TrackDriverRideStatePresentation on RideState {

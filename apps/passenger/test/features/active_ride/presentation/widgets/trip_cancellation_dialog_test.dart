@@ -19,10 +19,7 @@ void main() {
         Builder(
           builder: (context) {
             return ElevatedButton(
-              onPressed: () => showDialog<String>(
-                context: context,
-                builder: (_) => const TripCancellationDialog(),
-              ),
+              onPressed: () => showTripCancellationSheet(context),
               child: const Text('Open'),
             );
           },
@@ -60,11 +57,7 @@ void main() {
             builder: (context) {
               return ElevatedButton(
                 onPressed: () async {
-                  result = await showDialog<String>(
-                    context: context,
-                    barrierDismissible: true,
-                    builder: (_) => const TripCancellationDialog(),
-                  );
+                  result = await showTripCancellationSheet(context);
                 },
                 child: const Text('Open'),
               );
@@ -103,11 +96,7 @@ void main() {
             builder: (context) {
               return ElevatedButton(
                 onPressed: () async {
-                  result = await showDialog<String>(
-                    context: context,
-                    barrierDismissible: true,
-                    builder: (_) => const TripCancellationDialog(),
-                  );
+                  result = await showTripCancellationSheet(context);
                 },
                 child: const Text('Open'),
               );

@@ -636,7 +636,13 @@ void main() {
         vehiclePlate: 'ABC-123',
         vehicleType: 'Sedan',
       ),
-      expect: () => [isA<TrackDriverCanceled>()],
+      expect: () => [
+        isA<TrackDriverCanceled>().having(
+          (state) => state.canceledByPassenger,
+          'canceledByPassenger',
+          isFalse,
+        ),
+      ],
       verify: (_) {
         verifyNever(() => repo.fetchDriverLocation('ride-1'));
         verify(() => session.saveActiveRideId('')).called(1);

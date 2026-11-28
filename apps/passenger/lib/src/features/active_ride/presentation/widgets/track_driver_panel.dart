@@ -17,6 +17,7 @@ class const TrackDriverPanel({
   required this.unreadChatMessagesCount,
   this.showContactActions = true,
   this.isCancellingTrip = false,
+  this.hasArrived,
   this.isInTransit,
   required this.onChatDriverPressed,
   required this.onReportDriverPressed,
@@ -33,6 +34,7 @@ class const TrackDriverPanel({
   final int unreadChatMessagesCount;
   final bool showContactActions;
   final bool isCancellingTrip;
+  final bool? hasArrived;
   final bool? isInTransit;
   final VoidCallback onChatDriverPressed;
   final VoidCallback onReportDriverPressed;
@@ -52,6 +54,25 @@ class const TrackDriverPanel({
         ? driverRating!.trim()
         : ride.displayDriverRating;
     final onTrip = isInTransit ?? ride.status == 'in_transit';
+    final arrived = (hasArrived ?? ride.status == 'arrived') && !onTrip;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final milestone = onTrip
+        ? _PassengerTripMilestone(
+            key: const ValueKey('passenger-milestone-in-transit'),
+            icon: LucideIcons.navigation,
+            label: 'Trip in progress',
+            backgroundColor: context.semanticColors.infoContainer,
+            foregroundColor: context.semanticColors.onInfoContainer,
+          )
+        : arrived
+        ? _PassengerTripMilestone(
+            key: const ValueKey('passenger-milestone-arrived'),
+            icon: LucideIcons.circle_check,
+            label: 'Driver arrived',
+            backgroundColor: context.semanticColors.successContainer,
+            foregroundColor: context.semanticColors.onSuccessContainer,
+          )
+        : null;
 
     return Material(
       color: colors.surfaceContainerLowest,
@@ -84,6 +105,21 @@ class const TrackDriverPanel({
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
+            AnimatedSwitcher(
+              duration: reduceMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 220),
+              child: milestone == null
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      key: milestone.key,
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: milestone,
+                      ),
+                    ),
+            ),
             Wrap(
               alignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -284,8 +320,57 @@ class const TrackDriverPanel({
                       ),
                     ),
                 onPressed: isCancellingTrip ? null : onCancelTripPressed,
-                child: Text(isCancellingTrip ? 'Cancelling…' : 'Cancel ride'),
+                child: Text(isCancellingTrip ? 'Canceling…' : 'Cancel ride'),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class const _PassengerTripMilestone({
+  super.key,
+  required this.icon,
+  required this.label,
+  required this.backgroundColor,
+  required this.foregroundColor,
+}) extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs + 1,
+        ),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ExcludeSemantics(
+              child: Icon(icon, size: 15, color: foregroundColor),
+            ),
+            const SizedBox(width: AppSpacing.xs + 2),
+            Flexible(
+              child: Text(
+                label,
+                style: context.textStyles.labelMedium?.copyWith(
+                  color: foregroundColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ],
         ),
       ),

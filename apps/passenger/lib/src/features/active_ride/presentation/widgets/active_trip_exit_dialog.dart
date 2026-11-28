@@ -4,9 +4,13 @@ import 'package:material_ui/material_ui.dart';
 
 enum ActiveTripExitAction { keepTracking, minimize, cancel }
 
-class const ActiveTripExitDialog({required this.driverName, super.key})
-    extends StatelessWidget {
+class const ActiveTripExitDialog({
+  required this.driverName,
+  this.canCancel = true,
+  super.key,
+}) extends StatelessWidget {
   final String driverName;
+  final bool canCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -46,29 +50,31 @@ class const ActiveTripExitDialog({required this.driverName, super.key})
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, ActiveTripExitAction.cancel),
-          style:
-              TextButton.styleFrom(
-                foregroundColor: colors.error,
-                enableFeedback: false,
-                splashFactory: NoSplash.splashFactory,
-                minimumSize: const Size(0, AppSize.minimumTouchTarget),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+        if (canCancel)
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(context, ActiveTripExitAction.cancel),
+            style:
+                TextButton.styleFrom(
+                  foregroundColor: colors.error,
+                  enableFeedback: false,
+                  splashFactory: NoSplash.splashFactory,
+                  minimumSize: const Size(0, AppSize.minimumTouchTarget),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  textStyle: context.textStyles.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ).copyWith(
+                  overlayColor: WidgetStateProperty.resolveWith(
+                    (states) => states.contains(WidgetState.focused)
+                        ? colors.error.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                  ),
                 ),
-                textStyle: context.textStyles.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ).copyWith(
-                overlayColor: WidgetStateProperty.resolveWith(
-                  (states) => states.contains(WidgetState.focused)
-                      ? colors.error.withValues(alpha: 0.12)
-                      : Colors.transparent,
-                ),
-              ),
-          child: const Text('Cancel ride'),
-        ),
+            child: const Text('Cancel ride'),
+          ),
         TextButton(
           onPressed: () =>
               Navigator.pop(context, ActiveTripExitAction.minimize),

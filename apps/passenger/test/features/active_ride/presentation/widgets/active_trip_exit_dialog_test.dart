@@ -40,4 +40,19 @@ void main() {
 
     expect(selectedAction, ActiveTripExitAction.cancel);
   });
+
+  testWidgets('hides Cancel ride once the trip is in transit', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        home: const Scaffold(
+          body: ActiveTripExitDialog(driverName: 'Alex', canCancel: false),
+        ),
+      ),
+    );
+
+    expect(find.text('Keep tracking'), findsOneWidget);
+    expect(find.text('Go to home'), findsOneWidget);
+    expect(find.text('Cancel ride'), findsNothing);
+  });
 }

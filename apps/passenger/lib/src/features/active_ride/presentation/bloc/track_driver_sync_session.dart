@@ -93,7 +93,7 @@ class TrackDriverSyncSession {
           }
           if (rideUpdate.status == RideStatus.cancelled) {
             await _finishTerminal(
-              const TrackDriverCanceled(),
+              const TrackDriverCanceled(canceledByPassenger: false),
               logMessage:
                   'Unable to clear the canceled passenger ride locally.',
             );

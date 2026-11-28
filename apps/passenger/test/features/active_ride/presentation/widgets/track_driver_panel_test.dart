@@ -266,4 +266,48 @@ void main() {
       expect(find.text('Cancel ride'), findsNothing);
     },
   );
+
+  testWidgets(
+    'displays Driver arrived and Trip in progress milestone pills cleanly at large scale',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 480);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: TrackDriverPanel(
+                  ride: const RideSnapshot(
+                    id: 'ride-arrived',
+                    pickupName: 'Pickup',
+                    dropoffName: 'Destination',
+                    status: 'arrived',
+                    driverName: 'Alex',
+                  ),
+                  statusTitle: 'Meet your driver',
+                  statusSubtitle: 'Pickup',
+                  etaText: '',
+                  hasArrived: true,
+                  isInTransit: false,
+                  unreadChatMessagesCount: 0,
+                  onChatDriverPressed: () {},
+                  onReportDriverPressed: () {},
+                  onCancelTripPressed: () {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Driver arrived'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

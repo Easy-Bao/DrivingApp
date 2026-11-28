@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:chat/chat.dart';
 import 'package:design_system/design_system.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
@@ -56,6 +57,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   bool _initialized = false;
   bool _hasHandledTerminalState = false;
   bool _isCancellingTrip = false;
+  RideStatus? _lastAnnouncedStatus;
 
   @override
   void initState() {
@@ -181,6 +183,14 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
             :final routePoints,
             :final status,
           ):
+        if (_lastAnnouncedStatus != null && _lastAnnouncedStatus != status) {
+          if (status == RideStatus.arrived) {
+            unawaited(HapticFeedback.mediumImpact());
+          } else if (status == RideStatus.inTransit) {
+            unawaited(HapticFeedback.lightImpact());
+          }
+        }
+        _lastAnnouncedStatus = status;
         unawaited(
           _mapController.update(
             TrackDriverMapUpdate(
@@ -194,6 +204,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       case TripCompleted(:final driverId, :final driverName):
         if (_hasHandledTerminalState) return;
         _hasHandledTerminalState = true;
+        unawaited(HapticFeedback.mediumImpact());
         widget.realtimeClient?.setActiveTripResyncHandler(null);
         widget.onRideTerminated();
         context.pushReplacementNamed(
@@ -204,6 +215,38 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
             driverName: driverName,
           ),
         );
+      case TrackDriverCanceled(:final canceledByPassenger, :final message):
+        if (_hasHandledTerminalState) return;
+        _hasHandledTerminalState = true;
+        widget.realtimeClient?.setActiveTripResyncHandler(null);
+        widget.onRideTerminated();
+        if (mounted) {
+          final notice = canceledByPassenger
+              ? 'Ride canceled.'
+              : message.trim().isEmpty
+              ? 'Your driver canceled this trip.'
+              : message.trim();
+          AppSnackBar.show(
+            context,
+            notice,
+            tone: canceledByPassenger
+                ? AppSnackBarTone.info
+                : AppSnackBarTone.warning,
+          );
+          context.goNamed(HomeRoutes.home);
+        }
+      case TrackDriverEmergencyStopped(:final message):
+        if (_hasHandledTerminalState) return;
+        _hasHandledTerminalState = true;
+        widget.realtimeClient?.setActiveTripResyncHandler(null);
+        widget.onRideTerminated();
+        if (mounted) {
+          final notice = message.trim().isEmpty
+              ? 'Ride ended for safety.'
+              : message.trim();
+          AppSnackBar.show(context, notice, tone: AppSnackBarTone.warning);
+          context.goNamed(HomeRoutes.home);
+        }
       case RideFailed(:final message):
         if (_hasHandledTerminalState) return;
         _hasHandledTerminalState = true;
@@ -213,7 +256,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
           final notice = message.trim().isEmpty
               ? 'This trip is no longer active.'
               : message.trim();
-          AppSnackBar.show(context, notice, isError: true);
+          AppSnackBar.show(context, notice, tone: AppSnackBarTone.error);
           context.goNamed(HomeRoutes.home);
         }
       case Idle() || SearchingDriver():
@@ -283,7 +326,10 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
 
     final action = await showDialog<ActiveTripExitAction>(
       context: context,
-      builder: (_) => ActiveTripExitDialog(driverName: driverName),
+      builder: (_) => ActiveTripExitDialog(
+        driverName: driverName,
+        canCancel: !_trackDriverCubit.state.isInTransit,
+      ),
     );
 
     if (!mounted || action == null) return;
@@ -434,6 +480,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                                       unreadChatMessagesCount: unreadCount,
                                       showContactActions: true,
                                       isCancellingTrip: _isCancellingTrip,
+                                      hasArrived: hasArrived,
                                       isInTransit: isInTransit,
                                       onChatDriverPressed: () =>
                                           _openChat(state),
