@@ -50,6 +50,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   late final RideDetailsCubit _detailsCubit;
   late final bool _ownsDetailsCubit;
   String? _contactError;
+  bool _hasReportedSafetyIssue = false;
 
   String? get _rideId =>
       widget.ride?.id ?? widget.initialRide?.id ?? widget.rideId;
@@ -145,6 +146,9 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
         !counterparty.contactAllowed ||
         counterparty.phone.trim().isEmpty) {
       return;
+    }
+    if (_contactError != null) {
+      setState(() => _contactError = null);
     }
     try {
       final opened = await launchUrl(
@@ -410,50 +414,104 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                     ),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: rideId == null || rideId.isEmpty
-                            ? null
-                            : () => showSafetyReportSheet(
-                                context,
-                                rideId: rideId,
-                                driverName: driverName,
-                                vehiclePlate:
-                                    ride?.vehiclePlate ??
-                                    snapshot?.plateNumber ??
-                                    '',
-                                vehicleType:
-                                    ride?.vehicleType ??
-                                    snapshot?.vehicleType ??
-                                    '',
-                                trackRepository: widget.trackRepository,
-                              ),
-                        style:
-                            TextButton.styleFrom(
-                              foregroundColor: colors.onSurfaceVariant,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.xs,
-                              ),
-                              minimumSize: const Size(
-                                0,
-                                AppSize.minimumTouchTarget,
-                              ),
-                              enableFeedback: false,
-                              splashFactory: NoSplash.splashFactory,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.md,
+                      child: _hasReportedSafetyIssue
+                          ? Semantics(
+                              container: true,
+                              liveRegion: true,
+                              child: Padding(
+                                key: const ValueKey(
+                                  'passenger-safety-issue-reported',
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.xs,
+                                  vertical: AppSpacing.sm,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    ExcludeSemantics(
+                                      child: Icon(
+                                        LucideIcons.circle_check,
+                                        size: 16,
+                                        color: context.semanticColors.success,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpacing.sm),
+                                    Flexible(
+                                      child: Text(
+                                        'Issue reported',
+                                        style: context.textStyles.labelLarge
+                                            ?.copyWith(
+                                              color: context
+                                                  .semanticColors
+                                                  .onSuccessContainer,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ).copyWith(
-                              overlayColor: WidgetStateProperty.resolveWith(
-                                (states) => states.contains(WidgetState.focused)
-                                    ? colors.primary.withValues(alpha: 0.12)
-                                    : Colors.transparent,
-                              ),
+                            )
+                          : TextButton.icon(
+                              onPressed: rideId == null || rideId.isEmpty
+                                  ? null
+                                  : () async {
+                                      final submitted =
+                                          await showSafetyReportSheet(
+                                            context,
+                                            rideId: rideId,
+                                            driverName: driverName,
+                                            vehiclePlate:
+                                                ride?.vehiclePlate ??
+                                                snapshot?.plateNumber ??
+                                                '',
+                                            vehicleType:
+                                                ride?.vehicleType ??
+                                                snapshot?.vehicleType ??
+                                                '',
+                                            trackRepository:
+                                                widget.trackRepository,
+                                          );
+                                      if (submitted && mounted) {
+                                        setState(
+                                          () => _hasReportedSafetyIssue = true,
+                                        );
+                                      }
+                                    },
+                              style:
+                                  TextButton.styleFrom(
+                                    foregroundColor: colors.onSurfaceVariant,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.xs,
+                                    ),
+                                    minimumSize: const Size(
+                                      0,
+                                      AppSize.minimumTouchTarget,
+                                    ),
+                                    enableFeedback: false,
+                                    splashFactory: NoSplash.splashFactory,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.md,
+                                      ),
+                                    ),
+                                  ).copyWith(
+                                    overlayColor:
+                                        WidgetStateProperty.resolveWith(
+                                          (states) =>
+                                              states.contains(
+                                                WidgetState.focused,
+                                              )
+                                              ? colors.primary.withValues(
+                                                  alpha: 0.12,
+                                                )
+                                              : Colors.transparent,
+                                        ),
+                                  ),
+                              icon: const Icon(LucideIcons.flag, size: 16),
+                              label: const Text('Report an issue'),
                             ),
-                        icon: const Icon(LucideIcons.flag, size: 16),
-                        label: const Text('Report an issue'),
-                      ),
                     ),
                   ],
                 ),

@@ -159,4 +159,102 @@ void main() {
       expect(attempts, 2);
     },
   );
+
+  testWidgets(
+    'shows inline retry error when loading the next page of reviews fails',
+    (tester) async {
+      final repository = _MockDriverProfileRepository();
+      var pageTwoAttempts = 0;
+      when(() => repository.fetchStats('driver-3')).thenAnswer(
+        (_) async => const Ok(DriverProfileStats(completedTrips: 20)),
+      );
+      when(
+        () =>
+            repository.fetchReviews('driver-3', page: 1, limit: 3, cursor: ''),
+      ).thenAnswer(
+        (_) async => const Ok(
+          OffsetPage<DriverReview>(
+            items: [
+              DriverReview(
+                passengerName: 'Alex',
+                comment: 'Smooth first review.',
+                rating: 5,
+              ),
+              DriverReview(
+                passengerName: 'Bea',
+                comment: 'Second review.',
+                rating: 4.5,
+              ),
+              DriverReview(
+                passengerName: 'Carl',
+                comment: 'Third review.',
+                rating: 5,
+              ),
+            ],
+            nextOffset: 3,
+            hasMore: true,
+            nextCursor: 'cursor-page-2',
+          ),
+        ),
+      );
+      when(
+        () => repository.fetchReviews(
+          'driver-3',
+          page: 2,
+          limit: 3,
+          cursor: 'cursor-page-2',
+        ),
+      ).thenAnswer((_) async {
+        pageTwoAttempts++;
+        if (pageTwoAttempts == 1) {
+          return const Err(NetworkFailure('Unable to load more reviews.'));
+        }
+        return const Ok(
+          OffsetPage<DriverReview>(
+            items: [
+              DriverReview(
+                passengerName: 'Dana',
+                comment: 'Loaded after pagination retry.',
+                rating: 5,
+              ),
+            ],
+            nextOffset: 4,
+            hasMore: false,
+          ),
+        );
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: Scaffold(
+            body: DriverProfileDetailsSheet(
+              driverId: 'driver-3',
+              driverName: 'Jordan Reyes',
+              vehicleType: 'Tricycle',
+              plateNumber: 'ABC-123',
+              rating: '4.9',
+              repository: repository,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      await tester.drag(find.byType(ListView), const Offset(0, -600));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Unable to load more reviews.'), findsOneWidget);
+      expect(find.text('Try again'), findsOneWidget);
+      expect(pageTwoAttempts, 1);
+
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Dana'), findsOneWidget);
+      expect(find.text('Loaded after pagination retry.'), findsOneWidget);
+      expect(pageTwoAttempts, 2);
+    },
+  );
 }

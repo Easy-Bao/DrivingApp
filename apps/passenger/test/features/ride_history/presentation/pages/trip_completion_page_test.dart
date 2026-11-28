@@ -104,6 +104,11 @@ void main() {
   ) async {
     await open(tester);
     expect(find.text('Ride completed'), findsOneWidget);
+    final routeTimeline = tester.widget<CompactRouteTimeline>(
+      find.byType(CompactRouteTimeline),
+    );
+    expect(routeTimeline.pickup, 'Pickup');
+    expect(routeTimeline.dropoff, 'Destination');
     expect(find.text('₱185.00'), findsOneWidget);
     expect(find.text('Done'), findsOneWidget);
     expect(find.text('Comment (optional)'), findsNothing);
@@ -145,6 +150,7 @@ void main() {
       ),
     ).called(1);
     expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Thanks for rating your ride.'), findsOneWidget);
   });
 
   testWidgets('failed rating keeps the draft and offers retry through Done', (
@@ -233,5 +239,59 @@ void main() {
         comment: any(named: 'comment'),
       ),
     );
+  });
+
+  testWidgets('returnToReceipt mode hides View receipt and pops review', (
+    tester,
+  ) async {
+    DriverReview? returnedReview;
+    final ratingRouter = GoRouter(
+      initialLocation: '/receipt',
+      routes: [
+        GoRoute(
+          path: '/receipt',
+          builder: (context, _) => Scaffold(
+            body: Center(
+              child: TextButton(
+                onPressed: () async {
+                  returnedReview = await context.push<DriverReview>('/rate');
+                },
+                child: const Text('Open rating'),
+              ),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/rate',
+          builder: (_, _) => TripCompletionPage(
+            ride: _ride,
+            detailsCubit: cubit,
+            returnToReceipt: true,
+          ),
+        ),
+      ],
+    );
+    addTearDown(ratingRouter.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp.router(theme: AppTheme.main, routerConfig: ratingRouter),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Open rating'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Rate your ride'), findsOneWidget);
+    expect(find.text('Ride completed'), findsNothing);
+    expect(find.text('View receipt'), findsNothing);
+
+    await tester.tap(find.byTooltip('5 stars'));
+    await tester.pump();
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open rating'), findsOneWidget);
+    expect(find.text('Thanks for rating your ride.'), findsOneWidget);
+    expect(returnedReview?.rating, 5);
   });
 }

@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:core_domain/core_domain.dart';
 import 'package:design_system/design_system.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
@@ -30,6 +32,7 @@ class TripCompletionPage extends StatefulWidget {
 class _TripCompletionPageState extends State<TripCompletionPage> {
   final _commentController = TextEditingController();
   int _rating = 0;
+  String? _localRatingError;
 
   @override
   void initState() {
@@ -43,9 +46,9 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
     await widget.detailsCubit.loadMyReview(widget.ride.id);
   }
 
-  void _leave() {
+  void _leave({DriverReview? submittedReview}) {
     if (widget.returnToReceipt) {
-      context.pop();
+      context.pop(submittedReview);
     } else {
       context.goNamed(HomeRoutes.home);
     }
@@ -55,15 +58,24 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
     final cubit = widget.detailsCubit;
     if (cubit.state.isSubmittingReview) return;
     final ride = cubit.state.ride ?? widget.ride;
+    DriverReview? submittedReview;
     if (_rating > 0 && cubit.state.submittedReview == null) {
       final driverId = ride.driverId;
-      if (driverId == null ||
-          driverId.isEmpty ||
-          cubit.state.isLoading ||
+      if (driverId == null || driverId.isEmpty) {
+        setState(
+          () => _localRatingError =
+              'Driver details are unavailable for rating this ride.',
+        );
+        return;
+      }
+      if (cubit.state.isLoading ||
           cubit.state.isLoadingReview ||
           !cubit.state.hasLoadedReview ||
           cubit.state.reviewErrorMessage != null) {
         return;
+      }
+      if (_localRatingError != null) {
+        setState(() => _localRatingError = null);
       }
       await cubit.submitRating(
         driverId: driverId,
@@ -72,8 +84,11 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
         comment: _commentController.text.trim(),
       );
       if (!mounted || cubit.state.submittedReview == null) return;
+      submittedReview = cubit.state.submittedReview;
+      unawaited(HapticFeedback.lightImpact());
+      AppSnackBar.show(context, 'Thanks for rating your ride.');
     }
-    if (mounted) _leave();
+    if (mounted) _leave(submittedReview: submittedReview);
   }
 
   @override
@@ -131,7 +146,7 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
                 icon: const Icon(LucideIcons.x, size: 20),
               ),
               title: Text(
-                'Ride completed',
+                widget.returnToReceipt ? 'Rate your ride' : 'Ride completed',
                 style: context.textStyles.titleMedium?.copyWith(
                   color: colors.onSurface,
                   fontWeight: FontWeight.w600,
@@ -155,19 +170,29 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Center(
-                          child: Container(
-                            width: 64,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              color: colors.surfaceContainerLowest,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: colors.outlineVariant),
-                            ),
-                            alignment: Alignment.center,
-                            child: Icon(
-                              LucideIcons.user,
-                              size: 26,
-                              color: colors.onSurface,
+                          child: ExcludeSemantics(
+                            child: Container(
+                              width: 64,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                color: widget.returnToReceipt
+                                    ? colors.surfaceContainerLowest
+                                    : context.semanticColors.successContainer,
+                                shape: BoxShape.circle,
+                                border: widget.returnToReceipt
+                                    ? Border.all(color: colors.outlineVariant)
+                                    : null,
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                widget.returnToReceipt
+                                    ? LucideIcons.star
+                                    : LucideIcons.check,
+                                size: 28,
+                                color: widget.returnToReceipt
+                                    ? context.semanticColors.rating
+                                    : context.semanticColors.onSuccessContainer,
+                              ),
                             ),
                           ),
                         ),
@@ -216,7 +241,10 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
                                       ),
                                   onPressed:
                                       reviewReady && !busy && review == null
-                                      ? () => setState(() => _rating = star)
+                                      ? () => setState(() {
+                                          _rating = star;
+                                          _localRatingError = null;
+                                        })
                                       : null,
                                   icon: Icon(
                                     star <= (review?.rating.round() ?? _rating)
@@ -327,7 +355,7 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
                               ),
                             ),
                           ],
-                          if (state.ratingErrorMessage
+                          if (state.ratingErrorMessage ?? _localRatingError
                               case final ratingErrorMessage?) ...[
                             const SizedBox(height: AppSpacing.sm),
                             Semantics(
@@ -344,11 +372,13 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
                         ],
                         const SizedBox(height: AppSpacing.xxl),
                         Container(
-                          padding: const EdgeInsets.fromLTRB(
+                          padding: EdgeInsets.fromLTRB(
                             AppSpacing.lg,
                             AppSpacing.lg,
                             AppSpacing.lg,
-                            AppSpacing.xs,
+                            widget.returnToReceipt
+                                ? AppSpacing.lg
+                                : AppSpacing.xs,
                           ),
                           decoration: BoxDecoration(
                             color: colors.surfaceContainerLowest,
@@ -356,7 +386,28 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
                             borderRadius: BorderRadius.circular(AppRadius.lg),
                           ),
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              if (!widget.returnToReceipt &&
+                                  (ride.pickupName.trim().isNotEmpty ||
+                                      ride.dropoffName.trim().isNotEmpty)) ...[
+                                CompactRouteTimeline(
+                                  pickup: ride.pickupName.trim().isNotEmpty
+                                      ? ride.pickupName
+                                      : 'Pickup',
+                                  dropoff: ride.dropoffName.trim().isNotEmpty
+                                      ? ride.dropoffName
+                                      : 'Destination',
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                Divider(
+                                  height: 1,
+                                  color: colors.outlineVariant.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                              ],
                               Row(
                                 children: [
                                   Expanded(
@@ -390,47 +441,49 @@ class _TripCompletionPageState extends State<TripCompletionPage> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: AppSpacing.md),
-                              Divider(
-                                height: 1,
-                                color: colors.outlineVariant.withValues(
-                                  alpha: 0.7,
+                              if (!widget.returnToReceipt) ...[
+                                const SizedBox(height: AppSpacing.md),
+                                Divider(
+                                  height: 1,
+                                  color: colors.outlineVariant.withValues(
+                                    alpha: 0.7,
+                                  ),
                                 ),
-                              ),
-                              TextButton(
-                                onPressed: busy
-                                    ? null
-                                    : () => context.pushNamed(
-                                        RideHistoryRoutes.rideDetails,
-                                        extra: (
-                                          ride: ride,
-                                          showRatingAction: false,
-                                        ),
-                                      ),
-                                style:
-                                    TextButton.styleFrom(
-                                      foregroundColor: colors.onSurface,
-                                      enableFeedback: false,
-                                      splashFactory: NoSplash.splashFactory,
-                                      minimumSize: const Size(
-                                        double.infinity,
-                                        AppSize.minimumTouchTarget,
-                                      ),
-                                    ).copyWith(
-                                      overlayColor:
-                                          WidgetStateProperty.resolveWith(
-                                            (states) =>
-                                                states.contains(
-                                                  WidgetState.focused,
-                                                )
-                                                ? colors.primary.withValues(
-                                                    alpha: 0.08,
-                                                  )
-                                                : Colors.transparent,
+                                TextButton(
+                                  onPressed: busy
+                                      ? null
+                                      : () => context.pushNamed(
+                                          RideHistoryRoutes.rideDetails,
+                                          extra: (
+                                            ride: ride,
+                                            showRatingAction: false,
                                           ),
-                                    ),
-                                child: const Text('View receipt'),
-                              ),
+                                        ),
+                                  style:
+                                      TextButton.styleFrom(
+                                        foregroundColor: colors.onSurface,
+                                        enableFeedback: false,
+                                        splashFactory: NoSplash.splashFactory,
+                                        minimumSize: const Size(
+                                          double.infinity,
+                                          AppSize.minimumTouchTarget,
+                                        ),
+                                      ).copyWith(
+                                        overlayColor:
+                                            WidgetStateProperty.resolveWith(
+                                              (states) =>
+                                                  states.contains(
+                                                    WidgetState.focused,
+                                                  )
+                                                  ? colors.primary.withValues(
+                                                      alpha: 0.08,
+                                                    )
+                                                  : Colors.transparent,
+                                            ),
+                                      ),
+                                  child: const Text('View receipt'),
+                                ),
+                              ],
                             ],
                           ),
                         ),

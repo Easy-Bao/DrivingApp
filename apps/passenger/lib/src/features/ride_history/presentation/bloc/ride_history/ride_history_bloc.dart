@@ -96,7 +96,14 @@ class RideHistoryBloc({
     RefreshRideHistoryEvent event,
     Emitter<RideHistoryState> emit,
   ) async {
-    await _fetchAndEmit(event.passengerId, emit);
+    try {
+      await _fetchAndEmit(event.passengerId, emit);
+    } finally {
+      final completer = event.completer;
+      if (completer != null && !completer.isCompleted) {
+        completer.complete();
+      }
+    }
   }
 
   Future<void> _fetchAndEmit(

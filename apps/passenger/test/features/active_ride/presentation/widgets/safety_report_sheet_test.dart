@@ -141,6 +141,12 @@ void main() {
       await tester.tap(find.text('Done'));
       await tester.pumpAndSettle();
       expect(find.byType(BottomSheet), findsNothing);
+      expect(
+        find.byKey(const ValueKey('passenger-safety-issue-reported')),
+        findsOneWidget,
+      );
+      expect(find.text('Issue reported'), findsOneWidget);
+      expect(find.byTooltip('Report a safety issue'), findsNothing);
       await tester.pump(const Duration(seconds: 4));
     },
   );

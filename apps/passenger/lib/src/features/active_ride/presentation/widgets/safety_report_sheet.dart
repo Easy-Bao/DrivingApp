@@ -10,7 +10,7 @@ class const SafetyReportButton({
   this.vehiclePlate = '',
   this.vehicleType = '',
   required this.trackRepository,
-}) extends StatelessWidget {
+}) extends StatefulWidget {
   final String? rideId;
   final String driverName;
   final String vehiclePlate;
@@ -18,24 +18,81 @@ class const SafetyReportButton({
   final TrackRepository trackRepository;
 
   @override
+  State<SafetyReportButton> createState() => _SafetyReportButtonState();
+}
+
+class _SafetyReportButtonState extends State<SafetyReportButton> {
+  bool _hasReported = false;
+
+  @override
+  void didUpdateWidget(covariant SafetyReportButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.rideId != oldWidget.rideId) {
+      _hasReported = false;
+    }
+  }
+
+  Future<void> _openReportSheet() async {
+    final rideId = widget.rideId;
+    if (rideId == null || rideId.isEmpty || _hasReported) return;
+    final submitted = await showSafetyReportSheet(
+      context,
+      rideId: rideId,
+      driverName: widget.driverName,
+      vehiclePlate: widget.vehiclePlate,
+      vehicleType: widget.vehicleType,
+      trackRepository: widget.trackRepository,
+    );
+    if (submitted && mounted) {
+      setState(() => _hasReported = true);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_hasReported) {
+      final semanticColors = context.semanticColors;
+      return Semantics(
+        container: true,
+        liveRegion: true,
+        child: Padding(
+          key: const ValueKey('passenger-safety-issue-reported'),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ExcludeSemantics(
+                child: Icon(
+                  LucideIcons.circle_check,
+                  size: 16,
+                  color: semanticColors.success,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Flexible(
+                child: Text(
+                  'Issue reported',
+                  style: context.textStyles.labelLarge?.copyWith(
+                    color: semanticColors.onSuccessContainer,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final colors = context.colorScheme;
-    final canReport = rideId != null && rideId!.isNotEmpty;
+    final canReport = widget.rideId != null && widget.rideId!.isNotEmpty;
     return Tooltip(
       message: 'Report a safety issue',
       child: TextButton.icon(
-        onPressed: canReport
-            ? () async {
-                await showSafetyReportSheet(
-                  context,
-                  rideId: rideId!,
-                  driverName: driverName,
-                  vehiclePlate: vehiclePlate,
-                  vehicleType: vehicleType,
-                  trackRepository: trackRepository,
-                );
-              }
-            : null,
+        onPressed: canReport ? _openReportSheet : null,
         style:
             TextButton.styleFrom(
               foregroundColor: colors.onSurfaceVariant,

@@ -13,9 +13,12 @@ final class const LoadRideHistoryEvent({required this.passengerId})
   List<Object?> get props => [passengerId];
 }
 
-final class const RefreshRideHistoryEvent({required this.passengerId})
-    extends RideHistoryEvent {
+final class const RefreshRideHistoryEvent({
+  required this.passengerId,
+  this.completer,
+}) extends RideHistoryEvent {
   final String passengerId;
+  final Completer<void>? completer;
 
   @override
   List<Object?> get props => [passengerId];

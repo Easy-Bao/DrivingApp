@@ -316,4 +316,67 @@ void main() {
       expect(injectedCubit.isClosed, isFalse);
     },
   );
+
+  testWidgets(
+    'replaces Report an issue with Issue reported after submitting a safety report',
+    (tester) async {
+      final cubit = _DetailsCubit();
+      final trackRepository = _TrackRepository();
+      when(() => cubit.state).thenReturn(const RideDetailsState());
+      when(() => cubit.load('receipt-report')).thenAnswer((_) async {});
+      when(
+        () => trackRepository.createSafetyReport(
+          rideId: 'receipt-report',
+          category: 'unsafe_driving',
+          description: 'Driver sped through the intersection.',
+        ),
+      ).thenAnswer((_) async => const Ok(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: RideDetailsPage(
+            trackRepository: trackRepository,
+            sessionService: _SessionStore(),
+            profileRepository: _ProfileRepository(),
+            detailsCubit: cubit,
+            initialRide: const RideSnapshot(
+              id: 'receipt-report',
+              status: 'completed',
+              pickupName: 'Receipt pickup',
+              dropoffName: 'Receipt destination',
+              driverName: 'Alex Driver',
+              fareAmount: 2860,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Report an issue'));
+      await tester.tap(find.text('Report an issue'));
+      await tester.pumpAndSettle();
+
+      final reason = find.byKey(const ValueKey('report-reason-unsafe_driving'));
+      await tester.ensureVisible(reason);
+      await tester.tap(reason);
+      await tester.enterText(
+        find.byType(TextField),
+        'Driver sped through the intersection.',
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Submit report'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('passenger-safety-issue-reported')),
+        findsOneWidget,
+      );
+      expect(find.text('Issue reported'), findsOneWidget);
+      expect(find.text('Report an issue'), findsNothing);
+    },
+  );
 }

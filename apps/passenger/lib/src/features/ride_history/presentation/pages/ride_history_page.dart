@@ -60,7 +60,7 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
         bottom: false,
         child: RefreshIndicator(
           color: context.colorScheme.onSurface,
-          onRefresh: _loadRideHistory,
+          onRefresh: _refreshRideHistory,
           child: BlocListener<SessionBloc, SessionState>(
             listenWhen: (_, current) => current is AuthenticatedSession,
             listener: (_, _) => unawaited(_loadRideHistory()),
@@ -201,6 +201,22 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
     if (sessionState case AuthenticatedSession(:final passengerId)) {
       BlocProvider.of<RideHistoryBloc>(context)
           .add(LoadRideHistoryEvent(passengerId: passengerId));
+    }
+  }
+
+  Future<void> _refreshRideHistory() async {
+    _referenceTime = DateTime.now();
+    final sessionState = BlocProvider.of<SessionBloc>(context).state;
+    if (sessionState case AuthenticatedSession(:final passengerId)) {
+      final bloc = BlocProvider.of<RideHistoryBloc>(context);
+      final completer = Completer<void>();
+      bloc.add(
+        RefreshRideHistoryEvent(passengerId: passengerId, completer: completer),
+      );
+      await completer.future.timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {},
+      );
     }
   }
 

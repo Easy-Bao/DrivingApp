@@ -45,6 +45,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
   String? _nextCursor;
   int? _completedTripsCount;
   String? _reviewsErrorMessage;
+  String? _loadMoreErrorMessage;
   List<DriverReview> _driverReviewsList = <DriverReview>[];
 
   @override
@@ -61,7 +62,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
   }
 
   void _onScroll() {
-    if (!_scrollController.hasClients) return;
+    if (!_scrollController.hasClients || _loadMoreErrorMessage != null) return;
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       unawaited(_loadMoreDriverReviews());
@@ -76,6 +77,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
       setState(() {
         _isLoadingStats = true;
         _reviewsErrorMessage = null;
+        _loadMoreErrorMessage = null;
       });
     }
     final statsFuture = widget.repository.fetchStatsResult(widget.driverId);
@@ -108,6 +110,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
         _completedTripsCount = completedTrips;
         _driverReviewsList = reviews;
         _reviewsErrorMessage = reviewsErrorMessage;
+        _loadMoreErrorMessage = null;
         _isLoadingStats = false;
       });
     }
@@ -118,16 +121,18 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
     setState(() {
       _isLoadingMore = true;
+      _loadMoreErrorMessage = null;
     });
 
     final nextPage = _currentPage + 1;
     var nextReviews = const <DriverReview>[];
+    String? loadMoreError;
     (await widget.repository.fetchReviewsResult(
       widget.driverId,
       page: nextPage,
       cursor: _nextCursor,
       limit: _reviewPageSize,
-    )).fold((_) => _hasMore = false, (value) {
+    )).fold((failure) => loadMoreError = failure.message, (value) {
       nextReviews = value.items;
       _hasMore = value.hasMore;
       _nextCursor = value.nextCursor;
@@ -135,11 +140,14 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
     if (mounted) {
       setState(() {
-        _currentPage = nextPage;
-        _driverReviewsList = <DriverReview>[
-          ..._driverReviewsList,
-          ...nextReviews,
-        ];
+        if (loadMoreError == null) {
+          _currentPage = nextPage;
+          _driverReviewsList = <DriverReview>[
+            ..._driverReviewsList,
+            ...nextReviews,
+          ];
+        }
+        _loadMoreErrorMessage = loadMoreError;
         _isLoadingMore = false;
       });
     }
@@ -154,40 +162,17 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
       );
     }
 
-    final colors = context.colorScheme;
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 550.0,
-          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-        ),
-        child: SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.78,
-          child: Container(
-            decoration: BoxDecoration(
-              color: colors.surfaceContainerLowest,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppRadius.sheet),
-              ),
-              border: Border(top: BorderSide(color: colors.outlineVariant)),
-              boxShadow: [
-                BoxShadow(
-                  color: colors.onSurface.withValues(alpha: 0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, -6),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.fromLTRB(
-              AppLayout.pagePadding,
-              AppSpacing.md,
-              AppLayout.pagePadding,
-              AppLayout.pagePadding,
-            ),
-            child: SafeArea(top: false, child: _buildProfileContent()),
-          ),
-        ),
+    final sheetHeight = MediaQuery.sizeOf(context).height * 0.74;
+    return AppBottomSheetContainer(
+      showShadow: true,
+      maxWidth: 550.0,
+      padding: const EdgeInsets.fromLTRB(
+        AppLayout.pagePadding,
+        AppSpacing.sm + 2,
+        AppLayout.pagePadding,
+        AppLayout.pagePadding,
       ),
+      child: SizedBox(height: sheetHeight, child: _buildProfileContent()),
     );
   }
 
@@ -229,18 +214,6 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                 ),
               ),
             ],
-          )
-        else
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: AppSpacing.xl),
-              decoration: BoxDecoration(
-                color: colors.outlineVariant,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-            ),
           ),
         const SizedBox(height: AppSpacing.xs),
         Row(
@@ -378,15 +351,42 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
       );
     }
 
-    final showsLoader = _hasMore || _isLoadingMore;
+    final showsFooter =
+        _hasMore || _isLoadingMore || _loadMoreErrorMessage != null;
     return ListView.separated(
       controller: _scrollController,
       physics: const BouncingScrollPhysics(),
       padding: EdgeInsets.zero,
-      itemCount: _driverReviewsList.length + (showsLoader ? 1 : 0),
+      itemCount: _driverReviewsList.length + (showsFooter ? 1 : 0),
       separatorBuilder: (_, _) => Divider(height: 1, color: hairline),
       itemBuilder: (context, index) {
         if (index == _driverReviewsList.length) {
+          if (_loadMoreErrorMessage case final loadMoreError?) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      loadMoreError,
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: colors.error,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => unawaited(_loadMoreDriverReviews()),
+                    style: TextButton.styleFrom(
+                      foregroundColor: colors.onSurface,
+                      enableFeedback: false,
+                      splashFactory: NoSplash.splashFactory,
+                    ),
+                    child: const Text('Try again'),
+                  ),
+                ],
+              ),
+            );
+          }
           return Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
