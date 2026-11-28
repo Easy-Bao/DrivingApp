@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:design_system/design_system.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,6 +22,9 @@ class _SessionBloc extends MockBloc<SessionEvent, SessionState>
     implements SessionBloc {}
 
 class _FakeGeolocatorPlatform extends GeolocatorPlatform {
+  double latitude = 37.3861;
+  double longitude = -122.0839;
+
   @override
   Future<LocationPermission> checkPermission() async =>
       LocationPermission.whileInUse;
@@ -33,8 +37,8 @@ class _FakeGeolocatorPlatform extends GeolocatorPlatform {
     LocationSettings? locationSettings,
   }) async {
     return Position(
-      longitude: -122.0839,
-      latitude: 37.3861,
+      longitude: longitude,
+      latitude: latitude,
       timestamp: DateTime(2026),
       accuracy: 1,
       altitude: 0,
@@ -51,6 +55,8 @@ class _FakeLocationRepository implements maps.LocationRepository {
   List<maps.Place> nearbyPlaces = [];
   List<maps.Place> searchPlacesResult = [];
   bool throwOnSearch = false;
+  Object? nearbyError;
+  int nearbyCallCount = 0;
   Completer<Map<String, dynamic>>? nearbyPlacesCompleter;
 
   @override
@@ -81,8 +87,11 @@ class _FakeLocationRepository implements maps.LocationRepository {
     required double longitude,
     int page = 1,
   }) {
+    nearbyCallCount++;
     final completer = nearbyPlacesCompleter;
     if (completer != null) return completer.future;
+    final error = nearbyError;
+    if (error != null) return Future.error(error);
     return Future.value({
       'places': [for (final place in nearbyPlaces) place.toJson()],
     });
@@ -101,13 +110,15 @@ class _FakeLocationRepository implements maps.LocationRepository {
 
 void main() {
   late _TestMapPlatform mapPlatform;
+  late _FakeGeolocatorPlatform geolocatorPlatform;
   final locationRepository = _FakeLocationRepository();
   final originalGeolocatorPlatform = GeolocatorPlatform.instance;
 
   setUp(() async {
     mapPlatform = _TestMapPlatform();
+    geolocatorPlatform = _FakeGeolocatorPlatform();
     MapboxMapsFlutterPlatform.instance = mapPlatform;
-    GeolocatorPlatform.instance = _FakeGeolocatorPlatform();
+    GeolocatorPlatform.instance = geolocatorPlatform;
     await maps.MapProvider.initialize(
       nativeService: maps.MapNativeService(
         placeServiceBaseUri: Uri.parse('http://test.local'),
@@ -118,6 +129,8 @@ void main() {
     locationRepository.nearbyPlaces = [];
     locationRepository.searchPlacesResult = [];
     locationRepository.throwOnSearch = false;
+    locationRepository.nearbyError = null;
+    locationRepository.nearbyCallCount = 0;
     locationRepository.nearbyPlacesCompleter = null;
     await maps.LocationService.getCurrentPosition();
   });
@@ -589,6 +602,143 @@ void main() {
       expect(find.text('Search unavailable'), findsOneWidget);
       expect(find.text('Retry'), findsOneWidget);
       expect(tester.takeException(), isNull);
+
+      locationRepository.throwOnSearch = false;
+      locationRepository.searchPlacesResult = const [
+        maps.Place(
+          id: 'robinsons-1',
+          name: 'Robinsons Place',
+          fullAddress: 'Robinsons Place, Mountain View',
+          latitude: 37.3865,
+          longitude: -122.0835,
+          distanceKm: 0.4,
+        ),
+      ];
+
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Robinsons Place'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'shows nearby places error with retry and recovers when backend returns',
+    (tester) async {
+      final request = RequestOptions(path: '/api/v1/location/nearby');
+      locationRepository.nearbyError = DioException(
+        requestOptions: request,
+        type: DioExceptionType.badResponse,
+        response: Response<Object?>(requestOptions: request, statusCode: 503),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: const SearchDestinationPage(autofocusSearch: true),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Nearby places unavailable'), findsOneWidget);
+      expect(
+        find.text('The service is unavailable. Try again later.'),
+        findsOneWidget,
+      );
+      expect(find.text('No nearby places found'), findsNothing);
+
+      locationRepository.nearbyError = null;
+      locationRepository.nearbyPlaces = const [
+        maps.Place(
+          id: 'charleston-park',
+          name: 'Charleston Park',
+          fullAddress: 'Charleston Park, Mountain View',
+          latitude: 37.3862,
+          longitude: -122.0838,
+          distanceKm: 0.2,
+        ),
+      ];
+
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Charleston Park'), findsOneWidget);
+      expect(find.text('Nearby places unavailable'), findsNothing);
+
+      // Verify the expanded nearby panel fills the viewport rather than
+      // clipping to the top search bar height.
+      final nearbyTileRect = tester.getRect(find.text('Charleston Park'));
+      final overlayStackSize = tester.getSize(
+        find
+            .ancestor(
+              of: find.text('Charleston Park'),
+              matching: find.byType(Stack),
+            )
+            .first,
+      );
+      expect(overlayStackSize.height, greaterThan(nearbyTileRect.bottom));
+    },
+  );
+
+  testWidgets(
+    'avoids duplicate nearby fetches for unchanged coordinates and reloads when position moves',
+    (tester) async {
+      locationRepository.nearbyPlaces = const [
+        maps.Place(
+          id: 'charleston-park',
+          name: 'Charleston Park',
+          fullAddress: 'Charleston Park, Mountain View',
+          latitude: 37.3862,
+          longitude: -122.0838,
+          distanceKm: 0.2,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: const SearchDestinationPage(autofocusSearch: true),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(locationRepository.nearbyCallCount, 1);
+      expect(find.text('Charleston Park'), findsOneWidget);
+
+      maps.MapProvider.clearLookupCaches();
+      geolocatorPlatform
+        ..latitude = 37.4100
+        ..longitude = -122.1000;
+      locationRepository
+        ..nearbyCallCount = 0
+        ..nearbyPlaces = const [
+          maps.Place(
+            id: 'moved-place',
+            name: 'Shoreline Lake',
+            fullAddress: 'Mountain View',
+            latitude: 37.4102,
+            longitude: -122.1002,
+            distanceKm: 0.3,
+          ),
+        ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: const SearchDestinationPage(
+            key: ValueKey('moved-search'),
+            autofocusSearch: true,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(locationRepository.nearbyCallCount, 2);
+      expect(find.text('Shoreline Lake'), findsOneWidget);
     },
   );
 }

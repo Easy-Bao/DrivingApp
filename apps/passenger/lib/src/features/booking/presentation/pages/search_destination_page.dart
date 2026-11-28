@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -222,8 +223,9 @@ class _SearchDestinationPageState()
   }
 
   Future<void> _initLocation() async {
-    if (_cubit.state.userLatitude != null &&
-        _cubit.state.userLongitude != null) {
+    final initialLat = _cubit.state.userLatitude;
+    final initialLng = _cubit.state.userLongitude;
+    if (initialLat != null && initialLng != null) {
       unawaited(_cubit.loadNearbyPlaces());
     }
 
@@ -233,24 +235,41 @@ class _SearchDestinationPageState()
         ? await LocationService.getCurrentPosition()
         : null;
     if (position != null && mounted) {
+      final shouldReloadNearby =
+          initialLat == null ||
+          initialLng == null ||
+          (position.latitude - initialLat).abs() >= 0.0005 ||
+          (position.longitude - initialLng).abs() >= 0.0005;
       _cubit.updateUserLocation(
         latitude: position.latitude,
         longitude: position.longitude,
+        markLoadingNearby: shouldReloadNearby,
       );
       final controller = _mapController;
       if (controller != null) {
-        await MapProvider.moveCamera(
-          controller,
-          position.latitude,
-          position.longitude,
-          zoom: 14.5,
-          animate: false,
-        );
-        unawaited(
-          _updateCurrentLocationMarker(position.latitude, position.longitude),
-        );
+        try {
+          await MapProvider.moveCamera(
+            controller,
+            position.latitude,
+            position.longitude,
+            zoom: 14.5,
+            animate: false,
+          );
+          if (!mounted) return;
+          unawaited(
+            _updateCurrentLocationMarker(position.latitude, position.longitude),
+          );
+        } catch (error, stackTrace) {
+          developer.log(
+            'Unable to move destination search camera to user location.',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
       }
-      unawaited(_cubit.loadNearbyPlaces());
+      if (mounted && shouldReloadNearby) {
+        unawaited(_cubit.loadNearbyPlaces());
+      }
     } else if (mounted &&
         (_cubit.state.userLatitude == null ||
             _cubit.state.userLongitude == null)) {
@@ -477,20 +496,23 @@ class _SearchDestinationPageState()
                         drivingDistances: state.drivingDistances,
                         drivingDistanceRequests: state.drivingDistanceRequests,
                         onPlaceSelected: _onPlaceSelected,
-                        errorMessage: state.searchError,
+                        errorMessage: hasQuery
+                            ? state.searchError
+                            : state.nearbyError,
                         onRetry: () {
+                          MapProvider.clearLookupCaches();
                           if (hasQuery) {
                             final requestId = _cubit.startSearchPending();
-                            final isAuthenticated =
-                                BlocProvider.of<SessionBloc>(context).state
-                                    is AuthenticatedSession;
                             unawaited(
                               _cubit.performSearch(
                                 _searchController.text,
-                                isAuthenticated: isAuthenticated,
+                                isAuthenticated: _isAuthenticated(),
                                 requestId: requestId,
                               ),
                             );
+                          } else if (_cubit.state.userLatitude == null ||
+                              _cubit.state.userLongitude == null) {
+                            unawaited(_initLocation());
                           } else {
                             _cubit.markNearbyRefreshing();
                             unawaited(_cubit.loadNearbyPlaces());
@@ -524,62 +546,66 @@ class _SearchDestinationPageState()
                 ),
               ),
             ),
-            AnimatedBuilder(
-              animation: _expandAnimation,
-              child: resultsPanelContent,
-              builder: (context, resultsChild) {
-                final t = _expandAnimation.value;
-                final containerLeft = (1.0 - t) * 56.0;
-                final containerTop = (1.0 - t) * (topPadding + 10.0);
-                final containerRight = (1.0 - t) * 56.0;
-                final containerHeight =
-                    52.0 +
-                    t *
-                        (availableHeight -
-                            (1.0 - t) * (topPadding + 10.0) -
-                            52.0);
-                final containerRadius = (1.0 - t) * 36.0;
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _expandAnimation,
+                child: resultsPanelContent,
+                builder: (context, resultsChild) {
+                  final t = _expandAnimation.value;
+                  final containerLeft = (1.0 - t) * 56.0;
+                  final containerTop = (1.0 - t) * (topPadding + 10.0);
+                  final containerRight = (1.0 - t) * 56.0;
+                  final containerHeight =
+                      52.0 +
+                      t *
+                          (availableHeight -
+                              (1.0 - t) * (topPadding + 10.0) -
+                              52.0);
+                  final containerRadius = (1.0 - t) * 36.0;
 
-                return Stack(
-                  children: [
-                    if (t > 0.01)
-                      Positioned(
-                        left: containerLeft,
-                        top: containerTop,
-                        right: containerRight,
-                        height: containerHeight,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(containerRadius),
-                          child: Material(
-                            color: context.colorScheme.surface,
-                            elevation: 8 * t,
-                            child: ColoredBox(
+                  return Stack(
+                    children: [
+                      if (t > 0.01)
+                        Positioned(
+                          left: containerLeft,
+                          top: containerTop,
+                          right: containerRight,
+                          height: containerHeight,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                              containerRadius,
+                            ),
+                            child: Material(
                               color: context.colorScheme.surface,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(height: t * (topPadding + 62.0)),
-                                  if (t > 0.2) Expanded(child: resultsChild!),
-                                ],
+                              elevation: 8 * t,
+                              child: ColoredBox(
+                                color: context.colorScheme.surface,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(height: t * (topPadding + 62.0)),
+                                    if (t > 0.2) Expanded(child: resultsChild!),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
+                      SearchDestinationBar(
+                        expandProgress: t,
+                        mapPinFadeAnimation: _mapPinFadeAnimation,
+                        collapsedControlsFadeAnimation:
+                            _collapsedControlsFadeAnimation,
+                        searchController: _searchController,
+                        focusNode: _focusNode,
+                        onBackTap: _handleSearchBackTap,
+                        onOpenMapPin: () => unawaited(_openMapPin()),
+                        onClearSearch: _searchController.clear,
                       ),
-                    SearchDestinationBar(
-                      expandProgress: t,
-                      mapPinFadeAnimation: _mapPinFadeAnimation,
-                      collapsedControlsFadeAnimation:
-                          _collapsedControlsFadeAnimation,
-                      searchController: _searchController,
-                      focusNode: _focusNode,
-                      onBackTap: _handleSearchBackTap,
-                      onOpenMapPin: () => unawaited(_openMapPin()),
-                      onClearSearch: _searchController.clear,
-                    ),
-                  ],
-                );
-              },
+                    ],
+                  );
+                },
+              ),
             ),
           ],
         ),
