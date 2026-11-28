@@ -520,9 +520,7 @@ class _DashboardPageState extends State<DashboardPage>
             TripEndedDialog(title: title, message: message),
       );
       if (mounted) {
-        if (context.canPop()) {
-          context.pop();
-        } else {
+        if (_isActiveTripRouteOpen) {
           context.goNamed(DashboardRoutes.dashboard);
         }
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -850,12 +848,13 @@ class _DashboardPageState extends State<DashboardPage>
     if (!_reviewedTripIds.contains(rideId) &&
         resolvedTrip.needsRecoveryReview(DateTime.now())) {
       final isInTransit = resolvedTrip.status == 'in_transit';
-      await showDialog<void>(
+      final shouldOpen = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
         builder: (_) => TripRecoveryReviewDialog(isInTransit: isInTransit),
       );
       if (!mounted || !context.mounted) return (null, false);
+      if (shouldOpen != true) return (null, true);
       _reviewedTripIds.add(rideId);
       // The passenger may cancel while the review is open.
       resolvedTrip = await BlocProvider.of<DashboardCubit>(context)

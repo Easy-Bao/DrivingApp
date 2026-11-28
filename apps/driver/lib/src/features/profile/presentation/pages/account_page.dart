@@ -211,87 +211,16 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  Future<bool> _confirmLogout(BuildContext context) async {
-    final colorScheme = context.colorScheme;
-    final textStyles = context.textStyles;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => Dialog(
-        backgroundColor: colorScheme.surfaceContainerLowest,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          side: BorderSide(color: colorScheme.outlineVariant),
-        ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.xxl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Log out?',
-                  textAlign: TextAlign.center,
-                  style: textStyles.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'You will need to sign in again before going online or accepting trips.',
-                  textAlign: TextAlign.center,
-                  style: textStyles.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xxl),
-                SizedBox(
-                  height: AppSize.controlHeight,
-                  child: FilledButton(
-                    key: const ValueKey<String>(
-                      'driver-account-logout-confirm',
-                    ),
-                    onPressed: () => Navigator.of(dialogContext).pop(true),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: colorScheme.error,
-                      foregroundColor: colorScheme.onError,
-                      elevation: 0,
-                      enableFeedback: false,
-                      splashFactory: NoSplash.splashFactory,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                    ),
-                    child: const Text('Log out'),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                SizedBox(
-                  height: AppSize.controlHeight,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(false),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: colorScheme.onSurface,
-                      side: BorderSide(color: colorScheme.outlineVariant),
-                      enableFeedback: false,
-                      splashFactory: NoSplash.splashFactory,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                    ),
-                    child: const Text('Cancel'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+  Future<bool> _confirmLogout(BuildContext context) {
+    return showAppConfirmDialog(
+      context,
+      title: 'Log out?',
+      message: 'You will need to sign in again before going online or accepting trips.',
+      confirmLabel: 'Log out',
+      cancelLabel: 'Cancel',
+      icon: LucideIcons.log_out,
+      tone: AppConfirmDialogTone.destructive,
+      isDestructive: true,
     );
-    return confirmed ?? false;
   }
 }

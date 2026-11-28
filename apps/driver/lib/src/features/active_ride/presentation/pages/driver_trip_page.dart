@@ -303,6 +303,13 @@ class _DriverTripPageState extends State<DriverTripPage> {
       await widget.rideCompletionHandler.afterRideCompleted(rideId: rideId);
     }
     if (!mounted) return;
+    final route = ModalRoute.of(context);
+    if (route != null && route.isActive && !route.isCurrent) {
+      // A modal notice (such as TripEndedDialog) is already above this route.
+      // Remove only the trip route underneath without dismissing the modal.
+      Navigator.of(context).removeRoute(route);
+      return;
+    }
     if (context.canPop()) {
       context.pop();
     } else {

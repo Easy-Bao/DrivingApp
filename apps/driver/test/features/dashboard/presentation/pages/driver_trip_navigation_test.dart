@@ -411,4 +411,121 @@ void main() {
       await location.close();
     },
   );
+
+  testWidgets(
+    'dismissing trip recovery review with Not now keeps driver on dashboard without error',
+    (tester) async {
+      final dashboard = _Dashboard();
+      final flow = _RideFlow();
+      final location = _Location();
+      final states = StreamController<DashboardState>.broadcast();
+      final lifecycle = AppLifecycleCoordinator();
+      final realtime = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://example.test'),
+        tokenProvider: () async => null,
+      );
+      final staleTrip = RideSnapshot(
+        id: 'trip-stale',
+        status: 'accepted',
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+        pickupName: 'Pickup',
+        dropoffName: 'Destination',
+        distanceKm: 2,
+        durationMinutes: 5,
+        fareAmount: 2800,
+      );
+      whenListen(
+        dashboard,
+        states.stream,
+        initialState: DashboardState(activeRides: [staleTrip]),
+      );
+      when(() => flow.state).thenReturn(const Idle());
+      when(() => location.state).thenReturn(const LocationAccessReady());
+      when(
+        () =>
+            dashboard.loadDispatchSnapshot(includeOffers: false, silent: true),
+      ).thenAnswer((_) async => true);
+      when(() => dashboard.removeExpiredRideOffers()).thenReturn(false);
+      when(() => dashboard.fetchAuthoritativeRide('trip-stale'))
+          .thenAnswer((_) async => staleTrip);
+
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => DashboardPage(
+              lifecycleCoordinator: lifecycle,
+              realtimeClient: realtime,
+            ),
+          ),
+          GoRoute(
+            path: '/trip',
+            name: ActiveRideRoutes.trip,
+            builder: (_, _) => const Scaffold(body: Text('Trip route opened')),
+          ),
+        ],
+      );
+      addTearDown(() async {
+        router.dispose();
+        await states.close();
+        await lifecycle.dispose();
+        await realtime.dispose();
+        await dashboard.close();
+        await flow.close();
+        await location.close();
+      });
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<DashboardCubit>.value(value: dashboard),
+            BlocProvider<RideFlowCubit>.value(value: flow),
+            BlocProvider<LocationAccessCubit>.value(value: location),
+          ],
+          child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+        ),
+      );
+      await tester.pump();
+      for (
+        var frame = 0;
+        frame < 8 && find.text('Review this trip').evaluate().isEmpty;
+        frame++
+      ) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      expect(find.text('Review this trip'), findsOneWidget);
+      expect(find.text('Not now'), findsOneWidget);
+
+      await tester.tap(find.text('Not now'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Trip route opened'), findsNothing);
+      expect(router.routeInformationProvider.value.uri.path, '/');
+      verifyNever(
+        () => flow.resumeRide(
+          rideId: any(named: 'rideId'),
+          bookingReference: any(named: 'bookingReference'),
+          status: any(named: 'status'),
+          passengerName: any(named: 'passengerName'),
+          passengerId: any(named: 'passengerId'),
+          distanceKm: any(named: 'distanceKm'),
+          pickupLatitude: any(named: 'pickupLatitude'),
+          pickupLongitude: any(named: 'pickupLongitude'),
+          destinationLatitude: any(named: 'destinationLatitude'),
+          destinationLongitude: any(named: 'destinationLongitude'),
+          arrivedAt: any(named: 'arrivedAt'),
+          waitingUntil: any(named: 'waitingUntil'),
+        ),
+      );
+      expect(
+        find.text(
+          'Your trip could not be opened. Refresh its status and try again.',
+        ),
+        findsNothing,
+      );
+      expect(find.text('1 / 5 active bookings'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 }
