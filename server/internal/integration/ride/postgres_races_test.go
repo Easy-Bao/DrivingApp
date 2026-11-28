@@ -342,7 +342,7 @@ WHERE id = $1`, rideID).Scan(&status, &assignedDriverID); err != nil {
 	var wantSettlements int
 	switch status {
 	case "accepted":
-		if acceptErr != nil || cancelErr == nil || !errors.Is(cancelErr, pgx.ErrNoRows) {
+		if acceptErr != nil || !errors.Is(cancelErr, domain.ErrInvalidStatusTransition) {
 			t.Fatalf("accepted state has inconsistent outcomes: acceptance=%v cancellation=%v", acceptErr, cancelErr)
 		}
 		if !assignedDriverID.Valid || assignedDriverID.Int32 != driverID {
@@ -358,7 +358,7 @@ WHERE id = $1`, rideID).Scan(&status, &assignedDriverID); err != nil {
 				t.Fatalf("cancelled accepted ride has inconsistent outcomes: driver=%v acceptance=%v", assignedDriverID, acceptErr)
 			}
 			wantSettlements = 1
-		} else if acceptErr == nil || !errors.Is(acceptErr, pgx.ErrNoRows) {
+		} else if !errors.Is(acceptErr, domain.ErrInvalidStatusTransition) {
 			t.Fatalf("unassigned cancelled ride has inconsistent acceptance result: %v", acceptErr)
 		}
 	default:
@@ -401,8 +401,8 @@ func TestStaleRideStateTransitionCannotOverwriteCancellation(t *testing.T) {
 		string(domain.RideAccepted),
 		domain.RideTransition{EventType: domain.RideEventStatusChanged},
 	)
-	if !errors.Is(err, pgx.ErrNoRows) {
-		t.Fatalf("stale transition error = %v, want no matching current-state row", err)
+	if !errors.Is(err, domain.ErrInvalidStatusTransition) {
+		t.Fatalf("stale transition error = %v, want invalid ride status transition", err)
 	}
 
 	var status string
@@ -573,6 +573,7 @@ func newPostgresRideFixture(t *testing.T) *postgresRideFixture {
 		"booking_references.sql",
 		"bid_sessions.sql",
 		"rides.sql",
+		"reviews.sql",
 		"bid_offers.sql",
 		"notifications.sql",
 		"ride_settlements.sql",
