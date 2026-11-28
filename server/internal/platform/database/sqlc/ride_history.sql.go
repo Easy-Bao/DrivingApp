@@ -12,6 +12,21 @@ import (
 )
 
 const listDriverRides = `-- name: ListDriverRides :many
+WITH ride_page AS (
+    SELECT candidate.id, candidate.created_at
+    FROM rides AS candidate
+    WHERE candidate.driver_id = $1
+      AND (
+          ($2::boolean = true AND candidate.status IN ('assigned', 'accepted', 'arrived', 'in_transit'))
+          OR
+          ($2::boolean = false AND candidate.status IN ('completed', 'cancelled'))
+      )
+      AND ($3::timestamptz IS NULL
+           OR (candidate.created_at, candidate.id) < ($3::timestamptz, $4::int))
+    ORDER BY candidate.created_at DESC, candidate.id DESC
+    LIMIT $6::int
+    OFFSET $5::int
+)
 SELECT ride.id, ride.booking_reference, ride.passenger_id, ride.driver_id, ride.status, ride.fare_amount, ride.ride_type, ride.pickup_latitude, ride.pickup_longitude, ride.pickup_name, ride.dropoff_latitude, ride.dropoff_longitude, ride.dropoff_name, ride.distance_km, ride.duration_minutes, ride.driver_name, ride.vehicle_type, ride.plate_number, ride.driver_rating, ride.created_at, ride.completed_at, ride.arrived_at, ride.waiting_until, ride.cancelled_by, ride.cancellation_reason, ride.cancellation_responsibility, ride.cancellation_details, ride.bid_session_id,
     COALESCE(settlement.payment_status, 'unpaid') AS payment_status,
     COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
@@ -34,22 +49,13 @@ SELECT ride.id, ride.booking_reference, ride.passenger_id, ride.driver_id, ride.
     END::text AS passenger_phone,
     passenger_review.rating AS passenger_rating,
     passenger_review.comment AS passenger_feedback
-FROM rides AS ride
+FROM ride_page
+JOIN rides AS ride ON ride.id = ride_page.id
 LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
 LEFT JOIN users AS user_account ON user_account.id = ride.passenger_id
 LEFT JOIN passenger_profiles AS passenger_profile ON passenger_profile.user_id = ride.passenger_id
 LEFT JOIN reviews AS passenger_review ON passenger_review.ride_id = ride.id
-WHERE ride.driver_id = $1
-  AND (
-      ($2::boolean = true AND ride.status IN ('assigned', 'accepted', 'arrived', 'in_transit'))
-      OR
-      ($2::boolean = false AND ride.status IN ('completed', 'cancelled'))
-  )
-AND ($3::timestamptz IS NULL
-       OR (ride.created_at, ride.id) < ($3::timestamptz, $4::int))
-ORDER BY ride.created_at DESC, ride.id DESC
-LIMIT $6::int
-OFFSET $5::int
+ORDER BY ride_page.created_at DESC, ride_page.id DESC
 `
 
 type ListDriverRidesParams struct {

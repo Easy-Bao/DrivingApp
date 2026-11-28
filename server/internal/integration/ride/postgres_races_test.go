@@ -762,8 +762,17 @@ func TestListDriverRidesFiltersActiveAndTerminalTrips(t *testing.T) {
 	fixture.seedDriver(t, ctx, driverID)
 
 	fixture.createRide(t, ctx, passengerID, driverID, "in_transit", 2500)
-	fixture.createRide(t, ctx, passengerID, driverID, "completed", 3000)
-	fixture.createRide(t, ctx, passengerID, driverID, "cancelled", 1500)
+	completedRide := fixture.createRide(t, ctx, passengerID, driverID, "completed", 3000)
+	cancelledRide := fixture.createRide(t, ctx, passengerID, driverID, "cancelled", 1500)
+	createdAt := time.Now().UTC().Truncate(time.Second)
+	if _, err := fixture.pool.Exec(ctx, `UPDATE rides SET created_at = $1 WHERE id IN ($2, $3)`, createdAt, completedRide, cancelledRide); err != nil {
+		t.Fatalf("give terminal rides equal timestamps: %v", err)
+	}
+	if _, err := fixture.pool.Exec(ctx, `
+INSERT INTO reviews (ride_id, driver_id, passenger_id, rating, comment)
+VALUES ($1, $2, $3, 4.5, 'Smooth trip')`, completedRide, driverID, passengerID); err != nil {
+		t.Fatalf("seed the passenger review: %v", err)
+	}
 
 	historyTrips, err := fixture.store.DriverTrips(ctx, driverID, domain.TripHistoryQuery{
 		Limit:      10,
@@ -776,10 +785,28 @@ func TestListDriverRidesFiltersActiveAndTerminalTrips(t *testing.T) {
 	if len(historyTrips) != 2 {
 		t.Fatalf("historyTrips len = %d, want 2", len(historyTrips))
 	}
-	for _, trip := range historyTrips {
-		if trip.Status != "completed" && trip.Status != "cancelled" {
-			t.Fatalf("unexpected non-terminal ride status in history: %s", trip.Status)
-		}
+	if historyTrips[0].ID != cancelledRide || historyTrips[1].ID != completedRide {
+		t.Fatalf("terminal history order = %d, %d; want %d, %d", historyTrips[0].ID, historyTrips[1].ID, cancelledRide, completedRide)
+	}
+	for _, page := range []struct {
+		name  string
+		query domain.TripHistoryQuery
+	}{
+		{"offset", domain.TripHistoryQuery{Limit: 1, Offset: 1}},
+		{"cursor", domain.TripHistoryQuery{Limit: 1, BeforeCreatedAt: createdAt, BeforeID: cancelledRide}},
+	} {
+		t.Run(page.name, func(t *testing.T) {
+			trips, err := fixture.store.DriverTrips(ctx, driverID, page.query)
+			if err != nil {
+				t.Fatalf("fetch next history page: %v", err)
+			}
+			if len(trips) != 1 || trips[0].ID != completedRide {
+				t.Fatalf("next history page = %+v, want only ride %d", trips, completedRide)
+			}
+			if trips[0].PassengerRating != 4.5 || trips[0].PassengerFeedback != "Smooth trip" {
+				t.Fatalf("missing passenger review in paginated ride: %+v", trips[0])
+			}
+		})
 	}
 
 	activeTrips, err := fixture.store.DriverTrips(ctx, driverID, domain.TripHistoryQuery{

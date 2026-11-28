@@ -1,4 +1,19 @@
 -- name: ListDriverRides :many
+WITH ride_page AS (
+    SELECT candidate.id, candidate.created_at
+    FROM rides AS candidate
+    WHERE candidate.driver_id = sqlc.arg('driver_id')
+      AND (
+          (sqlc.arg('active_only')::boolean = true AND candidate.status IN ('assigned', 'accepted', 'arrived', 'in_transit'))
+          OR
+          (sqlc.arg('active_only')::boolean = false AND candidate.status IN ('completed', 'cancelled'))
+      )
+      AND (sqlc.narg('before_created_at')::timestamptz IS NULL
+           OR (candidate.created_at, candidate.id) < (sqlc.narg('before_created_at')::timestamptz, sqlc.arg('before_id')::int))
+    ORDER BY candidate.created_at DESC, candidate.id DESC
+    LIMIT sqlc.arg('limit')::int
+    OFFSET sqlc.arg('offset')::int
+)
 SELECT sqlc.embed(ride),
     COALESCE(settlement.payment_status, 'unpaid') AS payment_status,
     COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
@@ -21,22 +36,13 @@ SELECT sqlc.embed(ride),
     END::text AS passenger_phone,
     passenger_review.rating AS passenger_rating,
     passenger_review.comment AS passenger_feedback
-FROM rides AS ride
+FROM ride_page
+JOIN rides AS ride ON ride.id = ride_page.id
 LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
 LEFT JOIN users AS user_account ON user_account.id = ride.passenger_id
 LEFT JOIN passenger_profiles AS passenger_profile ON passenger_profile.user_id = ride.passenger_id
 LEFT JOIN reviews AS passenger_review ON passenger_review.ride_id = ride.id
-WHERE ride.driver_id = sqlc.arg('driver_id')
-  AND (
-      (sqlc.arg('active_only')::boolean = true AND ride.status IN ('assigned', 'accepted', 'arrived', 'in_transit'))
-      OR
-      (sqlc.arg('active_only')::boolean = false AND ride.status IN ('completed', 'cancelled'))
-  )
-AND (sqlc.narg('before_created_at')::timestamptz IS NULL
-       OR (ride.created_at, ride.id) < (sqlc.narg('before_created_at')::timestamptz, sqlc.arg('before_id')::int))
-ORDER BY ride.created_at DESC, ride.id DESC
-LIMIT sqlc.arg('limit')::int
-OFFSET sqlc.arg('offset')::int;
+ORDER BY ride_page.created_at DESC, ride_page.id DESC;
 
 -- name: ListPassengerRides :many
 SELECT sqlc.embed(ride),
