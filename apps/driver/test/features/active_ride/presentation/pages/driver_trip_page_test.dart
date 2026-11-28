@@ -287,4 +287,103 @@ void main() {
       expect(find.text('Dispatch Home'), findsOneWidget);
     },
   );
+
+  testWidgets('requires confirmation before recording passenger no-show', (
+    tester,
+  ) async {
+    final oldLocation = GeolocatorPlatform.instance;
+    GeolocatorPlatform.instance = _Location();
+    MapboxMapsFlutterPlatform.instance = _MapPlatform();
+    addTearDown(() {
+      GeolocatorPlatform.instance = oldLocation;
+    });
+    await LocationService.getCurrentPosition();
+
+    final ride = _RideCubit();
+    final map = _MapBloc();
+    final session = _Session();
+    final completionHandler = _CompletionHandler();
+    final lifecycle = AppLifecycleCoordinator();
+    final states = StreamController<RideState>.broadcast();
+    const waiting = RideFlowWaitingPassenger(
+      passengerName: 'Alex',
+      waitTimeSeconds: 300,
+      pickupLatitude: 14.6,
+      pickupLongitude: 120.9,
+      destinationLatitude: 14.7,
+      destinationLongitude: 121,
+    );
+    whenListen(ride, states.stream, initialState: waiting);
+    when(() => map.state).thenReturn(const LiveMapInitial());
+    when(() => map.stream).thenAnswer((_) => const Stream.empty());
+    when(() => session.readDriverId()).thenAnswer((_) async => '');
+    when(() => ride.activeRideId).thenReturn('trip-no-show');
+    when(() => ride.activePassengerName).thenReturn('Alex');
+    when(() => ride.canMarkPassengerNoShow).thenReturn(true);
+    when(() => ride.passengerNoShowTimeRemaining).thenReturn(Duration.zero);
+    when(() => ride.markPassengerNoShow()).thenAnswer((_) async => true);
+    when(() => ride.reset()).thenAnswer((_) async {});
+    when(() => completionHandler.afterRideCompleted(rideId: 'trip-no-show'))
+        .thenAnswer((_) async {});
+
+    final router = GoRouter(
+      initialLocation: '/trip',
+      routes: [
+        GoRoute(
+          path: '/dashboard',
+          name: DashboardRoutes.dashboard,
+          builder: (_, _) => const Scaffold(body: Text('Dispatch Home')),
+        ),
+        GoRoute(
+          path: '/trip',
+          builder: (_, _) => DriverTripPage(
+            rideId: 'trip-no-show',
+            pickup: 'Pickup street',
+            dropoff: 'Destination street',
+            distance: 3,
+            fare: 40,
+            chatRepositoryFactory: _Factory(),
+            sessionService: session,
+            lifecycleCoordinator: lifecycle,
+            rideCompletionHandler: completionHandler,
+          ),
+        ),
+      ],
+    );
+    addTearDown(() async {
+      router.dispose();
+      await states.close();
+      await lifecycle.dispose();
+    });
+
+    await tester.pumpWidget(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider<RideFlowCubit>.value(value: ride),
+          BlocProvider<LiveMapBloc>.value(value: map),
+        ],
+        child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Passenger did not arrive'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Record passenger no-show?'), findsOneWidget);
+    verifyNever(() => ride.markPassengerNoShow());
+
+    await tester.tap(find.text('Keep waiting'));
+    await tester.pumpAndSettle();
+    verifyNever(() => ride.markPassengerNoShow());
+
+    await tester.tap(find.text('Passenger did not arrive'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm no-show'));
+    await tester.pumpAndSettle();
+
+    verify(() => ride.markPassengerNoShow()).called(1);
+    expect(find.text('Passenger no-show recorded.'), findsOneWidget);
+    expect(find.text('Dispatch Home'), findsOneWidget);
+  });
 }

@@ -92,4 +92,40 @@ void main() {
       }
     }
   }
+
+  testWidgets(
+    'keeps primary action label intact while canceling or recording no-show',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: Scaffold(
+            body: DriverTripPanel(
+              state: const RideFlowWaitingPassenger(
+                passengerName: 'Alex',
+                waitTimeSeconds: 180,
+              ),
+              pickup: 'Pickup',
+              dropoff: 'Dropoff',
+              fare: 50,
+              progress: 0,
+              isBusy: true,
+              busyAction: DriverTripBusyAction.markingNoShow,
+              unreadCount: 0,
+              onProgressChanged: (_) {},
+              onAdvance: () {},
+              onChat: () {},
+              onCancel: () {},
+              onNoShow: () {},
+              noShowRemaining: Duration.zero,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Start trip'), findsOneWidget);
+      expect(find.text('Starting trip…'), findsNothing);
+      expect(find.text('Recording no-show…'), findsOneWidget);
+    },
+  );
 }

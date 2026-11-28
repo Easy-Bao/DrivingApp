@@ -7,6 +7,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
+enum DriverTripBusyAction { none, advancing, canceling, markingNoShow }
+
 class const DriverTripPanel({
   super.key,
   required this.state,
@@ -16,6 +18,7 @@ class const DriverTripPanel({
   required this.progress,
   this.progressListenable,
   required this.isBusy,
+  this.busyAction = DriverTripBusyAction.none,
   required this.unreadCount,
   required this.onProgressChanged,
   required this.onAdvance,
@@ -33,6 +36,7 @@ class const DriverTripPanel({
   final double progress;
   final ValueListenable<double>? progressListenable;
   final bool isBusy;
+  final DriverTripBusyAction busyAction;
   final int unreadCount;
   final ValueChanged<double> onProgressChanged;
   final VoidCallback onAdvance;
@@ -53,6 +57,15 @@ class const DriverTripPanel({
     final waitLabel =
         '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}';
     final remaining = ((noShowRemaining?.inMilliseconds ?? 0) / 1000).ceil();
+    final effectiveBusyAction = busyAction != DriverTripBusyAction.none
+        ? busyAction
+        : (isBusy ? DriverTripBusyAction.advancing : DriverTripBusyAction.none);
+    final isAdvancing = effectiveBusyAction == DriverTripBusyAction.advancing;
+    final isCanceling = effectiveBusyAction == DriverTripBusyAction.canceling;
+    final isMarkingNoShow =
+        effectiveBusyAction == DriverTripBusyAction.markingNoShow;
+    final isAnyBusy =
+        isBusy || effectiveBusyAction != DriverTripBusyAction.none;
 
     return Material(
       color: colorScheme.surface,
@@ -182,7 +195,7 @@ class const DriverTripPanel({
                 height: AppSize.controlHeight,
                 child: FilledButton(
                   key: const ValueKey<String>('driver-trip-start-button'),
-                  onPressed: isBusy ? null : onAdvance,
+                  onPressed: isAnyBusy ? null : onAdvance,
                   style:
                       FilledButton.styleFrom(
                         backgroundColor: colorScheme.primary,
@@ -203,7 +216,7 @@ class const DriverTripPanel({
                           return Colors.transparent;
                         }),
                       ),
-                  child: Text(isBusy ? 'Starting trip…' : 'Start trip'),
+                  child: Text(isAdvancing ? 'Starting trip…' : 'Start trip'),
                 ),
               )
             else if (progressListenable case final listenable?)
@@ -223,7 +236,8 @@ class const DriverTripPanel({
                   hint: inTransit
                       ? 'Swipe right to complete the trip.'
                       : 'Swipe right to confirm arrival.',
-                  isProcessing: isBusy,
+                  isProcessing: isAdvancing,
+                  enabled: !isAnyBusy,
                   onProgressChanged: onProgressChanged,
                   onConfirmed: onAdvance,
                 ),
@@ -243,7 +257,8 @@ class const DriverTripPanel({
                 hint: inTransit
                     ? 'Swipe right to complete the trip.'
                     : 'Swipe right to confirm arrival.',
-                isProcessing: isBusy,
+                isProcessing: isAdvancing,
+                enabled: !isAnyBusy,
                 onProgressChanged: onProgressChanged,
                 onConfirmed: onAdvance,
               ),
@@ -268,14 +283,14 @@ class const DriverTripPanel({
                         return Colors.transparent;
                       }),
                     ),
-                onPressed: isBusy ? null : onCancel,
-                child: const Text('Cancel ride'),
+                onPressed: isAnyBusy ? null : onCancel,
+                child: Text(isCanceling ? 'Canceling…' : 'Cancel ride'),
               ),
             ],
             if (waiting && noShowRemaining != null)
               if (onNoShow != null)
                 TextButton(
-                  onPressed: isBusy ? null : onNoShow,
+                  onPressed: isAnyBusy ? null : onNoShow,
                   style:
                       TextButton.styleFrom(
                         foregroundColor: colorScheme.onSurface,
@@ -289,7 +304,11 @@ class const DriverTripPanel({
                           return Colors.transparent;
                         }),
                       ),
-                  child: const Text('Passenger did not arrive'),
+                  child: Text(
+                    isMarkingNoShow
+                        ? 'Recording no-show…'
+                        : 'Passenger did not arrive',
+                  ),
                 )
               else
                 Padding(

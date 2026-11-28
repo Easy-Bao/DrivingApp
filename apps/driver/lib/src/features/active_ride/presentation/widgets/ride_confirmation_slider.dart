@@ -10,6 +10,7 @@ class const RideConfirmationSlider({
   required this.processingLabel,
   required this.hint,
   required this.isProcessing,
+  this.enabled = true,
   required this.onProgressChanged,
   required this.onConfirmed,
 }) extends StatefulWidget {
@@ -22,6 +23,7 @@ class const RideConfirmationSlider({
   final String processingLabel;
   final String hint;
   final bool isProcessing;
+  final bool enabled;
   final ValueChanged<double> onProgressChanged;
   final VoidCallback onConfirmed;
 
@@ -46,7 +48,8 @@ class _RideConfirmationSliderState extends State<RideConfirmationSlider> {
               (constraints.maxWidth - RideConfirmationSlider.thumbSize)
                   .clamp(0.0, double.infinity)
                   .toDouble();
-          final canInteract = !widget.isProcessing && travel > 0;
+          final canInteract =
+              widget.enabled && !widget.isProcessing && travel > 0;
           final colors = context.colorScheme;
           final fillWidth =
               RideConfirmationSlider.thumbSize + travel * progress;

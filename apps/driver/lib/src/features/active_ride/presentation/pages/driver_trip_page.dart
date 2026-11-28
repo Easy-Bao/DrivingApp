@@ -64,7 +64,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
   final _panelKey = GlobalKey();
   Widget? _map;
   AppMapController? _mapController;
-  bool _isActing = false;
+  DriverTripBusyAction _busyAction = DriverTripBusyAction.none;
   String? _notice;
   bool _isRefreshing = false;
   bool _tripFinished = false;
@@ -74,6 +74,8 @@ class _DriverTripPageState extends State<DriverTripPage> {
   String? _completedPassengerName;
   bool _safetyReportSubmitted = false;
   bool _completionHapticPlayed = false;
+
+  bool get _isActing => _busyAction != DriverTripBusyAction.none;
 
   bool get _isShowingCompletionSummary =>
       _completedFare != null || _rideCubit.state is TripCompleted;
@@ -333,7 +335,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
       await _finishTrip();
       return;
     }
-    setState(() => _isActing = true);
+    setState(() => _busyAction = DriverTripBusyAction.advancing);
     try {
       final state = _rideCubit.state;
       final position = await LocationService.getCurrentPosition();
@@ -419,7 +421,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
     } finally {
       _progressNotifier.value = 0;
       if (mounted) {
-        setState(() => _isActing = false);
+        setState(() => _busyAction = DriverTripBusyAction.none);
       }
     }
   }
@@ -430,11 +432,32 @@ class _DriverTripPageState extends State<DriverTripPage> {
         !_rideCubit.canMarkPassengerNoShow) {
       return;
     }
-    setState(() => _isActing = true);
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Record passenger no-show?',
+      message: 'This will end the trip because the passenger did not arrive at pickup.',
+      confirmLabel: 'Confirm no-show',
+      cancelLabel: 'Keep waiting',
+      icon: LucideIcons.user_x,
+      tone: AppConfirmDialogTone.warning,
+      isDestructive: true,
+    );
+    if (!confirmed ||
+        !mounted ||
+        !_rideCubit.state.isWaitingAtPickup ||
+        !_rideCubit.canMarkPassengerNoShow) {
+      return;
+    }
+    setState(() => _busyAction = DriverTripBusyAction.markingNoShow);
     try {
       final marked = await _rideCubit.markPassengerNoShow();
       if (!mounted) return;
       if (marked) {
+        AppSnackBar.show(
+          context,
+          'Passenger no-show recorded.',
+          tone: AppSnackBarTone.info,
+        );
         await _finishTrip();
         return;
       }
@@ -446,7 +469,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
     } catch (error) {
       _showError(ErrorHandler.getErrorMessage(error));
     } finally {
-      if (mounted) setState(() => _isActing = false);
+      if (mounted) setState(() => _busyAction = DriverTripBusyAction.none);
     }
   }
 
@@ -474,26 +497,32 @@ class _DriverTripPageState extends State<DriverTripPage> {
 
   Future<void> _cancelRide() async {
     if (_isActing || !mounted) return;
-    final choice = await showRideCancellationSheet(context);
-    if (!mounted || choice == null) return;
-
-    setState(() => _isActing = true);
-    try {
-      final canceled = await BlocProvider.of<RideFlowCubit>(context)
-          .cancelRide(reason: choice.reason, details: choice.details);
-      if (!mounted) return;
-      if (canceled) {
-        await _finishTrip();
-      } else {
-        _showError(
-          _rideCubit.lastActionFailureMessage ??
+    final choice = await showRideCancellationSheet(
+      context,
+      onSubmit: (selection) async {
+        if (!mounted) return null;
+        setState(() => _busyAction = DriverTripBusyAction.canceling);
+        try {
+          final canceled = await _rideCubit.cancelRide(
+            reason: selection.reason,
+            details: selection.details,
+          );
+          if (canceled) return null;
+          return _rideCubit.lastActionFailureMessage ??
               _rideCubit.state.failureMessage ??
-              'The ride could not be cancelled. Please try again.',
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isActing = false);
-    }
+              'The ride could not be canceled. Please try again.';
+        } catch (error) {
+          return ErrorHandler.getErrorMessage(error);
+        } finally {
+          if (mounted) {
+            setState(() => _busyAction = DriverTripBusyAction.none);
+          }
+        }
+      },
+    );
+    if (!mounted || choice == null) return;
+    AppSnackBar.show(context, 'Ride canceled.', tone: AppSnackBarTone.info);
+    await _finishTrip();
   }
 
   @override
@@ -727,6 +756,7 @@ class _DriverTripPageState extends State<DriverTripPage> {
                                         progress: _progressNotifier.value,
                                         progressListenable: _progressNotifier,
                                         isBusy: _isActing,
+                                        busyAction: _busyAction,
                                         unreadCount: unreadCount,
                                         notice: _notice,
                                         onDismissNotice: () =>

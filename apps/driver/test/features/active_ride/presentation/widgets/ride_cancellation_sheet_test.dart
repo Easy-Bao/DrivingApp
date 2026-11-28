@@ -198,4 +198,59 @@ void main() {
     expect(result!.reason, 'other');
     expect(result!.details, 'Flat tire on expressway');
   });
+
+  testWidgets('keeps selected inputs open when onSubmit returns an error', (
+    tester,
+  ) async {
+    var attempts = 0;
+    CancellationChoice? result;
+
+    await tester.pumpWidget(
+      buildTestableWidget(
+        Builder(
+          builder: (context) {
+            return ElevatedButton(
+              onPressed: () async {
+                result = await showRideCancellationSheet(
+                  context,
+                  onSubmit: (choice) async {
+                    attempts++;
+                    return attempts == 1 ? 'Network error. Try again.' : null;
+                  },
+                );
+              },
+              child: const Text('Open'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey('driver-cancellation-reason-dropdown')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Vehicle problem').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey('confirm-driver-cancel-ride-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cancel ride?'), findsOneWidget);
+    expect(find.text('Network error. Try again.'), findsOneWidget);
+    expect(result, isNull);
+
+    await tester.tap(
+      find.byKey(const ValueKey('confirm-driver-cancel-ride-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cancel ride?'), findsNothing);
+    expect(result?.reason, 'vehicle_problem');
+  });
 }
