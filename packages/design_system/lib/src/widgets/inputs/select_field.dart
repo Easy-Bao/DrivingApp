@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
 import 'package:design_system/src/tokens/spacing.dart';
+import 'package:design_system/src/widgets/layout/bottom_sheet_container.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
@@ -118,7 +119,30 @@ class _AppSelectFieldState<T> extends State<AppSelectField<T>> {
         for (final option in widget.options)
           PopupMenuItem<T>(
             value: option.value,
-            child: Text(option.label, style: widget.style),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    option.label,
+                    style:
+                        (widget.style ?? Theme.of(context).textTheme.bodyLarge)
+                            ?.copyWith(
+                              fontWeight: option.value == widget.value
+                                  ? FontWeight.w700
+                                  : null,
+                            ),
+                  ),
+                ),
+                if (option.value == widget.value) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  Icon(
+                    LucideIcons.check,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ],
+              ],
+            ),
           ),
       ],
     );
@@ -202,44 +226,35 @@ class _AppSelectMenu<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final maxHeight = MediaQuery.sizeOf(context).height * 0.72;
 
-    return Material(
-      color: colors.surface,
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(AppRadius.sheet),
+    return AppBottomSheetContainer(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm + 2,
+        AppSpacing.lg,
+        AppSpacing.md,
       ),
-      clipBehavior: Clip.antiAlias,
-      child: SafeArea(
-        top: false,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxHeight),
-          child: ListView(
-            shrinkWrap: true,
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.md,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: ListView(
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          children: [
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w800),
+            const SizedBox(height: AppSpacing.md),
+            for (final option in options) ...[
+              _AppSelectOptionTile<T>(
+                option: option,
+                selected: option.value == selectedValue,
               ),
-              const SizedBox(height: AppSpacing.md),
-              for (final option in options) ...[
-                _AppSelectOptionTile<T>(
-                  option: option,
-                  selected: option.value == selectedValue,
-                ),
-                if (option != options.last)
-                  const SizedBox(height: AppSpacing.sm),
-              ],
+              if (option != options.last) const SizedBox(height: AppSpacing.sm),
             ],
-          ),
+          ],
         ),
       ),
     );

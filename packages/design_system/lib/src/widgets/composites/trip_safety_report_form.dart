@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:design_system/src/theme/theme_context.dart';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
 import 'package:design_system/src/tokens/spacing.dart';
+import 'package:design_system/src/widgets/feedback/completion_view.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 class const SafetyReportReason({required this.value, required this.label}) {
@@ -23,7 +27,7 @@ Future<bool> showTripSafetyReportForm(
     isScrollControlled: true,
     showDragHandle: true,
     useSafeArea: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
+    backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
         top: Radius.circular(AppRadius.sheet),
@@ -111,6 +115,7 @@ class _TripSafetyReportFormState extends State<TripSafetyReportForm> {
       return;
     }
     FocusScope.of(context).unfocus();
+    unawaited(HapticFeedback.mediumImpact());
     setState(() {
       _isSubmitting = false;
       _isSubmitted = true;
@@ -124,49 +129,11 @@ class _TripSafetyReportFormState extends State<TripSafetyReportForm> {
       return SafeArea(
         top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.xxl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: AppSpacing.lg),
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: colors.primaryContainer,
-                child: Icon(
-                  Icons.check_rounded,
-                  size: 32,
-                  color: colors.onPrimaryContainer,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              Semantics(
-                liveRegion: true,
-                header: true,
-                child: Text(
-                  'Report received',
-                  textAlign: TextAlign.center,
-                  style: context.textStyles.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'Thank you for letting us know. Your report has been saved.',
-                textAlign: TextAlign.center,
-                style: context.textStyles.bodyMedium?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Done'),
-                ),
-              ),
-            ],
+          child: AppCompletionView(
+            title: 'Report received',
+            message: 'Thank you for letting us know. Your report has been saved and our safety team will review it.',
+            primaryActionLabel: 'Done',
+            onPrimaryAction: () => Navigator.of(context).pop(true),
           ),
         ),
       );

@@ -1,4 +1,5 @@
 import 'package:design_system/design_system.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -143,5 +144,37 @@ void main() {
 
     expect(selectedValue, isNull);
     expect(find.text('First reason'), findsNothing);
+  });
+
+  testWidgets('shows a checkmark for the selected item in anchored menus', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 240,
+              child: AppSelectField<String>.anchored(
+                key: const ValueKey('anchored-select'),
+                value: 'second',
+                options: const [
+                  AppSelectOption<String>(value: 'first', label: 'First'),
+                  AppSelectOption<String>(value: 'second', label: 'Second'),
+                ],
+                onChanged: (_) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('anchored-select')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PopupMenuItem<String>), findsNWidgets(2));
+    expect(find.byIcon(LucideIcons.check), findsOneWidget);
   });
 }
