@@ -84,6 +84,7 @@ services:
       context: .
       dockerfile: server/build/api.Dockerfile
     restart: always
+    stop_grace_period: 30s
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable
       APP_ENV: ${APP_ENV:-production}

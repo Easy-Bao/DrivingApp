@@ -1,6 +1,9 @@
 # Ignore build artifacts and platform-specific directories for Docker build context
 .git
 .idea
+.aws
+**/.env
+**/.env.*
 /target
 /server/target
 /android

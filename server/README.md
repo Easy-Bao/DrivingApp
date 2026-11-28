@@ -304,13 +304,18 @@ Invoke-RestMethod "http://127.0.0.1:$gatewayPort/health"
 Before starting, set `POSTGRES_PASSWORD` and replace `JWT_SECRET` in `.env`
 with private values; the JWT secret must be at least 32 characters. Add
 `MAPBOX_ACCESS_TOKEN` to enable location search and routing. SMTP values are
-only needed when testing verification emails.
+only needed when testing verification emails. The build context excludes
+dotenv files; Compose still uses them to configure the running services.
 
 The health command should return an object whose service is `api`.
 The readiness command is `http://127.0.0.1:<GATEWAY_PORT>/readyz` and returns `503`
 until PostgreSQL and Redis are available. Compose gates API startup on the
 successful migration checkpoint before the readiness endpoint is exposed.
 API requests should use `http://127.0.0.1:<GATEWAY_PORT>/api/v1/...`.
+
+The API container has a 30-second stop grace period. Allow at least that much
+time in other orchestrators so the API can drain HTTP requests (up to 15 seconds),
+wait for WebSocket clients to exit (up to 5 seconds), and close its dependencies.
 
 ### Optional admin web app
 
