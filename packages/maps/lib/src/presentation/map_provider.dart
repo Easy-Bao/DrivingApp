@@ -1,9 +1,11 @@
 import 'dart:typed_data';
 
+import 'package:foundation/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/src/data/services/map_http_service.dart';
 import 'package:maps/src/domain/entities/place.dart';
 import 'package:maps/src/domain/entities/route.dart';
+import 'package:maps/src/domain/failures/place_failure.dart';
 import 'package:maps/src/presentation/annotation_service.dart';
 import 'package:maps/src/presentation/app_map_view.dart';
 import 'package:maps/src/presentation/camera_service.dart';
@@ -17,6 +19,8 @@ export 'package:maps/src/presentation/map_lookup_service.dart';
 
 class MapProvider._() {
   static const double nearbyRadiusKm = MapLookupService.nearbyRadiusKm;
+  static const double fallbackNearbyRadiusKm =
+      MapLookupService.fallbackNearbyRadiusKm;
   static bool _initialized = false;
 
   static String styleUriFor() => mapbox.MapboxStyles.MAPBOX_STREETS;
@@ -37,6 +41,16 @@ class MapProvider._() {
   /// transition. The next visible feature request must reach the server
   /// instead of reusing a stale empty or route response.
   static void clearLookupCaches() => MapLookupService.clearLookupCaches();
+
+  static Future<Result<List<Place>, PlaceFailure>> searchPlacesResult(
+    String query, {
+    double? latitude,
+    double? longitude,
+  }) => MapLookupService.searchPlacesResult(
+    query,
+    latitude: latitude,
+    longitude: longitude,
+  );
 
   static Future<List<Place>> searchPlaces(
     String query, {
@@ -79,6 +93,16 @@ class MapProvider._() {
     originLatitude: originLatitude,
     originLongitude: originLongitude,
     destinations: destinations,
+  );
+
+  static Future<Result<List<Place>, PlaceFailure>> getNearbyPOIsResult({
+    required double latitude,
+    required double longitude,
+    int page = 1,
+  }) => MapLookupService.getNearbyPOIsResult(
+    latitude: latitude,
+    longitude: longitude,
+    page: page,
   );
 
   static Future<List<Place>> getNearbyPOIs({

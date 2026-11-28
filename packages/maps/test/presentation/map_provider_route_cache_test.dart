@@ -61,6 +61,103 @@ void main() {
     expect(apiClient.nearbyCallCount, 2);
   });
 
+  test('returns a failure from getNearbyPOIsResult without caching transient errors', () async {
+    const latitude = 10.223456;
+    const longitude = 20.754321;
+    apiClient.failNextNearby = true;
+
+    final first = await MapProvider.getNearbyPOIsResult(
+      latitude: latitude,
+      longitude: longitude,
+    );
+    expect(first.isErr, isTrue);
+    first.fold(
+      (failure) => expect(failure, isA<PlaceNetworkError>()),
+      (_) => fail('Expected nearby lookup failure.'),
+    );
+
+    final second = await MapProvider.getNearbyPOIsResult(
+      latitude: latitude,
+      longitude: longitude,
+    );
+    expect(second.isOk, isTrue);
+    second.fold(
+      (failure) => fail('Expected retry to succeed: $failure'),
+      (places) => expect(places, isNotEmpty),
+    );
+    expect(apiClient.nearbyCallCount, 2);
+  });
+
+  test(
+    'falls back to the wider nearby radius on page 1 for sparse areas only',
+    () async {
+      const latitude = 10.323456;
+      const longitude = 20.854321;
+      apiClient.nearbyOverride = [
+        const {
+          'id': 'regional-1',
+          'name': 'Regional Hospital',
+          'fullAddress': 'Highway 1',
+          'latitude': 10.423456,
+          'longitude': 20.854321,
+          'distance_km': 11.1,
+        },
+      ];
+
+      final page1 = await MapProvider.getNearbyPOIsResult(
+        latitude: latitude,
+        longitude: longitude,
+        page: 1,
+      );
+      expect(page1.isOk, isTrue);
+      page1.fold(
+        (failure) => fail('Expected page 1 fallback places: $failure'),
+        (places) {
+          expect(places, hasLength(1));
+          expect(places.single.id, 'regional-1');
+        },
+      );
+
+      final page2 = await MapProvider.getNearbyPOIsResult(
+        latitude: latitude,
+        longitude: longitude,
+        page: 2,
+      );
+      expect(page2.isOk, isTrue);
+      page2.fold(
+        (failure) => fail('Expected page 2 to succeed cleanly: $failure'),
+        (places) => expect(places, isEmpty),
+      );
+    },
+  );
+
+  test('returns a failure from searchPlacesResult without caching transient errors', () async {
+    apiClient.failNextSearch = true;
+
+    final first = await MapProvider.searchPlacesResult(
+      'Plaza',
+      latitude: 10.1,
+      longitude: 20.2,
+    );
+    expect(first.isErr, isTrue);
+    first.fold(
+      (failure) => expect(failure, isA<PlaceNetworkError>()),
+      (_) => fail('Expected search failure.'),
+    );
+
+    final second = await MapProvider.searchPlacesResult(
+      'Plaza',
+      latitude: 10.1,
+      longitude: 20.2,
+    );
+    expect(second.isOk, isTrue);
+    second.fold(
+      (failure) => fail('Expected search retry to succeed: $failure'),
+      (places) => expect(places, isNotEmpty),
+    );
+    expect(apiClient.searchCallCount, 2);
+  });
+
   test('coalesces and reuses travel matrix lookups', () async {
     const originLatitude = 11.123456;
     const originLongitude = 21.654321;
@@ -156,19 +253,52 @@ class _DelayedLocationRemoteDataSource extends MockLocationRemoteDataSource {
   Completer<Route>? _pendingRoute;
   int routeCallCount = 0;
   int nearbyCallCount = 0;
+  int searchCallCount = 0;
   int matrixCallCount = 0;
   bool failNextRoute = false;
+  bool failNextNearby = false;
+  bool failNextSearch = false;
+  List<Map<String, dynamic>>? nearbyOverride;
 
   void reset() {
     _pendingRoute = null;
     routeCallCount = 0;
     nearbyCallCount = 0;
+    searchCallCount = 0;
     matrixCallCount = 0;
     failNextRoute = false;
+    failNextNearby = false;
+    failNextSearch = false;
+    nearbyOverride = null;
   }
 
   void holdNextRoute() {
     _pendingRoute = Completer<Route>();
+  }
+
+  @override
+  Future<Map<String, dynamic>> searchPlaces({
+    required String query,
+    double? userLatitude,
+    double? userLongitude,
+  }) {
+    searchCallCount++;
+    if (failNextSearch) {
+      failNextSearch = false;
+      throw DioException(
+        requestOptions: RequestOptions(path: '/api/v1/location/search'),
+        type: DioExceptionType.badResponse,
+        response: Response<Object?>(
+          requestOptions: RequestOptions(path: '/api/v1/location/search'),
+          statusCode: 503,
+        ),
+      );
+    }
+    return super.searchPlaces(
+      query: query,
+      userLatitude: userLatitude,
+      userLongitude: userLongitude,
+    );
   }
 
   @override
@@ -178,6 +308,21 @@ class _DelayedLocationRemoteDataSource extends MockLocationRemoteDataSource {
     int page = 1,
   }) {
     nearbyCallCount++;
+    if (failNextNearby) {
+      failNextNearby = false;
+      throw DioException(
+        requestOptions: RequestOptions(path: '/api/v1/location/nearby'),
+        type: DioExceptionType.badResponse,
+        response: Response<Object?>(
+          requestOptions: RequestOptions(path: '/api/v1/location/nearby'),
+          statusCode: 503,
+        ),
+      );
+    }
+    final override = nearbyOverride;
+    if (override != null) {
+      return Future.value({'places': override});
+    }
     return super.getNearbyPois(
       latitude: latitude,
       longitude: longitude,

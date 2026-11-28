@@ -53,4 +53,65 @@ void main() {
     expect(results, [nearby]);
     expect(results.single.distanceKm, 2.4);
   });
+
+  test(
+    'resolveNearby keeps primary-radius places when matches exist inside it',
+    () {
+      const nearby = Place(
+        id: 'nearby',
+        name: 'Nearby place',
+        fullAddress: 'Nearby address',
+        latitude: originLatitude,
+        longitude: originLongitude,
+        distanceKm: 2.4,
+      );
+      const regional = Place(
+        id: 'regional',
+        name: 'Regional place',
+        fullAddress: 'Regional address',
+        latitude: originLatitude,
+        longitude: originLongitude,
+        distanceKm: 11.2,
+      );
+
+      final results = NearbyPlaceResolver.resolveNearby(
+        places: const [nearby, regional],
+        latitude: originLatitude,
+        longitude: originLongitude,
+        primaryRadiusKm: 5,
+        fallbackRadiusKm: 25,
+      );
+
+      expect(results, [nearby]);
+    },
+  );
+
+  test('resolveNearby falls back to the wider radius when the primary radius is empty', () {
+    const regional = Place(
+      id: 'regional',
+      name: 'Regional place',
+      fullAddress: 'Regional address',
+      latitude: originLatitude,
+      longitude: originLongitude,
+      distanceKm: 11.2,
+    );
+    const tooFar = Place(
+      id: 'too-far',
+      name: 'Far place',
+      fullAddress: 'Far address',
+      latitude: originLatitude,
+      longitude: originLongitude,
+      distanceKm: 30.0,
+    );
+
+    final results = NearbyPlaceResolver.resolveNearby(
+      places: const [regional, tooFar],
+      latitude: originLatitude,
+      longitude: originLongitude,
+      primaryRadiusKm: 5,
+      fallbackRadiusKm: 25,
+    );
+
+    expect(results, [regional]);
+  });
 }

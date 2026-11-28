@@ -12,6 +12,7 @@ import 'package:material_ui/material_ui.dart' show debugPrint;
 
 class MapLookupService._() {
   static const double nearbyRadiusKm = 5.0;
+  static const double fallbackNearbyRadiusKm = 25.0;
   static const _lookupCacheTtl = Duration(seconds: 15);
   static const _routeCacheTtl = Duration(seconds: 20);
   static const _routeRetryDelay = Duration(milliseconds: 250);
@@ -53,12 +54,12 @@ class MapLookupService._() {
     return nativeService;
   }
 
-  static Future<List<Place>> searchPlaces(
+  static Future<Result<List<Place>, PlaceFailure>> searchPlacesResult(
     String query, {
     double? latitude,
     double? longitude,
   }) async {
-    if (query.trim().isEmpty) return [];
+    if (query.trim().isEmpty) return const Ok([]);
 
     final nativeService = _requireNativeService();
     final userLatitude = latitude ?? LocationService.lastPosition?.latitude;
@@ -66,7 +67,7 @@ class MapLookupService._() {
     final key = _searchRequestKey(query, userLatitude, userLongitude);
 
     try {
-      return await _searchCache.getOrLoad(key, () async {
+      final places = await _searchCache.getOrLoad(key, () async {
         final result = await nativeService.searchPlaces(
           query: query,
           proximityLatitude: latitude,
@@ -80,7 +81,7 @@ class MapLookupService._() {
             debugPrint(
               'MapProvider.searchPlaces failure: ${failure.runtimeType}',
             );
-            throw const _MapLookupFailure();
+            throw _MapLookupFailure(failure);
           }(),
           Ok(value: final places) =>
             places
@@ -91,12 +92,26 @@ class MapLookupService._() {
                 .toList(growable: false),
         };
       });
-    } on _MapLookupFailure {
-      return [];
+      return Ok(places);
+    } on _MapLookupFailure catch (error) {
+      return Err(error.failure);
     } catch (_) {
       debugPrint('MapProvider.searchPlaces error.');
-      return [];
+      return const Err(PlaceNetworkError());
     }
+  }
+
+  static Future<List<Place>> searchPlaces(
+    String query, {
+    double? latitude,
+    double? longitude,
+  }) async {
+    final result = await searchPlacesResult(
+      query,
+      latitude: latitude,
+      longitude: longitude,
+    );
+    return result.getOrElse((_) => const []);
   }
 
   static Future<Place?> getPlaceFromCoordinates(
@@ -242,7 +257,7 @@ class MapLookupService._() {
     }
   }
 
-  static Future<List<Place>> getNearbyPOIs({
+  static Future<Result<List<Place>, PlaceFailure>> getNearbyPOIsResult({
     required double latitude,
     required double longitude,
     int page = 1,
@@ -250,7 +265,7 @@ class MapLookupService._() {
     final nativeService = _requireNativeService();
     final key = _nearbyRequestKey(latitude, longitude, page);
     try {
-      return await _nearbyCache.getOrLoad(key, () async {
+      final places = await _nearbyCache.getOrLoad(key, () async {
         final result = await nativeService.getNearbyPois(
           latitude: latitude,
           longitude: longitude,
@@ -261,22 +276,45 @@ class MapLookupService._() {
             debugPrint(
               'MapProvider.getNearbyPOIs failure: ${failure.runtimeType}',
             );
-            throw const _MapLookupFailure();
+            throw _MapLookupFailure(failure);
           }(),
-          Ok(value: final pois) => NearbyPlaceResolver.withinRadius(
-            places: pois,
-            latitude: latitude,
-            longitude: longitude,
-            radiusKm: nearbyRadiusKm,
-          ),
+          Ok(value: final pois) =>
+            page == 1
+                ? NearbyPlaceResolver.resolveNearby(
+                    places: pois,
+                    latitude: latitude,
+                    longitude: longitude,
+                    primaryRadiusKm: nearbyRadiusKm,
+                    fallbackRadiusKm: fallbackNearbyRadiusKm,
+                  )
+                : NearbyPlaceResolver.withinRadius(
+                    places: pois,
+                    latitude: latitude,
+                    longitude: longitude,
+                    radiusKm: nearbyRadiusKm,
+                  ),
         };
       });
-    } on _MapLookupFailure {
-      return [];
+      return Ok(places);
+    } on _MapLookupFailure catch (error) {
+      return Err(error.failure);
     } catch (_) {
       debugPrint('MapProvider.getNearbyPOIs error.');
-      return [];
+      return const Err(PlaceNetworkError());
     }
+  }
+
+  static Future<List<Place>> getNearbyPOIs({
+    required double latitude,
+    required double longitude,
+    int page = 1,
+  }) async {
+    final result = await getNearbyPOIsResult(
+      latitude: latitude,
+      longitude: longitude,
+      page: page,
+    );
+    return result.getOrElse((_) => const []);
   }
 }
 
@@ -303,6 +341,6 @@ String _drivingDistanceRequestKey(
 String _coordinateCacheKey(double? value) =>
     value?.toStringAsFixed(6) ?? 'none';
 
-class _MapLookupFailure implements Exception {
-  const _MapLookupFailure();
+class const _MapLookupFailure(this.failure) implements Exception {
+  final PlaceFailure failure;
 }

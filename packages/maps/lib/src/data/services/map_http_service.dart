@@ -167,7 +167,8 @@ class MapNativeService({
         '$operation network failure: ${e.type.name}',
         name: 'MapNativeService',
       );
-      return const Err(PlaceNetworkError());
+      final mapped = FailureMapper.fromException(e);
+      return Err(PlaceNetworkError(message: mapped.message));
     } on FormatException catch (e) {
       dev.log('$operation parse error', name: 'MapNativeService');
       return Err(

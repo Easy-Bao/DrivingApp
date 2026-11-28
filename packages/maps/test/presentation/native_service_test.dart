@@ -66,6 +66,36 @@ void main() {
       );
     });
 
+    test(
+      'getNearbyPois maps 503 responses to a user-facing PlaceNetworkError',
+      () async {
+        dio.httpClientAdapter = _MockHttpClientAdapter((options) {
+          return ResponseBody.fromString(
+            jsonEncode({'error': 'service unavailable'}),
+            503,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        });
+
+        final result = await service.getNearbyPois(
+          latitude: 7.8282,
+          longitude: 123.4361,
+          page: 1,
+        );
+
+        expect(result.isErr, isTrue);
+        result.fold((failure) {
+          expect(failure, isA<PlaceNetworkError>());
+          expect(
+            failure.message,
+            'The service is unavailable. Try again later.',
+          );
+        }, (_) => fail('Expected failure for HTTP 503'));
+      },
+    );
+
     test('searchPlaces parses places JSON response correctly', () async {
       dio.httpClientAdapter = _MockHttpClientAdapter((options) {
         if (options.uri.path == '/api/v1/location/search') {

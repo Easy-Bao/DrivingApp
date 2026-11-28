@@ -32,4 +32,32 @@ class NearbyPlaceResolver._() {
         .whereType<Place>()
         .toList(growable: false);
   }
+
+  /// Applies [primaryRadiusKm] first and falls back to [fallbackRadiusKm] when
+  /// sparse regions have no mapped places inside the tighter radius.
+  static List<Place> resolveNearby({
+    required List<Place> places,
+    required double latitude,
+    required double longitude,
+    required double primaryRadiusKm,
+    required double fallbackRadiusKm,
+  }) {
+    final primary = withinRadius(
+      places: places,
+      latitude: latitude,
+      longitude: longitude,
+      radiusKm: primaryRadiusKm,
+    );
+    if (primary.isNotEmpty ||
+        !fallbackRadiusKm.isFinite ||
+        fallbackRadiusKm <= primaryRadiusKm) {
+      return primary;
+    }
+    return withinRadius(
+      places: places,
+      latitude: latitude,
+      longitude: longitude,
+      radiusKm: fallbackRadiusKm,
+    );
+  }
 }
