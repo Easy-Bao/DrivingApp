@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"strings"
 	"testing"
 	"time"
 )
@@ -15,6 +16,17 @@ func TestOpenWithContextStopsBeforeOpeningWhenCanceled(t *testing.T) {
 	_, err := OpenWithContext(ctx, "redis://localhost:6379/0")
 	if err != context.Canceled {
 		t.Fatalf("error = %v, want context canceled", err)
+	}
+}
+
+func TestOpenWithContextKeepsCredentialsOutOfParseErrors(t *testing.T) {
+	const samplePassword = "fixture-password"
+	_, err := OpenWithContext(t.Context(), "redis://user:"+samplePassword+"@localhost:invalid")
+	if err == nil || !strings.Contains(err.Error(), "REDIS_URL") {
+		t.Fatal("expected a safe REDIS_URL configuration error")
+	}
+	if strings.Contains(err.Error(), samplePassword) {
+		t.Fatal("Redis configuration error includes the password")
 	}
 }
 
