@@ -65,7 +65,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
     final passengerId = valueAsString(widget.trip['passenger_id']);
     final tripId = valueAsString(widget.trip['id']);
     if (passengerId == null || tripId == null) {
-      _showChatFeedback('Chat Unavailable. Please Try Again.');
+      _showChatFeedback('Chat is unavailable. Please try again.');
       return;
     }
 
@@ -79,7 +79,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
       if (mounted) {
         setState(() {
           _isContactingPassenger = false;
-          _chatFeedbackMessage = 'Chat Unavailable. Please Sign In Again.';
+          _chatFeedbackMessage = 'Chat is unavailable. Please sign in again.';
         });
       }
       return;
@@ -98,7 +98,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
       );
     } catch (_) {
       if (!mounted) return;
-      _showChatFeedback('Chat Unavailable Right Now. Please Try Again.');
+      _showChatFeedback('Chat is unavailable right now. Please try again.');
     } finally {
       if (mounted) setState(() => _isContactingPassenger = false);
     }

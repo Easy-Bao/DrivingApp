@@ -97,5 +97,11 @@ void main() {
     await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
     expect(find.byType(BottomSheet), findsNothing);
+    expect(
+      find.byKey(const ValueKey('driver-safety-issue-reported')),
+      findsOneWidget,
+    );
+    expect(find.text('Issue reported'), findsOneWidget);
+    expect(find.byTooltip('Report a safety issue'), findsNothing);
   });
 }

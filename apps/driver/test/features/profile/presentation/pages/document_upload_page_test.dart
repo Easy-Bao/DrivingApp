@@ -81,6 +81,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.uploadCount, 1);
     expect(photo.readCount, 1);
+    expect(
+      find.byKey(const ValueKey('driver-document-upload-complete')),
+      findsOneWidget,
+    );
+    expect(find.text('Document submitted'), findsOneWidget);
+    expect(find.text("Driver's license"), findsOneWidget);
+    expect(find.text('Pending review'), findsOneWidget);
+
+    await tester.tap(find.text('Upload another'));
+    await tester.pumpAndSettle();
+    expect(find.text('Submit a clear photo for review'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('driver-document-submit')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('switches document type cleanly and disables platform splashes', (
