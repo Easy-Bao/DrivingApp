@@ -171,7 +171,17 @@ class _DashboardPageState extends State<DashboardPage>
   Future<void> _resumeForegroundWork() async {
     final wasExpired = await BlocProvider.of<DashboardCubit>(context)
         .checkOnlineInactivity();
-    if (wasExpired || !mounted || !_isForeground) return;
+    if (wasExpired) {
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          'You were switched offline due to inactivity.',
+          tone: AppSnackBarTone.warning,
+        );
+      }
+      return;
+    }
+    if (!mounted || !_isForeground) return;
     await _loadActiveTrips();
     if (!mounted || !_isForeground) return;
     await BlocProvider.of<RideFlowCubit>(context).syncAuthoritativeRideState();
@@ -286,6 +296,11 @@ class _DashboardPageState extends State<DashboardPage>
         lng: position?.longitude ?? 0,
       );
       if (mounted) {
+        AppSnackBar.show(
+          context,
+          'You were switched offline because location access is unavailable.',
+          tone: AppSnackBarTone.warning,
+        );
         await BlocProvider.of<LocationAccessCubit>(context).refresh();
       }
     } finally {
@@ -605,21 +620,17 @@ class _DashboardPageState extends State<DashboardPage>
       if (!context.mounted) return;
 
       final dashboardCubit = BlocProvider.of<DashboardCubit>(context);
-      final messenger = ScaffoldMessenger.of(context);
 
       await dashboardCubit.toggleOnline(
         requestedOnline: requestedOnline,
         lat: position?.latitude ?? 0,
         lng: position?.longitude ?? 0,
       );
-      if (mounted) {
+      if (mounted && context.mounted) {
         final err = dashboardCubit.state.errorMessage;
         if (err != null && err.isNotEmpty) {
-          messenger
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(content: Text(err), behavior: SnackBarBehavior.floating),
-            );
+          dashboardCubit.dismissError();
+          AppSnackBar.show(context, err, tone: AppSnackBarTone.error);
         }
       }
     } finally {
@@ -695,30 +706,33 @@ class _DashboardPageState extends State<DashboardPage>
     if (sessionId == null) return;
     final previousRideIds = state.activeRides.map((ride) => ride.id).toSet();
     _isShowingRequest = true;
+    var acceptedRequest = false;
     try {
-      await Navigator.of(context, rootNavigator: true).push<void>(
-        PageRouteBuilder<void>(
-          fullscreenDialog: true,
-          pageBuilder: (_, animation, secondaryAnimation) =>
-              IncomingRideRequestPage(cubit: cubit, sessionId: sessionId),
-          transitionsBuilder: (_, animation, secondaryAnimation, child) {
-            final curved = CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-              reverseCurve: Curves.easeInCubic,
-            );
-            return SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 1),
-                end: Offset.zero,
-              ).animate(curved),
-              child: child,
-            );
-          },
-          transitionDuration: AppTransitions.modalDuration,
-          reverseTransitionDuration: AppTransitions.modalDuration,
-        ),
-      );
+      final result = await Navigator.of(context, rootNavigator: true)
+          .push<bool>(
+            PageRouteBuilder<bool>(
+              fullscreenDialog: true,
+              pageBuilder: (_, animation, secondaryAnimation) =>
+                  IncomingRideRequestPage(cubit: cubit, sessionId: sessionId),
+              transitionsBuilder: (_, animation, secondaryAnimation, child) {
+                final curved = CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                  reverseCurve: Curves.easeInCubic,
+                );
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 1),
+                    end: Offset.zero,
+                  ).animate(curved),
+                  child: child,
+                );
+              },
+              transitionDuration: AppTransitions.modalDuration,
+              reverseTransitionDuration: AppTransitions.modalDuration,
+            ),
+          );
+      acceptedRequest = result ?? false;
     } finally {
       _isShowingRequest = false;
     }
@@ -729,6 +743,19 @@ class _DashboardPageState extends State<DashboardPage>
       if (assigned != null && !_isActiveTripRouteOpen) {
         _scheduleActiveTripNavigation(rideId: assigned.id);
       } else {
+        if (assigned != null && _isActiveTripRouteOpen) {
+          AppSnackBar.show(
+            context,
+            'Ride added to your active bookings.',
+            tone: AppSnackBarTone.success,
+          );
+        } else if (acceptedRequest) {
+          AppSnackBar.show(
+            context,
+            'This ride request is no longer available.',
+            tone: AppSnackBarTone.warning,
+          );
+        }
         unawaited(_refreshOnlinePresence());
       }
       WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -6,6 +6,7 @@ import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashbo
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/incoming_request_action_bar.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/incoming_request_countdown_badge.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:material_ui/material_ui.dart';
@@ -30,9 +31,16 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
     DateTime.now(),
   );
   Timer? _timer;
-  bool _submitting = false;
+  bool _submittingAccept = false;
+  bool _submittingDecline = false;
   bool _accepted = false;
   bool _closing = false;
+
+  bool get _isSubmitting => _submittingAccept || _submittingDecline;
+
+  bool _isSubmittedInState(DashboardState state) => state.submittedOffers.any(
+    (offer) => valueAsString(offer['id']) == widget.sessionId,
+  );
 
   Map<String, dynamic>? _request(DashboardState state) {
     if (!state.isOnline || state.isAtBookingCapacity) return null;
@@ -45,6 +53,7 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
   @override
   void initState() {
     super.initState();
+    _accepted = _isSubmittedInState(widget.cubit.state);
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       widget.cubit.removeExpiredRideOffers();
       if (mounted) _clock.value = DateTime.now();
@@ -64,11 +73,12 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
   void _close() {
     if (_closing || !mounted) return;
     _closing = true;
+    final wasAccepted = _accepted;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() {});
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) Navigator.of(context).pop();
+        if (mounted) Navigator.of(context).pop<bool>(wasAccepted);
       });
     });
   }
@@ -77,7 +87,7 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
     Map<String, dynamic> bid, {
     required bool accept,
   }) async {
-    if (_submitting || _accepted || _request(widget.cubit.state) == null) {
+    if (_isSubmitting || _accepted || _request(widget.cubit.state) == null) {
       return;
     }
     final expiry = DateTime.tryParse(valueAsString(bid['expires_at']) ?? '');
@@ -88,7 +98,8 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
     final fare = fareInPesos(bid);
     if (accept && fare == null) return;
     setState(() {
-      _submitting = true;
+      _submittingAccept = accept;
+      _submittingDecline = !accept;
     });
     bool succeeded;
     if (accept && fare != null) {
@@ -104,9 +115,11 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
     }
     if (!mounted) return;
     if (succeeded && accept) {
+      unawaited(HapticFeedback.lightImpact());
       setState(() {
         _accepted = true;
-        _submitting = false;
+        _submittingAccept = false;
+        _submittingDecline = false;
       });
     } else if (succeeded) {
       _close();
@@ -115,16 +128,11 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
         final message =
             widget.cubit.state.errorMessage ??
             'Unable to respond. Please try again.';
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(message),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+        widget.cubit.dismissError();
+        AppSnackBar.show(context, message, tone: AppSnackBarTone.error);
         setState(() {
-          _submitting = false;
+          _submittingAccept = false;
+          _submittingDecline = false;
         });
       }
     }
@@ -144,11 +152,7 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
       final expiry = DateTime.tryParse(valueAsString(bid?['expires_at']) ?? '');
       final fare = bid == null ? null : fareInPesos(bid);
       final isDirect = bid?['target_driver_id'] != null;
-      final awaitingAssignment =
-          _accepted ||
-          state.submittedOffers.any(
-            (offer) => valueAsString(offer['id']) == widget.sessionId,
-          );
+      final awaitingAssignment = _accepted || _isSubmittedInState(state);
       final hairline = Divider(
         height: 1,
         thickness: 1,
@@ -226,10 +230,22 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
                                   ),
                                 ),
                                 const SizedBox(height: AppSpacing.xs + 2),
-                                IncomingRequestCountdownLabel(
-                                  clock: _clock,
-                                  expiry: expiry,
-                                ),
+                                if (awaitingAssignment)
+                                  Semantics(
+                                    liveRegion: true,
+                                    child: Text(
+                                      'Response sent · Waiting for confirmation',
+                                      style: textStyles.bodyMedium?.copyWith(
+                                        color: context.semanticColors.success,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  IncomingRequestCountdownLabel(
+                                    clock: _clock,
+                                    expiry: expiry,
+                                  ),
                                 const SizedBox(height: AppSpacing.xxl),
                                 Text(
                                   'Trip fare',
@@ -319,10 +335,11 @@ class _IncomingRideRequestPageState extends State<IncomingRideRequestPage> {
                         IncomingRequestActionBar(
                           horizontalPadding: horizontalPadding,
                           awaitingAssignment: awaitingAssignment,
-                          submitting: _submitting,
+                          submittingAccept: _submittingAccept,
+                          submittingDecline: _submittingDecline,
                           canAccept:
-                              !_submitting && bid != null && fare != null,
-                          canDecline: !_submitting && bid != null,
+                              !_isSubmitting && bid != null && fare != null,
+                          canDecline: !_isSubmitting && bid != null,
                           onAccept: () {
                             if (bid != null) {
                               unawaited(_respond(bid, accept: true));

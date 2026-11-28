@@ -5,7 +5,8 @@ class const IncomingRequestActionBar({
   super.key,
   required this.horizontalPadding,
   required this.awaitingAssignment,
-  required this.submitting,
+  required this.submittingAccept,
+  required this.submittingDecline,
   required this.canAccept,
   required this.canDecline,
   required this.onAccept,
@@ -13,7 +14,8 @@ class const IncomingRequestActionBar({
 }) extends StatelessWidget {
   final double horizontalPadding;
   final bool awaitingAssignment;
-  final bool submitting;
+  final bool submittingAccept;
+  final bool submittingDecline;
   final bool canAccept;
   final bool canDecline;
   final VoidCallback onAccept;
@@ -46,12 +48,15 @@ class const IncomingRequestActionBar({
             if (awaitingAssignment) ...[
               const LinearProgressIndicator(minHeight: 3),
               const SizedBox(height: AppSpacing.md),
-              Text(
-                'Confirming your trip…',
-                textAlign: TextAlign.center,
-                style: textStyles.titleSmall?.copyWith(
-                  color: colorScheme.onSurface,
-                  fontWeight: FontWeight.w600,
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  'Confirming your trip…',
+                  textAlign: TextAlign.center,
+                  style: textStyles.titleSmall?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ] else ...[
@@ -80,7 +85,9 @@ class const IncomingRequestActionBar({
                           return Colors.transparent;
                         }),
                       ),
-                  child: Text(submitting ? 'Sending response…' : 'Accept ride'),
+                  child: Text(
+                    submittingAccept ? 'Sending response…' : 'Accept ride',
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm + 2),
@@ -107,7 +114,7 @@ class const IncomingRequestActionBar({
                           return Colors.transparent;
                         }),
                       ),
-                  child: const Text('Decline'),
+                  child: Text(submittingDecline ? 'Declining…' : 'Decline'),
                 ),
               ),
             ],

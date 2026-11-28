@@ -98,13 +98,20 @@ void main() {
   testWidgets('keeps a failed decline visible and supports retry', (
     tester,
   ) async {
+    final decline = Completer<bool>();
     when(() => cubit.declineRideRequest('request'))
-        .thenAnswer((_) async => false);
+        .thenAnswer((_) => decline.future);
     await open(tester);
     await tester.tap(find.text('Decline'));
+    await tester.pump();
+    expect(find.text('Declining…'), findsOneWidget);
+    expect(find.text('Accept ride'), findsOneWidget);
+    expect(find.text('Sending response…'), findsNothing);
+    decline.complete(false);
     await tester.pumpAndSettle();
     expect(find.text('Unable to respond. Please try again.'), findsOneWidget);
     expect(find.text('Accept ride'), findsOneWidget);
+    verify(() => cubit.dismissError()).called(1);
   });
 
   testWidgets(
