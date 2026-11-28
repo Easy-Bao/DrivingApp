@@ -1,52 +1,89 @@
+import 'dart:async';
+
 import 'package:design_system/src/theme/theme_context.dart';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
-class const TripReference({
-  super.key,
-  required this.id,
-  this.label = 'Booking ID',
-  this.compact = false,
-  this.expanded = false,
-}) extends StatelessWidget {
+class TripReference extends StatefulWidget {
+  const TripReference({
+    super.key,
+    required this.id,
+    this.label = 'Booking ID',
+    this.compact = false,
+    this.expanded = false,
+  });
+
+  static const Duration copiedResetDuration = Duration(milliseconds: 1800);
+
   final String id;
   final String label;
   final bool compact;
   final bool expanded;
 
   @override
+  State<TripReference> createState() => _TripReferenceState();
+}
+
+class _TripReferenceState extends State<TripReference> {
+  bool _copied = false;
+  Timer? _resetTimer;
+
+  @override
+  void dispose() {
+    _resetTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _copy(String normalizedId) async {
+    await Clipboard.setData(ClipboardData(text: normalizedId));
+    if (!mounted) return;
+    unawaited(HapticFeedback.selectionClick());
+    _resetTimer?.cancel();
+    setState(() => _copied = true);
+    _resetTimer = Timer(TripReference.copiedResetDuration, () {
+      if (!mounted) return;
+      setState(() => _copied = false);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final normalizedId = id.trim();
+    final normalizedId = widget.id.trim();
     if (normalizedId.isEmpty) return const SizedBox.shrink();
 
     final colors = Theme.of(context).colorScheme;
-    final fontSize = compact ? 12.0 : 14.0;
+    final semanticColors = context.semanticColors;
+    final fontSize = widget.compact ? 12.0 : 14.0;
+    final disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+
     return Semantics(
       container: true,
-      label: '$label $normalizedId',
+      label: '${widget.label} $normalizedId',
       child: Container(
         padding: EdgeInsets.only(
-          left: expanded
+          left: widget.expanded
               ? 0
-              : compact
+              : widget.compact
               ? 10
               : 12,
         ),
-        decoration: expanded
+        decoration: widget.expanded
             ? null
             : BoxDecoration(
                 color: colors.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
         child: Row(
-          mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
+          mainAxisSize: widget.expanded ? MainAxisSize.max : MainAxisSize.min,
           children: [
-            if (expanded) ...[
+            if (widget.expanded) ...[
               Expanded(
                 child: Text(
-                  label,
+                  widget.label,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                     fontSize: fontSize,
@@ -56,12 +93,14 @@ class const TripReference({
               const SizedBox(width: 8),
             ],
             Flexible(
-              fit: expanded ? FlexFit.tight : FlexFit.loose,
+              fit: widget.expanded ? FlexFit.tight : FlexFit.loose,
               child: SelectableText(
-                expanded ? normalizedId : '$label - $normalizedId',
-                textAlign: expanded ? TextAlign.end : TextAlign.start,
+                widget.expanded
+                    ? normalizedId
+                    : '${widget.label} - $normalizedId',
+                textAlign: widget.expanded ? TextAlign.end : TextAlign.start,
                 style:
-                    (compact
+                    (widget.compact
                             ? context.textStyles.bodySmall
                             : context.textStyles.bodyMedium)
                         ?.copyWith(
@@ -72,19 +111,35 @@ class const TripReference({
                         ),
               ),
             ),
-            IconButton(
-              tooltip: 'Copy $label',
-              constraints: const BoxConstraints(
-                minWidth: AppSize.minimumTouchTarget,
-                minHeight: AppSize.minimumTouchTarget,
-              ),
-              onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: normalizedId));
-              },
-              icon: Icon(
-                Icons.copy_rounded,
-                size: 18,
-                color: colors.onSurfaceVariant,
+            Semantics(
+              liveRegion: _copied,
+              child: IconButton(
+                tooltip: _copied
+                    ? '${widget.label} copied'
+                    : 'Copy ${widget.label}',
+                constraints: const BoxConstraints(
+                  minWidth: AppSize.minimumTouchTarget,
+                  minHeight: AppSize.minimumTouchTarget,
+                ),
+                onPressed: () => unawaited(_copy(normalizedId)),
+                icon: AnimatedSwitcher(
+                  duration: disableAnimations
+                      ? Duration.zero
+                      : const Duration(milliseconds: 180),
+                  child: _copied
+                      ? Icon(
+                          LucideIcons.check,
+                          key: const ValueKey<String>('trip-reference-copied'),
+                          size: 18,
+                          color: semanticColors.success,
+                        )
+                      : Icon(
+                          LucideIcons.copy,
+                          key: const ValueKey<String>('trip-reference-copy'),
+                          size: 18,
+                          color: colors.onSurfaceVariant,
+                        ),
+                ),
               ),
             ),
           ],

@@ -1,11 +1,12 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 void main() {
   testWidgets(
-    'receipt reference wraps and copies only its booking identifier',
+    'receipt reference wraps, copies only its identifier, and shows inline confirmation',
     (tester) async {
       String? copied;
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
@@ -49,7 +50,7 @@ void main() {
             ?.fontSize,
       );
       final row = tester.getRect(find.byType(TripReference));
-      final copyButton = find.widgetWithIcon(IconButton, Icons.copy_rounded);
+      final copyButton = find.widgetWithIcon(IconButton, LucideIcons.copy);
       expect(tester.getRect(copyButton).right, row.right);
       expect(
         tester.widget<SelectableText>(find.byType(SelectableText)).textAlign,
@@ -57,7 +58,20 @@ void main() {
       );
       await tester.tap(find.byTooltip('Copy Booking ID'));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
       expect(copied, '701629644613868');
+      expect(find.byTooltip('Booking ID copied'), findsOneWidget);
+      expect(find.byIcon(LucideIcons.check), findsOneWidget);
+      expect(
+        tester.widget<Icon>(find.byIcon(LucideIcons.check)).color,
+        AppSemanticColors.defaults.success,
+      );
+
+      await tester.pump(TripReference.copiedResetDuration);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.byTooltip('Copy Booking ID'), findsOneWidget);
+      expect(find.byIcon(LucideIcons.copy), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
