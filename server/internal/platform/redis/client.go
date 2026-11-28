@@ -32,6 +32,7 @@ func OpenWithContext(ctx context.Context, redisURL string) (*redisclient.Client,
 	if err != nil {
 		return nil, fmt.Errorf("parse redis URL: %w", err)
 	}
+	options.ContextTimeoutEnabled = true
 
 	client := redisclient.NewClient(options)
 
