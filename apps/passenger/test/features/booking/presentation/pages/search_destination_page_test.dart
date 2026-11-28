@@ -586,7 +586,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pumpAndSettle();
 
-      expect(find.text('No places found'), findsOneWidget);
+      expect(find.text('Search unavailable'), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
