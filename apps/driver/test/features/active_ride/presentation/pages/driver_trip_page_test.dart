@@ -9,6 +9,7 @@ import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/presentation/pages/driver_trip_page.dart';
+import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -190,4 +191,100 @@ void main() {
     await states.close();
     await lifecycle.dispose();
   });
+
+  testWidgets(
+    'displays trip completed fare summary before returning to dispatch',
+    (tester) async {
+      final oldLocation = GeolocatorPlatform.instance;
+      GeolocatorPlatform.instance = _Location();
+      MapboxMapsFlutterPlatform.instance = _MapPlatform();
+      addTearDown(() {
+        GeolocatorPlatform.instance = oldLocation;
+      });
+      await LocationService.getCurrentPosition();
+
+      final ride = _RideCubit();
+      final map = _MapBloc();
+      final session = _Session();
+      final completionHandler = _CompletionHandler();
+      final lifecycle = AppLifecycleCoordinator();
+      final states = StreamController<RideState>.broadcast();
+      const inTransit = RideFlowInTransit(
+        passengerName: 'Alex',
+        destinationLatitude: 14.7,
+        destinationLongitude: 121,
+      );
+      whenListen(ride, states.stream, initialState: inTransit);
+      when(() => map.state).thenReturn(const LiveMapInitial());
+      when(() => map.stream).thenAnswer((_) => const Stream.empty());
+      when(() => session.readDriverId()).thenAnswer((_) async => '');
+      when(() => ride.activeRideId).thenReturn('trip-42');
+      when(() => ride.activePassengerName).thenReturn('Alex');
+      when(() => ride.canMarkPassengerNoShow).thenReturn(false);
+      when(() => ride.passengerNoShowTimeRemaining).thenReturn(null);
+      when(() => ride.refreshPassengerLocation()).thenAnswer((_) async {});
+      when(() => ride.reset()).thenAnswer((_) async {});
+      when(() => completionHandler.afterRideCompleted(rideId: 'trip-42'))
+          .thenAnswer((_) async {});
+
+      final router = GoRouter(
+        initialLocation: '/trip',
+        routes: [
+          GoRoute(
+            path: '/dashboard',
+            name: DashboardRoutes.dashboard,
+            builder: (_, _) => const Scaffold(body: Text('Dispatch Home')),
+          ),
+          GoRoute(
+            path: '/trip',
+            builder: (_, _) => DriverTripPage(
+              rideId: 'trip-42',
+              pickup: 'Pickup street',
+              dropoff: 'Destination street',
+              distance: 3,
+              fare: 40,
+              chatRepositoryFactory: _Factory(),
+              sessionService: session,
+              lifecycleCoordinator: lifecycle,
+              rideCompletionHandler: completionHandler,
+            ),
+          ),
+        ],
+      );
+      addTearDown(() async {
+        router.dispose();
+        await states.close();
+        await lifecycle.dispose();
+      });
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<RideFlowCubit>.value(value: ride),
+            BlocProvider<LiveMapBloc>.value(value: map),
+          ],
+          child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      states.add(const TripCompleted(fare: 85.5));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Trip completed'), findsOneWidget);
+      expect(find.text('₱85.50'), findsOneWidget);
+      expect(find.text('Pickup street'), findsOneWidget);
+      expect(find.text('Destination street'), findsOneWidget);
+      expect(find.text('Alex'), findsOneWidget);
+      expect(find.text('Back to dispatch'), findsOneWidget);
+
+      await tester.tap(find.text('Back to dispatch'));
+      await tester.pumpAndSettle();
+
+      verify(() => ride.reset()).called(1);
+      verify(() => completionHandler.afterRideCompleted(rideId: 'trip-42'))
+          .called(1);
+      expect(find.text('Dispatch Home'), findsOneWidget);
+    },
+  );
 }

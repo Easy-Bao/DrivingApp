@@ -722,10 +722,13 @@ class RideFlowCubit({
       if (!_isCurrentAction(actionGeneration) || ride == null) return null;
 
       final fareAmount = ride.fareAmount;
+      final fare =
+          ((fareAmount != null && fareAmount > 0) ? fareAmount : 0) / 100;
       _isRideCompletionPending = true;
       _rideStatusSyncTimer?.cancel();
       _rideStatusSyncTimer = null;
-      return ((fareAmount != null && fareAmount > 0) ? fareAmount : 0) / 100;
+      emit(TripCompleted(fare: fare));
+      return fare;
     } finally {
       if (_isCurrentAction(actionGeneration)) {
         _isActionInFlight = false;

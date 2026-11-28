@@ -40,6 +40,7 @@ class ActiveRideModule._() {
             sessionService: Modular.get<SessionStore>(),
             lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
             rideCompletionHandler: Modular.get<RideCompletionHandler>(),
+            rideRepository: Modular.get<RideRepository>(),
           ),
         );
       },

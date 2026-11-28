@@ -617,7 +617,7 @@ void main() {
 
       expect(fare, 27);
       expect(cubit.activeRideId, 'test-ride-id');
-      expect(cubit.state, isA<RideFlowInTransit>());
+      expect(cubit.state, const TripCompleted(fare: 27));
       verifyNever(() => mockSessionService.clearActiveRideId());
       await cubit.close();
     },

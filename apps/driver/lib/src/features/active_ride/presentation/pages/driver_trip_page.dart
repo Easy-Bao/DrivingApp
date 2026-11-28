@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:chat/chat.dart';
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/core/session/session_store.dart';
+import 'package:driver/src/features/active_ride/domain/repositories/ride_repository.dart';
 import 'package:driver/src/features/active_ride/domain/services/ride_completion_handler.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
@@ -10,8 +11,10 @@ import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride
 import 'package:driver/src/features/active_ride/presentation/controllers/driver_trip_chat_tracker.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_trip_panel.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/ride_cancellation_sheet.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/safety_report_sheet.dart';
 import 'package:driver/src/features/chat/chat_routes.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
@@ -31,6 +34,7 @@ class const DriverTripPage({
   required this.sessionService,
   required this.lifecycleCoordinator,
   required this.rideCompletionHandler,
+  this.rideRepository,
 }) extends StatefulWidget {
   final String? rideId;
   final String pickup;
@@ -41,6 +45,7 @@ class const DriverTripPage({
   final SessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
   final RideCompletionHandler rideCompletionHandler;
+  final RideRepository? rideRepository;
 
   @override
   State<DriverTripPage> createState() => _DriverTripPageState();
@@ -63,6 +68,15 @@ class _DriverTripPageState extends State<DriverTripPage> {
   String? _notice;
   bool _isRefreshing = false;
   bool _tripFinished = false;
+  bool _isFinishingCompletion = false;
+  double? _completedFare;
+  String? _completedRideId;
+  String? _completedPassengerName;
+  bool _safetyReportSubmitted = false;
+  bool _completionHapticPlayed = false;
+
+  bool get _isShowingCompletionSummary =>
+      _completedFare != null || _rideCubit.state is TripCompleted;
 
   @override
   void initState() {
@@ -152,7 +166,12 @@ class _DriverTripPageState extends State<DriverTripPage> {
   }
 
   Future<void> _refreshTracking() async {
-    if (!mounted || _isRefreshing || _tripFinished) return;
+    if (!mounted ||
+        _isRefreshing ||
+        _tripFinished ||
+        _isShowingCompletionSummary) {
+      return;
+    }
     _isRefreshing = true;
     try {
       await _chatTracker.refreshUnreadCount(_rideCubit.activeRideId);
@@ -230,9 +249,22 @@ class _DriverTripPageState extends State<DriverTripPage> {
       _ensureMap(state);
       if (mounted && _map != null) setState(() {});
     }
+    if (state is TripCompleted) {
+      _enterCompletionSummary(
+        fare: state.fare,
+        passengerName:
+            _completedPassengerName ?? _rideCubit.activePassengerName,
+      );
+      return;
+    }
     if (state is RideFlowTerminal) {
       unawaited(_finishTrip());
       return;
+    }
+    if (state.isWaitingAtPickup) {
+      unawaited(HapticFeedback.mediumImpact());
+    } else if (state is TripInProgress) {
+      unawaited(HapticFeedback.lightImpact());
     }
     final position = LocationService.lastPosition;
     if (position != null && state is! RideFailed) {
@@ -240,10 +272,30 @@ class _DriverTripPageState extends State<DriverTripPage> {
     }
   }
 
+  void _enterCompletionSummary({
+    required double fare,
+    required String passengerName,
+  }) {
+    if (!mounted) return;
+    if (!_completionHapticPlayed) {
+      _completionHapticPlayed = true;
+      unawaited(HapticFeedback.mediumImpact());
+    }
+    setState(() {
+      _completedFare = fare > 0 ? fare : widget.fare;
+      _completedRideId ??= _rideCubit.activeRideId ?? widget.rideId;
+      _completedPassengerName = passengerName;
+      _notice = null;
+    });
+  }
+
   Future<void> _finishTrip() async {
     if (!mounted || _tripFinished) return;
     _tripFinished = true;
-    final rideId = _rideCubit.activeRideId ?? widget.rideId;
+    if (_isShowingCompletionSummary && mounted) {
+      setState(() => _isFinishingCompletion = true);
+    }
+    final rideId = _completedRideId ?? _rideCubit.activeRideId ?? widget.rideId;
     await _rideCubit.reset();
     if (rideId != null && rideId.isNotEmpty) {
       await widget.rideCompletionHandler.afterRideCompleted(rideId: rideId);
@@ -253,6 +305,20 @@ class _DriverTripPageState extends State<DriverTripPage> {
       context.pop();
     } else {
       context.goNamed(DashboardRoutes.dashboard);
+    }
+  }
+
+  Future<void> _reportCompletedTripIssue() async {
+    final rideRepository = widget.rideRepository;
+    final rideId = _completedRideId ?? _rideCubit.activeRideId ?? widget.rideId;
+    if (rideRepository == null || rideId == null || rideId.isEmpty) return;
+    final reported = await showSafetyReportSheet(
+      context,
+      rideId: rideId,
+      rideRepository: rideRepository,
+    );
+    if (reported && mounted) {
+      setState(() => _safetyReportSubmitted = true);
     }
   }
 
@@ -279,13 +345,19 @@ class _DriverTripPageState extends State<DriverTripPage> {
         return;
       }
       if (state is TripInProgress) {
+        final passengerName = state.passengerNameOr(
+          _rideCubit.activePassengerName,
+        );
         final fare = await _rideCubit.completeRide(
           driverLatitude: position.latitude,
           driverLongitude: position.longitude,
         );
         if (!mounted) return;
-        if (fare != null ||
-            _rideCubit.state is RideFlowTerminal ||
+        if (fare != null) {
+          _enterCompletionSummary(fare: fare, passengerName: passengerName);
+          return;
+        }
+        if (_rideCubit.state is RideFlowTerminal ||
             _rideCubit.activeRideId == null) {
           await _finishTrip();
           return;
@@ -433,119 +505,261 @@ class _DriverTripPageState extends State<DriverTripPage> {
     super.dispose();
   }
 
+  Widget _buildCompletionSummary(BuildContext context, double completedFare) {
+    final colors = context.colorScheme;
+    final textStyles = context.textStyles;
+    final passengerName =
+        _completedPassengerName ?? _rideCubit.activePassengerName;
+    final completedRideId =
+        _completedRideId ?? _rideCubit.activeRideId ?? widget.rideId;
+    final canReport =
+        widget.rideRepository != null &&
+        completedRideId != null &&
+        completedRideId.isNotEmpty &&
+        !_safetyReportSubmitted;
+
+    return Scaffold(
+      backgroundColor: context.canvasColor,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: AppCompletionView(
+                key: const ValueKey<String>('driver-trip-completion-view'),
+                title: 'Trip completed',
+                message:
+                    'Collect cash from $passengerName before heading to your next trip.',
+                primaryActionLabel: _isFinishingCompletion
+                    ? 'Returning…'
+                    : 'Back to dispatch',
+                onPrimaryAction: _isFinishingCompletion
+                    ? null
+                    : () => unawaited(_finishTrip()),
+                secondaryActionLabel: canReport ? 'Report an issue' : null,
+                onSecondaryAction: canReport
+                    ? () => unawaited(_reportCompletedTripIssue())
+                    : null,
+                footnote: _safetyReportSubmitted
+                    ? 'Safety report submitted.'
+                    : null,
+                summary: Container(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                    border: Border.all(color: colors.outlineVariant),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'CASH FARE TO COLLECT',
+                        textAlign: TextAlign.center,
+                        style: textStyles.labelSmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.9,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        formatPesoAmount(completedFare),
+                        textAlign: TextAlign.center,
+                        style: textStyles.headlineMedium?.tabular.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: colors.outlineVariant.withValues(alpha: 0.7),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      CompactRouteTimeline(
+                        pickup: widget.pickup,
+                        dropoff: widget.dropoff,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: colors.outlineVariant.withValues(alpha: 0.7),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Row(
+                        children: [
+                          Text(
+                            'Passenger',
+                            style: textStyles.bodyMedium?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                          const Spacer(),
+                          Flexible(
+                            child: Text(
+                              passengerName,
+                              textAlign: TextAlign.end,
+                              overflow: TextOverflow.ellipsis,
+                              style: textStyles.titleSmall?.copyWith(
+                                color: colors.onSurface,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<RideFlowCubit, RideState>(
       listenWhen: (previous, current) =>
           previous.runtimeType != current.runtimeType,
       listener: _onRideChanged,
-      child: PopScope(
-        canPop: !_isActing,
-        child: Scaffold(
-          body: Stack(
-            children: [
-              Positioned.fill(
-                child:
-                    _map ??
-                    const Center(child: Text('Map location is unavailable.')),
-              ),
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Material(
-                    color: context.colorScheme.surfaceContainerLowest,
-                    shape: CircleBorder(
-                      side: BorderSide(
-                        color: context.colorScheme.outlineVariant,
-                      ),
-                    ),
-                    elevation: 1,
-                    shadowColor: context.colorScheme.shadow,
-                    child: IconButton(
-                      key: const ValueKey<String>('driver-trip-back'),
-                      tooltip: 'Back to dashboard',
-                      onPressed: _isActing ? null : () => context.pop(),
-                      style:
-                          IconButton.styleFrom(
-                            foregroundColor: context.colorScheme.onSurface,
-                            shape: const CircleBorder(),
-                            enableFeedback: false,
-                            splashFactory: NoSplash.splashFactory,
-                          ).copyWith(
-                            overlayColor: WidgetStateProperty.resolveWith((
-                              states,
-                            ) {
-                              if (states.contains(WidgetState.focused)) {
-                                return context.colorScheme.primary.withValues(
-                                  alpha: 0.12,
-                                );
-                              }
-                              return Colors.transparent;
-                            }),
-                          ),
-                      icon: const Icon(LucideIcons.arrow_left, size: 20),
-                    ),
+      child: BlocBuilder<RideFlowCubit, RideState>(
+        buildWhen: (previous, current) =>
+            (previous is TripCompleted) != (current is TripCompleted),
+        builder: (context, rideState) {
+          final completedFare = rideState is TripCompleted
+              ? (rideState.fare > 0 ? rideState.fare : widget.fare)
+              : _completedFare;
+          if (completedFare != null) {
+            return PopScope(
+              canPop: false,
+              onPopInvokedWithResult: (didPop, _) {
+                if (!didPop && !_isFinishingCompletion) {
+                  unawaited(_finishTrip());
+                }
+              },
+              child: _buildCompletionSummary(context, completedFare),
+            );
+          }
+
+          return PopScope(
+            canPop: !_isActing,
+            child: Scaffold(
+              body: Stack(
+                children: [
+                  Positioned.fill(
+                    child:
+                        _map ??
+                        const Center(
+                          child: Text('Map location is unavailable.'),
+                        ),
                   ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: SafeArea(
-                  top: false,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) => ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: 600,
-                        maxHeight: constraints.maxHeight * 0.72,
-                      ),
-                      child: SingleChildScrollView(
-                        key: _panelKey,
-                        child: BlocBuilder<RideFlowCubit, RideState>(
-                          buildWhen: (_, current) =>
-                              current is DriverEnRoute ||
-                              current is TripInProgress,
-                          builder: (context, state) {
-                            return ValueListenableBuilder<int>(
-                              valueListenable: _chatTracker.unreadCount,
-                              builder: (context, unreadCount, _) =>
-                                  DriverTripPanel(
-                                    state: state,
-                                    pickup: widget.pickup,
-                                    dropoff: widget.dropoff,
-                                    fare: widget.fare,
-                                    progress: _progressNotifier.value,
-                                    progressListenable: _progressNotifier,
-                                    isBusy: _isActing,
-                                    unreadCount: unreadCount,
-                                    notice: _notice,
-                                    onDismissNotice: () =>
-                                        setState(() => _notice = null),
-                                    onProgressChanged: (value) {
-                                      _progressNotifier.value = value;
-                                      if (value > 0 && _notice != null) {
-                                        setState(() => _notice = null);
-                                      }
-                                    },
-                                    onAdvance: _advance,
-                                    onChat: _openChat,
-                                    onCancel: _cancelRide,
-                                    noShowRemaining:
-                                        _rideCubit.passengerNoShowTimeRemaining,
-                                    onNoShow: _rideCubit.canMarkPassengerNoShow
-                                        ? _markNoShow
-                                        : null,
-                                  ),
-                            );
-                          },
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Material(
+                        color: context.colorScheme.surfaceContainerLowest,
+                        shape: CircleBorder(
+                          side: BorderSide(
+                            color: context.colorScheme.outlineVariant,
+                          ),
+                        ),
+                        elevation: 1,
+                        shadowColor: context.colorScheme.shadow,
+                        child: IconButton(
+                          key: const ValueKey<String>('driver-trip-back'),
+                          tooltip: 'Back to dashboard',
+                          onPressed: _isActing ? null : () => context.pop(),
+                          style:
+                              IconButton.styleFrom(
+                                foregroundColor: context.colorScheme.onSurface,
+                                shape: const CircleBorder(),
+                                enableFeedback: false,
+                                splashFactory: NoSplash.splashFactory,
+                              ).copyWith(
+                                overlayColor: WidgetStateProperty.resolveWith((
+                                  states,
+                                ) {
+                                  if (states.contains(WidgetState.focused)) {
+                                    return context.colorScheme.primary
+                                        .withValues(alpha: 0.12);
+                                  }
+                                  return Colors.transparent;
+                                }),
+                              ),
+                          icon: const Icon(LucideIcons.arrow_left, size: 20),
                         ),
                       ),
                     ),
                   ),
-                ),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SafeArea(
+                      top: false,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) => ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: 600,
+                            maxHeight: constraints.maxHeight * 0.72,
+                          ),
+                          child: SingleChildScrollView(
+                            key: _panelKey,
+                            child: BlocBuilder<RideFlowCubit, RideState>(
+                              buildWhen: (_, current) =>
+                                  current is DriverEnRoute ||
+                                  current is TripInProgress,
+                              builder: (context, state) {
+                                return ValueListenableBuilder<int>(
+                                  valueListenable: _chatTracker.unreadCount,
+                                  builder: (context, unreadCount, _) =>
+                                      DriverTripPanel(
+                                        state: state,
+                                        pickup: widget.pickup,
+                                        dropoff: widget.dropoff,
+                                        fare: widget.fare,
+                                        progress: _progressNotifier.value,
+                                        progressListenable: _progressNotifier,
+                                        isBusy: _isActing,
+                                        unreadCount: unreadCount,
+                                        notice: _notice,
+                                        onDismissNotice: () =>
+                                            setState(() => _notice = null),
+                                        onProgressChanged: (value) {
+                                          _progressNotifier.value = value;
+                                          if (value > 0 && _notice != null) {
+                                            setState(() => _notice = null);
+                                          }
+                                        },
+                                        onAdvance: _advance,
+                                        onChat: _openChat,
+                                        onCancel: _cancelRide,
+                                        noShowRemaining: _rideCubit
+                                            .passengerNoShowTimeRemaining,
+                                        onNoShow:
+                                            _rideCubit.canMarkPassengerNoShow
+                                            ? _markNoShow
+                                            : null,
+                                      ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

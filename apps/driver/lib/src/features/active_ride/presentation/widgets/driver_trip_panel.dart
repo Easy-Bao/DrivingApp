@@ -87,6 +87,33 @@ class const DriverTripPanel({
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
+            AnimatedSwitcher(
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 200),
+              child: waiting
+                  ? _TripMilestonePill(
+                      key: const ValueKey<String>('driver-milestone-arrived'),
+                      icon: LucideIcons.circle_check,
+                      label: 'Arrived at pickup',
+                      backgroundColor: context.semanticColors.successContainer,
+                      foregroundColor:
+                          context.semanticColors.onSuccessContainer,
+                    )
+                  : inTransit
+                  ? _TripMilestonePill(
+                      key: const ValueKey<String>(
+                        'driver-milestone-in-transit',
+                      ),
+                      icon: LucideIcons.navigation,
+                      label: 'Trip in progress',
+                      backgroundColor: context.semanticColors.infoContainer,
+                      foregroundColor: context.semanticColors.onInfoContainer,
+                    )
+                  : const SizedBox.shrink(
+                      key: ValueKey<String>('driver-milestone-en-route'),
+                    ),
+            ),
             Text(
               waiting
                   ? 'Waiting for passenger · $waitLabel'
@@ -276,6 +303,60 @@ class const DriverTripPanel({
                   ),
                 ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class const _TripMilestonePill({
+  super.key,
+  required this.icon,
+  required this.label,
+  required this.backgroundColor,
+  required this.foregroundColor,
+}) extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Semantics(
+          liveRegion: true,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm + 2,
+              vertical: AppSpacing.xs,
+            ),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ExcludeSemantics(
+                  child: Icon(icon, size: 14, color: foregroundColor),
+                ),
+                const SizedBox(width: AppSpacing.xs + 2),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: context.textStyles.labelSmall?.copyWith(
+                      color: foregroundColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
