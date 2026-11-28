@@ -15,11 +15,13 @@ CREATE TABLE ride_settlements (
     updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT ride_settlements_money_check CHECK (
         gross_fare >= 0
-        AND cash_received_amount >= 0
-        AND cash_change_amount >= 0
-        AND cash_change_amount <= cash_received_amount
         AND commission_amount >= 0
         AND driver_payout_amount >= 0
+    ),
+    CONSTRAINT ride_settlements_cash_amounts_check CHECK (
+        cash_received_amount >= 0
+        AND cash_change_amount >= 0
+        AND cash_change_amount <= cash_received_amount
     ),
     CONSTRAINT ride_settlements_cash_outcome_check CHECK (
         cash_outcome IN ('paid', 'partial', 'refused', 'unpaid', 'disputed')
@@ -27,13 +29,18 @@ CREATE TABLE ride_settlements (
     CONSTRAINT ride_settlements_payment_status_check CHECK (
         payment_status IN ('unpaid', 'paid')
     ),
-    CONSTRAINT ride_settlements_commission_range_check CHECK (
+    CONSTRAINT ride_settlements_ride_fk
+        FOREIGN KEY (ride_id) REFERENCES rides (id) ON DELETE RESTRICT
+);
+
+ALTER TABLE ride_settlements
+    ADD CONSTRAINT ride_settlements_commission_range_check CHECK (
         commission_bps BETWEEN 0 AND 10000
-    ),
-    CONSTRAINT ride_settlements_payment_outcome_check CHECK (
+    ) NOT VALID,
+    ADD CONSTRAINT ride_settlements_payment_outcome_check CHECK (
         (payment_status = 'paid') = (cash_outcome = 'paid')
-    ),
-    CONSTRAINT ride_settlements_cash_collection_check CHECK (
+    ) NOT VALID,
+    ADD CONSTRAINT ride_settlements_cash_collection_check CHECK (
         CASE cash_outcome
             WHEN 'paid' THEN gross_fare > 0
                 AND cash_received_amount - cash_change_amount = gross_fare
@@ -43,13 +50,7 @@ CREATE TABLE ride_settlements (
             WHEN 'refused' THEN cash_received_amount = cash_change_amount
             ELSE true
         END
-    ),
-    CONSTRAINT ride_settlements_ride_fk
-        FOREIGN KEY (ride_id) REFERENCES rides (id) ON DELETE RESTRICT
-);
+    ) NOT VALID;
 
 CREATE UNIQUE INDEX ridesettlement_ride_id
     ON ride_settlements (ride_id);
-
-CREATE INDEX ridesettlement_payment_status_updated_at
-    ON ride_settlements (payment_status, updated_at);

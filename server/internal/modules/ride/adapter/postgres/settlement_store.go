@@ -91,8 +91,7 @@ func (repository *RideRepository) SettleCash(
 		return domain.Ride{}, err
 	}
 
-	profile, err := transactionQueries.GetDriverProfileByUserIDFull(ctx, dbDriverID)
-	if err != nil {
+	if _, err := transactionQueries.GetDriverProfileByUserID(ctx, dbDriverID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.Ride{}, domain.ErrUnauthorizedRide
 		}
@@ -122,7 +121,7 @@ func (repository *RideRepository) SettleCash(
 			)
 		}
 		if validated.Snapshot.DriverPayoutAmount > 0 {
-			if err := creditNativeDriverWallet(ctx, transactionQueries, profile.UserID, validated.Snapshot.DriverPayoutAmount); err != nil {
+			if err := creditNativeDriverWallet(ctx, transactionQueries, dbDriverID, validated.Snapshot.DriverPayoutAmount); err != nil {
 				return domain.Ride{}, fmt.Errorf("credit driver wallet: %w", err)
 			}
 		}
