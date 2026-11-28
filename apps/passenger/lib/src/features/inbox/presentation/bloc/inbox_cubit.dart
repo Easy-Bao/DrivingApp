@@ -12,6 +12,16 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
   final InboxRepository inboxRepository;
   final List<InboxNotification> _localNotifications = [];
   final Set<String> _dismissedNotificationIds = {};
+  final Map<
+    String,
+    ({
+      InboxNotification notification,
+      bool wasLocal,
+      int requestRevision,
+      Timer timer,
+    })
+  >
+  _pendingDeletions = {};
   String? _activePassengerId;
   int _sessionRevision = 0;
   int _listGeneration = 0;
@@ -44,6 +54,7 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
 
   Future<void> _loadNotifications(String passengerId) async {
     if (_activePassengerId != passengerId) {
+      _cancelPendingDeletions();
       _activePassengerId = passengerId;
       _sessionRevision++;
       _markAllReadRevision = null;
@@ -200,6 +211,8 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
   }
 
   void addLocalNotification(InboxNotification notification) {
+    _pendingDeletions.remove(notification.id)?.timer.cancel();
+    _dismissedNotificationIds.remove(notification.id);
     _localNotifications.removeWhere((item) => item.id == notification.id);
     _localNotifications.insert(0, notification);
     final current = state;
@@ -299,7 +312,7 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
     dismissNotificationById(current.notifications[index].id);
   }
 
-  void dismissNotificationById(String notificationId) {
+  void dismissNotificationById(String notificationId, {Duration? deferDelete}) {
     final current = state;
     if (current is! InboxLoadedState) return;
     final index = current.notifications.indexWhere(
@@ -311,18 +324,87 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
     final wasLocal = _localNotifications.any(
       (item) => item.id == notification.id,
     );
+    _pendingDeletions.remove(notification.id)?.timer.cancel();
     _localNotifications.removeWhere((item) => item.id == notification.id);
     _dismissedNotificationIds.add(notification.id);
     _emitLoaded(
       current.copyWith(notifications: currentList, clearDismissError: true),
     );
-    unawaited(
-      _deleteRemoteNotification(
-        notification,
-        requestRevision: _sessionRevision,
-        wasLocal: wasLocal,
-      ),
+    final requestRevision = _sessionRevision;
+    if (deferDelete == null || deferDelete <= Duration.zero) {
+      unawaited(
+        _deleteRemoteNotification(
+          notification,
+          requestRevision: requestRevision,
+          wasLocal: wasLocal,
+        ),
+      );
+      return;
+    }
+    final timer = Timer(deferDelete, () {
+      final entry = _pendingDeletions.remove(notification.id);
+      if (entry == null || isClosed || requestRevision != _sessionRevision) {
+        return;
+      }
+      unawaited(
+        _deleteRemoteNotification(
+          entry.notification,
+          requestRevision: entry.requestRevision,
+          wasLocal: entry.wasLocal,
+        ),
+      );
+    });
+    _pendingDeletions[notification.id] = (
+      notification: notification,
+      wasLocal: wasLocal,
+      requestRevision: requestRevision,
+      timer: timer,
     );
+  }
+
+  bool undoDismissNotification(String notificationId) {
+    final entry = _pendingDeletions.remove(notificationId);
+    if (entry == null) return false;
+    entry.timer.cancel();
+    _dismissedNotificationIds.remove(notificationId);
+    if (entry.wasLocal) {
+      _localNotifications
+        ..removeWhere((item) => item.id == notificationId)
+        ..insert(0, entry.notification);
+    }
+    if (state case final InboxLoadedState latest) {
+      _emitLoaded(
+        latest.copyWith(
+          notifications: [...latest.notifications, entry.notification],
+          clearDismissError: true,
+        ),
+      );
+    }
+    return true;
+  }
+
+  void flushPendingDeletions() {
+    if (_pendingDeletions.isEmpty) return;
+    final pending = _pendingDeletions.values.toList(growable: false);
+    _pendingDeletions.clear();
+    for (final entry in pending) {
+      entry.timer.cancel();
+      if (isClosed || entry.requestRevision != _sessionRevision) continue;
+      unawaited(
+        _deleteRemoteNotification(
+          entry.notification,
+          requestRevision: entry.requestRevision,
+          wasLocal: entry.wasLocal,
+        ),
+      );
+    }
+  }
+
+  void _cancelPendingDeletions() {
+    for (final entry in _pendingDeletions.values) {
+      entry.timer.cancel();
+    }
+    _pendingDeletions.clear();
   }
 
   Future<void> _deleteRemoteNotification(
@@ -367,6 +449,7 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
   }
 
   void clearSessionData() {
+    _cancelPendingDeletions();
     _activePassengerId = null;
     _activeLoad = null;
     _activeLoadPassengerId = null;
@@ -377,5 +460,11 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
     _localNotifications.clear();
     _dismissedNotificationIds.clear();
     emit(const InboxInitialState());
+  }
+
+  @override
+  Future<void> close() {
+    _cancelPendingDeletions();
+    return super.close();
   }
 }

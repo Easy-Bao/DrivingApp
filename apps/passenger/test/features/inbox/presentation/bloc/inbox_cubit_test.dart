@@ -398,4 +398,60 @@ void main() {
     cubit.clearDismissError();
     expect((cubit.state as InboxLoadedState).dismissError, isNull);
   });
+
+  test(
+    'supports deferred dismissal with undo before the undo window expires',
+    () async {
+      final repository = MockDismissibleInboxRepository();
+      final remoteNotification = notification.copyWith(id: '55');
+      when(
+        () => repository.fetchPassengerNotificationsPage(
+          'passenger-1',
+          limit: 50,
+          offset: 0,
+        ),
+      ).thenAnswer(
+        (_) async => Ok(
+          OffsetPage(
+            items: [remoteNotification],
+            hasMore: false,
+            nextOffset: null,
+          ),
+        ),
+      );
+      when(() => repository.deletePassengerNotification('passenger-1', '55'))
+          .thenAnswer((_) async => const Ok(null));
+
+      final cubit = InboxCubit(inboxRepository: repository);
+      addTearDown(cubit.close);
+
+      await cubit.loadNotifications('passenger-1');
+      cubit.dismissNotificationById(
+        '55',
+        deferDelete: const Duration(milliseconds: 60),
+      );
+      expect((cubit.state as InboxLoadedState).notifications, isEmpty);
+      verifyNever(
+        () => repository.deletePassengerNotification('passenger-1', '55'),
+      );
+
+      expect(cubit.undoDismissNotification('55'), isTrue);
+      expect((cubit.state as InboxLoadedState).notifications.map((n) => n.id), [
+        '55',
+      ]);
+
+      await Future<void>.delayed(const Duration(milliseconds: 90));
+      verifyNever(
+        () => repository.deletePassengerNotification('passenger-1', '55'),
+      );
+
+      cubit.dismissNotificationById(
+        '55',
+        deferDelete: const Duration(milliseconds: 30),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+      verify(() => repository.deletePassengerNotification('passenger-1', '55'))
+          .called(1);
+    },
+  );
 }

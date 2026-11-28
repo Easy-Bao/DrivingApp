@@ -65,6 +65,7 @@ class _InboxPageState extends State<InboxPage>
 
   @override
   void dispose() {
+    _inboxCubit.flushPendingDeletions();
     _filterTransitionCurve.dispose();
     _filterTransitionController.dispose();
     super.dispose();
@@ -453,7 +454,18 @@ class _InboxPageState extends State<InboxPage>
         }
       });
     }
-    _inboxCubit.dismissNotificationById(notificationId);
+    _inboxCubit.dismissNotificationById(
+      notificationId,
+      deferDelete: AppSnackBar.actionDuration,
+    );
+    if (!mounted) return;
+    AppSnackBar.show(
+      context,
+      'Notification deleted.',
+      tone: AppSnackBarTone.info,
+      actionLabel: 'Undo',
+      onAction: () => _inboxCubit.undoDismissNotification(notificationId),
+    );
   }
 
   Future<void> _openNotification(

@@ -20,6 +20,9 @@ class MockSessionBloc extends MockBloc<SessionEvent, SessionState>
 
 class MockInboxRepository extends Mock implements InboxRepository {}
 
+class MockDismissibleInboxRepository extends Mock
+    implements InboxRepository, DismissibleInboxRepository {}
+
 class MockInboxCubit extends MockCubit<InboxState> implements InboxCubit {}
 
 void main() {
@@ -541,6 +544,64 @@ void main() {
       expect(midLeft, greaterThan(initialLeft));
       expect(finalLeft, greaterThan(midLeft));
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'shows undo snackbar when deleting a notification and restores it on Undo',
+    (tester) async {
+      final session = MockSessionBloc();
+      when(() => session.state)
+          .thenReturn(const AuthenticatedSession(passengerId: 'p'));
+      final repository = MockDismissibleInboxRepository();
+      when(() => repository.fetchPassengerNotifications('p')).thenAnswer(
+        (_) async => Ok([
+          InboxNotification(
+            id: '77',
+            title: 'Ride completed',
+            message: 'Receipt ready',
+            timestamp: DateTime.now(),
+            type: 'ride',
+            isRead: false,
+          ),
+        ]),
+      );
+      when(() => repository.deletePassengerNotification('p', '77'))
+          .thenAnswer((_) async => const Ok(null));
+
+      final cubit = InboxCubit(inboxRepository: repository);
+      addTearDown(cubit.close);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: BlocProvider<SessionBloc>.value(
+            value: session,
+            child: InboxPage(inboxCubit: cubit),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+        find.byKey(const ValueKey<String>('inbox-dismissible-77')),
+        const Offset(-500, 0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notification deleted.'), findsOneWidget);
+      expect(find.text('Undo'), findsOneWidget);
+      expect((cubit.state as InboxLoadedState).notifications, isEmpty);
+      verifyNever(() => repository.deletePassengerNotification('p', '77'));
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ride completed'), findsOneWidget);
+      expect((cubit.state as InboxLoadedState).notifications.map((n) => n.id), [
+        '77',
+      ]);
+      verifyNever(() => repository.deletePassengerNotification('p', '77'));
     },
   );
 }
