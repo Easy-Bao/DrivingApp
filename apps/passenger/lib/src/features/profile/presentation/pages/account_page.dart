@@ -273,6 +273,24 @@ class AccountPage extends StatelessWidget {
     );
   }
 
+  Future<void> _confirmLogout(BuildContext context) async {
+    final onLogout = this.onLogout;
+    if (onLogout == null) return;
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Log out?',
+      message: 'You will need to sign in again to book rides or view your trip history.',
+      confirmLabel: 'Log out',
+      cancelLabel: 'Cancel',
+      icon: LucideIcons.log_out,
+      tone: AppConfirmDialogTone.destructive,
+      isDestructive: true,
+    );
+    if (confirmed) {
+      onLogout();
+    }
+  }
+
   Widget _buildLogoutButton(BuildContext context) {
     final colorScheme = context.colorScheme;
     return SizedBox(
@@ -280,7 +298,7 @@ class AccountPage extends StatelessWidget {
       height: AppSize.controlHeight,
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: onLogout,
+        onPressed: () => unawaited(_confirmLogout(context)),
         style:
             OutlinedButton.styleFrom(
               foregroundColor: colorScheme.error,

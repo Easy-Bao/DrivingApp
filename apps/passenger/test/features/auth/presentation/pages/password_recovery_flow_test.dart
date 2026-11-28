@@ -143,6 +143,11 @@ void main() {
       );
       await tester.tap(find.widgetWithText(FilledButton, 'Reset password'));
       await tester.pumpAndSettle();
+      expect(find.text('Password updated'), findsOneWidget);
+      expect(find.text('Back to sign in'), findsOneWidget);
+      expect(find.text('Ready to sign in'), findsNothing);
+      await tester.tap(find.text('Back to sign in'));
+      await tester.pumpAndSettle();
       expect(find.text('Ready to sign in'), findsOneWidget);
       verify(
         () => repository.confirmResetPassword(

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 // ignore: depend_on_referenced_packages
@@ -9,13 +10,20 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/auth/auth_routes.dart';
+import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:passenger/src/features/auth/domain/entities/session.dart';
 import 'package:passenger/src/features/auth/domain/entities/sign_up_result.dart';
 import 'package:passenger/src/features/auth/domain/repositories/auth_repository.dart';
+import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/features/auth/domain/validators/phone_number_validator.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/pages/sign_up_page.dart';
+import 'package:passenger/src/features/home/home_routes.dart';
 
 class _AuthRepository extends Mock implements AuthRepository {}
+
+class _SessionRepository extends Mock implements SessionRepository {}
 
 void main() {
   testWidgets(
@@ -170,5 +178,75 @@ void main() {
     await tester.pumpAndSettle();
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('shows Account created confirmation on direct sign-up success', (
+    tester,
+  ) async {
+    final repository = _AuthRepository();
+    final sessionRepository = _SessionRepository();
+    when(() => sessionRepository.clearSession())
+        .thenAnswer((_) async => const Ok(Session.guest()));
+    when(
+      () => repository.registerPassenger(
+        name: 'Test Passenger',
+        email: 'passenger@example.com',
+        phone: '+639171234567',
+        password: 'new-password',
+      ),
+    ).thenAnswer(
+      (_) async => const Ok(
+        SignUpAuthenticated(
+          AuthCredentials(
+            passengerId: '42',
+            passengerName: 'Test Passenger',
+            passengerEmail: 'passenger@example.com',
+            passengerPhone: '+639171234567',
+            token: 'token',
+          ),
+        ),
+      ),
+    );
+    final sessionBloc = SessionBloc(sessionRepository: sessionRepository);
+    addTearDown(sessionBloc.close);
+
+    final router = GoRouter(
+      initialLocation: '/signup',
+      routes: [
+        GoRoute(
+          path: '/signup',
+          builder: (_, _) => SignUpPage(signUpBloc: SignUpBloc(repository)),
+        ),
+        GoRoute(
+          path: '/home',
+          name: HomeRoutes.home,
+          builder: (_, _) => const Scaffold(body: Text('Passenger Home')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      BlocProvider<SessionBloc>.value(
+        value: sessionBloc,
+        child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).at(0), 'Test Passenger');
+    await tester.enterText(find.byType(TextField).at(1), '09171234567');
+    await tester.enterText(
+      find.byType(TextField).at(2),
+      'passenger@example.com',
+    );
+    await tester.enterText(find.byType(TextField).at(3), 'new-password');
+    await tester.ensureVisible(find.byType(FilledButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create account'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Passenger Home'), findsOneWidget);
+    expect(find.text('Account created.'), findsOneWidget);
   });
 }

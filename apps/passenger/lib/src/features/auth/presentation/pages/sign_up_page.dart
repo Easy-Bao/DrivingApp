@@ -118,6 +118,8 @@ class _SignupPageContentState extends State<_SignupPageContent> {
       listener: (context, state) {
         if (state is SignUpSuccess) {
           TextInput.finishAutofillContext();
+          unawaited(HapticFeedback.lightImpact());
+          AppSnackBar.show(context, 'Account created.');
           BlocProvider.of<SessionBloc>(context).add(
             SessionAuthenticatedRequested(
               passengerId: state.credentials.passengerId,

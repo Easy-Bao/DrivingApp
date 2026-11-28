@@ -9,7 +9,13 @@ sealed class const SessionState() extends Equatable {
 
 final class const SessionLoading() extends SessionState;
 
-final class const GuestSession() extends SessionState;
+final class const GuestSession({
+  final bool wasExpired = false,
+  final bool wasSignedOut = false,
+}) extends SessionState {
+  @override
+  List<Object?> get props => [wasExpired, wasSignedOut];
+}
 
 final class const AuthenticatedSession({
   required final String passengerId,

@@ -379,4 +379,65 @@ void main() {
       ),
     );
   });
+
+  testWidgets('confirms discarding unsaved edits with shared confirm dialog', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider<ProfileCubit>.value(value: profileCubit),
+            BlocProvider<SessionBloc>.value(value: sessionBloc),
+          ],
+          child: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => MultiBlocProvider(
+                      providers: [
+                        BlocProvider<ProfileCubit>.value(value: profileCubit),
+                        BlocProvider<SessionBloc>.value(value: sessionBloc),
+                      ],
+                      child: const ProfileInfoPage(),
+                    ),
+                  ),
+                ),
+                child: const Text('Open profile'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open profile'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('passenger-profile-field-Full Name')),
+      'Unsaved Name',
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppConfirmDialog), findsOneWidget);
+    expect(find.text('Discard unsaved changes?'), findsOneWidget);
+    await tester.tap(find.text('Keep editing'));
+    await tester.pumpAndSettle();
+    expect(find.text('Profile Info'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey<String>('passenger-profile-discard-confirm')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open profile'), findsOneWidget);
+  });
 }

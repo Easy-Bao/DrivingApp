@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:material_ui/material_ui.dart';
@@ -75,6 +76,7 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
     return BlocConsumer<VerifyOtpBloc, VerifyOtpState>(
       listener: (context, state) {
         if (state is VerifyOtpSuccess) {
+          unawaited(HapticFeedback.lightImpact());
           if (widget.isForgotPassword) {
             unawaited(
               context.pushNamed(
@@ -83,11 +85,18 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
               ),
             );
           } else {
+            AppSnackBar.show(context, 'Email verified.');
             BlocProvider.of<SessionBloc>(context).add(const SessionStarted());
             context.goNamed(HomeRoutes.home);
           }
         } else if (state is VerifyOtpResent) {
           _otpController.clear();
+          unawaited(HapticFeedback.lightImpact());
+          AppSnackBar.show(
+            context,
+            'Verification code sent.',
+            tone: AppSnackBarTone.info,
+          );
         }
       },
       builder: (context, state) {

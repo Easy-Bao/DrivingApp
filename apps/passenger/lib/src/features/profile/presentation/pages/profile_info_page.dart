@@ -423,87 +423,20 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   }
 
   Future<void> _handleUnsavedBackNavigation() async {
-    final colorScheme = context.colorScheme;
-    final textStyles = context.textStyles;
-    final discard = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => Dialog(
-        backgroundColor: colorScheme.surfaceContainerLowest,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          side: BorderSide(color: colorScheme.outlineVariant),
-        ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.xxl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Discard unsaved changes?',
-                  textAlign: TextAlign.center,
-                  style: textStyles.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'Your profile edits have not been saved yet.',
-                  textAlign: TextAlign.center,
-                  style: textStyles.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xxl),
-                SizedBox(
-                  height: AppSize.controlHeight,
-                  child: FilledButton(
-                    key: const ValueKey<String>(
-                      'passenger-profile-discard-confirm',
-                    ),
-                    onPressed: () => Navigator.of(dialogContext).pop(true),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: colorScheme.error,
-                      foregroundColor: colorScheme.onError,
-                      elevation: 0,
-                      enableFeedback: false,
-                      splashFactory: NoSplash.splashFactory,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                    ),
-                    child: const Text('Discard changes'),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                SizedBox(
-                  height: AppSize.controlHeight,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(false),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: colorScheme.onSurface,
-                      side: BorderSide(color: colorScheme.outlineVariant),
-                      enableFeedback: false,
-                      splashFactory: NoSplash.splashFactory,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                    ),
-                    child: const Text('Keep editing'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+    final discard = await showAppConfirmDialog(
+      context,
+      title: 'Discard unsaved changes?',
+      message: 'Your profile edits have not been saved yet.',
+      confirmLabel: 'Discard changes',
+      cancelLabel: 'Keep editing',
+      confirmButtonKey: const ValueKey<String>(
+        'passenger-profile-discard-confirm',
       ),
+      icon: LucideIcons.triangle_alert,
+      tone: AppConfirmDialogTone.warning,
+      isDestructive: true,
     );
-    if (discard == true && mounted && context.mounted) {
+    if (discard && mounted && context.mounted) {
       setState(() => _isDirty = false);
       Navigator.of(context).pop();
     }

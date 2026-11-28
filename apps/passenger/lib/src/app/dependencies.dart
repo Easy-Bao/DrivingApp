@@ -55,8 +55,9 @@ class AppDependencies extends Module {
               sendTimeout: const Duration(seconds: 15),
             ),
           ),
-          onSessionExpired: () =>
-              i.get<SessionBloc>().add(const SessionGuestRequested()),
+          onSessionExpired: () => i.get<SessionBloc>().add(
+            const SessionGuestRequested(expired: true),
+          ),
         );
         session.onActiveRideCleared = provider.flushDeferredExpiry;
         return provider;

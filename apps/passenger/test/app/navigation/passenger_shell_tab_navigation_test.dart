@@ -1200,6 +1200,55 @@ void main() {
       expect(find.text('Retry'), findsOneWidget);
     },
   );
+
+  testWidgets('surfaces session-expired and signed-out feedback snackbars', (
+    tester,
+  ) async {
+    final sessionBloc = SessionBloc(sessionRepository: _SessionRepositoryStub())
+      ..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
+    final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
+    final realtimeClient = RealtimeWebSocketClient(
+      uri: Uri.parse('ws://localhost/realtime'),
+      tokenProvider: () async => 'test-token',
+      connector: _RealtimeSocketConnectorStub(),
+    );
+    final navigationCoordinator = TabNavigationCoordinator();
+    final lifecycleCoordinator = AppLifecycleCoordinator();
+    final router = _createRouter(
+      inboxCubit,
+      realtimeClient,
+      navigationCoordinator,
+      lifecycleCoordinator,
+    );
+    addTearDown(() async {
+      router.dispose();
+      await sessionBloc.close();
+      await inboxCubit.close();
+      await realtimeClient.dispose();
+      navigationCoordinator.dispose();
+      await lifecycleCoordinator.dispose();
+    });
+
+    await tester.pumpWidget(
+      BlocProvider<SessionBloc>.value(
+        value: sessionBloc,
+        child: MaterialApp.router(theme: AppTheme.main, routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    sessionBloc.add(const SessionGuestRequested(expired: true));
+    await tester.pumpAndSettle();
+    expect(find.text('Session expired. Please sign in again.'), findsOneWidget);
+
+    sessionBloc.add(
+      const SessionAuthenticatedRequested(passengerId: 'passenger-1'),
+    );
+    await tester.pumpAndSettle();
+    sessionBloc.add(const SessionLogoutRequested());
+    await tester.pumpAndSettle();
+    expect(find.text('Signed out.'), findsOneWidget);
+  });
 }
 
 GoRouter _createRouter(

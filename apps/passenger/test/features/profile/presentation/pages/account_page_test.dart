@@ -110,6 +110,19 @@ void main() {
         300,
       );
       await tester.tap(find.byKey(const ValueKey('passenger-account-logout')));
+      await tester.pumpAndSettle();
+      expect(find.text('Log out?'), findsOneWidget);
+      expect(logoutCount, 0);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.text('Log out?'), findsNothing);
+      expect(logoutCount, 0);
+
+      await tester.tap(find.byKey(const ValueKey('passenger-account-logout')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Log out'));
+      await tester.pumpAndSettle();
       expect(logoutCount, 1);
     },
   );

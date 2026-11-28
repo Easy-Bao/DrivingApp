@@ -290,13 +290,26 @@ class _ShellLayoutState extends State<ShellLayout> {
               widget.inboxCubit.clearSessionData();
             }
             AppSnackBar.show(context, message, isError: true);
-          case GuestSession():
+          case GuestSession(:final wasExpired, :final wasSignedOut):
             _forceHomeForGuest();
             _loadedInboxPassengerId = null;
             _activePassengerId = null;
             unawaited(widget.realtimeClient.stop());
             if (!widget.inboxCubit.isClosed) {
               widget.inboxCubit.clearSessionData();
+            }
+            if (wasExpired) {
+              AppSnackBar.show(
+                context,
+                'Session expired. Please sign in again.',
+                tone: AppSnackBarTone.warning,
+              );
+            } else if (wasSignedOut) {
+              AppSnackBar.show(
+                context,
+                'Signed out.',
+                tone: AppSnackBarTone.info,
+              );
             }
           case SessionLoading():
             break;

@@ -18,6 +18,12 @@ final class const SessionAuthenticatedRequested({
   List<Object?> get props => [passengerId, passengerName];
 }
 
-final class const SessionGuestRequested() extends SessionEvent {}
+final class const SessionGuestRequested({this.expired = false})
+    extends SessionEvent {
+  final bool expired;
+
+  @override
+  List<Object?> get props => [expired];
+}
 
 final class const SessionLogoutRequested() extends SessionEvent {}

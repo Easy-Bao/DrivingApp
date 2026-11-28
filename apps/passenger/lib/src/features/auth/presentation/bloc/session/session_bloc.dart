@@ -58,7 +58,7 @@ class SessionBloc({required this._sessionRepository})
     final operation = ++_sessionOperation;
     await _sessionRepository.clearSession();
     if (operation != _sessionOperation) return;
-    emit(const GuestSession());
+    emit(GuestSession(wasExpired: event.expired));
   }
 
   Future<void> _onSessionLogoutRequested(
@@ -71,11 +71,11 @@ class SessionBloc({required this._sessionRepository})
     if (operation != _sessionOperation) return;
     result.fold(
       (failure) => emit(SessionFailure(ErrorHandler.getErrorMessage(failure))),
-      (session) => emit(_stateFor(session)),
+      (session) => emit(_stateFor(session, wasSignedOut: true)),
     );
   }
 
-  SessionState _stateFor(Session session) {
+  SessionState _stateFor(Session session, {bool wasSignedOut = false}) {
     final passengerId = session.passengerId;
     if (session.isAuthenticated && passengerId != null) {
       return AuthenticatedSession(
@@ -83,6 +83,6 @@ class SessionBloc({required this._sessionRepository})
         passengerName: session.passengerName,
       );
     }
-    return const GuestSession();
+    return GuestSession(wasSignedOut: wasSignedOut);
   }
 }

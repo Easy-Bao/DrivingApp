@@ -39,7 +39,6 @@ class const _ResetPasswordConfirmPageContent({
         listener: (context, state) {
           if (state is ResetPasswordConfirmSuccess) {
             TextInput.finishAutofillContext();
-            context.goNamed(AuthRoutes.signin);
           }
         },
         builder: (context, state) => AppPasswordResetFlow(
@@ -54,6 +53,8 @@ class const _ResetPasswordConfirmPageContent({
               code.trim().length == 6,
           isSubmitting: state is ResetPasswordConfirmLoading,
           isResending: state is ResetPasswordCodeResending,
+          isCompleted: state is ResetPasswordConfirmSuccess,
+          onCompletedAction: () => context.goNamed(AuthRoutes.signin),
           errorMessage: switch (state) {
             ResetPasswordCodeVerificationFailure(:final errorMessage) ||
             ResetPasswordConfirmFailure(:final errorMessage) => errorMessage,

@@ -72,6 +72,6 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(provider.isDeferredExpiryPending, isFalse);
-    expect(sessionBloc.state, const GuestSession());
+    expect(sessionBloc.state, const GuestSession(wasExpired: true));
   });
 }

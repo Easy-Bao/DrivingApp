@@ -59,7 +59,21 @@ void main() {
     build: () => SessionBloc(sessionRepository: sessionRepository),
     seed: () => const AuthenticatedSession(passengerId: '42'),
     act: (bloc) => bloc.add(const SessionLogoutRequested()),
-    expect: () => [const SessionLoading(), const GuestSession()],
+    expect: () => [
+      const SessionLoading(),
+      const GuestSession(wasSignedOut: true),
+    ],
+    verify: (_) {
+      verify(() => sessionRepository.clearSession()).called(1);
+    },
+  );
+
+  blocTest<SessionBloc, SessionState>(
+    'marks guest session as expired when requested by token expiry',
+    build: () => SessionBloc(sessionRepository: sessionRepository),
+    seed: () => const AuthenticatedSession(passengerId: '42'),
+    act: (bloc) => bloc.add(const SessionGuestRequested(expired: true)),
+    expect: () => [const GuestSession(wasExpired: true)],
     verify: (_) {
       verify(() => sessionRepository.clearSession()).called(1);
     },
