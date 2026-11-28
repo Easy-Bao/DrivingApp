@@ -3,13 +3,14 @@ package mapbox
 import (
 	"context"
 	"fmt"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/places/domain"
 	"math"
 	"net/url"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/places/domain"
 )
 
 func (provider *RoutingProvider) Route(
@@ -72,23 +73,19 @@ func (provider *RoutingProvider) Route(
 }
 
 func routeCacheKey(origin, destination domain.Coordinates, options domain.RouteOptions) string {
-	var builder strings.Builder
-	builder.WriteString(coordinate(origin.Longitude))
-	builder.WriteByte(',')
-	builder.WriteString(coordinate(origin.Latitude))
-	builder.WriteByte(';')
-	builder.WriteString(coordinate(destination.Longitude))
-	builder.WriteByte(',')
-	builder.WriteString(coordinate(destination.Latitude))
-	builder.WriteByte('|')
-	builder.WriteString(string(options.Profile))
+	var buffer [256]byte
+	key := appendRouteCoordinatePair(buffer[:0], origin)
+	key = appendRouteCoordinatePair(append(key, ';'), destination)
+	key = append(append(key, '|'), options.Profile...)
 	for _, point := range options.ExcludePoints {
-		builder.WriteByte('|')
-		builder.WriteString(coordinate(point.Longitude))
-		builder.WriteByte(',')
-		builder.WriteString(coordinate(point.Latitude))
+		key = appendRouteCoordinatePair(append(key, '|'), point)
 	}
-	return builder.String()
+	return string(key)
+}
+
+func appendRouteCoordinatePair(key []byte, point domain.Coordinates) []byte {
+	key = strconv.AppendFloat(key, point.Longitude, 'f', _coordinatePrecision, 64)
+	return strconv.AppendFloat(append(key, ','), point.Latitude, 'f', _coordinatePrecision, 64)
 }
 
 func routeFromMapbox(

@@ -177,6 +177,8 @@ func sanitizeMapboxError(err error) error {
 	return &sanitized
 }
 
+const _coordinatePrecision = 6
+
 func coordinate(value float64) string {
-	return strconv.FormatFloat(value, 'f', 6, 64)
+	return strconv.FormatFloat(value, 'f', _coordinatePrecision, 64)
 }

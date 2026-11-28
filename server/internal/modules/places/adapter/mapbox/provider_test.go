@@ -451,6 +451,24 @@ func TestRouteSupportsTrafficProfileAndExcludedRoadPoints(t *testing.T) {
 	}
 }
 
+func TestRouteCacheKeyPreservesCoordinateFormat(t *testing.T) {
+	key := routeCacheKey(
+		domain.Coordinates{Latitude: -0.0000002, Longitude: -180},
+		domain.Coordinates{Latitude: 90, Longitude: 180},
+		domain.RouteOptions{
+			Profile: domain.RouteProfileDrivingTraffic,
+			ExcludePoints: []domain.Coordinates{
+				{Latitude: 7.83, Longitude: 123.1234567},
+				{Latitude: -5, Longitude: -8.5},
+			},
+		},
+	)
+	const want = "-180.000000,-0.000000;180.000000,90.000000|driving-traffic|123.123457,7.830000|-8.500000,-5.000000"
+	if key != want {
+		t.Fatalf("route cache key = %q, want %q", key, want)
+	}
+}
+
 func TestRouteReusesRecentCalculation(t *testing.T) {
 	provider := NewRoutingProvider("test-token")
 	requestCount := 0
