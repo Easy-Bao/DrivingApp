@@ -353,6 +353,31 @@ void main() {
       await cubit.close();
     });
 
+    test(
+      'restorePlace reinserts removed place at its prior index and default',
+      () async {
+        when(() => mockRepository.savePlaces(any())).thenAnswer((_) async {});
+        final cubit = SavedPlacesCubit(repository: mockRepository);
+        addTearDown(cubit.close);
+
+        await cubit.addPlace(
+          const SavedPlace(label: 'Home', iconName: 'house', isDefault: true),
+        );
+        await cubit.addPlace(
+          const SavedPlace(label: 'Work', iconName: 'briefcase'),
+        );
+        final removed = cubit.state.places.first;
+        await cubit.removePlace(0);
+        expect(cubit.state.places.single.label, 'Work');
+        expect(cubit.state.places.single.isDefault, isTrue);
+
+        await cubit.restorePlace(0, removed);
+        expect(cubit.state.places.map((p) => p.label), ['Home', 'Work']);
+        expect(cubit.state.places.first.isDefault, isTrue);
+        expect(cubit.state.places.last.isDefault, isFalse);
+      },
+    );
+
     test('SavedPlace compares fields by value', () {
       const a = SavedPlace(
         label: 'Home',

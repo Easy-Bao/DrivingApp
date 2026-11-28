@@ -13,11 +13,13 @@ class const AddCategoryPage({
   this.initialPlace,
   this.initialLabel,
   this.initialIconName,
+  this.isEditing = false,
   this.mapPreviewBuilder,
 }) extends StatefulWidget {
   final Place? initialPlace;
   final String? initialLabel;
   final String? initialIconName;
+  final bool isEditing;
   final WidgetBuilder? mapPreviewBuilder;
 
   @override
@@ -173,9 +175,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   }
 
   void _showFailureSnackBar(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    AppSnackBar.show(context, message, tone: AppSnackBarTone.error);
   }
 
   String _iconNameFromData(IconData icon) {
@@ -244,7 +244,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
           icon: Icon(LucideIcons.x, color: colorScheme.onSurface, size: 20),
         ),
         title: Text(
-          'Add place',
+          widget.isEditing ? 'Edit place' : 'Add place',
           style: textStyles.titleLarge?.copyWith(
             fontWeight: FontWeight.w700,
             letterSpacing: -0.3,

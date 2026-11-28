@@ -114,9 +114,14 @@ class _HomePageState extends State<HomePage> {
               previous.errorMessage != current.errorMessage &&
               current.errorMessage != null,
           listener: (context, state) {
+            if (ModalRoute.of(context)?.isCurrent != true) return;
             final errorMessage = state.errorMessage;
             if (errorMessage != null) {
-              AppSnackBar.show(context, errorMessage, isError: true);
+              AppSnackBar.show(
+                context,
+                errorMessage,
+                tone: AppSnackBarTone.error,
+              );
             }
           },
         ),
@@ -176,7 +181,7 @@ class _HomePageState extends State<HomePage> {
                             onPlaceTap: (place) =>
                                 unawaited(_handleSavedPlaceTap(place)),
                             onPlaceLongPress: (index, place) =>
-                                unawaited(_showChipOptions(index, place.label)),
+                                unawaited(_showChipOptions(index, place)),
                             onAddPlace: () =>
                                 unawaited(_openNewSavedPlaceFlow()),
                           ),
@@ -330,6 +335,10 @@ class _HomePageState extends State<HomePage> {
       );
       if (newPlace != null && mounted) {
         await cubit.addPlace(newPlace);
+        if (mounted &&
+            cubit.state.errorSource != SavedPlacesErrorSource.persistence) {
+          AppSnackBar.show(context, '${newPlace.label} saved.');
+        }
       }
     } finally {
       _isSavedPlaceFlowOpen = false;
@@ -544,7 +553,12 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       final updatedPlace = await context.pushNamed<SavedPlace>(
         SavedPlacesRoutes.addCategory,
-        extra: {'place': selectedPlace, 'initialLabel': place.label},
+        extra: {
+          'place': selectedPlace,
+          'initialLabel': place.label,
+          'initialIconName': place.iconName,
+          'isEditing': true,
+        },
       );
       if (updatedPlace != null && mounted) {
         final existingIndex = cubit.state.places.indexOf(place);
@@ -553,7 +567,14 @@ class _HomePageState extends State<HomePage> {
         } else {
           await cubit.addPlace(updatedPlace);
         }
-        await cubit.invalidateAndReload();
+        final hadPersistenceError =
+            cubit.state.errorSource == SavedPlacesErrorSource.persistence;
+        if (!hadPersistenceError) {
+          await cubit.invalidateAndReload();
+          if (mounted) {
+            AppSnackBar.show(context, '${updatedPlace.label} updated.');
+          }
+        }
       }
     }
   }
@@ -568,14 +589,26 @@ class _HomePageState extends State<HomePage> {
     await cubit.loadPlaces();
   }
 
-  Future<void> _showChipOptions(int index, String label) async {
+  Future<void> _showChipOptions(int index, SavedPlace place) async {
     if (!await ensureSavedPlaceAuthentication(context) || !mounted) return;
     await showSavedPlaceChipOptionsSheet(
       context,
-      label: label,
+      label: place.label,
       onRemove: () async {
         if (!mounted) return;
-        await BlocProvider.of<SavedPlacesCubit>(context).removePlace(index);
+        final cubit = BlocProvider.of<SavedPlacesCubit>(context);
+        await cubit.removePlace(index);
+        if (!mounted) return;
+        if (cubit.state.errorSource == SavedPlacesErrorSource.persistence) {
+          return;
+        }
+        AppSnackBar.show(
+          context,
+          '${place.label} removed.',
+          tone: AppSnackBarTone.info,
+          actionLabel: 'Undo',
+          onAction: () => unawaited(cubit.restorePlace(index, place)),
+        );
       },
     );
   }

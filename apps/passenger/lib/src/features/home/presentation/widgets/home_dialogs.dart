@@ -211,109 +211,83 @@ Future<void> showSavedPlaceChipOptionsSheet(
 }) {
   return showModalBottomSheet<void>(
     context: context,
+    showDragHandle: false,
     backgroundColor: Colors.transparent,
     builder: (sheetContext) {
       final colors = sheetContext.colorScheme;
-      return SafeArea(
-        top: false,
-        child: Container(
-          margin: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            0,
-            AppSpacing.lg,
-            AppSpacing.xxl,
-          ),
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(AppRadius.sheet),
-            border: Border.all(color: colors.outlineVariant),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: AppSpacing.sm),
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colors.outlineVariant,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
+      return AppBottomSheetContainer(
+        padding: const EdgeInsets.fromLTRB(
+          AppLayout.pagePadding,
+          AppSpacing.md,
+          AppLayout.pagePadding,
+          AppSpacing.md,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: sheetContext.textStyles.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colors.onSurface,
               ),
-              const SizedBox(height: AppSpacing.lg),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppLayout.pagePadding,
-                ),
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: sheetContext.textStyles.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colors.onSurface,
-                  ),
-                ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Divider(
+              height: 1,
+              color: colors.outlineVariant.withValues(alpha: 0.7),
+            ),
+            InkWell(
+              enableFeedback: false,
+              splashFactory: NoSplash.splashFactory,
+              overlayColor: WidgetStateProperty.resolveWith(
+                (states) => states.contains(WidgetState.focused)
+                    ? colors.error.withValues(alpha: 0.12)
+                    : Colors.transparent,
               ),
-              const SizedBox(height: AppSpacing.lg),
-              Divider(
-                height: 1,
-                color: colors.outlineVariant.withValues(alpha: 0.7),
-              ),
-              Material(
-                type: MaterialType.transparency,
-                child: InkWell(
-                  enableFeedback: false,
-                  splashFactory: NoSplash.splashFactory,
-                  overlayColor: WidgetStateProperty.resolveWith(
-                    (states) => states.contains(WidgetState.focused)
-                        ? colors.error.withValues(alpha: 0.12)
-                        : Colors.transparent,
-                  ),
-                  onTap: () async {
-                    Navigator.of(sheetContext).pop();
-                    await onRemove();
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppLayout.pagePadding,
-                      vertical: AppSpacing.md,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: colors.error.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            LucideIcons.trash_2,
-                            color: colors.error,
-                            size: 17,
-                          ),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              onTap: () async {
+                Navigator.of(sheetContext).pop();
+                await onRemove();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: colors.error.withValues(alpha: 0.3),
                         ),
-                        const SizedBox(width: AppSpacing.md),
-                        Text(
-                          'Remove shortcut',
-                          style: sheetContext.textStyles.bodyLarge?.copyWith(
-                            color: colors.error,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        LucideIcons.trash_2,
+                        color: colors.error,
+                        size: 17,
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: AppSpacing.md),
+                    Text(
+                      'Remove shortcut',
+                      style: sheetContext.textStyles.bodyLarge?.copyWith(
+                        color: colors.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     },

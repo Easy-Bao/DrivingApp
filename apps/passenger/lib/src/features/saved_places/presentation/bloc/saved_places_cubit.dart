@@ -119,6 +119,25 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
     });
   }
 
+  Future<void> restorePlace(int index, SavedPlace place) {
+    return _enqueueMutation(() async {
+      final base = place.isDefault
+          ? [
+              for (final existing in state.places)
+                existing.copyWith(isDefault: false),
+            ]
+          : [...state.places];
+      final targetIndex = index.clamp(0, base.length);
+      base.insert(targetIndex, place);
+      await _persistPlaces(base);
+    });
+  }
+
+  void dismissError() {
+    if (isClosed || state.errorMessage == null) return;
+    emit(state.copyWith(clearErrorMessage: true));
+  }
+
   Future<void> replacePlace(int index, SavedPlace place) {
     return _enqueueMutation(() async {
       if (index < 0 || index >= state.places.length) return;

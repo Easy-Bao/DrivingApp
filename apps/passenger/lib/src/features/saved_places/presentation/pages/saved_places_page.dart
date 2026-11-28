@@ -62,6 +62,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
           'place': selectedPlace,
           'initialLabel': label,
           'initialIconName': iconName,
+          'isEditing': existing != null,
         },
       );
       if (configuredPlace == null || !mounted) return;
@@ -72,7 +73,8 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
               (place) =>
                   place.label.toLowerCase() == existing.label.toLowerCase(),
             );
-      if (existingIndex == -1) {
+      final isUpdating = existingIndex != -1;
+      if (!isUpdating) {
         await cubit.addPlace(configuredPlace);
       } else {
         await cubit.replacePlace(existingIndex, configuredPlace);
@@ -86,6 +88,14 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
         return;
       }
       await cubit.invalidateAndReload();
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          isUpdating
+              ? '${configuredPlace.label} updated.'
+              : '${configuredPlace.label} saved.',
+        );
+      }
     } finally {
       _isPlaceFlowOpen = false;
     }
@@ -109,10 +119,12 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       if (newPlace != null && mounted) {
         await cubit.addPlace(newPlace);
         final error = cubit.state.errorMessage;
-        if (mounted &&
-            error != null &&
+        if (!mounted) return;
+        if (error != null &&
             cubit.state.errorSource == SavedPlacesErrorSource.persistence) {
           _showFailureSnackBar(error);
+        } else {
+          AppSnackBar.show(context, '${newPlace.label} saved.');
         }
       }
     } finally {
@@ -129,20 +141,37 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
         onChangeLocation: () => unawaited(
           _addOrUpdatePlace(place.label, place.iconName, existing: place),
         ),
-        onRemove: () {
-          if (!mounted) return;
-          unawaited(
-            BlocProvider.of<SavedPlacesCubit>(context).removePlace(index),
-          );
-        },
+        onRemove: () => unawaited(_removePlace(place, index)),
       ),
     );
   }
 
-  Future<void> _setDefaultPlace(int index) async {
+  Future<void> _removePlace(SavedPlace place, int index) async {
     if (!mounted) return;
     final cubit = BlocProvider.of<SavedPlacesCubit>(context);
-    await cubit.setDefaultPlace(index);
+    await cubit.removePlace(index);
+    if (!mounted) return;
+
+    final error = cubit.state.errorMessage;
+    if (error != null &&
+        cubit.state.errorSource == SavedPlacesErrorSource.persistence) {
+      _showFailureSnackBar(error);
+      return;
+    }
+
+    AppSnackBar.show(
+      context,
+      '${place.label} removed.',
+      tone: AppSnackBarTone.info,
+      actionLabel: 'Undo',
+      onAction: () => unawaited(_restorePlace(index, place)),
+    );
+  }
+
+  Future<void> _restorePlace(int index, SavedPlace place) async {
+    if (!mounted) return;
+    final cubit = BlocProvider.of<SavedPlacesCubit>(context);
+    await cubit.restorePlace(index, place);
     if (!mounted) return;
 
     final error = cubit.state.errorMessage;
@@ -152,11 +181,26 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     }
   }
 
+  Future<void> _setDefaultPlace(int index) async {
+    if (!mounted) return;
+    final cubit = BlocProvider.of<SavedPlacesCubit>(context);
+    if (index < 0 || index >= cubit.state.places.length) return;
+    final placeLabel = cubit.state.places[index].label;
+    await cubit.setDefaultPlace(index);
+    if (!mounted) return;
+
+    final error = cubit.state.errorMessage;
+    if (error != null &&
+        cubit.state.errorSource == SavedPlacesErrorSource.persistence) {
+      _showFailureSnackBar(error);
+      return;
+    }
+    AppSnackBar.show(context, '$placeLabel set as Home quick action.');
+  }
+
   void _showFailureSnackBar(String message) {
     if (AppNetworkStatusScope.isUnavailableOf(context)) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    AppSnackBar.show(context, message, tone: AppSnackBarTone.error);
   }
 
   @override
@@ -273,6 +317,8 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
             onRetry: () => unawaited(
               BlocProvider.of<SavedPlacesCubit>(context).loadPlaces(),
             ),
+            onDismiss: () =>
+                BlocProvider.of<SavedPlacesCubit>(context).dismissError(),
           ),
           const SizedBox(height: AppSpacing.lg),
         ],

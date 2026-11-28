@@ -16,98 +16,81 @@ Future<void> showSavedPlaceOptionsSheet(
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: false,
-    backgroundColor: colorScheme.surfaceContainerLowest,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(
-        top: Radius.circular(AppRadius.sheet),
-      ),
-    ),
+    backgroundColor: Colors.transparent,
     builder: (sheetContext) {
-      return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppLayout.pagePadding,
-            AppSpacing.md,
-            AppLayout.pagePadding,
-            AppSpacing.md,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                ),
+      return AppBottomSheetContainer(
+        padding: const EdgeInsets.fromLTRB(
+          AppLayout.pagePadding,
+          AppSpacing.md,
+          AppLayout.pagePadding,
+          AppSpacing.md,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              place.label,
+              textAlign: TextAlign.center,
+              style: textStyles.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: colorScheme.onSurface,
               ),
-              const SizedBox(height: AppSpacing.xl),
+            ),
+            if (place.savedAddress case final savedAddress?
+                when savedAddress.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.xs),
               Text(
-                place.label,
+                savedAddress,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: textStyles.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.onSurface,
+                style: textStyles.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  height: 1.4,
                 ),
-              ),
-              if (place.savedAddress case final savedAddress?
-                  when savedAddress.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  savedAddress,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: textStyles.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-              const SizedBox(height: AppSpacing.lg),
-              const SavedPlacesHairline(),
-              _SavedPlaceSheetAction(
-                icon: place.isDefault
-                    ? LucideIcons.circle_check
-                    : LucideIcons.circle,
-                title: place.isDefault
-                    ? 'Default Home quick action'
-                    : 'Set as Home quick action',
-                subtitle: place.isDefault
-                    ? 'Shown as the only saved place on Home'
-                    : 'Show this place as the only saved place on Home',
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  if (!place.isDefault) {
-                    onSetDefault();
-                  }
-                },
-              ),
-              const SavedPlacesHairline(indent: 36),
-              _SavedPlaceSheetAction(
-                icon: LucideIcons.pencil,
-                title: 'Change location',
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  onChangeLocation();
-                },
-              ),
-              const SavedPlacesHairline(indent: 36),
-              _SavedPlaceSheetAction(
-                icon: LucideIcons.trash_2,
-                title: 'Remove shortcut',
-                isDestructive: true,
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  onRemove();
-                },
               ),
             ],
-          ),
+            const SizedBox(height: AppSpacing.lg),
+            const SavedPlacesHairline(),
+            _SavedPlaceSheetAction(
+              icon: place.isDefault
+                  ? LucideIcons.circle_check
+                  : LucideIcons.circle,
+              title: place.isDefault
+                  ? 'Default Home quick action'
+                  : 'Set as Home quick action',
+              subtitle: place.isDefault
+                  ? 'Shown as the only saved place on Home'
+                  : 'Show this place as the only saved place on Home',
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                if (!place.isDefault) {
+                  onSetDefault();
+                }
+              },
+            ),
+            const SavedPlacesHairline(indent: 36),
+            _SavedPlaceSheetAction(
+              icon: LucideIcons.pencil,
+              title: 'Change location',
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                onChangeLocation();
+              },
+            ),
+            const SavedPlacesHairline(indent: 36),
+            _SavedPlaceSheetAction(
+              icon: LucideIcons.trash_2,
+              title: 'Remove shortcut',
+              isDestructive: true,
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                onRemove();
+              },
+            ),
+          ],
         ),
       );
     },

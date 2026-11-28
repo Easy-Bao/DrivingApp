@@ -1,3 +1,4 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -25,6 +26,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: AppTheme.main,
         home: BlocProvider.value(value: cubit, child: const SavedPlacePage()),
       ),
     );
@@ -45,8 +47,52 @@ void main() {
     expect(cubit.state.defaultPlace?.label, 'Near Bathroom');
     expect(cubit.state.places.where((place) => place.isDefault), hasLength(1));
     expect(find.text('Default'), findsOneWidget);
+    expect(
+      find.text('Near Bathroom set as Home quick action.'),
+      findsOneWidget,
+    );
 
     await cubit.close();
+  });
+
+  testWidgets('removes a saved place with an undo confirmation snackbar', (
+    tester,
+  ) async {
+    final repository = MockSavedPlacesRepository();
+    when(() => repository.loadPlaces()).thenAnswer(
+      (_) async => const <SavedPlace>[
+        SavedPlace(label: 'Home', iconName: 'house', isDefault: true),
+        SavedPlace(label: 'Gym', iconName: 'dumbbell'),
+      ],
+    );
+    when(() => repository.savePlaces(any())).thenAnswer((_) async {});
+    final cubit = SavedPlacesCubit(repository: repository);
+    addTearDown(cubit.close);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        home: BlocProvider.value(value: cubit, child: const SavedPlacePage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final gymTile = find.byKey(const ValueKey<String>('saved-place-Gym'));
+    await tester.scrollUntilVisible(gymTile, 300);
+    await tester.tap(gymTile);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Remove shortcut'));
+    await tester.pumpAndSettle();
+
+    expect(cubit.state.places.any((p) => p.label == 'Gym'), isFalse);
+    expect(find.text('Gym removed.'), findsOneWidget);
+    expect(find.text('Undo'), findsOneWidget);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    expect(cubit.state.places.any((p) => p.label == 'Gym'), isTrue);
   });
 
   testWidgets('keeps the redesigned shortcuts usable on a narrow screen', (

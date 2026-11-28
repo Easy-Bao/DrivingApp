@@ -46,10 +46,12 @@ class SavedPlacesModule._() {
         final place = extra['place'] as Place?;
         final initialLabel = extra['initialLabel'] as String?;
         final initialIconName = extra['initialIconName'] as String?;
+        final isEditing = extra['isEditing'] as bool? ?? false;
         return AddCategoryPage(
           initialPlace: place,
           initialLabel: initialLabel,
           initialIconName: initialIconName,
+          isEditing: isEditing,
         );
       },
       transition: AppTransitions.push.toLeft,

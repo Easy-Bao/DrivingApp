@@ -87,4 +87,33 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('displays Edit place title when editing an existing place', (
+    tester,
+  ) async {
+    const place = Place(
+      id: 'place-1',
+      name: 'Home',
+      fullAddress: '123 Main St',
+      latitude: 14.5505,
+      longitude: 121.0509,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.main,
+        home: AddCategoryPage(
+          initialPlace: place,
+          initialLabel: 'Home',
+          initialIconName: 'house',
+          isEditing: true,
+          mapPreviewBuilder: (_) => const ColoredBox(color: Colors.transparent),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit place'), findsOneWidget);
+    expect(find.text('Add place'), findsNothing);
+  });
 }
