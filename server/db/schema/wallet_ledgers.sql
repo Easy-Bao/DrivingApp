@@ -10,9 +10,7 @@ CREATE TABLE wallet_ledgers (
     CONSTRAINT wallet_ledgers_driver_fk
         FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE RESTRICT,
     CONSTRAINT wallet_ledgers_ride_fk
-        FOREIGN KEY (ride_id) REFERENCES rides (id) ON DELETE RESTRICT,
-    CONSTRAINT wallet_ledgers_idempotency_key_required
-        CHECK (idempotency_key IS NOT NULL)
+        FOREIGN KEY (ride_id) REFERENCES rides (id) ON DELETE RESTRICT
 );
 
 CREATE UNIQUE INDEX wallet_ledgers_idempotency_key_uidx

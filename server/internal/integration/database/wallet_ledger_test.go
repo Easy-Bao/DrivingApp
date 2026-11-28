@@ -4,6 +4,7 @@ package database_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"testing"
@@ -12,6 +13,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/db/migrations"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func TestWalletLedgerSupportsSecondaryEntriesAndIdempotency(t *testing.T) {
@@ -158,4 +160,43 @@ func executeEmbeddedMigration(ctx context.Context, connection *pgx.Conn, name st
 	}
 	_, err = connection.PgConn().Exec(ctx, string(sql)).ReadAll()
 	return err
+}
+
+func TestWalletLedgerKeyNotNullMigrationPreservesKeysAndNullProtection(t *testing.T) {
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	defer cancel()
+	conn := openIsolatedSchemaConn(t, ctx, "wallet_ledger_key")
+	if _, err := conn.Exec(ctx, `
+CREATE TABLE wallet_ledgers (
+    idempotency_key text UNIQUE DEFAULT gen_random_uuid()::text,
+    CONSTRAINT wallet_ledgers_idempotency_key_required CHECK (idempotency_key IS NOT NULL)
+);
+INSERT INTO wallet_ledgers (idempotency_key) VALUES ('existing-key');`); err != nil {
+		t.Fatal(err)
+	}
+	for _, step := range []struct {
+		direction, nullability, nullErrorCode string
+	}{
+		{"up", "NO", "23502"},
+		{"down", "YES", "23514"},
+	} {
+		if err := executeEmbeddedMigration(ctx, conn, "2026112803_wallet_ledger_key_not_null."+step.direction+".sql"); err != nil {
+			t.Fatalf("%s migration: %v", step.direction, err)
+		}
+		var nullability string
+		if err := conn.QueryRow(ctx, `
+SELECT is_nullable FROM information_schema.columns
+WHERE table_schema = current_schema() AND table_name = 'wallet_ledgers' AND column_name = 'idempotency_key'`,
+		).Scan(&nullability); err != nil || nullability != step.nullability {
+			t.Fatalf("%s ledger key nullability = %q, want %q: %v", step.direction, nullability, step.nullability, err)
+		}
+		var key string
+		if err := conn.QueryRow(ctx, "SELECT idempotency_key FROM wallet_ledgers").Scan(&key); err != nil || key != "existing-key" {
+			t.Fatalf("%s existing ledger key = %q: %v", step.direction, key, err)
+		}
+		_, err := conn.Exec(ctx, "INSERT INTO wallet_ledgers VALUES (NULL)")
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); !ok || pgErr.Code != step.nullErrorCode {
+			t.Fatalf("%s insert null ledger key: got %v, want %s", step.direction, err, step.nullErrorCode)
+		}
+	}
 }
