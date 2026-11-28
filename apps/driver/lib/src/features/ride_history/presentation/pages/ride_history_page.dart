@@ -218,6 +218,9 @@ class _TripHistoryPageState extends State<TripHistoryPage>
                         message: errorMessage,
                         onRetry: () =>
                             BlocProvider.of<TripHistoryCubit>(context).load(),
+                        onDismiss: () =>
+                            BlocProvider.of<TripHistoryCubit>(context)
+                                .dismissError(),
                       ),
                     );
                   }

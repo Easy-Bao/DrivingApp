@@ -101,6 +101,19 @@ void main() {
     );
     expect(saveButton.style?.enableFeedback, isFalse);
     expect(saveButton.style?.splashFactory, NoSplash.splashFactory);
+
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('driver-account-field-Vehicle Type')),
+      'SUV',
+    );
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const ValueKey<String>('driver-account-details-save')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Vehicle information updated.'), findsOneWidget);
+    expect(cubit.state.account.vehicleType, 'SUV');
     expect(tester.takeException(), isNull);
   });
 }

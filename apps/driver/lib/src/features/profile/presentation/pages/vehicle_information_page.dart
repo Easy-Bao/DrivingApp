@@ -47,6 +47,10 @@ class _VehicleInformationPageState extends State<VehicleInformationPage> {
 
   void _handleFieldChanged() {
     if (!mounted) return;
+    final cubit = BlocProvider.of<AccountCubit>(context);
+    if (cubit.state.errorMessage != null) {
+      cubit.dismissError();
+    }
     setState(() => _validationError = null);
   }
 
@@ -79,12 +83,12 @@ class _VehicleInformationPageState extends State<VehicleInformationPage> {
     );
     if (!mounted || !context.mounted) return;
     if (success) {
-      AppSnackBar.show(context, 'Vehicle information updated.');
       final onBack = widget.onBack;
       if (onBack != null) {
+        AppSnackBar.show(context, 'Vehicle information updated.');
         onBack();
       } else {
-        context.pop();
+        context.pop<bool>(true);
       }
     }
   }

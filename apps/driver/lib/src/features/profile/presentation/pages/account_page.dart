@@ -55,10 +55,7 @@ class _AccountPageState extends State<AccountPage> {
                         AccountProfileHeader(
                           account: state.account,
                           onTap: () => unawaited(
-                            _openEditableDestination(
-                              context,
-                              ProfileRoutes.personalDetails,
-                            ),
+                            context.pushNamed(ProfileRoutes.personalDetails),
                           ),
                         ),
                         if (state.isLoading) ...[
@@ -93,12 +90,8 @@ class _AccountPageState extends State<AccountPage> {
                               icon: LucideIcons.car_front,
                               title: 'Vehicle information',
                               subtitle: _vehicleSummary(state.account),
-                              onTap: () => unawaited(
-                                _openEditableDestination(
-                                  context,
-                                  ProfileRoutes.vehicleInformation,
-                                ),
-                              ),
+                              onTap: () =>
+                                  unawaited(_openVehicleInformation(context)),
                             ),
                             AppSettingsNavigationTile(
                               icon: LucideIcons.trending_up,
@@ -124,13 +117,17 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Future<void> _openEditableDestination(
-    BuildContext context,
-    String routeName,
-  ) async {
+  Future<void> _openVehicleInformation(BuildContext context) async {
     final accountCubit = BlocProvider.of<AccountCubit>(context);
-    await context.pushNamed(routeName);
-    if (context.mounted) unawaited(accountCubit.load());
+    final updated = await context.pushNamed<bool>(
+      ProfileRoutes.vehicleInformation,
+    );
+    if (!context.mounted) return;
+    if (updated == true) {
+      AppSnackBar.show(context, 'Vehicle information updated.');
+      return;
+    }
+    unawaited(accountCubit.load());
   }
 
   String _vehicleSummary(AccountSnapshot account) {

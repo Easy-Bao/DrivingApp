@@ -68,10 +68,6 @@ class const PerformancePage({super.key, this.onBack, this.onRefresh})
                   48,
                 ),
                 children: [
-                  if (state.isLoading && stats != null) ...[
-                    const LinearProgressIndicator(minHeight: 2),
-                    const SizedBox(height: AppSpacing.lg),
-                  ],
                   if (stats != null)
                     ..._buildStatsSections(stats, hairline)
                   else if (state.isLoading)

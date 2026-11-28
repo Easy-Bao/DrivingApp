@@ -124,6 +124,11 @@ class TripHistoryCubit({
     return [...tripsById.values, ...withoutId];
   }
 
+  void dismissError() {
+    if (isClosed || state.errorMessage == null) return;
+    emit(state.copyWith(clearError: true));
+  }
+
   void _emitInitialFailure(String message) {
     if (isClosed) return;
     final hasExistingTrips = state.trips.isNotEmpty;

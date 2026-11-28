@@ -68,6 +68,7 @@ class const PersonalDetailsPage({super.key, this.onBack})
                     icon: LucideIcons.user_round,
                     label: 'Full name',
                     value: account.name,
+                    isVerifiedLocked: true,
                   ),
                   insetHairline,
                   _ContactDetailRow(

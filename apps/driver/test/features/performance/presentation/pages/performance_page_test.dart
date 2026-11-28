@@ -149,4 +149,83 @@ void main() {
     expect(find.text('5 star'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'does not render a duplicate progress bar while refreshing stats',
+    (tester) async {
+      final repository = _MockPerformanceRepository();
+      final sessionService = _MockSessionService();
+      final refreshCompleter = Completer<Result<PerformanceStats, Failure>>();
+      var calls = 0;
+      when(() => sessionService.readDriverId())
+          .thenAnswer((_) async => 'driver-1');
+      when(() => repository.fetchStats('driver-1')).thenAnswer((_) {
+        calls++;
+        if (calls == 1) {
+          return Future.value(
+            const Ok(
+              PerformanceStats(
+                todayEarningsAmount: 10000,
+                todayCompletedTrips: 1,
+                totalTrips: 2,
+                completedTrips: 2,
+                totalEarningsAmount: 20000,
+                averageRating: 4.9,
+                standing: DriverStanding(
+                  settledTrips: 2,
+                  completionRatePercent: 100,
+                ),
+              ),
+            ),
+          );
+        }
+        return refreshCompleter.future;
+      });
+
+      final cubit = PerformanceCubit(
+        repository: repository,
+        sessionService: sessionService,
+      );
+      addTearDown(cubit.close);
+      await cubit.load();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: BlocProvider<PerformanceCubit>.value(
+            value: cubit,
+            child: PerformancePage(onBack: () {}),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      unawaited(cubit.load());
+      await tester.pump();
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is LinearProgressIndicator && widget.value == null,
+        ),
+        findsNothing,
+      );
+
+      refreshCompleter.complete(
+        const Ok(
+          PerformanceStats(
+            todayEarningsAmount: 10000,
+            todayCompletedTrips: 1,
+            totalTrips: 2,
+            completedTrips: 2,
+            totalEarningsAmount: 20000,
+            averageRating: 4.9,
+            standing: DriverStanding(
+              settledTrips: 2,
+              completionRatePercent: 100,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    },
+  );
 }
