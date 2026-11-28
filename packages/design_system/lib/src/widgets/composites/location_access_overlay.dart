@@ -1,8 +1,8 @@
+import 'package:design_system/src/theme/semantic_colors.dart';
 import 'package:design_system/src/theme/theme_context.dart';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
 import 'package:design_system/src/tokens/spacing.dart';
-import 'package:design_system/src/tokens/status_colors.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -98,11 +98,13 @@ class const _LocationAccessSheet({
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final semanticColors = context.semanticColors;
     final presentation = _presentation;
     final primaryAction = _primaryAction;
+    final (badgeBg, badgeFg) = presentation.colors(colorScheme, semanticColors);
     return Material(
       key: const ValueKey<String>('location-access-overlay-sheet'),
-      color: colorScheme.surface,
+      color: colorScheme.surfaceContainerLowest,
       elevation: 0,
       borderRadius: const BorderRadius.vertical(
         top: Radius.circular(AppRadius.sheet),
@@ -113,10 +115,10 @@ class const _LocationAccessSheet({
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.sm,
-            AppSpacing.lg,
-            AppSpacing.lg,
+            AppSpacing.xl,
+            AppSpacing.xl,
+            AppSpacing.xl,
+            AppSpacing.xl,
           ),
           child: Align(
             alignment: Alignment.topCenter,
@@ -126,69 +128,60 @@ class const _LocationAccessSheet({
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: colorScheme.onSurfaceVariant.withValues(
-                          alpha: 0.45,
-                        ),
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: AppSize.controlHeight,
-                        height: AppSize.controlHeight,
-                        decoration: BoxDecoration(
-                          color: presentation
-                              .color(colorScheme)
-                              .withValues(alpha: 0.13),
-                          borderRadius: BorderRadius.circular(17),
-                        ),
-                        alignment: Alignment.center,
-                        child: state == LocationAccessOverlayState.checking
-                            ? SizedBox.square(
-                                dimension: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.4,
-                                  color: presentation.color(colorScheme),
+                      ExcludeSemantics(
+                        child: Container(
+                          width: AppSize.controlHeight,
+                          height: AppSize.controlHeight,
+                          decoration: BoxDecoration(
+                            color: badgeBg,
+                            borderRadius: BorderRadius.circular(17),
+                          ),
+                          alignment: Alignment.center,
+                          child: state == LocationAccessOverlayState.checking
+                              ? SizedBox.square(
+                                  dimension: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.4,
+                                    color: badgeFg,
+                                  ),
+                                )
+                              : Icon(
+                                  presentation.icon,
+                                  size: 24,
+                                  color: badgeFg,
                                 ),
-                              )
-                            : Icon(
-                                presentation.icon,
-                                size: 24,
-                                color: presentation.color(colorScheme),
-                              ),
+                        ),
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              presentation.title,
-                              style: Theme.of(context).textTheme.titleLarge
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.3,
-                                  ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              message ?? presentation.message,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                    height: 1.35,
-                                  ),
-                            ),
-                          ],
+                        child: Semantics(
+                          container: true,
+                          liveRegion: true,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                presentation.title,
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.3,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                message ?? presentation.message,
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                      height: 1.35,
+                                    ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -310,12 +303,27 @@ class const _LocationAccessPresentation({
   final String message;
   final _LocationAccessTone tone;
 
-  Color color(ColorScheme colorScheme) {
+  (Color, Color) colors(
+    ColorScheme colorScheme,
+    AppSemanticColors semanticColors,
+  ) {
     return switch (tone) {
-      _LocationAccessTone.neutral => colorScheme.onSurfaceVariant,
-      _LocationAccessTone.primary => colorScheme.primary,
-      _LocationAccessTone.warning => AppStatusColors.warning,
-      _LocationAccessTone.error => colorScheme.error,
+      _LocationAccessTone.neutral => (
+        colorScheme.surfaceContainerHighest,
+        colorScheme.onSurfaceVariant,
+      ),
+      _LocationAccessTone.primary => (
+        colorScheme.primaryContainer,
+        colorScheme.onPrimaryContainer,
+      ),
+      _LocationAccessTone.warning => (
+        semanticColors.warningContainer,
+        semanticColors.onWarningContainer,
+      ),
+      _LocationAccessTone.error => (
+        colorScheme.errorContainer,
+        colorScheme.onErrorContainer,
+      ),
     };
   }
 }

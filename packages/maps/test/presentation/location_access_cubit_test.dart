@@ -112,6 +112,34 @@ void main() {
 
       await expectLater(startFuture, completes);
     });
+
+    test(
+      'emits checking state when refresh is triggered with showChecking',
+      () async {
+        final repository = _FakeLocationAccessRepository(
+          LocationAccessState.serviceDisabled,
+        );
+        final cubit = LocationAccessCubit(repository: repository);
+        addTearDown(cubit.close);
+
+        await cubit.start();
+        final states = <LocationAccessViewState>[];
+        final subscription = cubit.stream.listen(states.add);
+        addTearDown(subscription.cancel);
+
+        await cubit.refresh(showChecking: true);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(states, const [
+          LocationAccessChecking(),
+          LocationAccessUnavailable(
+            accessState: LocationAccessState.serviceDisabled,
+            message:
+                'Turn on device location in Settings, then return to EasyRide.',
+          ),
+        ]);
+      },
+    );
   });
 
   group(LocationAccessOverlayScope, () {

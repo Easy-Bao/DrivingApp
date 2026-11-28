@@ -66,14 +66,14 @@ class LocationAccessOverlayScope extends StatelessWidget {
             appName: appName,
             message: message,
             onOpenLocationSettings: () => unawaited(cubit.enable()),
-            onTryAgain: () => unawaited(cubit.refresh()),
+            onTryAgain: () => unawaited(cubit.refresh(showChecking: true)),
           ),
           LocationAccessState.deniedForever => LocationAccessOverlay(
             state: LocationAccessOverlayState.permissionDeniedForever,
             appName: appName,
             message: message,
             onOpenAppSettings: () => unawaited(cubit.enable()),
-            onTryAgain: () => unawaited(cubit.refresh()),
+            onTryAgain: () => unawaited(cubit.refresh(showChecking: true)),
           ),
         },
     };

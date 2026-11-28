@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:design_system/src/theme/theme_context.dart';
 import 'package:design_system/src/tokens/spacing.dart';
+import 'package:design_system/src/widgets/feedback/completion_view.dart';
 import 'package:design_system/src/widgets/inputs/verification_code_field.dart';
 import 'package:design_system/src/widgets/layout/auth_layout.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -24,6 +26,11 @@ class AppPasswordResetFlow extends StatefulWidget {
     this.isCodeVerified = false,
     this.isSubmitting = false,
     this.isResending = false,
+    this.isCompleted = false,
+    this.completedTitle = 'Password updated',
+    this.completedMessage = 'Your password has been reset. You can now sign in with your new password.',
+    this.completedActionLabel = 'Back to sign in',
+    this.onCompletedAction,
     this.errorMessage,
   });
 
@@ -41,6 +48,11 @@ class AppPasswordResetFlow extends StatefulWidget {
   final bool isCodeVerified;
   final bool isSubmitting;
   final bool isResending;
+  final bool isCompleted;
+  final String completedTitle;
+  final String completedMessage;
+  final String completedActionLabel;
+  final VoidCallback? onCompletedAction;
   final String? errorMessage;
 
   @override
@@ -59,6 +71,8 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
   bool _showConfirmation = false;
   bool _dismissedError = false;
   bool _suppressingCodeListener = false;
+  bool _showCodeResentNotice = false;
+  bool _showCodeVerifiedNotice = false;
   String? _codeError;
   String? _passwordError;
   String? _confirmationError;
@@ -95,6 +109,13 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
         (oldWidget.isSubmitting && !widget.isSubmitting)) {
       _dismissedError = false;
     }
+    if (widget.isResending && !oldWidget.isResending) {
+      _showCodeResentNotice = false;
+    }
+    if (!oldWidget.isCompleted && widget.isCompleted) {
+      FocusScope.of(context).unfocus();
+      unawaited(HapticFeedback.mediumImpact());
+    }
     if (!oldWidget.isCodeVerified &&
         widget.isCodeVerified &&
         !oldWidget.isResending &&
@@ -105,6 +126,9 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
       _passwordStep = true;
       _codeError = null;
       _dismissedError = true;
+      _showCodeResentNotice = false;
+      _showCodeVerifiedNotice = true;
+      unawaited(HapticFeedback.lightImpact());
     }
     if (oldWidget.isResending &&
         !widget.isResending &&
@@ -117,6 +141,9 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
       }
       _passwordStep = false;
       _codeError = null;
+      _showCodeVerifiedNotice = false;
+      _showCodeResentNotice = true;
+      unawaited(HapticFeedback.lightImpact());
       _startResendTimer();
     }
   }
@@ -126,6 +153,7 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
     final hadInlineError = _codeError != null || !_dismissedError;
     _codeError = null;
     _dismissedError = true;
+    _showCodeResentNotice = false;
     if (hadInlineError) {
       widget.onCodeChanged?.call();
     }
@@ -199,6 +227,7 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
       setState(() {
         _passwordStep = false;
         _dismissedError = true;
+        _showCodeVerifiedNotice = false;
       });
       widget.onStepBack?.call();
     } else {
@@ -226,6 +255,34 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.isCompleted) {
+      final completeAction = widget.onCompletedAction ?? widget.onBack;
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) completeAction();
+        },
+        child: Scaffold(
+          backgroundColor: context.colorScheme.surface,
+          body: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: SingleChildScrollView(
+                  child: AppCompletionView(
+                    title: widget.completedTitle,
+                    message: widget.completedMessage,
+                    primaryActionLabel: widget.completedActionLabel,
+                    onPrimaryAction: completeAction,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final codeError = _codeError ?? _activeErrorMessage;
     final submitError = _activeErrorMessage;
     final showButtonSpinner = _passwordStep
@@ -300,7 +357,22 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
                 ),
               ],
             ),
+            if (_showCodeResentNotice) ...[
+              const SizedBox(height: AppSpacing.sm),
+              _statusNotice(
+                key: const ValueKey<String>('password-reset-resent-notice'),
+                message:
+                    'New verification code sent to ${widget.email.trim()}.',
+              ),
+            ],
           ] else ...[
+            if (_showCodeVerifiedNotice) ...[
+              _statusNotice(
+                key: const ValueKey<String>('password-reset-verified-notice'),
+                message: 'Verification code confirmed.',
+              ),
+              const SizedBox(height: AppSpacing.lg),
+            ],
             AutofillGroup(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -416,15 +488,43 @@ class _AppPasswordResetFlowState extends State<AppPasswordResetFlow> {
     ],
   );
 
+  Widget _statusNotice({required Key key, required String message}) {
+    final semanticColors = context.semanticColors;
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      child: Row(
+        key: key,
+        children: [
+          ExcludeSemantics(
+            child: Icon(
+              LucideIcons.circle_check,
+              size: 16,
+              color: semanticColors.success,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: context.textStyles.bodySmall?.copyWith(
+                color: semanticColors.onSuccessContainer,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _requirement(String label, bool met) => Semantics(
     label: '$label, ${met ? 'met' : 'not met'}',
     child: ExcludeSemantics(
       child: Row(
         children: [
           Icon(
-            met
-                ? Icons.check_circle_outline_rounded
-                : Icons.radio_button_unchecked_rounded,
+            met ? LucideIcons.circle_check : LucideIcons.circle,
             size: 18,
             color: met
                 ? context.semanticColors.success

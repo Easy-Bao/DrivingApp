@@ -265,4 +265,65 @@ void main() {
     expect(find.text('Delivery failed.'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+
+  testWidgets(
+    'surfaces inline resend and verified cues and renders completion state',
+    (tester) async {
+      var resending = false;
+      var verified = false;
+      var completed = false;
+      var completedActionTapped = false;
+      late StateSetter update;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.main,
+          home: StatefulBuilder(
+            builder: (context, setState) {
+              update = setState;
+              return AppPasswordResetFlow(
+                email: 'person@example.com',
+                minimumPasswordLength: 8,
+                isResending: resending,
+                isCodeVerified: verified,
+                isCompleted: completed,
+                onBack: () {},
+                onResend: () {},
+                onVerifyCode: (_) {},
+                onSubmit: (_, _) {},
+                onCompletedAction: () => completedActionTapped = true,
+              );
+            },
+          ),
+        ),
+      );
+
+      update(() => resending = true);
+      await tester.pump();
+      update(() => resending = false);
+      await tester.pump();
+      expect(
+        find.byKey(const ValueKey<String>('password-reset-resent-notice')),
+        findsOneWidget,
+      );
+
+      await tester.enterText(find.byType(TextField), '123456');
+      await tester.pump();
+      update(() => verified = true);
+      await tester.pump();
+      expect(
+        find.byKey(const ValueKey<String>('password-reset-verified-notice')),
+        findsOneWidget,
+      );
+
+      update(() => completed = true);
+      await tester.pumpAndSettle();
+      expect(find.byType(AppCompletionView), findsOneWidget);
+      expect(find.text('Password updated'), findsOneWidget);
+
+      await tester.tap(find.text('Back to sign in'));
+      expect(completedActionTapped, isTrue);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 }

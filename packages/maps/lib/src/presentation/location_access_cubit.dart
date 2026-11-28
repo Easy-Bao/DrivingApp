@@ -43,7 +43,10 @@ class LocationAccessCubit extends Cubit<LocationAccessViewState> {
     }
   }
 
-  Future<void> refresh() async {
+  Future<void> refresh({bool showChecking = false}) async {
+    if (showChecking) {
+      _emitIfOpen(const LocationAccessChecking());
+    }
     try {
       _applyAccessState(await _repository.refresh());
     } catch (_) {
